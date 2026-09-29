@@ -37,7 +37,7 @@ jobs:
           '@ | Set-Content make_icon.py -Encoding UTF8
           python make_icon.py
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --collect-all pandas --collect-all openpyxl desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
       - name: Verify packaged Python runtime
         shell: pwsh
         run: |
@@ -62,11 +62,11 @@ jobs:
           @'
           ENFORM VERDE - WINDOWS
           Para abrir: dê duplo clique em "Enform Verde.exe".
-          Mantenha o EXE e a pasta _internal juntos.\n          IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
+          Mantenha o EXE e a pasta _internal juntos.\n          IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.\n          A análise espacial aceita vetor local e tenta consulta pública do SICAR e COS Embrapa quando houver internet.
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v0.99.1-corrigido
+          name: Enform-Verde-Windows-v1.0.0-beta-espacial
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
