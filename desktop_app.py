@@ -160,7 +160,7 @@ class App(tk.Tk):
         top=ttk.Frame(main); top.pack(fill="x")
         ttk.Label(top,text="Análise de carbono",style="Title.TLabel").pack(side="left")
         ttk.Button(top,text="EXECUTAR ANÁLISE",command=self.execute,style="Run.TButton").pack(side="right")
-        ttk.Button(top,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=8)\n        ttk.Button(top,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=8)
+        ttk.Button(top,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=8)
         ttk.Button(top,text="Salvar relatório",command=self.save_report).pack(side="right",padx=8)
         self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True,pady=(16,8))
         self.tabs=[]
