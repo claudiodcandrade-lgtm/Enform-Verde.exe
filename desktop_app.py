@@ -1,4 +1,4 @@
-import sys, json, math, tempfile, re
+import sys, json, math, tempfile, re, zipfile
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -45,7 +45,13 @@ def spatial_libs():
 
 def read_vector(path):
     gpd=spatial_libs(); p=Path(path)
-    if p.suffix.lower()==".kml":
+    if p.suffix.lower()==".kmz":
+        d=Path(tempfile.mkdtemp(prefix="enform_kmz_"))
+        with zipfile.ZipFile(path) as z: z.extractall(d)
+        ks=list(d.rglob("*.kml"))
+        if not ks: raise ValueError("KMZ sem arquivo KML interno.")
+        gdf=gpd.read_file(ks[0],driver="KML")
+    elif p.suffix.lower()==".kml":
         gdf=gpd.read_file(path,driver="KML")
     else:gdf=gpd.read_file(path)
     if gdf.empty: raise ValueError("O vetor não contém feições.")
@@ -209,7 +215,7 @@ class App(tk.Tk):
             self.status.set("Consultando SICAR..."); self.update_idletasks(); self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
         except Exception as e: self.status.set("CAR não resolvido."); messagebox.showwarning("SICAR",str(e))
     def pick_vector(self):
-        p=filedialog.askopenfilename(filetypes=[("Vetores","*.kml *.geojson *.json *.shp *.gpkg"),("Todos","*.*")])
+        p=filedialog.askopenfilename(filetypes=[("Vetores","*.kml *.kmz *.geojson *.json *.shp *.gpkg"),("Todos","*.*")])
         if not p:return
         try:self.gdf=read_vector(p); self.project["vector"]=p; self._show_geom(Path(p).name)
         except Exception as e:messagebox.showerror("Vetor",str(e))
@@ -243,7 +249,7 @@ class App(tk.Tk):
         if self.gdf is None:
             if self.car.get().strip():
                 try:self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
-                except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e)+"\n\nAlternativamente carregue KML, SHP, GeoJSON, GPKG ou KMZ extraído.")
+                except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e)+"\n\nAlternativamente carregue KML, KMZ, SHP, GeoJSON ou GPKG.")
             else:return messagebox.showwarning("Perímetro necessário","Informe o CAR ou carregue o arquivo vetorial da propriedade.")
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
