@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: requirements_desktop.txt
       - name: Install dependencies
@@ -38,12 +38,23 @@ jobs:
           python make_icon.py
       - name: Build executable
         run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --collect-all pandas --collect-all openpyxl desktop_app.py
-      - name: Compiled EXE self-test
+      - name: Verify packaged Python runtime
         shell: pwsh
         run: |
-          $exe = Join-Path $PWD 'dist\Enform Verde\Enform Verde.exe'
+          $root = Join-Path $PWD 'dist\Enform Verde'
+          $exe = Join-Path $root 'Enform Verde.exe'
+          $dll = Get-ChildItem -Path $root -Recurse -Filter 'python311.dll' | Select-Object -First 1
           if (!(Test-Path $exe)) { throw 'Enform Verde.exe was not created' }
-          $p = Start-Process -FilePath $exe -ArgumentList '--self-test' -PassThru -Wait
+          if (!$dll) { throw 'python311.dll is missing from packaged application' }
+          Write-Host "Embedded runtime: $($dll.FullName)"
+      - name: Compiled EXE self-test from clean copied folder
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'dist\Enform Verde'
+          $dst = Join-Path $env:RUNNER_TEMP 'Enform Verde Clean Test'
+          Copy-Item -Path $src -Destination $dst -Recurse
+          $exe = Join-Path $dst 'Enform Verde.exe'
+          $p = Start-Process -FilePath $exe -ArgumentList '--self-test' -WorkingDirectory $dst -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw "EXE self-test failed: $($p.ExitCode)" }
       - name: Add instructions
         shell: pwsh
@@ -51,11 +62,11 @@ jobs:
           @'
           ENFORM VERDE - WINDOWS
           Para abrir: dê duplo clique em "Enform Verde.exe".
-          Mantenha o EXE e a pasta _internal juntos.
+          Mantenha o EXE e a pasta _internal juntos.\n          IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-operacional
+          name: Enform-Verde-Windows-v0.99.1-corrigido
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
