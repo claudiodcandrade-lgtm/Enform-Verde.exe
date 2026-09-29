@@ -1,0 +1,60 @@
+name: Build Enform Verde Windows
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_desktop.txt
+          pip install pillow
+      - name: Source self-test
+        run: python desktop_app.py --self-test
+      - name: Create icon
+        shell: pwsh
+        run: |
+          @'
+          from PIL import Image, ImageDraw, ImageFont
+          im=Image.new('RGBA',(256,256),(22,92,58,255))
+          d=ImageDraw.Draw(im); d.ellipse((28,28,228,228),fill=(240,248,242,255)); d.ellipse((48,48,208,208),fill=(38,125,76,255))
+          try: font=ImageFont.truetype('arialbd.ttf',64)
+          except: font=ImageFont.load_default()
+          d.text((72,88),'EV',fill='white',font=font)
+          im.save('enform_verde.ico',sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])
+          '@ | Set-Content make_icon.py -Encoding UTF8
+          python make_icon.py
+      - name: Build executable
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --collect-all pandas --collect-all openpyxl desktop_app.py
+      - name: Compiled EXE self-test
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'dist\Enform Verde\Enform Verde.exe'
+          if (!(Test-Path $exe)) { throw 'Enform Verde.exe was not created' }
+          $p = Start-Process -FilePath $exe -ArgumentList '--self-test' -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw "EXE self-test failed: $($p.ExitCode)" }
+      - name: Add instructions
+        shell: pwsh
+        run: |
+          @'
+          ENFORM VERDE - WINDOWS
+          Para abrir: dê duplo clique em "Enform Verde.exe".
+          Mantenha o EXE e a pasta _internal juntos.
+          '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Enform-Verde-Windows-operacional
+          path: dist/Enform Verde/
+          if-no-files-found: error
+          retention-days: 30
