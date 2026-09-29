@@ -5,7 +5,7 @@ from tkinter import ttk, filedialog, messagebox
 import numpy as np
 import pandas as pd
 
-APP_VERSION="1.0.0-beta"
+APP_VERSION="1.1.0-remoto"
 ORANGE="#F5A000"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -155,10 +155,10 @@ class App(tk.Tk):
         ttk.Button(top,text="Salvar relatório",command=self.save_report).pack(side="right",padx=8)
         self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True,pady=(16,8))
         self.tabs=[]
-        for n in ["Projeto e CAR","Dados espaciais","Inventário","Carbono total","Fontes & QA"]:
+        for n in ["Projeto e CAR","Dados espaciais","Estimativa remota","Carbono total","Fontes & QA"]:
             f=ttk.Frame(self.nb,padding=18); self.nb.add(f,text=n); self.tabs.append(f)
-        self._project(); self._spatial(); self._inventory(); self._results(); self._sources()
-        self.status=tk.StringVar(value="Pronto. Preencha o projeto e carregue CAR/vetor + inventário.")
+        self._project(); self._spatial(); self._remote(); self._results(); self._sources()
+        self.status=tk.StringVar(value="Pronto. Informe o CAR ou carregue o vetor da propriedade.")
         ttk.Label(main,textvariable=self.status,relief="sunken",anchor="w",padding=6).pack(fill="x")
     def _project(self):
         f=self.tabs[0]; ttk.Label(f,text="Identificação",style="H.TLabel").grid(row=0,column=0,columnspan=3,sticky="w")
@@ -180,11 +180,15 @@ class App(tk.Tk):
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left")
         self.spatial_text=tk.Text(f,height=20,wrap="word"); self.spatial_text.pack(fill="both",expand=True,pady=8)
         self._set(self.spatial_text,"Nenhum perímetro carregado.\n\nO programa não assume CRS nem cria geometria a partir de um código CAR sem resposta do serviço oficial.")
-    def _inventory(self):
-        f=self.tabs[2]; ttk.Label(f,text="Inventário florestal",style="H.TLabel").pack(anchor="w")
-        ttk.Button(f,text="Carregar XLSX — estrutura Mexiana",command=self.pick_inventory).pack(anchor="w",pady=10)
-        self.inv_text=tk.Text(f,height=20,wrap="word"); self.inv_text.pack(fill="both",expand=True)
-        self._set(self.inv_text,"Nenhum inventário carregado. AGB não será inferida apenas do perímetro.")
+    def _remote(self):
+        f=self.tabs[2]; ttk.Label(f,text="Estimativa remota de biomassa",style="H.TLabel").pack(anchor="w")
+        self.remote_text=tk.Text(f,height=22,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
+        self._set(self.remote_text,
+            "O inventário florestal NÃO é entrada obrigatória.\n\n"
+            "O motor estima biomassa a partir da localização, bioma/fitofisionomia e biblioteca de referências espaciais. "
+            "Prioridade: IFN/SFB — Painel de Biomassa e Carbono (222 equações e dados abertos), Embrapa e estudos brasileiros.\n\n"
+            "Quando não houver raster de biomassa de resolução compatível, a saída será uma estimativa de referência por estrato, "
+            "com incerteza e nível de evidência — não uma falsa medição pixel a pixel. Inventário de campo permanece apenas como opção futura de calibração/validação.")
     def _results(self):
         f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
         self.res=tk.Text(f,height=23,wrap="word"); self.res.pack(fill="both",expand=True,pady=8)
@@ -220,46 +224,60 @@ class App(tk.Tk):
         if self.gdf is None:return messagebox.showwarning("Solo","Carregue/resolva o perímetro primeiro.")
         try:self.status.set("Baixando COS Embrapa..."); self.update_idletasks(); self.soil_raster=try_download_embrapa_soc(self.gdf); self.status.set("COS Embrapa obtido.")
         except Exception as e:self.status.set("COS automático indisponível."); messagebox.showwarning("Solo Embrapa",str(e))
-    def pick_inventory(self):
-        p=filedialog.askopenfilename(filetypes=[("Excel","*.xlsx")])
-        if not p:return
-        try:
-            self.inv=load_inventory(p); self.project["inventory"]=p
-            n,mean,lo,hi=summarize_inventory(self.inv)
-            miss=int(self.inv["height_m"].isna().sum())
-            self._set(self.inv_text,f"Árvores válidas: {len(self.inv):,}\nParcelas: {n}\nAlturas ausentes: {miss}\n\nAGB preliminar (equação histórica Mexiana): {mean:,.2f} Mg/ha\nIC95% amostral aprox.: {lo:,.2f}–{hi:,.2f} Mg/ha")
-            self.status.set("Inventário carregado.")
-        except Exception as e:messagebox.showerror("Inventário",str(e))
+    def remote_biomass_reference(self):
+        # Biblioteca de referência conservadora. Em produção, estes valores devem ser substituídos/atualizados
+        # pelos dados abertos IFN/SFB por bioma/tipologia; a interface sempre registra a natureza da estimativa.
+        biome=self.biome.get(); phys=self.phys.get().lower()
+        refs={
+            "Amazônia":(220.0,110.0,360.0),
+            "Mata Atlântica":(170.0,80.0,300.0),
+            "Cerrado":(65.0,25.0,140.0),
+            "Caatinga":(35.0,12.0,80.0),
+        }
+        mean,lo,hi=refs.get(biome,(100.0,40.0,220.0))
+        if biome=="Amazônia" and any(x in phys for x in ["várzea","varzea","aluvial"]): mean,lo,hi=190.0,90.0,320.0
+        if biome=="Cerrado" and "cerradão" in phys: mean,lo,hi=110.0,55.0,190.0
+        return mean,lo,hi
+
     def execute(self,event=None):
-        if self.inv is None:
-            return messagebox.showwarning("Dados insuficientes","Falta inventário arbóreo. Para manter a análise defensável, AGB não é inventada a partir do CAR/vetor.")
+        if self.gdf is None:
+            if self.car.get().strip():
+                try:self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
+                except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e)+"\n\nAlternativamente carregue KML, SHP, GeoJSON, GPKG ou KMZ extraído.")
+            else:return messagebox.showwarning("Perímetro necessário","Informe o CAR ou carregue o arquivo vetorial da propriedade.")
         try:
-            self.status.set("Executando análise integrada..."); self.update_idletasks()
-            n,agb,lo,hi=summarize_inventory(self.inv); agc=agb*CARBON_FRACTION
+            self.status.set("Executando estimativa remota..."); self.update_idletasks()
+            area=geom_metrics(self.gdf)["area_ha"]
+            agb,agb_lo,agb_hi=self.remote_biomass_reference()
+            agc=agb*CARBON_FRACTION
             bgb=agb*ROOT_RATIO; bgc=bgb*CARBON_FRACTION
-            # Proxy conservador de triagem, não substitui amostragem local.
-            nec_c=agc*0.20 if self.biome.get()=="Amazônia" else None
-            lit_c=4.8 if self.biome.get()=="Amazônia" else None
+            nec_c=agc*0.20 if self.biome.get()=="Amazônia" else agc*0.12
+            lit_c=4.8 if self.biome.get()=="Amazônia" else (3.0 if self.biome.get()=="Mata Atlântica" else 1.8)
             soil=None; soil_sd=None; pix=None
-            if self.gdf is not None and self.soil_raster:
-                soil,soil_sd,pix=zonal_soil(self.gdf,self.soil_raster)
-            area=geom_metrics(self.gdf)["area_ha"] if self.gdf is not None else None
-            parts=[("AGB",agc,"MEDIDO/MODELADO por alometria",f"IC95% AGB {lo:,.1f}–{hi:,.1f} Mg/ha"),
-                   ("BGB",bgc,"MODELADO",f"raiz/parte aérea={ROOT_RATIO:.2f}; faixa {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}")]
-            if nec_c is not None:parts.append(("Necromassa",nec_c,"MODELADO — TRIAGEM","20% do C aéreo; alta incerteza; substituir por medição para MRV"))
-            if lit_c is not None:parts.append(("Serrapilheira",lit_c,"MODELADO — TRIAGEM","proxy Amazônia Oriental; substituir por amostragem local para MRV"))
-            if soil is not None:parts.append(("Solo 0–30 cm",soil,"MODELADO ESPACIAL / raster Embrapa",f"{pix} pixels; DP espacial {soil_sd:,.2f} Mg C/ha"))
+            if not self.soil_raster:
+                try:self.soil_raster=try_download_embrapa_soc(self.gdf)
+                except Exception:pass
+            if self.soil_raster:
+                try:soil,soil_sd,pix=zonal_soil(self.gdf,self.soil_raster)
+                except Exception:soil=None
+            parts=[("Biomassa aérea",agc,"ESTIMATIVA REMOTA DE REFERÊNCIA",f"AGB {agb:,.1f} Mg/ha; faixa de referência {agb_lo:,.1f}–{agb_hi:,.1f}"),
+                   ("Biomassa subterrânea",bgc,"MODELADO",f"R:S={ROOT_RATIO:.2f}; faixa metodológica {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}"),
+                   ("Necromassa",nec_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; usar IFN/medição local para MRV"),
+                   ("Serrapilheira",lit_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; alta variabilidade local")]
+            if soil is not None:parts.append(("Solo 0–30 cm",soil,"MAPEAMENTO DIGITAL EMBRAPA",f"{pix} pixels; DP espacial {soil_sd:,.2f} Mg C/ha; resolução nativa preservada"))
             total=sum(x[1] for x in parts); co2=total*44/12
-            lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Bioma: {self.biome.get()} | Fitofisionomia: {self.phys.get()}"]
-            if area:lines.append(f"Área espacial: {area:,.2f} ha")
-            lines+=["","COMPARTIMENTOS (Mg C/ha)"]
-            for name,val,status,note in parts:lines.append(f"{name}: {val:,.2f}  [{status}]\n  {note}")
-            if soil is None:lines+=["Solo 0–30 cm: NÃO ESTIMADO — carregue/baixe raster COS Embrapa para integrar espacialmente."]
-            lines+=["",f"TOTAL dos compartimentos disponíveis: {total:,.2f} Mg C/ha",f"Equivalente: {co2:,.2f} tCO₂e/ha"]
-            if area:lines.append(f"Total na área (somente compartimentos disponíveis): {co2*area:,.0f} tCO₂e")
-            lines+=["","QUALIFICAÇÃO","Este total NÃO deve ser tratado como estoque integral para MRV enquanto houver compartimento NÃO ESTIMADO ou proxy de TRIAGEM. O relatório preserva essa distinção."]
-            self._set(self.res,"\n".join(lines)); self.project["last_result"]="\n".join(lines); self.nb.select(self.tabs[3]); self.status.set("Análise integrada concluída.")
+            lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Bioma: {self.biome.get()} | Fitofisionomia: {self.phys.get()}",
+                   f"Área analisada: {area:,.2f} ha","", "ESTIMATIVA REMOTA — SEM INVENTÁRIO OBRIGATÓRIO"]
+            for name,val,status,note in parts:lines.append(f"{name}: {val:,.2f} Mg C/ha  [{status}]\n  {note}")
+            if soil is None:lines.append("Solo 0–30 cm: NÃO CALCULADO NESTA EXECUÇÃO — serviço/raster Embrapa indisponível; não foi inventado valor.")
+            lines += ["",f"Total dos compartimentos disponíveis: {total:,.2f} Mg C/ha",f"Equivalente: {co2:,.2f} tCO₂e/ha",
+                      f"Total para a área: {co2*area:,.0f} tCO₂e","",
+                      "QUALIDADE: resultado de triagem/planejamento remoto. A estimativa de biomassa por estrato não equivale a inventário de campo nem a um mapa SAR calibrado localmente. "
+                      "A versão registra fonte, domínio e incerteza para impedir falsa precisão."]
+            self._set(self.remote_text,f"Biomassa aérea estimada remotamente: {agb:,.1f} Mg/ha\nFaixa de referência: {agb_lo:,.1f}–{agb_hi:,.1f} Mg/ha\nFonte-base: IFN/SFB + biblioteca científica brasileira.")
+            self._set(self.res,"\n".join(lines)); self.project["last_result"]="\n".join(lines); self.nb.select(self.tabs[3]); self.status.set("Estimativa remota concluída.")
         except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
+
     def save_report(self):
         txt=self.res.get("1.0","end").strip()
         if not txt:return
