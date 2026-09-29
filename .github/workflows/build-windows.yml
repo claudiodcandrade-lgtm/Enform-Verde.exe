@@ -30,10 +30,9 @@ jobs:
           import tkinter as tk
           import desktop_app as app
           assert hasattr(app.App, "export_excel"), "App.export_excel missing"
-          root=tk.Tk(); root.withdraw()
-          ui=app.App(root)
-          root.update_idletasks()
-          root.destroy()
+          ui=app.App()
+          ui.update_idletasks()
+          ui.destroy()
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
