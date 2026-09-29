@@ -320,6 +320,40 @@ class App(tk.Tk):
             sh=wb.create_sheet(name); setup(sh,"Enform Verde — "+name); put(sh,data)
         wb.save(p); self.status.set("Excel exportado com sucesso.")
 
+    def export_excel(self):
+        if not self.project.get("last_result"):
+            return messagebox.showwarning("Excel","Execute a análise antes de exportar.")
+        p=filedialog.asksaveasfilename(defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
+        if not p: return
+        wb=Workbook(); orange="EF9B06"; green="0B3D2E"; white="FFFFFF"; pale="F4F6F5"
+        def setup(sh,title):
+            sh.sheet_view.showGridLines=False; sh.freeze_panes="A4"; sh.merge_cells("A1:F1")
+            sh["A1"]=title; sh["A1"].font=Font(size=18,bold=True,color=white); sh["A1"].fill=PatternFill("solid",fgColor=green)
+            sh.row_dimensions[1].height=30
+            for col,w in zip("ABCDEF",[28,48,18,28,34,44]): sh.column_dimensions[col].width=w
+        def put(sh,data):
+            headers=["Item","Descrição/Valor","Unidade","Método","Fonte","Observação"]
+            for j,h in enumerate(headers,1):
+                c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
+            for i,row in enumerate(data,4):
+                for j,v in enumerate(row,1):
+                    c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.alignment=Alignment(vertical="top",wrap_text=True)
+                    if isinstance(v,(int,float)): c.number_format='#,##0.00'
+        ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
+        area=geom_metrics(self.gdf)["area_ha"] if self.gdf is not None else None
+        put(ws,[["Projeto",self.name.get(),"—","—","—",""],["Bioma",self.biome.get(),"—","classificação","—",""],["Fitofisionomia",self.phys.get(),"—","classificação","—",""],["Área",area,"ha","geometria","CAR/vetor",""],["Sensor/produto",self.sensor.get(),"—","SAR/multissensor","ESA/fornecedor",""]])
+        datasets={
+          "AGB":[["Resultado consolidado",self.project["last_result"],"Mg/ha","SAR/biblioteca","IFN/SFB + Embrapa","ver QA"]],
+          "Compartimentos":[["Reservatórios","AGB, BGB, necromassa, serapilheira","Mg C/ha","motor Enform","IFN/SFB + Embrapa","status por compartimento"]],
+          "Solo":[["COS","0–30 cm","Mg C/ha","recorte raster","Embrapa/PronaSolos","resolução nativa preservada"]],
+          "Sensores SAR":[["Preferencial","ESA Biomass","—","P-band SAR","ESA","estrutura lenhosa"],["Histórico","ALOS/PALSAR","—","L-band SAR","JAXA","série histórica"],["Complementar","TerraSAR-X/COSMO-SkyMed","—","X-band SAR","operadores","textura/dossel"]],
+          "Modelos":[["Biblioteca","IFN/SFB + Embrapa/literatura","—","seleção por domínio","SFB/IFN","bioma/fitofisionomia"]],
+          "QA e Incerteza":[["Regra","Não declarar mensuração SAR sem produto efetivamente processado","—","QA","Enform","evita falsa precisão"]],
+          "Bibliografia":[["SFB/IFN","Painel de Biomassa e Carbono","—","—","SFB","dados abertos"],["ESA","Biomass P-band; CCI Biomass AGB","—","—","ESA","produto e incerteza"]]}
+        for name,data in datasets.items():
+            sh=wb.create_sheet(name); setup(sh,"Enform Verde — "+name); put(sh,data)
+        wb.save(p); self.status.set("Excel exportado com sucesso.")
+
     def save_report(self):
         txt=self.res.get("1.0","end").strip()
         if not txt:return
