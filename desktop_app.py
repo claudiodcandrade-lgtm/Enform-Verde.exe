@@ -190,7 +190,9 @@ class App(tk.Tk):
         self.spatial_text=tk.Text(f,height=20,wrap="word"); self.spatial_text.pack(fill="both",expand=True,pady=8)
         self._set(self.spatial_text,"Nenhum perímetro carregado.\n\nO programa não assume CRS nem cria geometria a partir de um código CAR sem resposta do serviço oficial.")
     def _remote(self):
-        f=self.tabs[2]; ttk.Label(f,text="Sensores SAR e estimativa de biomassa",style="H.TLabel").pack(anchor="w")\n        self.sensor=tk.StringVar(value="ESA Biomass — banda P")\n        ttk.Combobox(f,textvariable=self.sensor,state="readonly",width=58,values=["ESA Biomass — banda P","ESA CCI Biomass — AGB 100 m + incerteza","ALOS/PALSAR — banda L","ALOS-2/PALSAR-2 — banda L","TerraSAR-X/TanDEM-X — banda X","COSMO-SkyMed — banda X"]).pack(anchor="w",pady=8)
+        f=self.tabs[2]; ttk.Label(f,text="Sensores SAR e estimativa de biomassa",style="H.TLabel").pack(anchor="w")
+        self.sensor=tk.StringVar(value="ESA Biomass — banda P")
+        ttk.Combobox(f,textvariable=self.sensor,state="readonly",width=58,values=["ESA Biomass — banda P","ESA CCI Biomass — AGB 100 m + incerteza","ALOS/PALSAR — banda L","ALOS-2/PALSAR-2 — banda L","TerraSAR-X/TanDEM-X — banda X","COSMO-SkyMed — banda X"]).pack(anchor="w",pady=8)
         self.remote_text=tk.Text(f,height=22,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
         self._set(self.remote_text,
             "O inventário florestal NÃO é entrada obrigatória.\n\n"
