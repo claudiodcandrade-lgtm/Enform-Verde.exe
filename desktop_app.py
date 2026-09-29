@@ -5,7 +5,7 @@ from tkinter import ttk, filedialog, messagebox
 import numpy as np
 import pandas as pd
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment\nfrom openpyxl import Workbook\nfrom openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment
 
 APP_VERSION="1.2.0-SAR"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
