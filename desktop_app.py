@@ -5,7 +5,7 @@ from tkinter import ttk, filedialog, messagebox
 import pandas as pd
 import numpy as np
 
-APP_VERSION="0.99-win"
+APP_VERSION="0.99.2-win"
 
 EQUATIONS=[
 ("MEXIANA_HIST","Amazônia","Várzea estuarina - FOD Aluvial/Terras Baixas","B = 0,1184 × DAP^2,53","Inventário Fazenda Santo Ambrósio"),
@@ -46,7 +46,7 @@ class App(tk.Tk):
         self.title(f"Enform Verde {APP_VERSION}")
         self.geometry("1100x720"); self.minsize(900,600)
         self.project={"version":APP_VERSION}; self.inv=None
-        self._style(); self._ui()
+        self._style(); self._ui(); self.bind("<Return>", self.execute_analysis)
     def _style(self):
         s=ttk.Style(self)
         try:s.theme_use("vista")
@@ -54,11 +54,13 @@ class App(tk.Tk):
         s.configure("Title.TLabel",font=("Segoe UI",18,"bold"))
         s.configure("H.TLabel",font=("Segoe UI",11,"bold"))
         s.configure("TButton",padding=7)
+        s.configure("Run.TButton",font=("Segoe UI",10,"bold"),padding=9)
     def _ui(self):
         top=ttk.Frame(self,padding=(18,14)); top.pack(fill="x")
         ttk.Label(top,text="Enform Verde",style="Title.TLabel").pack(side="left")
         ttk.Label(top,text="  Biomassa e carbono florestal",foreground="#555").pack(side="left",pady=(7,0))
         ttk.Button(top,text="Salvar projeto",command=self.save_project).pack(side="right")
+        ttk.Button(top,text="EXECUTAR ANÁLISE",command=self.execute_analysis,style="Run.TButton").pack(side="right",padx=10)
         self.nb=ttk.Notebook(self); self.nb.pack(fill="both",expand=True,padx=18,pady=(0,18))
         names=["1. Projeto","2. Vegetação","3. Inventário / AGB","4. Resultados","5. Biblioteca científica"]
         self.tabs=[]
@@ -76,6 +78,7 @@ class App(tk.Tk):
         ttk.Label(f,text="Código CAR").grid(row=2,column=0,sticky="w",pady=10)
         self.car=tk.StringVar(); ttk.Entry(f,textvariable=self.car,width=60).grid(row=2,column=1,sticky="ew",padx=10)
         ttk.Label(f,text="O código CAR é registrado, mas o programa não inventa nem resolve automaticamente o perímetro.",foreground="#666").grid(row=3,column=1,sticky="w",padx=10)
+        ttk.Label(f,text="Após preencher os dados, pressione Enter ou clique em EXECUTAR ANÁLISE.",foreground="#333").grid(row=6,column=1,sticky="w",padx=10,pady=(20,0))
         ttk.Label(f,text="Arquivo vetorial").grid(row=4,column=0,sticky="w",pady=(20,5))
         ttk.Button(f,text="Selecionar KML / GeoJSON / SHP / GPKG",command=self.pick_vector).grid(row=4,column=1,sticky="w",padx=10,pady=(20,5))
         self.vector=tk.StringVar(value="Nenhum arquivo selecionado")
@@ -114,18 +117,32 @@ class App(tk.Tk):
         p=filedialog.askopenfilename(filetypes=[("Excel","*.xlsx")])
         if not p:return
         try:
-            d=load_inventory(p); n,mean,lo,hi=summarize_inventory(d)
+            self.inv=load_inventory(p); self.project["inventory"]=p; self.inv_lbl.set(Path(p).name)
+            self.status.set("Inventário carregado. Pressione Enter ou clique em EXECUTAR ANÁLISE.")
+        except Exception as e: messagebox.showerror("Enform Verde",str(e))
+
+    def execute_analysis(self, event=None):
+        self.project.update({"name":self.name.get().strip(),"car":self.car.get().strip(),"biome":self.biome.get(),"physiognomy":self.phys.get().strip()})
+        if self.inv is None:
+            msg=("Dados do projeto registrados, mas ainda não há inventário arbóreo carregado.\n\n"
+                 "Para calcular AGB/carbono, abra a aba 'Inventário / AGB' e carregue o XLSX. "
+                 "CAR, bioma, fitofisionomia ou arquivo vetorial, sozinhos, não contêm DAP/altura por árvore.")
+            self.status.set("Análise não executada: inventário XLSX ausente.")
+            messagebox.showwarning("Enform Verde — dados insuficientes",msg); return
+        try:
+            self.status.set("Executando análise..."); self.update_idletasks()
+            d=self.inv; n,mean,lo,hi=summarize_inventory(d)
             issues=[]
             if d["height_m"].isna().any():issues.append("alturas ausentes")
             if (d["height_m"].fillna(1)<=0).any():issues.append("alturas não positivas")
-            self.inv=d; self.project["inventory"]=p; self.inv_lbl.set(Path(p).name)
             txt=f"Árvores válidas: {len(d):,}\nParcelas: {n}\nQA: {', '.join(issues) if issues else 'sem alertas básicos'}\n\nAGB — equação histórica Mexiana\nMédia: {mean:,.2f} Mg/ha\nIC95% amostral aproximado: {lo:,.2f} – {hi:,.2f} Mg/ha\n\nA equação histórica de Mexiana não deve ser transferida automaticamente para outras fitofisionomias."
             self.qa.config(state="normal"); self.qa.delete("1.0","end"); self.qa.insert("1.0",txt); self.qa.config(state="disabled")
             c=mean*0.47; co2=c*(44/12)
-            out=f"Biomassa aérea (AGB): {mean:,.2f} Mg/ha\nCarbono da AGB (fração 0,47): {c:,.2f} Mg C/ha\nEquivalente de CO₂ da AGB: {co2:,.2f} tCO₂e/ha\n\nOs demais compartimentos (BGB, necromassa, serrapilheira e solo) permanecem não estimados até receberem dados/métodos próprios. Não são preenchidos silenciosamente."
+            out=f"Projeto: {self.name.get()}\nBioma: {self.biome.get()}\nFitofisionomia: {self.phys.get()}\n\nBiomassa aérea (AGB): {mean:,.2f} Mg/ha\nIC95% AGB: {lo:,.2f} – {hi:,.2f} Mg/ha\nCarbono da AGB (fração 0,47): {c:,.2f} Mg C/ha\nEquivalente de CO₂ da AGB: {co2:,.2f} tCO₂e/ha\n\nOs demais compartimentos (BGB, necromassa, serrapilheira e solo) permanecem não estimados até receberem dados/métodos próprios. Não são preenchidos silenciosamente."
             self.res.config(state="normal"); self.res.delete("1.0","end"); self.res.insert("1.0",out); self.res.config(state="disabled")
-            self.status.set("Inventário carregado e AGB calculada.")
-        except Exception as e: messagebox.showerror("Enform Verde",str(e))
+            self.nb.select(self.tabs[3]); self.status.set("Análise concluída.")
+        except Exception as e:
+            self.status.set("Falha na análise."); messagebox.showerror("Enform Verde — análise",str(e))
     def save_project(self):
         self.project.update({"name":self.name.get(),"car":self.car.get(),"biome":self.biome.get(),"physiognomy":self.phys.get()})
         p=filedialog.asksaveasfilename(defaultextension=".enformverde.json",filetypes=[("Projeto Enform Verde","*.enformverde.json")])
