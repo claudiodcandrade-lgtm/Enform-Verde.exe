@@ -154,9 +154,7 @@ class App(tk.Tk):
             col=random.choice(["#0D4B35","#146044","#1C6B4C","#245B43","#0A3528"])
             hero.create_oval(x-r,y-r,x+r,y+r,fill=col,outline="")
         hero.create_rectangle(0,570,330,760,fill=FOREST,outline="")
-        hero.create_text(32,600,text="Carbono florestal
-com rastreabilidade
-metodológica.",anchor="nw",fill="white",font=("Segoe UI",17,"bold"))
+        hero.create_text(32,600,text="Carbono florestal\\ncom rastreabilidade\\nmetodológica.",anchor="nw",fill="white",font=("Segoe UI",17,"bold"))
         hero.create_text(32,700,text="MEDIDO  •  MODELADO  •  INCERTEZA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",9))
         main=ttk.Frame(root,padding=22); main.pack(side="left",fill="both",expand=True)
         top=ttk.Frame(main); top.pack(fill="x")
