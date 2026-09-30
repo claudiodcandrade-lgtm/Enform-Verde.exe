@@ -532,12 +532,12 @@ class App(tk.Tk):
         if not p:return
         wb=Workbook(); orange="F29A00"; green="0B3D2E"; white="FFFFFF"; pale="F4F6F5"; line="D5DDD9"
         thin=Side(style="thin",color=line)
-        headers=["Categoria","Parâmetro / resultado","tC/ha","tCO₂e/ha","Status","Método","Fonte","Observação"]
+        headers=["Categoria","Parâmetro / resultado","tC/ha","tCO₂e/ha","Margem de erro (%)","Status","Método","Fonte","Observação"]
         def setup(sh,title):
-            sh.sheet_view.showGridLines=False; sh.freeze_panes="A4"; sh.auto_filter.ref="A3:H200"
-            sh.merge_cells("A1:H1"); c=sh["A1"]; c.value=title; c.font=Font(size=18,bold=True,color=white); c.fill=PatternFill("solid",fgColor=green); c.alignment=Alignment(vertical="center")
+            sh.sheet_view.showGridLines=False; sh.freeze_panes="A4"; sh.auto_filter.ref="A3:I200"
+            sh.merge_cells("A1:I1"); c=sh["A1"]; c.value=title; c.font=Font(size=18,bold=True,color=white); c.fill=PatternFill("solid",fgColor=green); c.alignment=Alignment(vertical="center")
             sh.row_dimensions[1].height=32
-            for col,w in zip("ABCDEFGH",[20,34,16,18,25,28,30,55]): sh.column_dimensions[col].width=w
+            for col,w in zip("ABCDEFGHI",[20,34,16,18,18,25,28,30,55]): sh.column_dimensions[col].width=w
             for j,h in enumerate(headers,1):
                 c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange); c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True); c.border=Border(top=thin,bottom=thin,left=thin,right=thin)
             sh.row_dimensions[3].height=28
@@ -546,7 +546,7 @@ class App(tk.Tk):
                 sh.row_dimensions[i].height=32
                 for j,v in enumerate(row,1):
                     c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.border=Border(top=thin,bottom=thin,left=thin,right=thin); c.alignment=Alignment(vertical="center",wrap_text=True)
-                    if j in (3,4) and isinstance(v,(int,float)): c.number_format='#,##0.00'
+                    if j in (3,4,5) and isinstance(v,(int,float)): c.number_format='#,##0.00'
                 sh.cell(i,2).font=Font(bold=True,color=green)
         area=self.project["area_ha"]; total=self.project["total_tc_ha"]; totalco2=self.project["total_tco2_ha"]; ar=self.project["analysis_rows"]
         ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
@@ -558,12 +558,12 @@ class App(tk.Tk):
                 ["Resultado","Carbono total por hectare",total,totalco2,"CONSOLIDADO","soma dos compartimentos","Enform","somente compartimentos disponíveis"],
                 ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{total*area:,.0f} tC | {totalco2*area:,.0f} tCO₂e"]])
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
-        put(sh,[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
+        put(sh,[["Resultado",r["parametro"],r["tc"],r["tco2"],r.get("erro_pct"),r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
         for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira"),("Carbono do Solo","Solo 0–30 cm")]:
             sh=wb.create_sheet(sheet); setup(sh,"Enform Verde — "+sheet)
             rr=[r for r in ar if r["parametro"]==param]
             data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
-            if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
+            if not data:data=[["Resultado",param,None,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
             put(sh,data)
         sh=wb.create_sheet("Diagnóstico IBGE"); setup(sh,"Enform Verde — Diagnóstico territorial IBGE")
         diag=self.project.get("ibge_diagnosis",{})
