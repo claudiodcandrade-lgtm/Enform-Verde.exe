@@ -275,7 +275,7 @@ def self_test():
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); self.geometry("1260x760"); self.minsize(1050,650)
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
         s=ttk.Style(self)
