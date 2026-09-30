@@ -602,7 +602,7 @@ class App(tk.Tk):
                     metric="propagação da incerteza AGB; faixa R:S metodológica adicional"; level="1σ da AGB; R:S sem nível de confiança"
                 elif name.startswith("Solo "):
                     depth=name.replace("Solo ",""); sp=soil_profiles.get(depth,{})
-                    sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=None; ep=(sd/val*100 if val else None)
+                    sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=sd; ep=(sd/val*100 if val else None)
                     metric=f"DP espacial={sd:,.2f} tC/ha ({ep:.1f}% da média)" if ep is not None else "DP espacial N/D"
                     level="variabilidade espacial do mapa; não IC95% nem erro de predição"
                 else:
