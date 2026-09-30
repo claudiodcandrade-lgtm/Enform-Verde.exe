@@ -374,7 +374,7 @@ class App(tk.Tk):
                 rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"status":status,"metodo":method,"fonte":source,"obs":note})
             self.project["analysis_rows"]=rows
             self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
-            lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma: {self.biome.get()} | Fitofisionomia: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
+            lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
             for r in rows:
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  {r['status']} — {r['obs']}",""]
             if soil is None: lines += ["Solo 0–30 cm","  NÃO CALCULADO — serviço/raster de COS indisponível nesta execução; nenhum valor foi inventado.",""]
@@ -410,8 +410,8 @@ class App(tk.Tk):
         area=self.project["area_ha"]; total=self.project["total_tc_ha"]; totalco2=self.project["total_tco2_ha"]; ar=self.project["analysis_rows"]
         ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
         put(ws,[["Entrada","Projeto",None,None,"Informado","cadastro",None,self.name.get()],
-                ["Entrada","Bioma",None,None,"Informado","classificação",None,self.biome.get()],
-                ["Entrada","Fitofisionomia",None,None,"Informado","classificação",None,self.phys.get()],
+                ["Diagnóstico IBGE","Bioma dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Biomas 2025",self.biome.get()],
+                ["Diagnóstico IBGE","Fitofisionomia/região fitoecológica dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Vegetação 2026",self.phys.get()],
                 ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{area:,.2f} ha"],
                 ["Entrada","Sensor/produto selecionado",None,None,"Informado","SAR/multissensor","ESA/fornecedor",self.sensor.get()],
                 ["Resultado","Carbono total por hectare",total,totalco2,"CONSOLIDADO","soma dos compartimentos","Enform","somente compartimentos disponíveis"],
