@@ -1,4 +1,4 @@
-import math,re
+import math,re,hashlib,time
 from pathlib import Path
 import numpy as np, requests
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
@@ -147,7 +147,7 @@ def literature_fallback(biome,phys,library_rows=None):
         kind="amplitude bibliográfica conservadora; não é erro estatístico nem IC95%"
     return {"available":True,"agb_mg_ha":mean,"uncertainty_mg_ha":sd,"uncertainty_kind":kind,"n_studies":len(ok),"studies":ok,
       "status":"ESTIMATIVA BIBLIOGRÁFICA — SAR NÃO PROCESSÁVEL NESTA EXECUÇÃO","source":"biblioteca científica interna"}
-def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None):
+def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     audit={"biomass_l2b":None,"cci":None,"asf":None,"warnings":[]}
     # 1 ESA BIOMASS. Availability without credentials is recorded, not treated as a fatal error yet.
@@ -170,11 +170,36 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         if cci["paths"]:
             r=process_real_sar(gdf,cci["paths"],biome,phys);r["audit"]=audit;r["paths"]=cci["paths"];r["historical"]=True;r["data_origin"]="SAR / MAPEAMENTO";return r
     except Exception as e:audit["cci"]={"error":str(e)}
-    # 3 L-band discovery. It is a candidate data source, not a fatal application error.
+    # 3 L-band: discovery plus authenticated Earthdata/ASF download when credentials are supplied.
+    # Catalogue presence alone is never treated as a processed measurement.
+
     asf=discover_asf(gdf,limit=50);audit["asf"]=asf
     lcount=sum(x["count"] for x in asf if x["band"]=="L")
-    if lcount:
-        audit["warnings"].append(f"{lcount} produto(s) L-band catalogados, mas não processáveis nesta execução sem credencial/produto ARD.")
+    if lcount and edl_user and edl_password:
+        try:
+            from lband_preprocess import preprocess_lband
+            cand=next((it for group in asf if group.get("band")=="L" for it in group.get("items",[]) if (it.get("properties") or {}).get("url")),None)
+            if cand:
+                url=cand["properties"]["url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
+                target=dl/Path(url.split("?")[0]).name
+                if not target.exists():
+                    sess=requests.Session(); sess.auth=(edl_user,edl_password)
+                    with sess.get(url,stream=True,timeout=(10,240),allow_redirects=True) as rr:
+                        rr.raise_for_status()
+                        with open(target,"wb") as out:
+                            for chunk in rr.iter_content(8*1024*1024):
+                                if chunk: out.write(chunk)
+                pre=preprocess_lband(target,dl/("proc_"+target.stem))
+                audit["asf_download"]={"scene":cand.get("id"),"preprocess":pre.get("status")}
+                if pre.get("rasters"):
+                    pr=process_real_sar(gdf,pre["rasters"],biome,phys)
+                    if pr.get("agb_mg_ha") is not None:
+                        pr["audit"]=audit; pr["data_origin"]="SAR_L"; pr["paths"]=pre["rasters"]; return pr
+                    audit["warnings"].append("L-band baixada/processada, mas não existe modelo executável compatível com os atributos desta cena.")
+        except Exception as e:
+            audit["warnings"].append("ASF L-band download/process: "+str(e))
+    elif lcount:
+        audit["warnings"].append(f"{lcount} produto(s) L-band catalogados; informe Earthdata Login para download/processamento automático.")
     # 4 Guaranteed analytical result. Literature is secondary and explicitly labelled when SAR cannot be processed now.
     r=literature_fallback(biome,phys,library_rows); r["audit"]=audit; r["data_origin"]="LITERATURA"
     if lcount:r["status"]="ESTIMATIVA BIBLIOGRÁFICA SECUNDÁRIA — SAR CATALOGADO, NÃO PROCESSADO"
