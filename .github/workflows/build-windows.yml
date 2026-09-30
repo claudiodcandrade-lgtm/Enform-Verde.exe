@@ -28,6 +28,7 @@ jobs:
         run: |
           @'
           import tkinter as tk
+          from pathlib import Path
           import desktop_app as app
           assert hasattr(app.App, "export_excel"), "App.export_excel missing"
           assert "tCO₂e/ha" in open("desktop_app.py",encoding="utf-8").read(), "dual carbon units missing"
@@ -49,7 +50,7 @@ jobs:
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
-          assert "enform_logo.png" in src and "width=500" in src, "expanded visual identity missing"
+          assert "enform_header.jpg" in src and "width=500" in src, "approved forest/logo header missing"
           assert "NASA Earthdata usuário:" in src and "edl_password" in src, "Earthdata credentials UI missing"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
           assert "ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO" in src, "secondary-analysis status missing"
@@ -57,6 +58,9 @@ jobs:
           assert "process_nisar_gcov" in sar_src and "analyze_nisar_gcov" in sar_src, "NISAR GCOV processor missing"
           assert "NISAR_GCOV_HDF5" in sar_src, "NISAR HDF5 route missing"
           assert "select_executable_model" in sar_src, "strict SAR model selector missing"
+          assert "public_sentinel1_cog" in sar_src and "EARTH_SEARCH_STAC" in sar_src, "public real SAR fallback missing"
+          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Sentinel-1 C-band fallback"), "SAR priority regression"
+          assert Path("enform_header.jpg").exists() and Path("enform_header.jpg").stat().st_size > 2000, "forest/logo visual asset missing"
           import scientific_calibration as sc
           assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
           assert any("Embrapa" in x["institution"] for x in sc.SCIENTIFIC_INVENTORY_REGISTRY), "Embrapa evidence missing"
@@ -100,7 +104,7 @@ jobs:
           '@ | Set-Content make_icon.py -Encoding UTF8
           python make_icon.py
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.jpg;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
       - name: Verify packaged Python runtime
         shell: pwsh
         run: |
@@ -129,7 +133,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.10.0-SCIENTIFIC
+          name: Enform-Verde-Windows-v3.11.0-SAR-VISUAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
