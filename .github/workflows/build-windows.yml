@@ -35,6 +35,10 @@ jobs:
           assert "cod_imovel" in open("desktop_app.py",encoding="utf-8").read(), "SICAR CAR-code filter missing"
           assert "IBGE_VEGE_2026_URL" in open("desktop_app.py",encoding="utf-8").read(), "IBGE 2026 library missing"
           assert "Diagnóstico IBGE" in open("desktop_app.py",encoding="utf-8").read(), "IBGE Excel sheet missing"
+          src=open("desktop_app.py",encoding="utf-8").read()
+          assert "geo_area_imovel" in src, "SICAR geometry contract missing"
+          assert "DEFAULT@SECLEVEL=1" in src, "SICAR TLS compatibility missing"
+          assert "state=\"readonly\"" not in src[src.index("def _project"):src.index("def _spatial")], "manual biome selector still present"
           ui=app.App()
           ui.update_idletasks()
           ui.destroy()
@@ -84,7 +88,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v1.3.2-SAR-IBGE
+          name: Enform-Verde-Windows-v1.3.3-SICAR-IBGE
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
