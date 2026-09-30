@@ -8,7 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
 
-APP_VERSION="1.3.4-SICAR-SIGEF-IBGE"
+APP_VERSION="1.3.5-STATE-RESET"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -361,11 +361,29 @@ class App(tk.Tk):
              "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
         self._set(self.src,txt)
     def _set(self,w,t): w.config(state="normal"); w.delete("1.0","end"); w.insert("1.0",t); w.config(state="disabled")
+    def _reset_analysis_state(self,keep_geometry=False):
+        """Invalida integralmente qualquer resultado derivado da consulta anterior."""
+        old_vector=self.project.get("vector")
+        self.project={"version":APP_VERSION}
+        if old_vector and keep_geometry:self.project["vector"]=old_vector
+        if not keep_geometry:self.gdf=None
+        self.soil_raster=None
+        self.inv=None
+        self.biome.set(""); self.phys.set("")
+        for widget_name in ("remote_text","res"):
+            w=getattr(self,widget_name,None)
+            if w is not None:self._set(w,"")
+        if hasattr(self,"spatial_text"):self._set(self.spatial_text,"Nova entrada recebida. Resultados anteriores foram descartados.")
+        self.status.set("Estado anterior descartado. Preparando nova consulta.")
+        self.update_idletasks()
+
     def car_lookup(self):
+        self._reset_analysis_state()
         try:
             self.status.set("Consultando SICAR..."); self.update_idletasks(); self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
         except Exception as e: self.status.set("CAR não resolvido."); messagebox.showwarning("SICAR",str(e))
     def ccir_lookup(self):
+        self._reset_analysis_state()
         try:
             self.status.set("Consultando SIGEF pelo código do CCIR..."); self.update_idletasks()
             self.gdf=resolve_ccir_sigef(self.ccir.get()); self._show_geom("CCIR / SIGEF")
@@ -375,6 +393,7 @@ class App(tk.Tk):
     def pick_vector(self):
         p=filedialog.askopenfilename(filetypes=[("Vetores","*.kml *.kmz *.geojson *.json *.shp *.gpkg"),("Todos","*.*")])
         if not p:return
+        self._reset_analysis_state()
         try:self.gdf=read_vector(p); self.project["vector"]=p; self._show_geom(Path(p).name)
         except Exception as e:messagebox.showerror("Vetor",str(e))
     def _show_geom(self,src):
@@ -416,6 +435,9 @@ class App(tk.Tk):
         return mean,lo,hi
 
     def execute(self,event=None):
+        # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
+        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
+            self.project.pop(k,None)
         if self.gdf is None:
             if self.car.get().strip():
                 try:self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
