@@ -420,7 +420,7 @@ class App(tk.Tk):
         ttk.Label(auth,text="(memória da sessão)",foreground="#666").pack(side="left")
         auth2=ttk.Frame(f); auth2.pack(fill="x",pady=4)
         ttk.Label(auth2,text="NASA Earthdata User Token:").pack(side="left")
-        self.edl_token=tk.StringVar(); self.edl_user=tk.StringVar(); self.edl_password=tk.StringVar()
+        self.edl_token=tk.StringVar()
         ttk.Entry(auth2,textvariable=self.edl_token,width=48,show="•").pack(side="left",padx=4)
         ttk.Button(auth2,text="GERAR TOKEN NO EARTHDATA",command=lambda:webbrowser.open("https://urs.earthdata.nasa.gov/users/generate_token")).pack(side="left",padx=4)
         ttk.Label(auth2,text="60 dias • somente memória desta sessão",foreground="#666").pack(side="left")
