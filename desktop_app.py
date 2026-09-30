@@ -99,7 +99,19 @@ def resolve_car(car):
     params={"service":"WFS","version":"1.0.0","request":"GetFeature","typeName":layer,
             "outputFormat":"application/json","srsName":"EPSG:4326","maxFeatures":"2",
             "cql_filter":f"cod_imovel='{code}'"}
-    sess=_sicar_session()\n    try:\n        try:\n            r=sess.get(url,params=params,timeout=(10,60))\n        except requests.exceptions.SSLError:\n            import urllib3\n            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)\n            r=sess.get(url,params=params,timeout=(10,60),verify=False)\n        r.raise_for_status()\n        js=r.json()\n    except Exception as e:\n        raise RuntimeError("Falha de comunicação com a base georreferenciada pública do SICAR: "+str(e))\n    feats=js.get("features") or []
+    sess=_sicar_session()
+    try:
+        try:
+            r=sess.get(url,params=params,timeout=(10,60))
+        except requests.exceptions.SSLError:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            r=sess.get(url,params=params,timeout=(10,60),verify=False)
+        r.raise_for_status()
+        js=r.json()
+    except Exception as e:
+        raise RuntimeError("Falha de comunicação com a base georreferenciada pública do SICAR: "+str(e))
+    feats=js.get("features") or []
     if not feats:
         raise LookupError("O código informado não foi localizado na camada pública "+layer+". Confira se foi digitado o código completo do imóvel.")
     if len(feats)>1:
