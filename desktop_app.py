@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.6.0-PROFESSIONAL"
+APP_VERSION="3.7.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -648,7 +648,16 @@ class App(tk.Tk):
                 "note":"propagação RSS dos componentes quantificados; não inclui componentes com erro estatístico N/D"}
             self.project["analysis_rows"]=rows
             self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
-            lines=([f"AVISO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
+            audit=sar.get("audit") or {}
+        diag=[]
+        if audit:
+            diag=["","TRILHA SAR:"]
+            b=audit.get("biomass_l2b") or {}; diag.append(f"BIOMASS P L2B catalogado: {b.get('count',0)}")
+            c=audit.get("cci") or {}; diag.append(f"CCI AGB: {c.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(c,dict) else "CCI AGB: não disponível")
+            ad=audit.get("asf_download") or {}
+            if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
+            for w in audit.get("warnings",[]): diag.append("Aviso: "+str(w))
+        lines=([f"AVISO SAR: {self.project.get('sar_warning')}",""]+diag if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
             for r in rows:
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
