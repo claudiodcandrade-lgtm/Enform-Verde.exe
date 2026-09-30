@@ -126,6 +126,41 @@ def resolve_car(car):
     gdf.attrs["sicar_data_atualizacao"]=props.get("data_atualizacao")
     return gdf
 
+def resolve_ccir_sigef(code):
+    """Resolve código INCRA/SNCR do CCIR em parcela georreferenciada certificada no SIGEF."""
+    import requests, geopandas as gpd
+    digits=re.sub(r"\\D","",code or "")
+    if len(digits)!=13: raise ValueError("Informe o Código do Imóvel Rural de 13 dígitos constante do CCIR.")
+    # Consulta pública de parcelas do SIGEF pelo código do imóvel (SNCR/INCRA).
+    search="https://sigef.incra.gov.br/api/parcelas/consulta/"
+    sess=requests.Session(); sess.headers.update({"User-Agent":f"Enform-Verde/{APP_VERSION}","Accept":"application/json"})
+    candidates=[]
+    for key in ("codigo_imovel","codigo_imovel_incra","sncr"):
+        try:
+            r=sess.get(search,params={key:digits,"format":"json"},timeout=(10,45))
+            if not r.ok: continue
+            js=r.json()
+            if isinstance(js,dict):
+                candidates=js.get("results") or js.get("features") or js.get("parcelas") or []
+            elif isinstance(js,list): candidates=js
+            if candidates: break
+        except Exception: continue
+    if not candidates:
+        raise LookupError("Nenhuma parcela certificada no SIGEF foi localizada automaticamente para o código INCRA/SNCR do CCIR. O CCIR é cadastral e só possui geometria quando há correspondência georreferenciada no SIGEF/SNCI.")
+    item=candidates[0]
+    if isinstance(item,dict) and item.get("geometry"):
+        tmp=Path(tempfile.gettempdir())/"enform_sigef.geojson"
+        tmp.write_text(json.dumps({"type":"FeatureCollection","features":[item]}),encoding="utf-8")
+        gdf=gpd.read_file(tmp)
+        return gdf.to_crs("EPSG:4326") if gdf.crs else gdf.set_crs("EPSG:4326")
+    url=item.get("geojson") or item.get("geometry_url") or item.get("download") if isinstance(item,dict) else None
+    if url:
+        r=sess.get(url,timeout=(10,60)); r.raise_for_status()
+        tmp=Path(tempfile.gettempdir())/"enform_sigef.geojson"; tmp.write_bytes(r.content)
+        gdf=gpd.read_file(tmp)
+        return gdf.to_crs("EPSG:4326") if gdf.crs else gdf.set_crs("EPSG:4326")
+    raise RuntimeError("A parcela foi localizada no SIGEF, mas a consulta pública não forneceu geometria em formato utilizável automaticamente.")
+
 IBGE_VEGE_2026_URL="https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip"
 IBGE_BIOMAS_2025_URL="https://geoftp.ibge.gov.br/informacoes_ambientais/estudos_ambientais/biomas/vetores/2025_Biomas-e-Sistema-Costeiro-Marinho-do-Brasil-1-250000_shp.zip"
 
@@ -330,6 +365,13 @@ class App(tk.Tk):
         try:
             self.status.set("Consultando SICAR..."); self.update_idletasks(); self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
         except Exception as e: self.status.set("CAR não resolvido."); messagebox.showwarning("SICAR",str(e))
+    def ccir_lookup(self):
+        try:
+            self.status.set("Consultando SIGEF pelo código do CCIR..."); self.update_idletasks()
+            self.gdf=resolve_ccir_sigef(self.ccir.get()); self._show_geom("CCIR / SIGEF")
+        except Exception as e:
+            self.status.set("CCIR/SIGEF não resolvido."); messagebox.showwarning("CCIR / SIGEF",str(e))
+
     def pick_vector(self):
         p=filedialog.askopenfilename(filetypes=[("Vetores","*.kml *.kmz *.geojson *.json *.shp *.gpkg"),("Todos","*.*")])
         if not p:return
