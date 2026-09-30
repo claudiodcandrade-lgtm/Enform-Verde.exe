@@ -347,16 +347,31 @@ class App(tk.Tk):
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
     def _remote(self):
-        f=self.tabs[2]; ttk.Label(f,text="Sensores SAR e estimativa de biomassa",style="H.TLabel").pack(anchor="w")
-        self.sensor=tk.StringVar(value="ESA Biomass — banda P")
-        ttk.Combobox(f,textvariable=self.sensor,state="readonly",width=58,values=["ESA Biomass — banda P","ESA CCI Biomass — AGB 100 m + incerteza","ALOS/PALSAR — banda L","ALOS-2/PALSAR-2 — banda L","TerraSAR-X/TanDEM-X — banda X","COSMO-SkyMed — banda X"]).pack(anchor="w",pady=8)
+        f=self.tabs[2]; ttk.Label(f,text="Pipeline SAR real",style="H.TLabel").pack(anchor="w")
+        row=ttk.Frame(f); row.pack(fill="x",pady=8)
+        ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left")
+        ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left",padx=8)
+        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — multissensor")
         self.remote_text=tk.Text(f,height=22,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
-        self._set(self.remote_text,
-            "O inventário florestal NÃO é entrada obrigatória.\n\n"
-            "O motor estima biomassa a partir da localização, bioma/fitofisionomia e biblioteca de referências espaciais. "
-            "Prioridade: IFN/SFB — Painel de Biomassa e Carbono (222 equações e dados abertos), Embrapa e estudos brasileiros.\n\n"
-            "Quando não houver raster de biomassa de resolução compatível, a saída será uma estimativa de referência por estrato, "
-            "com incerteza e nível de evidência — não uma falsa medição pixel a pixel. Inventário de campo permanece apenas como opção futura de calibração/validação.")
+        self._set(self.remote_text,"Pipeline real. O programa não usa média bibliográfica por bioma como biomassa SAR. Descubra a cobertura e carregue produtos GeoTIFF SAR/AGB e, quando disponível, a camada de incerteza.")
+
+    def discover_sar_ui(self):
+        if self.gdf is None:return messagebox.showwarning("SAR","Carregue/resolva o polígono primeiro.")
+        try:
+            self.status.set("Consultando catálogos SAR..."); self.update_idletasks()
+            cov=discover_sar(self.gdf); self.project["sar_catalog"]=cov
+            txt=["COBERTURA SAR ENCONTRADA"]
+            for x in cov:txt.append(f"{x['provider']} — {x['dataset']} ({x['band']}): {x['count']} cena(s)"+((" — "+x["error"]) if x.get("error") else ""))
+            self._set(self.remote_text,"\n".join(txt)); self.status.set("Descoberta SAR concluída.")
+        except Exception as e:self.status.set("Falha na descoberta SAR."); messagebox.showerror("SAR",str(e))
+
+    def pick_sar(self):
+        ps=filedialog.askopenfilenames(title="Produtos SAR / AGB / incerteza",filetypes=[("GeoTIFF","*.tif *.tiff"),("Todos","*.*")])
+        if not ps:return
+        self.sar_paths=list(ps); self.project["sar_paths"]=list(ps)
+        self._set(self.remote_text,"Produtos selecionados:\n"+"\n".join(self.sar_paths)+"\n\nClique em EXECUTAR ANÁLISE.")
+        self.status.set(f"{len(ps)} produto(s) SAR selecionado(s).")
+
     def _results(self):
         f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
         self.res=tk.Text(f,height=23,wrap="word"); self.res.pack(fill="both",expand=True,pady=8)
