@@ -45,6 +45,8 @@ jobs:
           assert "def _reset_analysis_state" in src, "state reset missing"
           assert src.count("self._reset_analysis_state()") >= 3, "CAR CCIR vector reset hooks missing"
           assert "self.project.pop(k,None)" in src, "execution result invalidation missing"
+          assert "active_input_id" in src and "current_car" in src, "fresh-input identity guard missing"
+          assert "enform_logo.png" in src and "width=500" in src, "expanded visual identity missing"
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
           ui.update_idletasks()
@@ -95,7 +97,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v1.3.5-STATE-RESET
+          name: Enform-Verde-Windows-v1.3.6-FRESH-QUERY
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
