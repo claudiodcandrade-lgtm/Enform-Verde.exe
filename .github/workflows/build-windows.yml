@@ -54,6 +54,10 @@ jobs:
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
+      - name: Live SICAR polygon lookup
+        shell: pwsh
+        run: |
+          python -c "import desktop_app as a; g=a.resolve_car('MT-5108501-CBE0F5EDD27A4D7888E7392EA7D44793'); assert len(g)==1 and not g.geometry.isna().any(); print('SICAR_LIVE_OK', g.crs, len(g))"
       - name: Create icon
         shell: pwsh
         run: |
