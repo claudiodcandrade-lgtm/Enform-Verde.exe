@@ -93,14 +93,17 @@ def resolve_car(car):
     """Resolve CAR against the official public SICAR WFS, with protocol fallbacks and diagnostics."""
     import geopandas as gpd, requests
     raw=str(car or "").strip().upper().replace("–","-").replace("—","-")
-    code="".join(raw.split())\n    code=re.sub(r"[^A-Z0-9]","",code)\n    if len(code)==41: code=code[:2]+"-"+code[2:9]+"-"+code[9:]
+    code="".join(raw.split())
+    compact="".join(ch for ch in code if ch.isalnum())
+    if len(compact)==41:
+        code=compact[:2]+"-"+compact[2:9]+"-"+compact[9:]
     m=re.match(r"^([A-Z]{2})-([0-9]{7})-([A-F0-9]{32})$",code)
     if not m: raise ValueError("Código CAR inválido/incompleto. Use o código integral no padrão UF-7 dígitos-32 caracteres.")
     uf=m.group(1).lower(); layer=f"sicar:sicar_imoveis_{uf}"
     urls=["https://geoserver.car.gov.br/geoserver/sicar/ows","https://geoserver.car.gov.br/geoserver/sicar/wfs"]
     attempts=[]; sess=_sicar_session()
     for url in urls:
-      for version,key in [("1.0.0","typeName"),("2.0.0","typeNames")]:
+      for version,key in [("1.0.0","typeName"),("1.1.0","typeName"),("2.0.0","typeNames")]:
         params={"service":"WFS","version":version,"request":"GetFeature",key:layer,
                 "outputFormat":"application/json","srsName":"EPSG:4326","cql_filter":f"cod_imovel='{code}'"}
         try:
