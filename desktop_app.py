@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.1.1-PROFESSIONAL"
+APP_VERSION="3.2.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -246,7 +246,7 @@ def zonal_soil(gdf,raster_path):
     if len(vals)==0: raise ValueError("O raster de solo não possui pixels válidos na área.")
     return float(np.mean(vals)),float(np.std(vals)),len(vals)
 
-def pronasolos_soc_profiles(gdf,max_points=25):
+def pronasolos_soc_profiles(gdf,max_points=12):
     """Sample official PronaSolos 90 m SOC-stock rasters through ArcGIS REST identify.
     Returns cumulative 0-30/60/100/200 cm stocks. Spatial SD is descriptive, not map prediction error."""
     import requests
@@ -261,15 +261,19 @@ def pronasolos_soc_profiles(gdf,max_points=25):
             if geom.covers(p):pts.append(p)
     if not pts:pts=[geom.representative_point()]
     pts=pts[:max_points]
-    url="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
+    urls=[
+      "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify",
+      "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/solos_90m/MapServer/identify",
+      "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/atributos_solo_90m/MapServer/identify"]
     layer_ids=[2,3,4,5,6,7]; vals={k:[] for k in layer_ids}; sess=requests.Session()
     extent=f"{minx},{miny},{maxx},{maxy}"
     for p in pts:
+      for url in urls:
         params={"f":"json","geometry":f"{p.x},{p.y}","geometryType":"esriGeometryPoint","sr":"3857",
-                "layers":"all:"+",".join(map(str,layer_ids)),"tolerance":"1","mapExtent":extent,
-                "imageDisplay":"800,800,96","returnGeometry":"false"}
+                "layers":"all:"+",".join(map(str,layer_ids)),"tolerance":"3","mapExtent":extent,
+                "imageDisplay":"1200,1200,96","returnGeometry":"false"}
         try:
-            r=sess.get(url,params=params,timeout=(5,15)); r.raise_for_status(); js=r.json()
+            r=sess.get(url,params=params,timeout=(4,10)); r.raise_for_status(); js=r.json()
             for item in js.get("results",[]):
                 lid=int(item.get("layerId",-1)); at=item.get("attributes") or {}
                 raw=at.get("Pixel Value",at.get("Stretched value",item.get("value")))
@@ -277,7 +281,8 @@ def pronasolos_soc_profiles(gdf,max_points=25):
                     v=float(str(raw).replace(",","."))
                     if np.isfinite(v) and -1<v<1000 and lid in vals:vals[lid].append(v)
                 except:pass
-        except Exception:continue
+        except Exception: continue
+        if all(vals[k] for k in layer_ids): break
     names=["0–5","5–15","15–30","30–60","60–100","100–200"]
     targets={"0–30 cm":3,"0–60 cm":4,"0–100 cm":5,"0–200 cm":6}; out={}
     for label,count in targets.items():
