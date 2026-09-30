@@ -61,6 +61,12 @@ jobs:
         shell: pwsh
         run: |
           python -c "import desktop_app as a; g1=a.resolve_car('MT-5108501-CBE0F5EDD27A4D7888E7392EA7D44793'); g2=a.resolve_car('MT-5103700-92A39DC62FDF4D88874F218D41BE1C7F'); assert len(g1)==1 and len(g2)==1; assert tuple(g1.total_bounds)!=tuple(g2.total_bounds); print('SICAR_SEQUENCE_OK',g1.crs,g2.crs)"
+      - name: Professional scientific contracts
+        shell: pwsh
+        run: |
+          python -c "import sar_pipeline as s; m=[x for x in s.MODEL_REGISTRY if x.get('executable')]; assert any(x['id']=='CASSOL_2019_EQ13' for x in m); assert m[0].get('rmse_mg_ha') is not None; print('EXECUTABLE_MODEL_REGISTRY_OK')"
+          python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
+
       - name: Create icon
         shell: pwsh
         run: |
@@ -104,7 +110,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v2.1.0-AUTO-SAR
+          name: Enform-Verde-Windows-v3.0.0-PRO-RC1
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
