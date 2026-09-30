@@ -1,6 +1,7 @@
 import sys, json, math, tempfile, re, zipfile, threading, queue, traceback
 from pathlib import Path
 import tkinter as tk
+import webbrowser
 from tkinter import ttk, filedialog, messagebox
 import numpy as np
 import pandas as pd
@@ -10,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.11.0-SAR-VISUAL"
+APP_VERSION="3.12.0-SAR-FIRST"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -418,19 +419,18 @@ class App(tk.Tk):
         ttk.Entry(auth,textvariable=self.esa_token,width=48,show="•").pack(side="left",padx=6)
         ttk.Label(auth,text="(memória da sessão)",foreground="#666").pack(side="left")
         auth2=ttk.Frame(f); auth2.pack(fill="x",pady=4)
-        ttk.Label(auth2,text="NASA Earthdata usuário:").pack(side="left")
-        self.edl_user=tk.StringVar(); self.edl_password=tk.StringVar()
-        ttk.Entry(auth2,textvariable=self.edl_user,width=22).pack(side="left",padx=4)
-        ttk.Label(auth2,text="senha:").pack(side="left")
-        ttk.Entry(auth2,textvariable=self.edl_password,width=22,show="•").pack(side="left",padx=4)
-        ttk.Label(auth2,text="(não gravados)",foreground="#666").pack(side="left")
+        ttk.Label(auth2,text="NASA Earthdata User Token:").pack(side="left")
+        self.edl_token=tk.StringVar(); self.edl_user=tk.StringVar(); self.edl_password=tk.StringVar()
+        ttk.Entry(auth2,textvariable=self.edl_token,width=48,show="•").pack(side="left",padx=4)
+        ttk.Button(auth2,text="GERAR TOKEN NO EARTHDATA",command=lambda:webbrowser.open("https://urs.earthdata.nasa.gov/users/generate_token")).pack(side="left",padx=4)
+        ttk.Label(auth2,text="60 dias • somente memória desta sessão",foreground="#666").pack(side="left")
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         self.pipeline_btn=ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute); self.pipeline_btn.pack(side="left")
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
         ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
-        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — P-band BIOMASS → SAR L/X compatível → CCI → literatura")
+        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
         self.remote_text=tk.Text(f,height=22,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
-        self._set(self.remote_text,"Hierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nSe houver SAR mas faltar autenticação/processamento, o programa NÃO usa literatura como substituto.")
+        self._set(self.remote_text,"Hierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
 
     def discover_sar_ui(self):
         if self.gdf is None:return messagebox.showwarning("SAR","Carregue/resolva o polígono primeiro.")
@@ -558,7 +558,7 @@ class App(tk.Tk):
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         def worker():
             try:
-                sar=automatic_pipeline(gdf,biome,phys,token,edl_user=self.edl_user.get().strip(),edl_password=self.edl_password.get())
+                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=self.edl_token.get().strip())
                 try: soil_profiles=pronasolos_soc_profiles(gdf)
                 except Exception as e: soil_profiles={"error":str(e)}
                 self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))
