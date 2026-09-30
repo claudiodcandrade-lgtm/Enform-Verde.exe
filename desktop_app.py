@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.8.0-PROFESSIONAL"
+APP_VERSION="3.9.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -358,12 +358,14 @@ class App(tk.Tk):
             im.thumbnail((500,440),Image.Resampling.LANCZOS)
             self.hero_photo=ImageTk.PhotoImage(im)
             hero.create_image(0,0,image=self.hero_photo,anchor="nw")
+            # Cover the legacy/baked logo area before drawing the single approved large logo.
+            hero.create_rectangle(18,18,360,190,fill=FOREST,outline="")
             logo=base/"enform_logo.png"
             if logo.exists():
                 lg=Image.open(logo).convert("RGBA")
                 lg.thumbnail((300,150),Image.Resampling.LANCZOS)
                 self.hero_logo=ImageTk.PhotoImage(lg)
-                hero.create_image(34,30,image=self.hero_logo,anchor="nw")
+                hero.create_image(38,34,image=self.hero_logo,anchor="nw")
         else:
             hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
             hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
