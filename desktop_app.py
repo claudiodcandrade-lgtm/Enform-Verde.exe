@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.7.0-PROFESSIONAL"
+APP_VERSION="3.8.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -246,56 +246,85 @@ def zonal_soil(gdf,raster_path):
     if len(vals)==0: raise ValueError("O raster de solo não possui pixels válidos na área.")
     return float(np.mean(vals)),float(np.std(vals)),len(vals)
 
-def pronasolos_soc_profiles(gdf,max_points=12):
-    """Sample official PronaSolos 90 m SOC-stock rasters through ArcGIS REST identify.
-    Returns cumulative 0-30/60/100/200 cm stocks. Spatial SD is descriptive, not map prediction error."""
+def pronasolos_soc_profiles(gdf,max_points=36):
+    """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha), cumulative profiles.
+    Uses only the verified official MapServer. Each depth is queried independently."""
     import requests
+    from shapely.geometry import Point
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
     minx,miny,maxx,maxy=geom.bounds
-    n=max(3,int(math.sqrt(max_points))); xs=np.linspace(minx,maxx,n); ys=np.linspace(miny,maxy,n)
-    pts=[]
-    from shapely.geometry import Point
-    for y in ys:
-        for x in xs:
-            p=Point(float(x),float(y))
-            if geom.covers(p):pts.append(p)
-    if not pts:pts=[geom.representative_point()]
-    pts=pts[:max_points]
-    urls=[
-      "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify",
-      "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/solos_90m/MapServer/identify",
-      "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/atributos_solo_90m/MapServer/identify"]
-    layer_ids=[2,3,4,5,6,7]; vals={k:[] for k in layer_ids}; sess=requests.Session()
-    extent=f"{minx},{miny},{maxx},{maxy}"
+    # systematic polygon sampling plus representative point; avoid dependence on bbox corners
+    n=max(4,int(math.ceil(math.sqrt(max_points))))
+    xs=np.linspace(minx,maxx,n); ys=np.linspace(miny,maxy,n)
+    pts=[Point(float(x),float(y)) for y in ys for x in xs if geom.covers(Point(float(x),float(y)))]
+    rp=geom.representative_point()
+    pts=[rp]+pts
+    # de-duplicate and cap
+    uniq=[]; seen=set()
     for p in pts:
-      for url in urls:
-        params={"f":"json","geometry":f"{p.x},{p.y}","geometryType":"esriGeometryPoint","sr":"3857",
-                "layers":"all:"+",".join(map(str,layer_ids)),"tolerance":"3","mapExtent":extent,
-                "imageDisplay":"1200,1200,96","returnGeometry":"false"}
-        try:
-            r=sess.get(url,params=params,timeout=(4,10)); r.raise_for_status(); js=r.json()
-            for item in js.get("results",[]):
-                lid=int(item.get("layerId",-1)); at=item.get("attributes") or {}
-                raw=at.get("Pixel Value",at.get("Stretched value",item.get("value")))
-                try:
-                    v=float(str(raw).replace(",","."))
-                    if np.isfinite(v) and -1<v<1000 and lid in vals:vals[lid].append(v)
-                except:pass
-        except Exception: continue
-        if all(vals[k] for k in layer_ids): break
+        k=(round(p.x,2),round(p.y,2))
+        if k not in seen: seen.add(k); uniq.append(p)
+    pts=uniq[:max_points]
+    service="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
+    layer_ids=[2,3,4,5,6,7]
     names=["0–5","5–15","15–30","30–60","60–100","100–200"]
+    vals={k:[] for k in layer_ids}; errors={k:[] for k in layer_ids}
+    sess=requests.Session()
+    extent=f"{minx},{miny},{maxx},{maxy}"
+    def numeric_value(item):
+        at=item.get("attributes") or {}
+        candidates=[item.get("value")]
+        # ArcGIS raster identify varies by server/version/language.
+        for key,val in at.items():
+            kl=str(key).lower()
+            if ("pixel" in kl and "value" in kl) or "stretched" in kl or kl in ("value","valor","pixel_value"):
+                candidates.append(val)
+        for raw in candidates:
+            if raw is None: continue
+            try:
+                txt=str(raw).strip().replace(" ","").replace(",",".")
+                v=float(txt)
+                if np.isfinite(v) and 0 <= v < 2000: return v
+            except Exception: pass
+        return None
+    for p in pts:
+        # Query each layer independently: one missing/deep layer can never invalidate 0-30.
+        for lid in layer_ids:
+            params={"f":"json","geometry":f"{p.x},{p.y}","geometryType":"esriGeometryPoint","sr":"3857",
+                    "layers":f"all:{lid}","tolerance":"5","mapExtent":extent,
+                    "imageDisplay":"1600,1600,96","returnGeometry":"false"}
+            try:
+                r=sess.get(service,params=params,timeout=(5,20)); r.raise_for_status(); js=r.json()
+                if js.get("error"): raise RuntimeError(str(js["error"]))
+                found=False
+                for item in js.get("results",[]):
+                    if int(item.get("layerId",-1))!=lid: continue
+                    v=numeric_value(item)
+                    if v is not None: vals[lid].append(v); found=True; break
+                if not found: errors[lid].append("sem valor numérico")
+            except Exception as e: errors[lid].append(str(e)[:160])
     targets={"0–30 cm":3,"0–60 cm":4,"0–100 cm":5,"0–200 cm":6}; out={}
     for label,count in targets.items():
         need=layer_ids[:count]
-        if any(len(vals[k])==0 for k in need): continue
-        m=min(len(vals[k]) for k in need)
-        x=np.sum(np.vstack([np.asarray(vals[k][:m],float) for k in need]),axis=0)
-        out[label]={"tc_ha":float(np.mean(x)),"spatial_sd_tc_ha":float(np.std(x,ddof=1)) if len(x)>1 else 0.0,
-          "n_samples":int(len(x)),"layers":names[:count],
-          "uncertainty_kind":"DP espacial das amostras do mapa; não é IC95% nem erro de predição"}
+        if any(not vals[k] for k in need): continue
+        # Use depth means independently; this avoids pairing samples incorrectly when one depth has a local NoData.
+        means=[float(np.mean(vals[k])) for k in need]
+        stock=float(sum(means))
+        # Conservative descriptive spatial propagation; NOT prediction uncertainty/CI95.
+        sds=[float(np.std(vals[k],ddof=1)) if len(vals[k])>1 else 0.0 for k in need]
+        spatial_sd=float(math.sqrt(sum(x*x for x in sds)))
+        out[label]={"tc_ha":stock,"spatial_sd_tc_ha":spatial_sd,
+          "n_samples":min(len(vals[k]) for k in need),"layers":names[:count],
+          "layer_means_tc_ha":dict(zip(names[:count],means)),
+          "source":"PronaSolos/Embrapa Solos — estoque de carbono orgânico 90 m",
+          "uncertainty_kind":"DP espacial propagado das amostras do mapa; não é IC95% nem erro de predição"}
     if "0–30 cm" not in out:
-        missing=[names[i] for i,k in enumerate(layer_ids[:3]) if not vals[k]]
-        raise RuntimeError("PronaSolos não retornou camada(s) essencial(is) para 0–30 cm: "+", ".join(missing))
+        detail=[]
+        for i,k in enumerate(layer_ids[:3]):
+            detail.append(f"{names[i]} cm: n={len(vals[k])}; "+(("; ".join(errors[k][:2])) if errors[k] else "sem retorno"))
+        raise RuntimeError("PronaSolos oficial consultado, mas 0–30 cm não pôde ser composto. "+" | ".join(detail))
+    out["_diagnostic"]={"samples_requested":len(pts),"valid_by_layer":{names[i]:len(vals[k]) for i,k in enumerate(layer_ids)},
+                        "service":service}
     return out
 
 
