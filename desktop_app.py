@@ -306,6 +306,18 @@ class App(tk.Tk):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
         self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {m['area_ha']:,.2f} ha\nCentroide: {m['centroid'][1]:.6f}, {m['centroid'][0]:.6f}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
         self.status.set("Perímetro carregado.")
+        try:
+            d=diagnose_ibge(self.gdf)
+            self.project["ibge_diagnosis"]=d
+            if d["biomas"]: self.biome.set(d["biomas"][0][0])
+            if d["vegetacao"] and d["vegetacao"][-1]["classes"]: self.phys.set(d["vegetacao"][-1]["classes"][0][0])
+            btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
+            vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"])
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nIBGE — Bioma(s): "+btxt+"\nIBGE 2026 — Vegetação: "+vtxt)
+            self.status.set("Perímetro e diagnóstico IBGE concluídos.")
+        except Exception as e:
+            self.project["ibge_diagnosis_error"]=str(e)
+            self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
     def pick_soil(self):
         p=filedialog.askopenfilename(filetypes=[("GeoTIFF","*.tif *.tiff")])
         if p:self.soil_raster=p; self.status.set("Raster de COS selecionado.")
