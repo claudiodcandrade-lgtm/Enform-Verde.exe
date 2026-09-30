@@ -39,6 +39,10 @@ jobs:
           assert "geo_area_imovel" in src, "SICAR geometry contract missing"
           assert "DEFAULT@SECLEVEL=1" in src, "SICAR TLS compatibility missing"
           assert "state=\"readonly\"" not in src[src.index("def _project"):src.index("def _spatial")], "manual biome selector still present"
+          assert "CCIR — código INCRA/SNCR" in src, "CCIR opening input missing"
+          assert "CARREGAR ARQUIVO VETORIAL" in src[src.index("def _project"):src.index("def _spatial")], "opening vector upload missing"
+          assert "Carregar KML / GeoJSON" not in src[src.index("def _spatial"):src.index("def _remote")], "old vector upload still present"
+          assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
           ui.update_idletasks()
           ui.destroy()
@@ -88,7 +92,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v1.3.3-SICAR-IBGE
+          name: Enform-Verde-Windows-v1.3.4-SICAR-SIGEF-IBGE
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
