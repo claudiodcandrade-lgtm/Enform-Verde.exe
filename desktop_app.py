@@ -490,9 +490,13 @@ class App(tk.Tk):
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
-            sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get())
+            if self.sar_paths:
+                sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get())
+            else:
+                self.status.set("Pipeline automático: BIOMASS P → L-band → CCI → literatura..."); self.update_idletasks()
+                sar=automatic_pipeline(self.gdf,self.biome.get(),self.phys.get(),self.esa_token.get().strip())
             self.project["sar_result"]=sar
-            if sar.get("agb_mg_ha") is None:raise ValueError(sar.get("message","AGB não estimada: falta modelo SAR validado compatível."))
+            if sar.get("agb_mg_ha") is None:raise ValueError(sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada.")
             agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
             agb_lo=max(0.0,agb-1.96*sar_unc); agb_hi=agb+1.96*sar_unc
             agc=agb*CARBON_FRACTION
@@ -508,7 +512,7 @@ class App(tk.Tk):
                 try:soil,soil_sd,pix=zonal_soil(self.gdf,self.soil_raster)
                 except Exception:soil=None
             parts=[
-              ("Biomassa aérea",agc,"SAR PROCESSADO",f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","pipeline SAR real",sar.get("source","produto SAR processado")),
+              ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","pipeline automático",sar.get("source",sar.get("status","produto processado"))),
               ("Biomassa subterrânea",bgc,"MODELADO",f"R:S={ROOT_RATIO:.2f}; faixa metodológica {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}","relação raiz:parte aérea","biblioteca metodológica"),
               ("Necromassa",nec_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; substituir por IFN/medição local para MRV","proxy por bioma","IFN/Embrapa"),
               ("Serapilheira",lit_c,"MODELADO — TRIAGEM","alta variabilidade local","proxy por bioma","Embrapa/literatura")]
