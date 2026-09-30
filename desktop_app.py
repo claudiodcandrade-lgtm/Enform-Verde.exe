@@ -554,3 +554,8 @@ class App(tk.Tk):
 if __name__=="__main__":
     if "--self-test" in sys.argv:self_test()
     else:App().mainloop()
+            hero.create_image(0,0,image=self.hero_photo,anchor="nw")
+            logo=base/"enform_logo.png"
+            if logo.exists():
+                lg=Image.open(logo).convert("RGBA"); lg.thumbnail((300,150),Image.Resampling.LANCZOS)
+                self.hero_logo=ImageTk.PhotoImage(lg); hero.create_image(34,30,image=self.hero_logo,anchor="nw")
