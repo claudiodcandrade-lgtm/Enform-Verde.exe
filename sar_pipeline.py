@@ -20,6 +20,19 @@ MODEL_REGISTRY=[
 
 ]
 def _wkt(gdf):return gdf.to_crs(4326).geometry.union_all().wkt
+def _scene_datetime(item):
+    """Best-effort ISO acquisition datetime for newest-first selection."""
+    p=item.get("properties",{}) or {}
+    for k in ("startTime","stopTime","sceneDate","acquisitionDate","datetime","start_datetime","end_datetime"):
+        v=p.get(k)
+        if v:return str(v)
+    raw=item.get("raw") or {}
+    rp=raw.get("properties",{}) if isinstance(raw,dict) else {}
+    return str(rp.get("datetime") or rp.get("start_datetime") or "")
+
+def _newest_first(items):
+    return sorted(items,key=_scene_datetime,reverse=True)
+
 def discover_asf(gdf,limit=25):
     """Discover candidate scenes. NISAR is explicitly restricted to L2 GCOV when possible."""
     out=[]
@@ -49,6 +62,7 @@ def discover_asf(gdf,limit=25):
                 urls.sort(key=lambda u:(0 if u.lower().split("?")[0].endswith((".h5",".hdf5")) else 1,len(u)))
                 items.append({"id":p.get("sceneName") or x.get("id"),"properties":p,
                               "download_url":urls[0] if urls else None,"raw":x})
+            items=_newest_first(items)
             out.append({"provider":"ASF/NASA","dataset":label,"band":band,"count":len(fs),"items":items,
                         "eligibility":"candidato; elegibilidade final depende de produto/polarização/interseção/modelo"})
         except Exception as e:
@@ -113,7 +127,7 @@ def maap_search(gdf,collection,limit=50,product_type=None):
     fs=r.json().get("features",[])
     if product_type:
         fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{})))]
-    return fs
+    return sorted(fs,key=lambda x:str((x.get("properties") or {}).get("datetime") or (x.get("properties") or {}).get("start_datetime") or ""),reverse=True)
 def _download(url,out,token=None):
     h={"Authorization":"Bearer "+token} if token else {}
     with requests.get(url,headers=h,stream=True,timeout=(10,180)) as r:
@@ -298,7 +312,7 @@ def public_sentinel1_cog(gdf,cache,limit=6):
 
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
-    audit={"priority":"P > L > X(local/licensed) > C(public diagnostic) > CCI","biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
+    audit={"priority":"P > L > X(local/licensed) > C(public diagnostic) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
 
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
@@ -322,7 +336,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             def _rank(it):
                 t=(str(it.get("id",""))+" "+str(it.get("properties",{}))).upper()
                 return 0 if ("NISAR" in t and "GCOV" in t) else (1 if "NISAR" in t else 2)
-            for cand in sorted(cands,key=_rank)[:3]:
+            # Within each spectral/product priority, newest acquisition is attempted first.
+            cands=sorted(cands,key=_scene_datetime,reverse=True)
+            cands=sorted(cands,key=_rank)
+            audit["recency_policy"]="spectral priority first; newest acquisition first within each band/product class; rejected scenes are logged and next newest is tried"
+            for cand in cands[:8]:
                 try:
                     url=cand["download_url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
                     target=dl/Path(url.split("?")[0]).name
