@@ -1,6 +1,7 @@
 import math,re,hashlib,time
 from pathlib import Path
 import numpy as np, requests
+from scientific_calibration import SCIENTIFIC_INVENTORY_REGISTRY, saturation_audit, glcm_features, multiscale_texture, rank_external_evidence, fit_local_ensemble
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
 MODEL_REGISTRY=[
@@ -348,4 +349,17 @@ def execute_registered_model(model_id,features):
     for x in pred:y+=float(co[x])*float(features[x])
     return {"agb_mg_ha":max(0.0,y),"model":model_id,"rmse_mg_ha":m.get("rmse_mg_ha"),"bias_mg_ha":m.get("bias_mg_ha"),"validation":m.get("validation"),"doi":m.get("doi")}
 def model_registry_rows():
-    return [{k:m.get(k) for k in ("id","biome","physiognomy","domain","sensor","algorithm","predictors","coefficients","rmse_mg_ha","bias_mg_ha","r2","validation","doi","institution","executable","constraints")} for m in MODEL_REGISTRY]
+    rows=[{k:m.get(k) for k in ("id","biome","physiognomy","domain","sensor","algorithm","predictors","coefficients","rmse_mg_ha","bias_mg_ha","r2","validation","doi","institution","executable","constraints")} for m in MODEL_REGISTRY]
+    for x in SCIENTIFIC_INVENTORY_REGISTRY:
+        rows.append({"id":x["id"],"biome":x["biome"],"physiognomy":x["physiognomy"],"domain":x["region"],
+                     "sensor":"inventário/literatura","algorithm":"referência externa / prior; não agrupada automaticamente",
+                     "predictors":None,"coefficients":None,"rmse_mg_ha":None,"bias_mg_ha":None,"r2":None,
+                     "validation":x["role"],"doi":x.get("doi"),"institution":x["institution"],"executable":False,
+                     "constraints":x["transfer_rule"]})
+    return rows
+
+def scientific_calibration_report(biome, physiognomy, agb_mg_ha=None, bands=(), region=""):
+    """Auditable evidence + saturation report exposed to UI/export layers."""
+    return {"evidence":rank_external_evidence(biome,physiognomy,region),
+            "saturation":saturation_audit(agb_mg_ha,bands) if agb_mg_ha is not None else None,
+            "policy":"inventários externos = priors/validação externa; calibração SAR local exige parcelas coincidentes"}

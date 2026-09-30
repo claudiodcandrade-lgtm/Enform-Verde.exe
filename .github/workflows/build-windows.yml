@@ -57,6 +57,14 @@ jobs:
           assert "process_nisar_gcov" in sar_src and "analyze_nisar_gcov" in sar_src, "NISAR GCOV processor missing"
           assert "NISAR_GCOV_HDF5" in sar_src, "NISAR HDF5 route missing"
           assert "select_executable_model" in sar_src, "strict SAR model selector missing"
+          import scientific_calibration as sc
+          assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
+          assert any("Embrapa" in x["institution"] for x in sc.SCIENTIFIC_INVENTORY_REGISTRY), "Embrapa evidence missing"
+          assert any("UFRA" in x["institution"] for x in sc.SCIENTIFIC_INVENTORY_REGISTRY), "UFRA evidence missing"
+          assert any(("UFLA" in x["institution"] or "UFV" in x["institution"]) for x in sc.SCIENTIFIC_INVENTORY_REGISTRY), "UFLA/UFV evidence missing"
+          t=sc.glcm_features([[1,2,3],[2,3,4],[3,4,5]]); assert "entropy" in t and "contrast" in t, "GLCM engine missing"
+          a=sc.saturation_audit(418.66155,["C","L","P","X"]); assert a["bands"]["L"]["state"]=="high_risk", "dense-forest saturation audit missing"
+          assert sc.rank_external_evidence("Amazônia","floresta tropical","Pará"), "scientific evidence ranking missing"
           assert "estoque_carbono_90m/MapServer/identify" in src, "verified PronaSolos endpoint missing"
           assert "solos_90m/MapServer/identify" not in src and "atributos_solo_90m/MapServer/identify" not in src, "unverified soil endpoints must not be used"
           assert "layer_means_tc_ha" in src and "valid_by_layer" in src, "soil depth diagnostics missing"
@@ -121,7 +129,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.9.0-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.10.0-SCIENTIFIC
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
