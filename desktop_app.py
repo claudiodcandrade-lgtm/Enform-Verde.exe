@@ -76,23 +76,23 @@ def resolve_car(car):
     code=car.strip().upper()
     m=re.match(r"^([A-Z]{2})-",code)
     if not m: raise ValueError("Código CAR inválido: esperado UF-...")
-    uf=m.group(1).lower(); layer=f"sicar:sicar_imoveis_{uf}"
+    uf0=m.group(1); uf=uf0 if uf0=="DF" else uf0.lower(); layer=f"sicar:sicar_imoveis_{uf}"
     url="https://geoserver.car.gov.br/geoserver/sicar/ows"
     errors=[]
-    for fld in ("cod_imovel","codImovel","numero_do_recibo"):
+    for fld in ("cod_imovel",):
         params={"service":"WFS","version":"1.0.0","request":"GetFeature","typeName":layer,
-                "outputFormat":"application/json","srsName":"EPSG:4674",
+                "outputFormat":"application/json","srsName":"EPSG:4326",
                 "CQL_FILTER":f"{fld}='{code}'"}
         try:
-            r=requests.get(url,params=params,timeout=25)
+            r=requests.get(url,params=params,headers={"User-Agent":f"Enform-Verde/{APP_VERSION}","Accept":"application/json"},timeout=(10,60))
             if r.ok and "FeatureCollection" in r.text:
                 js=r.json()
                 if js.get("features"):
                     tmp=Path(tempfile.gettempdir())/"enform_car.geojson"; tmp.write_text(json.dumps(js),encoding="utf-8")
-                    return gpd.read_file(tmp)
+                    gdf=gpd.read_file(tmp)\n                    if gdf.empty or gdf.geometry.isna().all(): raise RuntimeError("SICAR retornou registro sem geometria válida.")\n                    return gdf.to_crs("EPSG:4326") if gdf.crs else gdf.set_crs("EPSG:4326")
             errors.append(f"{fld}:{r.status_code}")
         except Exception as e: errors.append(str(e))
-    raise RuntimeError("O geosserviço público do SICAR não devolveu a geometria deste CAR. Use o vetor exportado do SICAR. Tentativas: "+"; ".join(errors[-3:]))
+    raise RuntimeError("O WFS público oficial do SICAR/SFB não devolveu a geometria deste CAR. Tentativas: "+"; ".join(errors[-3:]))
 
 def zonal_soil(gdf,raster_path):
     import rasterio
