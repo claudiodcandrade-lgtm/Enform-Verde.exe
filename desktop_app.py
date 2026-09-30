@@ -276,20 +276,20 @@ class App(tk.Tk):
         s.configure("TButton",padding=7)
     def _ui(self):
         root=ttk.Frame(self); root.pack(fill="both",expand=True)
-        hero=tk.Canvas(root,width=430,bg=FOREST,highlightthickness=0); hero.pack(side="left",fill="y")
+        hero=tk.Canvas(root,width=500,bg=FOREST,highlightthickness=0); hero.pack(side="left",fill="y")
         base=Path(sys.executable).parent if getattr(sys,"frozen",False) else Path(__file__).parent
         visual=base/"enform_visual.jpg"
         if visual.exists():
             im=Image.open(visual).convert("RGB")
-            im.thumbnail((430,360),Image.Resampling.LANCZOS)
+            im.thumbnail((500,440),Image.Resampling.LANCZOS)
             self.hero_photo=ImageTk.PhotoImage(im)
-            hero.create_image(0,0,image=self.hero_photo,anchor="nw")
+            hero.create_image(0,0,image=self.hero_photo,anchor="nw")\n            logo=base/"enform_logo.png"\n            if logo.exists():\n                lg=Image.open(logo).convert("RGBA"); lg.thumbnail((300,150),Image.Resampling.LANCZOS)\n                self.hero_logo=ImageTk.PhotoImage(lg); hero.create_image(34,30,image=self.hero_logo,anchor="nw")
         else:
             hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
             hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
-        hero.create_rectangle(0,360,430,760,fill=FOREST,outline="")
-        hero.create_text(32,405,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
-        hero.create_text(32,495,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
+        hero.create_rectangle(0,440,500,760,fill=FOREST,outline="")
+        hero.create_text(32,475,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
+        hero.create_text(32,565,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
         hero.create_text(32,650,text="tC/ha  •  tCO₂e/ha\nMEDIDO  •  MODELADO  •  INCERTEZA",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
         main=ttk.Frame(root,padding=22); main.pack(side="left",fill="both",expand=True)
         top=ttk.Frame(main); top.pack(fill="x")
