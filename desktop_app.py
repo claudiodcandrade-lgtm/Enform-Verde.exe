@@ -8,7 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
 
-APP_VERSION="1.3.6-FRESH-QUERY"
+APP_VERSION="1.3.7-ACTIVE-SAR-QA"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -335,7 +335,6 @@ class App(tk.Tk):
         ttk.Button(f,text="Buscar CCIR no SIGEF",command=self.ccir_lookup).grid(row=3,column=2,padx=6)
         ttk.Button(f,text="CARREGAR ARQUIVO VETORIAL",command=self.pick_vector,style="Run.TButton").grid(row=4,column=1,sticky="w",pady=18,padx=10)
         ttk.Label(f,text="KML • KMZ • SHP • GeoJSON • GPKG",foreground="#666").grid(row=4,column=2,sticky="w")
-        ttk.Label(f,text="Bioma e fitofisionomia não são entradas. O programa os identifica pelo cruzamento espacial com o IBGE e os apresenta no resultado.",foreground="#666").grid(row=5,column=1,columnspan=3,sticky="w",pady=8)
         f.columnconfigure(1,weight=1)
 
     def _spatial(self):
@@ -425,6 +424,7 @@ class App(tk.Tk):
         except Exception as e:
             self.project["ibge_diagnosis_error"]=str(e)
             self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
+            messagebox.showwarning("Diagnóstico IBGE","O polígono foi carregado, mas o diagnóstico IBGE não pôde ser concluído:\n"+str(e))
     def pick_soil(self):
         p=filedialog.askopenfilename(filetypes=[("GeoTIFF","*.tif *.tiff")])
         if p:self.soil_raster=p; self.status.set("Raster de COS selecionado.")
