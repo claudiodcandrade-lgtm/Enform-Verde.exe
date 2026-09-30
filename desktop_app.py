@@ -93,7 +93,7 @@ def resolve_car(car):
     """Resolve CAR against the official public SICAR WFS, with protocol fallbacks and diagnostics."""
     import geopandas as gpd, requests
     raw=str(car or "").strip().upper().replace("–","-").replace("—","-")
-    code="".join(raw.split())
+    code="".join(raw.split())\n    code=re.sub(r"[^A-Z0-9]","",code)\n    if len(code)==41: code=code[:2]+"-"+code[2:9]+"-"+code[9:]
     m=re.match(r"^([A-Z]{2})-([0-9]{7})-([A-F0-9]{32})$",code)
     if not m: raise ValueError("Código CAR inválido/incompleto. Use o código integral no padrão UF-7 dígitos-32 caracteres.")
     uf=m.group(1).lower(); layer=f"sicar:sicar_imoveis_{uf}"
