@@ -50,7 +50,7 @@ jobs:
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
-          assert "enform_header.jpg" in src and "width=500" in src, "approved forest/logo header missing"
+          assert "enform_header.jpg" in src and "Official Enform logo replaces the leaf symbol" in src, "approved professional header missing"
           assert "NASA Earthdata User Token:" in src and "edl_token" in src and "edl_password" not in src[src.index("def _remote"):src.index("def discover_sar_ui")], "Earthdata token-only UI missing"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
           assert "ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO" in src, "secondary-analysis status missing"
@@ -61,7 +61,7 @@ jobs:
           assert "public_sentinel1_cog" in sar_src and "EARTH_SEARCH_STAC" in sar_src, "public real SAR fallback missing"
           assert "edl_token" in sar_src and 'Authorization":"Bearer "' in sar_src, "Earthdata token auth missing"
           assert "sar_attempted_first" in sar_src, "SAR-first fallback audit missing"
-          assert "GERAR TOKEN NO EARTHDATA" in src and "users/generate_token" in src, "Earthdata browser token UI missing"
+          assert "GERAR TOKEN NO EARTHDATA" in src and "users/generate_token" in src, "Earthdata browser token UI missing"\n          assert "Propriedade (CAR)" in src and "Mapas e limites" in src and "Carregar produtos SAR / AGB" in src, "approved dashboard navigation missing"
           assert "literatura/modelagem somente após falha documentada" in src, "fallback policy regression"
           assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Sentinel-1 C-band fallback"), "SAR priority regression"
           assert Path("enform_header.jpg").exists() and Path("enform_header.jpg").stat().st_size > 2000, "forest/logo visual asset missing"
@@ -137,7 +137,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.12.0-SAR-FIRST
+          name: Enform-Verde-Windows-v3.13.0-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
