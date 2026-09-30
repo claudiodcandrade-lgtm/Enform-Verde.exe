@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.14.0-PROFESSIONAL"
+APP_VERSION="3.15.0-MULTISOURCE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -468,6 +468,19 @@ class App(tk.Tk):
         ttk.Label(authbox,text="Token mantido somente na memória desta sessão; não é gravado no projeto.",foreground="#666").grid(row=2,column=1,sticky="w",padx=8,pady=(2,0))
         authbox.columnconfigure(1,weight=1)
 
+        providers=ttk.LabelFrame(f,text="Fontes SAR independentes",padding=10); providers.pack(fill="x",pady=(0,8))
+        ttk.Label(providers,text="NASA Earthdata / ASF",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="w")
+        ttk.Label(providers,text="NISAR e ALOS/PALSAR — usa o User Token acima quando o download exigir autenticação.").grid(row=0,column=1,sticky="w",padx=8)
+        ttk.Label(providers,text="Copernicus CDSE",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="w",pady=4)
+        ttk.Label(providers,text="Sentinel-1 GRD — catálogo independente do Earthdata; token CDSE é opcional para ativos autenticados.").grid(row=1,column=1,sticky="w",padx=8)
+        self.cdse_token=tk.StringVar()
+        ttk.Entry(providers,textvariable=self.cdse_token,width=38,show="•").grid(row=1,column=2,sticky="ew",padx=5)
+        ttk.Label(providers,text="ESA / MAAP",font=("Segoe UI",9,"bold")).grid(row=2,column=0,sticky="w")
+        ttk.Label(providers,text="BIOMASS banda P / CCI — rota independente, quando produto e autorização estiverem disponíveis.").grid(row=2,column=1,sticky="w",padx=8)
+        ttk.Label(providers,text="Arquivo local/licenciado",font=("Segoe UI",9,"bold")).grid(row=3,column=0,sticky="w",pady=4)
+        ttk.Label(providers,text="GeoTIFF/HDF5 SAR ou AGB — não depende de conexão externa.").grid(row=3,column=1,sticky="w",padx=8)
+        providers.columnconfigure(1,weight=1)
+
         # Optional ESA/MAAP credential remains secondary.
         esa=ttk.Frame(f); esa.pack(fill="x",pady=(0,5))
         ttk.Label(esa,text="ESA MAAP offline token (opcional):").pack(side="left")
@@ -608,7 +621,7 @@ class App(tk.Tk):
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         def worker():
             try:
-                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=self.edl_token.get().strip())
+                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=self.edl_token.get().strip(),cdse_token=self.cdse_token.get().strip())
                 try: soil_profiles=pronasolos_soc_profiles(gdf)
                 except Exception as e: soil_profiles={"error":str(e)}
                 self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))
