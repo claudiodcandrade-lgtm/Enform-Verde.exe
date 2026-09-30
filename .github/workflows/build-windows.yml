@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Select v3.1 release source\n        shell: pwsh\n        run: Copy-Item desktop_app_v310.py desktop_app.py -Force\n      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
