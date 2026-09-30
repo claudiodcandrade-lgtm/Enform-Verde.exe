@@ -29,7 +29,7 @@ jobs:
           @'
           import tkinter as tk
           import desktop_app as app
-          assert hasattr(app.App, "export_excel"), "App.export_excel missing"
+          assert hasattr(app.App, "export_excel"), "App.export_excel missing"\n          assert "tCO₂e/ha" in open("desktop_app.py",encoding="utf-8").read(), "dual carbon units missing"\n          assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"
           ui=app.App()
           ui.update_idletasks()
           ui.destroy()
@@ -79,7 +79,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v1.2.1-SAR-corrigido
+          name: Enform-Verde-Windows-v1.3.0-SAR-visual
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
