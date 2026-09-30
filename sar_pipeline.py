@@ -5,9 +5,9 @@ ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
 MODEL_REGISTRY=[
 {"id":"CASSOL_2021","biome":"Amazônia","domain":"floresta secundária","bands":["L"],"sensor":"ALOS-2/PALSAR-2","doi":"10.1080/01431161.2021.1903615","institution":"INPE/NCEO"},
-{"id":"CASSOL_2019","biome":"Amazônia","domain":"floresta secundária","bands":["L"],"sensor":"ALOS-2/PALSAR-2","doi":"10.3390/rs11010059","institution":"INPE/NCEO"},
-{"id":"VARZEA_2018","biome":"Amazônia","domain":"várzea","bands":["L","X"],"sensor":"ALOS/PALSAR + TerraSAR-X","doi":"10.3390/rs10091355","rmse_mg_ha":74.6},
-{"id":"CERRADO_2021","biome":"Cerrado","domain":"vegetação nativa","bands":["L"],"sensor":"ALOS/ALOS-2 + Landsat","r2":0.53,"rel_rmse_pct":57.0}
+{"id":"CASSOL_2019","biome":"Amazônia","domain":"floresta secundária; Santarém","bands":["L"],"sensor":"ALOS-2/PALSAR-2","algorithm":"MLR polarimétrica","coefficients":None,"r2":0.51,"rmse_mg_ha":38.7,"bias_mg_ha":2.1,"uncertainty_pct":18.6,"validation":"bootstrap 100 repetições, 80/20","doi":"10.3390/rs11010059","institution":"INPE/NCEO","executable":False},
+{"id":"VARZEA_2018","biome":"Amazônia","domain":"floresta de várzea","bands":["L","X"],"sensor":"ALOS/PALSAR + TerraSAR-X","algorithm":"regressão selecionada por CV","coefficients":None,"r2":0.46,"rmse_mg_ha":74.6,"validation":"cross-validation","doi":"10.3390/rs10091355","executable":False},
+{"id":"CERRADO_RIO_VERMELHO_2020","biome":"Cerrado","domain":"vegetação lenhosa; Rio Vermelho","bands":["L"],"sensor":"ALOS-2/PALSAR-2 + Landsat 8 + LiDAR","algorithm":"Random Forest","coefficients":None,"r2":0.89,"rmse_mg_ha":7.58,"bias_mg_ha":0.43,"validation":"k-fold + jackknife; referência LiDAR","doi":"10.3390/rs12172685","executable":False}
 ]
 def _wkt(gdf):return gdf.to_crs(4326).geometry.union_all().wkt
 def discover_asf(gdf,limit=25):
