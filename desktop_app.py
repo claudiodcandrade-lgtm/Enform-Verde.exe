@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.13.0-PROFESSIONAL"
+APP_VERSION="3.14.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -354,25 +354,39 @@ class App(tk.Tk):
         root=ttk.Frame(self); root.pack(fill="both",expand=True)
         base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
 
-        header=tk.Canvas(root,height=108,bg="#10291f",highlightthickness=0); header.pack(fill="x",side="top")
+        # Wide header: preserve source aspect ratio; never stretch independently in X/Y.
+        header_h=150
+        header=tk.Canvas(root,height=header_h,bg="#10291f",highlightthickness=0); header.pack(fill="x",side="top")
         visual=base/"enform_header.jpg"
         if visual.exists():
-            im=Image.open(visual).convert("RGB")
+            src=Image.open(visual).convert("RGB")
             sw=max(self.winfo_screenwidth(),1260)
-            im=im.resize((sw,108),Image.Resampling.LANCZOS)
+            # cover crop. Aspect ratio is preserved, avoiding the distorted/pixel-burst look.
+            scale=max(sw/src.width,header_h/src.height)
+            im=src.resize((max(sw,round(src.width*scale)),max(header_h,round(src.height*scale))),Image.Resampling.LANCZOS)
+            left=max(0,(im.width-sw)//2); top=max(0,(im.height-header_h)//2)
+            im=im.crop((left,top,left+sw,top+header_h))
             self.header_photo=ImageTk.PhotoImage(im)
             header.create_image(0,0,image=self.header_photo,anchor="nw")
-            # Official Enform logo replaces the leaf symbol from the reference template.
+            header.create_rectangle(0,0,390,header_h,fill="#10291f",outline="",stipple="gray50")
+            # Official Enform logo, kept at near-native size to avoid pixelation.
             lg=Image.open(io.BytesIO(base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAOAAAAB2CAMAAADmzG+NAAAAY1BMVEX////vmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2ZUpum1AAAAH3RSTlMAEBAgIDAwQEBQUGBgcHCAgJCQoKCwsMDA0NDg4PDwFagsVAAABJdJREFUeNrtmdl2qjAUhsMgIKKkTI3IkPd/yrMyJ6A9FhUta/9XFkLgS/aYIgQCgUAgEAgEAoFAIBAIBAKBQCAQ6Ok65sc42DDf98jU18fdRgHLUenytUlGr/6+aMbzwdvmNsZ53QvEPve26oz7UjD2x+0GnMNZGOpuu4ixCKr5htNGzEPOecuZMeeeuN8ESz+O5zqPJ1d33BUPG+Dbqfz3fXRM0uPZ/2sDZehodD7aCfDALpV/HrAex3Ne6kKmtLZx37+BMGsGSgeSPdMFWVb3VI63EXfs0qo532+pVPVEF9zpOkYgmkqNE64ZaTTfED7PBXsrsuR8Gy+xzd+vV9RgxUfxE12wdoKnQMztSHNZrfYeuHGGKCme6YKTNBjU3BM9K+XXK/EljI+8Jgv2pSlbDpzas9r944oWmj11SjsLXnRw4WWMIvT6ceyD9QCTZ1cycazTYK9cz+OEqvRezUg5oP+SqYOjaANV/OSEKsd/jeO4Xw3wdUWpyIJfFuHBGOnl7wMiFPBOV/peYLneYaV0/2pAWX1KQtv1zuts4esBUWDFT+Z6sYkzh00AIq/WhMz1vpG21/M2AMUxd6mLmNiUb7uNAJr4ybawRGh/cXLkbxRmGOPT9dTtJxjj1P8/IBuHs+jGK6Lp9NEJY5zYD2eTzsSULnwLxSFiuaDgzlTzM2DDURDCutmwUrfUDUJIx2tRLlWwhdUgJ+lO1mKwIQw5aVXjIR9K5DuHlF08yYcLt3qIlZEG+rwm/j1epHs7SmmrN4DwXigzt1RnSx3haf/EEM0uiqLVb8xQ8aswozPkE/P+uRvGMj2w8mZJAI0G54OHyAIk2RWWa4CVe9EU4nyIbP8twMIe7KwwnhlprWx0XPSvGME3FGmSNWINfQPITbGtGrEGw01AyddgXHTuMvEhhE4A+XykkmDC4CvxZOd+HgMLhLHWyxoJPm0loJLBWkNi26wgEF+NsfhizMWiRMrvEhEihDu1FiB7xVClSWivTxuqvlJ/gDBzN9B4qig9xw8E/MZpZAffAlT72TkN0iSKdvNJlJFKgMZ3vFLPWznu3V3pwsoHa7POEGmqk/mpj5SKHwBT6k5iL9r85I3ao1MnshRXAOPHACP79ZGM9MQAVtdbXBewmAQHn5rbc79yQonY7fSnPjp/qPbM9PzhqdN5zAAm9wCSqetYj9LZ4YbjaIkVvG4dFDx0SCGn9GUEpbQr7DRB0d2AN0406Kzmca4kjve+4CSET4lVETJUEbrx2Y8AkhkgcQDxqwEVXerc+iWgXWNVnwOoE1EzOwS8H7CxA4UO9/5HAIqA12ZXTsjuBzxNKBIrcr4bUKz+cK3FuR8wdEOl300K17cCJk7pmLX+AkBZj0jCsLUz+dsBxRbyUjHBHaXFEkBfFggp+2+M+H1CnwLot253EC0AnLZcVgX0fkC72+Q99RLAKSFGHwSIUNaZXjxDiwCRXxhEkqDPAkQoLQgZCMF2NGXHUNg9UAqdv6aWkFWknU6C+DkUunklxNODJxwiEAgEAoFAIBAIBAKBQCAQCAQCgUAgEAgEAoFAIBAIdEv/ABJx6rY9YuvYAAAAAElFTkSuQmCC"))).convert("RGBA")
-            lg.thumbnail((175,92),Image.Resampling.LANCZOS)
+            lg.thumbnail((224,118),Image.Resampling.LANCZOS)
             self.header_logo=ImageTk.PhotoImage(lg)
-            header.create_rectangle(8,5,205,103,fill="#10291f",outline="")
-            header.create_image(18,8,image=self.header_logo,anchor="nw")
-            header.create_text(202,24,text="Verde",anchor="nw",fill="#52CC53",font=("Segoe UI",28,"bold"))
-            header.create_text(204,70,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
+            header.create_image(22,14,image=self.header_logo,anchor="nw")
+            header.create_text(238,38,text="Verde",anchor="nw",fill="#52CC53",font=("Segoe UI",28,"bold"))
+            header.create_text(240,91,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
         else:
-            header.create_text(24,24,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
-            header.create_text(26,72,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
+            header.create_text(24,30,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
+            header.create_text(26,90,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
+
+        # Global action bar: EXECUTAR ANÁLISE must remain visible regardless of selected section.
+        action=ttk.Frame(root,padding=(230,7,14,7)); action.pack(fill="x",side="top")
+        ttk.Label(action,text="Análise de carbono",style="Title.TLabel").pack(side="left")
+        ttk.Button(action,text="Salvar relatório",command=self.save_report).pack(side="right",padx=(8,0))
+        ttk.Button(action,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=(8,0))
+        self.global_execute_btn=ttk.Button(action,text="EXECUTAR ANÁLISE",command=self.execute,style="Run.TButton")
+        self.global_execute_btn.pack(side="right",padx=(8,0))
 
         body=ttk.Frame(root); body.pack(fill="both",expand=True)
         nav=tk.Frame(body,width=220,bg="#F6F8F8",highlightbackground="#D8E0E0",highlightthickness=1)
@@ -442,25 +456,31 @@ class App(tk.Tk):
         for j,t in enumerate(["1. Dados e Catálogos","2. Download e Pré-processamento","3. Modelagem e AGB","4. Resultados SAR"]):
             lab=tk.Label(steps,text=t,bg=("#08733F" if j==0 else "#EEF2F3"),fg=("white" if j==0 else "#233B49"),font=("Segoe UI",10,"bold"),padx=14,pady=9,bd=1,relief="solid")
             lab.pack(side="left",fill="x",expand=True,padx=(0,2))
-        ttk.Label(f,text="Autenticação e processamento SAR",style="H.TLabel").pack(anchor="w")
-        auth=ttk.Frame(f); auth.pack(fill="x",pady=6)
-        ttk.Label(auth,text="ESA MAAP offline token:").pack(side="left")
-        self.esa_token=tk.StringVar()
-        ttk.Entry(auth,textvariable=self.esa_token,width=48,show="•").pack(side="left",padx=6)
-        ttk.Label(auth,text="(memória da sessão)",foreground="#666").pack(side="left")
-        auth2=ttk.Frame(f); auth2.pack(fill="x",pady=4)
-        ttk.Label(auth2,text="NASA Earthdata User Token:",font=("Segoe UI",10,"bold")).pack(side="left")
+
+        authbox=ttk.LabelFrame(f,text="Conexão NASA Earthdata — necessária para produtos autenticados",padding=12)
+        authbox.pack(fill="x",pady=(4,10))
+        ttk.Label(authbox,text="Earthdata User Token:",font=("Segoe UI",10,"bold")).grid(row=0,column=0,sticky="w")
         self.edl_token=tk.StringVar()
-        ttk.Entry(auth2,textvariable=self.edl_token,width=48,show="•").pack(side="left",padx=4)
-        ttk.Button(auth2,text="GERAR TOKEN NO EARTHDATA",command=lambda:webbrowser.open("https://urs.earthdata.nasa.gov/users/generate_token"),style="Run.TButton").pack(side="left",padx=8)
-        ttk.Label(auth2,text="60 dias • somente memória desta sessão",foreground="#666").pack(side="left")
+        ttk.Entry(authbox,textvariable=self.edl_token,width=62,show="•").grid(row=0,column=1,sticky="ew",padx=8)
+        ttk.Button(authbox,text="GERAR TOKEN NO EARTHDATA",command=lambda:webbrowser.open("https://urs.earthdata.nasa.gov/users/generate_token"),style="Run.TButton").grid(row=0,column=2,padx=6)
+        self.edl_state=tk.StringVar(value="Não conectado — gere ou cole um User Token")
+        ttk.Label(authbox,textvariable=self.edl_state,foreground="#555").grid(row=1,column=1,sticky="w",padx=8,pady=(5,0))
+        ttk.Label(authbox,text="Token mantido somente na memória desta sessão; não é gravado no projeto.",foreground="#666").grid(row=2,column=1,sticky="w",padx=8,pady=(2,0))
+        authbox.columnconfigure(1,weight=1)
+
+        # Optional ESA/MAAP credential remains secondary.
+        esa=ttk.Frame(f); esa.pack(fill="x",pady=(0,5))
+        ttk.Label(esa,text="ESA MAAP offline token (opcional):").pack(side="left")
+        self.esa_token=tk.StringVar()
+        ttk.Entry(esa,textvariable=self.esa_token,width=42,show="•").pack(side="left",padx=6)
+
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
-        self.pipeline_btn=ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute); self.pipeline_btn.pack(side="left")
+        self.pipeline_btn=ttk.Button(row,text="EXECUTAR ANÁLISE SAR",command=self.execute,style="Run.TButton"); self.pipeline_btn.pack(side="left")
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
         ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
         self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
-        self.remote_text=tk.Text(f,height=22,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
-        self._set(self.remote_text,"Hierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
+        self.remote_text=tk.Text(f,height=18,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
+        self._set(self.remote_text,"EARTHDATA: cole o User Token acima antes de executar produtos que exijam autenticação.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
 
     def discover_sar_ui(self):
         if self.gdf is None:return messagebox.showwarning("SAR","Carregue/resolva o polígono primeiro.")
@@ -597,6 +617,215 @@ class App(tk.Tk):
         self.after(120,self._poll_analysis)
 
     def _poll_analysis(self):
+        try:kind,payload=self._analysis_queue.get_nowait()
+        except queue.Empty:
+            if self._analysis_running:self.after(120,self._poll_analysis)
+            return
+        self._analysis_running=False; self.run_btn.state(["!disabled"]); self.pipeline_btn.state(["!disabled"])
+        if kind=="error":
+            log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
+            self.status.set("Falha controlada — programa permanece responsivo.")
+            return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
+        self.status.set("SAR consultado; calculando carbono…")
+        self.after(1,lambda:self._execute_main(precomputed_sar=payload.get("sar"),precomputed_soil=payload.get("soil")))
+
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None):
+        # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
+        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
+            self.project.pop(k,None)
+        current_car=self.car.get().strip().upper()
+        current_ccir=re.sub(r"\\D","",self.ccir.get())
+        if current_car and (self.active_source!="CAR" or self.active_input_id!=current_car):
+            self._reset_analysis_state()
+            try:
+                self.gdf=resolve_car(current_car); self.active_source="CAR"; self.active_input_id=current_car; self._show_geom("SICAR")
+            except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e))
+        elif current_ccir and (self.active_source!="CCIR" or self.active_input_id!=current_ccir):
+            self._reset_analysis_state()
+            try:
+                self.gdf=resolve_ccir_sigef(current_ccir); self.active_source="CCIR"; self.active_input_id=current_ccir; self._show_geom("CCIR / SIGEF")
+            except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e))
+        if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR/CCIR ou carregue o arquivo vetorial da propriedade.")
+        try:
+            self.status.set("Executando estimativa remota..."); self.update_idletasks()
+            area=geom_metrics(self.gdf)["area_ha"]
+            if precomputed_sar is not None:
+                sar=precomputed_sar
+            elif self.sar_paths:
+                sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get())
+            else:
+                raise RuntimeError("Pipeline automático sem resultado do worker.")
+            self.project["sar_result"]=sar
+            # Contract: a numerical AGB is a SAR result only when provenance explicitly says SAR.
+            if sar.get("agb_mg_ha") is not None and not str(sar.get("data_origin","")).startswith("SAR"):
+                self.project["reference_result"]=sar
+                raise RuntimeError("Contrato de proveniência violado: AGB numérica sem origem SAR. O valor foi bloqueado para impedir rotulagem incorreta.")
+            if sar.get("agb_mg_ha") is None:
+                msg=sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada."
+                lit=sar.get("literature_reference") or {}
+                if lit.get("available"):
+                    # Always deliver an analysis, but never relabel literature as SAR.
+                    sar=dict(lit)
+                    sar["data_origin"]="LITERATURA_SECUNDARIA"
+                    sar["status"]="ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO"
+                    sar["source"]=lit.get("source","biblioteca científica interna")
+                    sar["sar_diagnostic"]=msg
+                    self.project["sar_result"]=sar
+                    self.project["sar_warning"]=msg
+                else:
+                    self.project["last_result"]="ANÁLISE INCOMPLETA — SAR NÃO PROCESSADO\n\n"+msg
+                    self._set(self.res,self.project["last_result"]); self.nb.select(self.tabs[3]); self.status.set("SAR não processado e sem referência secundária compatível."); return
+            agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
+            unc_kind=str(sar.get("uncertainty_kind") or "incerteza do produto/modelo")
+            unc_mult=1.0 if "amplitude bibliográfica" in unc_kind else 1.96
+            agb_lo=max(0.0,agb-unc_mult*sar_unc); agb_hi=agb+unc_mult*sar_unc
+            agc=agb*CARBON_FRACTION
+            agc_lo=agb_lo*CARBON_FRACTION; agc_hi=agb_hi*CARBON_FRACTION
+            bgb=agb*ROOT_RATIO; bgc=bgb*CARBON_FRACTION
+            nec_c=agc*0.20 if self.biome.get()=="Amazônia" else agc*0.12
+            lit_c=4.8 if self.biome.get()=="Amazônia" else (3.0 if self.biome.get()=="Mata Atlântica" else 1.8)
+            soil_profiles=precomputed_soil if isinstance(precomputed_soil,dict) else {}
+            soil_error=soil_profiles.get("error") if soil_profiles else "PronaSolos não retornou perfil."
+            parts=[
+              ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","pipeline automático",sar.get("source",sar.get("status","produto processado"))),
+              ("Biomassa subterrânea",bgc,"MODELADO",f"R:S={ROOT_RATIO:.2f}; faixa metodológica {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}","relação raiz:parte aérea","biblioteca metodológica"),
+              ("Necromassa",nec_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; substituir por IFN/medição local para MRV","proxy por bioma","IFN/Embrapa"),
+              ("Serapilheira",lit_c,"MODELADO — TRIAGEM","alta variabilidade local","proxy por bioma","Embrapa/literatura")]
+            p030=soil_profiles.get("0–30 cm") if soil_profiles else None
+            if p030:
+                parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
+            total=sum(x[1] for x in parts); co2=total*44/12
+            # Deeper SOC profiles are reported independently and are NOT summed again into Carbono Total.
+            for depth in ("0–60 cm","0–100 cm","0–200 cm"):
+                p=soil_profiles.get(depth) if soil_profiles else None
+                if p:parts.append((f"Solo {depth}",p["tc_ha"],"MAPEAMENTO DIGITAL",f'{p["n_samples"]} amostras do mapa 90 m; DP espacial {p["spatial_sd_tc_ha"]:,.2f} tC/ha; não somado novamente ao Carbono Total',f"PronaSolos 90 m: soma das camadas até {depth.split('–')[1]}","Embrapa Solos/PronaSolos"))
+            if soil_error:self.project["soil_warning"]=soil_error
+            # Statistical/uncertainty metadata. Never label a descriptive range as a confidence interval.
+            agb_abs=(sar_unc*CARBON_FRACTION) if sar_unc else None
+            agb_pct=(sar_unc/agb*100) if agb and sar_unc else None
+            agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
+            rows=[]
+            for name,val,status,note,method,source in parts:
+                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO"))))
+                if name=="Biomassa aérea":
+                    ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo") if sar_unc else "N/D")
+                elif name=="Biomassa subterrânea":
+                    # Propagate SAR uncertainty only; R:S range is methodological, not a statistical CI.
+                    ea=(agb_abs*ROOT_RATIO if agb_abs is not None else None); ep=(ea/val*100 if ea is not None and val else None)
+                    metric="propagação da incerteza AGB; faixa R:S metodológica adicional"; level="1σ da AGB; R:S sem nível de confiança"
+                elif name.startswith("Solo "):
+                    depth=name.replace("Solo ",""); sp=soil_profiles.get(depth,{})
+                    sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=sd; ep=(sd/val*100 if val else None)
+                    metric=f"DP espacial={sd:,.2f} tC/ha ({ep:.1f}% da média)" if ep is not None else "DP espacial N/D"
+                    level="variabilidade espacial do mapa; não IC95% nem erro de predição"
+                else:
+                    ea=None; ep=None; metric="proxy bibliográfico/modelado sem distribuição de erro validada"; level="erro estatístico N/D"
+                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
+                             "erro_abs_tc":ea,"erro_pct":ep,"erro_metrica":metric,"nivel_confianca":level})
+            # Propagate only quantified independent 1-sigma components; report coverage of uncertainty.
+            q=[r for r in rows if r.get("erro_abs_tc") is not None]
+            total_sigma=math.sqrt(sum(r["erro_abs_tc"]**2 for r in q)) if q else None
+            total_err_pct=(total_sigma/total*100) if total_sigma is not None and total else None
+            self.project["total_uncertainty"]={"sigma_tc_ha":total_sigma,"pct":total_err_pct,"quantified_components":len(q),"total_components":len(rows),
+                "note":"propagação RSS dos componentes quantificados; não inclui componentes com erro estatístico N/D"}
+            self.project["analysis_rows"]=rows
+            self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
+            audit=sar.get("audit") or {}
+            diag=[]
+            if audit:
+                diag=["","TRILHA SAR:"]
+                bb=audit.get("biomass_l2b") or {}; diag.append(f"BIOMASS P L2B catalogado: {bb.get('count',0)}")
+                cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
+                ad=audit.get("asf_download") or {}
+                if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
+                for w in audit.get("warnings",[]): diag.append("Aviso: "+str(w))
+            lines=([f"AVISO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
+            for r in rows:
+                err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
+                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
+            if not p030: lines += ["Solo 0–30 cm","  NÃO CALCULADO — PronaSolos não retornou as três camadas necessárias nesta execução.","  Diagnóstico: "+str(soil_error),""]
+            lines += ["TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {total:,.2f} tC/ha  |  {co2:,.2f} tCO₂e/ha",f"  Total na área: {total*area:,.0f} tC  |  {co2*area:,.0f} tCO₂e","",
+                      "QUALIDADE: resultado de triagem/planejamento remoto. O relatório distingue produto SAR efetivamente processado de estimativa bibliográfica/modelada."]
+            self._set(self.remote_text,f"Biomassa aérea: {agc:,.2f} tC/ha | {agc*44/12:,.2f} tCO₂e/ha\nFaixa de referência: {agc_lo:,.2f}–{agc_hi:,.2f} tC/ha | {agc_lo*44/12:,.2f}–{agc_hi*44/12:,.2f} tCO₂e/ha")
+            self._set(self.res,"\n".join(lines)); self.project["last_result"]="\n".join(lines); self.nb.select(self.tabs[3]); self.status.set("Estimativa remota concluída.")
+        except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
+
+    def export_excel(self):
+        if not self.project.get("analysis_rows"):
+            return messagebox.showwarning("Excel","Execute a análise antes de exportar.")
+        p=filedialog.asksaveasfilename(defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
+        if not p:return
+        wb=Workbook(); orange="F29A00"; green="0B3D2E"; white="FFFFFF"; pale="F4F6F5"; line="D5DDD9"
+        thin=Side(style="thin",color=line)
+        headers=["Categoria","Parâmetro / resultado","tC/ha","tCO₂e/ha","Status","Método","Fonte","Observação"]
+        def setup(sh,title):
+            sh.sheet_view.showGridLines=False; sh.freeze_panes="A4"; sh.auto_filter.ref="A3:H200"
+            sh.merge_cells("A1:H1"); c=sh["A1"]; c.value=title; c.font=Font(size=18,bold=True,color=white); c.fill=PatternFill("solid",fgColor=green); c.alignment=Alignment(vertical="center")
+            sh.row_dimensions[1].height=32
+            for col,w in zip("ABCDEFGH",[20,34,16,18,25,28,30,55]): sh.column_dimensions[col].width=w
+            for j,h in enumerate(headers,1):
+                c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange); c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True); c.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+            sh.row_dimensions[3].height=28
+        def put(sh,data):
+            for i,row in enumerate(data,4):
+                sh.row_dimensions[i].height=32
+                for j,v in enumerate(row,1):
+                    c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.border=Border(top=thin,bottom=thin,left=thin,right=thin); c.alignment=Alignment(vertical="center",wrap_text=True)
+                    if j in (3,4) and isinstance(v,(int,float)): c.number_format='#,##0.00'
+                sh.cell(i,2).font=Font(bold=True,color=green)
+        area=self.project["area_ha"]; total=self.project["total_tc_ha"]; totalco2=self.project["total_tco2_ha"]; ar=self.project["analysis_rows"]
+        ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
+        put(ws,[["Entrada","Projeto",None,None,"Informado","cadastro",None,self.name.get()],
+                ["Diagnóstico IBGE","Bioma dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Biomas 2025",self.biome.get()],
+                ["Diagnóstico IBGE","Fitofisionomia/região fitoecológica dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Vegetação 2026",self.phys.get()],
+                ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{area:,.2f} ha"],
+                ["Entrada","Sensor/produto selecionado",None,None,"Informado","SAR/multissensor","ESA/fornecedor",self.sensor.get()],
+                ["Resultado","Carbono total por hectare",total,totalco2,"CONSOLIDADO","soma dos compartimentos","Enform","somente compartimentos disponíveis"],
+                ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{total*area:,.0f} tC | {totalco2*area:,.0f} tCO₂e"]])
+        sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
+        put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
+        for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
+            sh=wb.create_sheet(sheet); setup(sh,"Enform Verde — "+sheet)
+            rr=[r for r in ar if r["parametro"]==param]
+            data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
+            if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
+            put(sh,data)
+        sh=wb.create_sheet("Carbono do Solo"); setup(sh,"Enform Verde — Carbono orgânico do solo")
+        soil_rows=[r for r in ar if r["parametro"].startswith("Solo ")]
+        soil_data=[["MAPEAMENTO — PronaSolos",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]+" | "+r.get("erro_metrica","")] for r in soil_rows]
+        if not soil_data: soil_data=[["MAPEAMENTO","Carbono do solo",None,None,"NÃO CALCULADO","PronaSolos 90 m","Embrapa Solos/PronaSolos","Sem valores válidos nesta execução."]]
+        put(sh,soil_data)
+        sh=wb.create_sheet("Diagnóstico IBGE"); setup(sh,"Enform Verde — Diagnóstico territorial IBGE")
+        diag=self.project.get("ibge_diagnosis",{})
+        idata=[]
+        for n,ha,pct in diag.get("biomas",[]): idata.append(["Bioma",n,None,None,"IBGE oficial","interseção espacial","IBGE — Biomas 2025",f"{ha:,.2f} ha | {pct:.2f}% da área"])
+        for grp in diag.get("vegetacao",[]):
+            for n,ha,pct in grp.get("classes",[]): idata.append(["Vegetação "+grp.get("campo",""),n,None,None,"IBGE oficial 2026","interseção espacial","IBGE — Vegetação 2026",f"{ha:,.2f} ha | {pct:.2f}% da área"])
+        if not idata:idata=[["Diagnóstico","IBGE",None,None,"NÃO DISPONÍVEL","—","IBGE","A consulta/interseção não foi concluída nesta execução."]]
+        put(sh,idata)
+        sh=wb.create_sheet("Sensores SAR"); setup(sh,"Enform Verde — Sensores SAR")
+        put(sh,[["Sensor","ESA Biomass — banda P",None,None,"Preferencial","PolSAR/PolInSAR/TomoSAR","ESA","Primeiro SAR orbital em banda P; usar somente quando produto efetivamente processado."],
+                ["Sensor","ALOS/PALSAR / ALOS-2",None,None,"Histórico/complementar","banda L","JAXA","Séries históricas para atributos estruturais."],
+                ["Sensor","TerraSAR-X / TanDEM-X / COSMO-SkyMed",None,None,"Complementar","banda X","Operadores","Textura e estrutura do dossel; não é banda do satélite Biomass."]])
+        sh=wb.create_sheet("Modelos e QA"); setup(sh,"Enform Verde — Modelos, QA e incerteza")
+        put(sh,[["QA","Mensuração SAR",None,None,"REGRA","controle metodológico","Enform","Não declarar mensuração SAR sem produto efetivamente processado."],
+                ["Modelo","Conversão C→CO₂e",None,None,"Aplicado","tC × 44/12","estequiometria","Todas as estimativas de carbono são exibidas em tC/ha e tCO₂e/ha."],
+                ["Modelo","Biblioteca brasileira",None,None,"Prioritária","seleção por domínio","IFN/SFB + Embrapa","Bioma, fitofisionomia e domínio de calibração devem ser compatíveis."]])
+        sh=wb.create_sheet("Bibliografia"); setup(sh,"Enform Verde — Bibliografia e proveniência")
+        put(sh,[["Fonte","ESA Biomass",None,None,"Oficial","P-band SAR","ESA","Missão orbital para biomassa florestal."],
+                ["Fonte","IFN / Painel de Biomassa e Carbono",None,None,"Prioritária","inventário/equações","SFB","Base brasileira para seleção e validação."],
+                ["Fonte","Embrapa",None,None,"Prioritária","protocolos/equações/COS","Embrapa","Fontes brasileiras priorizadas no motor."]])
+        wb.save(p); self.status.set("Excel exportado com sucesso.")
+
+    def save_report(self):
+        txt=self.res.get("1.0","end").strip()
+        if not txt:return
+        p=filedialog.asksaveasfilename(defaultextension=".txt",filetypes=[("Relatório TXT","*.txt")])
+        if p:Path(p).write_text(txt+"\n\nFONTES\n"+self.src.get("1.0","end"),encoding="utf-8"); self.status.set("Relatório salvo.")
+
+if __name__=="__main__":
+    if "--self-test" in sys.argv:self_test()
+    else:App().mainloop()    def _poll_analysis(self):
         try:kind,payload=self._analysis_queue.get_nowait()
         except queue.Empty:
             if self._analysis_running:self.after(120,self._poll_analysis)
