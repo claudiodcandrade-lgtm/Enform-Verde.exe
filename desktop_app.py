@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.3.0-PROFESSIONAL"
+APP_VERSION="3.4.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -566,8 +566,15 @@ class App(tk.Tk):
             else:
                 raise RuntimeError("Pipeline automático sem resultado do worker.")
             self.project["sar_result"]=sar
+            # Contract: a numerical AGB is a SAR result only when provenance explicitly says SAR.
+            if sar.get("agb_mg_ha") is not None and not str(sar.get("data_origin","")).startswith("SAR"):
+                self.project["reference_result"]=sar
+                raise RuntimeError("Contrato de proveniência violado: AGB numérica sem origem SAR. O valor foi bloqueado para impedir rotulagem incorreta.")
             if sar.get("agb_mg_ha") is None:
                 msg=sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada."
+                lit=sar.get("literature_reference") or {}
+                if lit.get("available"):
+                    msg += f"\n\nREFERÊNCIA BIBLIOGRÁFICA SEPARADA (não usada no resultado SAR): AGB={lit.get('agb_mg_ha',0):.1f} Mg/ha; {lit.get('uncertainty_kind','')}"
                 self.project["last_result"]="ANÁLISE SAR — AÇÃO NECESSÁRIA\n\n"+msg+"\n\nNão foi aplicado fallback bibliográfico porque existe cobertura SAR identificada."
                 self._set(self.res,self.project["last_result"]); self.nb.select(self.tabs[3]); self.status.set("Cobertura SAR encontrada; autenticação/processamento pendente.")
                 messagebox.showinfo("Cobertura SAR encontrada",msg); return
@@ -602,7 +609,7 @@ class App(tk.Tk):
             agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
             rows=[]
             for name,val,status,note,method,source in parts:
-                origem=(("SAR" if str(status).startswith("SAR") else "LITERATURA") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))
+                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO"))))
                 if name=="Biomassa aérea":
                     ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo") if sar_unc else "N/D")
                 elif name=="Biomassa subterrânea":
