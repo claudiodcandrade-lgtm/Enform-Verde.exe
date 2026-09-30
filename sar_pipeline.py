@@ -296,7 +296,7 @@ def public_sentinel1_cog(gdf,cache,limit=6):
         except Exception: pass
     return {"available":True,"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats}
 
-def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password=""):
+def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     audit={"priority":"P > L > X(local/licensed) > C(public diagnostic) > CCI","biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
 
@@ -315,7 +315,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # 2 — NISAR/ALOS L-band. Catalogue is public; NISAR science download requires EDL.
     asf=discover_asf(gdf,limit=50); audit["asf"]=asf
     lcount=sum(x["count"] for x in asf if x["band"]=="L")
-    if lcount and edl_user and edl_password:
+    if lcount and (edl_token or (edl_user and edl_password)):
         try:
             from lband_preprocess import preprocess_lband
             cands=[it for group in asf if group.get("band")=="L" for it in group.get("items",[]) if it.get("download_url")]
@@ -327,7 +327,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                     url=cand["download_url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
                     target=dl/Path(url.split("?")[0]).name
                     if not target.exists():
-                        sess=requests.Session(); sess.auth=(edl_user,edl_password)
+                        sess=requests.Session()
+                        if edl_token:
+                            sess.headers.update({"Authorization":"Bearer "+edl_token})
+                        else:
+                            sess.auth=(edl_user,edl_password)
                         with sess.get(url,stream=True,timeout=(10,300),allow_redirects=True) as rr:
                             rr.raise_for_status()
                             with open(target,"wb") as out:
@@ -346,7 +350,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                         return pr
                 except Exception as e: audit["warnings"].append("Cena L "+str(cand.get("id"))+": "+str(e))
         except Exception as e: audit["warnings"].append("ASF L-band: "+str(e))
-    elif lcount: audit["warnings"].append(f"{lcount} produto(s) L-band localizados; NISAR/ASF exige Earthdata Login para download.")
+    elif lcount: audit["warnings"].append(f"{lcount} produto(s) L-band localizados; download bloqueado porque não foi fornecido Earthdata User Token/autenticação local.")
 
     # 3 — X-band: no public automatic archive is assumed. Local/licensed X rasters are processed by process_real_sar.
     audit["x_band"]={"status":"rota local/licenciada","note":"TerraSAR-X/TanDEM-X não é inventado como download público automático."}
@@ -371,7 +375,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
 
     lit=literature_fallback(biome,phys,library_rows)
     return {"status":"SAR_NAO_PROCESSADO","agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":"SAR_NAO_PROCESSADO",
-            "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,
+            "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "message":"Nenhum arquivo SAR foi processado. Consulte a auditoria: P/L podem exigir credenciais; X exige produto local/licenciado; C público é tentado automaticamente."}
 
 def execute_registered_model(model_id,features):
