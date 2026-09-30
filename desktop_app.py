@@ -537,7 +537,9 @@ class App(tk.Tk):
                 self._set(self.res,self.project["last_result"]); self.nb.select(self.tabs[3]); self.status.set("Cobertura SAR encontrada; autenticação/processamento pendente.")
                 messagebox.showinfo("Cobertura SAR encontrada",msg); return
             agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
-            agb_lo=max(0.0,agb-1.96*sar_unc); agb_hi=agb+1.96*sar_unc
+            unc_kind=str(sar.get("uncertainty_kind") or "incerteza do produto/modelo")
+            unc_mult=1.0 if "amplitude bibliográfica" in unc_kind else 1.96
+            agb_lo=max(0.0,agb-unc_mult*sar_unc); agb_hi=agb+unc_mult*sar_unc
             agc=agb*CARBON_FRACTION
             agc_lo=agb_lo*CARBON_FRACTION; agc_hi=agb_hi*CARBON_FRACTION
             bgb=agb*ROOT_RATIO; bgc=bgb*CARBON_FRACTION
