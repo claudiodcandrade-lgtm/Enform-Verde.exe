@@ -289,13 +289,20 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                         with open(target,"wb") as out:
                             for chunk in rr.iter_content(8*1024*1024):
                                 if chunk: out.write(chunk)
-                pre=preprocess_lband(target,dl/("proc_"+target.stem))
-                audit["asf_download"]={"scene":cand.get("id"),"url_found":True,"preprocess":pre.get("status"),"candidate_count":len(cands)}
-                if pre.get("rasters"):
-                    pr=process_real_sar(gdf,pre["rasters"],biome,phys)
+                if target.suffix.lower() in (".h5",".hdf5") and "NISAR" in (str(cand.get("id",""))+" "+str(cand.get("properties",{}))).upper():
+                    pr=analyze_nisar_gcov(gdf,target,biome,phys)
+                    audit["asf_download"]={"scene":cand.get("id"),"url_found":True,"preprocess":"NISAR_GCOV_HDF5","candidate_count":len(cands),"features":pr.get("features")}
                     if pr.get("agb_mg_ha") is not None:
-                        pr["audit"]=audit; pr["data_origin"]="SAR_L"; pr["paths"]=pre["rasters"]; return pr
-                    audit["warnings"].append("L-band baixada/processada, mas não existe modelo executável compatível com os atributos desta cena.")
+                        pr["audit"]=audit; pr["paths"]=[str(target)]; return pr
+                    audit["warnings"].append(pr.get("message","NISAR GCOV processado sem modelo compatível."))
+                else:
+                    pre=preprocess_lband(target,dl/("proc_"+target.stem))
+                    audit["asf_download"]={"scene":cand.get("id"),"url_found":True,"preprocess":pre.get("status"),"candidate_count":len(cands)}
+                    if pre.get("rasters"):
+                        pr=process_real_sar(gdf,pre["rasters"],biome,phys)
+                        if pr.get("agb_mg_ha") is not None:
+                            pr["audit"]=audit; pr["data_origin"]="SAR_L"; pr["paths"]=pre["rasters"]; return pr
+                        audit["warnings"].append("L-band baixada/processada, mas não existe modelo executável compatível com os atributos desta cena.")
         except Exception as e:
             audit["warnings"].append("ASF L-band download/process: "+str(e))
     elif lcount:
