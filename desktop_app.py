@@ -563,7 +563,7 @@ class App(tk.Tk):
             agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
             rows=[]
             for name,val,status,note,method,source in parts:
-                origem=("SAR" if name=="Biomassa aérea" and str(status).startswith("SAR") else ("MAPEAMENTO" if name=="Solo 0–30 cm" else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))
+                origem=(("SAR" if str(status).startswith("SAR") else "LITERATURA") if name=="Biomassa aérea" else ("MAPEAMENTO" if name=="Solo 0–30 cm" else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))
                 if name=="Biomassa aérea":
                     ea,ep,metric,level=agb_abs,agb_pct,agb_metric,("1σ/DP do produto" if sar_unc else "N/D")
                 elif name=="Biomassa subterrânea":
