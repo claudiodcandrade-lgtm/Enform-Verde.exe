@@ -523,17 +523,37 @@ class App(tk.Tk):
               ("Serapilheira",lit_c,"MODELADO — TRIAGEM","alta variabilidade local","proxy por bioma","Embrapa/literatura")]
             if soil is not None: parts.append(("Solo 0–30 cm",soil,"MAPEAMENTO DIGITAL",f"{pix} pixels; DP espacial {soil_sd:,.2f} tC/ha","recorte raster","Embrapa/PronaSolos"))
             total=sum(x[1] for x in parts); co2=total*44/12
-            agb_err_pct=(1.96*sar_unc/agb*100) if agb and sar_unc else 0.0
+            # Statistical/uncertainty metadata. Never label a descriptive range as a confidence interval.
+            agb_abs=(sar_unc*CARBON_FRACTION) if sar_unc else None
+            agb_pct=(sar_unc/agb*100) if agb and sar_unc else None
+            agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
             rows=[]
             for name,val,status,note,method,source in parts:
                 origem=("SAR" if name=="Biomassa aérea" and str(status).startswith("SAR") else ("MAPEAMENTO" if name=="Solo 0–30 cm" else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))
-                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,"erro_pct":(agb_err_pct if name=="Biomassa aérea" else None)})
+                if name=="Biomassa aérea":
+                    ea,ep,metric,level=agb_abs,agb_pct,agb_metric,("1σ/DP do produto" if sar_unc else "N/D")
+                elif name=="Biomassa subterrânea":
+                    # Propagate SAR uncertainty only; R:S range is methodological, not a statistical CI.
+                    ea=(agb_abs*ROOT_RATIO if agb_abs is not None else None); ep=(ea/val*100 if ea is not None and val else None)
+                    metric="propagação da incerteza AGB; faixa R:S metodológica adicional"; level="1σ da AGB; R:S sem nível de confiança"
+                elif name=="Solo 0–30 cm":
+                    ea=None; ep=None; metric=f"DP espacial={soil_sd:,.2f} tC/ha; não equivale ao erro de acurácia do mapa"; level="erro estatístico N/D"
+                else:
+                    ea=None; ep=None; metric="proxy bibliográfico/modelado sem distribuição de erro validada"; level="erro estatístico N/D"
+                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
+                             "erro_abs_tc":ea,"erro_pct":ep,"erro_metrica":metric,"nivel_confianca":level})
+            # Propagate only quantified independent 1-sigma components; report coverage of uncertainty.
+            q=[r for r in rows if r.get("erro_abs_tc") is not None]
+            total_sigma=math.sqrt(sum(r["erro_abs_tc"]**2 for r in q)) if q else None
+            total_err_pct=(total_sigma/total*100) if total_sigma is not None and total else None
+            self.project["total_uncertainty"]={"sigma_tc_ha":total_sigma,"pct":total_err_pct,"quantified_components":len(q),"total_components":len(rows),
+                "note":"propagação RSS dos componentes quantificados; não inclui componentes com erro estatístico N/D"}
             self.project["analysis_rows"]=rows
             self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
             lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
             for r in rows:
-                err=(f"±{r['erro_pct']:.1f}%" if r.get('erro_pct') is not None else "N/D")
-                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Margem de erro/incerteza: {err}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
+                err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
+                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
             if soil is None: lines += ["Solo 0–30 cm","  NÃO CALCULADO — serviço/raster de COS indisponível nesta execução; nenhum valor foi inventado.",""]
             lines += ["TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {total:,.2f} tC/ha  |  {co2:,.2f} tCO₂e/ha",f"  Total na área: {total*area:,.0f} tC  |  {co2*area:,.0f} tCO₂e","",
                       "QUALIDADE: resultado de triagem/planejamento remoto. O relatório distingue produto SAR efetivamente processado de estimativa bibliográfica/modelada."]
