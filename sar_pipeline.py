@@ -263,81 +263,116 @@ def analyze_nisar_gcov(gdf,h5_path,biome,phys):
             "uncertainty_kind":"RMSE de validação do modelo","data_origin":"SAR_L_MODELO","source":m.get("source") or m.get("doi"),
             "sensor":"NISAR","band":"L","product":q["product"],"model_id":m["id"],"features":q["features"],"terms":q["terms"]}
 
+EARTH_SEARCH_STAC="https://earth-search.aws.element84.com/v1/search"
+
+def public_sentinel1_cog(gdf,cache,limit=6):
+    """Download and process real public Sentinel-1 GRD COG assets without credentials.
+    C-band is diagnostic/fallback in dense tropical forest; it is never promoted to
+    high-biomass AGB by itself because of saturation.
+    """
+    geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
+    body={"collections":["sentinel-1"],"intersects":geom,"limit":limit,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    r=requests.post(EARTH_SEARCH_STAC,json=body,timeout=(10,60)); r.raise_for_status()
+    items=r.json().get("features",[]); Path(cache).mkdir(parents=True,exist_ok=True)
+    paths=[]; scene_ids=[]
+    for it in items[:3]:
+        assets=it.get("assets") or {}; scene_ids.append(it.get("id"))
+        for pol in ("vh","hv","vv","hh"):
+            hit=None
+            for k,v in assets.items():
+                kl=k.lower(); href=v.get("href","")
+                if pol==kl or kl.endswith("-"+pol) or kl.endswith("_"+pol):
+                    if href.lower().startswith("http") and (".tif" in href.lower()): hit=(k,href); break
+            if not hit: continue
+            k,href=hit; ext=".tif"; out=Path(cache)/(str(it.get("id","s1"))+"_"+k+ext)
+            if not out.exists(): _download(href,out,None)
+            paths.append(str(out))
+    if not paths: return {"available":bool(items),"paths":[],"items":len(items),"scene_ids":scene_ids}
+    stats=[]
+    for p in paths:
+        try:
+            z=_zonal(gdf,p); z["path"]=p; z["role"]=role(p); stats.append(z)
+        except Exception: pass
+    return {"available":True,"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats}
+
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
-    audit={"biomass_l2b":None,"cci":None,"asf":None,"warnings":[]}
-    # 1 ESA BIOMASS. Availability without credentials is recorded, not treated as a fatal error yet.
-    try:
-        l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
-    except Exception as e:
-        l2items=[];audit["warnings"].append("BIOMASS catalogue: "+str(e))
-    audit["biomass_l2b"]={"count":len(l2items)}
+    audit={"priority":"P > L > X(local/licensed) > C(public diagnostic) > CCI","biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
+
+    # 1 — ESA BIOMASS P-band / official L2B AGB.
+    try: l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
+    except Exception as e: l2items=[]; audit["warnings"].append("BIOMASS catálogo: "+str(e))
+    audit["biomass_l2b"]={"count":len(l2items),"download_requires":"ESA MAAP token"}
     if l2items and offline_token:
         try:
             d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass")
             if d["paths"]:
-                r=process_real_sar(gdf,d["paths"],biome,phys);r["audit"]=audit;r["paths"]=d["paths"];r["data_origin"]="SAR";return r
-        except Exception as e:audit["warnings"].append("BIOMASS download/process: "+str(e))
-    elif l2items:audit["warnings"].append("BIOMASS disponível; token ESA MAAP não informado.")
-    # 2 CCI historical SAR-derived AGB: attempt before raw L-band auth roadblock.
-    try:
-        cci=cci_history(gdf,Path(cache)/"cci",offline_token or None)
-        audit["cci"]={"count":cci["items"],"downloaded":len(cci["paths"])}
-        if cci["paths"]:
-            r=process_real_sar(gdf,cci["paths"],biome,phys);r["audit"]=audit;r["paths"]=cci["paths"];r["historical"]=True;r["data_origin"]="SAR / MAPEAMENTO";return r
-    except Exception as e:audit["cci"]={"error":str(e)}
-    # 3 L-band: discovery plus authenticated Earthdata/ASF download when credentials are supplied.
-    # Catalogue presence alone is never treated as a processed measurement.
+                pr=process_real_sar(gdf,d["paths"],biome,phys); pr["audit"]=audit; pr["paths"]=d["paths"]; pr["data_origin"]="SAR_P_BIOMASS"; return pr
+        except Exception as e: audit["warnings"].append("BIOMASS P download/process: "+str(e))
+    elif l2items: audit["warnings"].append("BIOMASS P-band localizado, mas o download do produto requer token ESA MAAP.")
 
-    asf=discover_asf(gdf,limit=50);audit["asf"]=asf
+    # 2 — NISAR/ALOS L-band. Catalogue is public; NISAR science download requires EDL.
+    asf=discover_asf(gdf,limit=50); audit["asf"]=asf
     lcount=sum(x["count"] for x in asf if x["band"]=="L")
     if lcount and edl_user and edl_password:
         try:
             from lband_preprocess import preprocess_lband
             cands=[it for group in asf if group.get("band")=="L" for it in group.get("items",[]) if it.get("download_url")]
-            # Prefer calibrated NISAR PROVISIONAL / GCOV, then other NISAR, then ALOS.
             def _rank(it):
                 t=(str(it.get("id",""))+" "+str(it.get("properties",{}))).upper()
-                return (0 if ("NISAR" in t and "PROVISIONAL" in t and "GCOV" in t) else
-                        1 if ("NISAR" in t and "PROVISIONAL" in t) else
-                        2 if "NISAR" in t else 3)
-            cands=sorted(cands,key=_rank)
-            cand=cands[0] if cands else None
-            if cand:
-                url=cand["download_url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
-                target=dl/Path(url.split("?")[0]).name
-                if not target.exists():
-                    sess=requests.Session(); sess.auth=(edl_user,edl_password)
-                    with sess.get(url,stream=True,timeout=(10,240),allow_redirects=True) as rr:
-                        rr.raise_for_status()
-                        with open(target,"wb") as out:
-                            for chunk in rr.iter_content(8*1024*1024):
-                                if chunk: out.write(chunk)
-                if target.suffix.lower() in (".h5",".hdf5") and "NISAR" in (str(cand.get("id",""))+" "+str(cand.get("properties",{}))).upper():
-                    pr=analyze_nisar_gcov(gdf,target,biome,phys)
-                    audit["asf_download"]={"scene":cand.get("id"),"url_found":True,"preprocess":"NISAR_GCOV_HDF5","candidate_count":len(cands),"features":pr.get("features")}
-                    if pr.get("agb_mg_ha") is not None:
-                        pr["audit"]=audit; pr["paths"]=[str(target)]; return pr
-                    audit["warnings"].append(pr.get("message","NISAR GCOV processado sem modelo compatível."))
-                else:
+                return 0 if ("NISAR" in t and "GCOV" in t) else (1 if "NISAR" in t else 2)
+            for cand in sorted(cands,key=_rank)[:3]:
+                try:
+                    url=cand["download_url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
+                    target=dl/Path(url.split("?")[0]).name
+                    if not target.exists():
+                        sess=requests.Session(); sess.auth=(edl_user,edl_password)
+                        with sess.get(url,stream=True,timeout=(10,300),allow_redirects=True) as rr:
+                            rr.raise_for_status()
+                            with open(target,"wb") as out:
+                                for chunk in rr.iter_content(8*1024*1024):
+                                    if chunk: out.write(chunk)
+                    if target.suffix.lower() in (".h5",".hdf5") and "NISAR" in (str(cand.get("id",""))+" "+str(cand.get("properties",{}))).upper():
+                        pr=analyze_nisar_gcov(gdf,target,biome,phys)
+                        audit["asf_download"]={"scene":cand.get("id"),"processed":"NISAR_GCOV_HDF5","features":pr.get("features")}
+                        if pr.get("agb_mg_ha") is not None: pr["audit"]=audit; pr["paths"]=[str(target)]; return pr
+                        # Real SAR was processed even if no defensible AGB model exists.
+                        pr["status"]="SAR_PROCESSADO_SEM_AGB"; pr["audit"]=audit; pr["paths"]=[str(target)]; return pr
                     pre=preprocess_lband(target,dl/("proc_"+target.stem))
-                    audit["asf_download"]={"scene":cand.get("id"),"url_found":True,"preprocess":pre.get("status"),"candidate_count":len(cands)}
                     if pre.get("rasters"):
-                        pr=process_real_sar(gdf,pre["rasters"],biome,phys)
-                        if pr.get("agb_mg_ha") is not None:
-                            pr["audit"]=audit; pr["data_origin"]="SAR_L"; pr["paths"]=pre["rasters"]; return pr
-                        audit["warnings"].append("L-band baixada/processada, mas não existe modelo executável compatível com os atributos desta cena.")
-        except Exception as e:
-            audit["warnings"].append("ASF L-band download/process: "+str(e))
-    elif lcount:
-        audit["warnings"].append(f"{lcount} produto(s) L-band catalogados; informe Earthdata Login para download/processamento automático.")
-    # 4 Guaranteed analytical result. Literature is secondary and explicitly labelled when SAR cannot be processed now.
-    lit=literature_fallback(biome,phys,library_rows)
-    return {"status":"SAR_NAO_PROCESSADO","agb_mg_ha":None,"uncertainty_mg_ha":None,
-            "data_origin":"SAR_NAO_PROCESSADO","source":"nenhum produto SAR quantitativo processado nesta execução",
-            "audit":audit,"literature_reference":lit,
-            "message":"Há cobertura/produtos SAR catalogados, mas nenhum produto quantitativo/modelo compatível foi processado. A referência bibliográfica foi mantida separada e NÃO foi usada como resultado SAR."}
+                        pr=process_real_sar(gdf,pre["rasters"],biome,phys); pr["audit"]=audit; pr["data_origin"]="SAR_L"; pr["paths"]=pre["rasters"]
+                        if pr.get("agb_mg_ha") is None: pr["status"]="SAR_PROCESSADO_SEM_AGB"
+                        return pr
+                except Exception as e: audit["warnings"].append("Cena L "+str(cand.get("id"))+": "+str(e))
+        except Exception as e: audit["warnings"].append("ASF L-band: "+str(e))
+    elif lcount: audit["warnings"].append(f"{lcount} produto(s) L-band localizados; NISAR/ASF exige Earthdata Login para download.")
 
+    # 3 — X-band: no public automatic archive is assumed. Local/licensed X rasters are processed by process_real_sar.
+    audit["x_band"]={"status":"rota local/licenciada","note":"TerraSAR-X/TanDEM-X não é inventado como download público automático."}
+
+    # 4 — Real public Sentinel-1 C-band fallback. Process pixels, but do not infer dense-forest AGB from C alone.
+    try:
+        c=public_sentinel1_cog(gdf,Path(cache)/"sentinel1_public")
+        audit["sentinel1_public"]={"catalogued":c.get("items",0),"downloaded":len(c.get("paths",[])),"scene_ids":c.get("scene_ids",[])}
+        if c.get("stats"):
+            return {"status":"SAR_PROCESSADO_SEM_AGB","agb_mg_ha":None,"uncertainty_mg_ha":None,
+                    "data_origin":"SAR_C_PUBLIC","source":"Sentinel-1 GRD COG público — pixels efetivamente baixados e processados",
+                    "sensor":"Sentinel-1","band":"C","product":"GRD COG","stats":c["stats"],"paths":c["paths"],"audit":audit,
+                    "message":"SAR C-band foi efetivamente processado. Em floresta tropical densa, C-band está sujeito a forte saturação; o programa não converte este sinal isolado em AGB."}
+    except Exception as e: audit["warnings"].append("Sentinel-1 público download/process: "+str(e))
+
+    # 5 — CCI derived AGB is last quantitative fallback, never ahead of raw P/L processing.
+    try:
+        cci=cci_history(gdf,Path(cache)/"cci",offline_token or None); audit["cci"]={"count":cci["items"],"downloaded":len(cci["paths"])}
+        if cci["paths"]:
+            pr=process_real_sar(gdf,cci["paths"],biome,phys); pr["audit"]=audit; pr["paths"]=cci["paths"]; pr["historical"]=True; pr["data_origin"]="SAR_DERIVED_CCI"; return pr
+    except Exception as e: audit["cci"]={"error":str(e)}
+
+    lit=literature_fallback(biome,phys,library_rows)
+    return {"status":"SAR_NAO_PROCESSADO","agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":"SAR_NAO_PROCESSADO",
+            "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,
+            "message":"Nenhum arquivo SAR foi processado. Consulte a auditoria: P/L podem exigir credenciais; X exige produto local/licenciado; C público é tentado automaticamente."}
 
 def execute_registered_model(model_id,features):
     m=next((x for x in MODEL_REGISTRY if x["id"]==model_id),None)
