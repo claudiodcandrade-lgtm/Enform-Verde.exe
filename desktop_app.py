@@ -278,18 +278,19 @@ def pronasolos_soc_profiles(gdf,max_points=25):
                     if np.isfinite(v) and -1<v<1000 and lid in vals:vals[lid].append(v)
                 except:pass
         except Exception:continue
-    if any(len(vals[k])==0 for k in layer_ids):
-        missing=[str(k) for k in layer_ids if not vals[k]]
-        raise RuntimeError("PronaSolos respondeu sem valores numéricos para camada(s): "+",".join(missing))
-    arr={k:np.asarray(vals[k],float) for k in layer_ids}
-    # Use common sample count to keep cumulative profiles paired conservatively.
-    m=min(len(arr[k]) for k in layer_ids); stacks=np.vstack([arr[k][:m] for k in layer_ids])
-    cum=np.cumsum(stacks,axis=0)
-    targets={"0–30 cm":2,"0–60 cm":3,"0–100 cm":4,"0–200 cm":5}; out={}
-    for label,idx in targets.items():
-        x=cum[idx]; out[label]={"tc_ha":float(np.mean(x)),"spatial_sd_tc_ha":float(np.std(x,ddof=1)) if len(x)>1 else 0.0,
-          "n_samples":int(len(x)),"layers":[ "0–5","5–15","15–30","30–60","60–100","100–200"][:idx+1],
+    names=["0–5","5–15","15–30","30–60","60–100","100–200"]
+    targets={"0–30 cm":3,"0–60 cm":4,"0–100 cm":5,"0–200 cm":6}; out={}
+    for label,count in targets.items():
+        need=layer_ids[:count]
+        if any(len(vals[k])==0 for k in need): continue
+        m=min(len(vals[k]) for k in need)
+        x=np.sum(np.vstack([np.asarray(vals[k][:m],float) for k in need]),axis=0)
+        out[label]={"tc_ha":float(np.mean(x)),"spatial_sd_tc_ha":float(np.std(x,ddof=1)) if len(x)>1 else 0.0,
+          "n_samples":int(len(x)),"layers":names[:count],
           "uncertainty_kind":"DP espacial das amostras do mapa; não é IC95% nem erro de predição"}
+    if "0–30 cm" not in out:
+        missing=[names[i] for i,k in enumerate(layer_ids[:3]) if not vals[k]]
+        raise RuntimeError("PronaSolos não retornou camada(s) essencial(is) para 0–30 cm: "+", ".join(missing))
     return out
 
 
