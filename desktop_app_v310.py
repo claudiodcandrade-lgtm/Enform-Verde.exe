@@ -103,7 +103,7 @@ def resolve_car(car):
     urls=["https://geoserver.car.gov.br/geoserver/sicar/ows","https://geoserver.car.gov.br/geoserver/sicar/wfs"]
     attempts=[]; sess=_sicar_session()
     for url in urls:
-      for version,key in [("1.0.0","typeName"),("2.0.0","typeNames")]:
+      for version,key in [("1.0.0","typeName"),("1.1.0","typeName"),("2.0.0","typeNames")]:
         params={"service":"WFS","version":version,"request":"GetFeature",key:layer,
                 "outputFormat":"application/json","srsName":"EPSG:4326","cql_filter":f"cod_imovel='{code}'"}
         try:
