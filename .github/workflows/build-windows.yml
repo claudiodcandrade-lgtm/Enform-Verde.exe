@@ -31,7 +31,7 @@ jobs:
           import desktop_app as app
           assert hasattr(app.App, "export_excel"), "App.export_excel missing"
           assert "tCO₂e/ha" in open("desktop_app.py",encoding="utf-8").read(), "dual carbon units missing"
-          assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"
+          assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"\n          assert "cod_imovel" in open("desktop_app.py",encoding="utf-8").read(), "SICAR CAR-code filter missing"
           ui=app.App()
           ui.update_idletasks()
           ui.destroy()
@@ -81,7 +81,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v1.3.0-SAR-visual
+          name: Enform-Verde-Windows-v1.3.1-SAR-SICAR
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
