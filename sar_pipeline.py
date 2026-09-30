@@ -5,7 +5,7 @@ ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
 MODEL_REGISTRY=[
 {"id":"CASSOL_2021","biome":"Amazônia","domain":"floresta secundária","bands":["L"],"sensor":"ALOS-2/PALSAR-2","doi":"10.1080/01431161.2021.1903615","institution":"INPE/NCEO"},
-{"id":"CASSOL_2019","biome":"Amazônia","domain":"floresta secundária; Santarém","bands":["L"],"sensor":"ALOS-2/PALSAR-2","algorithm":"MLR polarimétrica","coefficients":None,"r2":0.51,"rmse_mg_ha":38.7,"bias_mg_ha":2.1,"uncertainty_pct":18.6,"validation":"bootstrap 100 repetições, 80/20","doi":"10.3390/rs11010059","institution":"INPE/NCEO","executable":False},
+{"id":"CASSOL_2019_EQ13","biome":"Amazônia","physiognomy":"floresta secundária","domain":"Santarém, PA; florestas secundárias; quad-pol PALSAR-2","bands":["L"],"sensor":"ALOS-2/PALSAR-2 SLC quad-pol","algorithm":"MLR polarimétrica Eq.13","predictors":["Neumann_tau","tau_s3","T23_imag","SE_Pnorm","SE_norm","T12_realB"],"coefficients":{"intercept":-1151.1,"Neumann_tau":516.6,"tau_s3":0.96,"T23_imag":2809.1,"SE_Pnorm":592.91,"SE_norm":319.52,"T12_realB":2306.73},"r2":0.51,"rmse_mg_ha":38.7,"bias_mg_ha":2.1,"uncertainty_pct":18.6,"validation":"bootstrap 100 repetições, 80/20","doi":"10.3390/rs11010059","institution":"INPE/colaboradores","executable":True,"constraints":"somente com os seis atributos polarimétricos definidos no artigo; não aplicar a HH/HV simples"},
 {"id":"VARZEA_2018","biome":"Amazônia","domain":"floresta de várzea","bands":["L","X"],"sensor":"ALOS/PALSAR + TerraSAR-X","algorithm":"regressão selecionada por CV","coefficients":None,"r2":0.46,"rmse_mg_ha":74.6,"validation":"cross-validation","doi":"10.3390/rs10091355","executable":False},
 {"id":"CERRADO_RIO_VERMELHO_2020","biome":"Cerrado","domain":"vegetação lenhosa; Rio Vermelho","bands":["L"],"sensor":"ALOS-2/PALSAR-2 + Landsat 8 + LiDAR","algorithm":"Random Forest","coefficients":None,"r2":0.89,"rmse_mg_ha":7.58,"bias_mg_ha":0.43,"validation":"k-fold + jackknife; referência LiDAR","doi":"10.3390/rs12172685","executable":False}
 ]
@@ -157,3 +157,16 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # Only here is literature allowed: no P-band L2B and no L-band coverage and no usable CCI.
     r=literature_fallback(biome,phys,library_rows);r["audit"]=audit
     return r
+
+
+def execute_registered_model(model_id,features):
+    m=next((x for x in MODEL_REGISTRY if x["id"]==model_id),None)
+    if not m or not m.get("executable"):raise ValueError("Modelo não executável ou ausente.")
+    co=m.get("coefficients") or {};pred=m.get("predictors") or []
+    missing=[x for x in pred if x not in features]
+    if missing:raise ValueError("Preditores obrigatórios ausentes: "+", ".join(missing))
+    y=float(co.get("intercept",0.0))
+    for x in pred:y+=float(co[x])*float(features[x])
+    return {"agb_mg_ha":max(0.0,y),"model":model_id,"rmse_mg_ha":m.get("rmse_mg_ha"),"bias_mg_ha":m.get("bias_mg_ha"),"validation":m.get("validation"),"doi":m.get("doi")}
+def model_registry_rows():
+    return [{k:m.get(k) for k in ("id","biome","physiognomy","domain","sensor","algorithm","predictors","coefficients","rmse_mg_ha","bias_mg_ha","r2","validation","doi","institution","executable","constraints")} for m in MODEL_REGISTRY]
