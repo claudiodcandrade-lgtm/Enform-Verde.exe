@@ -158,6 +158,87 @@ def literature_fallback(biome,phys,library_rows=None):
         kind="amplitude bibliográfica conservadora; não é erro estatístico nem IC95%"
     return {"available":True,"agb_mg_ha":mean,"uncertainty_mg_ha":sd,"uncertainty_kind":kind,"n_studies":len(ok),"studies":ok,
       "status":"ESTIMATIVA BIBLIOGRÁFICA — SAR NÃO PROCESSÁVEL NESTA EXECUÇÃO","source":"biblioteca científica interna"}
+
+def process_nisar_gcov(gdf,h5_path):
+    """Read calibrated NISAR L2 GCOV covariance terms and derive polygon statistics.
+    GCOV values are gamma0 power; no fabricated AGB is returned without a compatible model."""
+    import h5py
+    from pyproj import CRS, Transformer
+    from shapely.ops import transform as shp_transform
+    terms={}
+    with h5py.File(h5_path,"r") as h:
+        base="/science/LSAR/GCOV/grids/frequencyA"
+        if base not in h: raise ValueError("Arquivo não contém NISAR L2 GCOV frequencyA.")
+        g=h[base]
+        x=np.asarray(g["xCoordinates"][:],dtype=float); y=np.asarray(g["yCoordinates"][:],dtype=float)
+        epsg=None
+        for key in ("projection","projectionEPSG","epsg"):
+            if key in g:
+                try: epsg=int(np.asarray(g[key])[()])
+                except: pass
+        if epsg is None:
+            # GCOV commonly stores projection metadata on datasets/groups.
+            for obj in (g, h["/science/LSAR/GCOV"]):
+                for key,val in obj.attrs.items():
+                    if "epsg" in str(key).lower():
+                        try: epsg=int(val)
+                        except: pass
+        if epsg is None: raise ValueError("EPSG do grid GCOV não identificado.")
+        geom=gdf.to_crs(epsg).geometry.union_all()
+        minx,miny,maxx,maxy=geom.bounds
+        ix=np.where((x>=minx)&(x<=maxx))[0]; iy=np.where((y>=miny)&(y<=maxy))[0]
+        if not len(ix) or not len(iy): raise ValueError("GCOV sem interseção com o polígono.")
+        x0,x1=int(ix.min()),int(ix.max())+1; y0,y1=int(iy.min()),int(iy.max())+1
+        # Pixel-centre mask, robust to ascending/descending y.
+        xx,yy=np.meshgrid(x[x0:x1],y[y0:y1])
+        try:
+            import shapely
+            mask=shapely.contains_xy(geom,xx,yy)
+        except Exception:
+            from shapely.geometry import Point
+            mask=np.vectorize(lambda a,b: geom.contains(Point(float(a),float(b))))(xx,yy)
+        for name in ("HHHH","HVHV","VVVV","VHVH","RHRH","RVRV"):
+            if name not in g: continue
+            a=np.asarray(g[name][y0:y1,x0:x1],dtype=float)
+            v=a[mask & np.isfinite(a) & (a>0)]
+            if not len(v): continue
+            db=10*np.log10(v)
+            terms[name]={"mean_power":float(v.mean()),"mean_db":float(db.mean()),"sd_db":float(db.std(ddof=1)) if len(db)>1 else 0.0,"n":int(len(v))}
+    if not terms: raise ValueError("Nenhum termo polarimétrico GCOV válido dentro do polígono.")
+    features={}
+    if "HHHH" in terms: features["L_HH_dB"]=terms["HHHH"]["mean_db"]
+    hv="HVHV" if "HVHV" in terms else ("VHVH" if "VHVH" in terms else None)
+    if hv: features["L_HV_dB"]=terms[hv]["mean_db"]
+    if "VVVV" in terms: features["L_VV_dB"]=terms["VVVV"]["mean_db"]
+    if "L_HH_dB" in features and "L_HV_dB" in features: features["L_HV_HH_dB"]=features["L_HV_dB"]-features["L_HH_dB"]
+    return {"status":"NISAR_GCOV_PROCESSADO","features":features,"terms":terms,"product":"NISAR L2 GCOV PROVISIONAL","band":"L"}
+
+def select_executable_model(biome,phys,features):
+    """Strict compatibility: executable, biome/physiognomy domain and all predictors present."""
+    pp=(phys or "").lower()
+    cand=[]
+    for m in MODEL_REGISTRY:
+        if not m.get("executable") or m.get("execution_mode")=="direct_product": continue
+        if m.get("biome") not in (biome,"*"): continue
+        mp=(m.get("physiognomy") or "").lower()
+        if mp and pp and not any(t in pp for t in re.split(r"[/,; ]+",mp) if len(t)>4): continue
+        pred=m.get("predictors") or []
+        if pred and all(p in features for p in pred): cand.append(m)
+    cand.sort(key=lambda m:(m.get("rmse_mg_ha") is None,m.get("rmse_mg_ha") or 1e9))
+    return cand[0] if cand else None
+
+def analyze_nisar_gcov(gdf,h5_path,biome,phys):
+    q=process_nisar_gcov(gdf,h5_path); m=select_executable_model(biome,phys,q["features"])
+    if not m:
+        return {"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"data_origin":"SAR_NAO_PROCESSADO",
+                "source":"NISAR L2 GCOV processado; sem equação executável compatível",
+                "product":q["product"],"band":"L","features":q["features"],"terms":q["terms"],
+                "message":"NISAR GCOV foi efetivamente processado, mas nenhum modelo executável do catálogo aceita exatamente estes preditores e esta fitofisionomia."}
+    r=execute_registered_model(m["id"],q["features"])
+    return {"status":"SAR_PROCESSADO","agb_mg_ha":r["agb_mg_ha"],"uncertainty_mg_ha":r.get("rmse_mg_ha"),
+            "uncertainty_kind":"RMSE de validação do modelo","data_origin":"SAR_L_MODELO","source":m.get("source") or m.get("doi"),
+            "sensor":"NISAR","band":"L","product":q["product"],"model_id":m["id"],"features":q["features"],"terms":q["terms"]}
+
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     audit={"biomass_l2b":None,"cci":None,"asf":None,"warnings":[]}
