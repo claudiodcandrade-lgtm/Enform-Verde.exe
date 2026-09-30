@@ -71,30 +71,60 @@ def geom_metrics(gdf):
     b=union.bounds
     return {"area_ha":area,"centroid":[lon,lat],"bbox":[float(x) for x in b],"utm_epsg":epsg}
 
+def _sicar_session():
+    import requests, ssl
+    from requests.adapters import HTTPAdapter
+    class SicarTLSAdapter(HTTPAdapter):
+        def init_poolmanager(self,*args,**kwargs):
+            from urllib3.poolmanager import PoolManager
+            ctx=ssl.create_default_context()
+            try: ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+            except Exception: pass
+            kwargs["ssl_context"]=ctx
+            return super().init_poolmanager(*args,**kwargs)
+    sess=requests.Session()
+    sess.mount("https://geoserver.car.gov.br/",SicarTLSAdapter())
+    sess.headers.update({"User-Agent":f"Enform-Verde/{APP_VERSION}","Accept":"application/json"})
+    return sess
+
 def resolve_car(car):
-    import requests, geopandas as gpd
-    code=car.strip().upper()
+    """Busca um imóvel diretamente no WFS público georreferenciado do SICAR."""
+    import geopandas as gpd
+    code=re.sub(r"\\s+","",car.strip().upper())
     m=re.match(r"^([A-Z]{2})-",code)
-    if not m: raise ValueError("Código CAR inválido: esperado UF-...")
-    uf0=m.group(1); uf=uf0 if uf0=="DF" else uf0.lower(); layer=f"sicar:sicar_imoveis_{uf}"
+    if not m: raise ValueError("Código CAR inválido: esperado UF-códigoIBGE-identificador.")
+    uf=m.group(1).lower()
+    layer=f"sicar:sicar_imoveis_{uf}"
     url="https://geoserver.car.gov.br/geoserver/sicar/ows"
-    errors=[]
-    for fld in ("cod_imovel",):
-        params={"service":"WFS","version":"1.0.0","request":"GetFeature","typeName":layer,
-                "outputFormat":"application/json","srsName":"EPSG:4326",
-                "CQL_FILTER":f"{fld}='{code}'"}
-        try:
-            r=requests.get(url,params=params,headers={"User-Agent":f"Enform-Verde/{APP_VERSION}","Accept":"application/json"},timeout=(10,60))
-            if r.ok and "FeatureCollection" in r.text:
-                js=r.json()
-                if js.get("features"):
-                    tmp=Path(tempfile.gettempdir())/"enform_car.geojson"; tmp.write_text(json.dumps(js),encoding="utf-8")
-                    gdf=gpd.read_file(tmp)
-                    if gdf.empty or gdf.geometry.isna().all(): raise RuntimeError("SICAR retornou registro sem geometria válida.")
-                    return gdf.to_crs("EPSG:4326") if gdf.crs else gdf.set_crs("EPSG:4326")
-            errors.append(f"{fld}:{r.status_code}")
-        except Exception as e: errors.append(str(e))
-    raise RuntimeError("O WFS público oficial do SICAR/SFB não devolveu a geometria deste CAR. Tentativas: "+"; ".join(errors[-3:]))
+    params={"service":"WFS","version":"1.0.0","request":"GetFeature","typeName":layer,
+            "outputFormat":"application/json","srsName":"EPSG:4326","maxFeatures":"2",
+            "cql_filter":f"cod_imovel='{code}'"}
+    sess=_sicar_session()
+    try:
+        r=sess.get(url,params=params,timeout=(10,60))
+        r.raise_for_status()
+        js=r.json()
+    except Exception as e:
+        raise RuntimeError("Falha de comunicação com a base georreferenciada pública do SICAR: "+str(e))
+    feats=js.get("features") or []
+    if not feats:
+        raise LookupError("O código informado não foi localizado na camada pública "+layer+". Confira se foi digitado o código completo do imóvel.")
+    if len(feats)>1:
+        raise RuntimeError("O SICAR retornou mais de um registro para o código informado; a análise foi interrompida para evitar selecionar o imóvel errado.")
+    props=feats[0].get("properties") or {}
+    geom=feats[0].get("geometry")
+    if not geom: raise RuntimeError("O registro SICAR foi localizado, mas o serviço não retornou geo_area_imovel.")
+    tmp=Path(tempfile.gettempdir())/"enform_car_sicar.geojson"
+    tmp.write_text(json.dumps({"type":"FeatureCollection","features":feats}),encoding="utf-8")
+    gdf=gpd.read_file(tmp)
+    if gdf.crs is None:gdf=gdf.set_crs("EPSG:4326")
+    else:gdf=gdf.to_crs("EPSG:4326")
+    gdf.attrs["sicar_cod_imovel"]=props.get("cod_imovel",code)
+    gdf.attrs["sicar_status"]=props.get("status_imovel")
+    gdf.attrs["sicar_area_declarada_ha"]=props.get("area")
+    gdf.attrs["sicar_municipio"]=props.get("municipio")
+    gdf.attrs["sicar_data_atualizacao"]=props.get("data_atualizacao")
+    return gdf
 
 IBGE_VEGE_2026_URL="https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip"
 IBGE_BIOMAS_2025_URL="https://geoftp.ibge.gov.br/informacoes_ambientais/estudos_ambientais/biomas/vetores/2025_Biomas-e-Sistema-Costeiro-Marinho-do-Brasil-1-250000_shp.zip"
