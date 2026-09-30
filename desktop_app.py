@@ -355,6 +355,7 @@ class App(tk.Tk):
         visual=base/"enform_header.jpg"
         if visual.exists():
             im=Image.open(visual).convert("RGB")
+            if im.width < 500: im=im.resize((500,max(1,round(im.height*500/im.width))),Image.Resampling.LANCZOS)
             im.thumbnail((500,440),Image.Resampling.LANCZOS)
             self.hero_photo=ImageTk.PhotoImage(im)
             hero.create_image(0,0,image=self.hero_photo,anchor="nw")
