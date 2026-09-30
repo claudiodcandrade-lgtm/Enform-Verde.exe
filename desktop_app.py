@@ -471,6 +471,39 @@ class App(tk.Tk):
         if biome=="Cerrado" and "cerradão" in phys: mean,lo,hi=110.0,55.0,190.0
         return mean,lo,hi
 
+    def execute(self,event=None):
+        if self._analysis_running:
+            self.status.set("Análise já em execução; aguarde.")
+            return
+        car=self.car.get().strip().upper(); ccir=re.sub(r"\\D","",self.ccir.get())
+        if car and (self.active_source!="CAR" or self.active_input_id!=car):
+            return messagebox.showinfo("Perímetro","Use 'Buscar CAR no SICAR' antes de executar a análise.")
+        if ccir and (self.active_source!="CCIR" or self.active_input_id!=ccir):
+            return messagebox.showinfo("Perímetro","Use 'Buscar CCIR no SIGEF' antes de executar a análise.")
+        if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Busque CAR/CCIR ou carregue um vetor.")
+        if self.sar_paths:return self._execute_main(event)
+        self._analysis_running=True; self.run_btn.state(["disabled"]); self.pipeline_btn.state(["disabled"])
+        self.status.set("Consultando SAR em segundo plano…")
+        gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
+        def worker():
+            try:self._analysis_queue.put(("ok",automatic_pipeline(gdf,biome,phys,token)))
+            except Exception:self._analysis_queue.put(("error",traceback.format_exc()))
+        threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
+        self.after(120,self._poll_analysis)
+
+    def _poll_analysis(self):
+        try:kind,payload=self._analysis_queue.get_nowait()
+        except queue.Empty:
+            if self._analysis_running:self.after(120,self._poll_analysis)
+            return
+        self._analysis_running=False; self.run_btn.state(["!disabled"]); self.pipeline_btn.state(["!disabled"])
+        if kind=="error":
+            log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
+            self.status.set("Falha controlada — programa permanece responsivo.")
+            return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
+        self.status.set("SAR consultado; calculando carbono…")
+        self.after(1,lambda:self._execute_main(precomputed_sar=payload))
+
     def _execute_main(self,event=None,precomputed_sar=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
