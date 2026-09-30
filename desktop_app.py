@@ -295,7 +295,13 @@ class App(tk.Tk):
             im=Image.open(visual).convert("RGB")
             im.thumbnail((500,440),Image.Resampling.LANCZOS)
             self.hero_photo=ImageTk.PhotoImage(im)
-            hero.create_image(0,0,image=self.hero_photo,anchor="nw")\n            logo=base/"enform_logo.png"\n            if logo.exists():\n                lg=Image.open(logo).convert("RGBA"); lg.thumbnail((300,150),Image.Resampling.LANCZOS)\n                self.hero_logo=ImageTk.PhotoImage(lg); hero.create_image(34,30,image=self.hero_logo,anchor="nw")
+            hero.create_image(0,0,image=self.hero_photo,anchor="nw")
+            logo=base/"enform_logo.png"
+            if logo.exists():
+                lg=Image.open(logo).convert("RGBA")
+                lg.thumbnail((300,150),Image.Resampling.LANCZOS)
+                self.hero_logo=ImageTk.PhotoImage(lg)
+                hero.create_image(34,30,image=self.hero_logo,anchor="nw")
         else:
             hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
             hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
