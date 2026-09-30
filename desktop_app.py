@@ -567,7 +567,7 @@ class App(tk.Tk):
             for name,val,status,note,method,source in parts:
                 origem=(("SAR" if str(status).startswith("SAR") else "LITERATURA") if name=="Biomassa aérea" else ("MAPEAMENTO" if name=="Solo 0–30 cm" else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))
                 if name=="Biomassa aérea":
-                    ea,ep,metric,level=agb_abs,agb_pct,agb_metric,("1σ/DP do produto" if sar_unc else "N/D")
+                    ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo") if sar_unc else "N/D")
                 elif name=="Biomassa subterrânea":
                     # Propagate SAR uncertainty only; R:S range is methodological, not a statistical CI.
                     ea=(agb_abs*ROOT_RATIO if agb_abs is not None else None); ep=(ea/val*100 if ea is not None and val else None)
