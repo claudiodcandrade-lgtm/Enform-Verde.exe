@@ -127,7 +127,7 @@ def maap_search(gdf,collection,limit=50,product_type=None):
     fs=r.json().get("features",[])
     if product_type:
         fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{})))]
-    return _newest_first([{"id":x.get("id"),"properties":x.get("properties",{}),"raw":x} for x in fs]) if False else sorted(fs,key=lambda x:str((x.get("properties") or {}).get("datetime") or (x.get("properties") or {}).get("start_datetime") or ""),reverse=True)
+    return sorted(fs,key=lambda x:str((x.get("properties") or {}).get("datetime") or (x.get("properties") or {}).get("start_datetime") or ""),reverse=True)
 def _download(url,out,token=None):
     h={"Authorization":"Bearer "+token} if token else {}
     with requests.get(url,headers=h,stream=True,timeout=(10,180)) as r:
@@ -336,7 +336,6 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             def _rank(it):
                 t=(str(it.get("id",""))+" "+str(it.get("properties",{}))).upper()
                 return 0 if ("NISAR" in t and "GCOV" in t) else (1 if "NISAR" in t else 2)
-            cands=sorted(cands,key=lambda it:(_rank(it), "".join(chr(255-ord(c)) for c in _scene_datetime(it))))
             # Within each spectral/product priority, newest acquisition is attempted first.
             cands=sorted(cands,key=_scene_datetime,reverse=True)
             cands=sorted(cands,key=_rank)
