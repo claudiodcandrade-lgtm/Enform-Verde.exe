@@ -243,22 +243,52 @@ def zonal_soil(gdf,raster_path):
     if len(vals)==0: raise ValueError("O raster de solo não possui pixels válidos na área.")
     return float(np.mean(vals)),float(np.std(vals)),len(vals)
 
-def try_download_embrapa_soc(gdf):
-    # WCS público: tentativa automática; falha é reportada e nunca substituída por valor inventado.
+def pronasolos_soc_profiles(gdf,max_points=25):
+    """Sample official PronaSolos 90 m SOC-stock rasters through ArcGIS REST identify.
+    Returns cumulative 0-30/60/100/200 cm stocks. Spatial SD is descriptive, not map prediction error."""
     import requests
-    b=geom_metrics(gdf)["bbox"]; out=Path(tempfile.gettempdir())/"enform_soc030.tif"
-    endpoints=["https://geoinfo.dados.embrapa.br/geoserver/wcs","https://geoinfo.dados.embrapa.br/geoserver/ows"]
-    params={"service":"WCS","version":"1.0.0","request":"GetCoverage","coverage":"geonode:br_gsocmap030",
-            "crs":"EPSG:4326","bbox":",".join(map(str,b)),"format":"GeoTIFF","resx":"0.008333333","resy":"0.008333333"}
-    errs=[]
-    for u in endpoints:
+    gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
+    minx,miny,maxx,maxy=geom.bounds
+    n=max(3,int(math.sqrt(max_points))); xs=np.linspace(minx,maxx,n); ys=np.linspace(miny,maxy,n)
+    pts=[]
+    from shapely.geometry import Point
+    for y in ys:
+        for x in xs:
+            p=Point(float(x),float(y))
+            if geom.covers(p):pts.append(p)
+    if not pts:pts=[geom.representative_point()]
+    pts=pts[:max_points]
+    url="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
+    layer_ids=[2,3,4,5,6,7]; vals={k:[] for k in layer_ids}; sess=requests.Session()
+    extent=f"{minx},{miny},{maxx},{maxy}"
+    for p in pts:
+        params={"f":"json","geometry":f"{p.x},{p.y}","geometryType":"esriGeometryPoint","sr":"3857",
+                "layers":"all:"+",".join(map(str,layer_ids)),"tolerance":"1","mapExtent":extent,
+                "imageDisplay":"800,800,96","returnGeometry":"false"}
         try:
-            r=requests.get(u,params=params,timeout=45)
-            if r.ok and len(r.content)>1000 and not r.content.lstrip().startswith(b"<"):
-                out.write_bytes(r.content); return str(out)
-            errs.append(f"{r.status_code}")
-        except Exception as e: errs.append(str(e))
-    raise RuntimeError("Download WCS do COS Embrapa indisponível nesta execução ("+", ".join(errs)+"). Carregue o GeoTIFF oficial 0–30 cm.")
+            r=sess.get(url,params=params,timeout=(5,15)); r.raise_for_status(); js=r.json()
+            for item in js.get("results",[]):
+                lid=int(item.get("layerId",-1)); at=item.get("attributes") or {}
+                raw=at.get("Pixel Value",at.get("Stretched value",item.get("value")))
+                try:
+                    v=float(str(raw).replace(",","."))
+                    if np.isfinite(v) and -1<v<1000 and lid in vals:vals[lid].append(v)
+                except:pass
+        except Exception:continue
+    if any(len(vals[k])==0 for k in layer_ids):
+        missing=[str(k) for k in layer_ids if not vals[k]]
+        raise RuntimeError("PronaSolos respondeu sem valores numéricos para camada(s): "+",".join(missing))
+    arr={k:np.asarray(vals[k],float) for k in layer_ids}
+    # Use common sample count to keep cumulative profiles paired conservatively.
+    m=min(len(arr[k]) for k in layer_ids); stacks=np.vstack([arr[k][:m] for k in layer_ids])
+    cum=np.cumsum(stacks,axis=0)
+    targets={"0–30 cm":2,"0–60 cm":3,"0–100 cm":4,"0–200 cm":5}; out={}
+    for label,idx in targets.items():
+        x=cum[idx]; out[label]={"tc_ha":float(np.mean(x)),"spatial_sd_tc_ha":float(np.std(x,ddof=1)) if len(x)>1 else 0.0,
+          "n_samples":int(len(x)),"layers":[ "0–5","5–15","15–30","30–60","60–100","100–200"][:idx+1],
+          "uncertainty_kind":"DP espacial das amostras do mapa; não é IC95% nem erro de predição"}
+    return out
+
 
 def self_test():
     assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8
