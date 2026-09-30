@@ -1,4 +1,4 @@
-import sys, json, math, tempfile, re, zipfile
+import sys, json, math, tempfile, re, zipfile, threading, queue, traceback
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.0.1-PROFESSIONAL"
+APP_VERSION="3.0.2-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -277,7 +277,7 @@ def self_test():
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); self.geometry("1260x760"); self.minsize(1050,650)
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue()
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
         s=ttk.Style(self)
@@ -314,7 +314,7 @@ class App(tk.Tk):
         main=ttk.Frame(root,padding=22); main.pack(side="left",fill="both",expand=True)
         top=ttk.Frame(main); top.pack(fill="x")
         ttk.Label(top,text="Análise de carbono",style="Title.TLabel").pack(side="left")
-        ttk.Button(top,text="EXECUTAR ANÁLISE",command=self.execute,style="Run.TButton").pack(side="right")
+        self.run_btn=ttk.Button(top,text="EXECUTAR ANÁLISE",command=self.execute,style="Run.TButton"); self.run_btn.pack(side="right")
         ttk.Button(top,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=8)
         ttk.Button(top,text="Salvar relatório",command=self.save_report).pack(side="right",padx=8)
         self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True,pady=(16,8))
@@ -355,7 +355,7 @@ class App(tk.Tk):
         ttk.Entry(auth,textvariable=self.esa_token,width=48,show="•").pack(side="left",padx=6)
         ttk.Label(auth,text="(mantido apenas na memória desta sessão)",foreground="#666").pack(side="left")
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
-        ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute).pack(side="left")
+        self.pipeline_btn=ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute); self.pipeline_btn.pack(side="left")
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
         ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
         self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — BIOMASS P → L-band → CCI → literatura")
@@ -471,7 +471,7 @@ class App(tk.Tk):
         if biome=="Cerrado" and "cerradão" in phys: mean,lo,hi=110.0,55.0,190.0
         return mean,lo,hi
 
-    def execute(self,event=None):
+    def _execute_main(self,event=None,precomputed_sar=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
             self.project.pop(k,None)
@@ -491,11 +491,12 @@ class App(tk.Tk):
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
-            if self.sar_paths:
+            if precomputed_sar is not None:
+                sar=precomputed_sar
+            elif self.sar_paths:
                 sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get())
             else:
-                self.status.set("Pipeline automático: BIOMASS P → L-band → CCI → literatura..."); self.update_idletasks()
-                sar=automatic_pipeline(self.gdf,self.biome.get(),self.phys.get(),self.esa_token.get().strip())
+                raise RuntimeError("Pipeline automático sem resultado do worker.")
             self.project["sar_result"]=sar
             if sar.get("agb_mg_ha") is None:
                 msg=sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada."
