@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.0.0-PROFESSIONAL"
+APP_VERSION="3.0.1-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -497,7 +497,11 @@ class App(tk.Tk):
                 self.status.set("Pipeline automático: BIOMASS P → L-band → CCI → literatura..."); self.update_idletasks()
                 sar=automatic_pipeline(self.gdf,self.biome.get(),self.phys.get(),self.esa_token.get().strip())
             self.project["sar_result"]=sar
-            if sar.get("agb_mg_ha") is None:raise ValueError(sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada.")
+            if sar.get("agb_mg_ha") is None:
+                msg=sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada."
+                self.project["last_result"]="ANÁLISE SAR — AÇÃO NECESSÁRIA\n\n"+msg+"\n\nNão foi aplicado fallback bibliográfico porque existe cobertura SAR identificada."
+                self._set(self.res,self.project["last_result"]); self.nb.select(self.tabs[3]); self.status.set("Cobertura SAR encontrada; autenticação/processamento pendente.")
+                messagebox.showinfo("Cobertura SAR encontrada",msg); return
             agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
             agb_lo=max(0.0,agb-1.96*sar_unc); agb_hi=agb+1.96*sar_unc
             agc=agb*CARBON_FRACTION
