@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.5.0-PROFESSIONAL"
+APP_VERSION="3.6.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -582,10 +582,17 @@ class App(tk.Tk):
                 msg=sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada."
                 lit=sar.get("literature_reference") or {}
                 if lit.get("available"):
-                    msg += f"\n\nREFERÊNCIA BIBLIOGRÁFICA SEPARADA (não usada no resultado SAR): AGB={lit.get('agb_mg_ha',0):.1f} Mg/ha; {lit.get('uncertainty_kind','')}"
-                self.project["last_result"]="ANÁLISE SAR — AÇÃO NECESSÁRIA\n\n"+msg+"\n\nNão foi aplicado fallback bibliográfico porque existe cobertura SAR identificada."
-                self._set(self.res,self.project["last_result"]); self.nb.select(self.tabs[3]); self.status.set("Cobertura SAR encontrada; autenticação/processamento pendente.")
-                messagebox.showinfo("Cobertura SAR encontrada",msg); return
+                    # Always deliver an analysis, but never relabel literature as SAR.
+                    sar=dict(lit)
+                    sar["data_origin"]="LITERATURA_SECUNDARIA"
+                    sar["status"]="ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO"
+                    sar["source"]=lit.get("source","biblioteca científica interna")
+                    sar["sar_diagnostic"]=msg
+                    self.project["sar_result"]=sar
+                    self.project["sar_warning"]=msg
+                else:
+                    self.project["last_result"]="ANÁLISE INCOMPLETA — SAR NÃO PROCESSADO\n\n"+msg
+                    self._set(self.res,self.project["last_result"]); self.nb.select(self.tabs[3]); self.status.set("SAR não processado e sem referência secundária compatível."); return
             agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
             unc_kind=str(sar.get("uncertainty_kind") or "incerteza do produto/modelo")
             unc_mult=1.0 if "amplitude bibliográfica" in unc_kind else 1.96
@@ -641,7 +648,7 @@ class App(tk.Tk):
                 "note":"propagação RSS dos componentes quantificados; não inclui componentes com erro estatístico N/D"}
             self.project["analysis_rows"]=rows
             self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
-            lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
+            lines=([f"AVISO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
             for r in rows:
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
