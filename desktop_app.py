@@ -1,4 +1,4 @@
-import sys, json, math, tempfile, re, zipfile, threading, queue, traceback
+import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io
 from pathlib import Path
 import tkinter as tk
 import webbrowser
@@ -355,13 +355,21 @@ class App(tk.Tk):
         base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
 
         header=tk.Canvas(root,height=108,bg="#10291f",highlightthickness=0); header.pack(fill="x",side="top")
-        visual=base/"enform_dashboard_header.jpg"
+        visual=base/"enform_header.jpg"
         if visual.exists():
             im=Image.open(visual).convert("RGB")
             sw=max(self.winfo_screenwidth(),1260)
             im=im.resize((sw,108),Image.Resampling.LANCZOS)
             self.header_photo=ImageTk.PhotoImage(im)
             header.create_image(0,0,image=self.header_photo,anchor="nw")
+            # Official Enform logo replaces the leaf symbol from the reference template.
+            lg=Image.open(io.BytesIO(base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAOAAAAB2CAMAAADmzG+NAAAAY1BMVEX////vmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2ZUpum1AAAAH3RSTlMAEBAgIDAwQEBQUGBgcHCAgJCQoKCwsMDA0NDg4PDwFagsVAAABJdJREFUeNrtmdl2qjAUhsMgIKKkTI3IkPd/yrMyJ6A9FhUta/9XFkLgS/aYIgQCgUAgEAgEAoFAIBAIBAKBQCAQ6Ok65sc42DDf98jU18fdRgHLUenytUlGr/6+aMbzwdvmNsZ53QvEPve26oz7UjD2x+0GnMNZGOpuu4ixCKr5htNGzEPOecuZMeeeuN8ESz+O5zqPJ1d33BUPG+Dbqfz3fXRM0uPZ/2sDZehodD7aCfDALpV/HrAex3Ne6kKmtLZx37+BMGsGSgeSPdMFWVb3VI63EXfs0qo532+pVPVEF9zpOkYgmkqNE64ZaTTfED7PBXsrsuR8Gy+xzd+vV9RgxUfxE12wdoKnQMztSHNZrfYeuHGGKCme6YKTNBjU3BM9K+XXK/EljI+8Jgv2pSlbDpzas9r944oWmj11SjsLXnRw4WWMIvT6ceyD9QCTZ1cycazTYK9cz+OEqvRezUg5oP+SqYOjaANV/OSEKsd/jeO4Xw3wdUWpyIJfFuHBGOnl7wMiFPBOV/peYLneYaV0/2pAWX1KQtv1zuts4esBUWDFT+Z6sYkzh00AIq/WhMz1vpG21/M2AMUxd6mLmNiUb7uNAJr4ybawRGh/cXLkbxRmGOPT9dTtJxjj1P8/IBuHs+jGK6Lp9NEJY5zYD2eTzsSULnwLxSFiuaDgzlTzM2DDURDCutmwUrfUDUJIx2tRLlWwhdUgJ+lO1mKwIQw5aVXjIR9K5DuHlF08yYcLt3qIlZEG+rwm/j1epHs7SmmrN4DwXigzt1RnSx3haf/EEM0uiqLVb8xQ8aswozPkE/P+uRvGMj2w8mZJAI0G54OHyAIk2RWWa4CVe9EU4nyIbP8twMIe7KwwnhlprWx0XPSvGME3FGmSNWINfQPITbGtGrEGw01AyddgXHTuMvEhhE4A+XykkmDC4CvxZOd+HgMLhLHWyxoJPm0loJLBWkNi26wgEF+NsfhizMWiRMrvEhEihDu1FiB7xVClSWivTxuqvlJ/gDBzN9B4qig9xw8E/MZpZAffAlT72TkN0iSKdvNJlJFKgMZ3vFLPWznu3V3pwsoHa7POEGmqk/mpj5SKHwBT6k5iL9r85I3ao1MnshRXAOPHACP79ZGM9MQAVtdbXBewmAQHn5rbc79yQonY7fSnPjp/qPbM9PzhqdN5zAAm9wCSqetYj9LZ4YbjaIkVvG4dFDx0SCGn9GUEpbQr7DRB0d2AN0406Kzmca4kjve+4CSET4lVETJUEbrx2Y8AkhkgcQDxqwEVXerc+iWgXWNVnwOoE1EzOwS8H7CxA4UO9/5HAIqA12ZXTsjuBzxNKBIrcr4bUKz+cK3FuR8wdEOl300K17cCJk7pmLX+AkBZj0jCsLUz+dsBxRbyUjHBHaXFEkBfFggp+2+M+H1CnwLot253EC0AnLZcVgX0fkC72+Q99RLAKSFGHwSIUNaZXjxDiwCRXxhEkqDPAkQoLQgZCMF2NGXHUNg9UAqdv6aWkFWknU6C+DkUunklxNODJxwiEAgEAoFAIBAIBAKBQCAQCAQCgUAgEAgEAoFAIBAIdEv/ABJx6rY9YuvYAAAAAElFTkSuQmCC"))).convert("RGBA")
+            lg.thumbnail((175,92),Image.Resampling.LANCZOS)
+            self.header_logo=ImageTk.PhotoImage(lg)
+            header.create_rectangle(8,5,205,103,fill="#10291f",outline="")
+            header.create_image(18,8,image=self.header_logo,anchor="nw")
+            header.create_text(202,24,text="Verde",anchor="nw",fill="#52CC53",font=("Segoe UI",28,"bold"))
+            header.create_text(204,70,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
         else:
             header.create_text(24,24,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
             header.create_text(26,72,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
