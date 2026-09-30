@@ -63,7 +63,7 @@ jobs:
           assert "sar_attempted_first" in sar_src, "SAR-first fallback audit missing"
           assert "GERAR TOKEN NO EARTHDATA" in src and "users/generate_token" in src, "Earthdata browser token UI missing"
           assert "Propriedade (CAR)" in src and "Mapas e limites" in src and "Carregar produtos SAR / AGB" in src, "approved dashboard navigation missing"
-          assert "EXECUTAR ANÁLISE" in src and "Conexão NASA Earthdata" in src, "global analysis/Earthdata controls missing"
+          assert "EXECUTAR ANÁLISE" in src and "Conexão NASA Earthdata" in src, "global analysis/Earthdata controls missing"\n          assert "Copernicus CDSE" in src and "Fontes SAR independentes" in src, "multi-source SAR UI missing"
           assert "Aspect ratio is preserved" in src, "header aspect-ratio protection missing"
           assert "literatura/modelagem somente após falha documentada" in src, "fallback policy regression"
           assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Sentinel-1 C-band fallback"), "SAR priority regression"
@@ -140,7 +140,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.14.0-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.15.0-MULTISOURCE
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
