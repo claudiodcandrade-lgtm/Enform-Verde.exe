@@ -8,7 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
 
-APP_VERSION="1.3.5-STATE-RESET"
+APP_VERSION="1.3.6-FRESH-QUERY"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -369,6 +369,8 @@ class App(tk.Tk):
         if not keep_geometry:self.gdf=None
         self.soil_raster=None
         self.inv=None
+        self.active_source=None
+        self.active_input_id=None
         self.biome.set(""); self.phys.set("")
         for widget_name in ("remote_text","res"):
             w=getattr(self,widget_name,None)
@@ -380,13 +382,13 @@ class App(tk.Tk):
     def car_lookup(self):
         self._reset_analysis_state()
         try:
-            self.status.set("Consultando SICAR..."); self.update_idletasks(); self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
+            self.status.set("Consultando SICAR..."); self.update_idletasks(); self.gdf=resolve_car(self.car.get()); self.active_source="CAR"; self.active_input_id=self.car.get().strip().upper(); self.ccir.set(""); self._show_geom("SICAR")
         except Exception as e: self.status.set("CAR não resolvido."); messagebox.showwarning("SICAR",str(e))
     def ccir_lookup(self):
         self._reset_analysis_state()
         try:
             self.status.set("Consultando SIGEF pelo código do CCIR..."); self.update_idletasks()
-            self.gdf=resolve_ccir_sigef(self.ccir.get()); self._show_geom("CCIR / SIGEF")
+            self.gdf=resolve_ccir_sigef(self.ccir.get()); self.active_source="CCIR"; self.active_input_id=re.sub(r"\\D","",self.ccir.get()); self.car.set(""); self._show_geom("CCIR / SIGEF")
         except Exception as e:
             self.status.set("CCIR/SIGEF não resolvido."); messagebox.showwarning("CCIR / SIGEF",str(e))
 
@@ -394,7 +396,7 @@ class App(tk.Tk):
         p=filedialog.askopenfilename(filetypes=[("Vetores","*.kml *.kmz *.geojson *.json *.shp *.gpkg"),("Todos","*.*")])
         if not p:return
         self._reset_analysis_state()
-        try:self.gdf=read_vector(p); self.project["vector"]=p; self._show_geom(Path(p).name)
+        try:self.gdf=read_vector(p); self.project["vector"]=p; self.active_source="VECTOR"; self.active_input_id=str(Path(p).resolve()); self.car.set(""); self.ccir.set(""); self._show_geom(Path(p).name)
         except Exception as e:messagebox.showerror("Vetor",str(e))
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
@@ -438,12 +440,7 @@ class App(tk.Tk):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
             self.project.pop(k,None)
-        if self.gdf is None:
-            if self.car.get().strip():
-                try:self.gdf=resolve_car(self.car.get()); self._show_geom("SICAR")
-                except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e)+"\n\nAlternativamente carregue KML, KMZ, SHP, GeoJSON ou GPKG.")
-            else:return messagebox.showwarning("Perímetro necessário","Informe o CAR ou carregue o arquivo vetorial da propriedade.")
-        try:
+        current_car=self.car.get().strip().upper()\n        current_ccir=re.sub(r"\\D","",self.ccir.get())\n        if current_car and (self.active_source!="CAR" or self.active_input_id!=current_car):\n            self._reset_analysis_state()\n            try:\n                self.gdf=resolve_car(current_car); self.active_source="CAR"; self.active_input_id=current_car; self._show_geom("SICAR")\n            except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e))\n        elif current_ccir and (self.active_source!="CCIR" or self.active_input_id!=current_ccir):\n            self._reset_analysis_state()\n            try:\n                self.gdf=resolve_ccir_sigef(current_ccir); self.active_source="CCIR"; self.active_input_id=current_ccir; self._show_geom("CCIR / SIGEF")\n            except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e))\n        if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR/CCIR ou carregue o arquivo vetorial da propriedade.")\n        try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
             agb,agb_lo,agb_hi=self.remote_biomass_reference()
