@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.4.0-PROFESSIONAL"
+APP_VERSION="3.5.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -384,7 +384,14 @@ class App(tk.Tk):
         ttk.Label(auth,text="ESA MAAP offline token:").pack(side="left")
         self.esa_token=tk.StringVar()
         ttk.Entry(auth,textvariable=self.esa_token,width=48,show="•").pack(side="left",padx=6)
-        ttk.Label(auth,text="(mantido apenas na memória desta sessão)",foreground="#666").pack(side="left")
+        ttk.Label(auth,text="(memória da sessão)",foreground="#666").pack(side="left")
+        auth2=ttk.Frame(f); auth2.pack(fill="x",pady=4)
+        ttk.Label(auth2,text="NASA Earthdata usuário:").pack(side="left")
+        self.edl_user=tk.StringVar(); self.edl_password=tk.StringVar()
+        ttk.Entry(auth2,textvariable=self.edl_user,width=22).pack(side="left",padx=4)
+        ttk.Label(auth2,text="senha:").pack(side="left")
+        ttk.Entry(auth2,textvariable=self.edl_password,width=22,show="•").pack(side="left",padx=4)
+        ttk.Label(auth2,text="(não gravados)",foreground="#666").pack(side="left")
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         self.pipeline_btn=ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute); self.pipeline_btn.pack(side="left")
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
@@ -398,8 +405,9 @@ class App(tk.Tk):
         try:
             self.status.set("Consultando catálogos SAR..."); self.update_idletasks()
             cov=discover_sar(self.gdf); self.project["sar_catalog"]=cov
-            txt=["COBERTURA SAR ENCONTRADA"]
-            for x in cov:txt.append(f"{x['provider']} — {x['dataset']} ({x['band']}): {x['count']} cena(s)"+((" — "+x["error"]) if x.get("error") else ""))
+            txt=["REGISTROS RETORNADOS PELOS CATÁLOGOS SAR","(descoberta ≠ download ≠ processamento ≠ uso na estimativa)"]
+            for x in cov:txt.append(f"{x['provider']} — {x['dataset']} ({x['band']}): {x['count']} registro(s) retornado(s)"+((" — "+x["error"]) if x.get("error") else ""))
+            txt += ["","Para uso quantitativo, o produto ainda precisa ser elegível, baixado, pré-processado e associado a modelo/produto AGB compatível."]
             self._set(self.remote_text,"\n".join(txt)); self.status.set("Descoberta SAR concluída.")
         except Exception as e:self.status.set("Falha na descoberta SAR."); messagebox.showerror("SAR",str(e))
 
@@ -518,7 +526,7 @@ class App(tk.Tk):
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         def worker():
             try:
-                sar=automatic_pipeline(gdf,biome,phys,token)
+                sar=automatic_pipeline(gdf,biome,phys,token,edl_user=self.edl_user.get().strip(),edl_password=self.edl_password.get())
                 try: soil_profiles=pronasolos_soc_profiles(gdf)
                 except Exception as e: soil_profiles={"error":str(e)}
                 self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))
