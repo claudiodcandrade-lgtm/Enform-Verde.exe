@@ -394,6 +394,7 @@ class App(tk.Tk):
         if old_vector and keep_geometry:self.project["vector"]=old_vector
         if not keep_geometry:self.gdf=None
         self.soil_raster=None
+        self.sar_paths=[]
         self.inv=None
         self.active_source=None
         self.active_input_id=None
@@ -483,7 +484,11 @@ class App(tk.Tk):
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
-            agb,agb_lo,agb_hi=self.remote_biomass_reference()
+            sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get())
+            self.project["sar_result"]=sar
+            if sar.get("agb_mg_ha") is None:raise ValueError(sar.get("message","AGB não estimada: falta modelo SAR validado compatível."))
+            agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
+            agb_lo=max(0.0,agb-1.96*sar_unc); agb_hi=agb+1.96*sar_unc
             agc=agb*CARBON_FRACTION
             agc_lo=agb_lo*CARBON_FRACTION; agc_hi=agb_hi*CARBON_FRACTION
             bgb=agb*ROOT_RATIO; bgc=bgb*CARBON_FRACTION
@@ -497,13 +502,13 @@ class App(tk.Tk):
                 try:soil,soil_sd,pix=zonal_soil(self.gdf,self.soil_raster)
                 except Exception:soil=None
             parts=[
-              ("Biomassa aérea",agc,"ESTIMATIVA REMOTA DE REFERÊNCIA",f"AGB={agb:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","SAR/biblioteca","IFN/SFB + Embrapa"),
+              ("Biomassa aérea",agc,"SAR PROCESSADO",f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","pipeline SAR real",sar.get("source","produto SAR processado")),
               ("Biomassa subterrânea",bgc,"MODELADO",f"R:S={ROOT_RATIO:.2f}; faixa metodológica {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}","relação raiz:parte aérea","biblioteca metodológica"),
               ("Necromassa",nec_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; substituir por IFN/medição local para MRV","proxy por bioma","IFN/Embrapa"),
               ("Serapilheira",lit_c,"MODELADO — TRIAGEM","alta variabilidade local","proxy por bioma","Embrapa/literatura")]
             if soil is not None: parts.append(("Solo 0–30 cm",soil,"MAPEAMENTO DIGITAL",f"{pix} pixels; DP espacial {soil_sd:,.2f} tC/ha","recorte raster","Embrapa/PronaSolos"))
             total=sum(x[1] for x in parts); co2=total*44/12
-            agb_err_pct=max(abs(agb-agb_lo),abs(agb_hi-agb))/agb*100 if agb else None
+            agb_err_pct=(1.96*sar_unc/agb*100) if agb and sar_unc else 0.0
             rows=[]
             for name,val,status,note,method,source in parts:
                 rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"status":status,"metodo":method,"fonte":source,"obs":note,"erro_pct":(agb_err_pct if name=="Biomassa aérea" else None)})
