@@ -89,7 +89,9 @@ def resolve_car(car):
                 js=r.json()
                 if js.get("features"):
                     tmp=Path(tempfile.gettempdir())/"enform_car.geojson"; tmp.write_text(json.dumps(js),encoding="utf-8")
-                    gdf=gpd.read_file(tmp)\n                    if gdf.empty or gdf.geometry.isna().all(): raise RuntimeError("SICAR retornou registro sem geometria válida.")\n                    return gdf.to_crs("EPSG:4326") if gdf.crs else gdf.set_crs("EPSG:4326")
+                    gdf=gpd.read_file(tmp)
+                    if gdf.empty or gdf.geometry.isna().all(): raise RuntimeError("SICAR retornou registro sem geometria válida.")
+                    return gdf.to_crs("EPSG:4326") if gdf.crs else gdf.set_crs("EPSG:4326")
             errors.append(f"{fld}:{r.status_code}")
         except Exception as e: errors.append(str(e))
     raise RuntimeError("O WFS público oficial do SICAR/SFB não devolveu a geometria deste CAR. Tentativas: "+"; ".join(errors[-3:]))
