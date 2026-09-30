@@ -5,7 +5,7 @@ ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
 MODEL_REGISTRY=[
 {"id":"ESA_BIOMASS_FP_AGB_L2B","biome":"*","physiognomy":"florestas no domínio válido do produto ESA","domain":"ESA BIOMASS Level-2B AGB; usar AGB e AGB_Std_Dev do produto, sem recalibrar como backscatter","bands":["P"],"sensor":"ESA BIOMASS P-band","algorithm":"produto geofísico oficial L2B","predictors":["AGB"],"coefficients":None,"validation":"qualidade/incerteza fornecida pelo produto","institution":"ESA","executable":True,"execution_mode":"direct_product","constraints":"respeitar quality flags e cobertura do FP_AGB_L2B"},
-{"id":"ESA_CCI_BIOMASS_V6","biome":"*","physiognomy":"cobertura florestal global","domain":"mapa AGB CCI v6; fusão SAR L+C","bands":["L","C"],"sensor":"ALOS-2 PALSAR-2 + Sentinel-1","algorithm":"BIOMASAR-L/BIOMASAR-C + fusão","predictors":["AGB"],"coefficients":None,"validation":"incerteza do produto CCI","institution":"ESA CCI Biomass","executable":True,"execution_mode":"direct_product","constraints":"produto histórico; não rotular como P-band nem como estimativa local calibrada"},
+{"id":"ESA_CCI_BIOMASS_V7","biome":"*","physiognomy":"cobertura florestal global","domain":"mapa AGB CCI v7; série 2005–2012 e 2015–2024; produto EO multissensor","bands":["L","C"],"sensor":"ALOS-2 PALSAR-2 + Sentinel-1","algorithm":"BIOMASAR-L/BIOMASAR-C + fusão","predictors":["AGB"],"coefficients":None,"validation":"incerteza do produto CCI","institution":"ESA CCI Biomass","executable":True,"execution_mode":"direct_product","constraints":"produto histórico; não rotular como P-band nem como estimativa local calibrada"},
 {"id":"PEREIRA_2018_VARZEA_POL","biome":"Amazônia","physiognomy":"várzea/floresta inundável","domain":"várzea amazônica; full-pol PALSAR; 18 amostras","bands":["L"],"sensor":"ALOS/PALSAR-1 PLR","algorithm":"GLM log-link com atributos polarimétricos","predictors":["V_ZD","Phi_alphaS1","Phi_alphaS2"],"coefficients":None,"r2":0.88,"rmse_mg_ha":74.59,"bias_mg_ha":-4.9,"validation":"cross-validation; erro relativo ~46%","doi":"10.3390/rs10091355","institution":"INPE/UNESP/colaboradores","executable":False,"constraints":"preditores e desempenho verificados; coeficientes numéricos não publicados na tabela principal, portanto não inventar execução"},
 {"id":"PEREIRA_2018_VARZEA_XL","biome":"Amazônia","physiognomy":"várzea/floresta inundável","domain":"várzea amazônica; PALSAR + TerraSAR-X + Radarsat-2","bands":["L","X","C"],"sensor":"ALOS/PALSAR + TerraSAR-X + Radarsat-2","algorithm":"GLM multifrequência","predictors":["PL_HV_HH","RC2_HV_HH","TX_HH_dB"],"coefficients":None,"r2":0.88,"rmse_mg_ha":107.32,"bias_mg_ha":-11.4,"validation":"cross-validation","doi":"10.3390/rs10091355","institution":"INPE/UNESP/colaboradores","executable":False,"constraints":"usar para seleção/aferição; sem coeficientes publicados não executar numericamente"},
 
@@ -20,15 +20,38 @@ MODEL_REGISTRY=[
 ]
 def _wkt(gdf):return gdf.to_crs(4326).geometry.union_all().wkt
 def discover_asf(gdf,limit=25):
+    """Discover candidate scenes. NISAR is explicitly restricted to L2 GCOV when possible."""
     out=[]
-    for dataset,band in [("ALOS PALSAR","L"),("NISAR","L"),("SENTINEL-1","C")]:
+    queries=[
+      ("ALOS PALSAR","L",{}),
+      ("NISAR L2 GCOV","L",{"dataset":"NISAR","processingLevel":"GCOV"}),
+      ("SENTINEL-1","C",{})]
+    for label,band,extra in queries:
         try:
-            r=requests.get(ASF_SEARCH,params={"dataset":dataset,"intersectsWith":_wkt(gdf),"output":"geojson","maxResults":limit},timeout=(10,45));r.raise_for_status();js=r.json();fs=js.get("features",[])
-            out.append({"provider":"ASF/NASA","dataset":dataset,"band":band,"count":len(fs),"items":[{"id":x.get("properties",{}).get("sceneName") or x.get("id"),
-                "properties":x.get("properties",{}),
-                "download_url":next((v for k,v in x.get("properties",{}).items() if isinstance(v,str) and v.startswith("http") and ("url" in k.lower() or "download" in k.lower())),None),
-                "raw":x} for x in fs]})
-        except Exception as e:out.append({"provider":"ASF/NASA","dataset":dataset,"band":band,"count":0,"items":[],"error":str(e)})
+            params={"dataset":("NISAR" if label.startswith("NISAR") else label),"intersectsWith":_wkt(gdf),
+                    "output":"geojson","maxResults":limit}
+            params.update(extra)
+            r=requests.get(ASF_SEARCH,params=params,timeout=(10,60)); r.raise_for_status()
+            js=r.json(); fs=js.get("features",[])
+            # Defensive GCOV filter because catalogue parameter behavior can vary.
+            if label.startswith("NISAR"):
+                gc=[x for x in fs if "GCOV" in (str(x.get("properties",{}))+" "+str(x.get("id",""))).upper()]
+                if gc: fs=gc
+            items=[]
+            for x in fs:
+                p=x.get("properties",{}) or {}
+                urls=[]
+                for k,v in p.items():
+                    if isinstance(v,str) and v.startswith("http") and ("url" in k.lower() or "download" in k.lower()):
+                        urls.append(v)
+                # Prefer science HDF5 for NISAR.
+                urls.sort(key=lambda u:(0 if u.lower().split("?")[0].endswith((".h5",".hdf5")) else 1,len(u)))
+                items.append({"id":p.get("sceneName") or x.get("id"),"properties":p,
+                              "download_url":urls[0] if urls else None,"raw":x})
+            out.append({"provider":"ASF/NASA","dataset":label,"band":band,"count":len(fs),"items":items,
+                        "eligibility":"candidato; elegibilidade final depende de produto/polarização/interseção/modelo"})
+        except Exception as e:
+            out.append({"provider":"ASF/NASA","dataset":label,"band":band,"count":0,"items":[],"error":str(e)})
     return out
 def discover_cdse(gdf,limit=25):
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
@@ -117,7 +140,7 @@ def download_maap_agb(gdf,offline_token,cache):
     return {"available":True,"paths":paths,"items":len(items),"reason":None}
 def cci_history(gdf,cache,offline_token=None):
     # ESA MAAP local collection. Search is public; asset access may require ESA bearer token.
-    items=maap_search(gdf,"CCIBiomassV5.01",limit=100)
+    items=maap_search(gdf,"CCIBiomassV7",limit=100)
     if not items:return {"available":False,"paths":[],"items":0}
     token=maap_access_token(offline_token) if offline_token else None
     Path(cache).mkdir(parents=True,exist_ok=True);paths=[]
