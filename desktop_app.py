@@ -7,7 +7,7 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
-from sar_pipeline import discover_sar, process_real_sar, MODEL_REGISTRY
+from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY
 
 APP_VERSION="2.0.0-REAL-SAR"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
@@ -347,13 +347,19 @@ class App(tk.Tk):
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
     def _remote(self):
-        f=self.tabs[2]; ttk.Label(f,text="Pipeline SAR real",style="H.TLabel").pack(anchor="w")
+        f=self.tabs[2]; ttk.Label(f,text="Pipeline automático SAR → biomassa",style="H.TLabel").pack(anchor="w")
+        auth=ttk.Frame(f); auth.pack(fill="x",pady=6)
+        ttk.Label(auth,text="ESA MAAP offline token:").pack(side="left")
+        self.esa_token=tk.StringVar()
+        ttk.Entry(auth,textvariable=self.esa_token,width=48,show="•").pack(side="left",padx=6)
+        ttk.Label(auth,text="(mantido apenas na memória desta sessão)",foreground="#666").pack(side="left")
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
-        ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left")
-        ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left",padx=8)
-        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — multissensor")
+        ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute).pack(side="left")
+        ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
+        ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
+        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — BIOMASS P → L-band → CCI → literatura")
         self.remote_text=tk.Text(f,height=22,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
-        self._set(self.remote_text,"Pipeline real. O programa não usa média bibliográfica por bioma como biomassa SAR. Descubra a cobertura e carregue produtos GeoTIFF SAR/AGB e, quando disponível, a camada de incerteza.")
+        self._set(self.remote_text,"Hierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band);\n2. produtos L-band disponíveis;\n3. ESA CCI Biomass como série histórica SAR-derived;\n4. literatura científica compatível SOMENTE se as buscas anteriores comprovarem ausência de SAR utilizável.\n\nSe houver SAR mas faltar autenticação/processamento, o programa NÃO usa literatura como substituto.")
 
     def discover_sar_ui(self):
         if self.gdf is None:return messagebox.showwarning("SAR","Carregue/resolva o polígono primeiro.")
