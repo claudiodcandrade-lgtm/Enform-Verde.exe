@@ -5,9 +5,9 @@ from tkinter import ttk, filedialog, messagebox
 import numpy as np
 import pandas as pd
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side\nfrom PIL import Image, ImageTk
 
-APP_VERSION="1.2.0-SAR"
+APP_VERSION="1.3.0-SAR"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -145,17 +145,20 @@ class App(tk.Tk):
     def _ui(self):
         root=ttk.Frame(self); root.pack(fill="both",expand=True)
         hero=tk.Canvas(root,width=330,bg=FOREST,highlightthickness=0); hero.pack(side="left",fill="y")
-        # linguagem visual inspirada na referência: painel florestal, marca branca e névoa/copa estilizadas
-        hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
-        hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
-        import random; random.seed(4)
-        for _ in range(75):
-            x=random.randint(-20,350); y=random.randint(150,760); r=random.randint(18,70)
-            col=random.choice(["#0D4B35","#146044","#1C6B4C","#245B43","#0A3528"])
-            hero.create_oval(x-r,y-r,x+r,y+r,fill=col,outline="")
-        hero.create_rectangle(0,570,330,760,fill=FOREST,outline="")
-        hero.create_text(32,600,text="Carbono florestal\ncom rastreabilidade\nmetodológica.",anchor="nw",fill="white",font=("Segoe UI",17,"bold"))
-        hero.create_text(32,700,text="MEDIDO  •  MODELADO  •  INCERTEZA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",9))
+        base=Path(sys.executable).parent if getattr(sys,"frozen",False) else Path(__file__).parent
+        visual=base/"enform_visual.jpg"
+        if visual.exists():
+            im=Image.open(visual).convert("RGB")
+            im.thumbnail((330,245),Image.Resampling.LANCZOS)
+            self.hero_photo=ImageTk.PhotoImage(im)
+            hero.create_image(0,0,image=self.hero_photo,anchor="nw")
+        else:
+            hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
+            hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
+        hero.create_rectangle(0,245,330,760,fill=FOREST,outline="")
+        hero.create_text(32,300,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
+        hero.create_text(32,390,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
+        hero.create_text(32,650,text="tC/ha  •  tCO₂e/ha\nMEDIDO  •  MODELADO  •  INCERTEZA",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
         main=ttk.Frame(root,padding=22); main.pack(side="left",fill="both",expand=True)
         top=ttk.Frame(main); top.pack(fill="x")
         ttk.Label(top,text="Análise de carbono",style="Title.TLabel").pack(side="left")
@@ -169,6 +172,7 @@ class App(tk.Tk):
         self._project(); self._spatial(); self._remote(); self._results(); self._sources()
         self.status=tk.StringVar(value="Pronto. Informe o CAR ou carregue o vetor da propriedade.")
         ttk.Label(main,textvariable=self.status,relief="sunken",anchor="w",padding=6).pack(fill="x")
+
     def _project(self):
         f=self.tabs[0]; ttk.Label(f,text="Identificação",style="H.TLabel").grid(row=0,column=0,columnspan=3,sticky="w")
         self.name=tk.StringVar(value="Projeto Enform Verde"); self.car=tk.StringVar()
@@ -261,6 +265,7 @@ class App(tk.Tk):
             area=geom_metrics(self.gdf)["area_ha"]
             agb,agb_lo,agb_hi=self.remote_biomass_reference()
             agc=agb*CARBON_FRACTION
+            agc_lo=agb_lo*CARBON_FRACTION; agc_hi=agb_hi*CARBON_FRACTION
             bgb=agb*ROOT_RATIO; bgc=bgb*CARBON_FRACTION
             nec_c=agc*0.20 if self.biome.get()=="Amazônia" else agc*0.12
             lit_c=4.8 if self.biome.get()=="Amazônia" else (3.0 if self.biome.get()=="Mata Atlântica" else 1.8)
@@ -271,87 +276,80 @@ class App(tk.Tk):
             if self.soil_raster:
                 try:soil,soil_sd,pix=zonal_soil(self.gdf,self.soil_raster)
                 except Exception:soil=None
-            parts=[("Biomassa aérea",agc,"ESTIMATIVA REMOTA DE REFERÊNCIA",f"AGB {agb:,.1f} Mg/ha; faixa de referência {agb_lo:,.1f}–{agb_hi:,.1f}"),
-                   ("Biomassa subterrânea",bgc,"MODELADO",f"R:S={ROOT_RATIO:.2f}; faixa metodológica {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}"),
-                   ("Necromassa",nec_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; usar IFN/medição local para MRV"),
-                   ("Serrapilheira",lit_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; alta variabilidade local")]
-            if soil is not None:parts.append(("Solo 0–30 cm",soil,"MAPEAMENTO DIGITAL EMBRAPA",f"{pix} pixels; DP espacial {soil_sd:,.2f} Mg C/ha; resolução nativa preservada"))
+            parts=[
+              ("Biomassa aérea",agc,"ESTIMATIVA REMOTA DE REFERÊNCIA",f"AGB={agb:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","SAR/biblioteca","IFN/SFB + Embrapa"),
+              ("Biomassa subterrânea",bgc,"MODELADO",f"R:S={ROOT_RATIO:.2f}; faixa metodológica {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}","relação raiz:parte aérea","biblioteca metodológica"),
+              ("Necromassa",nec_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; substituir por IFN/medição local para MRV","proxy por bioma","IFN/Embrapa"),
+              ("Serapilheira",lit_c,"MODELADO — TRIAGEM","alta variabilidade local","proxy por bioma","Embrapa/literatura")]
+            if soil is not None: parts.append(("Solo 0–30 cm",soil,"MAPEAMENTO DIGITAL",f"{pix} pixels; DP espacial {soil_sd:,.2f} tC/ha","recorte raster","Embrapa/PronaSolos"))
             total=sum(x[1] for x in parts); co2=total*44/12
-            lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma: {self.biome.get()} | Fitofisionomia: {self.phys.get()}",
-                   f"Área analisada: {area:,.2f} ha","", "ESTIMATIVA REMOTA — SEM INVENTÁRIO OBRIGATÓRIO"]
-            for name,val,status,note in parts:lines.append(f"{name}: {val:,.2f} Mg C/ha  [{status}]\n  {note}")
-            if soil is None:lines.append("Solo 0–30 cm: NÃO CALCULADO NESTA EXECUÇÃO — serviço/raster Embrapa indisponível; não foi inventado valor.")
-            lines += ["",f"Total dos compartimentos disponíveis: {total:,.2f} Mg C/ha",f"Equivalente: {co2:,.2f} tCO₂e/ha",
-                      f"Total para a área: {co2*area:,.0f} tCO₂e","",
-                      "QUALIDADE: resultado de triagem/planejamento remoto. A estimativa de biomassa por estrato não equivale a inventário de campo nem a um mapa SAR calibrado localmente. "
-                      "A versão registra fonte, domínio e incerteza para impedir falsa precisão."]
-            self._set(self.remote_text,f"Biomassa aérea estimada remotamente: {agb:,.1f} Mg/ha\nFaixa de referência: {agb_lo:,.1f}–{agb_hi:,.1f} Mg/ha\nFonte-base: IFN/SFB + biblioteca científica brasileira.")
+            rows=[]
+            for name,val,status,note,method,source in parts:
+                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"status":status,"metodo":method,"fonte":source,"obs":note})
+            self.project["analysis_rows"]=rows
+            self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
+            lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma: {self.biome.get()} | Fitofisionomia: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
+            for r in rows:
+                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  {r['status']} — {r['obs']}",""]
+            if soil is None: lines += ["Solo 0–30 cm","  NÃO CALCULADO — serviço/raster de COS indisponível nesta execução; nenhum valor foi inventado.",""]
+            lines += ["TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {total:,.2f} tC/ha  |  {co2:,.2f} tCO₂e/ha",f"  Total na área: {total*area:,.0f} tC  |  {co2*area:,.0f} tCO₂e","",
+                      "QUALIDADE: resultado de triagem/planejamento remoto. O relatório distingue produto SAR efetivamente processado de estimativa bibliográfica/modelada."]
+            self._set(self.remote_text,f"Biomassa aérea: {agc:,.2f} tC/ha | {agc*44/12:,.2f} tCO₂e/ha\nFaixa de referência: {agc_lo:,.2f}–{agc_hi:,.2f} tC/ha | {agc_lo*44/12:,.2f}–{agc_hi*44/12:,.2f} tCO₂e/ha")
             self._set(self.res,"\n".join(lines)); self.project["last_result"]="\n".join(lines); self.nb.select(self.tabs[3]); self.status.set("Estimativa remota concluída.")
         except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
 
-        if not self.project.get("last_result"): return messagebox.showwarning("Excel","Execute a análise antes de exportar.")
-        p=filedialog.asksaveasfilename(defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
-        if not p:return
-        wb=Workbook(); orange="EF9B06"; green="0B3D2E"; white="FFFFFF"; pale="F4F6F5"
-        def setup(sh,title):
-            sh.sheet_view.showGridLines=False; sh.freeze_panes="A4"; sh.merge_cells("A1:F1")
-            sh["A1"]=title; sh["A1"].font=Font(size=18,bold=True,color=white); sh["A1"].fill=PatternFill("solid",fgColor=green)
-            for col,w in zip("ABCDEF",[28,48,18,28,34,44]): sh.column_dimensions[col].width=w
-        def put(sh,data):
-            headers=["Item","Descrição/Valor","Unidade","Método","Fonte","Observação"]
-            for j,h in enumerate(headers,1):
-                c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
-            for i,row in enumerate(data,4):
-                for j,v in enumerate(row,1):
-                    c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.alignment=Alignment(vertical="top",wrap_text=True)
-                    if isinstance(v,(int,float)): c.number_format='#,##0.00'
-        ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
-        area=geom_metrics(self.gdf)["area_ha"] if self.gdf is not None else None
-        put(ws,[["Projeto",self.name.get(),"—","—","—",""],["Bioma",self.biome.get(),"—","classificação","—",""],["Fitofisionomia",self.phys.get(),"—","classificação","—",""],["Área",area,"ha","geometria","CAR/vetor",""],["Sensor/produto",self.sensor.get(),"—","SAR/multissensor","ESA/fornecedor",""]])
-        datasets={
-          "AGB":[["Resultado consolidado",self.project["last_result"],"Mg/ha","SAR/biblioteca","IFN/SFB + Embrapa","ver QA"]],
-          "Compartimentos":[["Reservatórios","AGB, BGB, necromassa, serapilheira","Mg C/ha","motor Enform","IFN/SFB + Embrapa","status por compartimento"]],
-          "Solo":[["COS","0–30 cm","Mg C/ha","recorte raster","Embrapa/PronaSolos","resolução nativa preservada"]],
-          "Sensores SAR":[["Preferencial","ESA Biomass","—","P-band SAR","ESA","estrutura lenhosa"],["Histórico","ALOS/PALSAR","—","L-band SAR","JAXA","série histórica"],["Complementar","TerraSAR-X/COSMO-SkyMed","—","X-band SAR","operadores","textura/dossel"]],
-          "Modelos":[["Biblioteca","222 equações IFN + Embrapa/literatura","—","seleção por domínio","SFB/IFN","bioma/fitofisionomia"]],
-          "QA e Incerteza":[["Regra","Não declarar mensuração SAR sem produto efetivamente processado","—","QA","Enform","evita falsa precisão"]],
-          "Bibliografia":[["SFB/IFN","Painel de Biomassa e Carbono — 2026","—","—","SFB","dados abertos"],["ESA","Biomass P-band; CCI Biomass AGB 100 m","—","—","ESA","incerteza por pixel no CCI"]]}
-        for name,data in datasets.items():
-            sh=wb.create_sheet(name); setup(sh,"Enform Verde — "+name); put(sh,data)
-        wb.save(p); self.status.set("Excel exportado com sucesso.")
-
     def export_excel(self):
-        if not self.project.get("last_result"):
+        if not self.project.get("analysis_rows"):
             return messagebox.showwarning("Excel","Execute a análise antes de exportar.")
         p=filedialog.asksaveasfilename(defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
-        if not p: return
-        wb=Workbook(); orange="EF9B06"; green="0B3D2E"; white="FFFFFF"; pale="F4F6F5"
+        if not p:return
+        wb=Workbook(); orange="F29A00"; green="0B3D2E"; white="FFFFFF"; pale="F4F6F5"; line="D5DDD9"
+        thin=Side(style="thin",color=line)
+        headers=["Categoria","Parâmetro / resultado","tC/ha","tCO₂e/ha","Status","Método","Fonte","Observação"]
         def setup(sh,title):
-            sh.sheet_view.showGridLines=False; sh.freeze_panes="A4"; sh.merge_cells("A1:F1")
-            sh["A1"]=title; sh["A1"].font=Font(size=18,bold=True,color=white); sh["A1"].fill=PatternFill("solid",fgColor=green)
-            sh.row_dimensions[1].height=30
-            for col,w in zip("ABCDEF",[28,48,18,28,34,44]): sh.column_dimensions[col].width=w
-        def put(sh,data):
-            headers=["Item","Descrição/Valor","Unidade","Método","Fonte","Observação"]
+            sh.sheet_view.showGridLines=False; sh.freeze_panes="A4"; sh.auto_filter.ref="A3:H200"
+            sh.merge_cells("A1:H1"); c=sh["A1"]; c.value=title; c.font=Font(size=18,bold=True,color=white); c.fill=PatternFill("solid",fgColor=green); c.alignment=Alignment(vertical="center")
+            sh.row_dimensions[1].height=32
+            for col,w in zip("ABCDEFGH",[20,34,16,18,25,28,30,55]): sh.column_dimensions[col].width=w
             for j,h in enumerate(headers,1):
-                c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
+                c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange); c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True); c.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+            sh.row_dimensions[3].height=28
+        def put(sh,data):
             for i,row in enumerate(data,4):
+                sh.row_dimensions[i].height=32
                 for j,v in enumerate(row,1):
-                    c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.alignment=Alignment(vertical="top",wrap_text=True)
-                    if isinstance(v,(int,float)): c.number_format='#,##0.00'
+                    c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.border=Border(top=thin,bottom=thin,left=thin,right=thin); c.alignment=Alignment(vertical="center",wrap_text=True)
+                    if j in (3,4) and isinstance(v,(int,float)): c.number_format='#,##0.00'
+                sh.cell(i,2).font=Font(bold=True,color=green)
+        area=self.project["area_ha"]; total=self.project["total_tc_ha"]; totalco2=self.project["total_tco2_ha"]; ar=self.project["analysis_rows"]
         ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
-        area=geom_metrics(self.gdf)["area_ha"] if self.gdf is not None else None
-        put(ws,[["Projeto",self.name.get(),"—","—","—",""],["Bioma",self.biome.get(),"—","classificação","—",""],["Fitofisionomia",self.phys.get(),"—","classificação","—",""],["Área",area,"ha","geometria","CAR/vetor",""],["Sensor/produto",self.sensor.get(),"—","SAR/multissensor","ESA/fornecedor",""]])
-        datasets={
-          "AGB":[["Resultado consolidado",self.project["last_result"],"Mg/ha","SAR/biblioteca","IFN/SFB + Embrapa","ver QA"]],
-          "Compartimentos":[["Reservatórios","AGB, BGB, necromassa, serapilheira","Mg C/ha","motor Enform","IFN/SFB + Embrapa","status por compartimento"]],
-          "Solo":[["COS","0–30 cm","Mg C/ha","recorte raster","Embrapa/PronaSolos","resolução nativa preservada"]],
-          "Sensores SAR":[["Preferencial","ESA Biomass","—","P-band SAR","ESA","estrutura lenhosa"],["Histórico","ALOS/PALSAR","—","L-band SAR","JAXA","série histórica"],["Complementar","TerraSAR-X/COSMO-SkyMed","—","X-band SAR","operadores","textura/dossel"]],
-          "Modelos":[["Biblioteca","IFN/SFB + Embrapa/literatura","—","seleção por domínio","SFB/IFN","bioma/fitofisionomia"]],
-          "QA e Incerteza":[["Regra","Não declarar mensuração SAR sem produto efetivamente processado","—","QA","Enform","evita falsa precisão"]],
-          "Bibliografia":[["SFB/IFN","Painel de Biomassa e Carbono","—","—","SFB","dados abertos"],["ESA","Biomass P-band; CCI Biomass AGB","—","—","ESA","produto e incerteza"]]}
-        for name,data in datasets.items():
-            sh=wb.create_sheet(name); setup(sh,"Enform Verde — "+name); put(sh,data)
+        put(ws,[["Entrada","Projeto",None,None,"Informado","cadastro",None,self.name.get()],
+                ["Entrada","Bioma",None,None,"Informado","classificação",None,self.biome.get()],
+                ["Entrada","Fitofisionomia",None,None,"Informado","classificação",None,self.phys.get()],
+                ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{area:,.2f} ha"],
+                ["Entrada","Sensor/produto selecionado",None,None,"Informado","SAR/multissensor","ESA/fornecedor",self.sensor.get()],
+                ["Resultado","Carbono total por hectare",total,totalco2,"CONSOLIDADO","soma dos compartimentos","Enform","somente compartimentos disponíveis"],
+                ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{total*area:,.0f} tC | {totalco2*area:,.0f} tCO₂e"]])
+        sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
+        put(sh,[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
+        for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira"),("Carbono do Solo","Solo 0–30 cm")]:
+            sh=wb.create_sheet(sheet); setup(sh,"Enform Verde — "+sheet)
+            rr=[r for r in ar if r["parametro"]==param]
+            data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
+            if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
+            put(sh,data)
+        sh=wb.create_sheet("Sensores SAR"); setup(sh,"Enform Verde — Sensores SAR")
+        put(sh,[["Sensor","ESA Biomass — banda P",None,None,"Preferencial","PolSAR/PolInSAR/TomoSAR","ESA","Primeiro SAR orbital em banda P; usar somente quando produto efetivamente processado."],
+                ["Sensor","ALOS/PALSAR / ALOS-2",None,None,"Histórico/complementar","banda L","JAXA","Séries históricas para atributos estruturais."],
+                ["Sensor","TerraSAR-X / TanDEM-X / COSMO-SkyMed",None,None,"Complementar","banda X","Operadores","Textura e estrutura do dossel; não é banda do satélite Biomass."]])
+        sh=wb.create_sheet("Modelos e QA"); setup(sh,"Enform Verde — Modelos, QA e incerteza")
+        put(sh,[["QA","Mensuração SAR",None,None,"REGRA","controle metodológico","Enform","Não declarar mensuração SAR sem produto efetivamente processado."],
+                ["Modelo","Conversão C→CO₂e",None,None,"Aplicado","tC × 44/12","estequiometria","Todas as estimativas de carbono são exibidas em tC/ha e tCO₂e/ha."],
+                ["Modelo","Biblioteca brasileira",None,None,"Prioritária","seleção por domínio","IFN/SFB + Embrapa","Bioma, fitofisionomia e domínio de calibração devem ser compatíveis."]])
+        sh=wb.create_sheet("Bibliografia"); setup(sh,"Enform Verde — Bibliografia e proveniência")
+        put(sh,[["Fonte","ESA Biomass",None,None,"Oficial","P-band SAR","ESA","Missão orbital para biomassa florestal."],
+                ["Fonte","IFN / Painel de Biomassa e Carbono",None,None,"Prioritária","inventário/equações","SFB","Base brasileira para seleção e validação."],
+                ["Fonte","Embrapa",None,None,"Prioritária","protocolos/equações/COS","Embrapa","Fontes brasileiras priorizadas no motor."]])
         wb.save(p); self.status.set("Excel exportado com sucesso.")
 
     def save_report(self):
