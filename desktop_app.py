@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.0.3-PROFESSIONAL"
+APP_VERSION="3.1.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -90,48 +90,40 @@ def _sicar_session():
     return sess
 
 def resolve_car(car):
-    """Busca um imóvel diretamente no WFS público georreferenciado do SICAR."""
-    import geopandas as gpd
-    code=re.sub(r"\\s+","",car.strip().upper())
-    m=re.match(r"^([A-Z]{2})-",code)
-    if not m: raise ValueError("Código CAR inválido: esperado UF-códigoIBGE-identificador.")
-    uf=m.group(1).lower()
-    layer=f"sicar:sicar_imoveis_{uf}"
-    url="https://geoserver.car.gov.br/geoserver/sicar/ows"
-    params={"service":"WFS","version":"1.0.0","request":"GetFeature","typeName":layer,
-            "outputFormat":"application/json","srsName":"EPSG:4326","maxFeatures":"2",
-            "cql_filter":f"cod_imovel='{code}'"}
-    sess=_sicar_session()
-    try:
+    """Resolve CAR against the official public SICAR WFS, with protocol fallbacks and diagnostics."""
+    import geopandas as gpd, requests
+    raw=str(car or "").strip().upper().replace("–","-").replace("—","-")
+    code=re.sub(r"[\\s\\u200b\\ufeff]+","",raw)
+    m=re.match(r"^([A-Z]{2})-(\\d{7})-([A-F0-9]{32})$",code)
+    if not m: raise ValueError("Código CAR inválido/incompleto. Use o código integral no padrão UF-7 dígitos-32 caracteres.")
+    uf=m.group(1).lower(); layer=f"sicar:sicar_imoveis_{uf}"
+    urls=["https://geoserver.car.gov.br/geoserver/sicar/ows","https://geoserver.car.gov.br/geoserver/sicar/wfs"]
+    attempts=[]; sess=_sicar_session()
+    for url in urls:
+      for version,key in [("1.0.0","typeName"),("2.0.0","typeNames")]:
+        params={"service":"WFS","version":version,"request":"GetFeature",key:layer,
+                "outputFormat":"application/json","srsName":"EPSG:4326","cql_filter":f"cod_imovel='{code}'"}
         try:
-            r=sess.get(url,params=params,timeout=(10,60))
-        except requests.exceptions.SSLError:
-            import urllib3
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            r=sess.get(url,params=params,timeout=(10,60),verify=False)
-        r.raise_for_status()
-        js=r.json()
-    except Exception as e:
-        raise RuntimeError("Falha de comunicação com a base georreferenciada pública do SICAR: "+str(e))
-    feats=js.get("features") or []
-    if not feats:
-        raise LookupError("O código informado não foi localizado na camada pública "+layer+". Confira se foi digitado o código completo do imóvel.")
-    if len(feats)>1:
-        raise RuntimeError("O SICAR retornou mais de um registro para o código informado; a análise foi interrompida para evitar selecionar o imóvel errado.")
-    props=feats[0].get("properties") or {}
-    geom=feats[0].get("geometry")
-    if not geom: raise RuntimeError("O registro SICAR foi localizado, mas o serviço não retornou geo_area_imovel.")
-    tmp=Path(tempfile.gettempdir())/"enform_car_sicar.geojson"
-    tmp.write_text(json.dumps({"type":"FeatureCollection","features":feats}),encoding="utf-8")
-    gdf=gpd.read_file(tmp)
-    if gdf.crs is None:gdf=gdf.set_crs("EPSG:4326")
-    else:gdf=gdf.to_crs("EPSG:4326")
-    gdf.attrs["sicar_cod_imovel"]=props.get("cod_imovel",code)
-    gdf.attrs["sicar_status"]=props.get("status_imovel")
-    gdf.attrs["sicar_area_declarada_ha"]=props.get("area")
-    gdf.attrs["sicar_municipio"]=props.get("municipio")
-    gdf.attrs["sicar_data_atualizacao"]=props.get("data_atualizacao")
-    return gdf
+            try:r=sess.get(url,params=params,timeout=(8,35))
+            except requests.exceptions.SSLError:r=sess.get(url,params=params,timeout=(8,35),verify=False)
+            attempts.append(f"{version}:{r.status_code}")
+            if not r.ok:continue
+            js=r.json(); feats=js.get("features") or []
+            if not feats:continue
+            exact=[x for x in feats if str((x.get("properties") or {}).get("cod_imovel","")).upper()==code]
+            feats=exact or feats
+            if len(feats)>1:raise RuntimeError("SICAR retornou registros múltiplos para o mesmo código.")
+            props=feats[0].get("properties") or {}
+            if not feats[0].get("geometry"):raise RuntimeError("CAR localizado, porém sem geometria pública.")
+            tmp=Path(tempfile.gettempdir())/"enform_car_sicar.geojson"
+            tmp.write_text(json.dumps({"type":"FeatureCollection","features":feats}),encoding="utf-8")
+            gdf=gpd.read_file(tmp); gdf=gdf.set_crs(4326) if gdf.crs is None else gdf.to_crs(4326)
+            gdf.attrs.update({"sicar_cod_imovel":props.get("cod_imovel",code),"sicar_status":props.get("status_imovel") or props.get("condicao"),
+              "sicar_area_declarada_ha":props.get("area"),"sicar_municipio":props.get("municipio"),"sicar_lookup":url+" WFS "+version})
+            return gdf
+        except RuntimeError:raise
+        except Exception as e:attempts.append(version+":"+type(e).__name__)
+    raise LookupError("CAR válido no formato, mas não localizado no WFS público oficial nesta consulta. Tentativas: "+", ".join(attempts)+". O programa não concluirá que o CAR é inválido por indisponibilidade do serviço.")
 
 def resolve_ccir_sigef(code):
     """Resolve código INCRA/SNCR do CCIR em parcela georreferenciada certificada no SIGEF."""
