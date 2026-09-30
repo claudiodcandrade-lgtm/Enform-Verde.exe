@@ -94,6 +94,9 @@ def resolve_car(car):
     import geopandas as gpd, requests
     raw=str(car or "").strip().upper().replace("–","-").replace("—","-")
     code="".join(raw.split())
+    compact="".join(ch for ch in code if ch.isalnum())
+    if len(compact)==41:
+        code=compact[:2]+"-"+compact[2:9]+"-"+compact[9:]
     m=re.match(r"^([A-Z]{2})-([0-9]{7})-([A-F0-9]{32})$",code)
     if not m: raise ValueError("Código CAR inválido/incompleto. Use o código integral no padrão UF-7 dígitos-32 caracteres.")
     uf=m.group(1).lower(); layer=f"sicar:sicar_imoveis_{uf}"
