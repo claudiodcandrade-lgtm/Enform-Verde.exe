@@ -8,7 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
 
-APP_VERSION="1.3.0-SAR"
+APP_VERSION="1.3.2-SAR-IBGE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -95,6 +95,77 @@ def resolve_car(car):
             errors.append(f"{fld}:{r.status_code}")
         except Exception as e: errors.append(str(e))
     raise RuntimeError("O WFS público oficial do SICAR/SFB não devolveu a geometria deste CAR. Tentativas: "+"; ".join(errors[-3:]))
+
+IBGE_VEGE_2026_URL="https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip"
+IBGE_BIOMAS_2025_URL="https://geoftp.ibge.gov.br/informacoes_ambientais/estudos_ambientais/biomas/vetores/2025_Biomas-e-Sistema-Costeiro-Marinho-do-Brasil-1-250000_shp.zip"
+
+def _ibge_cache():
+    import os
+    root=Path(os.environ.get("LOCALAPPDATA",Path.home()))/"EnformVerde"/"IBGE"
+    root.mkdir(parents=True,exist_ok=True); return root
+
+def _download_extract(url,folder,tag):
+    import requests
+    folder.mkdir(parents=True,exist_ok=True)
+    marker=folder/".ready"
+    if marker.exists(): return
+    zpath=folder/(tag+".zip")
+    with requests.get(url,stream=True,timeout=(15,180),headers={"User-Agent":f"Enform-Verde/{APP_VERSION}"}) as r:
+        r.raise_for_status()
+        with open(zpath,"wb") as out:
+            for chunk in r.iter_content(1024*1024):
+                if chunk: out.write(chunk)
+    with zipfile.ZipFile(zpath) as z:z.extractall(folder)
+    marker.write_text("IBGE official source: "+url,encoding="utf-8")
+
+def _find_polygon_file(folder):
+    files=list(folder.rglob("*.shp"))+list(folder.rglob("*.gpkg"))
+    if not files: raise RuntimeError("Pacote IBGE baixado, mas nenhum vetor poligonal foi encontrado.")
+    return max(files,key=lambda p:p.stat().st_size)
+
+def _field(cols,candidates):
+    low={str(c).lower():c for c in cols}
+    for x in candidates:
+        if x.lower() in low:return low[x.lower()]
+    for c in cols:
+        lc=str(c).lower()
+        if any(x.lower() in lc for x in candidates):return c
+    return None
+
+def _shares(project,theme,fields):
+    import geopandas as gpd
+    p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
+    bbox=p.total_bounds
+    t=t.cx[bbox[0]:bbox[2],bbox[1]:bbox[3]]
+    if t.empty:return []
+    inter=gpd.overlay(t,p[["geometry"]],how="intersection",keep_geom_type=False)
+    inter=inter[~inter.geometry.is_empty].copy()
+    inter["_ha"]=inter.geometry.area/10000
+    total=inter["_ha"].sum()
+    out=[]
+    for field in fields:
+        if field and field in inter.columns:
+            g=inter.groupby(field,dropna=False)["_ha"].sum().sort_values(ascending=False)
+            out.append((field,[(str(k),float(v),float(v/total*100)) for k,v in g.items() if v>0]))
+    return out
+
+def diagnose_ibge(project):
+    """Bioma oficial IBGE + regiões/fitofisionomias da Vegetação IBGE versão 2026."""
+    import geopandas as gpd
+    root=_ibge_cache(); veg=root/"vegetacao_2026"; bio=root/"biomas_2025"
+    _download_extract(IBGE_VEGE_2026_URL,veg,"vege_area_2026")
+    _download_extract(IBGE_BIOMAS_2025_URL,bio,"biomas_2025")
+    vg=gpd.read_file(_find_polygon_file(veg),bbox=tuple(project.to_crs("EPSG:4326").total_bounds))
+    bg=gpd.read_file(_find_polygon_file(bio),bbox=tuple(project.to_crs("EPSG:4326").total_bounds))
+    bfield=_field(bg.columns,["Bioma","Nome_Bioma","nm_bioma"])
+    l1=_field(vg.columns,["Legenda_1","legenda_1","fito"])
+    l2=_field(vg.columns,["Legenda_2","legenda_2","formacao"])
+    bs=_shares(project,bg,[bfield]); vs=_shares(project,vg,[l1,l2])
+    if not bs or not bs[0][1]: raise RuntimeError("O polígono não interceptou a camada oficial de Biomas do IBGE.")
+    return {"bioma_field":bfield,"biomas":bs[0][1],"vegetacao_fields":[x[0] for x in vs],
+            "vegetacao":[{"campo":x[0],"classes":x[1]} for x in vs],
+            "fonte_bioma":"IBGE — Biomas do Brasil, revisão 2025, 1:250.000",
+            "fonte_vegetacao":"IBGE — Vegetação/Regiões Fitoecológicas, versão 2026, 1:250.000"}
 
 def zonal_soil(gdf,raster_path):
     import rasterio
