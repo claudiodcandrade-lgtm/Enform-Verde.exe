@@ -51,7 +51,7 @@ jobs:
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
           assert "enform_header.jpg" in src and "width=500" in src, "approved forest/logo header missing"
-          assert "NASA Earthdata usuário:" in src and "edl_password" in src, "Earthdata credentials UI missing"
+          assert "NASA Earthdata User Token:" in src and "edl_token" in src and "edl_password" not in src[src.index("def _remote"):src.index("def discover_sar_ui")], "Earthdata token-only UI missing"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
           assert "ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO" in src, "secondary-analysis status missing"
           sar_src=open("sar_pipeline.py",encoding="utf-8").read()
