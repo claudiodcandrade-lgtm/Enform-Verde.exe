@@ -495,7 +495,8 @@ class App(tk.Tk):
             self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
             lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
             for r in rows:
-                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  {r['status']} — {r['obs']}",""]
+                err=(f"±{r['erro_pct']:.1f}% — faixa conservadora de referência, não IC95%" if r.get('erro_pct') is not None else "N/D — requer modelo SAR validado")
+                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  Margem de erro/incerteza: {err}",f"  {r['status']} — {r['obs']}",""]
             if soil is None: lines += ["Solo 0–30 cm","  NÃO CALCULADO — serviço/raster de COS indisponível nesta execução; nenhum valor foi inventado.",""]
             lines += ["TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {total:,.2f} tC/ha  |  {co2:,.2f} tCO₂e/ha",f"  Total na área: {total*area:,.0f} tC  |  {co2*area:,.0f} tCO₂e","",
                       "QUALIDADE: resultado de triagem/planejamento remoto. O relatório distingue produto SAR efetivamente processado de estimativa bibliográfica/modelada."]
