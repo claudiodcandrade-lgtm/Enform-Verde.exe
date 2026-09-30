@@ -253,15 +253,15 @@ class App(tk.Tk):
         visual=base/"enform_visual.jpg"
         if visual.exists():
             im=Image.open(visual).convert("RGB")
-            im.thumbnail((430,320),Image.Resampling.LANCZOS)
+            im.thumbnail((430,360),Image.Resampling.LANCZOS)
             self.hero_photo=ImageTk.PhotoImage(im)
             hero.create_image(0,0,image=self.hero_photo,anchor="nw")
         else:
             hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
             hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
-        hero.create_rectangle(0,320,430,760,fill=FOREST,outline="")
-        hero.create_text(32,365,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
-        hero.create_text(32,455,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
+        hero.create_rectangle(0,360,430,760,fill=FOREST,outline="")
+        hero.create_text(32,405,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
+        hero.create_text(32,495,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
         hero.create_text(32,650,text="tC/ha  •  tCO₂e/ha\nMEDIDO  •  MODELADO  •  INCERTEZA",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
         main=ttk.Frame(root,padding=22); main.pack(side="left",fill="both",expand=True)
         top=ttk.Frame(main); top.pack(fill="x")
@@ -280,14 +280,15 @@ class App(tk.Tk):
     def _project(self):
         f=self.tabs[0]; ttk.Label(f,text="Identificação",style="H.TLabel").grid(row=0,column=0,columnspan=3,sticky="w")
         self.name=tk.StringVar(value="Projeto Enform Verde"); self.car=tk.StringVar()
-        self.biome=tk.StringVar(value="Amazônia"); self.phys=tk.StringVar(value="Várzea estuarina / floresta aluvial")
-        labels=[("Projeto",self.name),("Código CAR",self.car),("Fitofisionomia",self.phys)]
-        for i,(lab,var) in enumerate(labels,1):
+        self.biome=tk.StringVar(value="A definir pelo IBGE"); self.phys=tk.StringVar(value="A definir pelo IBGE")
+        for i,(lab,var) in enumerate([("Projeto",self.name),("Código CAR",self.car)],1):
             ttk.Label(f,text=lab).grid(row=i,column=0,sticky="w",pady=8); ttk.Entry(f,textvariable=var,width=70).grid(row=i,column=1,sticky="ew",padx=10)
-        ttk.Label(f,text="Bioma").grid(row=4,column=0,sticky="w",pady=8)
-        ttk.Combobox(f,textvariable=self.biome,state="readonly",values=["Amazônia","Mata Atlântica","Cerrado","Caatinga"],width=28).grid(row=4,column=1,sticky="w",padx=10)
-        ttk.Button(f,text="Resolver perímetro pelo CAR",command=self.car_lookup).grid(row=2,column=2,padx=8)
-        ttk.Label(f,text="A resolução automática usa o geosserviço público do SICAR. Se ele não responder, carregue o vetor oficial.",foreground="#666").grid(row=5,column=1,columnspan=2,sticky="w",pady=10)
+        ttk.Button(f,text="Buscar polígono diretamente no SICAR",command=self.car_lookup).grid(row=2,column=2,padx=8)
+        ttk.Separator(f,orient="horizontal").grid(row=3,column=0,columnspan=3,sticky="ew",pady=14)
+        ttk.Label(f,text="Diagnóstico territorial automático",style="H.TLabel").grid(row=4,column=0,columnspan=3,sticky="w")
+        ttk.Label(f,text="Bioma").grid(row=5,column=0,sticky="w",pady=8); ttk.Label(f,textvariable=self.biome,font=("Segoe UI",10,"bold")).grid(row=5,column=1,sticky="w",padx=10)
+        ttk.Label(f,text="Fitofisionomia / região fitoecológica").grid(row=6,column=0,sticky="w",pady=8); ttk.Label(f,textvariable=self.phys,font=("Segoe UI",10,"bold")).grid(row=6,column=1,sticky="w",padx=10)
+        ttk.Label(f,text="Esses campos não são selecionados pelo usuário: são definidos pela interseção espacial com as bases oficiais do IBGE.",foreground="#666").grid(row=7,column=1,columnspan=2,sticky="w",pady=10)
         f.columnconfigure(1,weight=1)
     def _spatial(self):
         f=self.tabs[1]; ttk.Label(f,text="Perímetro e solo",style="H.TLabel").pack(anchor="w")
