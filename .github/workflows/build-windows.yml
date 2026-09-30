@@ -48,7 +48,7 @@ jobs:
           assert "active_input_id" in src and "current_car" in src, "fresh-input identity guard missing"
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
-          assert "Margem de erro/incerteza" in src, "uncertainty output missing"
+          assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"
           assert "enform_logo.png" in src and "width=500" in src, "expanded visual identity missing"
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
