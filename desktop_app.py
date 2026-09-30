@@ -508,7 +508,11 @@ class App(tk.Tk):
         self.status.set("Consultando SAR em segundo plano…")
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         def worker():
-            try:self._analysis_queue.put(("ok",automatic_pipeline(gdf,biome,phys,token)))
+            try:
+                sar=automatic_pipeline(gdf,biome,phys,token)
+                try: soil_profiles=pronasolos_soc_profiles(gdf)
+                except Exception as e: soil_profiles={"error":str(e)}
+                self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))
             except Exception:self._analysis_queue.put(("error",traceback.format_exc()))
         threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
         self.after(120,self._poll_analysis)
