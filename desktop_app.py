@@ -95,11 +95,10 @@ def resolve_car(car):
     raw=str(car or "").strip().upper().replace("–","-").replace("—","-")\n    raw=re.sub(r"[\\s\\u200b\\ufeff]+","",raw)\n    compact=re.sub(r"[^A-Z0-9]","",raw)\n    m=re.match(r"^([A-Z]{2})([0-9]{7})([A-F0-9]{32})$",compact)\n    code=(f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else raw)
     if not m: raise ValueError("Código CAR inválido/incompleto. Use o código integral no padrão UF-7 dígitos-32 caracteres.")
     uf=m.group(1).lower(); layer=f"sicar:sicar_imoveis_{uf}"
-    urls=["https://geoserver.car.gov.br/geoserver/sicar/ows","https://geoserver.car.gov.br/geoserver/sicar/wfs"]
+    urls=["https://geoserver.car.gov.br/geoserver/sicar/ows","https://geoserver.car.gov.br/geoserver/sicar/wfs"]\n    layers=[layer,layer.replace("sicar:","")]
     attempts=[]; sess=_sicar_session()
-    for url in urls:
-      for version,key in [("1.0.0","typeName"),("2.0.0","typeNames")]:
-        params={"service":"WFS","version":version,"request":"GetFeature",key:layer,
+    for url in urls:\n     for lyr in layers:\n      for version,key in [("1.0.0","typeName"),("1.1.0","typeName"),("2.0.0","typeNames")]:
+        params={"service":"WFS","version":version,"request":"GetFeature",key:lyr,
                 "outputFormat":"application/json","srsName":"EPSG:4326","cql_filter":f"cod_imovel='{code}'"}
         try:
             try:r=sess.get(url,params=params,timeout=(8,35))
