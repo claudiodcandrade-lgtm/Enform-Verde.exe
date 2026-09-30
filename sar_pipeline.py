@@ -51,6 +51,9 @@ def role(path):
     for p in ("hh","hv","vv","vh"):
         if re.search(r"(^|[_-])"+p+r"([_.-]|$)",n):return p.upper()
     return "SAR"
+def _provenance(origin, source, sensor=None, band=None, product=None, model=None, scene_ids=None):
+    return {"data_origin":origin,"source":source,"sensor":sensor,"band":band,"product":product,"model_id":model,"scene_ids":scene_ids or []}
+
 def process_real_sar(gdf,paths,biome="",phys=""):
     if not paths:raise ValueError("Nenhum produto SAR/raster de biomassa foi fornecido.")
     stats=[];agb=None;unc=None
@@ -63,7 +66,7 @@ def process_real_sar(gdf,paths,biome="",phys=""):
         if unc is None:
             a=next(x for x in stats if x["role"]=="AGB");unc=a["sd"]/math.sqrt(max(a["n"],1));kind="erro-padrão espacial; não substitui erro do modelo"
         else:kind="camada de incerteza do produto"
-        return {"status":"SAR_PROCESSADO","agb_mg_ha":agb,"uncertainty_mg_ha":unc,"uncertainty_kind":kind,"stats":stats,"source":"produto SAR/AGB efetivamente processado"}
+        return {"status":"SAR_PROCESSADO","agb_mg_ha":agb,"uncertainty_mg_ha":unc,"uncertainty_kind":kind,"stats":stats,**_provenance("SAR","produto SAR/AGB efetivamente processado",product="raster AGB")}
     refs=[m for m in MODEL_REGISTRY if m["biome"]==biome]
     return {"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"message":"SAR processado, mas sem modelo executável validado com atributos compatíveis; AGB não foi inventada."}
 
@@ -206,9 +209,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     elif lcount:
         audit["warnings"].append(f"{lcount} produto(s) L-band catalogados; informe Earthdata Login para download/processamento automático.")
     # 4 Guaranteed analytical result. Literature is secondary and explicitly labelled when SAR cannot be processed now.
-    r=literature_fallback(biome,phys,library_rows); r["audit"]=audit; r["data_origin"]="LITERATURA"
-    if lcount:r["status"]="ESTIMATIVA BIBLIOGRÁFICA SECUNDÁRIA — SAR CATALOGADO, NÃO PROCESSADO"
-    return r
+    lit=literature_fallback(biome,phys,library_rows)
+    return {"status":"SAR_NAO_PROCESSADO","agb_mg_ha":None,"uncertainty_mg_ha":None,
+            "data_origin":"SAR_NAO_PROCESSADO","source":"nenhum produto SAR quantitativo processado nesta execução",
+            "audit":audit,"literature_reference":lit,
+            "message":"Há cobertura/produtos SAR catalogados, mas nenhum produto quantitativo/modelo compatível foi processado. A referência bibliográfica foi mantida separada e NÃO foi usada como resultado SAR."}
 
 
 def execute_registered_model(model_id,features):
