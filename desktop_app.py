@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.0.0-PRO-RC1"
+APP_VERSION="3.0.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -522,7 +522,7 @@ class App(tk.Tk):
             agb_err_pct=(1.96*sar_unc/agb*100) if agb and sar_unc else 0.0
             rows=[]
             for name,val,status,note,method,source in parts:
-                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"status":status,"metodo":method,"fonte":source,"obs":note,"erro_pct":(agb_err_pct if name=="Biomassa aérea" else None)})
+                origem=("SAR" if name=="Biomassa aérea" and str(status).startswith("SAR") else ("MAPEAMENTO" if name=="Solo 0–30 cm" else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))\n                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,"erro_pct":(agb_err_pct if name=="Biomassa aérea" else None)})
             self.project["analysis_rows"]=rows
             self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
             lines=[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]
