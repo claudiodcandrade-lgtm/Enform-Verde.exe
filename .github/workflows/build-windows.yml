@@ -31,7 +31,8 @@ jobs:
           import desktop_app as app
           assert hasattr(app.App, "export_excel"), "App.export_excel missing"
           assert "tCO₂e/ha" in open("desktop_app.py",encoding="utf-8").read(), "dual carbon units missing"
-          assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"\n          assert "cod_imovel" in open("desktop_app.py",encoding="utf-8").read(), "SICAR CAR-code filter missing"
+          assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"
+          assert "cod_imovel" in open("desktop_app.py",encoding="utf-8").read(), "SICAR CAR-code filter missing"
           ui=app.App()
           ui.update_idletasks()
           ui.destroy()
