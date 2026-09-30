@@ -16,7 +16,7 @@ ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#3441
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
 SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
- "soil":"Vasques et al. (2021), Embrapa Solos/PronaSolos, COS 0–30 cm, 1 km + incerteza",
+ "soil":"Embrapa Solos/PronaSolos, estoque de carbono 90 m, seis camadas entre 0 e 200 cm",
  "deadwood":"Freitas et al. (2021), Embrapa Amazônia Ocidental — necromassa lenhosa",
  "litter":"Embrapa Amazônia Oriental — estudos de serapilheira; proxy só para triagem",
 }
@@ -659,12 +659,18 @@ class App(tk.Tk):
                 ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{total*area:,.0f} tC | {totalco2*area:,.0f} tCO₂e"]])
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
-        for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira"),("Carbono do Solo","Solo 0–30 cm")]:
+        for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
             sh=wb.create_sheet(sheet); setup(sh,"Enform Verde — "+sheet)
             rr=[r for r in ar if r["parametro"]==param]
             data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
             if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
             put(sh,data)
+        sh=wb.create_sheet("Carbono do Solo"); setup(sh,"Enform Verde — Carbono orgânico do solo")
+        soil_rows=[r for r in ar if r["parametro"] in ("Solo 0–30 cm","Solo 0–60 cm","Solo 0–100 cm","Solo 0–200 cm")]
+        if soil_rows:
+            put(sh,[["MAPEAMENTO — PronaSolos",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]+" | "+r.get("erro_metrica","")] for r in soil_rows])
+        else:
+            put(sh,[["MAPEAMENTO","Carbono do solo",None,None,"NÃO CALCULADO","PronaSolos 90 m","Embrapa Solos/PronaSolos","Serviço não retornou valores válidos nesta execução."]])
         sh=wb.create_sheet("Diagnóstico IBGE"); setup(sh,"Enform Verde — Diagnóstico territorial IBGE")
         diag=self.project.get("ibge_diagnosis",{})
         idata=[]
