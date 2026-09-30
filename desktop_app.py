@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.2.0-PROFESSIONAL"
+APP_VERSION="3.3.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -389,9 +389,9 @@ class App(tk.Tk):
         self.pipeline_btn=ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute); self.pipeline_btn.pack(side="left")
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
         ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
-        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — BIOMASS P → L-band → CCI → literatura")
+        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — P-band BIOMASS → SAR L/X compatível → CCI → literatura")
         self.remote_text=tk.Text(f,height=22,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
-        self._set(self.remote_text,"Hierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band);\n2. produtos L-band disponíveis;\n3. ESA CCI Biomass como série histórica SAR-derived;\n4. literatura científica compatível SOMENTE se as buscas anteriores comprovarem ausência de SAR utilizável.\n\nSe houver SAR mas faltar autenticação/processamento, o programa NÃO usa literatura como substituto.")
+        self._set(self.remote_text,"Hierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nSe houver SAR mas faltar autenticação/processamento, o programa NÃO usa literatura como substituto.")
 
     def discover_sar_ui(self):
         if self.gdf is None:return messagebox.showwarning("SAR","Carregue/resolva o polígono primeiro.")
