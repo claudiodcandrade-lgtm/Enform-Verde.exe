@@ -526,7 +526,7 @@ class App(tk.Tk):
         self.status.set("SAR consultado; calculando carbono…")
         self.after(1,lambda:self._execute_main(precomputed_sar=payload))
 
-    def _execute_main(self,event=None,precomputed_sar=None):
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
             self.project.pop(k,None)
