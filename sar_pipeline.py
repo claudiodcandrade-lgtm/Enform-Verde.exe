@@ -137,30 +137,36 @@ def literature_fallback(biome,phys,library_rows=None):
     return {"available":True,"agb_mg_ha":mean,"uncertainty_mg_ha":sd,"n_studies":len(ok),"studies":ok,"status":"ESTIMATIVA BIBLIOGRÁFICA — SAR INDISPONÍVEL"}
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
-    audit={"biomass_l2b":None,"cci":None,"asf":None}
-    # Priority 1: ESA BIOMASS P-band L2B AGB.
-    l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
+    audit={"biomass_l2b":None,"cci":None,"asf":None,"warnings":[]}
+    # 1 ESA BIOMASS. Availability without credentials is recorded, not treated as a fatal error yet.
+    try:
+        l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
+    except Exception as e:
+        l2items=[];audit["warnings"].append("BIOMASS catalogue: "+str(e))
     audit["biomass_l2b"]={"count":len(l2items)}
-    if l2items:
-        if not offline_token:return {"status":"SAR_AVAILABLE_AUTH_REQUIRED","audit":audit,"message":"FP_AGB_L2B existe no polígono. Informe o token ESA MAAP; fallback bibliográfico é proibido porque SAR está disponível."}
-        d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass")
-        if d["paths"]:
-            r=process_real_sar(gdf,d["paths"],biome,phys);r["audit"]=audit;r["paths"]=d["paths"];return r
-        return {"status":"SAR_AVAILABLE_PROCESSING_FAILED","audit":audit,"message":"FP_AGB_L2B existe, mas nenhum raster AGB utilizável foi obtido. Fallback bibliográfico é proibido."}
-    # Priority 2: L-band discovery. Presence blocks literature fallback.
+    if l2items and offline_token:
+        try:
+            d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass")
+            if d["paths"]:
+                r=process_real_sar(gdf,d["paths"],biome,phys);r["audit"]=audit;r["paths"]=d["paths"];r["data_origin"]="SAR";return r
+        except Exception as e:audit["warnings"].append("BIOMASS download/process: "+str(e))
+    elif l2items:audit["warnings"].append("BIOMASS disponível; token ESA MAAP não informado.")
+    # 2 CCI historical SAR-derived AGB: attempt before raw L-band auth roadblock.
+    try:
+        cci=cci_history(gdf,Path(cache)/"cci",offline_token or None)
+        audit["cci"]={"count":cci["items"],"downloaded":len(cci["paths"])}
+        if cci["paths"]:
+            r=process_real_sar(gdf,cci["paths"],biome,phys);r["audit"]=audit;r["paths"]=cci["paths"];r["historical"]=True;r["data_origin"]="SAR / MAPEAMENTO";return r
+    except Exception as e:audit["cci"]={"error":str(e)}
+    # 3 L-band discovery. It is a candidate data source, not a fatal application error.
     asf=discover_asf(gdf,limit=50);audit["asf"]=asf
     lcount=sum(x["count"] for x in asf if x["band"]=="L")
     if lcount:
-        return {"status":"SAR_L_AVAILABLE_DOWNLOAD_REQUIRED","audit":audit,"message":f"{lcount} produto(s) L-band encontrados. Configure credencial NASA Earthdata/ASF para download; fallback bibliográfico é proibido."}
-    # CCI is SAR-derived historical AGB and should be used before literature.
-    try:
-        cci=cci_history(gdf,Path(cache)/"cci",offline_token or None);audit["cci"]={"count":cci["items"],"downloaded":len(cci["paths"])}
-        if cci["paths"]:
-            r=process_real_sar(gdf,cci["paths"],biome,phys);r["audit"]=audit;r["paths"]=cci["paths"];r["historical"]=True;return r
-    except Exception as e:audit["cci"]={"error":str(e)}
-    # Only here is literature allowed: no P-band L2B and no L-band coverage and no usable CCI.
-    r=literature_fallback(biome,phys,library_rows);r["audit"]=audit
-    return r
+        return {"status":"SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA","audit":audit,"agb_mg_ha":None,"uncertainty_mg_ha":None,
+          "message":f"{lcount} produto(s) L-band encontrados. A análise não falhou: configure NASA Earthdata/ASF para processamento automático. Literatura não substitui SAR existente.",
+          "data_origin":"SAR — disponível, ainda não processado"}
+    # 4 Literature only after searches find no usable SAR coverage.
+    r=literature_fallback(biome,phys,library_rows);r["audit"]=audit;r["data_origin"]="LITERATURA";return r
 
 
 def execute_registered_model(model_id,features):
