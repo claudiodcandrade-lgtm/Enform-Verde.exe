@@ -46,6 +46,20 @@ def preprocess_lband(path,workdir,dem=None):
         ras=find_geotiffs(src) if Path(src).is_dir() else [str(src)]
         return {"status":"ARD_READY","kind":kind,"rasters":ras,"steps":["produto georreferenciado/ARD detectado","sem recalibração destrutiva"],"qa":[]}
     if kind=="CEOS_L11_SLC":
-        # JAXA states ScanSAR L1.1 is not supported by SNAP. Do not fake a conversion.
-        return {"status":"SLC_PROCESSOR_REQUIRED","kind":kind,"rasters":[],"steps":["CEOS L1.1/SLC detectado"],"qa":["JAXA ScanSAR L1.1 não deve ser enviado ao SNAP; use L2.2 NRB equivalente quando disponível.","Calibração JAXA CF=-83 dB está registrada, mas focusing/geocoding/RTC requer processador validado para este modo."]}
+        names=" ".join(x.name.lower() for x in Path(src).rglob("*"))
+        scansar=any(x in names for x in ["w1","w2","w3","scansar"])
+        gpt=shutil.which("gpt")
+        if scansar:
+            return {"status":"SLC_SCAN_ARD_REQUIRED","kind":kind,"rasters":[],"steps":["ScanSAR L1.1 detectado","buscar L2.2 CEOS-ARD/NRB equivalente"],"qa":["JAXA declara ScanSAR L1.1 incompatível com SNAP; a rota profissional exige L2.2/NRB ou processador JAXA validado."]}
+        if not gpt:
+            return {"status":"SLC_SNAP_REQUIRED","kind":kind,"rasters":[],"steps":["Stripmap/Spotlight L1.1 detectado"],"qa":["Instale ESA SNAP/S1TBX para calibração e Range-Doppler Terrain Correction automatizados."]}
+        graph=Path(workdir)/"alos2_l11_to_tc.xml"
+        out=Path(workdir)/"alos2_tc.dim"
+        graph.write_text("""<graph id="ALOS2_L11_PRO"><version>1.0</version><node id="Read"><operator>Read</operator><sources/><parameters><file>${input}</file></parameters></node><node id="Calibration"><operator>Calibration</operator><sources><sourceProduct refid="Read"/></sources><parameters><outputSigmaBand>true</outputSigmaBand></parameters></node><node id="TC"><operator>Terrain-Correction</operator><sources><sourceProduct refid="Calibration"/></sources><parameters><demName>SRTM 1Sec HGT</demName><pixelSpacingInMeter>25.0</pixelSpacingInMeter><mapProjection>AUTO:42001</mapProjection></parameters></node><node id="Write"><operator>Write</operator><sources><sourceProduct refid="TC"/></sources><parameters><file>${output}</file><formatName>BEAM-DIMAP</formatName></parameters></node></graph>""",encoding="utf-8")
+        volume=next((x for x in Path(src).rglob("*") if x.name.lower().startswith("vol-")),None)
+        if volume is None:return {"status":"SLC_METADATA_MISSING","kind":kind,"rasters":[],"steps":[],"qa":["Arquivo VOL CEOS não encontrado."]}
+        cp=subprocess.run([gpt,str(graph),"-Pinput="+str(volume),"-Poutput="+str(out)],capture_output=True,text=True)
+        if cp.returncode!=0:return {"status":"SLC_PREPROCESS_FAILED","kind":kind,"rasters":[],"steps":["SNAP Calibration","Range-Doppler Terrain Correction"],"qa":[cp.stderr[-1500:]]}
+        ras=find_geotiffs(workdir)
+        return {"status":"SLC_PREPROCESSED","kind":kind,"rasters":ras,"steps":["SNAP Calibration","Range-Doppler Terrain Correction"],"qa":[]}
     return {"status":"UNSUPPORTED","kind":kind,"rasters":[],"steps":[],"qa":["Formato L-band não reconhecido."]}
