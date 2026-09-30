@@ -528,7 +528,7 @@ class App(tk.Tk):
             self.status.set("Falha controlada — programa permanece responsivo.")
             return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
         self.status.set("SAR consultado; calculando carbono…")
-        self.after(1,lambda:self._execute_main(precomputed_sar=payload))
+        self.after(1,lambda:self._execute_main(precomputed_sar=payload.get("sar"),precomputed_soil=payload.get("soil")))
 
     def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
