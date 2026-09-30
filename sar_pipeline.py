@@ -24,7 +24,10 @@ def discover_asf(gdf,limit=25):
     for dataset,band in [("ALOS PALSAR","L"),("NISAR","L"),("SENTINEL-1","C")]:
         try:
             r=requests.get(ASF_SEARCH,params={"dataset":dataset,"intersectsWith":_wkt(gdf),"output":"geojson","maxResults":limit},timeout=(10,45));r.raise_for_status();js=r.json();fs=js.get("features",[])
-            out.append({"provider":"ASF/NASA","dataset":dataset,"band":band,"count":len(fs),"items":[{"id":x.get("properties",{}).get("sceneName") or x.get("id"),"properties":x.get("properties",{})} for x in fs]})
+            out.append({"provider":"ASF/NASA","dataset":dataset,"band":band,"count":len(fs),"items":[{"id":x.get("properties",{}).get("sceneName") or x.get("id"),
+                "properties":x.get("properties",{}),
+                "download_url":next((v for k,v in x.get("properties",{}).items() if isinstance(v,str) and v.startswith("http") and ("url" in k.lower() or "download" in k.lower())),None),
+                "raw":x} for x in fs]})
         except Exception as e:out.append({"provider":"ASF/NASA","dataset":dataset,"band":band,"count":0,"items":[],"error":str(e)})
     return out
 def discover_cdse(gdf,limit=25):
@@ -186,9 +189,17 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     if lcount and edl_user and edl_password:
         try:
             from lband_preprocess import preprocess_lband
-            cand=next((it for group in asf if group.get("band")=="L" for it in group.get("items",[]) if (it.get("properties") or {}).get("url")),None)
+            cands=[it for group in asf if group.get("band")=="L" for it in group.get("items",[]) if it.get("download_url")]
+            # Prefer calibrated NISAR PROVISIONAL / GCOV, then other NISAR, then ALOS.
+            def _rank(it):
+                t=(str(it.get("id",""))+" "+str(it.get("properties",{}))).upper()
+                return (0 if ("NISAR" in t and "PROVISIONAL" in t and "GCOV" in t) else
+                        1 if ("NISAR" in t and "PROVISIONAL" in t) else
+                        2 if "NISAR" in t else 3)
+            cands=sorted(cands,key=_rank)
+            cand=cands[0] if cands else None
             if cand:
-                url=cand["properties"]["url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
+                url=cand["download_url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
                 target=dl/Path(url.split("?")[0]).name
                 if not target.exists():
                     sess=requests.Session(); sess.auth=(edl_user,edl_password)
@@ -198,7 +209,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                             for chunk in rr.iter_content(8*1024*1024):
                                 if chunk: out.write(chunk)
                 pre=preprocess_lband(target,dl/("proc_"+target.stem))
-                audit["asf_download"]={"scene":cand.get("id"),"preprocess":pre.get("status")}
+                audit["asf_download"]={"scene":cand.get("id"),"url_found":True,"preprocess":pre.get("status"),"candidate_count":len(cands)}
                 if pre.get("rasters"):
                     pr=process_real_sar(gdf,pre["rasters"],biome,phys)
                     if pr.get("agb_mg_ha") is not None:
