@@ -603,7 +603,7 @@ class App(tk.Tk):
             return messagebox.showinfo("Perímetro","Use 'Buscar CCIR no SIGEF' antes de executar a análise.")
         if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Busque CAR/CCIR ou carregue um vetor.")
         if self.sar_paths:return self._execute_main(event)
-        self._analysis_running=True; self.run_btn.state(["disabled"]); self.pipeline_btn.state(["disabled"])
+        self._analysis_running=True; self.run_btn.state(["disabled"]); self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando SAR em segundo plano…")
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         def worker():
@@ -621,7 +621,7 @@ class App(tk.Tk):
         except queue.Empty:
             if self._analysis_running:self.after(120,self._poll_analysis)
             return
-        self._analysis_running=False; self.run_btn.state(["!disabled"]); self.pipeline_btn.state(["!disabled"])
+        self._analysis_running=False; self.run_btn.state(["!disabled"]); self.pipeline_btn.state(["!disabled"]); self.global_execute_btn.state(["!disabled"])
         if kind=="error":
             log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
             self.status.set("Falha controlada — programa permanece responsivo.")
