@@ -53,6 +53,10 @@ jobs:
           assert "NASA Earthdata usuário:" in src and "edl_password" in src, "Earthdata credentials UI missing"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
           assert "ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO" in src, "secondary-analysis status missing"
+          sar_src=open("sar_pipeline.py",encoding="utf-8").read()
+          assert "process_nisar_gcov" in sar_src and "analyze_nisar_gcov" in sar_src, "NISAR GCOV processor missing"
+          assert "NISAR_GCOV_HDF5" in sar_src, "NISAR HDF5 route missing"
+          assert "select_executable_model" in sar_src, "strict SAR model selector missing"
           assert "descoberta ≠ download ≠ processamento ≠ uso" in src, "SAR discovery state labels missing"
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
@@ -114,7 +118,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.6.0-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.7.0-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
