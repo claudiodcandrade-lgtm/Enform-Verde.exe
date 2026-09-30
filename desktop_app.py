@@ -145,20 +145,20 @@ class App(tk.Tk):
         s.configure("TButton",padding=7)
     def _ui(self):
         root=ttk.Frame(self); root.pack(fill="both",expand=True)
-        hero=tk.Canvas(root,width=330,bg=FOREST,highlightthickness=0); hero.pack(side="left",fill="y")
+        hero=tk.Canvas(root,width=430,bg=FOREST,highlightthickness=0); hero.pack(side="left",fill="y")
         base=Path(sys.executable).parent if getattr(sys,"frozen",False) else Path(__file__).parent
         visual=base/"enform_visual.jpg"
         if visual.exists():
             im=Image.open(visual).convert("RGB")
-            im.thumbnail((330,245),Image.Resampling.LANCZOS)
+            im.thumbnail((430,320),Image.Resampling.LANCZOS)
             self.hero_photo=ImageTk.PhotoImage(im)
             hero.create_image(0,0,image=self.hero_photo,anchor="nw")
         else:
             hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
             hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
-        hero.create_rectangle(0,245,330,760,fill=FOREST,outline="")
-        hero.create_text(32,300,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
-        hero.create_text(32,390,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
+        hero.create_rectangle(0,320,430,760,fill=FOREST,outline="")
+        hero.create_text(32,365,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
+        hero.create_text(32,455,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
         hero.create_text(32,650,text="tC/ha  •  tCO₂e/ha\nMEDIDO  •  MODELADO  •  INCERTEZA",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
         main=ttk.Frame(root,padding=22); main.pack(side="left",fill="both",expand=True)
         top=ttk.Frame(main); top.pack(fill="x")
