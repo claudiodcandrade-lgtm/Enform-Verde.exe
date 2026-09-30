@@ -593,15 +593,18 @@ class App(tk.Tk):
             agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
             rows=[]
             for name,val,status,note,method,source in parts:
-                origem=(("SAR" if str(status).startswith("SAR") else "LITERATURA") if name=="Biomassa aérea" else ("MAPEAMENTO" if name=="Solo 0–30 cm" else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))
+                origem=(("SAR" if str(status).startswith("SAR") else "LITERATURA") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO")))
                 if name=="Biomassa aérea":
                     ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo") if sar_unc else "N/D")
                 elif name=="Biomassa subterrânea":
                     # Propagate SAR uncertainty only; R:S range is methodological, not a statistical CI.
                     ea=(agb_abs*ROOT_RATIO if agb_abs is not None else None); ep=(ea/val*100 if ea is not None and val else None)
                     metric="propagação da incerteza AGB; faixa R:S metodológica adicional"; level="1σ da AGB; R:S sem nível de confiança"
-                elif name=="Solo 0–30 cm":
-                    ea=None; ep=None; metric=f"DP espacial={soil_sd:,.2f} tC/ha; não equivale ao erro de acurácia do mapa"; level="erro estatístico N/D"
+                elif name.startswith("Solo "):
+                    depth=name.replace("Solo ",""); sp=soil_profiles.get(depth,{})
+                    sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=None; ep=(sd/val*100 if val else None)
+                    metric=f"DP espacial={sd:,.2f} tC/ha ({ep:.1f}% da média)" if ep is not None else "DP espacial N/D"
+                    level="variabilidade espacial do mapa; não IC95% nem erro de predição"
                 else:
                     ea=None; ep=None; metric="proxy bibliográfico/modelado sem distribuição de erro validada"; level="erro estatístico N/D"
                 rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
