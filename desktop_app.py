@@ -571,20 +571,22 @@ class App(tk.Tk):
             bgb=agb*ROOT_RATIO; bgc=bgb*CARBON_FRACTION
             nec_c=agc*0.20 if self.biome.get()=="Amazônia" else agc*0.12
             lit_c=4.8 if self.biome.get()=="Amazônia" else (3.0 if self.biome.get()=="Mata Atlântica" else 1.8)
-            soil=None; soil_sd=None; pix=None
-            if not self.soil_raster:
-                try:self.soil_raster=try_download_embrapa_soc(self.gdf)
-                except Exception:pass
-            if self.soil_raster:
-                try:soil,soil_sd,pix=zonal_soil(self.gdf,self.soil_raster)
-                except Exception:soil=None
+            soil_profiles=precomputed_soil if isinstance(precomputed_soil,dict) else {}
+            soil_error=soil_profiles.get("error") if soil_profiles else "PronaSolos não retornou perfil."
             parts=[
               ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","pipeline automático",sar.get("source",sar.get("status","produto processado"))),
               ("Biomassa subterrânea",bgc,"MODELADO",f"R:S={ROOT_RATIO:.2f}; faixa metodológica {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}","relação raiz:parte aérea","biblioteca metodológica"),
               ("Necromassa",nec_c,"MODELADO — TRIAGEM","proxy condicionado ao bioma; substituir por IFN/medição local para MRV","proxy por bioma","IFN/Embrapa"),
               ("Serapilheira",lit_c,"MODELADO — TRIAGEM","alta variabilidade local","proxy por bioma","Embrapa/literatura")]
-            if soil is not None: parts.append(("Solo 0–30 cm",soil,"MAPEAMENTO DIGITAL",f"{pix} pixels; DP espacial {soil_sd:,.2f} tC/ha","recorte raster","Embrapa/PronaSolos"))
+            p030=soil_profiles.get("0–30 cm") if soil_profiles else None
+            if p030:
+                parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
             total=sum(x[1] for x in parts); co2=total*44/12
+            # Deeper SOC profiles are reported independently and are NOT summed again into Carbono Total.
+            for depth in ("0–60 cm","0–100 cm","0–200 cm"):
+                p=soil_profiles.get(depth) if soil_profiles else None
+                if p:parts.append((f"Solo {depth}",p["tc_ha"],"MAPEAMENTO DIGITAL",f'{p["n_samples"]} amostras do mapa 90 m; DP espacial {p["spatial_sd_tc_ha"]:,.2f} tC/ha; não somado novamente ao Carbono Total',f"PronaSolos 90 m: soma das camadas até {depth.split('–')[1]}","Embrapa Solos/PronaSolos"))
+            if soil_error:self.project["soil_warning"]=soil_error
             # Statistical/uncertainty metadata. Never label a descriptive range as a confidence interval.
             agb_abs=(sar_unc*CARBON_FRACTION) if sar_unc else None
             agb_pct=(sar_unc/agb*100) if agb and sar_unc else None
