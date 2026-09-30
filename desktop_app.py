@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.12.0-SAR-FIRST"
+APP_VERSION="3.13.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -350,44 +350,61 @@ class App(tk.Tk):
         s.configure("Run.TButton",font=("Segoe UI",10,"bold"),padding=10)
         s.configure("TButton",padding=7)
     def _ui(self):
+        # Professional dashboard shell based on the approved Enform Verde reference.
         root=ttk.Frame(self); root.pack(fill="both",expand=True)
-        hero=tk.Canvas(root,width=500,bg=FOREST,highlightthickness=0); hero.pack(side="left",fill="y")
         base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
-        visual=base/"enform_header.jpg"
+
+        header=tk.Canvas(root,height=108,bg="#10291f",highlightthickness=0); header.pack(fill="x",side="top")
+        visual=base/"enform_dashboard_header.jpg"
         if visual.exists():
             im=Image.open(visual).convert("RGB")
-            if im.width < 500: im=im.resize((500,max(1,round(im.height*500/im.width))),Image.Resampling.LANCZOS)
-            im.thumbnail((500,440),Image.Resampling.LANCZOS)
-            self.hero_photo=ImageTk.PhotoImage(im)
-            hero.create_image(0,0,image=self.hero_photo,anchor="nw")
-            # Cover the legacy/baked logo area before drawing the single approved large logo.
-            hero.create_rectangle(18,18,360,190,fill=FOREST,outline="")
-            logo=base/"enform_logo.png"  # optional separate mark; header already contains approved Enform logo
-            if logo.exists():
-                lg=Image.open(logo).convert("RGBA")
-                lg.thumbnail((300,150),Image.Resampling.LANCZOS)
-                self.hero_logo=ImageTk.PhotoImage(lg)
-                hero.create_image(38,34,image=self.hero_logo,anchor="nw")
+            sw=max(self.winfo_screenwidth(),1260)
+            im=im.resize((sw,108),Image.Resampling.LANCZOS)
+            self.header_photo=ImageTk.PhotoImage(im)
+            header.create_image(0,0,image=self.header_photo,anchor="nw")
         else:
-            hero.create_text(35,45,text="enform",anchor="nw",fill="white",font=("Segoe UI",26,"bold"))
-            hero.create_text(36,92,text="VERDE",anchor="nw",fill=ORANGE,font=("Segoe UI",12,"bold"))
-        hero.create_rectangle(0,440,500,760,fill=FOREST,outline="")
-        hero.create_text(32,475,text="Carbono florestal\npor sensoriamento remoto",anchor="nw",fill="white",font=("Segoe UI",18,"bold"))
-        hero.create_text(32,565,text="AMAZÔNIA  •  CERRADO\nCAATINGA  •  MATA ATLÂNTICA",anchor="nw",fill="#DDE9E3",font=("Segoe UI",10,"bold"))
-        hero.create_text(32,650,text="tC/ha  •  tCO₂e/ha\nMEDIDO  •  MODELADO  •  INCERTEZA",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
-        main=ttk.Frame(root,padding=22); main.pack(side="left",fill="both",expand=True)
-        top=ttk.Frame(main); top.pack(fill="x")
-        ttk.Label(top,text="Análise de carbono",style="Title.TLabel").pack(side="left")
-        self.run_btn=ttk.Button(top,text="EXECUTAR ANÁLISE",command=self.execute,style="Run.TButton"); self.run_btn.pack(side="right")
-        ttk.Button(top,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=8)
-        ttk.Button(top,text="Salvar relatório",command=self.save_report).pack(side="right",padx=8)
-        self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True,pady=(16,8))
+            header.create_text(24,24,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
+            header.create_text(26,72,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
+
+        body=ttk.Frame(root); body.pack(fill="both",expand=True)
+        nav=tk.Frame(body,width=220,bg="#F6F8F8",highlightbackground="#D8E0E0",highlightthickness=1)
+        nav.pack(side="left",fill="y"); nav.pack_propagate(False)
+        main=ttk.Frame(body,padding=(10,8,10,6)); main.pack(side="left",fill="both",expand=True)
+
+        self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True)
         self.tabs=[]
-        for n in ["Projeto e CAR","Dados espaciais","Sensores SAR","Carbono total","Fontes & QA"]:
-            f=ttk.Frame(self.nb,padding=18); self.nb.add(f,text=n); self.tabs.append(f)
+        for n in ["Propriedade (CAR)","Mapas e limites","Carregar produtos SAR / AGB","Carbono Total","Base Científica e Modelos"]:
+            f=ttk.Frame(self.nb,padding=14); self.nb.add(f,text=n); self.tabs.append(f)
+
+        nav_items=[
+          ("⌂   Início",0),("▣   Propriedade (CAR)",0),("◫   Mapas e limites",1),
+          ("◈   Fitofisionomia (IBGE)",1),("◆   Carregar produtos\n     SAR / AGB",2),
+          ("◉   Biomassa Aérea (AGB)",3),("♨   Carbono no Solo",3),
+          ("●   Carbono Total",3),("▤   Resultados e Relatório",3),
+          ("⚙   Configurações",2),("▥   Base Científica e\n     Modelos",4),("ⓘ   Sobre",4)]
+        self.nav_buttons=[]
+        for label,idx in nav_items:
+            btn=tk.Button(nav,text=label,anchor="w",justify="left",relief="flat",bd=0,
+                          bg="#F6F8F8",fg="#233B49",activebackground="#E5F0EB",
+                          font=("Segoe UI",10),padx=16,pady=9,
+                          command=lambda i=idx:self.nb.select(i))
+            btn.pack(fill="x",pady=1); self.nav_buttons.append((btn,idx))
+        def mark_tab(event=None):
+            cur=self.nb.index(self.nb.select())
+            for btn,idx in self.nav_buttons:
+                if idx==cur:
+                    btn.configure(bg="#08733F",fg="white",font=("Segoe UI",10,"bold"))
+                else:
+                    btn.configure(bg="#F6F8F8",fg="#233B49",font=("Segoe UI",10))
+        self.nb.bind("<<NotebookTabChanged>>",mark_tab)
+
         self._project(); self._spatial(); self._remote(); self._results(); self._sources()
+        mark_tab()
+        footer=ttk.Frame(root,padding=(14,4)); footer.pack(fill="x",side="bottom")
+        ttk.Label(footer,text="Enform Verde "+APP_VERSION).pack(side="left")
         self.status=tk.StringVar(value="Pronto. Informe o CAR ou carregue o vetor da propriedade.")
-        ttk.Label(main,textvariable=self.status,relief="sunken",anchor="w",padding=6).pack(fill="x")
+        ttk.Label(footer,textvariable=self.status,anchor="center").pack(side="left",fill="x",expand=True)
+        ttk.Label(footer,text="Sistema de Estimativa de Estoques de Carbono em Vegetação Nativa").pack(side="right")
 
     def _project(self):
         f=self.tabs[0]; ttk.Label(f,text="Abrir análise",style="H.TLabel").grid(row=0,column=0,columnspan=4,sticky="w")
@@ -412,17 +429,22 @@ class App(tk.Tk):
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
     def _remote(self):
-        f=self.tabs[2]; ttk.Label(f,text="Pipeline automático SAR → biomassa",style="H.TLabel").pack(anchor="w")
+        f=self.tabs[2]
+        steps=ttk.Frame(f); steps.pack(fill="x",pady=(0,10))
+        for j,t in enumerate(["1. Dados e Catálogos","2. Download e Pré-processamento","3. Modelagem e AGB","4. Resultados SAR"]):
+            lab=tk.Label(steps,text=t,bg=("#08733F" if j==0 else "#EEF2F3"),fg=("white" if j==0 else "#233B49"),font=("Segoe UI",10,"bold"),padx=14,pady=9,bd=1,relief="solid")
+            lab.pack(side="left",fill="x",expand=True,padx=(0,2))
+        ttk.Label(f,text="Autenticação e processamento SAR",style="H.TLabel").pack(anchor="w")
         auth=ttk.Frame(f); auth.pack(fill="x",pady=6)
         ttk.Label(auth,text="ESA MAAP offline token:").pack(side="left")
         self.esa_token=tk.StringVar()
         ttk.Entry(auth,textvariable=self.esa_token,width=48,show="•").pack(side="left",padx=6)
         ttk.Label(auth,text="(memória da sessão)",foreground="#666").pack(side="left")
         auth2=ttk.Frame(f); auth2.pack(fill="x",pady=4)
-        ttk.Label(auth2,text="NASA Earthdata User Token:").pack(side="left")
+        ttk.Label(auth2,text="NASA Earthdata User Token:",font=("Segoe UI",10,"bold")).pack(side="left")
         self.edl_token=tk.StringVar()
         ttk.Entry(auth2,textvariable=self.edl_token,width=48,show="•").pack(side="left",padx=4)
-        ttk.Button(auth2,text="GERAR TOKEN NO EARTHDATA",command=lambda:webbrowser.open("https://urs.earthdata.nasa.gov/users/generate_token")).pack(side="left",padx=4)
+        ttk.Button(auth2,text="GERAR TOKEN NO EARTHDATA",command=lambda:webbrowser.open("https://urs.earthdata.nasa.gov/users/generate_token"),style="Run.TButton").pack(side="left",padx=8)
         ttk.Label(auth2,text="60 dias • somente memória desta sessão",foreground="#666").pack(side="left")
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         self.pipeline_btn=ttk.Button(row,text="EXECUTAR PIPELINE AUTOMÁTICO",command=self.execute); self.pipeline_btn.pack(side="left")
