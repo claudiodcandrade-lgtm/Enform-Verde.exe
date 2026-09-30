@@ -7,9 +7,10 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
-from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY
+from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows
+from lband_preprocess import preprocess_lband
 
-APP_VERSION="2.1.0-AUTO-SAR"
+APP_VERSION="3.0.0-PRO-RC1"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
