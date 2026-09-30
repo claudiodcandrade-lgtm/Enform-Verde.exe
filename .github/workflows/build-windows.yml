@@ -36,7 +36,7 @@ jobs:
           assert "IBGE_VEGE_2026_URL" in open("desktop_app.py",encoding="utf-8").read(), "IBGE 2026 library missing"
           assert "Diagnóstico IBGE" in open("desktop_app.py",encoding="utf-8").read(), "IBGE Excel sheet missing"
           src=open("desktop_app.py",encoding="utf-8").read()
-          assert "geo_area_imovel" in src, "SICAR geometry contract missing"
+          assert "cod_imovel" in src and "sicar:sicar_imoveis_" in src, "SICAR WFS contract missing"
           assert "DEFAULT@SECLEVEL=1" in src, "SICAR TLS compatibility missing"
           assert "state=\"readonly\"" not in src[src.index("def _project"):src.index("def _spatial")], "manual biome selector still present"
           assert "CCIR — código INCRA/SNCR" in src, "CCIR opening input missing"
