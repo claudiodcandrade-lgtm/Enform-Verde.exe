@@ -50,6 +50,8 @@ jobs:
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
           assert "enform_logo.png" in src and "width=500" in src, "expanded visual identity missing"
+          assert "NASA Earthdata usuário:" in src and "edl_password" in src, "Earthdata credentials UI missing"
+          assert "descoberta ≠ download ≠ processamento ≠ uso" in src, "SAR discovery state labels missing"
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
           ui.update_idletasks()
@@ -110,7 +112,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.4.0-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.5.0-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
