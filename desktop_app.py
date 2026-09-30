@@ -8,7 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
 
-APP_VERSION="1.3.2-SAR-IBGE"
+APP_VERSION="1.3.4-SICAR-SIGEF-IBGE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -278,26 +278,28 @@ class App(tk.Tk):
         ttk.Label(main,textvariable=self.status,relief="sunken",anchor="w",padding=6).pack(fill="x")
 
     def _project(self):
-        f=self.tabs[0]; ttk.Label(f,text="Identificação",style="H.TLabel").grid(row=0,column=0,columnspan=3,sticky="w")
-        self.name=tk.StringVar(value="Projeto Enform Verde"); self.car=tk.StringVar()
-        self.biome=tk.StringVar(value="A definir pelo IBGE"); self.phys=tk.StringVar(value="A definir pelo IBGE")
-        for i,(lab,var) in enumerate([("Projeto",self.name),("Código CAR",self.car)],1):
-            ttk.Label(f,text=lab).grid(row=i,column=0,sticky="w",pady=8); ttk.Entry(f,textvariable=var,width=70).grid(row=i,column=1,sticky="ew",padx=10)
-        ttk.Button(f,text="Buscar polígono diretamente no SICAR",command=self.car_lookup).grid(row=2,column=2,padx=8)
-        ttk.Separator(f,orient="horizontal").grid(row=3,column=0,columnspan=3,sticky="ew",pady=14)
-        ttk.Label(f,text="Diagnóstico territorial automático",style="H.TLabel").grid(row=4,column=0,columnspan=3,sticky="w")
-        ttk.Label(f,text="Bioma").grid(row=5,column=0,sticky="w",pady=8); ttk.Label(f,textvariable=self.biome,font=("Segoe UI",10,"bold")).grid(row=5,column=1,sticky="w",padx=10)
-        ttk.Label(f,text="Fitofisionomia / região fitoecológica").grid(row=6,column=0,sticky="w",pady=8); ttk.Label(f,textvariable=self.phys,font=("Segoe UI",10,"bold")).grid(row=6,column=1,sticky="w",padx=10)
-        ttk.Label(f,text="Esses campos não são selecionados pelo usuário: são definidos pela interseção espacial com as bases oficiais do IBGE.",foreground="#666").grid(row=7,column=1,columnspan=2,sticky="w",pady=10)
+        f=self.tabs[0]; ttk.Label(f,text="Abrir análise",style="H.TLabel").grid(row=0,column=0,columnspan=4,sticky="w")
+        self.name=tk.StringVar(value="Projeto Enform Verde"); self.car=tk.StringVar(); self.ccir=tk.StringVar()
+        self.biome=tk.StringVar(value=""); self.phys=tk.StringVar(value="")
+        fields=[("Projeto",self.name),("CAR / SICAR",self.car),("CCIR — código INCRA/SNCR (13 dígitos)",self.ccir)]
+        for i,(lab,var) in enumerate(fields,1):
+            ttk.Label(f,text=lab).grid(row=i,column=0,sticky="w",pady=8)
+            ttk.Entry(f,textvariable=var,width=62).grid(row=i,column=1,sticky="ew",padx=10)
+        ttk.Button(f,text="Buscar CAR no SICAR",command=self.car_lookup).grid(row=2,column=2,padx=6)
+        ttk.Button(f,text="Buscar CCIR no SIGEF",command=self.ccir_lookup).grid(row=3,column=2,padx=6)
+        ttk.Button(f,text="CARREGAR ARQUIVO VETORIAL",command=self.pick_vector,style="Run.TButton").grid(row=4,column=1,sticky="w",pady=18,padx=10)
+        ttk.Label(f,text="KML • KMZ • SHP • GeoJSON • GPKG",foreground="#666").grid(row=4,column=2,sticky="w")
+        ttk.Label(f,text="Bioma e fitofisionomia não são entradas. O programa os identifica pelo cruzamento espacial com o IBGE e os apresenta no resultado.",foreground="#666").grid(row=5,column=1,columnspan=3,sticky="w",pady=8)
         f.columnconfigure(1,weight=1)
+
     def _spatial(self):
-        f=self.tabs[1]; ttk.Label(f,text="Perímetro e solo",style="H.TLabel").pack(anchor="w")
+        f=self.tabs[1]; ttk.Label(f,text="Perímetro, diagnóstico e solo",style="H.TLabel").pack(anchor="w")
         row=ttk.Frame(f); row.pack(fill="x",pady=10)
-        ttk.Button(row,text="Carregar KML / GeoJSON / SHP / GPKG",command=self.pick_vector).pack(side="left")
-        ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left",padx=8)
-        ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left")
+        ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
+        ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
         self.spatial_text=tk.Text(f,height=20,wrap="word"); self.spatial_text.pack(fill="both",expand=True,pady=8)
-        self._set(self.spatial_text,"Nenhum perímetro carregado.\n\nO programa não assume CRS nem cria geometria a partir de um código CAR sem resposta do serviço oficial.")
+        self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
+
     def _remote(self):
         f=self.tabs[2]; ttk.Label(f,text="Sensores SAR e estimativa de biomassa",style="H.TLabel").pack(anchor="w")
         self.sensor=tk.StringVar(value="ESA Biomass — banda P")
