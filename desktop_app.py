@@ -16,7 +16,7 @@ ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#3441
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
 SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
- "soil":"Embrapa Solos/PronaSolos, estoque de carbono 90 m, seis camadas entre 0 e 200 cm",
+ "soil":"Vasques et al. (2021), Embrapa Solos/PronaSolos, COS 0–30 cm, 1 km + incerteza",
  "deadwood":"Freitas et al. (2021), Embrapa Amazônia Ocidental — necromassa lenhosa",
  "litter":"Embrapa Amazônia Oriental — estudos de serapilheira; proxy só para triagem",
 }
@@ -92,13 +92,16 @@ def _sicar_session():
 def resolve_car(car):
     """Resolve CAR against the official public SICAR WFS, with protocol fallbacks and diagnostics."""
     import geopandas as gpd, requests
-    raw=str(car or "").strip().upper().replace("–","-").replace("—","-")\n    raw=re.sub(r"[\\s\\u200b\\ufeff]+","",raw)\n    compact=re.sub(r"[^A-Z0-9]","",raw)\n    m=re.match(r"^([A-Z]{2})([0-9]{7})([A-F0-9]{32})$",compact)\n    code=(f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else raw)
+    raw=str(car or "").strip().upper().replace("–","-").replace("—","-")
+    code="".join(raw.split())
+    m=re.match(r"^([A-Z]{2})-([0-9]{7})-([A-F0-9]{32})$",code)
     if not m: raise ValueError("Código CAR inválido/incompleto. Use o código integral no padrão UF-7 dígitos-32 caracteres.")
     uf=m.group(1).lower(); layer=f"sicar:sicar_imoveis_{uf}"
-    urls=["https://geoserver.car.gov.br/geoserver/sicar/ows","https://geoserver.car.gov.br/geoserver/sicar/wfs"]\n    layers=[layer,layer.replace("sicar:","")]
+    urls=["https://geoserver.car.gov.br/geoserver/sicar/ows","https://geoserver.car.gov.br/geoserver/sicar/wfs"]
     attempts=[]; sess=_sicar_session()
-    for url in urls:\n     for lyr in layers:\n      for version,key in [("1.0.0","typeName"),("1.1.0","typeName"),("2.0.0","typeNames")]:
-        params={"service":"WFS","version":version,"request":"GetFeature",key:lyr,
+    for url in urls:
+      for version,key in [("1.0.0","typeName"),("2.0.0","typeNames")]:
+        params={"service":"WFS","version":version,"request":"GetFeature",key:layer,
                 "outputFormat":"application/json","srsName":"EPSG:4326","cql_filter":f"cod_imovel='{code}'"}
         try:
             try:r=sess.get(url,params=params,timeout=(8,35))
@@ -659,18 +662,12 @@ class App(tk.Tk):
                 ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{total*area:,.0f} tC | {totalco2*area:,.0f} tCO₂e"]])
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
-        for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
+        for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira"),("Carbono do Solo","Solo 0–30 cm")]:
             sh=wb.create_sheet(sheet); setup(sh,"Enform Verde — "+sheet)
             rr=[r for r in ar if r["parametro"]==param]
             data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
             if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
             put(sh,data)
-        sh=wb.create_sheet("Carbono do Solo"); setup(sh,"Enform Verde — Carbono orgânico do solo")
-        soil_rows=[r for r in ar if r["parametro"] in ("Solo 0–30 cm","Solo 0–60 cm","Solo 0–100 cm","Solo 0–200 cm")]
-        if soil_rows:
-            put(sh,[["MAPEAMENTO — PronaSolos",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]+" | "+r.get("erro_metrica","")] for r in soil_rows])
-        else:
-            put(sh,[["MAPEAMENTO","Carbono do solo",None,None,"NÃO CALCULADO","PronaSolos 90 m","Embrapa Solos/PronaSolos","Serviço não retornou valores válidos nesta execução."]])
         sh=wb.create_sheet("Diagnóstico IBGE"); setup(sh,"Enform Verde — Diagnóstico territorial IBGE")
         diag=self.project.get("ibge_diagnosis",{})
         idata=[]
