@@ -68,7 +68,10 @@ jobs:
           assert "EXECUTAR ANÁLISE" in src, "global analysis control missing"
           assert "Aspect ratio is preserved" in src, "header aspect-ratio protection missing"
           assert "literatura/modelagem somente após falha documentada" in src, "fallback policy regression"
-          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Real public Sentinel-1 C-band"), "SAR priority regression"\n          assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"\n          assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"\n          assert "VISUALIZAR SATÉLITE GOOGLE" in src and "tile.googleapis.com/v1/2dtiles" in src, "Google satellite polygon visualization missing"
+          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Real public Sentinel-1 C-band"), "SAR priority regression"
+          assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"
+          assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
+          assert "VISUALIZAR SATÉLITE GOOGLE" in src and "tile.googleapis.com/v1/2dtiles" in src, "Google satellite polygon visualization missing"
           assert Path("enform_header.jpg").exists() and Path("enform_header.jpg").stat().st_size > 2000, "forest/logo visual asset missing"
           import scientific_calibration as sc
           assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
