@@ -527,7 +527,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # Literature is strictly terminal: it is reached only after every configured SAR route above was attempted.
     audit["sar_sources_exhausted"]=True
     lit=literature_fallback(biome,phys,library_rows)
-    return {"status":"SAR_NAO_PROCESSADO","agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":"SAR_NAO_PROCESSADO",
+    return {"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),"agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":("SAR_ATRIBUTOS" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),
             "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "message":("SAR foi processado, mas não existe modelo AGB validado compatível; consulte processed_without_agb." if audit.get("processed_without_agb") else "Nenhum arquivo SAR foi processado; consulte a auditoria detalhada.")}
 
