@@ -34,7 +34,7 @@ jobs:
           assert "tCO₂e/ha" in open("desktop_app.py",encoding="utf-8").read(), "dual carbon units missing"
           assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"
           assert "cod_imovel" in open("desktop_app.py",encoding="utf-8").read(), "SICAR CAR-code filter missing"
-          assert "IBGE_VEGE_2026_URL" in open("desktop_app.py",encoding="utf-8").read(), "IBGE 2026 library missing"\n          assert "_read_zip_bbox" in src if False else True
+          assert "IBGE_VEGE_2026_URL" in open("desktop_app.py",encoding="utf-8").read(), "IBGE 2026 library missing"
           assert "Diagnóstico IBGE" in open("desktop_app.py",encoding="utf-8").read(), "IBGE Excel sheet missing"
           src=open("desktop_app.py",encoding="utf-8").read()
           assert "cod_imovel" in src and "sicar:sicar_imoveis_" in src, "SICAR WFS contract missing"
