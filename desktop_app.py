@@ -8,7 +8,7 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
-from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report
+from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
 APP_VERSION="3.15.0-MULTISOURCE"
@@ -471,10 +471,15 @@ class App(tk.Tk):
         providers=ttk.LabelFrame(f,text="Fontes SAR independentes",padding=10); providers.pack(fill="x",pady=(0,8))
         ttk.Label(providers,text="NASA Earthdata / ASF",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="w")
         ttk.Label(providers,text="NISAR e ALOS/PALSAR — usa o User Token acima quando o download exigir autenticação.").grid(row=0,column=1,sticky="w",padx=8)
-        ttk.Label(providers,text="Copernicus CDSE",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="w",pady=4)
-        ttk.Label(providers,text="Sentinel-1 GRD — catálogo independente do Earthdata; token CDSE é opcional para ativos autenticados.").grid(row=1,column=1,sticky="w",padx=8)
-        self.cdse_token=tk.StringVar()
-        ttk.Entry(providers,textvariable=self.cdse_token,width=38,show="•").grid(row=1,column=2,sticky="ew",padx=5)
+        ttk.Label(providers,text="Copernicus CDSE / Sentinel Hub",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="w",pady=4)
+        ttk.Label(providers,text="Sentinel-1 GRD — Process API independente do Earthdata; baixa pixels VV/VH RTC reais.").grid(row=1,column=1,sticky="w",padx=8)
+        cdse=ttk.Frame(providers); cdse.grid(row=1,column=2,sticky="ew",padx=5)
+        self.cdse_client_id=tk.StringVar(); self.cdse_client_secret=tk.StringVar(); self.cdse_token=tk.StringVar()
+        ttk.Label(cdse,text="Client ID").grid(row=0,column=0,sticky="w"); ttk.Entry(cdse,textvariable=self.cdse_client_id,width=25).grid(row=0,column=1,padx=3)
+        ttk.Label(cdse,text="Client Secret").grid(row=1,column=0,sticky="w"); ttk.Entry(cdse,textvariable=self.cdse_client_secret,width=25,show="•").grid(row=1,column=1,padx=3)
+        ttk.Button(cdse,text="TESTAR CDSE",command=self._test_cdse).grid(row=0,column=2,rowspan=2,padx=5)
+        self.cdse_state=tk.StringVar(value="CDSE não testado"); ttk.Label(cdse,textvariable=self.cdse_state,foreground="#555").grid(row=2,column=0,columnspan=3,sticky="w")
+        ttk.Label(cdse,text="Credenciais mantidas somente na memória desta sessão.",foreground="#666").grid(row=3,column=0,columnspan=3,sticky="w")
         ttk.Label(providers,text="ESA / MAAP",font=("Segoe UI",9,"bold")).grid(row=2,column=0,sticky="w")
         ttk.Label(providers,text="BIOMASS banda P / CCI — rota independente, quando produto e autorização estiverem disponíveis.").grid(row=2,column=1,sticky="w",padx=8)
         ttk.Label(providers,text="Arquivo local/licenciado",font=("Segoe UI",9,"bold")).grid(row=3,column=0,sticky="w",pady=4)
@@ -494,6 +499,17 @@ class App(tk.Tk):
         self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
         self.remote_text=tk.Text(f,height=18,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
         self._set(self.remote_text,"EARTHDATA: cole o User Token acima antes de executar produtos que exijam autenticação.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
+
+    def _test_cdse(self):
+        try:
+            cid=self.cdse_client_id.get().strip(); sec=self.cdse_client_secret.get().strip()
+            if not cid or not sec:
+                self.cdse_state.set("Informe Client ID e Client Secret.")
+                return
+            cdse_access_token(cid,sec)
+            self.cdse_state.set("CDSE conectado — OAuth2 válido.")
+        except Exception as e:
+            self.cdse_state.set("Falha CDSE: "+str(e)[:120])
 
     def discover_sar_ui(self):
         if self.gdf is None:return messagebox.showwarning("SAR","Carregue/resolva o polígono primeiro.")
@@ -621,7 +637,7 @@ class App(tk.Tk):
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         def worker():
             try:
-                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=self.edl_token.get().strip(),cdse_token=self.cdse_token.get().strip())
+                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=self.edl_token.get().strip(),cdse_token=self.cdse_token.get().strip(),cdse_client_id=self.cdse_client_id.get().strip(),cdse_client_secret=self.cdse_client_secret.get().strip())
                 try: soil_profiles=pronasolos_soc_profiles(gdf)
                 except Exception as e: soil_profiles={"error":str(e)}
                 self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))

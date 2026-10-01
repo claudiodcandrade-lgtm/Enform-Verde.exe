@@ -279,13 +279,50 @@ def analyze_nisar_gcov(gdf,h5_path,biome,phys):
 
 EARTH_SEARCH_STAC="https://earth-search.aws.element84.com/v1/search"
 CDSE_ODATA="https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+CDSE_TOKEN_URL="https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+CDSE_PROCESS_URL="https://sh.dataspace.copernicus.eu/process/v1"
+
+def cdse_access_token(client_id,client_secret):
+    """Obtain a short-lived CDSE OAuth2 token using client_credentials."""
+    if not client_id or not client_secret:
+        raise ValueError("CDSE Client ID e Client Secret são necessários para a Process API.")
+    r=requests.post(CDSE_TOKEN_URL,data={"grant_type":"client_credentials","client_id":client_id,"client_secret":client_secret},
+                    headers={"Content-Type":"application/x-www-form-urlencoded"},timeout=(10,45))
+    r.raise_for_status()
+    token=(r.json() or {}).get("access_token")
+    if not token: raise RuntimeError("CDSE não retornou access_token.")
+    return token
+
+def cdse_sentinel1_process(gdf,cache,client_id="",client_secret="",access_token="",days=120):
+    """Request real Sentinel-1 GRD VV/VH pixels from CDSE Sentinel Hub Process API.
+    Output is an orthorectified, terrain-corrected FLOAT32 GeoTIFF. Discovery,
+    authentication, pixel processing and zonal use are recorded separately.
+    """
+    token=access_token or cdse_access_token(client_id,client_secret)
+    gg=gdf.to_crs(4326); minx,miny,maxx,maxy=map(float,gg.total_bounds)
+    now=time.time(); frm=time.strftime("%Y-%m-%dT00:00:00Z",time.gmtime(now-days*86400))
+    to=time.strftime("%Y-%m-%dT23:59:59Z",time.gmtime(now))
+    evalscript="""//VERSION=3
+function setup(){return {input:["VV","VH","dataMask"],output:{id:"default",bands:3,sampleType:"FLOAT32"}}}
+function evaluatePixel(s){return [s.VV,s.VH,s.dataMask]}"""
+    body={"input":{"bounds":{"bbox":[minx,miny,maxx,maxy],"properties":{"crs":"http://www.opengis.net/def/crs/OGC/1.3/CRS84"}},
+                   "data":[{"type":"sentinel-1-grd","dataFilter":{"timeRange":{"from":frm,"to":to},"mosaickingOrder":"mostRecent"},
+                            "processing":{"orthorectify":True,"backCoeff":"GAMMA0_TERRAIN","demInstance":"COPERNICUS_30",
+                                          "speckleFilter":{"type":"LEE","windowSizeX":5,"windowSizeY":5}}}]},
+          "output":{"width":1024,"height":1024,"responses":[{"identifier":"default","format":{"type":"image/tiff"}}]},
+          "evalscript":evalscript}
+    r=requests.post(CDSE_PROCESS_URL,json=body,headers={"Authorization":"Bearer "+token,"Accept":"image/tiff"},timeout=(15,300))
+    r.raise_for_status()
+    Path(cache).mkdir(parents=True,exist_ok=True)
+    out=Path(cache)/("S1_GRD_RTC_"+time.strftime("%Y%m%d",time.gmtime(now))+"_VV_VH.tif")
+    out.write_bytes(r.content)
+    z=_zonal(gdf,str(out)); z["path"]=str(out); z["role"]="Sentinel-1 GRD RTC Gamma0 VV/VH"
+    return {"available":True,"paths":[str(out)],"stats":[z],"provider":"Copernicus Data Space Ecosystem / Sentinel Hub Process API",
+            "time_range":[frm,to],"processing":"orthorectify + GAMMA0_TERRAIN + COPERNICUS_30 + Lee 5x5",
+            "pixel_state":"PROCESSADO","errors":[]}
 
 def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
-    """Discover and process Sentinel-1 GRD COG directly from Copernicus CDSE.
-    Discovery is independent from NASA Earthdata. STAC results are newest-first.
-    If an asset is public HTTPS it is downloaded directly; authenticated assets can
-    use an optional CDSE bearer token. No C-band-only AGB is fabricated.
-    """
+    """Legacy catalogue/direct-asset route retained as a fallback when Process API credentials are absent."""
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
     body={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
@@ -295,14 +332,11 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
     Path(cache).mkdir(parents=True,exist_ok=True)
     paths=[]; scene_ids=[]; errors=[]
     for it in items[:4]:
-        assets=it.get("assets") or {}; scene_ids.append(it.get("id"))
-        # CDSE Sentinel-1 GRD STAC currently exposes COG assets. Prefer polarization rasters.
-        candidates=[]
+        assets=it.get("assets") or {}; scene_ids.append(it.get("id")); candidates=[]
         for k,v in assets.items():
             href=(v or {}).get("href",""); kl=k.lower(); typ=((v or {}).get("type") or "").lower()
             if href.startswith("http") and (".tif" in href.lower() or "geotiff" in typ):
-                score=0 if any(p in kl for p in ("vh","hv","vv","hh")) else 1
-                candidates.append((score,k,href))
+                candidates.append((0 if any(p in kl for p in ("vh","hv","vv","hh")) else 1,k,href))
         for _,k,href in sorted(candidates)[:2]:
             out=Path(cache)/(str(it.get("id","s1"))+"_"+re.sub(r"[^A-Za-z0-9_.-]+","_",k)+".tif")
             try:
@@ -315,8 +349,8 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
             z=_zonal(gdf,p); z["path"]=p; z["role"]=role(p); stats.append(z)
         except Exception as e: errors.append(Path(p).name+": "+str(e))
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,
-            "provider":"Copernicus Data Space Ecosystem","errors":errors}
-def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token=""):
+            "provider":"Copernicus Data Space Ecosystem catalogue/direct asset fallback","errors":errors}
+def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
 
@@ -381,14 +415,18 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
 
     # 4 — Real public Sentinel-1 C-band fallback. Process pixels, but do not infer dense-forest AGB from C alone.
     try:
-        c=public_sentinel1_cog(gdf,Path(cache)/"sentinel1_cdse",cdse_token=cdse_token)
-        audit["sentinel1_public"]={"catalogued":c.get("items",0),"downloaded":len(c.get("paths",[])),"scene_ids":c.get("scene_ids",[])}
+        if cdse_client_id and cdse_client_secret:
+            c=cdse_sentinel1_process(gdf,Path(cache)/"sentinel1_cdse",client_id=cdse_client_id,client_secret=cdse_client_secret)
+            audit["sentinel1_public"]={"route":"Sentinel Hub Process API","downloaded":len(c.get("paths",[])),"pixel_state":"PROCESSADO","time_range":c.get("time_range"),"processing":c.get("processing")}
+        else:
+            c=public_sentinel1_cog(gdf,Path(cache)/"sentinel1_cdse",cdse_token=cdse_token)
+            audit["sentinel1_public"]={"route":"catalogue/direct asset fallback","catalogued":c.get("items",0),"downloaded":len(c.get("paths",[])),"scene_ids":c.get("scene_ids",[])}
         if c.get("stats"):
             return {"status":"SAR_PROCESSADO_SEM_AGB","agb_mg_ha":None,"uncertainty_mg_ha":None,
-                    "data_origin":"SAR_C_PUBLIC","source":"Copernicus Data Space Ecosystem — Sentinel-1 GRD COG efetivamente processado",
-                    "sensor":"Sentinel-1","band":"C","product":"GRD COG","stats":c["stats"],"paths":c["paths"],"audit":audit,
-                    "message":"SAR C-band foi efetivamente processado. Em floresta tropical densa, C-band está sujeito a forte saturação; o programa não converte este sinal isolado em AGB."}
-    except Exception as e: audit["warnings"].append("Sentinel-1 público download/process: "+str(e))
+                    "data_origin":"SAR_C_PUBLIC","source":c.get("provider"),
+                    "sensor":"Sentinel-1","band":"C","product":"GRD RTC Gamma0 VV/VH","stats":c["stats"],"paths":c["paths"],"audit":audit,
+                    "message":"Pixels Sentinel-1 C-band foram efetivamente processados. Em floresta tropical densa, C-band está sujeito a saturação; o programa não converte este sinal isolado em AGB sem modelo calibrado/validado."}
+    except Exception as e: audit["warnings"].append("Sentinel-1 CDSE Process API/download: "+str(e))
 
     # 5 — CCI derived AGB is last quantitative fallback, never ahead of raw P/L processing.
     try:
