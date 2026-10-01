@@ -357,14 +357,27 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
     except Exception as e: l2items=[]; audit["warnings"].append("BIOMASS catálogo: "+str(e))
-    audit["biomass_l2b"]={"count":len(l2items),"download_requires":"ESA MAAP token"}
+    audit["biomass_l2b"]={"count":len(l2items),"access_policy":"direct/public first; authenticated access is never required from the UI"}
+    # First try scientific raster assets directly. ESA catalogue discovery is public; some assets may also be directly readable.
+    if l2items and not offline_token:
+        Path(cache).mkdir(parents=True,exist_ok=True); direct=[]
+        for it in l2items:
+            for k,url in _raster_assets(it):
+                if any(x in (k.lower()+url.lower()) for x in ["agb","biomass","uncert","std","sigma"]):
+                    p=Path(cache)/"biomass"/(it.get("id","biomass")+"_"+Path(url.split("?")[0]).name); p.parent.mkdir(parents=True,exist_ok=True)
+                    try:
+                        if not p.exists(): _download(url,p,None)
+                        direct.append(str(p))
+                    except Exception as e: audit["warnings"].append("BIOMASS direct asset: "+str(e))
+        if direct:
+            pr=process_real_sar(gdf,direct,biome,phys); pr["audit"]=audit; pr["paths"]=direct; pr["data_origin"]="SAR_P_BIOMASS"; return pr
     if l2items and offline_token:
         try:
             d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass")
             if d["paths"]:
                 pr=process_real_sar(gdf,d["paths"],biome,phys); pr["audit"]=audit; pr["paths"]=d["paths"]; pr["data_origin"]="SAR_P_BIOMASS"; return pr
         except Exception as e: audit["warnings"].append("BIOMASS P download/process: "+str(e))
-    elif l2items: audit["warnings"].append("BIOMASS P-band localizado, mas o download do produto requer token ESA MAAP.")
+    elif l2items: audit["warnings"].append("BIOMASS P-band localizado; ativos científicos diretos foram tentados. Ativos protegidos foram ignorados sem solicitar token ao usuário.")
 
     # 2 — NISAR/ALOS L-band. Catalogue is public; NISAR science download requires EDL.
     asf=discover_asf(gdf,limit=50); audit["asf"]=asf
