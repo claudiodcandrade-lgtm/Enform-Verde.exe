@@ -363,7 +363,7 @@ def self_test():
 
 class App(tk.Tk):
     def __init__(self):
-        super().__init__(); self.title("Enform Verde"); self.geometry("1260x760"); self.minsize(1050,650)
+        super().__init__(); self.title("Enform Verde"); self.geometry("1600x900"); self.minsize(1200,720)
         self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue()
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
@@ -371,7 +371,7 @@ class App(tk.Tk):
         try:s.theme_use("vista")
         except:pass
         s.configure(".",font=("Segoe UI",10),foreground=TEXT)
-        s.configure("Title.TLabel",font=("Segoe UI",21,"bold"),foreground=ORANGE)
+        s.configure("Title.TLabel",font=("Segoe UI",24,"bold"),foreground=ORANGE)
         s.configure("H.TLabel",font=("Segoe UI",12,"bold"),foreground=FOREST)
         s.configure("Run.TButton",font=("Segoe UI",10,"bold"),padding=10)
         s.configure("TButton",padding=7)
@@ -381,12 +381,12 @@ class App(tk.Tk):
         base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
 
         # Wide header: preserve source aspect ratio; never stretch independently in X/Y.
-        header_h=150
+        header_h=200
         header=tk.Canvas(root,height=header_h,bg="#10291f",highlightthickness=0); header.pack(fill="x",side="top")
         visual=base/"enform_header.jpg"
         if visual.exists():
             src=Image.open(visual).convert("RGB")
-            sw=max(self.winfo_screenwidth(),1260)
+            sw=max(self.winfo_width(),1600)
             # cover crop. Aspect ratio is preserved, avoiding the distorted/pixel-burst look.
             scale=max(sw/src.width,header_h/src.height)
             im=src.resize((max(sw,round(src.width*scale)),max(header_h,round(src.height*scale))),Image.Resampling.LANCZOS)
@@ -399,7 +399,7 @@ class App(tk.Tk):
             header.create_text(26,90,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
 
         # Global action bar: EXECUTAR ANÁLISE must remain visible regardless of selected section.
-        action=ttk.Frame(root,padding=(230,7,14,7)); action.pack(fill="x",side="top")
+        action=ttk.Frame(root,padding=(285,12,20,10)); action.pack(fill="x",side="top")
         ttk.Label(action,text="Análise de carbono",style="Title.TLabel").pack(side="left")
         ttk.Button(action,text="Salvar relatório",command=self.save_report).pack(side="right",padx=(8,0))
         ttk.Button(action,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=(8,0))
@@ -407,7 +407,7 @@ class App(tk.Tk):
         self.global_execute_btn.pack(side="right",padx=(8,0))
 
         body=ttk.Frame(root); body.pack(fill="both",expand=True)
-        nav=tk.Frame(body,width=220,bg="#F6F8F8",highlightbackground="#D8E0E0",highlightthickness=1)
+        nav=tk.Frame(body,width=270,bg="#F6F8F8",highlightbackground="#D8E0E0",highlightthickness=1)
         nav.pack(side="left",fill="y"); nav.pack_propagate(False)
         main=ttk.Frame(body,padding=(10,8,10,6)); main.pack(side="left",fill="both",expand=True)
 
