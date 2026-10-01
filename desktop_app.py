@@ -618,7 +618,7 @@ class App(tk.Tk):
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         edl_token=self.edl_token.get().strip(); cdse_token=self.cdse_token.get().strip()
         cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
-        self._analysis_running=True; self.run_btn.state(["disabled"]); self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
+        self._analysis_running=True; self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando SAR em segundo plano…")
         def worker():
             try:
@@ -635,7 +635,7 @@ class App(tk.Tk):
         except queue.Empty:
             if self._analysis_running:self.after(120,self._poll_analysis)
             return
-        self._analysis_running=False; self.run_btn.state(["!disabled"]); self.pipeline_btn.state(["!disabled"]); self.global_execute_btn.state(["!disabled"])
+        self._analysis_running=False; self.pipeline_btn.state(["!disabled"]); self.global_execute_btn.state(["!disabled"])
         if kind=="error":
             log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
             self.status.set("Falha controlada — programa permanece responsivo.")
