@@ -394,7 +394,12 @@ class App(tk.Tk):
             im=im.crop((left,top,left+sw,top+header_h))
             self.header_photo=ImageTk.PhotoImage(im)
             header.create_image(0,0,image=self.header_photo,anchor="nw")
-            # Mask the low-resolution baked branding and render one crisp native brand only.\n            header.create_rectangle(0,0,560,header_h,fill="#12372B",outline="")\n            header.create_text(34,55,text="enform",anchor="nw",fill="white",font=("Segoe UI",31,"bold"))\n            header.create_text(190,55,text="Verde",anchor="nw",fill="#F3A000",font=("Segoe UI",31,"bold"))\n            header.create_text(36,118,text="Carbono florestal • sensoriamento remoto • SAR",anchor="nw",fill="white",font=("Segoe UI",11))\n        else:
+            # Legacy bitmap contains baked obsolete branding; cover it completely.
+            header.create_rectangle(0,0,1050,header_h,fill="#12372B",outline="")
+            header.create_text(42,48,text="enform",anchor="nw",fill="white",font=("Segoe UI",34,"bold"))
+            header.create_text(210,48,text="Verde",anchor="nw",fill="#F3A000",font=("Segoe UI",34,"bold"))
+            header.create_text(44,112,text="Carbono florestal  •  Sensoriamento remoto  •  SAR",anchor="nw",fill="white",font=("Segoe UI",11))
+        else:
             header.create_text(24,30,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
             header.create_text(26,90,text="Carbono florestal • sensoriamento remoto • SAR",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
 
