@@ -632,12 +632,15 @@ class App(tk.Tk):
             return messagebox.showinfo("Perímetro","Use 'Buscar CCIR no SIGEF' antes de executar a análise.")
         if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Busque CAR/CCIR ou carregue um vetor.")
         if self.sar_paths:return self._execute_main(event)
+        # Snapshot every Tk variable on the GUI thread before starting the worker.
+        gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
+        edl_token=self.edl_token.get().strip(); cdse_token=self.cdse_token.get().strip()
+        cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
         self._analysis_running=True; self.run_btn.state(["disabled"]); self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando SAR em segundo plano…")
-        gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         def worker():
             try:
-                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=self.edl_token.get().strip(),cdse_token=self.cdse_token.get().strip(),cdse_client_id=self.cdse_client_id.get().strip(),cdse_client_secret=self.cdse_client_secret.get().strip())
+                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=edl_token,cdse_token=cdse_token,cdse_client_id=cdse_client_id,cdse_client_secret=cdse_client_secret)
                 try: soil_profiles=pronasolos_soc_profiles(gdf)
                 except Exception as e: soil_profiles={"error":str(e)}
                 self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))
