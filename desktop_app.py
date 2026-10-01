@@ -590,7 +590,7 @@ class App(tk.Tk):
             d=diagnose_ibge(self.gdf)
             self.project["ibge_diagnosis"]=d
             if d["biomas"]: self.biome.set(d["biomas"][0][0])
-            if d["vegetacao"] and d["vegetacao"][-1]["classes"]: self.phys.set(d["vegetacao"][-1]["classes"][0][0])\n            elif d.get("vegetacao_error"): self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
+            if d["vegetacao"] and d["vegetacao"][-1]["classes"]:\n                self.phys.set(d["vegetacao"][-1]["classes"][0][0])\n            elif d.get("vegetacao_error"):\n                self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
             btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
             vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"]) or ("PENDENTE: "+d.get("vegetacao_error","sem classe"))
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nIBGE — Bioma(s): "+btxt+"\nIBGE 2026 — Vegetação: "+vtxt)
