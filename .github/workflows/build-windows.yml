@@ -50,7 +50,7 @@ jobs:
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
-          assert "enform_header.jpg" in src and "Approved banner already contains" in src, "approved professional header missing or duplicate branding overlay returned"
+          assert "enform_header.jpg" in src and "Mask the low-resolution baked branding" in src and 'text="enform"' in src and 'text="Verde"' in src, "clean single native branding overlay missing"
           assert 'self.geometry("1713x918")' in src and "header_h=210" in src and "width=288" in src, "approved dashboard proportions missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -68,7 +68,7 @@ jobs:
           assert "EXECUTAR ANÁLISE" in src, "global analysis control missing"
           assert "Aspect ratio is preserved" in src, "header aspect-ratio protection missing"
           assert "literatura/modelagem somente após falha documentada" in src, "fallback policy regression"
-          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Sentinel-1 C-band fallback"), "SAR priority regression"
+          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Real public Sentinel-1 C-band"), "SAR priority regression"\n          assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"\n          assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"\n          assert "VISUALIZAR SATÉLITE GOOGLE" in src and "tile.googleapis.com/v1/2dtiles" in src, "Google satellite polygon visualization missing"
           assert Path("enform_header.jpg").exists() and Path("enform_header.jpg").stat().st_size > 2000, "forest/logo visual asset missing"
           import scientific_calibration as sc
           assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
