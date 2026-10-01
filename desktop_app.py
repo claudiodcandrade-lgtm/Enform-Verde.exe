@@ -481,7 +481,9 @@ class App(tk.Tk):
         Google imagery is visualization-only and is never passed to scientific analysis."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         key=self.google_maps_key.get().strip()
-        if not key:\n            self.map_canvas.delete("all"); self.map_canvas.create_text(20,20,anchor="nw",text="Google Satélite: informe a chave da Map Tiles API no campo acima.\\nO perímetro e a análise SAR não dependem dessa chave.",fill="#455"); self.status.set("Mapa Google aguardando chave; análise SAR permanece independente."); return
+        if not key:
+            self.status.set("Mapa Google aguardando chave; análise SAR permanece independente.")
+            return
         try:
             self.status.set("Carregando imagem de satélite Google..."); self.update_idletasks()
             g=self.gdf.to_crs(4326); minx,miny,maxx,maxy=map(float,g.total_bounds)
