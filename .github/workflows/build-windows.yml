@@ -70,7 +70,7 @@ jobs:
           assert "EXECUTAR ANÁLISE" in src, "global analysis control missing"
           assert "Aspect ratio is preserved" in src, "header aspect-ratio protection missing"
           assert "literatura/modelagem somente após falha documentada" in src, "fallback policy regression"
-          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Real public Sentinel-1 C-band"), "SAR priority regression"
+          pipe=sar_src[sar_src.index("def automatic_pipeline"):]; assert pipe.index("biomass_l2b") < pipe.index("planetary_alos_palsar") < pipe.index("planetary_sentinel1_cog"), "SAR priority regression P > L > C"
           assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"
           assert "planetary_alos_palsar" in sar_src and "alos-palsar-mosaic" in sar_src, "public L-band ALOS/PALSAR route missing"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
