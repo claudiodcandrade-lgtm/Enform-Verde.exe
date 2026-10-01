@@ -1,4 +1,4 @@
-import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io
+import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests
 from pathlib import Path
 import tkinter as tk
 import webbrowser
@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.15.0-MULTISOURCE"
+APP_VERSION="3.23.0"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -394,9 +394,9 @@ class App(tk.Tk):
             im=im.crop((left,top,left+sw,top+header_h))
             self.header_photo=ImageTk.PhotoImage(im)
             header.create_image(0,0,image=self.header_photo,anchor="nw")
-            # Approved banner already contains the Enform Verde branding; do not overlay or alter it.\n        else:
+            # Mask the low-resolution baked branding and render one crisp native brand only.\n            header.create_rectangle(0,0,560,header_h,fill="#12372B",outline="")\n            header.create_text(34,55,text="enform",anchor="nw",fill="white",font=("Segoe UI",31,"bold"))\n            header.create_text(190,55,text="Verde",anchor="nw",fill="#F3A000",font=("Segoe UI",31,"bold"))\n            header.create_text(36,118,text="Carbono florestal • sensoriamento remoto • SAR",anchor="nw",fill="white",font=("Segoe UI",11))\n        else:
             header.create_text(24,30,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
-            header.create_text(26,90,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
+            header.create_text(26,90,text="Carbono florestal • sensoriamento remoto • SAR",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
 
         # Global action bar: EXECUTAR ANÁLISE must remain visible regardless of selected section.
         action=ttk.Frame(root,padding=(305,12,32,10)); action.pack(fill="x",side="top")
@@ -441,7 +441,7 @@ class App(tk.Tk):
         self._project(); self._spatial(); self._remote(); self._results(); self._sources()
         mark_tab()
         footer=ttk.Frame(root,padding=(14,4)); footer.pack(fill="x",side="bottom")
-        ttk.Label(footer,text="Enform Verde "+APP_VERSION).pack(side="left")
+        ttk.Label(footer,text="v"+APP_VERSION).pack(side="left")
         self.status=tk.StringVar(value="Pronto. Informe o CAR ou carregue o vetor da propriedade.")
         ttk.Label(footer,textvariable=self.status,anchor="center").pack(side="left",fill="x",expand=True)
         ttk.Label(footer,text="Sistema de Estimativa de Estoques de Carbono em Vegetação Nativa").pack(side="right")
@@ -462,11 +462,60 @@ class App(tk.Tk):
 
     def _spatial(self):
         f=self.tabs[1]; ttk.Label(f,text="Perímetro, diagnóstico e solo",style="H.TLabel").pack(anchor="w")
-        row=ttk.Frame(f); row.pack(fill="x",pady=10)
+        row=ttk.Frame(f); row.pack(fill="x",pady=8)
         ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
-        self.spatial_text=tk.Text(f,height=20,wrap="word"); self.spatial_text.pack(fill="both",expand=True,pady=8)
+        ttk.Button(row,text="VISUALIZAR SATÉLITE GOOGLE",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
+        keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
+        ttk.Label(keyrow,text="Google Maps Platform API key (somente nesta sessão):").pack(side="left")
+        self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
+        ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
+        ttk.Label(keyrow,text="Map Tiles API • apenas visualização",foreground="#666").pack(side="left")
+        self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
+        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue o polígono e clique em VISUALIZAR SATÉLITE GOOGLE.",fill="#455")
+        self.spatial_text=tk.Text(f,height=7,wrap="word"); self.spatial_text.pack(fill="x",pady=4)
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
+
+    def show_google_map(self):
+        """Render Google Map Tiles satellite imagery in-memory and overlay the loaded property polygon.
+        Google imagery is visualization-only and is never passed to scientific analysis."""
+        if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
+        key=self.google_maps_key.get().strip()
+        if not key:return messagebox.showinfo("Google Maps","Informe uma chave da Google Maps Platform com a Map Tiles API habilitada. A chave fica apenas nesta sessão.")
+        try:
+            self.status.set("Carregando imagem de satélite Google..."); self.update_idletasks()
+            g=self.gdf.to_crs(4326); minx,miny,maxx,maxy=map(float,g.total_bounds)
+            w=max(700,self.map_canvas.winfo_width()); h=max(300,self.map_canvas.winfo_height()); tile=256
+            def world(lon,lat,z):
+                n=2**z; lat=max(-85.05112878,min(85.05112878,lat)); x=(lon+180)/360*n; y=(1-math.asinh(math.tan(math.radians(lat)))/math.pi)/2*n; return x,y
+            zoom=3
+            for z in range(3,23):
+                x1,y1=world(minx,maxy,z); x2,y2=world(maxx,miny,z)
+                if (x2-x1)*tile<=w*.82 and (y2-y1)*tile<=h*.82:zoom=z
+                else:break
+            cx=(minx+maxx)/2; cy=(miny+maxy)/2; wx,wy=world(cx,cy,zoom); ntx=max(3,math.ceil(w/tile)+2); nty=max(3,math.ceil(h/tile)+2); tx0=math.floor(wx-ntx/2); ty0=math.floor(wy-nty/2)
+            sess=requests.post("https://tile.googleapis.com/v1/createSession",params={"key":key},json={"mapType":"satellite","language":"pt-BR","region":"BR"},timeout=(10,30)); sess.raise_for_status(); js=sess.json(); token=js["session"]; ts=int(js.get("tileWidth",256))
+            mosaic=Image.new("RGB",(ntx*ts,nty*ts))
+            for yy in range(nty):
+                for xx in range(ntx):
+                    url=f"https://tile.googleapis.com/v1/2dtiles/{zoom}/{tx0+xx}/{ty0+yy}"
+                    rr=requests.get(url,params={"session":token,"key":key},timeout=(10,30)); rr.raise_for_status(); im=Image.open(io.BytesIO(rr.content)).convert("RGB"); mosaic.paste(im,(xx*ts,yy*ts))
+            # crop mosaic to canvas centre
+            pcx=(wx-tx0)*ts; pcy=(wy-ty0)*ts; left=int(pcx-w/2); top=int(pcy-h/2); view=mosaic.crop((left,top,left+w,top+h))
+            self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
+            def px(lon,lat):
+                x,y=world(lon,lat,zoom); return (x-tx0)*ts-left,(y-ty0)*ts-top
+            for geom in g.geometry:
+                polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else [geom]
+                for p in polys:
+                    pts=[]
+                    for lon,lat in p.exterior.coords:
+                        x,y=px(lon,lat); pts.extend((x,y))
+                    if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
+            copyright=js.get("copyright","Google"); self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline=""); self.map_canvas.create_text(w-8,h-12,anchor="e",text=copyright+" • Google",fill="#333",font=("Segoe UI",8))
+            self.status.set(f"Google Satélite carregado — zoom {zoom}. Uso exclusivo para visualização.")
+        except Exception as e:
+            self.status.set("Falha ao carregar Google Satélite."); messagebox.showerror("Google Maps",str(e))
 
     def _remote(self):
         f=self.tabs[2]
