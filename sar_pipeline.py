@@ -174,24 +174,24 @@ LITERATURE=[
 {"biome":"Cerrado","phys":["cerrado","savanna","savana"],"mean":None,"rmse":7.58,"bias":0.43,"r2":0.89,"cv":"k-fold/jackknife","source":"Silva et al. 2020","doi":"10.3390/rs12172685","note":"Rio Vermelho; referência de desempenho, não média nacional"}
 ]
 BUILTIN_LITERATURE=[]
-def literature_fallback(biome,phys,library_rows=None):
-    rows=list(library_rows or BUILTIN_LITERATURE)
-    # only studies with an explicit compatible mean are eligible for a numerical fallback
-    ok=[]
-    p=(phys or "").lower()
+PRIMARY_PLOT_DATA_PRIORITY=True
+# Evidence hierarchy: georeferenced published primary plot data > primary plot data with
+# recoverable sampling design > microlocal published summaries > regional summaries.
+# Generic biome-wide means are forbidden.
+def literature_fallback(biome,phys,library_rows=None,location=None):
+    """Microlocal, traceable fallback. Primary plot data outrank published summaries."""
+    rows=list(library_rows or []); p=(phys or "").lower(); loc=(location or "").lower(); ranked=[]
     for r in rows:
-        if r.get("biome")==biome and r.get("mean") is not None and (not r.get("phys") or any(x.lower() in p for x in r["phys"])):ok.append(r)
-    if not ok:return {"available":False,"reason":"Biblioteca ainda não contém médias AGB explícitas e metodologicamente compatíveis para este estrato."}
-    vals=np.array([float(x["mean"]) for x in ok]);mean=float(vals.mean())
-    if len(vals)>1:
-        sd=float(vals.std(ddof=1)); kind="desvio-padrão entre estudos; não IC95%"
-    else:
-        r=ok[0]; low=r.get("low"); high=r.get("high")
-        sd=float(max(mean-float(low),float(high)-mean)) if low is not None and high is not None else float(r.get("sd") or r.get("rmse") or mean*.30)
-        kind="amplitude bibliográfica conservadora; não é erro estatístico nem IC95%"
-    return {"available":True,"agb_mg_ha":mean,"uncertainty_mg_ha":sd,"uncertainty_kind":kind,"n_studies":len(ok),"studies":ok,
-      "status":"ESTIMATIVA BIBLIOGRÁFICA — SAR NÃO PROCESSÁVEL NESTA EXECUÇÃO","source":"biblioteca científica interna"}
-
+        if r.get("biome") not in (biome,"*") or r.get("mean") is None: continue
+        rp=[str(x).lower() for x in (r.get("phys") or [])]
+        if rp and p and not any(x in p or p in x for x in rp): continue
+        geo=" ".join(str(r.get(k,"")) for k in ("locality","municipality","region","state")).lower()
+        geo_score=4 if loc and loc in geo else (3 if r.get("locality") else (2 if r.get("municipality") else (1 if r.get("state") else 0)))
+        primary=bool(r.get("plot_data") or r.get("primary_plot_data") or r.get("plot_rows")); georef=bool(r.get("plot_coordinates") or r.get("plot_geometries")); design=bool(r.get("sampling_design") or r.get("plot_area_m2"))
+        evidence=4 if primary and georef else (3 if primary and design else (2 if primary else 1)); ranked.append(((evidence,geo_score),r))
+    if not ranked:return None
+    ranked.sort(key=lambda x:x[0],reverse=True); r=ranked[0][1]
+    return {"agb_mg_ha":float(r["mean"]),"uncertainty_pct":float(r.get("uncertainty_pct",30)),"source":r.get("source","inventário publicado"),"data_origin":"LITERATURA_MICRORREGIONAL","primary_plot_data":bool(r.get("plot_data") or r.get("primary_plot_data") or r.get("plot_rows")),"plot_georeferenced":bool(r.get("plot_coordinates") or r.get("plot_geometries")),"note":"Fallback externo; não é resultado SAR. Prioridade máxima para dados primários de parcelas."}
 def process_nisar_gcov(gdf,h5_path):
     """Read calibrated NISAR L2 GCOV covariance terms and derive polygon statistics.
     GCOV values are gamma0 power; no fabricated AGB is returned without a compatible model."""
