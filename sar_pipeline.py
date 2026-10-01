@@ -173,12 +173,7 @@ LITERATURE=[
 {"biome":"Amazônia","phys":["várzea","varzea","aluvial"],"mean":None,"rmse":74.6,"bias":None,"r2":0.46,"cv":"cross-validation","source":"Martins et al. 2018","doi":"10.3390/rs10091355","note":"referência L-band várzea; média não usada sem valor compatível"},
 {"biome":"Cerrado","phys":["cerrado","savanna","savana"],"mean":None,"rmse":7.58,"bias":0.43,"r2":0.89,"cv":"k-fold/jackknife","source":"Silva et al. 2020","doi":"10.3390/rs12172685","note":"Rio Vermelho; referência de desempenho, não média nacional"}
 ]
-BUILTIN_LITERATURE=[
- {"biome":"Amazônia","phys":[],"mean":220.0,"low":110.0,"high":360.0,"source":"biblioteca científica interna — síntese Amazônia","quality":"triagem"},
- {"biome":"Mata Atlântica","phys":[],"mean":170.0,"low":80.0,"high":300.0,"source":"biblioteca científica interna — síntese Mata Atlântica","quality":"triagem"},
- {"biome":"Cerrado","phys":[],"mean":65.0,"low":25.0,"high":140.0,"source":"biblioteca científica interna — síntese Cerrado","quality":"triagem"},
- {"biome":"Caatinga","phys":[],"mean":35.0,"low":12.0,"high":80.0,"source":"biblioteca científica interna — síntese Caatinga","quality":"triagem"}
-]
+BUILTIN_LITERATURE=[]
 def literature_fallback(biome,phys,library_rows=None):
     rows=list(library_rows or BUILTIN_LITERATURE)
     # only studies with an explicit compatible mean are eligible for a numerical fallback
@@ -350,6 +345,39 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
         except Exception as e: errors.append(Path(p).name+": "+str(e))
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,
             "provider":"Copernicus Data Space Ecosystem catalogue/direct asset fallback","errors":errors}
+def planetary_sentinel1_cog(gdf,cache,limit=8):
+    """Public, credential-free Sentinel-1 GRD pixel route via Microsoft Planetary Computer.
+    Reads signed Cloud-Optimized GeoTIFF windows for the AOI and reports actual VV/VH pixel statistics.
+    This proves SAR pixel processing; it does not fabricate AGB from C-band alone."""
+    geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
+    body={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    api="https://planetarycomputer.microsoft.com/api/stac/v1/search"
+    rr=requests.post(api,json=body,timeout=(10,60)); rr.raise_for_status(); items=rr.json().get("features",[])
+    if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":["sem cenas Sentinel-1 GRD no AOI"]}
+    Path(cache).mkdir(parents=True,exist_ok=True); stats=[]; paths=[]; errors=[]; scene_ids=[]
+    import rasterio
+    from rasterio.mask import mask
+    from rasterio.warp import transform_geom
+    for it in items[:3]:
+        scene_ids.append(it.get("id")); assets=it.get("assets") or {}
+        for pol in ("vh","vv","hv","hh"):
+            a=assets.get(pol)
+            if not a or not a.get("href"):continue
+            try:
+                unsigned=a["href"]; sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
+                with rasterio.open(href) as src:
+                    gj=transform_geom("EPSG:4326",src.crs,geom)
+                    arr,_=mask(src,[gj],crop=True,filled=False)
+                    v=np.ma.array(arr[0]).compressed(); v=v[np.isfinite(v) & (v>0)]
+                    if not len(v):raise ValueError("sem pixels válidos no polígono")
+                    # GRD DN values are real SAR image pixels. Keep native-domain stats and dB only when values are power-like positive.
+                    z={"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean":float(v.mean()),"sd":float(v.std(ddof=1)) if len(v)>1 else 0.0,"min":float(v.min()),"max":float(v.max()),"pixel_state":"PROCESSADO"}
+                    stats.append(z); paths.append(unsigned)
+                if len(stats)>=2:break
+            except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
+        if stats:break
+    return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,"provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,"pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
+
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
@@ -428,7 +456,18 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # 3 — X-band: no public automatic archive is assumed. Local/licensed X rasters are processed by process_real_sar.
     audit["x_band"]={"status":"rota local/licenciada","note":"TerraSAR-X/TanDEM-X não é inventado como download público automático."}
 
-    # 4 — Real public Sentinel-1 C-band fallback. Process pixels, but do not infer dense-forest AGB from C alone.
+    # 4 — Real public Sentinel-1 C-band. First use the credential-free Planetary Computer COG route.
+    try:
+        pc=planetary_sentinel1_cog(gdf,Path(cache)/"sentinel1_public")
+        if pc.get("stats"):
+            audit["sentinel1_public"]={"route":"Microsoft Planetary Computer signed COG","catalogued":pc.get("items",0),"scene_ids":pc.get("scene_ids",[]),"pixel_state":"PROCESSADO","stats":pc.get("stats",[])}
+            audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C","provider":pc.get("provider"),"paths":pc.get("paths",[]),"stats":pc.get("stats",[])})
+            audit["warnings"].append("Sentinel-1 C-band: pixels reais processados. AGB não é inferida de C-band isolada em floresta densa sem modelo validado.")
+        else:
+            audit["warnings"].append("Sentinel-1 Planetary Computer: "+("; ".join(pc.get("errors",[])[:3]) or "sem pixels processados"))
+    except Exception as e: audit["warnings"].append("Sentinel-1 Planetary Computer: "+str(e))
+
+    # Secondary Sentinel-1 route: CDSE Process API/direct assets.
     try:
         if cdse_client_id and cdse_client_secret:
             c=cdse_sentinel1_process(gdf,Path(cache)/"sentinel1_cdse",client_id=cdse_client_id,client_secret=cdse_client_secret)
@@ -453,7 +492,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     lit=literature_fallback(biome,phys,library_rows)
     return {"status":"SAR_NAO_PROCESSADO","agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":"SAR_NAO_PROCESSADO",
             "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,"sar_attempted_first":True,
-            "message":"Nenhum arquivo SAR foi processado. Consulte a auditoria: P/L podem exigir credenciais; X exige produto local/licenciado; C público é tentado automaticamente."}
+            "message":("SAR foi processado, mas não existe modelo AGB validado compatível; consulte processed_without_agb." if audit.get("processed_without_agb") else "Nenhum arquivo SAR foi processado; consulte a auditoria detalhada.")}
 
 def execute_registered_model(model_id,features):
     m=next((x for x in MODEL_REGISTRY if x["id"]==model_id),None)
