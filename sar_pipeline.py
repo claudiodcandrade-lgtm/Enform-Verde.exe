@@ -395,8 +395,15 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             try:
                 unsigned=a["href"]; sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
                 with rasterio.open(href) as src:
-                    gj=transform_geom("EPSG:4326",src.crs,geom)
-                    arr,_=mask(src,[gj],crop=True,filled=False)
+                    # Sentinel-1 GRD COGs may expose geolocation through GCPs instead of a dataset CRS.
+                    # WarpedVRT resolves those GCPs to EPSG:4326 before AOI masking.
+                    if src.crs is None:
+                        from rasterio.vrt import WarpedVRT
+                        with WarpedVRT(src,crs="EPSG:4326") as vrt:
+                            arr,_=mask(vrt,[geom],crop=True,filled=False)
+                    else:
+                        gj=transform_geom("EPSG:4326",src.crs,geom)
+                        arr,_=mask(src,[gj],crop=True,filled=False)
                     v=np.ma.array(arr[0]).compressed(); v=v[np.isfinite(v) & (v>0)]
                     if not len(v):raise ValueError("sem pixels válidos no polígono")
                     # GRD DN values are real SAR image pixels. Keep native-domain stats and dB only when values are power-like positive.
