@@ -114,7 +114,7 @@ def fit_local_ensemble(X,y,groups=None,random_state=42):
     X=np.asarray(X,float); y=np.asarray(y,float)
     if X.ndim!=2 or len(y)!=len(X) or len(y)<10: raise ValueError("São necessárias >=10 parcelas locais com preditores SAR coincidentes.")
     models={"Ridge":make_pipeline(StandardScaler(),Ridge(alpha=1.0)),
-            "RandomForest":RandomForestRegressor(n_estimators=400,min_samples_leaf=2,random_state=random_state,n_jobs=-1),
+            "RandomForest":RandomForestRegressor(n_estimators=300,min_samples_leaf=2,random_state=random_state,n_jobs=2),
             "HistGradientBoosting":HistGradientBoostingRegressor(max_iter=300,l2_regularization=1.0,random_state=random_state)}
     if groups is not None and len(np.unique(groups))>=5:
         cv=GroupKFold(n_splits=min(5,len(np.unique(groups)))); split=list(cv.split(X,y,groups)); validation="spatial/grouped"
