@@ -50,7 +50,9 @@ jobs:
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
-          assert "enform_header.jpg" in src and "Mask the low-resolution baked branding" in src and 'text="enform"' in src and 'text="Verde"' in src, "clean single native branding overlay missing"
+          assert "enform_header.jpg" in src and "Approved Enform mask is rendered exactly once" in src, "approved single-mask header missing"
+          header_block=src[src.index('visual=base/"enform_header.jpg"'):src.index("# Global action bar")]
+          assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
           assert 'self.geometry("1713x918")' in src and "header_h=210" in src and "width=288" in src, "approved dashboard proportions missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -70,6 +72,7 @@ jobs:
           assert "literatura/modelagem somente após falha documentada" in src, "fallback policy regression"
           assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Real public Sentinel-1 C-band"), "SAR priority regression"
           assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"
+          assert "planetary_alos_palsar" in sar_src and "alos-palsar-mosaic" in sar_src, "public L-band ALOS/PALSAR route missing"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
           assert "VISUALIZAR SATÉLITE GOOGLE" in src and "tile.googleapis.com/v1/2dtiles" in src, "Google satellite polygon visualization missing"
           assert Path("enform_header.jpg").exists() and Path("enform_header.jpg").stat().st_size > 2000, "forest/logo visual asset missing"
@@ -92,6 +95,21 @@ jobs:
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
+      - name: Live public SAR pixel test — Tapajos
+        shell: pwsh
+        run: |
+          @'
+          import geopandas as gpd
+          from shapely.geometry import box
+          import sar_pipeline as s
+          g=gpd.GeoDataFrame(geometry=[box(-54.965,-3.050,-54.930,-3.020)],crs="EPSG:4326")
+          r=s.planetary_sentinel1_cog(g,"sar_ci_cache",limit=4)
+          assert r.get("stats"), "Sentinel-1 catalog responded but no real AOI pixels were processed: "+str(r.get("errors"))
+          assert sum(x.get("n",0) for x in r["stats"])>0
+          print("LIVE_SAR_PIXELS_OK",r["stats"])
+          '@ | Set-Content live_sar_test.py -Encoding UTF8
+          python live_sar_test.py
+
       - name: Live SICAR polygon lookup
         shell: pwsh
         run: |

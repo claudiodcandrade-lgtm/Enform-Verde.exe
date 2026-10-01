@@ -394,12 +394,7 @@ class App(tk.Tk):
             im=im.crop((left,top,left+sw,top+header_h))
             self.header_photo=ImageTk.PhotoImage(im)
             header.create_image(0,0,image=self.header_photo,anchor="nw")
-            # Legacy bitmap contains baked obsolete branding; cover it completely.
-            header.create_rectangle(0,0,1050,header_h,fill="#12372B",outline="")
-            header.create_text(42,48,text="enform",anchor="nw",fill="white",font=("Segoe UI",34,"bold"))
-            header.create_text(210,48,text="Verde",anchor="nw",fill="#F3A000",font=("Segoe UI",34,"bold"))
-            header.create_text(44,112,text="Carbono florestal  •  Sensoriamento remoto  •  SAR",anchor="nw",fill="white",font=("Segoe UI",11))
-        else:
+            # Approved Enform mask is rendered exactly once; no text/logo overlay is permitted.\n        else:
             header.create_text(24,30,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
             header.create_text(26,90,text="Carbono florestal • sensoriamento remoto • SAR",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
 
@@ -486,7 +481,7 @@ class App(tk.Tk):
         Google imagery is visualization-only and is never passed to scientific analysis."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         key=self.google_maps_key.get().strip()
-        if not key:return messagebox.showinfo("Google Maps","Informe uma chave da Google Maps Platform com a Map Tiles API habilitada. A chave fica apenas nesta sessão.")
+        if not key:\n            self.map_canvas.delete("all"); self.map_canvas.create_text(20,20,anchor="nw",text="Google Satélite: informe a chave da Map Tiles API no campo acima.\\nO perímetro e a análise SAR não dependem dessa chave.",fill="#455"); self.status.set("Mapa Google aguardando chave; análise SAR permanece independente."); return
         try:
             self.status.set("Carregando imagem de satélite Google..."); self.update_idletasks()
             g=self.gdf.to_crs(4326); minx,miny,maxx,maxy=map(float,g.total_bounds)
