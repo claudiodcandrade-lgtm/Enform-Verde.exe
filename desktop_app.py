@@ -225,9 +225,9 @@ def diagnose_ibge(project):
     _download_extract(IBGE_BIOMAS_2025_URL,bio,"biomas_2025")
     vg=gpd.read_file(_find_polygon_file(veg),bbox=tuple(project.to_crs("EPSG:4326").total_bounds))
     bg=gpd.read_file(_find_polygon_file(bio),bbox=tuple(project.to_crs("EPSG:4326").total_bounds))
-    bfield=_field(bg.columns,["Bioma","Nome_Bioma","nm_bioma"])
-    l1=_field(vg.columns,["Legenda_1","legenda_1","fito"])
-    l2=_field(vg.columns,["Legenda_2","legenda_2","formacao"])
+    bfield=_field(bg.columns,["Bioma","Nome_Bioma","nm_bioma","bioma_1"])
+    l1=_field(vg.columns,["Tipologia","tipologia","RegiaoFito","regiao_fito","Legenda_1","legenda_1","fito"])
+    l2=_field(vg.columns,["Descricao","descricao","Formacao","formacao","Legenda_2","legenda_2","Vegetacao","vegetacao"])
     bs=_shares(project,bg,[bfield]); vs=_shares(project,vg,[l1,l2])
     if not bs or not bs[0][1]: raise RuntimeError("O polígono não interceptou a camada oficial de Biomas do IBGE.")
     return {"bioma_field":bfield,"biomas":bs[0][1],"vegetacao_fields":[x[0] for x in vs],
@@ -368,15 +368,7 @@ class App(tk.Tk):
             im=im.crop((left,top,left+sw,top+header_h))
             self.header_photo=ImageTk.PhotoImage(im)
             header.create_image(0,0,image=self.header_photo,anchor="nw")
-            header.create_rectangle(0,0,390,header_h,fill="#10291f",outline="",stipple="gray50")
-            # Official Enform logo, kept at near-native size to avoid pixelation.
-            lg=Image.open(io.BytesIO(base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAOAAAAB2CAMAAADmzG+NAAAAY1BMVEX////vmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2bvmwZSY2ZUpum1AAAAH3RSTlMAEBAgIDAwQEBQUGBgcHCAgJCQoKCwsMDA0NDg4PDwFagsVAAABJdJREFUeNrtmdl2qjAUhsMgIKKkTI3IkPd/yrMyJ6A9FhUta/9XFkLgS/aYIgQCgUAgEAgEAoFAIBAIBAKBQCAQ6Ok65sc42DDf98jU18fdRgHLUenytUlGr/6+aMbzwdvmNsZ53QvEPve26oz7UjD2x+0GnMNZGOpuu4ixCKr5htNGzEPOecuZMeeeuN8ESz+O5zqPJ1d33BUPG+Dbqfz3fXRM0uPZ/2sDZehodD7aCfDALpV/HrAex3Ne6kKmtLZx37+BMGsGSgeSPdMFWVb3VI63EXfs0qo532+pVPVEF9zpOkYgmkqNE64ZaTTfED7PBXsrsuR8Gy+xzd+vV9RgxUfxE12wdoKnQMztSHNZrfYeuHGGKCme6YKTNBjU3BM9K+XXK/EljI+8Jgv2pSlbDpzas9r944oWmj11SjsLXnRw4WWMIvT6ceyD9QCTZ1cycazTYK9cz+OEqvRezUg5oP+SqYOjaANV/OSEKsd/jeO4Xw3wdUWpyIJfFuHBGOnl7wMiFPBOV/peYLneYaV0/2pAWX1KQtv1zuts4esBUWDFT+Z6sYkzh00AIq/WhMz1vpG21/M2AMUxd6mLmNiUb7uNAJr4ybawRGh/cXLkbxRmGOPT9dTtJxjj1P8/IBuHs+jGK6Lp9NEJY5zYD2eTzsSULnwLxSFiuaDgzlTzM2DDURDCutmwUrfUDUJIx2tRLlWwhdUgJ+lO1mKwIQw5aVXjIR9K5DuHlF08yYcLt3qIlZEG+rwm/j1epHs7SmmrN4DwXigzt1RnSx3haf/EEM0uiqLVb8xQ8aswozPkE/P+uRvGMj2w8mZJAI0G54OHyAIk2RWWa4CVe9EU4nyIbP8twMIe7KwwnhlprWx0XPSvGME3FGmSNWINfQPITbGtGrEGw01AyddgXHTuMvEhhE4A+XykkmDC4CvxZOd+HgMLhLHWyxoJPm0loJLBWkNi26wgEF+NsfhizMWiRMrvEhEihDu1FiB7xVClSWivTxuqvlJ/gDBzN9B4qig9xw8E/MZpZAffAlT72TkN0iSKdvNJlJFKgMZ3vFLPWznu3V3pwsoHa7POEGmqk/mpj5SKHwBT6k5iL9r85I3ao1MnshRXAOPHACP79ZGM9MQAVtdbXBewmAQHn5rbc79yQonY7fSnPjp/qPbM9PzhqdN5zAAm9wCSqetYj9LZ4YbjaIkVvG4dFDx0SCGn9GUEpbQr7DRB0d2AN0406Kzmca4kjve+4CSET4lVETJUEbrx2Y8AkhkgcQDxqwEVXerc+iWgXWNVnwOoE1EzOwS8H7CxA4UO9/5HAIqA12ZXTsjuBzxNKBIrcr4bUKz+cK3FuR8wdEOl300K17cCJk7pmLX+AkBZj0jCsLUz+dsBxRbyUjHBHaXFEkBfFggp+2+M+H1CnwLot253EC0AnLZcVgX0fkC72+Q99RLAKSFGHwSIUNaZXjxDiwCRXxhEkqDPAkQoLQgZCMF2NGXHUNg9UAqdv6aWkFWknU6C+DkUunklxNODJxwiEAgEAoFAIBAIBAKBQCAQCAQCgUAgEAgEAoFAIBAIdEv/ABJx6rY9YuvYAAAAAElFTkSuQmCC"))).convert("RGBA")
-            lg.thumbnail((224,118),Image.Resampling.LANCZOS)
-            self.header_logo=ImageTk.PhotoImage(lg)
-            header.create_image(22,14,image=self.header_logo,anchor="nw")
-            header.create_text(238,38,text="Verde",anchor="nw",fill="#52CC53",font=("Segoe UI",28,"bold"))
-            header.create_text(240,91,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
-        else:
+            # Approved banner already contains the Enform Verde branding; do not overlay or alter it.\n        else:
             header.create_text(24,30,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
             header.create_text(26,90,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
 
@@ -618,7 +610,7 @@ class App(tk.Tk):
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         edl_token=self.edl_token.get().strip(); cdse_token=self.cdse_token.get().strip()
         cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
-        self._analysis_running=True; self.run_btn.state(["disabled"]); self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
+        self._analysis_running=True; self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando SAR em segundo plano…")
         def worker():
             try:
@@ -635,7 +627,7 @@ class App(tk.Tk):
         except queue.Empty:
             if self._analysis_running:self.after(120,self._poll_analysis)
             return
-        self._analysis_running=False; self.run_btn.state(["!disabled"]); self.pipeline_btn.state(["!disabled"]); self.global_execute_btn.state(["!disabled"])
+        self._analysis_running=False; self.pipeline_btn.state(["!disabled"]); self.global_execute_btn.state(["!disabled"])
         if kind=="error":
             log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
             self.status.set("Falha controlada — programa permanece responsivo.")

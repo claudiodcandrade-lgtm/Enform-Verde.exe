@@ -50,7 +50,7 @@ jobs:
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
-          assert "enform_header.jpg" in src, "approved professional header missing"
+          assert "enform_header.jpg" in src and "Approved banner already contains" in src, "approved professional header missing or duplicate branding overlay returned"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
           assert "ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO" in src, "secondary-analysis status missing"
           sar_src=open("sar_pipeline.py",encoding="utf-8").read()
