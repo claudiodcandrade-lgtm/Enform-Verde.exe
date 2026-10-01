@@ -399,13 +399,15 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                         pr=analyze_nisar_gcov(gdf,target,biome,phys)
                         audit["asf_download"]={"scene":cand.get("id"),"processed":"NISAR_GCOV_HDF5","features":pr.get("features")}
                         if pr.get("agb_mg_ha") is not None: pr["audit"]=audit; pr["paths"]=[str(target)]; return pr
-                        # Real SAR was processed even if no defensible AGB model exists.
-                        pr["status"]="SAR_PROCESSADO_SEM_AGB"; pr["audit"]=audit; pr["paths"]=[str(target)]; return pr
+                        # Preserve the processed scene in the audit, but continue through all SAR sources before any literature fallback.
+                        audit.setdefault("processed_without_agb",[]).append({"source":"NISAR_GCOV","scene":cand.get("id"),"paths":[str(target)],"features":pr.get("features")})
+                        continue
                     pre=preprocess_lband(target,dl/("proc_"+target.stem))
                     if pre.get("rasters"):
                         pr=process_real_sar(gdf,pre["rasters"],biome,phys); pr["audit"]=audit; pr["data_origin"]="SAR_L"; pr["paths"]=pre["rasters"]
-                        if pr.get("agb_mg_ha") is None: pr["status"]="SAR_PROCESSADO_SEM_AGB"
-                        return pr
+                        if pr.get("agb_mg_ha") is not None: return pr
+                        audit.setdefault("processed_without_agb",[]).append({"source":"L_BAND","scene":cand.get("id"),"paths":pre["rasters"]})
+                        continue
                 except Exception as e: audit["warnings"].append("Cena L "+str(cand.get("id"))+": "+str(e))
         except Exception as e: audit["warnings"].append("ASF L-band: "+str(e))
     elif lcount: audit["warnings"].append(f"{lcount} produto(s) L-band localizados; download bloqueado porque não foi fornecido Earthdata User Token/autenticação local.")
@@ -422,10 +424,8 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             c=public_sentinel1_cog(gdf,Path(cache)/"sentinel1_cdse",cdse_token=cdse_token)
             audit["sentinel1_public"]={"route":"catalogue/direct asset fallback","catalogued":c.get("items",0),"downloaded":len(c.get("paths",[])),"scene_ids":c.get("scene_ids",[])}
         if c.get("stats"):
-            return {"status":"SAR_PROCESSADO_SEM_AGB","agb_mg_ha":None,"uncertainty_mg_ha":None,
-                    "data_origin":"SAR_C_PUBLIC","source":c.get("provider"),
-                    "sensor":"Sentinel-1","band":"C","product":"GRD RTC Gamma0 VV/VH","stats":c["stats"],"paths":c["paths"],"audit":audit,
-                    "message":"Pixels Sentinel-1 C-band foram efetivamente processados. Em floresta tropical densa, C-band está sujeito a saturação; o programa não converte este sinal isolado em AGB sem modelo calibrado/validado."}
+            audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C","provider":c.get("provider"),"paths":c.get("paths",[]),"stats":c.get("stats",[])})
+            audit["warnings"].append("Sentinel-1 C-band processado, mas sem modelo AGB calibrado/validado compatível; busca SAR continua.")
     except Exception as e: audit["warnings"].append("Sentinel-1 CDSE Process API/download: "+str(e))
 
     # 5 — CCI derived AGB is last quantitative fallback, never ahead of raw P/L processing.
@@ -435,6 +435,8 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             pr=process_real_sar(gdf,cci["paths"],biome,phys); pr["audit"]=audit; pr["paths"]=cci["paths"]; pr["historical"]=True; pr["data_origin"]="SAR_DERIVED_CCI"; return pr
     except Exception as e: audit["cci"]={"error":str(e)}
 
+    # Literature is strictly terminal: it is reached only after every configured SAR route above was attempted.
+    audit["sar_sources_exhausted"]=True
     lit=literature_fallback(biome,phys,library_rows)
     return {"status":"SAR_NAO_PROCESSADO","agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":"SAR_NAO_PROCESSADO",
             "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,"sar_attempted_first":True,
