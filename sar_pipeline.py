@@ -345,6 +345,35 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
         except Exception as e: errors.append(Path(p).name+": "+str(e))
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,
             "provider":"Copernicus Data Space Ecosystem catalogue/direct asset fallback","errors":errors}
+def planetary_alos_palsar(gdf,cache,limit=12):
+    """Credential-free L-band route: JAXA ALOS/PALSAR annual 25 m mosaic on Planetary Computer.
+    Processes real HH/HV pixels inside the AOI. No AGB is fabricated without calibration."""
+    geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__; bbox=list(map(float,gdf.to_crs(4326).total_bounds))
+    body={"collections":["alos-palsar-mosaic"],"bbox":bbox,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    api="https://planetarycomputer.microsoft.com/api/stac/v1/search"; rr=requests.post(api,json=body,timeout=(10,60)); rr.raise_for_status(); items=rr.json().get("features",[])
+    import rasterio
+    from rasterio.mask import mask
+    from rasterio.warp import transform_geom
+    stats=[]; errors=[]; scene_ids=[]; paths=[]
+    for it in items:
+        scene_ids.append(it.get("id")); assets=it.get("assets") or {}
+        for pol in ("HH","HV","hh","hv"):
+            a=assets.get(pol)
+            if not a or not a.get("href"):continue
+            try:
+                sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":a["href"]},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
+                with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+                    with rasterio.open(href) as src:
+                        gj=transform_geom("EPSG:4326",src.crs,geom); ar,_=mask(src,[gj],crop=True,filled=False)
+                        v=np.ma.array(ar[0]).compressed(); v=v[np.isfinite(v)&(v>0)]
+                        if not len(v):continue
+                        db=10*np.log10(v)-83.0
+                        stats.append({"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean_dn":float(v.mean()),"mean_db":float(db.mean()),"sd_db":float(db.std(ddof=1)) if len(db)>1 else 0.0,"pixel_state":"PROCESSADO"})
+                        paths.append(a["href"])
+            except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
+        if len(stats)>=2:break
+    return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,"paths":paths,"stats":stats,"errors":errors,"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
+
 def planetary_sentinel1_cog(gdf,cache,limit=8):
     """Public, credential-free Sentinel-1 GRD pixel route via Microsoft Planetary Computer.
     Reads signed Cloud-Optimized GeoTIFF windows for the AOI and reports actual VV/VH pixel statistics.
@@ -407,7 +436,15 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         except Exception as e: audit["warnings"].append("BIOMASS P download/process: "+str(e))
     elif l2items: audit["warnings"].append("BIOMASS P-band localizado; ativos científicos diretos foram tentados. Ativos protegidos foram ignorados sem solicitar token ao usuário.")
 
-    # 2 — NISAR/ALOS L-band. Catalogue is public; NISAR science download requires EDL.
+    # 2 — Public L-band first: ALOS/PALSAR annual mosaic, no user credentials.
+    try:
+        al=planetary_alos_palsar(gdf,Path(cache)/"alos_palsar")
+        audit["alos_palsar_public"]={"catalogued":al.get("items",0),"scene_ids":al.get("scene_ids",[]),"pixel_state":al.get("pixel_state"),"stats":al.get("stats",[]),"errors":al.get("errors",[])[:4]}
+        if al.get("stats"):
+            audit.setdefault("processed_without_agb",[]).append({"source":"ALOS/PALSAR L","provider":al.get("provider"),"paths":al.get("paths",[]),"stats":al.get("stats",[])})
+    except Exception as e:audit["warnings"].append("ALOS/PALSAR público: "+str(e))
+
+    # 2b — NISAR/ALOS scene catalogue; NISAR science download may require EDL.
     asf=discover_asf(gdf,limit=50); audit["asf"]=asf
     lcount=sum(x["count"] for x in asf if x["band"]=="L")
     if lcount and (edl_token or (edl_user and edl_password)):
