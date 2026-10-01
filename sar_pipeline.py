@@ -277,7 +277,8 @@ def analyze_nisar_gcov(gdf,h5_path,biome,phys):
             "uncertainty_kind":"RMSE de validação do modelo","data_origin":"SAR_L_MODELO","source":m.get("source") or m.get("doi"),
             "sensor":"NISAR","band":"L","product":q["product"],"model_id":m["id"],"features":q["features"],"terms":q["terms"]}
 
-EARTH_SEARCH_STAC="https://earth-search.aws.element84.com/v1/search"\nCDSE_ODATA="https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+EARTH_SEARCH_STAC="https://earth-search.aws.element84.com/v1/search"
+CDSE_ODATA="https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
 
 def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
     """Discover and process Sentinel-1 GRD COG directly from Copernicus CDSE.
