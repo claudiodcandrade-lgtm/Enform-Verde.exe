@@ -67,7 +67,8 @@ jobs:
           assert "Copernicus CDSE / Sentinel Hub" in src and "Client ID" in src and "Client Secret" in src and "TESTAR CDSE" in src, "CDSE Process API OAuth UI missing"
           assert "Aspect ratio is preserved" in src, "header aspect-ratio protection missing"
           assert "literatura/modelagem somente após falha documentada" in src, "fallback policy regression"
-          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Sentinel-1 C-band fallback"), "SAR priority regression"\n          assert "CDSE_TOKEN_URL" in sar_src and "client_credentials" in sar_src and "VV" in sar_src and "VH" in sar_src, "CDSE OAuth/pixel contract missing"
+          assert sar_src.index("BIOMASS P-band") < sar_src.index("NISAR/ALOS L-band") < sar_src.index("Sentinel-1 C-band fallback"), "SAR priority regression"
+          assert "CDSE_TOKEN_URL" in sar_src and "client_credentials" in sar_src and "VV" in sar_src and "VH" in sar_src, "CDSE OAuth/pixel contract missing"
           assert Path("enform_header.jpg").exists() and Path("enform_header.jpg").stat().st_size > 2000, "forest/logo visual asset missing"
           import scientific_calibration as sc
           assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
