@@ -172,24 +172,44 @@ def _ibge_cache():
     root=Path(os.environ.get("LOCALAPPDATA",Path.home()))/"EnformVerde"/"IBGE"
     root.mkdir(parents=True,exist_ok=True); return root
 
-def _download_extract(url,folder,tag):
+def _download_zip(url,folder,tag):
+    """Cache the official ZIP without extracting the national dataset into RAM/disk."""
     import requests
     folder.mkdir(parents=True,exist_ok=True)
-    marker=folder/".ready"
-    if marker.exists(): return
     zpath=folder/(tag+".zip")
-    with requests.get(url,stream=True,timeout=(15,180),headers={"User-Agent":f"Enform-Verde/{APP_VERSION}"}) as r:
+    if zpath.exists() and zpath.stat().st_size>1024*1024:return zpath
+    tmp=zpath.with_suffix(".part")
+    with requests.get(url,stream=True,timeout=(15,300),headers={"User-Agent":f"Enform-Verde/{APP_VERSION}"}) as r:
         r.raise_for_status()
-        with open(zpath,"wb") as out:
-            for chunk in r.iter_content(1024*1024):
-                if chunk: out.write(chunk)
-    with zipfile.ZipFile(zpath) as z:z.extractall(folder)
-    marker.write_text("IBGE official source: "+url,encoding="utf-8")
+        with open(tmp,"wb") as out:
+            for chunk in r.iter_content(4*1024*1024):
+                if chunk:out.write(chunk)
+    tmp.replace(zpath)
+    return zpath
 
-def _find_polygon_file(folder):
-    files=list(folder.rglob("*.shp"))+list(folder.rglob("*.gpkg"))
-    if not files: raise RuntimeError("Pacote IBGE baixado, mas nenhum vetor poligonal foi encontrado.")
-    return max(files,key=lambda p:p.stat().st_size)
+def _read_zip_bbox(zpath,bbox4326,preferred=("area",)):
+    """Read only polygons intersecting the property bbox directly from ZIP (GDAL /vsizip)."""
+    import pyogrio
+    from pyproj import Transformer
+    vsi="zip://"+Path(zpath).as_posix()
+    layers=pyogrio.list_layers(vsi)
+    candidates=[]
+    for row in layers:
+        name=str(row[0]); geom=str(row[1] or "")
+        if "polygon" in geom.lower():
+            score=sum(10 for x in preferred if x.lower() in name.lower())+(5 if "brasil" in name.lower() else 0)
+            candidates.append((score,name))
+    if not candidates:raise RuntimeError("Pacote IBGE sem camada poligonal reconhecida.")
+    layer=max(candidates)[1]
+    info=pyogrio.read_info(vsi,layer=layer)
+    crs=info.get("crs")
+    bb=tuple(float(x) for x in bbox4326)
+    if crs and str(crs).upper() not in ("EPSG:4326","EPSG:4674"):
+        tr=Transformer.from_crs("EPSG:4326",crs,always_xy=True)
+        x1,y1=tr.transform(bb[0],bb[1]); x2,y2=tr.transform(bb[2],bb[3]); bb=(min(x1,x2),min(y1,y2),max(x1,x2),max(y1,y2))
+    g=pyogrio.read_dataframe(vsi,layer=layer,bbox=bb,use_arrow=False)
+    if g.empty:raise RuntimeError("A camada IBGE não retornou polígonos no envelope da propriedade.")
+    return g
 
 def _field(cols,candidates):
     low={str(c).lower():c for c in cols}
@@ -203,13 +223,12 @@ def _field(cols,candidates):
 def _shares(project,theme,fields):
     import geopandas as gpd
     p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
-    bbox=p.total_bounds
-    t=t.cx[bbox[0]:bbox[2],bbox[1]:bbox[3]]
-    if t.empty:return []
     inter=gpd.overlay(t,p[["geometry"]],how="intersection",keep_geom_type=False)
-    inter=inter[~inter.geometry.is_empty].copy()
+    inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
+    if inter.empty:return []
     inter["_ha"]=inter.geometry.area/10000
-    total=inter["_ha"].sum()
+    total=float(inter["_ha"].sum())
+    if total<=0:return []
     out=[]
     for field in fields:
         if field and field in inter.columns:
@@ -218,22 +237,29 @@ def _shares(project,theme,fields):
     return out
 
 def diagnose_ibge(project):
-    """Bioma oficial IBGE + regiões/fitofisionomias da Vegetação IBGE versão 2026."""
-    import geopandas as gpd
+    """IBGE diagnosis with bbox-only reads; national 355 MB vegetation ZIP is never expanded/read wholesale."""
     root=_ibge_cache(); veg=root/"vegetacao_2026"; bio=root/"biomas_2025"
-    _download_extract(IBGE_VEGE_2026_URL,veg,"vege_area_2026")
-    _download_extract(IBGE_BIOMAS_2025_URL,bio,"biomas_2025")
-    vg=gpd.read_file(_find_polygon_file(veg),bbox=tuple(project.to_crs("EPSG:4326").total_bounds))
-    bg=gpd.read_file(_find_polygon_file(bio),bbox=tuple(project.to_crs("EPSG:4326").total_bounds))
+    bbox=tuple(project.to_crs("EPSG:4326").total_bounds)
+    bz=_download_zip(IBGE_BIOMAS_2025_URL,bio,"biomas_2025")
+    bg=_read_zip_bbox(bz,bbox,("bioma","area"))
     bfield=_field(bg.columns,["Bioma","Nome_Bioma","nm_bioma","bioma_1"])
-    l1=_field(vg.columns,["Tipologia","tipologia","RegiaoFito","regiao_fito","Legenda_1","legenda_1","fito"])
-    l2=_field(vg.columns,["Descricao","descricao","Formacao","formacao","Legenda_2","legenda_2","Vegetacao","vegetacao"])
-    bs=_shares(project,bg,[bfield]); vs=_shares(project,vg,[l1,l2])
-    if not bs or not bs[0][1]: raise RuntimeError("O polígono não interceptou a camada oficial de Biomas do IBGE.")
-    return {"bioma_field":bfield,"biomas":bs[0][1],"vegetacao_fields":[x[0] for x in vs],
-            "vegetacao":[{"campo":x[0],"classes":x[1]} for x in vs],
+    bs=_shares(project,bg,[bfield])
+    if not bs or not bs[0][1]:raise RuntimeError("O polígono não interceptou a camada oficial de Biomas do IBGE.")
+    result={"bioma_field":bfield,"biomas":bs[0][1],"vegetacao_fields":[],"vegetacao":[],
             "fonte_bioma":"IBGE — Biomas do Brasil, revisão 2025, 1:250.000",
             "fonte_vegetacao":"IBGE — Vegetação/Regiões Fitoecológicas, versão 2026, 1:250.000"}
+    try:
+        vz=_download_zip(IBGE_VEGE_2026_URL,veg,"vege_area_2026")
+        vg=_read_zip_bbox(vz,bbox,("vege_area","area","brasil"))
+        l1=_field(vg.columns,["legenda_1","nm_pretet","leg_carga","tipologia"])
+        l2=_field(vg.columns,["legenda_2","nm_uveg","leg_sup","formacao"])
+        vs=_shares(project,vg,[l1,l2])
+        result["vegetacao_fields"]=[x[0] for x in vs]
+        result["vegetacao"]=[{"campo":x[0],"classes":x[1]} for x in vs]
+        if not result["vegetacao"]:result["vegetacao_error"]="Camada de vegetação lida, porém sem classe intersectante."
+    except Exception as e:
+        result["vegetacao_error"]=str(e)
+    return result
 
 def zonal_soil(gdf,raster_path):
     import rasterio
@@ -337,7 +363,7 @@ def self_test():
 
 class App(tk.Tk):
     def __init__(self):
-        super().__init__(); self.title("Enform Verde"); self.geometry("1260x760"); self.minsize(1050,650)
+        super().__init__(); self.title("Enform Verde"); self.geometry("1600x900"); self.minsize(1200,720)
         self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue()
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
@@ -345,7 +371,7 @@ class App(tk.Tk):
         try:s.theme_use("vista")
         except:pass
         s.configure(".",font=("Segoe UI",10),foreground=TEXT)
-        s.configure("Title.TLabel",font=("Segoe UI",21,"bold"),foreground=ORANGE)
+        s.configure("Title.TLabel",font=("Segoe UI",24,"bold"),foreground=ORANGE)
         s.configure("H.TLabel",font=("Segoe UI",12,"bold"),foreground=FOREST)
         s.configure("Run.TButton",font=("Segoe UI",10,"bold"),padding=10)
         s.configure("TButton",padding=7)
@@ -355,12 +381,12 @@ class App(tk.Tk):
         base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
 
         # Wide header: preserve source aspect ratio; never stretch independently in X/Y.
-        header_h=150
+        header_h=200
         header=tk.Canvas(root,height=header_h,bg="#10291f",highlightthickness=0); header.pack(fill="x",side="top")
         visual=base/"enform_header.jpg"
         if visual.exists():
             src=Image.open(visual).convert("RGB")
-            sw=max(self.winfo_screenwidth(),1260)
+            sw=max(self.winfo_width(),1600)
             # cover crop. Aspect ratio is preserved, avoiding the distorted/pixel-burst look.
             scale=max(sw/src.width,header_h/src.height)
             im=src.resize((max(sw,round(src.width*scale)),max(header_h,round(src.height*scale))),Image.Resampling.LANCZOS)
@@ -373,7 +399,7 @@ class App(tk.Tk):
             header.create_text(26,90,text=APP_VERSION,anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
 
         # Global action bar: EXECUTAR ANÁLISE must remain visible regardless of selected section.
-        action=ttk.Frame(root,padding=(230,7,14,7)); action.pack(fill="x",side="top")
+        action=ttk.Frame(root,padding=(285,12,20,10)); action.pack(fill="x",side="top")
         ttk.Label(action,text="Análise de carbono",style="Title.TLabel").pack(side="left")
         ttk.Button(action,text="Salvar relatório",command=self.save_report).pack(side="right",padx=(8,0))
         ttk.Button(action,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=(8,0))
@@ -381,7 +407,7 @@ class App(tk.Tk):
         self.global_execute_btn.pack(side="right",padx=(8,0))
 
         body=ttk.Frame(root); body.pack(fill="both",expand=True)
-        nav=tk.Frame(body,width=220,bg="#F6F8F8",highlightbackground="#D8E0E0",highlightthickness=1)
+        nav=tk.Frame(body,width=270,bg="#F6F8F8",highlightbackground="#D8E0E0",highlightthickness=1)
         nav.pack(side="left",fill="y"); nav.pack_propagate(False)
         main=ttk.Frame(body,padding=(10,8,10,6)); main.pack(side="left",fill="both",expand=True)
 
@@ -564,11 +590,11 @@ class App(tk.Tk):
             d=diagnose_ibge(self.gdf)
             self.project["ibge_diagnosis"]=d
             if d["biomas"]: self.biome.set(d["biomas"][0][0])
-            if d["vegetacao"] and d["vegetacao"][-1]["classes"]: self.phys.set(d["vegetacao"][-1]["classes"][0][0])
+            if d["vegetacao"] and d["vegetacao"][-1]["classes"]: self.phys.set(d["vegetacao"][-1]["classes"][0][0])\n            elif d.get("vegetacao_error"): self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
             btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
-            vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"])
+            vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"]) or ("PENDENTE: "+d.get("vegetacao_error","sem classe"))
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nIBGE — Bioma(s): "+btxt+"\nIBGE 2026 — Vegetação: "+vtxt)
-            self.status.set("Perímetro e diagnóstico IBGE concluídos.")
+            self.status.set("Perímetro e diagnóstico IBGE concluídos." if not d.get("vegetacao_error") else "Bioma IBGE concluído; fitofisionomia pendente sem bloquear a análise.")
         except Exception as e:
             self.project["ibge_diagnosis_error"]=str(e)
             self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
