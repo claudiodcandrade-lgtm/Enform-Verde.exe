@@ -63,6 +63,20 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertFalse(sar.national_predictive_route_matrix("Pampa","Estepe")["supported_biome"])
         self.assertFalse(sar.national_predictive_route_matrix("Pantanal","Savana")["supported_biome"])
 
+    def test_lband_dualpol_high_biomass_is_stratifier_not_agb_equation(self):
+        stats=[
+            {"polarization":"HH","mean_db":-7.039013463912296},
+            {"polarization":"HV","mean_db":-11.637107111856047},
+        ]
+        d=sar.lband_dualpol_diagnostic(stats,"Amazônia","Floresta Ombrófila Densa",273.515)
+        self.assertIsNotNone(d)
+        self.assertEqual(d["role"],"SAR_ESTRATIFICADOR")
+        self.assertEqual(d["saturation_risk"],"high")
+        self.assertFalse(d["quantitative_agb_from_dualpol_permitted"])
+        self.assertAlmostEqual(d["hh_minus_hv_db"],4.598093647943751,places=9)
+        self.assertGreater(d["rfdi"],0)
+        self.assertLess(d["rfdi"],1)
+
     @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
     def test_nonamazon_aoi_cannot_receive_tapajos_numeric_fallback(self):
         aoi=gpd.GeoDataFrame(geometry=[box(-46.75,-10.35,-46.70,-10.30)],crs="EPSG:4326")
