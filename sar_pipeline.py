@@ -655,6 +655,42 @@ def national_predictive_route_matrix(biome,phys,aoi=None,features=None):
             "ifn_sfb_reference":dict(SFB_IFN_BIOMASS_REFERENCE),
             "policy":"Priorizar produto/modelo SAR calibrado e domínio válido. Se nenhuma rota quantitativa compatível sobreviver, fornecer AGB por modelagem hierárquica de evidência brasileira, tão fitofisionômica/regional quanto possível, sempre com limite de incerteza explícito; nunca rotular esse fallback como SAR."}
 
+def _earthaccess_requests_session(edl_user="",edl_password="",edl_token=""):
+    """Return an authenticated NASA Earthdata requests session without console prompts.
+    Priority: explicit GUI credentials/token -> environment -> Windows _netrc/.netrc.
+    Nothing is persisted by Enform Verde."""
+    try:
+        import os, earthaccess
+        env_keys=("EARTHDATA_USERNAME","EARTHDATA_PASSWORD","EARTHDATA_TOKEN")
+        old={k:os.environ.get(k) for k in env_keys}
+        strategy=None; source=None
+        try:
+            if edl_token:
+                os.environ["EARTHDATA_TOKEN"]=str(edl_token); os.environ.pop("EARTHDATA_USERNAME",None); os.environ.pop("EARTHDATA_PASSWORD",None)
+                strategy="environment"; source="explicit_token"
+            elif edl_user and edl_password:
+                os.environ["EARTHDATA_USERNAME"]=str(edl_user); os.environ["EARTHDATA_PASSWORD"]=str(edl_password); os.environ.pop("EARTHDATA_TOKEN",None)
+                strategy="environment"; source="explicit_user_password"
+            elif os.environ.get("EARTHDATA_TOKEN") or (os.environ.get("EARTHDATA_USERNAME") and os.environ.get("EARTHDATA_PASSWORD")):
+                strategy="environment"; source="environment"
+            else:
+                home=Path.home(); netrc=os.environ.get("NETRC")
+                candidates=[Path(netrc)] if netrc else [home/"_netrc",home/".netrc"]
+                if any(p.exists() for p in candidates):
+                    strategy="netrc"; source="netrc"
+            if not strategy:return None,{"available":False,"reason":"Earthdata credentials not configured","source":None}
+            auth=earthaccess.login(strategy=strategy,persist=False)
+            if not getattr(auth,"authenticated",False):
+                return None,{"available":False,"reason":"Earthdata authentication rejected","source":source}
+            session=earthaccess.get_requests_https_session()
+            return session,{"available":True,"reason":"authenticated","source":source}
+        finally:
+            for k,v in old.items():
+                if v is None:os.environ.pop(k,None)
+                else:os.environ[k]=v
+    except Exception as e:
+        return None,{"available":False,"reason":type(e).__name__+": "+str(e)[:240],"source":"earthaccess"}
+
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
@@ -698,10 +734,12 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 audit["warnings"].append("ALOS/PALSAR L-band dual-pol processado e radiometricamente plausível, porém classificado como SAR estratificador devido à saturação esperada em floresta tropical úmida de alta biomassa; AGB quantitativa exige full-pol/P-band ou calibração local independente.")
     except Exception as e:audit["warnings"].append("ALOS/PALSAR público: "+str(e))
 
-    # 2b — NISAR/ALOS scene catalogue; NISAR science download may require EDL.
+    # 2b — NISAR/ALOS scene catalogue; authenticate through official earthaccess first.
     asf=discover_asf(gdf,limit=50); audit["asf"]=asf
     lcount=sum(x["count"] for x in asf if x["band"]=="L")
-    if lcount and (edl_token or (edl_user and edl_password)):
+    ea_session,ea_state=_earthaccess_requests_session(edl_user,edl_password,edl_token)
+    audit["earthaccess"]=ea_state
+    if lcount and (ea_session is not None or edl_token or (edl_user and edl_password)):
         try:
             from lband_preprocess import preprocess_lband
             cands=[it for group in asf if group.get("band")=="L" for it in group.get("items",[]) if it.get("download_url")]
@@ -726,11 +764,12 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                     url=cand["download_url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
                     target=dl/Path(url.split("?")[0]).name
                     if not target.exists():
-                        sess=requests.Session()
-                        if edl_token:
-                            sess.headers.update({"Authorization":"Bearer "+edl_token})
-                        else:
-                            sess.auth=(edl_user,edl_password)
+                        sess=ea_session or requests.Session()
+                        if ea_session is None:
+                            if edl_token:
+                                sess.headers.update({"Authorization":"Bearer "+edl_token})
+                            else:
+                                sess.auth=(edl_user,edl_password)
                         with sess.get(url,stream=True,timeout=(10,300),allow_redirects=True) as rr:
                             rr.raise_for_status()
                             with open(target,"wb") as out:
@@ -751,7 +790,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                         continue
                 except Exception as e: audit["warnings"].append("Cena L "+str(cand.get("id"))+": "+str(e))
         except Exception as e: audit["warnings"].append("ASF L-band: "+str(e))
-    elif lcount: audit["warnings"].append(f"{lcount} produto(s) L-band localizados; download bloqueado porque não foi fornecido Earthdata User Token/autenticação local.")
+    elif lcount: audit["warnings"].append(f"{lcount} produto(s) L-band localizados; download protegido requer Earthdata Login. O programa tentou earthaccess via credenciais informadas, variáveis EARTHDATA_* e _netrc/.netrc; estado: "+str((audit.get("earthaccess") or {}).get("reason"))+".")
 
     # 3 — X-band: no public automatic archive is assumed. Local/licensed X rasters are processed by process_real_sar.
     audit["x_band"]={"status":"rota local/licenciada","note":"TerraSAR-X/TanDEM-X não é inventado como download público automático."}
