@@ -139,7 +139,8 @@ jobs:
           assert lit and lit["available"] and abs(lit["agb_mg_ha"]-273.515)<1e-6
           assert lit["sar_metrics"]["RMSE"] is None and lit["agb_range_mg_ha"][0]<lit["agb_mg_ha"]<lit["agb_range_mg_ha"][1]
           assert "não é IC95%" in lit["uncertainty_kind"]
-          print("LIVE_TAPAJOS_KMZ_SAR_AND_REGIONAL_REFERENCE_OK",{"sentinel1":r["stats"],"alos_palsar":l["stats"],"agb_reference":lit})
+          import json
+          print("LIVE_TAPAJOS_KMZ_SAR_AND_REGIONAL_REFERENCE_OK "+json.dumps({"sentinel1":r["stats"],"alos_palsar":l["stats"],"agb_reference":lit},ensure_ascii=True))
           '@ | Set-Content live_sar_test.py -Encoding UTF8
           python live_sar_test.py
 
