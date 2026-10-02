@@ -58,7 +58,7 @@ class CatalogModelExecutionTests(unittest.TestCase):
             m=sar.national_predictive_route_matrix(biome,phys)
             self.assertTrue(m["supported_biome"],biome)
             self.assertFalse(m["biome_mean_permitted"],biome)
-            self.assertEqual(m["local_numeric_state"],"runtime_product_check_required")
+            self.assertIn(m["local_numeric_state"],("hierarchical_model_fallback_available","local_numeric_reference_available"))
             self.assertIn("state-level",m["ifn_sfb_reference"]["scope"])
         self.assertFalse(sar.national_predictive_route_matrix("Pampa","Estepe")["supported_biome"])
         self.assertFalse(sar.national_predictive_route_matrix("Pantanal","Savana")["supported_biome"])
@@ -68,8 +68,10 @@ class CatalogModelExecutionTests(unittest.TestCase):
         aoi=gpd.GeoDataFrame(geometry=[box(-46.75,-10.35,-46.70,-10.30)],crs="EPSG:4326")
         self.assertIsNone(sar.literature_fallback("Cerrado","Savana Arborizada",aoi=aoi))
         m=sar.national_predictive_route_matrix("Cerrado","Savana Arborizada",aoi=aoi)
-        self.assertEqual(m["local_numeric_state"],"runtime_product_check_required")
-        self.assertIsNone(m["regional_numeric_fallback"])
+        self.assertEqual(m["local_numeric_state"],"hierarchical_model_fallback_available")
+        self.assertIsNotNone(m["regional_numeric_fallback"])
+        self.assertGreater(m["regional_numeric_fallback"]["agb_mg_ha"],0)
+        self.assertEqual(len(m["regional_numeric_fallback"]["agb_range_mg_ha"]),2)
 
     @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
     def test_regional_model_selection_requires_aoi_inside_declared_domain(self):
