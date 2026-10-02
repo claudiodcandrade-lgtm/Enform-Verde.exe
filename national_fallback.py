@@ -69,9 +69,9 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
 
     elif "cerrado" in b:
         base=[
-          _record(16.55,8.05,25.05,"Oliveira et al. (2024), An. Acad. Bras. Ciênc. 96(3):e20221041",
+          _record(16.55,7.95,25.15,"Oliveira et al. (2024), An. Acad. Bras. Ciênc. 96(3):e20221041",
                   "https://www.scielo.br/j/aabc/a/ydXCX3FjW5TzrWMWF9sZBhk/?lang=en",
-                  "inventário/modelagem no Distrito Federal; média 16,55 ± 8,5 Mg/ha",uncertainty_kind="média ± DP publicada"),
+                  "inventário/modelagem no Distrito Federal; média 16,55 ± 8,6 Mg/ha",uncertainty_kind="média ± DP publicada"),
           _record(18.66,7.0,35.0,"Bispo et al. (2020), Remote Sensing 12:2685",
                   "https://doi.org/10.3390/rs12172685",
                   "Rio Vermelho/GO; referência brasileira multissensor, média reportada 18,66 Mg/ha",uncertainty_kind="envelope de transferência conservador"),
@@ -80,12 +80,12 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
                   "média reportada 19,72 Mg/ha em áreas protegidas",uncertainty_kind="envelope de transferência conservador")]
         if "cerradao" in p:
             rec=[_record(61.0,40.0,82.0,"Delitti et al. (2006), Biomass and mineralmass estimates in a cerrado ecosystem",
-                         "https://doi.org/10.1590/S0100-84042006000400001",
+                         "https://doi.org/10.1590/S0100-84042006000400003",
                          "síntese por fisionomia; cerradão ~61 Mg/ha",uncertainty_kind="envelope de transferência fitofisionômica")]
             label="Cerradão — referência fitofisionômica"
         elif any(k in p for k in ("campo sujo","campo limpo","cerrado ralo","campo cerrado","savana gram")):
             rec=[_record(14.8,5.9,32.8,"Delitti et al. (2006), Biomass and mineralmass estimates in a cerrado ecosystem",
-                         "https://doi.org/10.1590/S0100-84042006000400001",
+                         "https://doi.org/10.1590/S0100-84042006000400003",
                          "compilação brasileira: campo sujo/campo cerrado/cerrado aberto com ampla variação",uncertainty_kind="envelope empírico entre fisionomias abertas comparáveis")]
             label="Cerrado aberto/ralo — referência fitofisionômica"
         else:
