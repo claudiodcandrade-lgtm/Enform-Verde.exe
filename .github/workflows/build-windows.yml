@@ -198,7 +198,7 @@ jobs:
               current_gen=ui._map_generation
               ui._finish_satellite_map(current_gen,None,[],"Esri World Imagery",None,None,"offline test")
               ui.update_idletasks()
-              assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "tile failure must leave offline AOI visible"
+              assert ui._satellite_map_visible and any(ui.map_canvas.type(i)=="image" for i in ui.map_canvas.find_all()), "online map failure must leave packaged offline NASA basemap with AOI visible"
               ui._satellite_map_visible=False
               ui.map_canvas.configure(width=960,height=420)
               ui.update_idletasks(); ui._on_map_resize(); ui.update_idletasks(); ui._redraw_map_after_resize(); ui.update_idletasks()
