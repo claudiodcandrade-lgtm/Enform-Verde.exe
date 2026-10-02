@@ -633,7 +633,7 @@ class App(tk.Tk):
         def worker():
             errors=[]; rs=rings()
             if not rs:
-                self.after(0,self._finish_satellite_map,generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável")); return
+                self.after(0,self._finish_satellite_map,generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"); return
             if key:
                 try:
                     view,_=google_image(rs)
