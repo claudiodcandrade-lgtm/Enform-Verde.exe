@@ -47,6 +47,30 @@ class CatalogModelExecutionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"não executável"):
             sar.execute_registered_model("CAATINGA_S1_JESUS_2023",{"VH":0.2})
 
+    def test_national_route_matrix_covers_supported_biomes_without_generic_means(self):
+        samples={
+            "Amazônia":"Floresta Ombrófila Densa",
+            "Cerrado":"Savana Arborizada",
+            "Caatinga":"Savana Estépica",
+            "Mata Atlântica":"Floresta Estacional Semidecidual",
+        }
+        for biome,phys in samples.items():
+            m=sar.national_predictive_route_matrix(biome,phys)
+            self.assertTrue(m["supported_biome"],biome)
+            self.assertFalse(m["biome_mean_permitted"],biome)
+            self.assertEqual(m["local_numeric_state"],"runtime_product_check_required")
+            self.assertIn("state-level",m["ifn_sfb_reference"]["scope"])
+        self.assertFalse(sar.national_predictive_route_matrix("Pampa","Estepe")["supported_biome"])
+        self.assertFalse(sar.national_predictive_route_matrix("Pantanal","Savana")["supported_biome"])
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_nonamazon_aoi_cannot_receive_tapajos_numeric_fallback(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-46.75,-10.35,-46.70,-10.30)],crs="EPSG:4326")
+        self.assertIsNone(sar.literature_fallback("Cerrado","Savana Arborizada",aoi=aoi))
+        m=sar.national_predictive_route_matrix("Cerrado","Savana Arborizada",aoi=aoi)
+        self.assertEqual(m["local_numeric_state"],"runtime_product_check_required")
+        self.assertIsNone(m["regional_numeric_fallback"])
+
     @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
     def test_regional_model_selection_requires_aoi_inside_declared_domain(self):
         model=next(m for m in sar.MODEL_REGISTRY if m["id"]=="NARVAES_2023_CENTRAL_AMAZON")
