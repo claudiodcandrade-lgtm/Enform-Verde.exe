@@ -58,9 +58,10 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
         geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
         for poly in geoms:
             pts=[]
-            for lon,lat in poly.exterior.coords:
-                x=(float(lon)-bx[0])/max(bx[2]-bx[0],1e-12)*ow
-                y=(bx[3]-float(lat))/max(bx[3]-bx[1],1e-12)*oh
+            for coord in poly.exterior.coords:
+                lon,lat=float(coord[0]),float(coord[1])
+                x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*ow
+                y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
                 pts.append((x,y))
             if len(pts)>=4:
                 d.polygon(pts,fill=(255,138,0,42),outline=(255,138,0,255))
