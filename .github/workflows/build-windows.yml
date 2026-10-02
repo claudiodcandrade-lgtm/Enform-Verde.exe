@@ -233,7 +233,9 @@ jobs:
           @'
           ENFORM VERDE - WINDOWS
           Para abrir: dê duplo clique em "Enform Verde.exe".
-          Mantenha o EXE e a pasta _internal juntos.\n          IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.\n          A análise espacial aceita vetor local e tenta consulta pública do SICAR e COS Embrapa quando houver internet.
+          Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
+          IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
+          A análise espacial aceita vetor local e tenta consulta pública do SICAR, SIGEF e Embrapa quando houver internet.
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
