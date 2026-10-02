@@ -61,8 +61,7 @@ jobs:
           assert "CARREGAR ARQUIVO VETORIAL" in src[src.index("def _project"):src.index("def _spatial")], "opening vector upload missing"
           assert "Buscar CAR no SICAR" not in src and "Buscar CCIR no SIGEF" not in src, "manual registry lookup buttons must be absent"
           assert "A consulta CAR/SICAR ou CCIR/SIGEF ocorre automaticamente" in src, "registry lookup must run from EXECUTAR ANÁLISE"
-          spatial_block=src[src.index("def _spatial"):src.index("def _show_geom")]
-          assert "Carregar KML / GeoJSON" not in spatial_block, "old vector upload still present"
+          assert "Carregar KML / GeoJSON" not in src[src.index("def _spatial"):src.index("def _remote")], "old vector upload still present"
           assert "def _reset_analysis_state" in src, "state reset missing"
           assert src.count("self._reset_analysis_state()") >= 3, "CAR CCIR vector reset hooks missing"
           assert "self.project.pop(k,None)" in src, "execution result invalidation missing"
@@ -75,7 +74,8 @@ jobs:
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
-          assert "maps.googleapis.com/maps/api/staticmap" not in src and "VISUALIZAR SATÉLITE + POLÍGONO" not in src and "google_maps_key" not in src, "external map function must remain removed"
+          assert "sentinel2_preview" in src and "sentinel-2-l2a" in src and "planetarycomputer.microsoft.com/api/stac/v1/search" in src, "Sentinel-2 polygon map route missing"
+          assert "maps.googleapis.com/maps/api/staticmap" not in src and "google_maps_key" not in src, "Google Maps dependency must not remain"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -99,11 +99,16 @@ jobs:
           assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"
           assert "planetary_alos_palsar" in sar_src and "alos-palsar-mosaic" in sar_src, "public L-band ALOS/PALSAR route missing"
           assert "lband_dualpol_diagnostic" in sar_src and "SAR_ESTRATIFICADOR" in sar_src, "L-band saturation-aware diagnostic missing"
+          assert "full_pol_candidate" in sar_src and "lband_candidate_readiness" in sar_src, "full-pol/GCOV L-band candidate prioritization missing"
           assert "_jaxa_mosaic_gamma0_db" in sar_src and "np.square(a)" in sar_src, "JAXA mosaic gamma0 calibration regression"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
+          assert "VISUALIZAR SENTINEL-2 + POLÍGONO" in src and "def show_sentinel2_map" in src, "Sentinel-2 polygon visualization missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
-          assert "A visualização cartográfica foi removida" in src, "map removal explanation missing"
-          assert "map_canvas" not in src and "show_google_map" not in src, "map implementation must not remain in the desktop UI"
+          assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
+          assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI fallback must remain automatic"
+          assert "_map_generation" in src and "_refresh_satellite_after_resize" in src and "show_sentinel2_map(refresh=True)" in src, "Sentinel-2 map stale-response/resize guards missing"
+          assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
+          assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
           assert Path("enform_header.png").exists() and Path("enform_header.png").stat().st_size > 20000, "forest/logo visual asset missing"
           import scientific_calibration as sc
           assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
@@ -124,13 +129,11 @@ jobs:
           preflight=app.read_vector(kmz)
           assert len(preflight)>0, "KMZ preflight returned no geometry"
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
+          ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
           ui.update_idletasks()
           assert "Upload concluído" in ui.vector_status.get() and kmz.name in ui.vector_status.get(), "AOI filename/upload confirmation missing"
-          assert ui.gdf is not None and not ui.gdf.empty, "Tapajos geometry was not retained"
-          gm=app.geom_metrics(ui.gdf)
-          assert gm["area_ha"]>0 and gm["utm_epsg"], "geometry metrics unavailable after map removal"
-          assert "Área geométrica" in ui.spatial_text.get("1.0","end"), "spatial diagnostic text missing"
+          assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
           import tempfile
           with tempfile.TemporaryDirectory() as td:
               geojson=Path(td)/"tapajos_acceptance.geojson"
@@ -138,11 +141,42 @@ jobs:
               app.filedialog.askopenfilename=lambda **kwargs:str(geojson)
               ui.pick_vector(); ui.update_idletasks()
               assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
-              assert ui.gdf is not None and len(ui.gdf)>0, "GeoJSON geometry lost after map removal"
+              assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
+              # Simulate total basemap/network failure: the core map must remain usable.
+              current_gen=ui._map_generation
+              ui._finish_satellite_map(current_gen,None,[],"Esri World Imagery",None,None,"offline test")
+              ui.update_idletasks()
+              assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "tile failure must leave offline AOI visible"
+              ui._satellite_map_visible=False
+              ui.map_canvas.configure(width=960,height=420)
+              ui.update_idletasks(); ui._on_map_resize(); ui.update_idletasks(); ui._redraw_map_after_resize(); ui.update_idletasks()
+              polys=[i for i in ui.map_canvas.find_all() if ui.map_canvas.type(i)=="polygon"]
+              assert polys, "AOI disappeared after map resize"
+              bb=ui.map_canvas.bbox(polys[0]); cw=max(1,ui.map_canvas.winfo_width()); ch=max(1,ui.map_canvas.winfo_height())
+              assert ((bb[2]-bb[0])/cw > .45 or (bb[3]-bb[1])/ch > .45), "AOI is not fitted to resized map canvas: "+repr((bb,cw,ch))
+              old_generation=ui._map_generation
+              ui._reset_analysis_state()
+              assert ui._map_generation>old_generation and not ui._satellite_map_visible, "new input must invalidate stale satellite map responses"
           ui.destroy()
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
+      - name: Live Sentinel-2 polygon preview — actual Tapajos KMZ
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          @'
+          import desktop_app as a
+          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
+          p=a.sentinel2_preview(g,out_h=420)
+          assert p["image"].width>=420 and p["image"].height==420, "Sentinel-2 preview image invalid"
+          assert p["polygons"] and len(p["polygons"][0])>=6, "AOI polygon not transformed onto Sentinel-2 preview"
+          assert p["scene_id"] and p["provider"].startswith("Sentinel-2"), "Sentinel-2 provenance missing"
+          assert 0 <= float(p["cloud_cover"]) <= 100
+          print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
+          '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
+          python live_sentinel2_preview.py
+
       - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
         shell: pwsh
         run: |
@@ -355,7 +389,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.10-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.11-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
