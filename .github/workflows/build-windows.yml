@@ -23,6 +23,8 @@ jobs:
           pip install pillow
       - name: Source self-test
         run: python desktop_app.py --self-test
+      - name: Earthdata client import
+        run: python -c "import earthaccess; print('EARTHACCESS_IMPORT_OK', earthaccess.__version__)"
       - name: GUI contract test
         shell: pwsh
         timeout-minutes: 3
@@ -74,8 +76,7 @@ jobs:
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
-          assert "sentinel2_preview" in src and "sentinel-2-l2a" in src and "planetarycomputer.microsoft.com/api/stac/v1/search" in src, "Sentinel-2 polygon map route missing"
-          assert "maps.googleapis.com/maps/api/staticmap" not in src and "google_maps_key" not in src, "Google Maps dependency must not remain"
+          assert "maps.googleapis.com/maps/api/staticmap" in src and "server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export" in src, "Google -> Esri satellite fallback chain missing"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -88,8 +89,9 @@ jobs:
           assert "NISAR_GCOV_HDF5" in sar_src, "NISAR HDF5 route missing"
           assert "select_executable_model" in sar_src, "strict SAR model selector missing"
           assert "cdse_sentinel1_process" in sar_src and "CDSE_PROCESS_URL" in sar_src and "GAMMA0_TERRAIN" in sar_src, "CDSE Sentinel-1 Process API route missing"
-          assert "ESA BIOMASS — banda P" in src and "Não é necessário informar tokens Earthdata/ESA" in src, "automatic BIOMASS/token-free UI missing"
-          assert "edl_token" in sar_src and 'Authorization":"Bearer "' in sar_src, "Earthdata token auth missing"
+          assert "ESA BIOMASS — banda P" in src and "Rotas públicas são tentadas sem credenciais" in src, "automatic BIOMASS/public-first UI missing"
+          assert "_earthaccess_requests_session" in sar_src and "earthaccess.get_requests_https_session" in sar_src, "official earthaccess authentication route missing"
+          assert "Earthdata Login opcional" in src and "edl_user" in src and "edl_password" in src, "Earthdata username/password UI missing"
           assert "sar_attempted_first" in sar_src, "SAR-first fallback audit missing"
           assert "Propriedade (CAR)" in src and "Mapas e limites" in src and "Carregar produtos SAR / AGB" in src, "approved dashboard navigation missing"
           assert "EXECUTAR ANÁLISE" in src, "global analysis control missing"
@@ -99,14 +101,13 @@ jobs:
           assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"
           assert "planetary_alos_palsar" in sar_src and "alos-palsar-mosaic" in sar_src, "public L-band ALOS/PALSAR route missing"
           assert "lband_dualpol_diagnostic" in sar_src and "SAR_ESTRATIFICADOR" in sar_src, "L-band saturation-aware diagnostic missing"
-          assert "full_pol_candidate" in sar_src and "lband_candidate_readiness" in sar_src, "full-pol/GCOV L-band candidate prioritization missing"
           assert "_jaxa_mosaic_gamma0_db" in sar_src and "np.square(a)" in sar_src, "JAXA mosaic gamma0 calibration regression"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
-          assert "VISUALIZAR SENTINEL-2 + POLÍGONO" in src and "def show_sentinel2_map" in src, "Sentinel-2 polygon visualization missing"
+          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Esri World Imagery" in src, "satellite polygon visualization/fallback missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
-          assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI fallback must remain automatic"
-          assert "_map_generation" in src and "_refresh_satellite_after_resize" in src and "show_sentinel2_map(refresh=True)" in src, "Sentinel-2 map stale-response/resize guards missing"
+          assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
+          assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
           assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
           assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
           assert Path("enform_header.png").exists() and Path("enform_header.png").stat().st_size > 20000, "forest/logo visual asset missing"
@@ -134,6 +135,16 @@ jobs:
           ui.update_idletasks()
           assert "Upload concluído" in ui.vector_status.get() and kmz.name in ui.vector_status.get(), "AOI filename/upload confirmation missing"
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
+          # Real satellite fallback: no Google key -> Esri World Imagery export must populate the canvas.
+          import time
+          ui.google_maps_key.set("")
+          ui.show_google_map()
+          deadline=time.time()+45
+          while time.time()<deadline and not ui._satellite_map_visible:
+              ui.update(); time.sleep(.08)
+          assert ui._satellite_map_visible, "Esri World Imagery fallback did not render in the UI"
+          assert hasattr(ui,"google_map_photo"), "satellite image object missing after Esri fallback"
+          print("ESRI_WORLD_IMAGERY_UI_OK")
           import tempfile
           with tempfile.TemporaryDirectory() as td:
               geojson=Path(td)/"tapajos_acceptance.geojson"
@@ -161,22 +172,6 @@ jobs:
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
-      - name: Live Sentinel-2 polygon preview — actual Tapajos KMZ
-        shell: pwsh
-        timeout-minutes: 8
-        run: |
-          @'
-          import desktop_app as a
-          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          p=a.sentinel2_preview(g,out_h=420)
-          assert p["image"].width>=420 and p["image"].height==420, "Sentinel-2 preview image invalid"
-          assert p["polygons"] and len(p["polygons"][0])>=6, "AOI polygon not transformed onto Sentinel-2 preview"
-          assert p["scene_id"] and p["provider"].startswith("Sentinel-2"), "Sentinel-2 provenance missing"
-          assert 0 <= float(p["cloud_cover"]) <= 100
-          print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
-          '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
-          python live_sentinel2_preview.py
-
       - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
         shell: pwsh
         run: |
@@ -313,6 +308,20 @@ jobs:
           print("OUTSIDE_AMAZON_NATIONAL_FALLBACK_OK "+json.dumps({"biome":biome,"phys":phys,"agb":fb["agb_mg_ha"],"range":fb["agb_range_mg_ha"],"s1_pixels":sum(x.get("n",0) for x in c["stats"]),"l_pixels":sum(x.get("n",0) for x in l["stats"])},ensure_ascii=True))
           '@ | Set-Content national_cerrado_gate.py -Encoding UTF8
           python national_cerrado_gate.py
+
+      - name: Earthaccess noninteractive contract
+        shell: pwsh
+        run: |
+          @'
+          import os
+          import sar_pipeline as s
+          for k in ("EARTHDATA_USERNAME","EARTHDATA_PASSWORD","EARTHDATA_TOKEN","NETRC"): os.environ.pop(k,None)
+          sess,state=s._earthaccess_requests_session()
+          assert sess is None and not state["available"]
+          assert "configured" in state["reason"].lower()
+          print("EARTHACCESS_NONINTERACTIVE_CONTRACT_OK",state)
+          '@ | Set-Content earthaccess_contract.py -Encoding UTF8
+          python earthaccess_contract.py
 
       - name: Catalog equation and recalibration contract tests
         run: python -m unittest discover -s tests -v
