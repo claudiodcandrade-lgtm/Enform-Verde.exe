@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.6-PROFESSIONAL"
+APP_VERSION="3.24.7-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -665,6 +665,13 @@ class App(tk.Tk):
         dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6); scale=min((w-2*pad)/dx,(h-2*pad)/dy)
         draw_w=dx*scale; draw_h=dy*scale; ox=(w-draw_w)/2; oy=(h-draw_h)/2
         self._last_map_size=(w,h); self.map_canvas.delete("all"); self.map_canvas.configure(bg="#EAF0EC")
+        # Offline map frame: always available and intentionally independent of tile/network services.
+        for frac in (0.25,0.5,0.75):
+            gx=pad+(w-2*pad)*frac; gy=pad+(h-2*pad)*frac
+            self.map_canvas.create_line(gx,pad,gx,h-pad,fill="#C9D4CF",dash=(2,4))
+            self.map_canvas.create_line(pad,gy,w-pad,gy,fill="#C9D4CF",dash=(2,4))
+        self.map_canvas.create_text(w-14,14,anchor="ne",text="N",fill="#24382D",font=("Segoe UI",10,"bold"))
+        self.map_canvas.create_line(w-20,48,w-20,24,fill="#24382D",width=2,arrow="first")
         def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
         for geom in projected.geometry:
             polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
@@ -678,6 +685,9 @@ class App(tk.Tk):
         self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)
         self.map_canvas.create_line(bx,by-5,bx,by+4,fill="#24382D",width=2); self.map_canvas.create_line(bx+bar_px,by-5,bx+bar_px,by+4,fill="#24382D",width=2)
         self.map_canvas.create_text(bx+bar_px/2,by-7,text=f"{bar_m/1000:g} km",anchor="s",fill="#24382D",font=("Segoe UI",8,"bold"))
+        b4326=g.total_bounds
+        bbox_txt=f"{b4326[0]:.5f}, {b4326[1]:.5f}  →  {b4326[2]:.5f}, {b4326[3]:.5f}"
+        self.map_canvas.create_text(12,h-12,anchor="sw",text=bbox_txt,fill="#4A5B54",font=("Segoe UI",8))
 
     def _remote(self):
         f=self.tabs[2]
@@ -815,14 +825,26 @@ class App(tk.Tk):
         try:
             self.gdf=read_vector(p); self.project["vector"]=p; self.active_source="VECTOR"; self.active_input_id=str(Path(p).resolve()); self.car.set(""); self.ccir.set("")
             self.vector_status.set(f"Upload concluído ✓  {Path(p).name}  |  {len(self.gdf)} feição(ões) vetorial(is) carregada(s).")
-            self.nb.select(self.tabs[1]); self.update_idletasks(); self._draw_aoi_outline(f"AOI carregada: {Path(p).name}")
+            self.nb.select(self.tabs[1]); self.update_idletasks()
             self._show_geom(Path(p).name); self.vector_status.set(f"Upload concluído ✓  {Path(p).name}  |  {len(self.gdf)} feição(ões) carregada(s).")
         except Exception as e:
             self.gdf=None; self.vector_status.set(f"Upload não concluído — {Path(p).name}: {e}"); self.status.set("Falha ao carregar vetor."); messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {Path(p).name}\n\nMotivo: {e}")
+    def _schedule_offline_map_fit(self,label):
+        """Guarantee a usable map without network: draw now, then redraw after Tk settles."""
+        self._satellite_map_visible=False
+        self._draw_aoi_outline(label)
+        gen=self._map_generation
+        def redraw():
+            if self.gdf is None or gen!=self._map_generation or self._satellite_map_visible:return
+            self._draw_aoi_outline(label)
+        self.after_idle(redraw)
+        self.after(180,redraw)
+        self.after(420,redraw)
+
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
         self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {m['area_ha']:,.2f} ha\nCentroide: {m['centroid'][1]:.6f}, {m['centroid'][0]:.6f}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
-        self._draw_aoi_outline(f"Perímetro carregado: {src} — selecione visualizar satélite para mapa-base")
+        self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
         self.status.set(f"Perímetro carregado: {src}; diagnóstico IBGE em segundo plano."); self.update_idletasks()
         self._ibge_generation+=1; generation=self._ibge_generation; geometry=self.gdf.copy(); self._ibge_pending=True
         def worker():
