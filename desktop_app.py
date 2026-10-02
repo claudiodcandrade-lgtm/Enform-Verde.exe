@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.10-PROFESSIONAL"
+APP_VERSION="3.24.11-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -447,7 +447,7 @@ def ui_smoke_test():
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
         s=ttk.Style(self)
@@ -549,16 +549,314 @@ class App(tk.Tk):
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
-        ttk.Label(f,text="O perímetro carregado é usado diretamente nos recortes IBGE, solo e SAR. A visualização cartográfica foi removida para evitar dependência de APIs externas.",foreground="#52645E",wraplength=980).pack(anchor="w",pady=(2,8))
-        spatial_box=ttk.Frame(f); spatial_box.pack(fill="both",expand=True,pady=4)
-        self.spatial_text=tk.Text(spatial_box,height=16,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
+        ttk.Button(row,text="VISUALIZAR SENTINEL-2 + POLÍGONO",command=self.show_sentinel2_map,style="Run.TButton").pack(side="left",padx=8)
+        ttk.Label(f,text="Fundo satelital: Sentinel-2 L2A via Microsoft Planetary Computer, sem chave Google. Uso apenas cartográfico; não altera os cálculos.",foreground="#666",wraplength=980).pack(anchor="w",pady=(0,6))
+        self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None
+        self.map_canvas.bind("<Configure>",self._on_map_resize)
+        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor; o perímetro é mostrado mesmo se a imagem Sentinel-2 estiver indisponível.",fill="#455")
+        spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
+        self.spatial_text=tk.Text(spatial_box,height=7,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
         spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
         self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
+    def show_sentinel2_map(self,refresh=False):
+        """Load a recent low-cloud Sentinel-2 L2A RGB scene and overlay the AOI; no user API key."""
+        if self.gdf is None:return messagebox.showwarning("Imagem de satélite","Carregue/resolva o polígono primeiro.")
+        self._map_generation+=1; generation=self._map_generation
+        self._satellite_map_visible=False
+        g=self.gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
+        if not refresh:self.status.set("Buscando Sentinel-2 L2A recente no Planetary Computer...")
+        self.update_idletasks()
+        def worker():
+            try:
+                import rasterio
+                from rasterio.warp import transform_bounds, transform
+                from rasterio.windows import from_bounds
+                body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
+                      "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+                rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",json=body,timeout=(10,60)); rr.raise_for_status()
+                items=rr.json().get("features",[])
+                cand=[]
+                for it in items:
+                    visual=(it.get("assets") or {}).get("visual")
+                    if not visual or not visual.get("href"):continue
+                    props=it.get("properties") or {}
+                    cloud=float(props.get("eo:cloud_cover",100.0) if props.get("eo:cloud_cover") is not None else 100.0)
+                    dt=str(props.get("datetime") or "")
+                    cand.append((cloud,dt,it,visual["href"]))
+                if not cand:raise RuntimeError("Nenhuma cena Sentinel-2 L2A RGB encontrada para a AOI.")
+                low=[x for x in cand if x[0]<=20.0]
+                chosen=sorted(low,key=lambda x:x[1],reverse=True)[0] if low else sorted(cand,key=lambda x:(x[0],x[1]))[0]
+                cloud,dt,it,unsigned=chosen
+                sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
+                with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+                    with rasterio.open(href) as src:
+                        b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
+                        dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0); margin=.18
+                        wb=(bx[0]-dx*margin,bx[1]-dy*margin,bx[2]+dx*margin,bx[3]+dy*margin)
+                        win=from_bounds(*wb,transform=src.transform).round_offsets().round_lengths()
+                        out_h=700; out_w=max(700,min(1200,round(out_h*max(win.width,1)/max(win.height,1))))
+                        arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
+                                     resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
+                        rgb=np.moveaxis(arr,0,2)
+                        if rgb.dtype!=np.uint8:
+                            valid=rgb[np.isfinite(rgb)&(rgb>0)]
+                            hi=float(np.percentile(valid,99)) if valid.size else 1.0
+                            rgb=np.clip(rgb/max(hi,1e-9)*255,0,255).astype(np.uint8)
+                        view=Image.fromarray(rgb,"RGB")
+                        wt=src.window_transform(win); polygons=[]
+                        for geom0 in g.geometry:
+                            geoms=list(geom0.geoms) if geom0.geom_type=="MultiPolygon" else ([geom0] if geom0.geom_type=="Polygon" else [])
+                            for poly in geoms:
+                                coords=list(poly.exterior.coords)
+                                lon=[p[0] for p in coords]; lat=[p[1] for p in coords]
+                                xx,yy=transform("EPSG:4326",src.crs,lon,lat); pts=[]
+                                for x,y in zip(xx,yy):
+                                    col,row=(~wt)*(x,y)
+                                    pts.extend([float(col)*out_w/max(float(win.width),1.0),float(row)*out_h/max(float(win.height),1.0)])
+                                if len(pts)>=6:polygons.append(pts)
+                self.after(0,self._finish_satellite_map,generation,view,polygons,
+                           "Sentinel-2 L2A / Microsoft Planetary Computer",None,
+                           f"Sentinel-2 L2A • {(dt or '')[:10]} • nuvens da cena {cloud:.1f}%",None)
+            except Exception as e:
+                self.after(0,self._finish_satellite_map,generation,None,[],
+                           "Sentinel-2 L2A / Microsoft Planetary Computer",None,None,str(e))
+        threading.Thread(target=worker,name="EnformSentinel2Map",daemon=True).start()
+
+    def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
+        if generation!=self._map_generation or self.gdf is None:return
+        if error:
+            self._satellite_map_visible=False
+            self._draw_aoi_outline("Imagem base indisponível; polígono vetorial carregado")
+            self.status.set(f"{provider} indisponível; a AOI continua carregada e visível.")
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
+            return
+        self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
+        self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
+        for pts in polygons:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
+        self.map_canvas.create_rectangle(0,view.height-24,view.width,view.height,fill="white",outline=""); self.map_canvas.create_text(view.width-8,view.height-12,anchor="e",text=copyright,fill="#333",font=("Segoe UI",8))
+        self.status.set(f"{provider} carregado com o perímetro da AOI. Uso exclusivo para visualização.")
+
+    def _on_map_resize(self,event=None):
+        """Keep AOI and satellite base fitted after a real canvas resize."""
+        if self.gdf is None:return
+        size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
+        if size==self._last_map_size:return
+        if self._satellite_map_visible:
+            if self._map_refresh_job is not None:
+                try:self.after_cancel(self._map_refresh_job)
+                except Exception:pass
+            self._map_refresh_job=self.after(450,self._refresh_satellite_after_resize)
+            return
+        if self._map_redraw_job is not None:
+            try:self.after_cancel(self._map_redraw_job)
+            except Exception:pass
+        self._map_redraw_job=self.after(100,self._redraw_map_after_resize)
+
+    def _refresh_satellite_after_resize(self):
+        self._map_refresh_job=None
+        if self.gdf is not None:
+            self.show_sentinel2_map(refresh=True)
+
+    def _redraw_map_after_resize(self):
+        self._map_redraw_job=None
+        if self.gdf is not None and not self._satellite_map_visible:
+            self._draw_aoi_outline("AOI — visualização vetorial; Sentinel-2 ainda não carregado")
+
+    def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
+        """Render the AOI in a local metric projection and fit it to the live canvas."""
+        if self.gdf is None:return
+        self._satellite_map_visible=False
+        g=self.gdf.to_crs(4326); union=g.geometry.union_all(); center=union.centroid
+        from pyproj import CRS
+        local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
+        projected=g.to_crs(local); minx,miny,maxx,maxy=map(float,projected.total_bounds)
+        w=max(300,self.map_canvas.winfo_width()); h=max(220,self.map_canvas.winfo_height()); pad=max(30,min(70,int(min(w,h)*0.12)))
+        dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6); scale=min((w-2*pad)/dx,(h-2*pad)/dy)
+        draw_w=dx*scale; draw_h=dy*scale; ox=(w-draw_w)/2; oy=(h-draw_h)/2
+        self._last_map_size=(w,h); self.map_canvas.delete("all"); self.map_canvas.configure(bg="#EAF0EC")
+        # Offline map frame: always available and intentionally independent of tile/network services.
+        for frac in (0.25,0.5,0.75):
+            gx=pad+(w-2*pad)*frac; gy=pad+(h-2*pad)*frac
+            self.map_canvas.create_line(gx,pad,gx,h-pad,fill="#C9D4CF",dash=(2,4))
+            self.map_canvas.create_line(pad,gy,w-pad,gy,fill="#C9D4CF",dash=(2,4))
+        self.map_canvas.create_text(w-14,14,anchor="ne",text="N",fill="#24382D",font=("Segoe UI",10,"bold"))
+        self.map_canvas.create_line(w-20,48,w-20,24,fill="#24382D",width=2,arrow="first")
+        def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
+        for geom in projected.geometry:
+            polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+            for poly in polys:
+                pts=[]
+                for coord in poly.exterior.coords:pts.extend(xy(coord[0],coord[1]))
+                if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
+        self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
+        # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
+        bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
+        self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)
+        self.map_canvas.create_line(bx,by-5,bx,by+4,fill="#24382D",width=2); self.map_canvas.create_line(bx+bar_px,by-5,bx+bar_px,by+4,fill="#24382D",width=2)
+        self.map_canvas.create_text(bx+bar_px/2,by-7,text=f"{bar_m/1000:g} km",anchor="s",fill="#24382D",font=("Segoe UI",8,"bold"))
+        b4326=g.total_bounds
+        bbox_txt=f"{b4326[0]:.5f}, {b4326[1]:.5f}  →  {b4326[2]:.5f}, {b4326[3]:.5f}"
+        self.map_canvas.create_text(12,h-12,anchor="sw",text=bbox_txt,fill="#4A5B54",font=("Segoe UI",8))
+
+    def _remote(self):
+        f=self.tabs[2]
+        steps=ttk.Frame(f); steps.pack(fill="x",pady=(0,10))
+        for j,t in enumerate(["1. Dados e Catálogos","2. Download e Pré-processamento","3. Modelagem e AGB","4. Resultados SAR"]):
+            lab=tk.Label(steps,text=t,bg=("#08733F" if j==0 else "#EEF2F3"),fg=("white" if j==0 else "#233B49"),font=("Segoe UI",10,"bold"),padx=14,pady=9,bd=1,relief="solid")
+            lab.pack(side="left",fill="x",expand=True,padx=(0,2))
+
+        # Authentication controls removed from the user workflow. The application
+        # automatically tries public/direct SAR libraries first and records any access restriction.
+        self.edl_token=tk.StringVar(); self.esa_token=tk.StringVar()
+        self.cdse_token=tk.StringVar(); self.cdse_client_id=tk.StringVar(); self.cdse_client_secret=tk.StringVar()
+        providers=ttk.LabelFrame(f,text="Fontes SAR automáticas — prioridade máxima",padding=12); providers.pack(fill="x",pady=(4,10))
+        ttk.Label(providers,text="ESA BIOMASS — banda P",font=("Segoe UI",10,"bold")).grid(row=0,column=0,sticky="w")
+        ttk.Label(providers,text="PRIORIDADE 1 — consulta automática das coleções BIOMASS L1/L2 e FP_AGB_L2B; processamento do produto disponível mais adequado.").grid(row=0,column=1,sticky="w",padx=8)
+        ttk.Label(providers,text="ESA CCI Biomass v7",font=("Segoe UI",10,"bold")).grid(row=1,column=0,sticky="w",pady=5)
+        ttk.Label(providers,text="AGB 100 m + incerteza por pixel — acesso automático como produto quantitativo SAR derivado.").grid(row=1,column=1,sticky="w",padx=8)
+        ttk.Label(providers,text="Copernicus Sentinel-1",font=("Segoe UI",10,"bold")).grid(row=2,column=0,sticky="w")
+        ttk.Label(providers,text="C-band VV/VH — consulta/processamento automático quando o serviço público permitir acesso direto.").grid(row=2,column=1,sticky="w",padx=8)
+        ttk.Label(providers,text="NISAR / ALOS-PALSAR",font=("Segoe UI",10,"bold")).grid(row=3,column=0,sticky="w",pady=5)
+        ttk.Label(providers,text="L-band — catálogo consultado automaticamente; produtos diretamente acessíveis são processados sem intervenção do usuário.").grid(row=3,column=1,sticky="w",padx=8)
+        ttk.Label(providers,text="Arquivo local/licenciado",font=("Segoe UI",10,"bold")).grid(row=4,column=0,sticky="w")
+        ttk.Label(providers,text="GeoTIFF/HDF5 SAR ou AGB continua disponível como rota adicional.").grid(row=4,column=1,sticky="w",padx=8)
+        providers.columnconfigure(1,weight=1)
+
+        row=ttk.Frame(f); row.pack(fill="x",pady=8)
+        self.pipeline_btn=ttk.Button(row,text="EXECUTAR ANÁLISE SAR",command=self.execute,style="Run.TButton"); self.pipeline_btn.pack(side="left")
+        ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
+        ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
+        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
+        remote_box=ttk.Frame(f); remote_box.pack(fill="both",expand=True,pady=8)
+        self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
+        remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
+        self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
+        self._set(self.remote_text,"A análise é automática e SAR-FIRST. Não é necessário informar tokens Earthdata/ESA.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
+
+    def _test_cdse(self):
+        try:
+            cid=self.cdse_client_id.get().strip(); sec=self.cdse_client_secret.get().strip()
+            if not cid or not sec:
+                self.cdse_state.set("Informe Client ID e Client Secret.")
+                return
+            cdse_access_token(cid,sec)
+            self.cdse_state.set("CDSE conectado — OAuth2 válido.")
+        except Exception as e:
+            self.cdse_state.set("Falha CDSE: "+str(e)[:120])
+
+    def discover_sar_ui(self):
+        if self.gdf is None:return messagebox.showwarning("SAR","Carregue/resolva o polígono primeiro.")
+        try:
+            self.status.set("Consultando catálogos SAR..."); self.update_idletasks()
+            cov=discover_sar(self.gdf); self.project["sar_catalog"]=cov
+            txt=["REGISTROS RETORNADOS PELOS CATÁLOGOS SAR","(descoberta ≠ download ≠ processamento ≠ uso na estimativa)"]
+            for x in cov:txt.append(f"{x['provider']} — {x['dataset']} ({x['band']}): {x['count']} registro(s) retornado(s)"+((" — "+x["error"]) if x.get("error") else ""))
+            txt += ["","Para uso quantitativo, o produto ainda precisa ser elegível, baixado, pré-processado e associado a modelo/produto AGB compatível."]
+            self._set(self.remote_text,"\n".join(txt)); self.status.set("Descoberta SAR concluída.")
+        except Exception as e:self.status.set("Falha na descoberta SAR."); messagebox.showerror("SAR",str(e))
+
+    def pick_sar(self):
+        ps=filedialog.askopenfilenames(title="Produtos SAR / AGB / incerteza",filetypes=[("GeoTIFF","*.tif *.tiff"),("Todos","*.*")])
+        if not ps:return
+        self.sar_paths=list(ps); self.project["sar_paths"]=list(ps)
+        self._set(self.remote_text,"Produtos selecionados:\n"+"\n".join(self.sar_paths)+"\n\nClique em EXECUTAR ANÁLISE.")
+        self.status.set(f"{len(ps)} produto(s) SAR selecionado(s).")
+
+    def _results(self):
+        f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
+        result_box=ttk.Frame(f); result_box.pack(fill="both",expand=True,pady=8)
+        self.res=tk.Text(result_box,height=23,wrap="word",yscrollcommand=lambda *a:result_scroll.set(*a))
+        result_scroll=ttk.Scrollbar(result_box,orient="vertical",command=self.res.yview)
+        self.res.pack(side="left",fill="both",expand=True); result_scroll.pack(side="right",fill="y")
+        self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
+    def _sources(self):
+        f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
+        source_box=ttk.Frame(f); source_box.pack(fill="both",expand=True,pady=8)
+        self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
+        source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
+        self.src.pack(side="left",fill="both",expand=True); source_scroll.pack(side="right",fill="y")
+        txt=("REGRAS DO MOTOR\n• MEDIDO: derivado diretamente do inventário/raster fornecido.\n• MODELADO: proxy/equação publicada, identificado com fonte e domínio.\n• NÃO ESTIMADO: quando não existe suporte defensável.\n\n"
+             f"BGB: relação raiz/parte aérea {ROOT_RATIO:.2f}, faixa {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}; {SOURCES['protocol']}.\n"
+             f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
+             f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
+             f"Necromassa: {SOURCES['deadwood']}; proxy de triagem recebe incerteza elevada e nunca é rotulado como medido.\n"
+             "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
+        self._set(self.src,txt)
+    def _set(self,w,t): w.config(state="normal"); w.delete("1.0","end"); w.insert("1.0",t); w.config(state="disabled")
+    def _reset_analysis_state(self,keep_geometry=False):
+        """Invalida integralmente qualquer resultado derivado da consulta anterior."""
+        self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False
+        old_vector=self.project.get("vector")
+        self.project={"version":APP_VERSION}
+        if old_vector and keep_geometry:self.project["vector"]=old_vector
+        if not keep_geometry:self.gdf=None
+        self._map_generation+=1
+        self._satellite_map_visible=False
+        if getattr(self,"_map_refresh_job",None) is not None:
+            try:self.after_cancel(self._map_refresh_job)
+            except Exception:pass
+            self._map_refresh_job=None
+        if hasattr(self,"map_canvas"):
+            self.map_canvas.delete("all")
+            self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
+        self.soil_raster=None
+        self.sar_paths=[]
+        self.inv=None
+        self.active_source=None
+        self.active_input_id=None
+        self.biome.set(""); self.phys.set("")
+        for widget_name in ("remote_text","res"):
+            w=getattr(self,widget_name,None)
+            if w is not None:self._set(w,"")
+        if hasattr(self,"spatial_text"):self._set(self.spatial_text,"Nova entrada recebida. Resultados anteriores foram descartados.")
+        self.status.set("Estado anterior descartado. Preparando nova consulta.")
+        if hasattr(self,"vector_status") and not keep_geometry:self.vector_status.set("Nenhum arquivo vetorial carregado.")
+        self.update_idletasks()
+
+    def car_lookup(self):
+        self._reset_analysis_state()
+        try:
+            self.status.set("Consultando SICAR..."); self.update_idletasks(); self.gdf=resolve_car(self.car.get()); self.active_source="CAR"; self.active_input_id=self.car.get().strip().upper(); self.ccir.set(""); self._show_geom("SICAR")
+        except Exception as e: self.status.set("CAR não resolvido."); messagebox.showwarning("SICAR",str(e))
+    def ccir_lookup(self):
+        self._reset_analysis_state()
+        try:
+            self.status.set("Consultando SIGEF pelo código do CCIR..."); self.update_idletasks()
+            self.gdf=resolve_ccir_sigef(self.ccir.get()); self.active_source="CCIR"; self.active_input_id=re.sub(r"\D","",self.ccir.get()); self.car.set(""); self._show_geom("CCIR / SIGEF")
+        except Exception as e:
+            self.status.set("CCIR/SIGEF não resolvido."); messagebox.showwarning("CCIR / SIGEF",str(e))
+
+    def pick_vector(self):
+        p=filedialog.askopenfilename(title="Selecionar limite da propriedade",filetypes=[("Vetores","*.kml *.kmz *.geojson *.json *.shp *.gpkg"),("Todos","*.*")])
+        if not p:return
+        self._reset_analysis_state()
+        self.vector_status.set(f"Selecionado: {Path(p).name} — validando arquivo…"); self.status.set("Validando arquivo vetorial..."); self.update_idletasks()
+        try:
+            self.gdf=read_vector(p); self.project["vector"]=p; self.active_source="VECTOR"; self.active_input_id=str(Path(p).resolve()); self.car.set(""); self.ccir.set("")
+            self.vector_status.set(f"Upload concluído ✓  {Path(p).name}  |  {len(self.gdf)} feição(ões) vetorial(is) carregada(s).")
+            self.nb.select(self.tabs[1]); self.update_idletasks()
+            self._show_geom(Path(p).name); self.vector_status.set(f"Upload concluído ✓  {Path(p).name}  |  {len(self.gdf)} feição(ões) carregada(s).")
+        except Exception as e:
+            self.gdf=None; self.vector_status.set(f"Upload não concluído — {Path(p).name}: {e}"); self.status.set("Falha ao carregar vetor."); messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {Path(p).name}\n\nMotivo: {e}")
+    def _schedule_offline_map_fit(self,label):
+        """Guarantee a usable map without network: draw now, then redraw after Tk settles."""
+        self._satellite_map_visible=False
+        self._draw_aoi_outline(label)
+        gen=self._map_generation
+        def redraw():
+            if self.gdf is None or gen!=self._map_generation or self._satellite_map_visible:return
+            self._draw_aoi_outline(label)
+        self.after_idle(redraw)
+        self.after(180,redraw)
+        self.after(420,redraw)
+
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
         self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {m['area_ha']:,.2f} ha\nCentroide: {m['centroid'][1]:.6f}, {m['centroid'][0]:.6f}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
+        self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
         self.status.set(f"Perímetro carregado: {src}; diagnóstico IBGE em segundo plano."); self.update_idletasks()
         self._ibge_generation+=1; generation=self._ibge_generation; geometry=self.gdf.copy(); self._ibge_pending=True
         def worker():
@@ -713,7 +1011,7 @@ class App(tk.Tk):
                     for w in audit.get("warnings") or []: lines.append("Aviso: "+str(w))
                     lines += ["", "Métricas de validação AGB: RMSE, MAE, viés e R² não são aplicáveis sem modelo treinado/validado compatível. Incerteza da AGB: não estimável.", "Estado: PROCESSAMENTO SAR REAL CONCLUÍDO; ESTIMATIVA AGB PENDENTE DE MODELO/PARCELAS COMPATÍVEIS."]
                     report="\n".join(lines); self.project["partial_sar_analysis"]={"area_ha":area,"sar_result":sar,"report":report}; self.project["area_ha"]=area; self.project["last_result"]=report
-                    self._set(self.remote_text,"SAR PROCESSADO COM SUCESSO na AOI. AGB não derivada do SAR porque não existe modelo validado compatível com os preditores disponíveis; consulte a trilha e os pixels processados.")
+                    self._set(self.remote_text,"SAR processado na AOI. AGB não estimada por falta de modelo validado compatível; consulte a trilha, os pixels processados e o motivo no relatório.")
                     self._set(self.res,report); self.nb.select(self.tabs[3]); self.status.set("Processamento SAR concluído; AGB não estimada sem calibração compatível."); return
             agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
             unc_kind=str(sar.get("uncertainty_kind") or "incerteza do produto/modelo")
@@ -817,7 +1115,7 @@ class App(tk.Tk):
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
                          "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
-            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
+            lines=([f"AVISO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
             for r in rows:
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
