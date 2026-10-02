@@ -555,7 +555,10 @@ class App(tk.Tk):
             polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
             for poly in polys:
                 pts=[]
-                for x,y in poly.exterior.coords:pts.extend(xy(x,y))
+                for coord in poly.exterior.coords:
+                    # KML coordinates may include altitude (z); the 2-D map
+                    # preview intentionally uses only longitude and latitude.
+                    x,y=coord[0],coord[1]; pts.extend(xy(x,y))
                 if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
         self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
 
