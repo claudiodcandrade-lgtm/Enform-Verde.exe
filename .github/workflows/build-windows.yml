@@ -76,7 +76,7 @@ jobs:
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
-          assert "maps.googleapis.com/maps/api/staticmap" in src and "server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export" in src, "Google -> Esri satellite fallback chain missing"
+          assert "maps.googleapis.com/maps/api/staticmap" in src and "sentinel2_preview" in src and "server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export" in src, "Google -> Sentinel-2 -> Esri satellite fallback chain missing"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -102,6 +102,7 @@ jobs:
           assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"
           assert "planetary_alos_palsar" in sar_src and "alos-palsar-mosaic" in sar_src, "public L-band ALOS/PALSAR route missing"
           assert "lband_dualpol_diagnostic" in sar_src and "SAR_ESTRATIFICADOR" in sar_src, "L-band saturation-aware diagnostic missing"
+          assert "full_pol_candidate" in sar_src and "lband_candidate_readiness" in sar_src, "full-pol/GCOV L-band candidate prioritization missing"
           assert "_jaxa_mosaic_gamma0_db" in sar_src and "np.square(a)" in sar_src, "JAXA mosaic gamma0 calibration regression"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
           assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Esri World Imagery" in src, "satellite polygon visualization/fallback missing"
@@ -136,16 +137,16 @@ jobs:
           ui.update_idletasks()
           assert "Upload concluído" in ui.vector_status.get() and kmz.name in ui.vector_status.get(), "AOI filename/upload confirmation missing"
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
-          # Real satellite fallback: no Google key -> Esri World Imagery export must populate the canvas.
+          # Real satellite fallback: no Google key -> Sentinel-2 first, Esri only if Sentinel-2 fails.
           import time
           ui.google_maps_key.set("")
           ui.show_google_map()
           deadline=time.time()+45
           while time.time()<deadline and not ui._satellite_map_visible:
               ui.update(); time.sleep(.08)
-          assert ui._satellite_map_visible, "Esri World Imagery fallback did not render in the UI"
-          assert hasattr(ui,"google_map_photo"), "satellite image object missing after Esri fallback"
-          print("ESRI_WORLD_IMAGERY_UI_OK")
+          assert ui._satellite_map_visible, "Sentinel-2/Esri fallback did not render in the UI"
+          assert hasattr(ui,"google_map_photo"), "satellite image object missing after fallback"
+          print("SATELLITE_FALLBACK_UI_OK")
           import tempfile
           with tempfile.TemporaryDirectory() as td:
               geojson=Path(td)/"tapajos_acceptance.geojson"
@@ -173,6 +174,22 @@ jobs:
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
+      - name: Live Sentinel-2 polygon preview — actual Tapajos KMZ
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          @'
+          import desktop_app as a
+          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
+          p=a.sentinel2_preview(g,out_h=420)
+          assert p["image"].height==420 and p["image"].width>=420
+          assert p["polygons"] and len(p["polygons"][0])>=6
+          assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
+          assert 0 <= float(p["cloud_cover"]) <= 100
+          print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
+          '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
+          python live_sentinel2_preview.py
+
       - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
         shell: pwsh
         run: |
