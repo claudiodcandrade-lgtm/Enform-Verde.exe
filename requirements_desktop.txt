@@ -13,3 +13,4 @@ rasterio>=1.3
 h5py>=3.11
 asf_search>=8.1
 scikit-learn>=1.4,<2
+earthaccess>=0.15
