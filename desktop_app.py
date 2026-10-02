@@ -497,7 +497,7 @@ def sentinel2_preview(gdf,out_h=700):
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue()
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
         s=ttk.Style(self)
@@ -683,23 +683,32 @@ class App(tk.Tk):
         def worker():
             errors=[]; rs=rings()
             if not rs:
-                self.after(0,self._finish_satellite_map,generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"); return
+                self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"); return
             if key:
                 try:
                     view,_=google_image(rs)
-                    self.after(0,self._finish_satellite_map,generation,view,[],"Google Maps Static API",None,"Google",None); return
+                    self._map_queue.put((generation,view,[],"Google Maps Static API",None,"Google",None); return
                 except Exception as e:errors.append("Google: "+str(e))
             try:
                 p=sentinel2_preview(g)
                 copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {float(p.get('cloud_cover',0)):.1f}%"
-                self.after(0,self._finish_satellite_map,generation,p["image"],p["polygons"],p["provider"],None,copyright,None); return
+                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None); return
             except Exception as e:errors.append("Sentinel-2: "+str(e))
             try:
                 view=esri_image(rs)
-                self.after(0,self._finish_satellite_map,generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None); return
+                self._map_queue.put((generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None); return
             except Exception as e:errors.append("Esri: "+str(e))
-            self.after(0,self._finish_satellite_map,generation,None,[],"Google/Sentinel-2/Esri",None,None," | ".join(errors))
+            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri",None,None," | ".join(errors))
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
+        self.after(80,self._poll_map_queue)
+
+    def _poll_map_queue(self):
+        try:item=self._map_queue.get_nowait()
+        except queue.Empty:
+            if self.winfo_exists():self.after(100,self._poll_map_queue)
+            return
+        generation,view,polygons,provider,zoom,copyright,error=item
+        self._finish_satellite_map(generation,view,polygons,provider,zoom,copyright,error)
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
         if generation!=self._map_generation or self.gdf is None:return
