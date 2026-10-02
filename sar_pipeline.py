@@ -200,8 +200,16 @@ def download_maap_agb(gdf,offline_token,cache):
     return {"available":True,"paths":paths,"items":len(items),"reason":None}
 def cci_history(gdf,cache,offline_token=None):
     # ESA MAAP local collection. Search is public; asset access may require ESA bearer token.
-    items=maap_search(gdf,"CCIBiomassV7",limit=100)
-    if not items:return {"available":False,"paths":[],"items":0}
+    items=[]
+    collections_tried=[]
+    for collection in ("CCIBiomassV5.01","CCIBiomassV7"):
+        collections_tried.append(collection)
+        try:
+            items=maap_search(gdf,collection,limit=100)
+        except Exception:
+            items=[]
+        if items:break
+    if not items:return {"available":False,"paths":[],"items":0,"collections_tried":collections_tried}
     token=maap_access_token(offline_token) if offline_token else None
     Path(cache).mkdir(parents=True,exist_ok=True);paths=[]
     for it in items:
@@ -212,7 +220,7 @@ def cci_history(gdf,cache,offline_token=None):
                     if not p.exists():_download(url,p,token)
                     paths.append(str(p))
                 except Exception:pass
-    return {"available":True,"paths":paths,"items":len(items)}
+    return {"available":True,"paths":paths,"items":len(items),"collection":collection,"collections_tried":collections_tried}
 LITERATURE=[
 {"biome":"Amazônia","phys":["secund","sucess"],"mean":None,"rmse":38.7,"bias":2.1,"r2":0.51,"cv":"bootstrap 100 repetições; 80/20","source":"Cassol et al. 2019","doi":"10.3390/rs11010059","note":"referência de desempenho; média AGB não extraída para fallback"},
 {"biome":"Amazônia","phys":["várzea","varzea","aluvial"],"mean":None,"rmse":74.6,"bias":None,"r2":0.46,"cv":"cross-validation","source":"Martins et al. 2018","doi":"10.3390/rs10091355","note":"referência L-band várzea; média não usada sem valor compatível"},
