@@ -110,6 +110,7 @@ jobs:
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
           assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
           assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
+          assert "def map_zoom_in" in src and "def map_zoom_out" in src and "def map_zoom_fit" in src and "_map_extent_factor" in src, "geographic map zoom controls missing"
           assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
           assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
           assert Path("enform_header.png").exists() and Path("enform_header.png").stat().st_size > 20000, "forest/logo visual asset missing"
@@ -181,12 +182,15 @@ jobs:
           @'
           import desktop_app as a
           g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          p=a.sentinel2_preview(g,out_h=420)
+          p=a.sentinel2_preview(g,out_h=420,extent_factor=1.36)
           assert p["image"].height==420 and p["image"].width>=420
           assert p["polygons"] and len(p["polygons"][0])>=6
           assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
           assert 0 <= float(p["cloud_cover"]) <= 100
           print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
+          p2=a.sentinel2_preview(g,out_h=420,extent_factor=2.04)
+          assert p2["image"].height==420 and p2["polygons"], "zoom-out Sentinel-2 preview failed"
+          print("SENTINEL2_ZOOM_EXTENT_OK",p2["scene_id"],p2["image"].size)
           '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
           python live_sentinel2_preview.py
 
@@ -416,7 +420,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.11-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.12-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
