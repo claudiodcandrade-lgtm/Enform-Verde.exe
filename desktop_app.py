@@ -786,6 +786,10 @@ class App(tk.Tk):
                 cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
                 ad=audit.get("asf_download") or {}
                 if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
+                ready=audit.get("lband_candidate_readiness") or {}
+                if ready:
+                    diag.append(f"L-BAND AUTENTICADO — candidatos={ready.get('candidate_count',0)} | full-pol={ready.get('full_pol_candidates',0)} | NISAR GCOV={ready.get('gcov_candidates',0)}")
+                    diag.append("  "+str(ready.get("note","")))
                 matrix=audit.get("national_route_matrix") or {}
                 if matrix:
                     diag.append("COBERTURA PREDITIVA NACIONAL: "+str(matrix.get("local_numeric_state")))
