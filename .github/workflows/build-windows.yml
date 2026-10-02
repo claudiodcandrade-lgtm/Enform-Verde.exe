@@ -92,6 +92,7 @@ jobs:
           assert "ESA BIOMASS — banda P" in src and "Rotas públicas são tentadas sem credenciais" in src, "automatic BIOMASS/public-first UI missing"
           assert "_earthaccess_requests_session" in sar_src and "earthaccess.get_requests_https_session" in sar_src, "official earthaccess authentication route missing"
           assert "Earthdata Login opcional" in src and "edl_user" in src and "edl_password" in src, "Earthdata username/password UI missing"
+          assert "ESA MAAP Long Lasting Token (90 dias)" in src and "esa_token" in src, "ESA MAAP protected-data token field missing"
           assert "sar_attempted_first" in sar_src, "SAR-first fallback audit missing"
           assert "Propriedade (CAR)" in src and "Mapas e limites" in src and "Carregar produtos SAR / AGB" in src, "approved dashboard navigation missing"
           assert "EXECUTAR ANÁLISE" in src, "global analysis control missing"
