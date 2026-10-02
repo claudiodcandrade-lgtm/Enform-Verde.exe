@@ -2,6 +2,7 @@ import math,re,hashlib,time
 from pathlib import Path
 import numpy as np, requests
 from scientific_calibration import SCIENTIFIC_INVENTORY_REGISTRY, saturation_audit, glcm_features, multiscale_texture, rank_external_evidence, fit_local_ensemble
+from national_fallback import national_agb_fallback
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
 MODEL_REGISTRY=[
@@ -715,7 +716,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # Literature is strictly terminal: it is reached only after every configured SAR route above was attempted.
     audit["sar_sources_exhausted"]=True
     lit=literature_fallback(biome,phys,library_rows,aoi=gdf)
-    if lit: lit["sar_processed"]=bool(audit.get("processed_without_agb")); lit["sar_pixel_audit"]=audit.get("processed_without_agb",[])
+    if not lit:
+        lit=national_agb_fallback(biome,phys,aoi=gdf)
+    if lit:
+        lit["sar_processed"]=bool(audit.get("processed_without_agb"))
+        lit["sar_pixel_audit"]=audit.get("processed_without_agb",[])
     return {"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),"agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":("SAR_ATRIBUTOS" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),
             "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "message":("SAR foi processado, mas não existe modelo AGB validado compatível; consulte processed_without_agb." if audit.get("processed_without_agb") else "Nenhum arquivo SAR foi processado; consulte a auditoria detalhada.")}
