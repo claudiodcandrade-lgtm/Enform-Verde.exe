@@ -61,7 +61,8 @@ jobs:
           assert "CARREGAR ARQUIVO VETORIAL" in src[src.index("def _project"):src.index("def _spatial")], "opening vector upload missing"
           assert "Buscar CAR no SICAR" not in src and "Buscar CCIR no SIGEF" not in src, "manual registry lookup buttons must be absent"
           assert "A consulta CAR/SICAR ou CCIR/SIGEF ocorre automaticamente" in src, "registry lookup must run from EXECUTAR ANÁLISE"
-          assert "Carregar KML / GeoJSON" not in src[src.index("def _spatial"):src.index("def _remote")], "old vector upload still present"
+          spatial_block=src[src.index("def _spatial"):src.index("def _show_geom")]
+          assert "Carregar KML / GeoJSON" not in spatial_block, "old vector upload still present"
           assert "def _reset_analysis_state" in src, "state reset missing"
           assert src.count("self._reset_analysis_state()") >= 3, "CAR CCIR vector reset hooks missing"
           assert "self.project.pop(k,None)" in src, "execution result invalidation missing"
