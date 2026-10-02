@@ -582,23 +582,32 @@ def national_predictive_route_matrix(biome,phys,aoi=None,features=None):
             item["eligibility"]="eligible_now" if chosen and chosen.get("id")==m.get("id") else "ineligible_now"
         refs.append(item)
     lit=literature_fallback(b,p,aoi=aoi) if (supported and aoi is not None) else None
+    if not lit and supported:
+        lit=national_agb_fallback(b,p,aoi=aoi)
     local_numeric=bool(lit and lit.get("available") and lit.get("agb_mg_ha") is not None)
     if features is not None and supported:
         chosen=select_executable_model(b,p,features,aoi=aoi)
         local_numeric=local_numeric or bool(chosen)
-    state=("local_numeric_reference_available" if local_numeric else
-           ("runtime_product_check_required" if supported else "unsupported_biome_scope"))
+    if not supported:
+        state="unsupported_biome_scope"
+    elif lit and lit.get("data_origin")=="MODELAGEM_LITERATURA_HIERARQUICA":
+        state="hierarchical_model_fallback_available"
+    elif local_numeric:
+        state="local_numeric_reference_available"
+    else:
+        state="runtime_product_check_required"
     return {"supported_biome":supported,"biome":b,"physiognomy":p,
             "supported_scope":list(SUPPORTED_NATIONAL_BIOMES),
             "local_numeric_state":state,"biome_mean_permitted":False,
             "direct_product_routes":routes,"registered_model_routes":refs,
             "regional_numeric_fallback":lit,
             "ifn_sfb_reference":dict(SFB_IFN_BIOMASS_REFERENCE),
-            "policy":"No generic biome mean. A numeric AOI result requires a compatible spatial product, a domain-valid executable model, matched plot-sensor calibration, or a geofenced regional reference; otherwise report quantitative unavailability."}
+            "policy":"Priorizar produto/modelo SAR calibrado e domínio válido. Se nenhuma rota quantitativa compatível sobreviver, fornecer AGB por modelagem hierárquica de evidência brasileira, tão fitofisionômica/regional quanto possível, sempre com limite de incerteza explícito; nunca rotular esse fallback como SAR."}
 
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
-    audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}\n    audit["national_route_matrix"]=national_predictive_route_matrix(biome,phys,aoi=gdf)
+    audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
+    audit["national_route_matrix"]=national_predictive_route_matrix(biome,phys,aoi=gdf)
 
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
