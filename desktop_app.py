@@ -929,8 +929,11 @@ class App(tk.Tk):
                 lit=sar.get("literature_reference") or {}
                 if lit.get("available"):
                     # Always deliver an analysis, but never relabel literature as SAR.
-                    sar=dict(lit); sar["data_origin"]="LITERATURA_MICRORREGIONAL" if lit.get("data_origin")=="LITERATURA_MICRORREGIONAL" else "LITERATURA_SECUNDARIA"
-                    sar["status"]=("FALLBACK MICRORREGIONAL — SAR PROCESSADO, SEM MODELO AGB" if lit.get("sar_processed") else "FALLBACK DE REFERÊNCIA — SAR NÃO PROCESSADO")
+                    sar=dict(lit); sar["data_origin"]=lit.get("data_origin") or ("LITERATURA_MICRORREGIONAL" if lit.get("data_origin")=="LITERATURA_MICRORREGIONAL" else "LITERATURA_SECUNDARIA")
+                    if sar["data_origin"]=="MODELAGEM_LITERATURA_HIERARQUICA":
+                        sar["status"]=("FALLBACK MODELADO HIERÁRQUICO — SAR PROCESSADO, SEM MODELO AGB" if lit.get("sar_processed") else "FALLBACK MODELADO HIERÁRQUICO — SAR NÃO PROCESSADO")
+                    else:
+                        sar["status"]=("FALLBACK MICRORREGIONAL — SAR PROCESSADO, SEM MODELO AGB" if lit.get("sar_processed") else "FALLBACK DE REFERÊNCIA — SAR NÃO PROCESSADO")
                     sar["source"]=lit.get("source","biblioteca científica interna"); sar["sar_diagnostic"]=msg
                     sar["uncertainty_mg_ha"]=float(lit.get("uncertainty_mg_ha",float(lit.get("agb_mg_ha",0))*float(lit.get("uncertainty_pct",30))/100))
                     sar["uncertainty_kind"]=lit.get("uncertainty_kind", "amplitude bibliográfica; não IC95%")
@@ -1008,7 +1011,7 @@ class App(tk.Tk):
                 rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
                              "erro_abs_tc":ea,"erro_pct":ep,"erro_metrica":metric,"nivel_confianca":level})
             # Propagate only quantified independent 1-sigma components; report coverage of uncertainty.
-            q=[r for r in rows if r.get("erro_abs_tc") is not None and r.get("origem") not in ("LITERATURA_MICRORREGIONAL","LITERATURA_SECUNDARIA")]
+            q=[r for r in rows if r.get("erro_abs_tc") is not None and r.get("origem") not in ("LITERATURA_MICRORREGIONAL","LITERATURA_SECUNDARIA","MODELAGEM_LITERATURA_HIERARQUICA")]
             total_sigma=math.sqrt(sum(r["erro_abs_tc"]**2 for r in q)) if q else None
             total_err_pct=(total_sigma/total*100) if total_sigma is not None and total else None
             self.project["total_uncertainty"]={"sigma_tc_ha":total_sigma,"pct":total_err_pct,"quantified_components":len(q),"total_components":len(rows),
@@ -1035,7 +1038,7 @@ class App(tk.Tk):
                     diag.append(f"Pixel SAR PROCESSADO sem equação AGB compatível: {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
                     for z in item.get("stats",[]): diag.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
                 for w in audit.get("warnings",[]): diag.append("Aviso: "+str(w))
-            if sar.get("data_origin")=="LITERATURA_MICRORREGIONAL":
+            if sar.get("data_origin") in ("LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"):
                 diag += ["", "MÉTRICAS DE VALIDAÇÃO SAR: RMSE=N/D; MAE=N/D; viés=N/D; R²=N/D — faltam pares independentes parcela–pixel SAR.",
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
