@@ -63,8 +63,15 @@ def discover_asf(gdf,limit=25):
                         urls.append(v)
                 # Prefer science HDF5 for NISAR.
                 urls.sort(key=lambda u:(0 if u.lower().split("?")[0].endswith((".h5",".hdf5")) else 1,len(u)))
+                polraw=p.get("polarization") or p.get("polarizations") or p.get("beamModeType") or ""
+                if isinstance(polraw,(list,tuple)): pols=[str(v).upper() for v in polraw]
+                else:
+                    txt=str(polraw).upper().replace(","," ").replace("/"," ")
+                    pols=[q for q in ("HH","HV","VH","VV") if q in txt]
+                full_pol=set(("HH","HV","VV")).issubset(set(pols)) or set(("HH","VH","VV")).issubset(set(pols))
                 items.append({"id":p.get("sceneName") or x.get("id"),"properties":p,
-                              "download_url":urls[0] if urls else None,"raw":x})
+                              "download_url":urls[0] if urls else None,"raw":x,
+                              "polarizations":pols,"full_pol_candidate":full_pol})
             items=_newest_first(items)
             out.append({"provider":"ASF/NASA","dataset":label,"band":band,"count":len(fs),"items":items,
                         "eligibility":"candidato; elegibilidade final depende de produto/polarização/interseção/modelo"})
@@ -700,11 +707,20 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             cands=[it for group in asf if group.get("band")=="L" for it in group.get("items",[]) if it.get("download_url")]
             def _rank(it):
                 t=(str(it.get("id",""))+" "+str(it.get("properties",{}))).upper()
-                return 0 if ("NISAR" in t and "GCOV" in t) else (1 if "NISAR" in t else 2)
+                if "NISAR" in t and "GCOV" in t:return 0
+                if "NISAR" in t:return 1
+                if it.get("full_pol_candidate"):return 2
+                return 3
             # Within each spectral/product priority, newest acquisition is attempted first.
             cands=sorted(cands,key=_scene_datetime,reverse=True)
             cands=sorted(cands,key=_rank)
-            audit["recency_policy"]="spectral priority first; newest acquisition first within each band/product class; rejected scenes are logged and next newest is tried"
+            audit["recency_policy"]="spectral priority first; NISAR GCOV/full-pol first; newest acquisition first within each product class; rejected scenes are logged and next newest is tried"
+            audit["lband_candidate_readiness"]={
+                "candidate_count":len(cands),
+                "full_pol_candidates":sum(1 for x in cands if x.get("full_pol_candidate")),
+                "gcov_candidates":sum(1 for x in cands if "GCOV" in (str(x.get("id",""))+" "+str(x.get("properties",{}))).upper()),
+                "note":"download authentication and scientific model readiness are separate gates; full-pol/GCOV is prioritized because quantitative AGB models need more than dual-pol HH/HV in dense forest"
+            }
             for cand in cands[:8]:
                 try:
                     url=cand["download_url"]; dl=Path(cache)/"asf"; dl.mkdir(parents=True,exist_ok=True)
