@@ -13,6 +13,7 @@ MODEL_REGISTRY=[
 
 {"id":"CASSOL_2021","biome":"Amazônia","domain":"floresta secundária","bands":["L"],"sensor":"ALOS-2/PALSAR-2","doi":"10.1080/01431161.2021.1903615","institution":"INPE/NCEO"},
 {"id":"CASSOL_2019_EQ13","biome":"Amazônia","physiognomy":"floresta secundária","domain":"Santarém, PA; florestas secundárias; quad-pol PALSAR-2","bands":["L"],"sensor":"ALOS-2/PALSAR-2 SLC quad-pol","algorithm":"MLR polarimétrica Eq.13","predictors":["Neumann_tau","tau_s3","T23_imag","SE_Pnorm","SE_norm","T12_realB"],"coefficients":{"intercept":-1151.1,"Neumann_tau":516.6,"tau_s3":0.96,"T23_imag":2809.1,"SE_Pnorm":592.91,"SE_norm":319.52,"T12_realB":2306.73},"r2":0.51,"rmse_mg_ha":38.7,"bias_mg_ha":2.1,"uncertainty_pct":18.6,"validation":"bootstrap 100 repetições, 80/20","doi":"10.3390/rs11010059","institution":"INPE/colaboradores","executable":True,"constraints":"somente com os seis atributos polarimétricos definidos no artigo; não aplicar a HH/HV simples"},
+{"id":"NARVAES_2023_CENTRAL_AMAZON","biome":"Amazônia","physiognomy":"floresta tropical com estágios primário, exploração seletiva e sucessão; verificar equivalência local","domain":"região de Tapajós e entorno; 41 parcelas (33 calibração, 8 validação); ALOS/PALSAR full-pol L-band","bands":["L"],"sensor":"ALOS/PALSAR full polarimetric","algorithm":"regressão linear múltipla, equação publicada (Eq. 4)","predictors":["sigma0_HH_db","Pv_db","alpha_S2_deg","Phi_S2_deg","Phi_S3_deg","tau_m_deg"],"predictor_units":{"sigma0_HH_db":"dB","Pv_db":"dB","alpha_S2_deg":"graus","Phi_S2_deg":"graus","Phi_S3_deg":"graus","tau_m_deg":"graus"},"coefficients":{"intercept":-1221.37,"sigma0_HH_db":-70.31,"Pv_db":1064.65,"alpha_S2_deg":6.28,"Phi_S2_deg":-2.42,"Phi_S3_deg":3.44,"tau_m_deg":6.05},"r2":0.67,"r2_validation":0.81,"rmse_mg_ha":56.9,"validation":"41 parcelas; 33 ajuste e 8 validação; Syx=56.9 Mg/ha; artigo informa R²=0.81 na validação","doi":"10.3390/f14050941","institution":"INPE / instituições colaboradoras","executable":True,"constraints":"aplicar somente a atributos extraídos de ALOS/PALSAR full-pol e domínio de estudo; Pv e sigma0_HH em dB, atributos Touzi em graus; não usar mosaico anual HH/HV ou Sentinel-1 dual-pol; transferência fora do Tapajós exige calibração independente"},
 {"id":"VARZEA_2018","biome":"Amazônia","domain":"floresta de várzea","bands":["L","X"],"sensor":"ALOS/PALSAR + TerraSAR-X","algorithm":"regressão selecionada por CV","coefficients":None,"r2":0.46,"rmse_mg_ha":74.6,"validation":"cross-validation","doi":"10.3390/rs10091355","executable":False},
 {"id":"CERRADO_RIO_VERMELHO_2020","biome":"Cerrado","domain":"vegetação lenhosa; Rio Vermelho","bands":["L"],"sensor":"ALOS-2/PALSAR-2 + Landsat 8 + LiDAR","algorithm":"Random Forest","coefficients":None,"r2":0.89,"rmse_mg_ha":7.58,"bias_mg_ha":0.43,"validation":"k-fold + jackknife; referência LiDAR","doi":"10.3390/rs12172685","executable":False},
 {"id":"KUNTSCHIK_2004_CERRADAO_JERS1","biome":"Cerrado","physiognomy":"cerradão/fisionomias florestais","domain":"sudoeste de São Paulo","bands":["L"],"sensor":"JERS-1 SAR","algorithm":"regressão radar-biomassa","coefficients":None,"validation":"tese USP; equação confirmada, coeficientes pendentes de verificação integral","doi":"10.11606/T.41.2004.tde-14012005-084048","institution":"USP","executable":False},
@@ -649,6 +650,58 @@ def execute_registered_model(model_id,features):
     y=float(co.get("intercept",0.0))
     for x in pred:y+=float(co[x])*float(features[x])
     return {"agb_mg_ha":max(0.0,y),"model":model_id,"rmse_mg_ha":m.get("rmse_mg_ha"),"bias_mg_ha":m.get("bias_mg_ha"),"validation":m.get("validation"),"doi":m.get("doi")}
+
+def fit_catalog_reference(model_id, observations, agb_mg_ha, spatial_groups, target_features=None):
+    """Recalibrate a catalogued model family from real matched local plots/pixels.
+
+    This does not recover or imitate unpublished coefficients. It fits a new local
+    model using only the reference's declared predictors and returns grouped
+    out-of-fold errors. At least five independent spatial groups are mandatory.
+    ``observations`` must be a DataFrame with the exact predictor columns.
+    """
+    import pandas as pd
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import GroupKFold
+    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+    m=next((x for x in MODEL_REGISTRY if x["id"]==model_id),None)
+    if not m: raise ValueError("Referência/modelo não cadastrado.")
+    predictors=list(m.get("predictors") or [])
+    if not predictors: raise ValueError("A referência não declara preditores operacionais; recupere-os da fonte primária antes de ajustar.")
+    missing=[x for x in predictors if x not in observations.columns]
+    if missing: raise ValueError("Preditores SAR obrigatórios ausentes: "+", ".join(missing))
+    X=observations[predictors].apply(pd.to_numeric,errors="coerce").to_numpy(float)
+    y=np.asarray(agb_mg_ha,dtype=float).reshape(-1); groups=np.asarray(spatial_groups).astype(str).reshape(-1)
+    if len(X)!=len(y) or len(y)!=len(groups): raise ValueError("Cada linha exige atributos SAR, AGB de parcela e grupo espacial correspondentes.")
+    good=np.isfinite(X).all(axis=1)&np.isfinite(y)&(y>=0)&(groups!="")&(groups!="None")
+    X,y,groups=X[good],y[good],groups[good]
+    min_n=max(20,4*(len(predictors)+1)); labels=np.unique(groups)
+    if len(y)<min_n: raise ValueError(f"Recalibração local recusada: exige ao menos {min_n} pares parcela–pixel completos; encontrou {len(y)}.")
+    if len(labels)<5: raise ValueError(f"Recalibração local recusada: exige 5 grupos espaciais independentes; encontrou {len(labels)}.")
+    cv=GroupKFold(n_splits=min(5,len(labels))); pred=np.full(len(y),np.nan)
+    for tr,te in cv.split(X,y,groups):
+        if len(tr)<=len(predictors): raise ValueError("Grupo espacial deixa amostra de treino menor que o número de coeficientes.")
+        model=LinearRegression().fit(X[tr],y[tr]); pred[te]=model.predict(X[te])
+    residual=pred-y
+    metrics={"n_pairs":int(len(y)),"independent_groups":int(len(labels)),"RMSE_Mg_ha":float(np.sqrt(mean_squared_error(y,pred))),
+        "MAE_Mg_ha":float(mean_absolute_error(y,pred)),"bias_Mg_ha":float(np.mean(residual)),"R2":float(r2_score(y,pred)),
+        "validation":"GroupKFold espacial out-of-fold; grupos inteiros mantidos fora do treino",
+        "residual_quantiles_Mg_ha":[float(v) for v in np.quantile(residual,[0.025,0.975])]}
+    fitted=LinearRegression().fit(X,y)
+    out={"model_id":model_id,"reference_source":m.get("doi"),"reference_equation_used":False,
+        "calibration_type":"recalibração local independente; não replica os coeficientes publicados",
+        "predictors":predictors,"coefficients":{"intercept":float(fitted.intercept_),**{k:float(v) for k,v in zip(predictors,fitted.coef_)}},
+        "metrics":metrics,"transfer_scope":"somente a fitofisionomia, região, sensores e período representados pelos pares fornecidos",
+        "uncertainty":"quantis empíricos dos resíduos OOF; não são intervalo de confiança universal"}
+    if target_features is not None:
+        absent=[p for p in predictors if p not in target_features]
+        if absent: raise ValueError("Preditores SAR do alvo ausentes: "+", ".join(absent))
+        vals=np.asarray([float(target_features[p]) for p in predictors],dtype=float).reshape(1,-1)
+        if not np.isfinite(vals).all(): raise ValueError("Preditores do alvo contêm valor não finito.")
+        out["target_agb_mg_ha"]=max(0.0,float(fitted.predict(vals)[0]))
+        out["target_residual_range_mg_ha"]=[max(0.0,out["target_agb_mg_ha"]+metrics["residual_quantiles_Mg_ha"][0]),
+            max(0.0,out["target_agb_mg_ha"]+metrics["residual_quantiles_Mg_ha"][1])]
+    return out
+
 def model_registry_rows():
     rows=[{k:m.get(k) for k in ("id","biome","physiognomy","domain","sensor","algorithm","predictors","coefficients","rmse_mg_ha","bias_mg_ha","r2","validation","doi","institution","executable","constraints")} for m in MODEL_REGISTRY]
     for x in SCIENTIFIC_INVENTORY_REGISTRY:
