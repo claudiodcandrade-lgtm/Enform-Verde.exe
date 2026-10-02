@@ -76,7 +76,8 @@ jobs:
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
-          assert "maps.googleapis.com/maps/api/staticmap" in src and "sentinel2_preview" in src and "server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export" in src, "Google -> Sentinel-2 -> Esri satellite fallback chain missing"
+          assert "maps.googleapis.com/maps/api/staticmap" in src and "sentinel2_preview" in src and "World_Imagery" in src and "World_Street_Map" in src, "Google -> Sentinel-2 -> Esri Imagery -> Esri Street fallback chain missing"
+          assert "Fitofisionomia IBGE (legenda_1):" in src and "ibge_phys_display" in src and "ibge_biome_display" in src, "visible official IBGE phytophysiognomy panel missing"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -244,6 +245,10 @@ jobs:
           classes=d.get("regioes_fitoecologicas") or []
           assert classes and classes[0]["name"]==region and classes[0]["code"], "dominant IBGE phytoregion code/name/area is incomplete: "+repr(d)
           assert 0 < classes[0]["percent"] <= 100 and classes[0]["area_ha"] > 0
+          assert region==classes[0]["name"], "display/model phytophysiognomy must equal dominant official legenda_1 class"
+          src=open("desktop_app.py",encoding="utf-8").read()
+          assert "self.ibge_phys_display.set" in src and "código IBGE" in src, "IBGE class/code is not wired to visible UI"
+          print("IBGE_VISIBLE_PHYTO_CONTRACT_OK",region,classes[0]["code"])
           print("OFFICIAL_IBGE_TAPAJOS_CLASSIFICATION_OK "+json.dumps({"region":region,"classes":classes,"source":d.get("fonte_vegetacao")},ensure_ascii=True))
           '@ | Set-Content ibge_acceptance_test.py -Encoding UTF8
           python ibge_acceptance_test.py
@@ -420,7 +425,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.12-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.13-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
