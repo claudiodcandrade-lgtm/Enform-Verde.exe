@@ -779,9 +779,15 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     if lit:
         lit["sar_processed"]=bool(audit.get("processed_without_agb"))
         lit["sar_pixel_audit"]=audit.get("processed_without_agb",[])
-    return {"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),"agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":("SAR_ATRIBUTOS" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),
-            "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,"sar_attempted_first":True,
-            "message":("SAR foi processado, mas não existe modelo AGB validado compatível; consulte processed_without_agb." if audit.get("processed_without_agb") else "Nenhum arquivo SAR foi processado; consulte a auditoria detalhada.")}
+    sar_processed=bool(audit.get("processed_without_agb"))
+    return {"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if sar_processed else "SAR_NAO_PROCESSADO"),
+            "agb_mg_ha":None,"uncertainty_mg_ha":None,
+            "data_origin":("SAR_ATRIBUTOS_ESTRATIFICADORES" if sar_processed else "SAR_NAO_PROCESSADO"),
+            "source":("pixels SAR reais processados; sem equação AGB quantitativa compatível no domínio científico"
+                      if sar_processed else "nenhum arquivo SAR pôde ser baixado/processado nesta execução"),
+            "audit":audit,"literature_reference":lit,"sar_attempted_first":True,
+            "message":("SAR real processado. O dual-pol disponível é usado como evidência física/estratificadora; AGB quantitativa permanece no fallback regional até existir modelo compatível."
+                       if sar_processed else "Nenhum arquivo SAR foi processado; consulte a auditoria detalhada.")}
 
 def execute_registered_model(model_id,features):
     m=next((x for x in MODEL_REGISTRY if x["id"]==model_id),None)
