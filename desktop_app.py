@@ -713,7 +713,7 @@ class App(tk.Tk):
                     for w in audit.get("warnings") or []: lines.append("Aviso: "+str(w))
                     lines += ["", "Métricas de validação AGB: RMSE, MAE, viés e R² não são aplicáveis sem modelo treinado/validado compatível. Incerteza da AGB: não estimável.", "Estado: PROCESSAMENTO SAR REAL CONCLUÍDO; ESTIMATIVA AGB PENDENTE DE MODELO/PARCELAS COMPATÍVEIS."]
                     report="\n".join(lines); self.project["partial_sar_analysis"]={"area_ha":area,"sar_result":sar,"report":report}; self.project["area_ha"]=area; self.project["last_result"]=report
-                    self._set(self.remote_text,"SAR processado na AOI. AGB não estimada por falta de modelo validado compatível; consulte a trilha, os pixels processados e o motivo no relatório.")
+                    self._set(self.remote_text,"SAR PROCESSADO COM SUCESSO na AOI. AGB não derivada do SAR porque não existe modelo validado compatível com os preditores disponíveis; consulte a trilha e os pixels processados.")
                     self._set(self.res,report); self.nb.select(self.tabs[3]); self.status.set("Processamento SAR concluído; AGB não estimada sem calibração compatível."); return
             agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
             unc_kind=str(sar.get("uncertainty_kind") or "incerteza do produto/modelo")
@@ -813,7 +813,7 @@ class App(tk.Tk):
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
                          "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
-            lines=([f"AVISO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
+            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
             for r in rows:
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
