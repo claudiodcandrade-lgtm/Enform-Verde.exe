@@ -1316,7 +1316,7 @@ class App(tk.Tk):
             diag=[]
             if audit:
                 diag=["","TRILHA SAR:"]
-                bb=audit.get("biomass_l2b") or {}; diag.append(f"BIOMASS P L2B catalogado: {bb.get('count',0)}")
+                bb=audit.get("biomass_l2b") or {}; diag.append(f"BIOMASS P L2B catalogado: {bb.get(\'count\',0)} | operacional={bb.get(\'operational_count\',0)} | IOC={bb.get(\'ioc_count\',0)}")
                 cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
                 ad=audit.get("asf_download") or {}
                 if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
@@ -1331,6 +1331,17 @@ class App(tk.Tk):
                 for item in audit.get("processed_without_agb",[]):
                     diag.append(f"Pixel SAR PROCESSADO sem equação AGB compatível: {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
                     for z in item.get("stats",[]): diag.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
+                blocker=audit.get("agb_blocker") or sar.get("agb_blocker") or {}
+                if blocker:
+                    diag.append("BLOQUEIO AGB-SAR: "+str(blocker.get("primary_blocker")))
+                    cm=blocker.get("closest_model") or {}
+                    if cm:
+                        diag.append("  modelo mais próximo: "+str(cm.get("model_id"))+" | sensor="+str(cm.get("sensor")))
+                        avail=cm.get("available_predictors") or []
+                        miss=cm.get("missing_predictors") or []
+                        diag.append("  preditores disponíveis: "+(", ".join(avail) if avail else "nenhum dos exigidos"))
+                        diag.append("  preditores faltantes: "+(", ".join(miss) if miss else "nenhum"))
+                        diag.append("  restrição: "+str(cm.get("constraints")))
                 ldiag=audit.get("lband_dualpol_diagnostic") or {}
                 if ldiag:
                     diag += [
