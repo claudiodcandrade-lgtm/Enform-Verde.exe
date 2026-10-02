@@ -17,7 +17,7 @@ def _safe_target(root,name):
     # Archive member paths use POSIX separators even on Windows. Reject absolute,
     # drive-qualified and parent traversal paths before creating any file.
     raw=str(name).replace("\\","/"); parts=PurePosixPath(raw).parts
-    if not raw or raw.startswith("/") or any(p in ("..","") for p in parts):
+    if not raw or raw.startswith("/") or re.match(r"^[A-Za-z]:",raw) or any(p in ("..","") for p in parts):
         raise ValueError(f"Unsafe archive member path: {name!r}")
     target=(Path(root)/Path(*parts)).resolve(); base=Path(root).resolve()
     if target!=base and base not in target.parents:raise ValueError(f"Archive member escapes target: {name!r}")

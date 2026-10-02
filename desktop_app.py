@@ -742,6 +742,9 @@ class App(tk.Tk):
                 self.gdf=resolve_ccir_sigef(ccir); self.active_source="CCIR"; self.active_input_id=ccir; self.car.set(""); self._show_geom("CCIR/SNCR — SIGEF automático")
             except Exception as e:
                 self.status.set("Consulta automática CCIR/SNCR/SIGEF não concluída."); return messagebox.showwarning("CCIR / SIGEF",str(e))
+        if self._ibge_pending:
+            self._pending_execute=True; self.status.set("Perímetro resolvido. A análise começará após o diagnóstico territorial do IBGE.")
+            return
         if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR, CCIR ou carregue um arquivo vetorial; depois pressione EXECUTAR ANÁLISE.")
         if self.sar_paths:return self._execute_main(event)
         # Snapshot every Tk variable on the GUI thread before starting the worker.

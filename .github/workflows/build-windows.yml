@@ -25,11 +25,13 @@ jobs:
         run: python desktop_app.py --self-test
       - name: GUI contract test
         shell: pwsh
+        timeout-minutes: 3
         run: |
           @'
           import tkinter as tk
           from pathlib import Path
           import desktop_app as app
+          app.messagebox.showerror=lambda *a,**k: (_ for _ in ()).throw(RuntimeError("GUI contract encountered a modal error: "+str(a)))
           assert hasattr(app.App, "export_excel"), "App.export_excel missing"
           assert "tCO₂e/ha" in open("desktop_app.py",encoding="utf-8").read(), "dual carbon units missing"
           assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"
@@ -100,6 +102,8 @@ jobs:
           ui=app.App()
           ui.update_idletasks()
           kmz=Path("acceptance/Teste_SAR_Biomassa_Tapajos.kmz").resolve()
+          preflight=app.read_vector(kmz)
+          assert len(preflight)>0, "KMZ preflight returned no geometry"
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
           ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
