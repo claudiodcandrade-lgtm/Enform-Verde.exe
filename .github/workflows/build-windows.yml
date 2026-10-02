@@ -31,6 +31,7 @@ jobs:
           Invoke-WebRequest -Uri $b2 -OutFile nasa_b2.jpg
           @'
           from PIL import Image
+          Image.MAX_IMAGE_PIXELS=None  # fixed, trusted NASA BMNG source tiles
           # NASA BMNG 500 m tile extents:
           # B1 = 90N..0, 90W..0; B2 = 0..90S, 90W..0; 240 px/degree.
           W,E,N,S=-75.0,-33.0,6.0,-35.0
