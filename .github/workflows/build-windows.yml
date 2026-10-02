@@ -135,6 +135,9 @@ jobs:
           python make_icon.py
       - name: Build executable
         run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.jpg;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
+      - name: Place approved visual asset beside EXE
+        shell: pwsh
+        run: Copy-Item -Force 'enform_header.jpg' 'dist\Enform Verde\enform_header.jpg'
       - name: Verify packaged Python runtime
         shell: pwsh
         run: |
