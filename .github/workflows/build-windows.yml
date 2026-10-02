@@ -33,6 +33,21 @@ jobs:
           import desktop_app as app
           app.messagebox.showerror=lambda *a,**k: (_ for _ in ()).throw(RuntimeError("GUI contract encountered a modal error: "+str(a)))
           assert hasattr(app.App, "export_excel"), "App.export_excel missing"
+          assert app.primary_ibge_physiognomy({"vegetacao":[{"campo":"legenda_2","classes":[("Floresta Ombrófila Densa das Terras Baixas (classe de cobertura)",90,90)]},{"campo":"legenda_1","classes":[("Floresta Ombrófila Densa das Terras Baixas",100,100)]}]}) == "Floresta Ombrófila Densa das Terras Baixas", "IBGE fitofisionomia must come from dominant legenda_1, not legenda_2"
+          assert app.primary_ibge_physiognomy({"vegetacao":[{"campo":"legenda_2","classes":[("classe de cobertura",100,100)]}]}) == "", "missing legenda_1 must not be relabeled as phytogeographic region"
+          import geopandas as gpd
+          from shapely.geometry import box
+          from pyproj import Transformer
+          project=gpd.GeoDataFrame({"id":[1]},geometry=[box(-55.01,-3.10,-54.90,-3.00)],crs="EPSG:4326")
+          tr=Transformer.from_crs("EPSG:4326","EPSG:5880",always_xy=True)
+          regions=[]
+          for x0,x1,name,code in [(-55.01,-54.96,"Região A","A1"),(-54.96,-54.90,"Região B","B2")]:
+              corners=[tr.transform(x0,-3.10),tr.transform(x1,-3.10),tr.transform(x1,-3.00),tr.transform(x0,-3.00)]
+              regions.append((box(min(x for x,y in corners),min(y for x,y in corners),max(x for x,y in corners),max(y for x,y in corners)),name,code))
+          theme=gpd.GeoDataFrame({"legenda_1":[r[1] for r in regions],"cd_fito":[r[2] for r in regions]},geometry=[r[0] for r in regions],crs="EPSG:5880")
+          shares=app._shares(project,theme,["legenda_1"])
+          coded=app._shares_with_code(project,theme,"legenda_1","cd_fito")
+          assert shares and shares[0][1][0][0]=="Região B" and coded[0]["name"]=="Região B" and coded[0]["code"]=="B2", "IBGE area-weighted overlay/CRS/code contract failed"
           assert "tCO₂e/ha" in open("desktop_app.py",encoding="utf-8").read(), "dual carbon units missing"
           assert "Compartimentos de carbono" in open("desktop_app.py",encoding="utf-8").read(), "structured Excel exporter missing"
           assert "cod_imovel" in open("desktop_app.py",encoding="utf-8").read(), "SICAR CAR-code filter missing"
@@ -65,6 +80,8 @@ jobs:
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
           assert "FALLBACK MICRORREGIONAL — SAR PROCESSADO, SEM MODELO AGB" in src, "processed-SAR secondary estimate status missing"
+          assert src.count("ttk.Scrollbar(")>=4, "visible scrollbars missing from report and data panels"
+          assert "Nenhum compartimento adicional elegível" in src and "Serapilheira — estoque no piso florestal" in open("sar_pipeline.py",encoding="utf-8").read(), "regional additional biomass compartments or stock-vs-flux distinction missing"
           sar_src=open("sar_pipeline.py",encoding="utf-8").read()
           assert "process_nisar_gcov" in sar_src and "analyze_nisar_gcov" in sar_src, "NISAR GCOV processor missing"
           assert "NISAR_GCOV_HDF5" in sar_src, "NISAR HDF5 route missing"
@@ -139,6 +156,11 @@ jobs:
           assert lit and lit["available"] and abs(lit["agb_mg_ha"]-273.515)<1e-6
           assert lit["sar_metrics"]["RMSE"] is None and lit["agb_range_mg_ha"][0]<lit["agb_mg_ha"]<lit["agb_range_mg_ha"][1]
           assert "não é IC95%" in lit["uncertainty_kind"]
+          comps=lit["regional_components"]
+          assert abs(comps["Biomassa subterrânea"]["mean_dry_mg_ha"]-35.25)<1e-6
+          assert "não é IC95%" in comps["Serapilheira — estoque no piso florestal"]["method"]
+          assert "produtividade/queda anual" in comps["Serapilheira — estoque no piso florestal"]["method"]
+          assert "madeira caída" in comps and "madeira morta em pé" in comps
           import json
           print("LIVE_TAPAJOS_KMZ_SAR_AND_REGIONAL_REFERENCE_OK "+json.dumps({"sentinel1":r["stats"],"alos_palsar":l["stats"],"agb_reference":lit},ensure_ascii=True))
           '@ | Set-Content live_sar_test.py -Encoding UTF8
@@ -260,7 +282,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.2-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.4-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30

@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.2-PROFESSIONAL"
+APP_VERSION="3.24.4-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -233,6 +233,11 @@ def _field(cols,candidates):
 def _shares(project,theme,fields):
     import geopandas as gpd
     p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
+    try:
+        import shapely
+        p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+        t["geometry"]=t.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+    except Exception: pass
     inter=gpd.overlay(t,p[["geometry"]],how="intersection",keep_geom_type=False)
     inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
     if inter.empty:return []
@@ -245,6 +250,40 @@ def _shares(project,theme,fields):
             g=inter.groupby(field,dropna=False)["_ha"].sum().sort_values(ascending=False)
             out.append((field,[(str(k),float(v),float(v/total*100)) for k,v in g.items() if v>0]))
     return out
+
+def _shares_with_code(project,theme,name_field,code_field):
+    """Area-weighted IBGE region names retaining their official phytoregion code."""
+    import geopandas as gpd
+    p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
+    try:
+        import shapely
+        p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+        t["geometry"]=t.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+    except Exception: pass
+    columns=["geometry",name_field]+([code_field] if code_field else [])
+    inter=gpd.overlay(t[columns],p[["geometry"]],how="intersection",keep_geom_type=False)
+    inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
+    if inter.empty:return []
+    inter["_ha"]=inter.geometry.area/10000; total=float(inter["_ha"].sum())
+    if total<=0:return []
+    keys=[name_field]+([code_field] if code_field else [])
+    out=inter.groupby(keys,dropna=False)["_ha"].sum().sort_values(ascending=False)
+    return [{"name":str(key[0] if isinstance(key,tuple) else key),
+             "code":(str(key[1]) if code_field and isinstance(key,tuple) and key[1] is not None else None),
+             "area_ha":float(area),"percent":float(area/total*100)} for key,area in out.items() if area>0]
+
+def primary_ibge_physiognomy(diagnosis):
+    """Return the dominant current IBGE phytogeographic region (legend_1).
+
+    legend_2 describes the predominant vegetation cover class and is useful as
+    a secondary descriptor, but it is not a substitute for the phytogeographic
+    region requested for model-domain selection.
+    """
+    for group in (diagnosis or {}).get("vegetacao",[]):
+        if str(group.get("campo","")).casefold()=="legenda_1":
+            classes=group.get("classes") or []
+            if classes:return str(classes[0][0])
+    return ""
 
 def diagnose_ibge(project):
     """IBGE diagnosis with bbox-only reads; national 355 MB vegetation ZIP is never expanded/read wholesale."""
@@ -261,12 +300,18 @@ def diagnose_ibge(project):
     try:
         vz=_download_zip(IBGE_VEGE_2026_URL,veg,"vege_area_2026")
         vg=_read_zip_bbox(vz,bbox,("vege_area","area","brasil"))
-        l1=_field(vg.columns,["legenda_1","nm_pretet","leg_carga","tipologia"])
-        l2=_field(vg.columns,["legenda_2","nm_uveg","leg_sup","formacao"])
+        # In the official BDIA 1:250,000 schema, legenda_1 is the name of the
+        # phytogeographic region; legenda_2 is the predominant cover class.
+        # Do not silently substitute the latter for the former.
+        l1=_field(vg.columns,["legenda_1"])
+        l2=_field(vg.columns,["legenda_2"])
         vs=_shares(project,vg,[l1,l2])
         result["vegetacao_fields"]=[x[0] for x in vs]
         result["vegetacao"]=[{"campo":x[0],"classes":x[1]} for x in vs]
-        if not result["vegetacao"]:result["vegetacao_error"]="Camada de vegetação lida, porém sem classe intersectante."
+        fito_code=_field(vg.columns,["cd_fito"])
+        result["regioes_fitoecologicas"]=_shares_with_code(project,vg,l1,fito_code) if l1 else []
+        if not any(x[0]=="legenda_1" and x[1] for x in vs):
+            result["vegetacao_error"]="A camada foi lida, mas não retornou Região Fitoecológica IBGE em legenda_1 para a AOI. A análise não deve tratar a cobertura de legenda_2 como substituta."
     except Exception as e:
         result["vegetacao_error"]=str(e)
     return result
@@ -511,13 +556,19 @@ class App(tk.Tk):
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
         ttk.Label(keyrow,text="Map Tiles API • apenas visualização",foreground="#666").pack(side="left")
         self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None
+        self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
-        self.spatial_text=tk.Text(f,height=7,wrap="word"); self.spatial_text.pack(fill="x",pady=4)
+        spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
+        self.spatial_text=tk.Text(spatial_box,height=7,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
+        spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
+        self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
     def show_google_map(self):
         """Load optional satellite tiles without blocking the interface; retain AOI outline on errors."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
+        self._satellite_map_visible=False
         key=self.google_maps_key.get().strip()
         provider="Google Maps" if key else "Esri World Imagery (público)"
         g=self.gdf.to_crs(4326).copy(); w=max(700,self.map_canvas.winfo_width()); h=max(300,self.map_canvas.winfo_height())
@@ -562,33 +613,56 @@ class App(tk.Tk):
 
     def _finish_satellite_map(self,view,polygons,provider,zoom,copyright,error):
         if error:
+            self._satellite_map_visible=False
             self._draw_aoi_outline("Imagem base indisponível; polígono vetorial carregado")
             self.status.set(f"{provider} indisponível; a AOI continua carregada e visível.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
             return
+        self._satellite_map_visible=True
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
         for pts in polygons:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
         self.map_canvas.create_rectangle(0,view.height-24,view.width,view.height,fill="white",outline=""); self.map_canvas.create_text(view.width-8,view.height-12,anchor="e",text=copyright,fill="#333",font=("Segoe UI",8))
         self.status.set(f"{provider} carregado — zoom {zoom}. Uso exclusivo para visualização.")
 
+    def _on_map_resize(self,event=None):
+        """Redraw the offline footprint after Tk has assigned the final canvas size."""
+        if self.gdf is None or self._satellite_map_visible:return
+        size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
+        if size==self._last_map_size:return
+        if self._map_redraw_job is not None:
+            try:self.after_cancel(self._map_redraw_job)
+            except Exception:pass
+        self._map_redraw_job=self.after(100,self._redraw_map_after_resize)
+
+    def _redraw_map_after_resize(self):
+        self._map_redraw_job=None
+        if self.gdf is not None and not self._satellite_map_visible:
+            self._draw_aoi_outline("AOI — visualização vetorial; base satélite indisponível")
+
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
-        """Always show the uploaded polygon, even offline or when basemap tiles fail."""
+        """Render the AOI in a local metric projection and fit it to the live canvas."""
         if self.gdf is None:return
-        g=self.gdf.to_crs(4326); w=max(300,self.map_canvas.winfo_width()); h=max(220,self.map_canvas.winfo_height()); pad=28
-        minx,miny,maxx,maxy=map(float,g.total_bounds); dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8)
-        scale=min((w-2*pad)/dx,(h-2*pad)/dy); ox=(w-dx*scale)/2; oy=(h-dy*scale)/2
-        self.map_canvas.delete("all"); self.map_canvas.configure(bg="#EAF0EC")
+        g=self.gdf.to_crs(4326); union=g.geometry.union_all(); center=union.centroid
+        from pyproj import CRS
+        local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
+        projected=g.to_crs(local); minx,miny,maxx,maxy=map(float,projected.total_bounds)
+        w=max(300,self.map_canvas.winfo_width()); h=max(220,self.map_canvas.winfo_height()); pad=max(30,min(70,int(min(w,h)*0.12)))
+        dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6); scale=min((w-2*pad)/dx,(h-2*pad)/dy)
+        draw_w=dx*scale; draw_h=dy*scale; ox=(w-draw_w)/2; oy=(h-draw_h)/2
+        self._last_map_size=(w,h); self.map_canvas.delete("all"); self.map_canvas.configure(bg="#EAF0EC")
         def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
-        for geom in g.geometry:
+        for geom in projected.geometry:
             polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
             for poly in polys:
                 pts=[]
-                for coord in poly.exterior.coords:
-                    # KML coordinates may include altitude (z); the 2-D map
-                    # preview intentionally uses only longitude and latitude.
-                    x,y=coord[0],coord[1]; pts.extend(xy(x,y))
+                for coord in poly.exterior.coords:pts.extend(xy(coord[0],coord[1]))
                 if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
         self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
+        # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
+        bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
+        self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)
+        self.map_canvas.create_line(bx,by-5,bx,by+4,fill="#24382D",width=2); self.map_canvas.create_line(bx+bar_px,by-5,bx+bar_px,by+4,fill="#24382D",width=2)
+        self.map_canvas.create_text(bx+bar_px/2,by-7,text=f"{bar_m/1000:g} km",anchor="s",fill="#24382D",font=("Segoe UI",8,"bold"))
 
     def _remote(self):
         f=self.tabs[2]
@@ -619,7 +693,10 @@ class App(tk.Tk):
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
         ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
         self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
-        self.remote_text=tk.Text(f,height=18,wrap="word"); self.remote_text.pack(fill="both",expand=True,pady=8)
+        remote_box=ttk.Frame(f); remote_box.pack(fill="both",expand=True,pady=8)
+        self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
+        remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
+        self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
         self._set(self.remote_text,"A análise é automática e SAR-FIRST. Não é necessário informar tokens Earthdata/ESA.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
 
     def _test_cdse(self):
@@ -653,11 +730,17 @@ class App(tk.Tk):
 
     def _results(self):
         f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
-        self.res=tk.Text(f,height=23,wrap="word"); self.res.pack(fill="both",expand=True,pady=8)
+        result_box=ttk.Frame(f); result_box.pack(fill="both",expand=True,pady=8)
+        self.res=tk.Text(result_box,height=23,wrap="word",yscrollcommand=lambda *a:result_scroll.set(*a))
+        result_scroll=ttk.Scrollbar(result_box,orient="vertical",command=self.res.yview)
+        self.res.pack(side="left",fill="both",expand=True); result_scroll.pack(side="right",fill="y")
         self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
-        self.src=tk.Text(f,height=24,wrap="word"); self.src.pack(fill="both",expand=True,pady=8)
+        source_box=ttk.Frame(f); source_box.pack(fill="both",expand=True,pady=8)
+        self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
+        source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
+        self.src.pack(side="left",fill="both",expand=True); source_scroll.pack(side="right",fill="y")
         txt=("REGRAS DO MOTOR\n• MEDIDO: derivado diretamente do inventário/raster fornecido.\n• MODELADO: proxy/equação publicada, identificado com fonte e domínio.\n• NÃO ESTIMADO: quando não existe suporte defensável.\n\n"
              f"BGB: relação raiz/parte aérea {ROOT_RATIO:.2f}, faixa {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}; {SOURCES['protocol']}.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
@@ -738,10 +821,13 @@ class App(tk.Tk):
             return
         d=value; self.project["ibge_diagnosis"]=d
         if d["biomas"]:self.biome.set(d["biomas"][0][0])
-        if d["vegetacao"] and d["vegetacao"][-1]["classes"]:self.phys.set(d["vegetacao"][-1]["classes"][0][0])
+        primary=primary_ibge_physiognomy(d)
+        if primary:self.phys.set(primary)
         elif d.get("vegetacao_error"):self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
         btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
         vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"]) or ("PENDENTE: "+d.get("vegetacao_error","sem classe"))
+        code_txt="; ".join(f"{x['code'] or 'código N/D'} — {x['name']}: {x['percent']:.1f}% ({x['area_ha']:,.1f} ha)" for x in d.get("regioes_fitoecologicas",[])[:8])
+        if code_txt:vtxt="Região fitoecológica (IBGE legenda_1): "+code_txt+" | "+vtxt
         self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nIBGE — Bioma(s): "+btxt+"\nIBGE 2026 — Vegetação: "+vtxt)
         self.status.set("Perímetro e diagnóstico IBGE concluídos." if not d.get("vegetacao_error") else "Bioma IBGE concluído; fitofisionomia pendente sem bloquear a análise.")
         if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
@@ -879,6 +965,13 @@ class App(tk.Tk):
             soil_error=soil_profiles.get("error") if soil_profiles else "PronaSolos não retornou perfil."
             parts=[
               ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","produto SAR ou referência secundária, conforme origem",sar.get("source",sar.get("status","produto processado")))]
+            regional_components=sar.get("regional_components") or {}
+            for cname,component in regional_components.items():
+                dry=float(component["mean_dry_mg_ha"]); bounds=list(map(float,component["range_dry_mg_ha"]))
+                note=(f"biomassa seca={dry:,.2f} Mg/ha; faixa descritiva={bounds[0]:,.2f}–{bounds[1]:,.2f} Mg/ha; "
+                      f"fração C operacional={CARBON_FRACTION:.2f}; a faixa não é IC95% nem erro SAR. "+str(component.get("method","")))
+                parts.append((cname,dry*CARBON_FRACTION,"REFERÊNCIA MICRORREGIONAL",note,
+                              "estoque de referência publicado; não é predição SAR nem medição da AOI",component.get("source","literatura científica regional")))
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
                 parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
@@ -894,13 +987,17 @@ class App(tk.Tk):
             agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
             rows=[]
             for name,val,status,note,method,source in parts:
-                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA / MODELADO" if name in ("Necromassa","Serapilheira") else "MODELADO"))))
+                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA_MICRORREGIONAL" if name in regional_components else "MODELADO"))))
                 if name=="Biomassa aérea":
                     ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("envelope descritivo; sem cobertura probabilística declarada" if "envelope descritivo" in agb_metric else ("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo")) if sar_unc else "N/D")
+                elif name in regional_components:
+                    c=regional_components[name]; bounds=list(map(float,c["range_dry_mg_ha"]))
+                    ea=max(float(c["mean_dry_mg_ha"])-bounds[0],bounds[1]-float(c["mean_dry_mg_ha"]))*CARBON_FRACTION
+                    ep=(ea/val*100 if val else None)
+                    metric="envelope descritivo da fonte × fração C operacional; não é IC95%, erro preditivo ou erro SAR"
+                    level="dispersão/faixa de estudos locais; sem cobertura probabilística declarada"
                 elif name=="Biomassa subterrânea":
-                    # Propagate SAR uncertainty only; R:S range is methodological, not a statistical CI.
-                    ea=(agb_abs*ROOT_RATIO if agb_abs is not None else None); ep=(ea/val*100 if ea is not None and val else None)
-                    metric="propagação da incerteza AGB; faixa R:S metodológica adicional"; level="1σ da AGB; R:S sem nível de confiança"
+                    ea=None; ep=None; metric="N/D — sem dados compatíveis"; level="não estimado"
                 elif name.startswith("Solo "):
                     depth=name.replace("Solo ",""); sp=soil_profiles.get(depth,{})
                     sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=sd; ep=(sd/val*100 if val else None)
@@ -940,7 +1037,12 @@ class App(tk.Tk):
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
             if not p030: lines += ["Solo 0–30 cm","  NÃO CALCULADO — PronaSolos não retornou as três camadas necessárias nesta execução.","  Diagnóstico: "+str(soil_error),""]
-            lines += ["COMPARTIMENTOS NÃO SOMADOS", "Biomassa subterrânea, necromassa e serapilheira: não estimadas nesta execução; faltam dados/modelos regionais compatíveis para evitar valores genéricos por bioma.", "",
+            missing=[]
+            if "Biomassa subterrânea" not in regional_components: missing.append("biomassa subterrânea")
+            if not any(n.startswith("Necromassa") for n in regional_components): missing.append("necromassa")
+            if not any(n.startswith("Serapilheira") for n in regional_components): missing.append("serapilheira")
+            lines += ["COMPARTIMENTOS NÃO SOMADOS", ("Nenhum compartimento adicional elegível ficou sem estimativa nesta execução." if not missing else "; ".join(missing)+": não estimada por falta de dados/modelos regionais compatíveis."),
+                      *( ["Referências microrregionais são benchmarks secundários; não equivalem a medição da AOI nem a modelos alométricos/SAR calibrados."] if regional_components else [] ), "",
                       "TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {total:,.2f} tC/ha  |  {co2:,.2f} tCO₂e/ha",f"  Total na área: {total*area:,.0f} tC  |  {co2*area:,.0f} tCO₂e","",
                       "QUALIDADE: resultado de triagem/planejamento remoto. O relatório distingue SAR efetivamente processado de referência bibliográfica secundária e não substitui inventário de campo."]
             self._set(self.remote_text,f"Biomassa aérea: {agc:,.2f} tC/ha | {agc*44/12:,.2f} tCO₂e/ha\nFaixa de referência: {agc_lo:,.2f}–{agc_hi:,.2f} tC/ha | {agc_lo*44/12:,.2f}–{agc_hi*44/12:,.2f} tCO₂e/ha")
