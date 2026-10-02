@@ -233,6 +233,9 @@ jobs:
           python fallback_flow_test.py
           python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
 
+      - name: Catalog equation and recalibration contract tests
+        run: python -m unittest discover -s tests -v
+
       - name: Create icon
         shell: pwsh
         run: |
