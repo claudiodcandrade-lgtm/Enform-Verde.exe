@@ -444,56 +444,6 @@ def acceptance_test(kmz_path):
 def ui_smoke_test():
     root=App(); root.after(1200,root.destroy); root.mainloop()
 
-def sentinel2_preview(gdf,out_h=700):
-    """Return a recent low-cloud Sentinel-2 L2A RGB preview plus AOI pixel coordinates."""
-    import rasterio
-    from rasterio.warp import transform_bounds, transform
-    from rasterio.windows import from_bounds
-    g=gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
-    body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
-          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
-    rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",json=body,timeout=(10,60)); rr.raise_for_status()
-    items=rr.json().get("features",[]); cand=[]
-    for it in items:
-        visual=(it.get("assets") or {}).get("visual")
-        if not visual or not visual.get("href"):continue
-        props=it.get("properties") or {}
-        cloud=float(props.get("eo:cloud_cover",100.0) if props.get("eo:cloud_cover") is not None else 100.0)
-        dt=str(props.get("datetime") or "")
-        cand.append((cloud,dt,it,visual["href"]))
-    if not cand:raise RuntimeError("Nenhuma cena Sentinel-2 L2A RGB encontrada para a AOI.")
-    low=[x for x in cand if x[0]<=20.0]
-    chosen=sorted(low,key=lambda x:x[1],reverse=True)[0] if low else sorted(cand,key=lambda x:(x[0],x[1]),reverse=False)[0]
-    cloud,dt,it,unsigned=chosen
-    sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
-    with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
-        with rasterio.open(href) as src:
-            b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
-            dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0); margin=.18
-            wb=(bx[0]-dx*margin,bx[1]-dy*margin,bx[2]+dx*margin,bx[3]+dy*margin)
-            win=from_bounds(*wb,transform=src.transform).round_offsets().round_lengths()
-            out_w=max(700,min(1200,round(out_h*max(float(win.width),1.0)/max(float(win.height),1.0))))
-            arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
-                         resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
-            rgb=np.moveaxis(arr,0,2)
-            if rgb.dtype!=np.uint8:
-                valid=rgb[np.isfinite(rgb)&(rgb>0)]
-                hi=float(np.percentile(valid,99)) if valid.size else 1.0
-                rgb=np.clip(rgb/max(hi,1e-9)*255,0,255).astype(np.uint8)
-            view=Image.fromarray(rgb,"RGB"); wt=src.window_transform(win); polygons=[]
-            for geom0 in g.geometry:
-                geoms=list(geom0.geoms) if geom0.geom_type=="MultiPolygon" else ([geom0] if geom0.geom_type=="Polygon" else [])
-                for poly in geoms:
-                    coords=list(poly.exterior.coords)
-                    lon=[p[0] for p in coords]; lat=[p[1] for p in coords]
-                    xx,yy=transform("EPSG:4326",src.crs,lon,lat); pts=[]
-                    for x,y in zip(xx,yy):
-                        col,row=(~wt)*(x,y)
-                        pts.extend([float(col)*out_w/max(float(win.width),1.0),float(row)*out_h/max(float(win.height),1.0)])
-                    if len(pts)>=6:polygons.append(pts)
-    return {"image":view,"polygons":polygons,"scene_id":it.get("id"),"datetime":dt,"cloud_cover":cloud,
-            "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual"}
-
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
@@ -599,47 +549,116 @@ class App(tk.Tk):
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
-        ttk.Button(row,text="VISUALIZAR SENTINEL-2 + POLÍGONO",command=self.show_sentinel2_map,style="Run.TButton").pack(side="left",padx=8)
-        ttk.Label(f,text="Fundo satelital: Sentinel-2 L2A via Microsoft Planetary Computer, sem chave Google. Uso apenas cartográfico; não altera os cálculos.",foreground="#666",wraplength=980).pack(anchor="w",pady=(0,6))
+        ttk.Button(row,text="VISUALIZAR SATÉLITE + POLÍGONO",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
+        keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
+        ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
+        self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
+        ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
+        ttk.Label(keyrow,text="Google opcional; fallback automático Esri World Imagery",foreground="#666").pack(side="left")
         self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
         self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None
         self.map_canvas.bind("<Configure>",self._on_map_resize)
-        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor; o perímetro é mostrado mesmo se a imagem Sentinel-2 estiver indisponível.",fill="#455")
+        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
         spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
         self.spatial_text=tk.Text(spatial_box,height=7,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
         spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
         self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
-    def show_sentinel2_map(self,refresh=False):
-        """Load a recent low-cloud Sentinel-2 L2A RGB scene and overlay the AOI; no user API key."""
-        if self.gdf is None:return messagebox.showwarning("Imagem de satélite","Carregue/resolva o polígono primeiro.")
-        self._map_generation+=1; generation=self._map_generation; self._satellite_map_visible=False
-        g=self.gdf.copy()
-        if not refresh:self.status.set("Buscando Sentinel-2 L2A recente no Planetary Computer...")
+    def show_google_map(self,refresh=False):
+        """Satellite visualization: Google Static when keyed, then public Esri export, then offline vector."""
+        if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
+        self._map_generation+=1; generation=self._map_generation
+        g=self.gdf.to_crs(4326).copy()
+        w=max(500,self.map_canvas.winfo_width()); h=max(280,self.map_canvas.winfo_height())
+        ratio=w/max(h,1)
+        if ratio>=1:
+            req_w=1200; req_h=max(320,min(1200,round(1200/ratio)))
+        else:
+            req_h=1200; req_w=max(320,min(1200,round(1200*ratio)))
+        key=self.google_maps_key.get().strip()
+        if not refresh:self.status.set("Carregando imagem de satélite e perímetro...")
         self.update_idletasks()
+
+        def rings():
+            out=[]
+            span=max(float(g.total_bounds[2]-g.total_bounds[0]),float(g.total_bounds[3]-g.total_bounds[1]),1e-7)
+            tol=max(span/1600.0,1e-7)
+            for geom in g.geometry:
+                geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    coords=list(poly.simplify(tol,preserve_topology=True).exterior.coords)
+                    if len(coords)>220:
+                        step=max(1,math.ceil(len(coords)/220)); coords=coords[::step]
+                        if coords[-1]!=coords[0]:coords.append(coords[0])
+                    if len(coords)>=4:out.append(coords)
+            return out
+
+        def google_image(rs):
+            if not key:return None,"Google não configurado"
+            params=[("size",f"{min(req_w,640)}x{min(req_h,640)}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
+            for coords in rs:
+                pts="|".join(f"{lat:.6f},{lon:.6f}" for lon,lat in coords)
+                params.append(("path","color:0xff8a00ff|weight:4|fillcolor:0xff8a0033|"+pts))
+            rr=requests.get("https://maps.googleapis.com/maps/api/staticmap",params=params,timeout=(8,35))
+            rr.raise_for_status()
+            if "image" not in (rr.headers.get("Content-Type") or "").lower():
+                raise RuntimeError("resposta Google não é imagem")
+            return Image.open(io.BytesIO(rr.content)).convert("RGB").resize((w,h),Image.Resampling.LANCZOS),None
+
+        def esri_image(rs):
+            minx,miny,maxx,maxy=map(float,g.total_bounds)
+            padx=max((maxx-minx)*0.08,0.0005); pady=max((maxy-miny)*0.08,0.0005)
+            bx=(minx-padx,miny-pady,maxx+padx,maxy+pady)
+            params={"bbox":",".join(f"{v:.8f}" for v in bx),"bboxSR":"4326","imageSR":"4326",
+                    "size":f"{req_w},{req_h}","format":"jpg","f":"image","dpi":"96"}
+            rr=requests.get("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export",params=params,timeout=(8,35))
+            rr.raise_for_status()
+            if "image" not in (rr.headers.get("Content-Type") or "").lower():
+                raise RuntimeError("resposta Esri não é imagem")
+            im=Image.open(io.BytesIO(rr.content)).convert("RGB")
+            from PIL import ImageDraw
+            d=ImageDraw.Draw(im,"RGBA"); iw,ih=im.size
+            def px(lon,lat):
+                x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*iw
+                y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*ih
+                return (x,y)
+            for coords in rs:
+                pts=[px(float(lon),float(lat)) for lon,lat in coords]
+                if len(pts)>=4:
+                    d.polygon(pts,fill=(255,138,0,48),outline=(255,138,0,255))
+                    d.line(pts,width=max(3,round(iw/400)),fill=(255,138,0,255),joint="curve")
+            return im.resize((w,h),Image.Resampling.LANCZOS)
+
         def worker():
+            errors=[]; rs=rings()
+            if not rs:
+                self.after(0,self._finish_satellite_map,generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável")); return
+            if key:
+                try:
+                    view,_=google_image(rs)
+                    self.after(0,self._finish_satellite_map,generation,view,[],"Google Maps Static API",None,"Google",None)); return
+                except Exception as e:errors.append("Google: "+str(e))
             try:
-                p=sentinel2_preview(g)
-                copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {float(p.get('cloud_cover',0)):.1f}%"
-                self.after(0,self._finish_satellite_map,generation,p["image"],p["polygons"],p["provider"],None,copyright,None)
-            except Exception as e:
-                self.after(0,self._finish_satellite_map,generation,None,[],"Sentinel-2 L2A / Microsoft Planetary Computer",None,None,str(e))
-        threading.Thread(target=worker,name="EnformSentinel2Map",daemon=True).start()
+                view=esri_image(rs)
+                self.after(0,self._finish_satellite_map,generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None)); return
+            except Exception as e:errors.append("Esri: "+str(e))
+            self.after(0,self._finish_satellite_map,generation,None,[],"Google/Esri",None,None," | ".join(errors))
+        threading.Thread(target=worker,name="EnformMap",daemon=True).start()
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
         if generation!=self._map_generation or self.gdf is None:return
         if error:
             self._satellite_map_visible=False
-            self._draw_aoi_outline("Imagem base indisponível; polígono vetorial carregado")
-            self.status.set(f"{provider} indisponível; a AOI continua carregada e visível.")
+            self._draw_aoi_outline("Perímetro carregado — visualização vetorial")
+            self.status.set("Imagem de satélite indisponível; perímetro vetorial continua visível.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
         for pts in polygons:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
         self.map_canvas.create_rectangle(0,view.height-24,view.width,view.height,fill="white",outline=""); self.map_canvas.create_text(view.width-8,view.height-12,anchor="e",text=copyright,fill="#333",font=("Segoe UI",8))
-        self.status.set(f"{provider} carregado com o perímetro da AOI. Uso exclusivo para visualização.")
+        self.status.set(f"{provider} carregado — zoom {zoom}. Uso exclusivo para visualização.")
 
     def _on_map_resize(self,event=None):
         """Keep AOI and satellite base fitted after a real canvas resize."""
@@ -660,12 +679,12 @@ class App(tk.Tk):
     def _refresh_satellite_after_resize(self):
         self._map_refresh_job=None
         if self.gdf is not None:
-            self.show_sentinel2_map(refresh=True)
+            self.show_google_map(refresh=True)
 
     def _redraw_map_after_resize(self):
         self._map_redraw_job=None
         if self.gdf is not None and not self._satellite_map_visible:
-            self._draw_aoi_outline("AOI — visualização vetorial; Sentinel-2 ainda não carregado")
+            self._draw_aoi_outline("AOI — visualização vetorial; base satélite indisponível")
 
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
         """Render the AOI in a local metric projection and fit it to the live canvas."""
@@ -710,10 +729,13 @@ class App(tk.Tk):
             lab=tk.Label(steps,text=t,bg=("#08733F" if j==0 else "#EEF2F3"),fg=("white" if j==0 else "#233B49"),font=("Segoe UI",10,"bold"),padx=14,pady=9,bd=1,relief="solid")
             lab.pack(side="left",fill="x",expand=True,padx=(0,2))
 
-        # Authentication controls removed from the user workflow. The application
-        # automatically tries public/direct SAR libraries first and records any access restriction.
-        self.edl_token=tk.StringVar(); self.esa_token=tk.StringVar()
-        self.cdse_token=tk.StringVar(); self.cdse_client_id=tk.StringVar(); self.cdse_client_secret=tk.StringVar()
+        # Public routes remain automatic. Optional Earthdata Login unlocks protected NISAR/ASF scenes.
+        self.edl_token=tk.StringVar(); self.edl_user=tk.StringVar(value=os.environ.get("EARTHDATA_USERNAME","")); self.edl_password=tk.StringVar()
+        self.esa_token=tk.StringVar(); self.cdse_token=tk.StringVar(); self.cdse_client_id=tk.StringVar(); self.cdse_client_secret=tk.StringVar()
+        edl=ttk.LabelFrame(f,text="Earthdata Login opcional — NISAR/ASF protegido",padding=8); edl.pack(fill="x",pady=(0,6))
+        ttk.Label(edl,text="Usuário:").grid(row=0,column=0,sticky="w"); ttk.Entry(edl,textvariable=self.edl_user,width=28).grid(row=0,column=1,sticky="w",padx=(5,12))
+        ttk.Label(edl,text="Senha:").grid(row=0,column=2,sticky="w"); ttk.Entry(edl,textvariable=self.edl_password,show="•",width=28).grid(row=0,column=3,sticky="w",padx=5)
+        ttk.Label(edl,text="Não é armazenada. O programa também tenta EARTHDATA_* e _netrc/.netrc automaticamente.",foreground="#666").grid(row=1,column=0,columnspan=4,sticky="w",pady=(4,0))
         providers=ttk.LabelFrame(f,text="Fontes SAR automáticas — prioridade máxima",padding=12); providers.pack(fill="x",pady=(4,10))
         ttk.Label(providers,text="ESA BIOMASS — banda P",font=("Segoe UI",10,"bold")).grid(row=0,column=0,sticky="w")
         ttk.Label(providers,text="PRIORIDADE 1 — consulta automática das coleções BIOMASS L1/L2 e FP_AGB_L2B; processamento do produto disponível mais adequado.").grid(row=0,column=1,sticky="w",padx=8)
@@ -736,7 +758,7 @@ class App(tk.Tk):
         self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
         remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
         self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
-        self._set(self.remote_text,"A análise é automática e SAR-FIRST. Não é necessário informar tokens Earthdata/ESA.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
+        self._set(self.remote_text,"A análise é automática e SAR-FIRST. Rotas públicas são tentadas sem credenciais; Earthdata Login é opcional para liberar NISAR/ASF protegido.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
 
     def _test_cdse(self):
         try:
@@ -926,13 +948,13 @@ class App(tk.Tk):
         if self.sar_paths:return self._execute_main(event)
         # Snapshot every Tk variable on the GUI thread before starting the worker.
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
-        edl_token=self.edl_token.get().strip(); cdse_token=self.cdse_token.get().strip()
+        edl_token=self.edl_token.get().strip(); edl_user=self.edl_user.get().strip(); edl_password=self.edl_password.get(); cdse_token=self.cdse_token.get().strip()
         cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
         self._analysis_running=True; self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando e processando SAR em segundo plano…")
         def worker():
             try:
-                sar=automatic_pipeline(gdf,biome,phys,token,edl_token=edl_token,cdse_token=cdse_token,cdse_client_id=cdse_client_id,cdse_client_secret=cdse_client_secret)
+                sar=automatic_pipeline(gdf,biome,phys,token,edl_user=edl_user,edl_password=edl_password,edl_token=edl_token,cdse_token=cdse_token,cdse_client_id=cdse_client_id,cdse_client_secret=cdse_client_secret)
                 try: soil_profiles=pronasolos_soc_profiles(gdf)
                 except Exception as e: soil_profiles={"error":str(e)}
                 self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))
@@ -1086,10 +1108,6 @@ class App(tk.Tk):
                 cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
                 ad=audit.get("asf_download") or {}
                 if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
-                ready=audit.get("lband_candidate_readiness") or {}
-                if ready:
-                    diag.append(f"L-BAND AUTENTICADO — candidatos={ready.get('candidate_count',0)} | full-pol={ready.get('full_pol_candidates',0)} | NISAR GCOV={ready.get('gcov_candidates',0)}")
-                    diag.append("  "+str(ready.get("note","")))
                 matrix=audit.get("national_route_matrix") or {}
                 if matrix:
                     diag.append("COBERTURA PREDITIVA NACIONAL: "+str(matrix.get("local_numeric_state")))
@@ -1117,7 +1135,7 @@ class App(tk.Tk):
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
                          "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
-            lines=([f"AVISO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
+            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
             for r in rows:
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
