@@ -42,6 +42,8 @@ jobs:
           assert "state=\"readonly\"" not in src[src.index("def _project"):src.index("def _spatial")], "manual biome selector still present"
           assert "CCIR — código INCRA/SNCR" in src, "CCIR opening input missing"
           assert "CARREGAR ARQUIVO VETORIAL" in src[src.index("def _project"):src.index("def _spatial")], "opening vector upload missing"
+          assert "Buscar CAR no SICAR" not in src and "Buscar CCIR no SIGEF" not in src, "manual registry lookup buttons must be absent"
+          assert "A consulta CAR/SICAR ou CCIR/SIGEF ocorre automaticamente" in src, "registry lookup must run from EXECUTAR ANÁLISE"
           assert "Carregar KML / GeoJSON" not in src[src.index("def _spatial"):src.index("def _remote")], "old vector upload still present"
           assert "def _reset_analysis_state" in src, "state reset missing"
           assert src.count("self._reset_analysis_state()") >= 3, "CAR CCIR vector reset hooks missing"
@@ -50,10 +52,13 @@ jobs:
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
           assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
-          assert "enform_header.jpg" in src and "Approved Enform mask is rendered exactly once" in src, "approved single-mask header missing"
-          header_block=src[src.index('visual=base/"enform_header.jpg"'):src.index("# Global action bar")]
+          assert "enform_header.png" in src and "Approved high-resolution Enform mask" in src, "approved high-resolution mask missing"
+          header_block=src[src.index('visual=base/"enform_header.png"'):src.index("# Global action bar")]
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
-          assert 'self.geometry("1713x918")' in src and "header_h=210" in src and "width=288" in src, "approved dashboard proportions missing"
+          assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
+          assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
+          assert "Esri World Imagery (público)" in src and "server.arcgisonline.com/ArcGIS/rest/services/World_Imagery" in src, "no-key satellite polygon map fallback missing"
+          assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
@@ -134,10 +139,10 @@ jobs:
           '@ | Set-Content make_icon.py -Encoding UTF8
           python make_icon.py
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.jpg;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
-        run: Copy-Item -Force 'enform_header.jpg' 'dist\Enform Verde\enform_header.jpg'
+        run: Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
       - name: Verify packaged Python runtime
         shell: pwsh
         run: |
@@ -146,8 +151,9 @@ jobs:
           $dll = Get-ChildItem -Path $root -Recurse -Filter 'python311.dll' | Select-Object -First 1
           if (!(Test-Path $exe)) { throw 'Enform Verde.exe was not created' }
           if (!$dll) { throw 'python311.dll is missing from packaged application' }
-          $header = Join-Path $root 'enform_header.jpg'
-          if (!(Test-Path $header)) { throw 'enform_header.jpg is missing from packaged application' }
+          $header = Join-Path $root 'enform_header.png'
+          if (!(Test-Path $header)) { throw 'enform_header.png is missing from packaged application' }
+          if ((Get-Item $header).Length -lt 20000) { throw 'Approved high-resolution Enform mask is unexpectedly small' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh

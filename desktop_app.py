@@ -363,7 +363,7 @@ def self_test():
 
 class App(tk.Tk):
     def __init__(self):
-        super().__init__(); self.title("Enform Verde"); self.geometry("1713x918"); self.minsize(1280,720)
+        super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
         self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue()
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
@@ -380,23 +380,23 @@ class App(tk.Tk):
         root=ttk.Frame(self); root.pack(fill="both",expand=True)
         base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
 
-        # Wide header: preserve source aspect ratio; never stretch independently in X/Y.
+        # Approved high-resolution Enform mask; render once, preserve aspect ratio, add no text overlays.
         header_h=210
-        header=tk.Canvas(root,height=header_h,bg="#10291f",highlightthickness=0); header.pack(fill="x",side="top")
-        visual=base/"enform_header.jpg"
-        if visual.exists():
-            src=Image.open(visual).convert("RGB")
-            sw=max(self.winfo_width(),1713)
-            # cover crop. Aspect ratio is preserved, avoiding the distorted/pixel-burst look.
-            scale=max(sw/src.width,header_h/src.height)
-            im=src.resize((max(sw,round(src.width*scale)),max(header_h,round(src.height*scale))),Image.Resampling.LANCZOS)
-            left=max(0,(im.width-sw)//2); top=max(0,(im.height-header_h)//2)
-            im=im.crop((left,top,left+sw,top+header_h))
+        header=tk.Canvas(root,height=header_h,bg="#063D26",highlightthickness=0); header.pack(fill="x",side="top")
+        visual=base/"enform_header.png"
+        self.header_source=Image.open(visual).convert("RGB") if visual.exists() else None
+        def render_header(event=None):
+            w=max(1,int(event.width if event else header.winfo_width() or 1400)); h=max(1,int(event.height if event else header_h))
+            header.delete("all")
+            if self.header_source is None:
+                return
+            # Aspect ratio is preserved; the whole approved mask stays visible at every window size.
+            scale=min(w/self.header_source.width,h/self.header_source.height)
+            iw=max(1,round(self.header_source.width*scale)); ih=max(1,round(self.header_source.height*scale))
+            im=self.header_source.resize((iw,ih),Image.Resampling.LANCZOS)
             self.header_photo=ImageTk.PhotoImage(im)
-            header.create_image(0,0,image=self.header_photo,anchor="nw")
-            # Approved Enform mask is rendered exactly once; no text/logo overlay is permitted.\n        else:
-            header.create_text(24,30,text="enform Verde",anchor="nw",fill="white",font=("Segoe UI",28,"bold"))
-            header.create_text(26,90,text="Carbono florestal • sensoriamento remoto • SAR",anchor="nw",fill="white",font=("Segoe UI",10,"bold"))
+            header.create_image((w-iw)//2,(h-ih)//2,image=self.header_photo,anchor="nw")
+        header.bind("<Configure>",render_header); render_header()
 
         # Global action bar: EXECUTAR ANÁLISE must remain visible regardless of selected section.
         action=ttk.Frame(root,padding=(305,12,32,10)); action.pack(fill="x",side="top")
@@ -454,10 +454,9 @@ class App(tk.Tk):
         for i,(lab,var) in enumerate(fields,1):
             ttk.Label(f,text=lab).grid(row=i,column=0,sticky="w",pady=8)
             ttk.Entry(f,textvariable=var,width=62).grid(row=i,column=1,sticky="ew",padx=10)
-        ttk.Button(f,text="Buscar CAR no SICAR",command=self.car_lookup).grid(row=2,column=2,padx=6)
-        ttk.Button(f,text="Buscar CCIR no SIGEF",command=self.ccir_lookup).grid(row=3,column=2,padx=6)
-        ttk.Button(f,text="CARREGAR ARQUIVO VETORIAL",command=self.pick_vector,style="Run.TButton").grid(row=4,column=1,sticky="w",pady=18,padx=10)
-        ttk.Label(f,text="KML • KMZ • SHP • GeoJSON • GPKG",foreground="#666").grid(row=4,column=2,sticky="w")
+        ttk.Label(f,text="A consulta CAR/SICAR ou CCIR/SIGEF ocorre automaticamente ao pressionar EXECUTAR ANÁLISE.",foreground="#52645E",wraplength=900).grid(row=4,column=0,columnspan=3,sticky="w",pady=(12,4))
+        ttk.Button(f,text="CARREGAR ARQUIVO VETORIAL",command=self.pick_vector,style="Run.TButton").grid(row=5,column=1,sticky="w",pady=10,padx=10)
+        ttk.Label(f,text="KML • KMZ • SHP • GeoJSON • GPKG",foreground="#666").grid(row=5,column=2,sticky="w")
         f.columnconfigure(1,weight=1)
 
     def _spatial(self):
@@ -465,14 +464,14 @@ class App(tk.Tk):
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
-        ttk.Button(row,text="VISUALIZAR SATÉLITE GOOGLE",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
+        ttk.Button(row,text="VISUALIZAR SATÉLITE + POLÍGONO",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
         keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
-        ttk.Label(keyrow,text="Google Maps Platform API key (somente nesta sessão):").pack(side="left")
+        ttk.Label(keyrow,text="Chave Google opcional (sem chave, imagem pública Esri):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
         ttk.Label(keyrow,text="Map Tiles API • apenas visualização",foreground="#666").pack(side="left")
         self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
-        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue o polígono e clique em VISUALIZAR SATÉLITE GOOGLE.",fill="#455")
+        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
         self.spatial_text=tk.Text(f,height=7,wrap="word"); self.spatial_text.pack(fill="x",pady=4)
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
@@ -481,11 +480,9 @@ class App(tk.Tk):
         Google imagery is visualization-only and is never passed to scientific analysis."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         key=self.google_maps_key.get().strip()
-        if not key:
-            self.status.set("Mapa Google aguardando chave; análise SAR permanece independente.")
-            return
+        provider="Google Maps" if key else "Esri World Imagery (público)"
         try:
-            self.status.set("Carregando imagem de satélite Google..."); self.update_idletasks()
+            self.status.set(f"Carregando imagem de satélite ({provider})..."); self.update_idletasks()
             g=self.gdf.to_crs(4326); minx,miny,maxx,maxy=map(float,g.total_bounds)
             w=max(700,self.map_canvas.winfo_width()); h=max(300,self.map_canvas.winfo_height()); tile=256
             def world(lon,lat,z):
@@ -496,12 +493,16 @@ class App(tk.Tk):
                 if (x2-x1)*tile<=w*.82 and (y2-y1)*tile<=h*.82:zoom=z
                 else:break
             cx=(minx+maxx)/2; cy=(miny+maxy)/2; wx,wy=world(cx,cy,zoom); ntx=max(3,math.ceil(w/tile)+2); nty=max(3,math.ceil(h/tile)+2); tx0=math.floor(wx-ntx/2); ty0=math.floor(wy-nty/2)
-            sess=requests.post("https://tile.googleapis.com/v1/createSession",params={"key":key},json={"mapType":"satellite","language":"pt-BR","region":"BR"},timeout=(10,30)); sess.raise_for_status(); js=sess.json(); token=js["session"]; ts=int(js.get("tileWidth",256))
+            if key:
+                sess=requests.post("https://tile.googleapis.com/v1/createSession",params={"key":key},json={"mapType":"satellite","language":"pt-BR","region":"BR"},timeout=(10,30)); sess.raise_for_status(); js=sess.json(); token=js["session"]; ts=int(js.get("tileWidth",256)); copyright=js.get("copyright","Google")
+                tile=lambda x,y:f"https://tile.googleapis.com/v1/2dtiles/{zoom}/{x}/{y}?session={token}&key={key}"
+            else:
+                js={}; ts=256; copyright="Esri / Maxar — World Imagery"
+                tile=lambda x,y:f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{y}/{x}"
             mosaic=Image.new("RGB",(ntx*ts,nty*ts))
             for yy in range(nty):
                 for xx in range(ntx):
-                    url=f"https://tile.googleapis.com/v1/2dtiles/{zoom}/{tx0+xx}/{ty0+yy}"
-                    rr=requests.get(url,params={"session":token,"key":key},timeout=(10,30)); rr.raise_for_status(); im=Image.open(io.BytesIO(rr.content)).convert("RGB"); mosaic.paste(im,(xx*ts,yy*ts))
+                    rr=requests.get(tile(tx0+xx,ty0+yy),timeout=(10,30)); rr.raise_for_status(); im=Image.open(io.BytesIO(rr.content)).convert("RGB"); mosaic.paste(im,(xx*ts,yy*ts))
             # crop mosaic to canvas centre
             pcx=(wx-tx0)*ts; pcy=(wy-ty0)*ts; left=int(pcx-w/2); top=int(pcy-h/2); view=mosaic.crop((left,top,left+w,top+h))
             self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
@@ -514,8 +515,8 @@ class App(tk.Tk):
                     for lon,lat in p.exterior.coords:
                         x,y=px(lon,lat); pts.extend((x,y))
                     if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
-            copyright=js.get("copyright","Google"); self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline=""); self.map_canvas.create_text(w-8,h-12,anchor="e",text=copyright+" • Google",fill="#333",font=("Segoe UI",8))
-            self.status.set(f"Google Satélite carregado — zoom {zoom}. Uso exclusivo para visualização.")
+            self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline=""); self.map_canvas.create_text(w-8,h-12,anchor="e",text=copyright,fill="#333",font=("Segoe UI",8))
+            self.status.set(f"{provider} carregado — zoom {zoom}. Uso exclusivo para visualização.")
         except Exception as e:
             self.status.set("Falha ao carregar Google Satélite."); messagebox.showerror("Google Maps",str(e))
 
@@ -679,19 +680,28 @@ class App(tk.Tk):
         if self._analysis_running:
             self.status.set("Análise já em execução; aguarde.")
             return
-        car=self.car.get().strip().upper(); ccir=re.sub(r"\\D","",self.ccir.get())
+        car=self.car.get().strip().upper(); ccir=re.sub(r"\D","",self.ccir.get())
+        if car and ccir:return messagebox.showwarning("Identificação","Informe CAR ou CCIR, não ambos. Para outro perímetro, carregue um arquivo vetorial.")
         if car and (self.active_source!="CAR" or self.active_input_id!=car):
-            return messagebox.showinfo("Perímetro","Use 'Buscar CAR no SICAR' antes de executar a análise.")
-        if ccir and (self.active_source!="CCIR" or self.active_input_id!=ccir):
-            return messagebox.showinfo("Perímetro","Use 'Buscar CCIR no SIGEF' antes de executar a análise.")
-        if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Busque CAR/CCIR ou carregue um vetor.")
+            self._reset_analysis_state(); self.status.set("Consultando automaticamente o CAR no SICAR…"); self.update_idletasks()
+            try:
+                self.gdf=resolve_car(car); self.active_source="CAR"; self.active_input_id=car; self.ccir.set(""); self._show_geom("SICAR — consulta automática")
+            except Exception as e:
+                self.status.set("Consulta automática CAR/SICAR não concluída."); return messagebox.showwarning("SICAR",str(e))
+        elif ccir and (self.active_source!="CCIR" or self.active_input_id!=ccir):
+            self._reset_analysis_state(); self.status.set("Consultando automaticamente CCIR/SNCR e perímetro SIGEF…"); self.update_idletasks()
+            try:
+                self.gdf=resolve_ccir_sigef(ccir); self.active_source="CCIR"; self.active_input_id=ccir; self.car.set(""); self._show_geom("CCIR/SNCR — SIGEF automático")
+            except Exception as e:
+                self.status.set("Consulta automática CCIR/SNCR/SIGEF não concluída."); return messagebox.showwarning("CCIR / SIGEF",str(e))
+        if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR, CCIR ou carregue um arquivo vetorial; depois pressione EXECUTAR ANÁLISE.")
         if self.sar_paths:return self._execute_main(event)
         # Snapshot every Tk variable on the GUI thread before starting the worker.
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         edl_token=self.edl_token.get().strip(); cdse_token=self.cdse_token.get().strip()
         cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
         self._analysis_running=True; self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
-        self.status.set("Consultando SAR em segundo plano…")
+        self.status.set("Consultando e processando SAR em segundo plano…")
         def worker():
             try:
                 sar=automatic_pipeline(gdf,biome,phys,token,edl_token=edl_token,cdse_token=cdse_token,cdse_client_id=cdse_client_id,cdse_client_secret=cdse_client_secret)
@@ -759,8 +769,19 @@ class App(tk.Tk):
                     self.project["sar_result"]=sar
                     self.project["sar_warning"]=msg
                 else:
-                    self.project["last_result"]="ANÁLISE INCOMPLETA — SAR NÃO PROCESSADO\n\n"+msg
-                    self._set(self.res,self.project["last_result"]); self.nb.select(self.tabs[3]); self.status.set("SAR não processado e sem referência secundária compatível."); return
+                    # Report actual SAR operations while withholding unsupported AGB/carbon numbers.
+                    audit=sar.get("audit") or {}; lines=["RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA",f"Projeto: {self.name.get()}",f"Área da AOI: {area:,.2f} ha",f"Bioma: {self.biome.get() or 'não determinado'} | Fitofisionomia: {self.phys.get() or 'não determinada'}","", "Motivo: "+str(msg), "", "O SAR foi processado, mas o catálogo não contém equação validada compatível com os preditores e o domínio desta AOI. Não se publica AGB nem carbono sem suporte defensável.","", "PRODUTOS E PIXELS PROCESSADOS:"]
+                    processed=audit.get("processed_without_agb") or []
+                    for item in processed:
+                        lines.append(f"• {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
+                        for z in item.get("stats") or []: lines.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
+                        if item.get("scene_ids"): lines.append("  Cenas: "+", ".join(map(str,item["scene_ids"])))
+                    for z in sar.get("stats") or []: lines.append("• raster processado: "+json.dumps(z,ensure_ascii=False,sort_keys=True))
+                    for w in audit.get("warnings") or []: lines.append("Aviso: "+str(w))
+                    lines += ["", "Métricas de validação AGB: RMSE, MAE, viés e R² não são aplicáveis sem modelo treinado/validado compatível. Incerteza da AGB: não estimável.", "Estado: PROCESSAMENTO SAR REAL CONCLUÍDO; ESTIMATIVA AGB PENDENTE DE MODELO/PARCELAS COMPATÍVEIS."]
+                    report="\n".join(lines); self.project["partial_sar_analysis"]={"area_ha":area,"sar_result":sar,"report":report}; self.project["area_ha"]=area; self.project["last_result"]=report
+                    self._set(self.remote_text,"SAR processado na AOI. AGB não estimada por falta de modelo validado compatível; consulte a trilha, os pixels processados e o motivo no relatório.")
+                    self._set(self.res,report); self.nb.select(self.tabs[3]); self.status.set("Processamento SAR concluído; AGB não estimada sem calibração compatível."); return
             agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
             unc_kind=str(sar.get("uncertainty_kind") or "incerteza do produto/modelo")
             unc_mult=1.0 if "amplitude bibliográfica" in unc_kind else 1.96
