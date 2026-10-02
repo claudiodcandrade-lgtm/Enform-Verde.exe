@@ -616,7 +616,7 @@ class App(tk.Tk):
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
     def show_google_map(self,refresh=False):
-        """Satellite visualization: Google Static when keyed, then public Esri export, then offline vector."""
+        """Satellite visualization: Google when keyed, then Sentinel-2, then Esri, then offline vector."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()
@@ -645,7 +645,7 @@ class App(tk.Tk):
             return out
 
         def google_image(rs):
-            if not key:return None,"Google não configurado"
+            if not key:return None
             params=[("size",f"{min(req_w,640)}x{min(req_h,640)}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
             for coords in rs:
                 pts="|".join(f"{lat:.6f},{lon:.6f}" for lon,lat in coords)
@@ -654,7 +654,7 @@ class App(tk.Tk):
             rr.raise_for_status()
             if "image" not in (rr.headers.get("Content-Type") or "").lower():
                 raise RuntimeError("resposta Google não é imagem")
-            return Image.open(io.BytesIO(rr.content)).convert("RGB").resize((w,h),Image.Resampling.LANCZOS),None
+            return Image.open(io.BytesIO(rr.content)).convert("RGB").resize((w,h),Image.Resampling.LANCZOS)
 
         def esri_image(rs):
             minx,miny,maxx,maxy=map(float,g.total_bounds)
@@ -670,9 +670,8 @@ class App(tk.Tk):
             from PIL import ImageDraw
             d=ImageDraw.Draw(im,"RGBA"); iw,ih=im.size
             def px(lon,lat):
-                x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*iw
-                y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*ih
-                return (x,y)
+                return ((lon-bx[0])/max(bx[2]-bx[0],1e-12)*iw,
+                        (bx[3]-lat)/max(bx[3]-bx[1],1e-12)*ih)
             for coords in rs:
                 pts=[px(float(lon),float(lat)) for lon,lat in coords]
                 if len(pts)>=4:
@@ -683,22 +682,27 @@ class App(tk.Tk):
         def worker():
             errors=[]; rs=rings()
             if not rs:
-                self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"); return
+                self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"))
+                return
             if key:
                 try:
-                    view,_=google_image(rs)
-                    self._map_queue.put((generation,view,[],"Google Maps Static API",None,"Google",None); return
+                    view=google_image(rs)
+                    self._map_queue.put((generation,view,[],"Google Maps Static API",None,"Google",None))
+                    return
                 except Exception as e:errors.append("Google: "+str(e))
             try:
                 p=sentinel2_preview(g)
                 copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {float(p.get('cloud_cover',0)):.1f}%"
-                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None); return
+                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
+                return
             except Exception as e:errors.append("Sentinel-2: "+str(e))
             try:
                 view=esri_image(rs)
-                self._map_queue.put((generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None); return
+                self._map_queue.put((generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None))
+                return
             except Exception as e:errors.append("Esri: "+str(e))
-            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri",None,None," | ".join(errors))
+            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri",None,None," | ".join(errors)))
+
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
         self.after(80,self._poll_map_queue)
 
