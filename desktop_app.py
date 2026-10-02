@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.7-PROFESSIONAL"
+APP_VERSION="3.24.8-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -551,10 +551,10 @@ class App(tk.Tk):
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
         ttk.Button(row,text="VISUALIZAR SATÉLITE + POLÍGONO",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
         keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
-        ttk.Label(keyrow,text="Chave Google opcional (sem chave, imagem pública Esri):").pack(side="left")
+        ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Map Tiles API • apenas visualização",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Maps Static API • polígono sobre imagem de satélite",foreground="#666").pack(side="left")
         self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
         self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None
         self.map_canvas.bind("<Configure>",self._on_map_resize)
@@ -566,51 +566,58 @@ class App(tk.Tk):
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
     def show_google_map(self,refresh=False):
-        """Load satellite tiles asynchronously and bind the response to the current AOI generation."""
+        """Render the AOI with one Google Maps Static API request; no tile mosaic."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         self._map_generation+=1; generation=self._map_generation
-        self._satellite_map_visible=False
         key=self.google_maps_key.get().strip()
-        provider="Google Maps" if key else "Esri World Imagery (público)"
-        g=self.gdf.to_crs(4326).copy(); w=max(700,self.map_canvas.winfo_width()); h=max(300,self.map_canvas.winfo_height())
-        if not refresh:self.status.set(f"Carregando imagem de satélite ({provider}) em segundo plano...")
+        if not key:
+            self._satellite_map_visible=False
+            self._schedule_offline_map_fit("Polígono carregado — informe uma chave Google Maps Static API para imagem de satélite")
+            self.status.set("Polígono exibido. Para satélite, informe uma chave Google Maps Static API.")
+            return
+        g=self.gdf.to_crs(4326).copy()
+        w=max(500,self.map_canvas.winfo_width()); h=max(280,self.map_canvas.winfo_height())
+        ratio=w/max(h,1)
+        if ratio>=1:
+            req_w=640; req_h=max(180,min(640,round(640/ratio)))
+        else:
+            req_h=640; req_w=max(180,min(640,round(640*ratio)))
+        if not refresh:self.status.set("Carregando Google Maps Static API com o polígono...")
         self.update_idletasks()
-        def worker():
-          try:
-            minx,miny,maxx,maxy=map(float,g.total_bounds); tile=256
-            def world(lon,lat,z):
-                n=2**z; lat=max(-85.05112878,min(85.05112878,lat)); x=(lon+180)/360*n; y=(1-math.asinh(math.tan(math.radians(lat)))/math.pi)/2*n; return x,y
-            zoom=3
-            for z in range(3,23):
-                x1,y1=world(minx,maxy,z); x2,y2=world(maxx,miny,z)
-                if (x2-x1)*tile<=w*.82 and (y2-y1)*tile<=h*.82:zoom=z
-                else:break
-            cx=(minx+maxx)/2; cy=(miny+maxy)/2; wx,wy=world(cx,cy,zoom); ntx=max(3,math.ceil(w/tile)+2); nty=max(3,math.ceil(h/tile)+2); tx0=math.floor(wx-ntx/2); ty0=math.floor(wy-nty/2)
-            if key:
-                sess=requests.post("https://tile.googleapis.com/v1/createSession",params={"key":key},json={"mapType":"satellite","language":"pt-BR","region":"BR"},timeout=(10,30)); sess.raise_for_status(); js=sess.json(); token=js["session"]; ts=int(js.get("tileWidth",256)); copyright=js.get("copyright","Google")
-                tile=lambda x,y:f"https://tile.googleapis.com/v1/2dtiles/{zoom}/{x}/{y}?session={token}&key={key}"
-            else:
-                js={}; ts=256; copyright="Esri / Maxar — World Imagery"
-                tile=lambda x,y:f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{y}/{x}"
-            mosaic=Image.new("RGB",(ntx*ts,nty*ts))
-            for yy in range(nty):
-                for xx in range(ntx):
-                    rr=requests.get(tile(tx0+xx,ty0+yy),timeout=(10,30)); rr.raise_for_status(); im=Image.open(io.BytesIO(rr.content)).convert("RGB"); mosaic.paste(im,(xx*ts,yy*ts))
-            # crop mosaic to canvas centre
-            pcx=(wx-tx0)*ts; pcy=(wy-ty0)*ts; left=int(pcx-w/2); top=int(pcy-h/2); view=mosaic.crop((left,top,left+w,top+h))
-            points=[]
-            def px(lon,lat):
-                x,y=world(lon,lat,zoom); return (x-tx0)*ts-left,(y-ty0)*ts-top
+
+        def polygon_paths():
+            paths=[]
+            span=max(float(g.total_bounds[2]-g.total_bounds[0]),float(g.total_bounds[3]-g.total_bounds[1]),1e-7)
+            tol=max(span/1200.0,1e-7)
             for geom in g.geometry:
-                polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else [geom]
-                for p in polys:
-                    pts=[]
-                    for lon,lat in p.exterior.coords:
-                        x,y=px(lon,lat); pts.extend((x,y))
-                    if len(pts)>=6:points.append(pts)
-            self.after(0,self._finish_satellite_map,generation,view,points,provider,zoom,copyright,None)
-          except Exception as e:
-            self.after(0,self._finish_satellite_map,generation,None,[],provider,None,None,str(e))
+                geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    ring=poly.simplify(tol,preserve_topology=True).exterior
+                    coords=list(ring.coords)
+                    if len(coords)>180:
+                        step=max(1,math.ceil(len(coords)/180))
+                        coords=coords[::step]
+                        if coords[-1]!=coords[0]:coords.append(coords[0])
+                    if len(coords)>=4:
+                        pts="|".join(f"{lat:.6f},{lon:.6f}" for lon,lat in coords)
+                        paths.append("color:0xff8a00ff|weight:4|fillcolor:0xff8a0033|"+pts)
+            return paths
+
+        def worker():
+            try:
+                params=[("size",f"{req_w}x{req_h}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
+                for path in polygon_paths():params.append(("path",path))
+                if len(params)<=5:raise ValueError("A geometria não contém polígono utilizável.")
+                rr=requests.get("https://maps.googleapis.com/maps/api/staticmap",params=params,timeout=(10,45))
+                rr.raise_for_status()
+                ctype=(rr.headers.get("Content-Type") or "").lower()
+                if "image" not in ctype:
+                    raise RuntimeError("Google Maps Static API não retornou imagem: "+rr.text[:220])
+                view=Image.open(io.BytesIO(rr.content)).convert("RGB")
+                view=view.resize((w,h),Image.Resampling.LANCZOS)
+                self.after(0,self._finish_satellite_map,generation,view,[],"Google Maps Static API",None,"Google",None)
+            except Exception as e:
+                self.after(0,self._finish_satellite_map,generation,None,[],"Google Maps Static API",None,None,str(e))
         threading.Thread(target=worker,daemon=True).start()
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
