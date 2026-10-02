@@ -466,6 +466,12 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
         except Exception as e: errors.append(Path(p).name+": "+str(e))
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,
             "provider":"Copernicus Data Space Ecosystem catalogue/direct asset fallback","errors":errors}
+def _jaxa_mosaic_gamma0_db(dn,cf=-83.0):
+    """JAXA global mosaic DN -> gamma0 dB: 10*log10(DN^2)+CF."""
+    a=np.asarray(dn,dtype=np.float64)
+    with np.errstate(divide="ignore",invalid="ignore"):
+        return 10.0*np.log10(np.square(a))+float(cf)
+
 def planetary_alos_palsar(gdf,cache,limit=12):
     """Credential-free L-band route: JAXA ALOS/PALSAR annual 25 m mosaic on Planetary Computer.
     Processes real HH/HV pixels inside the AOI. No AGB is fabricated without calibration."""
@@ -488,8 +494,8 @@ def planetary_alos_palsar(gdf,cache,limit=12):
                         gj=transform_geom("EPSG:4326",src.crs,geom); ar,_=mask(src,[gj],crop=True,filled=False)
                         v=np.ma.array(ar[0]).compressed(); v=v[np.isfinite(v)&(v>0)]
                         if not len(v):continue
-                        db=10*np.log10(v)-83.0
-                        stats.append({"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean_dn":float(v.mean()),"mean_db":float(db.mean()),"sd_db":float(db.std(ddof=1)) if len(db)>1 else 0.0,"pixel_state":"PROCESSADO"})
+                        db=_jaxa_mosaic_gamma0_db(v,-83.0)
+                        stats.append({"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean_dn":float(v.mean()),"mean_db":float(db.mean()),"sd_db":float(db.std(ddof=1)) if len(db)>1 else 0.0,"calibration":"JAXA gamma0 dB = 10*log10(DN^2)-83","pixel_state":"PROCESSADO"})
                         paths.append(a["href"])
             except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
         if len(stats)>=2:break
