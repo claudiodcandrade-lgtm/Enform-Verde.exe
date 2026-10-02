@@ -205,7 +205,10 @@ jobs:
         run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
-        run: Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
+        run: |
+          Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
+          New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
+          Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
       - name: Verify packaged Python runtime
         shell: pwsh
         run: |
@@ -224,9 +227,26 @@ jobs:
           $src = Join-Path $PWD 'dist\Enform Verde'
           $dst = Join-Path $env:RUNNER_TEMP 'Enform Verde Clean Test'
           Copy-Item -Path $src -Destination $dst -Recurse
+          $fixture = Join-Path $dst 'acceptance'
+          New-Item -ItemType Directory -Force -Path $fixture | Out-Null
+          Copy-Item 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' (Join-Path $fixture 'Teste_SAR_Biomassa_Tapajos.kmz') -Force
           $exe = Join-Path $dst 'Enform Verde.exe'
-          $p = Start-Process -FilePath $exe -ArgumentList '--self-test' -WorkingDirectory $dst -PassThru -Wait
-          if ($p.ExitCode -ne 0) { throw "EXE self-test failed: $($p.ExitCode)" }
+          $oldPath = $env:PATH
+          try {
+            $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
+            $ui = Start-Process -FilePath $exe -ArgumentList '--ui-smoke' -WorkingDirectory $dst -PassThru -Wait
+            if ($ui.ExitCode -ne 0) { throw "Compiled EXE UI smoke test failed: $($ui.ExitCode)" }
+            $p = Start-Process -FilePath $exe -ArgumentList @('--acceptance-test','acceptance\Teste_SAR_Biomassa_Tapajos.kmz') -WorkingDirectory $dst -PassThru -Wait
+            if ($p.ExitCode -ne 0) {
+              $log = Join-Path $env:TEMP 'enform_verde_acceptance_error.txt'
+              if (Test-Path $log) { Get-Content $log }
+              throw "Compiled EXE Tapajos SAR/AOI acceptance failed: $($p.ExitCode)"
+            }
+            $result = Join-Path $env:TEMP 'enform_verde_acceptance_result.json'
+            if (!(Test-Path $result)) { throw 'Compiled EXE did not produce its acceptance summary' }
+            Get-Content $result
+          }
+          finally { $env:PATH = $oldPath }
       - name: Add instructions
         shell: pwsh
         run: |
@@ -236,6 +256,7 @@ jobs:
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
           A análise espacial aceita vetor local e tenta consulta pública do SICAR, SIGEF e Embrapa quando houver internet.
+          O pacote inclui acceptance\Teste_SAR_Biomassa_Tapajos.kmz para testar a AOI de referência.
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:

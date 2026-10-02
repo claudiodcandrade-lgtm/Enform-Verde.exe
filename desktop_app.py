@@ -369,7 +369,35 @@ def self_test():
     assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8
     assert ROOT_LOW<ROOT_RATIO<ROOT_HIGH
     assert abs(CARBON_FRACTION-0.47)<1e-9
-    print("ENFORM_VERDE_SELF_TEST_OK")
+    if sys.stdout is not None:print("ENFORM_VERDE_SELF_TEST_OK")
+
+def acceptance_test(kmz_path):
+    """Run the real Tapajós SAR acceptance path from the compiled executable."""
+    gdf=read_vector(kmz_path)
+    if gdf.empty:raise RuntimeError("AOI de aceitação sem feições.")
+    metrics=geom_metrics(gdf)
+    result=automatic_pipeline(gdf,"Amazônia","Floresta Ombrófila Densa das Terras Baixas",
+                              cache=str(Path(tempfile.gettempdir())/"enform_verde_acceptance_sar"))
+    audit=result.get("audit") or {}
+    processed=list(audit.get("processed_without_agb") or [])
+    pixel_count=sum(int(s.get("n",0)) for item in processed for s in item.get("stats",[]))
+    pixel_count+=sum(int(s.get("n",0)) for s in result.get("stats",[]))
+    if pixel_count<=0:raise RuntimeError("Nenhum pixel SAR foi processado dentro da AOI Tapajós.")
+    agb=result.get("agb_mg_ha")
+    if agb is None:
+        lit=result.get("literature_reference") or {}
+        if not lit.get("available") or not lit.get("sar_processed"):
+            raise RuntimeError("Pixels SAR foram processados, mas a referência regional Tapajós não foi selecionada corretamente.")
+    elif not str(result.get("data_origin","")).startswith("SAR"):
+        raise RuntimeError("Origem AGB incompatível: resultado numérico sem proveniência SAR.")
+    summary={"status":result.get("status"),"area_ha":metrics["area_ha"],"pixel_count":pixel_count,
+             "data_origin":result.get("data_origin"),"scene_count":len(audit.get("alos_palsar_public",{}).get("scene_ids",[]))+len(audit.get("sentinel1_public",{}).get("scene_ids",[])),
+             "fallback_agb_mg_ha":(result.get("literature_reference") or {}).get("agb_mg_ha")}
+    (Path(tempfile.gettempdir())/"enform_verde_acceptance_result.json").write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
+    return summary
+
+def ui_smoke_test():
+    root=App(); root.after(1200,root.destroy); root.mainloop()
 
 class App(tk.Tk):
     def __init__(self):
@@ -993,5 +1021,11 @@ class App(tk.Tk):
         if p:Path(p).write_text(txt+"\n\nFONTES\n"+self.src.get("1.0","end"),encoding="utf-8"); self.status.set("Relatório salvo.")
 
 if __name__=="__main__":
-    if "--self-test" in sys.argv:self_test()
+    if "--acceptance-test" in sys.argv:
+        try:acceptance_test(sys.argv[sys.argv.index("--acceptance-test")+1])
+        except Exception:
+            (Path(tempfile.gettempdir())/"enform_verde_acceptance_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
+            sys.exit(1)
+    elif "--ui-smoke" in sys.argv:ui_smoke_test()
+    elif "--self-test" in sys.argv:self_test()
     else:App().mainloop()
