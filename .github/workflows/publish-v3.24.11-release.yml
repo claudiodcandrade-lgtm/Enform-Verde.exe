@@ -1,0 +1,36 @@
+name: Publish Enform Verde v3.24.11 Release
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-v3.24.11-release.yml"
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download validated Windows artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release_asset
+          gh run download 37065186116             --repo ${{ github.repository }}             --name Enform-Verde-Windows-v3.24.11-PROFESSIONAL             --dir release_asset
+      - name: Package release ZIP
+        run: |
+          cd release_asset
+          zip -r ../Enform-Verde-Windows-v3.24.11-PROFESSIONAL.zip .
+          cd ..
+          sha256sum Enform-Verde-Windows-v3.24.11-PROFESSIONAL.zip
+      - name: Publish permanent GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v3.24.11-PROFESSIONAL"
+          ASSET="Enform-Verde-Windows-v3.24.11-PROFESSIONAL.zip"
+          if gh release view "$TAG" --repo ${{ github.repository }} >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --repo ${{ github.repository }} --clobber
+          else
+            gh release create "$TAG" "$ASSET"               --repo ${{ github.repository }}               --target a338e2e1b001e2b94b4fd50f7740b70a7de20614               --title "Enform Verde v3.24.11-PROFESSIONAL"               --notes "Build Windows validada no workflow 37065186116. Inclui cadeia de mapa Google -> Sentinel-2 -> Esri -> polígono offline, processamento SAR validado, Earthdata via earthaccess e ESA MAAP opcional."
+          fi
