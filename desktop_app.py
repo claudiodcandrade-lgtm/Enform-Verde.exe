@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.14-PROFESSIONAL"
+APP_VERSION="3.24.15-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -641,7 +641,19 @@ class App(tk.Tk):
         f.columnconfigure(1,weight=1)
 
     def _spatial(self):
-        f=self.tabs[1]; ttk.Label(f,text="Perímetro, diagnóstico e solo",style="H.TLabel").pack(anchor="w")
+        host=self.tabs[1]
+        tab_canvas=tk.Canvas(host,bg="#F4F6F5",highlightthickness=0)
+        tab_v=ttk.Scrollbar(host,orient="vertical",command=tab_canvas.yview)
+        tab_canvas.configure(yscrollcommand=tab_v.set)
+        tab_canvas.pack(side="left",fill="both",expand=True); tab_v.pack(side="right",fill="y")
+        f=ttk.Frame(tab_canvas,padding=(0,0,10,10))
+        win=tab_canvas.create_window((0,0),window=f,anchor="nw")
+        def sync_scroll(event=None):
+            tab_canvas.configure(scrollregion=tab_canvas.bbox("all"))
+            tab_canvas.itemconfigure(win,width=max(700,tab_canvas.winfo_width()))
+        f.bind("<Configure>",sync_scroll); tab_canvas.bind("<Configure>",sync_scroll)
+
+        ttk.Label(f,text="Perímetro, diagnóstico e solo",style="H.TLabel").pack(anchor="w")
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
@@ -654,6 +666,7 @@ class App(tk.Tk):
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
         ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri Imagery → Esri Street → NASA Blue Marble offline",foreground="#666").pack(side="left")
+
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
         self.ibge_phys_display=tk.StringVar(value="Aguardando classificação legenda_1.")
@@ -662,10 +675,20 @@ class App(tk.Tk):
         ttk.Label(ibgebox,text="Fitofisionomia IBGE (legenda_1):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
         ttk.Label(ibgebox,textvariable=self.ibge_phys_display,wraplength=840,foreground="#155D43").grid(row=1,column=1,sticky="w",padx=(8,0),pady=(4,0))
         ibgebox.columnconfigure(1,weight=1)
-        self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
+
+        map_frame=ttk.Frame(f); map_frame.pack(fill="both",expand=True,pady=(2,6))
+        self.map_canvas=tk.Canvas(map_frame,height=420,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
+                                  xscrollincrement=20,yscrollincrement=20)
+        self.map_hscroll=ttk.Scrollbar(map_frame,orient="horizontal",command=self.map_canvas.xview)
+        self.map_vscroll=ttk.Scrollbar(map_frame,orient="vertical",command=self.map_canvas.yview)
+        self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
+        self.map_canvas.grid(row=0,column=0,sticky="nsew"); self.map_vscroll.grid(row=0,column=1,sticky="ns"); self.map_hscroll.grid(row=1,column=0,sticky="ew")
+        map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
         self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
+        self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
+
         spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
         self.spatial_text=tk.Text(spatial_box,height=7,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
         spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
