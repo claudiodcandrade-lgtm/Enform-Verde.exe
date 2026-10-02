@@ -143,6 +143,8 @@ jobs:
           $dll = Get-ChildItem -Path $root -Recurse -Filter 'python311.dll' | Select-Object -First 1
           if (!(Test-Path $exe)) { throw 'Enform Verde.exe was not created' }
           if (!$dll) { throw 'python311.dll is missing from packaged application' }
+          $header = Join-Path $root 'enform_header.jpg'
+          if (!(Test-Path $header)) { throw 'enform_header.jpg is missing from packaged application' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh
