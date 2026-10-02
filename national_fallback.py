@@ -21,6 +21,17 @@ SUPPORTED_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica")
 def _norm(x):
     return str(x or "").casefold().replace("ã","a").replace("á","a").replace("â","a").replace("é","e").replace("ê","e").replace("í","i").replace("ó","o").replace("ô","o").replace("õ","o").replace("ú","u").replace("ç","c")
 
+def _aoi_distance_km(aoi, lon, lat):
+    if aoi is None:
+        return None
+    try:
+        from pyproj import Geod
+        c=aoi.to_crs("EPSG:4326").geometry.union_all().centroid
+        _,_,d=Geod(ellps="WGS84").inv(float(c.x),float(c.y),float(lon),float(lat))
+        return abs(float(d))/1000.0
+    except Exception:
+        return None
+
 def _record(center, low, high, source, url, basis, n=None, uncertainty_kind="envelope de transferência"):
     center=float(center); low=max(0.0,float(low)); high=max(center,float(high))
     return {"center":center,"low":low,"high":high,"source":source,"url":url,"basis":basis,
@@ -68,6 +79,16 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
                                "fisionomias mais úmidas/montanas no estudo; grande heterogeneidade",uncertainty_kind="envelope fitofisionômico observado"))
 
     elif "cerrado" in b:
+        d_df=_aoi_distance_km(aoi,-47.93,-15.95)
+        if d_df is not None and d_df <= 100.0 and not "cerradao" in p:
+            rec=[_record(16.55,7.95,25.15,
+                  "Oliveira et al. (2024), Artificial Neural Network and Remote Sensing combined to predict the Aboveground Biomass in the Cerrado biome",
+                  "https://doi.org/10.1590/0001-3765202420221041",
+                  "Distrito Federal; inventário de campo + sensoriamento remoto; média 16,55 ± 8,6 Mg/ha",
+                  uncertainty_kind="média ± DP publicada no estudo local; não é IC95% da AOI")]
+            label="Cerrado — referência microrregional do Distrito Federal"
+        else:
+            rec=[]
         base=[
           _record(16.55,7.95,25.15,"Oliveira et al. (2024), An. Acad. Bras. Ciênc. 96(3):e20221041",
                   "https://www.scielo.br/j/aabc/a/ydXCX3FjW5TzrWMWF9sZBhk/?lang=en",
@@ -88,7 +109,7 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
                          "https://doi.org/10.1590/S0100-84042006000400003",
                          "compilação brasileira: campo sujo/campo cerrado/cerrado aberto com ampla variação",uncertainty_kind="envelope empírico entre fisionomias abertas comparáveis")]
             label="Cerrado aberto/ralo — referência fitofisionômica"
-        else:
+        elif not rec:
             rec=base; label="Cerrado — síntese brasileira multiestudo"
 
     elif "mata atlantica" in b:
@@ -107,6 +128,7 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
                   uncertainty_kind="média ± DP entre estudos; não é IC95% da AOI")]
             label="Mata Atlântica — floresta madura"
         elif "semidecid" in p:
+            d_vicosa=_aoi_distance_km(aoi,-42.88,-20.75)
             rec=[
               _record(74.3,62.8,85.8,"Torres et al. (2024), Biomass Equations and Carbon Stock Estimates for the Southeastern Brazilian Atlantic Forest",
                       "https://doi.org/10.3390/f15091568",
@@ -116,7 +138,10 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
                       "https://www.scielo.br/j/rarv/a/4qcwXR4kPDwGnkDGQzmmLHK/?lang=pt",
                       "15 parcelas; AGB total 181,48 Mg/ha; DP do total de biomassa usado apenas como limite conservador de transferência",
                       n=15,uncertainty_kind="envelope conservador de transferência; não é IC da AGB")]
-            label="Mata Atlântica — Floresta Estacional Semidecidual"
+            if d_vicosa is not None and d_vicosa <= 100.0:
+                label="Mata Atlântica — Floresta Estacional Semidecidual, referência microrregional Viçosa/MG"
+            else:
+                label="Mata Atlântica — Floresta Estacional Semidecidual"
         else:
             rec=[_record(218.0,123.8,312.2,
                   "Pyles et al. (2024), Carbon stock in aboveground biomass and necromass in the Atlantic Forest",
