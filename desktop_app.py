@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.13-PROFESSIONAL"
+APP_VERSION="3.24.14-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -23,6 +23,50 @@ SOURCES={
 }
 ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
 CARBON_FRACTION=0.47
+
+def app_resource(name):
+    base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
+    p=base/name
+    if p.exists():return p
+    # onedir builds may keep data beside the executable rather than inside _internal
+    q=Path(sys.executable).parent/name if getattr(sys,"frozen",False) else p
+    return q
+
+OFFLINE_BRAZIL_BOUNDS=(-75.0,-35.0,-33.0,6.0)  # west,south,east,north
+
+def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
+    """Render AOI over the packaged NASA Blue Marble Brazil mosaic without network access."""
+    path=app_resource("offline_brazil_basemap.jpg")
+    if not path.exists():raise FileNotFoundError("offline_brazil_basemap.jpg ausente")
+    g=gdf.to_crs(4326).copy(); minx,miny,maxx,maxy=map(float,g.total_bounds)
+    dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8); f=max(0.30,min(8.0,float(extent_factor)))
+    cx=(minx+maxx)/2; cy=(miny+maxy)/2
+    bx=[cx-dx*f/2,cy-dy*f/2,cx+dx*f/2,cy+dy*f/2]
+    W,S,E,N=OFFLINE_BRAZIL_BOUNDS
+    bx=[max(W,bx[0]),max(S,bx[1]),min(E,bx[2]),min(N,bx[3])]
+    if bx[0]>=bx[2] or bx[1]>=bx[3]:raise ValueError("AOI fora da cobertura do mosaico offline do Brasil")
+    im=Image.open(path).convert("RGB"); iw,ih=im.size
+    def srcxy(lon,lat):
+        x=(lon-W)/(E-W)*iw; y=(N-lat)/(N-S)*ih
+        return x,y
+    x0,y0=srcxy(bx[0],bx[3]); x1,y1=srcxy(bx[2],bx[1])
+    crop=im.crop((max(0,int(x0)),max(0,int(y0)),min(iw,int(math.ceil(x1))),min(ih,int(math.ceil(y1)))))
+    ow,oh=map(int,out_size); crop=crop.resize((ow,oh),Image.Resampling.LANCZOS)
+    from PIL import ImageDraw
+    d=ImageDraw.Draw(crop,"RGBA")
+    for geom in g.geometry:
+        geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+        for poly in geoms:
+            pts=[]
+            for lon,lat in poly.exterior.coords:
+                x=(float(lon)-bx[0])/max(bx[2]-bx[0],1e-12)*ow
+                y=(bx[3]-float(lat))/max(bx[3]-bx[1],1e-12)*oh
+                pts.append((x,y))
+            if len(pts)>=4:
+                d.polygon(pts,fill=(255,138,0,42),outline=(255,138,0,255))
+                d.line(pts,width=max(3,round(ow/400)),fill=(255,138,0,255),joint="curve")
+    return crop,bx
+
 
 def agb_mexiana(dbh_cm):
     return 0.1184*np.power(np.asarray(dbh_cm,dtype=float),2.53)
@@ -512,7 +556,7 @@ class App(tk.Tk):
     def _ui(self):
         # Professional dashboard shell based on the approved Enform Verde reference.
         root=ttk.Frame(self); root.pack(fill="both",expand=True)
-        base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
+        base=app_resource(".").resolve()
 
         # Approved high-resolution Enform mask; render once, preserve aspect ratio, add no text overlays.
         header_h=210
@@ -608,7 +652,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri World Imagery → Esri World Street Map",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri Imagery → Esri Street → NASA Blue Marble offline",foreground="#666").pack(side="left")
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
         self.ibge_phys_display=tk.StringVar(value="Aguardando classificação legenda_1.")
@@ -734,7 +778,12 @@ class App(tk.Tk):
                 self._map_queue.put((generation,view,[],"Esri World Street Map",None,"Esri / World Street Map",None))
                 return
             except Exception as e:errors.append("Esri Street: "+str(e))
-            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri",None,None," | ".join(errors)))
+            try:
+                view,_=offline_brazil_preview(g,extent_factor,(w,h))
+                self._map_queue.put((generation,view,[],"NASA Blue Marble offline",None,"NASA Blue Marble — fundo nacional offline",None))
+                return
+            except Exception as e:errors.append("Offline NASA: "+str(e))
+            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri/NASA",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
         self.after(80,self._poll_map_queue)
@@ -751,8 +800,9 @@ class App(tk.Tk):
         if generation!=self._map_generation or self.gdf is None:return
         if error:
             self._satellite_map_visible=False
-            self._draw_aoi_outline("Perímetro carregado — visualização vetorial")
-            self.status.set("Imagem de satélite indisponível; perímetro vetorial continua visível.")
+            if not self._draw_offline_brazil_basemap("Mapa offline — NASA Blue Marble"):
+                self._draw_aoi_outline("Perímetro carregado — visualização vetorial")
+            self.status.set("Fontes online indisponíveis; fundo nacional offline mantido.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
@@ -786,6 +836,21 @@ class App(tk.Tk):
         self._map_redraw_job=None
         if self.gdf is not None and not self._satellite_map_visible:
             self._draw_aoi_outline("AOI — visualização vetorial; base satélite indisponível")
+
+    def _draw_offline_brazil_basemap(self,label="Mapa offline — NASA Blue Marble"):
+        if self.gdf is None:return False
+        try:
+            w=max(500,self.map_canvas.winfo_width()); h=max(280,self.map_canvas.winfo_height())
+            view,_=offline_brazil_preview(self.gdf,self._map_extent_factor,(w,h))
+            self._satellite_map_visible=True; self._last_map_size=(w,h)
+            self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all")
+            self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
+            self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline="")
+            self.map_canvas.create_text(w-8,h-12,anchor="e",text="NASA Blue Marble — fundo nacional offline",fill="#333",font=("Segoe UI",8))
+            self.map_canvas.create_text(10,10,anchor="nw",text=label,fill="white",font=("Segoe UI",9,"bold"))
+            return True
+        except Exception:
+            return False
 
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
         """Render the AOI in a local metric projection and fit it to the live canvas."""
@@ -972,11 +1037,13 @@ class App(tk.Tk):
     def _schedule_offline_map_fit(self,label):
         """Guarantee a usable map without network: draw now, then redraw after Tk settles."""
         self._satellite_map_visible=False
-        self._draw_aoi_outline(label)
+        if not self._draw_offline_brazil_basemap(label):
+            self._draw_aoi_outline(label)
         gen=self._map_generation
         def redraw():
-            if self.gdf is None or gen!=self._map_generation or self._satellite_map_visible:return
-            self._draw_aoi_outline(label)
+            if self.gdf is None or gen!=self._map_generation:return
+            if not self._draw_offline_brazil_basemap(label):
+                self._draw_aoi_outline(label)
         self.after_idle(redraw)
         self.after(180,redraw)
         self.after(420,redraw)
