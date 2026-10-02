@@ -501,6 +501,44 @@ def planetary_alos_palsar(gdf,cache,limit=12):
         if len(stats)>=2:break
     return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,"paths":paths,"stats":stats,"errors":errors,"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
+def lband_dualpol_diagnostic(stats,biome="",phys="",prior_agb_mg_ha=None):
+    """Summarize dual-pol L-band evidence and saturation risk without inventing an AGB regression."""
+    by={str(x.get("polarization","")).upper():x for x in (stats or [])}
+    if "HH" not in by or "HV" not in by:return None
+    hh=float(by["HH"]["mean_db"]); hv=float(by["HV"]["mean_db"])
+    hh_lin=10.0**(hh/10.0); hv_lin=10.0**(hv/10.0)
+    denom=hh_lin+hv_lin
+    rfdi=(hh_lin-hv_lin)/denom if denom>0 else None
+    ratio=(hv_lin/hh_lin) if hh_lin>0 else None
+    contrast=hh-hv
+    b=str(biome or "").casefold(); p=str(phys or "").casefold()
+    moist=("amaz" in b and ("ombrofila densa" in p or "ombrófila densa" in p or "floresta densa" in p))
+    prior=float(prior_agb_mg_ha) if prior_agb_mg_ha is not None else None
+    # Published L-band literature reports tropical moist-forest sensitivity loss around
+    # ~150–200 Mg/ha; Cartus et al. (2016) restricted tropical-moist fitting to <=155 Mg/ha.
+    high_biomass=bool(prior is not None and prior>155.0)
+    saturation_risk="high" if moist and high_biomass else ("moderate" if moist else "context_dependent")
+    quantitative_ok=not (moist and high_biomass)
+    return {
+      "hh_gamma0_db":hh,"hv_gamma0_db":hv,"hh_minus_hv_db":contrast,
+      "hv_over_hh_linear":ratio,"rfdi":rfdi,
+      "prior_agb_mg_ha":prior,
+      "saturation_risk":saturation_risk,
+      "quantitative_agb_from_dualpol_permitted":quantitative_ok,
+      "role":"SAR_ESTRATIFICADOR" if not quantitative_ok else "SAR_CANDIDATO_REQUER_CALIBRACAO_LOCAL",
+      "reason":("floresta tropical úmida com AGB de referência acima do domínio de sensibilidade dual-pol L-band; usar HH/HV para diagnóstico/estratificação, não para converter diretamente em AGB"
+                if not quantitative_ok else
+                "dual-pol fisicamente utilizável, mas ainda exige equação local/regional calibrada com pares parcela–pixel independentes"),
+      "references":[
+        {"source":"Cartus et al. (2016), Remote Sensing 8:522","doi":"10.3390/rs8060522",
+         "note":"sensibilidade L-band global; ajuste de floresta tropical úmida limitado a AGB <=155 Mg/ha"},
+        {"source":"Mitchard et al. (2009), Geophysical Research Letters 36:L23401","doi":"10.1029/2009GL040692",
+         "note":"HV mais sensível que HH; perda de sensibilidade em biomassa alta"},
+        {"source":"Narvaes et al. (2023), Forests 14:941","doi":"10.3390/f14050941",
+         "note":"Tapajós: modelo quantitativo robusto exige atributos full-pol adicionais a HH"}
+      ]
+    }
+
 def planetary_sentinel1_cog(gdf,cache,limit=8):
     """Public, credential-free Sentinel-1 GRD pixel route via Microsoft Planetary Computer.
     Reads signed Cloud-Optimized GeoTIFF windows for the AOI and reports actual VV/VH pixel statistics.
@@ -645,7 +683,12 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         al=planetary_alos_palsar(gdf,Path(cache)/"alos_palsar")
         audit["alos_palsar_public"]={"catalogued":al.get("items",0),"scene_ids":al.get("scene_ids",[]),"pixel_state":al.get("pixel_state"),"stats":al.get("stats",[]),"errors":al.get("errors",[])[:4]}
         if al.get("stats"):
-            audit.setdefault("processed_without_agb",[]).append({"source":"ALOS/PALSAR L","provider":al.get("provider"),"paths":al.get("paths",[]),"stats":al.get("stats",[])})
+            prior=(audit.get("national_route_matrix") or {}).get("regional_numeric_fallback") or {}
+            ldiag=lband_dualpol_diagnostic(al.get("stats",[]),biome,phys,prior.get("agb_mg_ha"))
+            audit["lband_dualpol_diagnostic"]=ldiag
+            audit.setdefault("processed_without_agb",[]).append({"source":"ALOS/PALSAR L","provider":al.get("provider"),"paths":al.get("paths",[]),"stats":al.get("stats",[]),"diagnostic":ldiag})
+            if ldiag and not ldiag.get("quantitative_agb_from_dualpol_permitted",False):
+                audit["warnings"].append("ALOS/PALSAR L-band dual-pol processado e radiometricamente plausível, porém classificado como SAR estratificador devido à saturação esperada em floresta tropical úmida de alta biomassa; AGB quantitativa exige full-pol/P-band ou calibração local independente.")
     except Exception as e:audit["warnings"].append("ALOS/PALSAR público: "+str(e))
 
     # 2b — NISAR/ALOS scene catalogue; NISAR science download may require EDL.
