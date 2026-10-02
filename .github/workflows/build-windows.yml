@@ -157,6 +157,19 @@ jobs:
           import tempfile
           import desktop_app as a
           import sar_pipeline as s
+          ccir_query={}
+          class FakeResponse:
+              ok=True
+              def json(self): return {"results":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-54.96,-3.05],[-54.95,-3.05],[-54.95,-3.04],[-54.96,-3.04],[-54.96,-3.05]]]},"properties":{}}]}
+          class FakeSession:
+              headers={}
+              def get(self,url,params,timeout): ccir_query.update(params); return FakeResponse()
+          real_session=a.requests.Session; a.requests.Session=lambda:FakeSession()
+          try:
+              ccir_gdf=a.resolve_ccir_sigef("1.234.567.890.123")
+              assert len(ccir_gdf)==1 and ccir_query.get("codigo_imovel")=="1234567890123", "formatted CCIR normalization/SIGEF geometry lookup failed"
+          finally:a.requests.Session=real_session
+          print("CCIR_SIGEF_FORMATTED_REFERENCE_OK")
           g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
           s.maap_search=lambda *args,**kwargs:[]
           s.discover_asf=lambda *args,**kwargs:[]

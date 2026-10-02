@@ -142,7 +142,7 @@ def resolve_car(car):
 def resolve_ccir_sigef(code):
     """Resolve código INCRA/SNCR do CCIR em parcela georreferenciada certificada no SIGEF."""
     import requests, geopandas as gpd
-    digits=re.sub(r"\\D","",code or "")
+    digits=re.sub(r"\D","",code or "")
     if len(digits)!=13: raise ValueError("Informe o Código do Imóvel Rural de 13 dígitos constante do CCIR.")
     # Consulta pública de parcelas do SIGEF pelo código do imóvel (SNCR/INCRA).
     search="https://sigef.incra.gov.br/api/parcelas/consulta/"
@@ -668,7 +668,7 @@ class App(tk.Tk):
         self._reset_analysis_state()
         try:
             self.status.set("Consultando SIGEF pelo código do CCIR..."); self.update_idletasks()
-            self.gdf=resolve_ccir_sigef(self.ccir.get()); self.active_source="CCIR"; self.active_input_id=re.sub(r"\\D","",self.ccir.get()); self.car.set(""); self._show_geom("CCIR / SIGEF")
+            self.gdf=resolve_ccir_sigef(self.ccir.get()); self.active_source="CCIR"; self.active_input_id=re.sub(r"\D","",self.ccir.get()); self.car.set(""); self._show_geom("CCIR / SIGEF")
         except Exception as e:
             self.status.set("CCIR/SIGEF não resolvido."); messagebox.showwarning("CCIR / SIGEF",str(e))
 
@@ -784,7 +784,7 @@ class App(tk.Tk):
         for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
             self.project.pop(k,None)
         current_car=self.car.get().strip().upper()
-        current_ccir=re.sub(r"\\D","",self.ccir.get())
+        current_ccir=re.sub(r"\D","",self.ccir.get())
         if current_car and (self.active_source!="CAR" or self.active_input_id!=current_car):
             self._reset_analysis_state()
             try:
