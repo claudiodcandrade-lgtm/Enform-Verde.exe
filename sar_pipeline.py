@@ -105,6 +105,25 @@ def role(path):
 def _provenance(origin, source, sensor=None, band=None, product=None, model=None, scene_ids=None):
     return {"data_origin":origin,"source":source,"sensor":sensor,"band":band,"product":product,"model_id":model,"scene_ids":scene_ids or []}
 
+def sar_agb_blocker(biome,phys,available_features=None,aoi=None):
+    """Explain exactly why processed SAR cannot yet produce defensible AGB."""
+    available=set((available_features or {}).keys())
+    candidates=[]
+    for m in MODEL_REGISTRY:
+        if not m.get("executable") or m.get("execution_mode")=="direct_product":continue
+        if m.get("biome") not in (biome,"*"):continue
+        pred=list(m.get("predictors") or [])
+        missing=[p for p in pred if p not in available]
+        candidates.append({"model_id":m.get("id"),"sensor":m.get("sensor"),"predictors":pred,
+                           "available_predictors":[p for p in pred if p in available],
+                           "missing_predictors":missing,"constraints":m.get("constraints"),
+                           "rmse_mg_ha":m.get("rmse_mg_ha")})
+    candidates.sort(key=lambda x:(len(x["missing_predictors"]),x.get("rmse_mg_ha") is None,x.get("rmse_mg_ha") or 1e9))
+    return {"available_features":sorted(available),"candidate_models":candidates[:6],
+            "primary_blocker":("nenhum modelo executável cadastrado para o bioma" if not candidates else
+                               "faltam preditores exigidos pelo modelo executável mais próximo"),
+            "closest_model":candidates[0] if candidates else None}
+
 def process_real_sar(gdf,paths,biome="",phys=""):
     if not paths:raise ValueError("Nenhum produto SAR/raster de biomassa foi fornecido.")
     stats=[];agb=None;unc=None
@@ -119,7 +138,9 @@ def process_real_sar(gdf,paths,biome="",phys=""):
         else:kind="camada de incerteza do produto"
         return {"status":"SAR_PROCESSADO","agb_mg_ha":agb,"uncertainty_mg_ha":unc,"uncertainty_kind":kind,"stats":stats,**_provenance("SAR","produto SAR/AGB efetivamente processado",product="raster AGB")}
     refs=[m for m in MODEL_REGISTRY if m["biome"]==biome]
-    return {"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"message":"SAR processado, mas sem modelo executável validado com atributos compatíveis; AGB não foi inventada."}
+    feats={x["role"]:x.get("mean") for x in stats if x.get("role") in ("HH","HV","VV","VH")}
+    blocker=sar_agb_blocker(biome,phys,feats,aoi=gdf)
+    return {"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"agb_blocker":blocker,"message":"SAR processado; AGB bloqueada por incompatibilidade explícita de preditores/modelo. Consulte agb_blocker."}
 
 
 MAAP_STAC="https://catalog.maap.eo.esa.int/catalogue/"
@@ -138,6 +159,20 @@ def maap_search(gdf,collection,limit=50,product_type=None):
     if product_type:
         fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{})))]
     return sorted(fs,key=lambda x:str((x.get("properties") or {}).get("datetime") or (x.get("properties") or {}).get("start_datetime") or ""),reverse=True)
+def biomass_l2b_search(gdf,limit=100):
+    """Search operational + IOC BIOMASS L2B collections; prefer operational products."""
+    out=[]
+    for collection,stage in (("BiomassLevel2b","OPERATIONAL"),("BiomassLevel2bIOC","IOC")):
+        try:
+            items=maap_search(gdf,collection,limit=limit,product_type="FP_AGB_L2B")
+            for it in items:
+                z=dict(it); z["_collection"]=collection; z["_stage"]=stage; out.append(z)
+        except Exception:
+            continue
+    out.sort(key=lambda it:(0 if it.get("_stage")=="OPERATIONAL" else 1,
+                            -int(bool((it.get("properties") or {}).get("datetime")))))
+    return out
+
 def _download(url,out,token=None):
     h={"Authorization":"Bearer "+token} if token else {}
     with requests.get(url,headers=h,stream=True,timeout=(10,180)) as r:
@@ -391,10 +426,12 @@ def select_executable_model(biome,phys,features,aoi=None):
 def analyze_nisar_gcov(gdf,h5_path,biome,phys):
     q=process_nisar_gcov(gdf,h5_path); m=select_executable_model(biome,phys,q["features"],aoi=gdf)
     if not m:
+        blocker=sar_agb_blocker(biome,phys,q["features"],aoi=gdf)
         return {"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"data_origin":"SAR_NAO_PROCESSADO",
                 "source":"NISAR L2 GCOV processado; sem equação executável compatível",
                 "product":q["product"],"band":"L","features":q["features"],"terms":q["terms"],
-                "message":"NISAR GCOV foi efetivamente processado, mas nenhum modelo executável do catálogo aceita exatamente estes preditores e esta fitofisionomia."}
+                "agb_blocker":blocker,
+                "message":"NISAR GCOV foi processado, mas os preditores disponíveis não satisfazem uma equação validada no domínio desta AOI. Consulte agb_blocker para a lista exata do que falta."}
     r=execute_registered_model(m["id"],q["features"])
     return {"status":"SAR_PROCESSADO","agb_mg_ha":r["agb_mg_ha"],"uncertainty_mg_ha":r.get("rmse_mg_ha"),
             "uncertainty_kind":"RMSE de validação do modelo","data_origin":"SAR_L_MODELO","source":m.get("source") or m.get("doi"),
@@ -697,9 +734,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     audit["national_route_matrix"]=national_predictive_route_matrix(biome,phys,aoi=gdf)
 
     # 1 — ESA BIOMASS P-band / official L2B AGB.
-    try: l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
+    try: l2items=biomass_l2b_search(gdf,limit=100)
     except Exception as e: l2items=[]; audit["warnings"].append("BIOMASS catálogo: "+str(e))
-    audit["biomass_l2b"]={"count":len(l2items),"access_policy":"direct/public first; authenticated access is never required from the UI"}
+    audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"access_policy":"BiomassLevel2b e BiomassLevel2bIOC; FP_AGB_L2B público/open-free quando o ativo científico estiver publicado para a AOI"}
     # First try scientific raster assets directly. ESA catalogue discovery is public; some assets may also be directly readable.
     if l2items and not offline_token:
         Path(cache).mkdir(parents=True,exist_ok=True); direct=[]
@@ -729,6 +766,10 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             prior=(audit.get("national_route_matrix") or {}).get("regional_numeric_fallback") or {}
             ldiag=lband_dualpol_diagnostic(al.get("stats",[]),biome,phys,prior.get("agb_mg_ha"))
             audit["lband_dualpol_diagnostic"]=ldiag
+            avail={"sigma0_HH_db":next((x.get("mean_db") for x in al.get("stats",[]) if str(x.get("polarization","")).upper()=="HH"),None),
+                   "sigma0_HV_db":next((x.get("mean_db") for x in al.get("stats",[]) if str(x.get("polarization","")).upper()=="HV"),None)}
+            avail={k:v for k,v in avail.items() if v is not None}
+            audit["agb_blocker"]=sar_agb_blocker(biome,phys,avail,aoi=gdf)
             audit.setdefault("processed_without_agb",[]).append({"source":"ALOS/PALSAR L","provider":al.get("provider"),"paths":al.get("paths",[]),"stats":al.get("stats",[]),"diagnostic":ldiag})
             if ldiag and not ldiag.get("quantitative_agb_from_dualpol_permitted",False):
                 audit["warnings"].append("ALOS/PALSAR L-band dual-pol processado e radiometricamente plausível, porém classificado como SAR estratificador devido à saturação esperada em floresta tropical úmida de alta biomassa; AGB quantitativa exige full-pol/P-band ou calibração local independente.")
