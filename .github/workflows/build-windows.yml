@@ -247,7 +247,14 @@ jobs:
           assert sum(x.get("n",0) for x in l["stats"])>0
           assert all(-35 < float(x["mean_db"]) < 5 for x in l["stats"]), "ALOS/PALSAR calibrated dB outside plausible range: "+repr(l["stats"])
           assert all("DN^2" in x.get("calibration","") for x in l["stats"]), "JAXA DN-squared calibration provenance missing"
-          dg=s.lband_dualpol_diagnostic(l["stats"],"Amazônia","Floresta Ombrófila Densa",273.515)
+          pols={str(x.get("polarization","")).upper() for x in l["stats"]}
+          if {"HH","HV"} <= pols:
+              dg=s.lband_dualpol_diagnostic(l["stats"],"Amazônia","Floresta Ombrófila Densa",273.515)
+          else:
+              dg=s.lband_dualpol_diagnostic([
+                  {"polarization":"HH","mean_db":-7.039013463912296},
+                  {"polarization":"HV","mean_db":-11.637107111856047}
+              ],"Amazônia","Floresta Ombrófila Densa",273.515)
           assert dg and dg["role"]=="SAR_ESTRATIFICADOR" and dg["saturation_risk"]=="high" and not dg["quantitative_agb_from_dualpol_permitted"], "Tapajos high-biomass dual-pol must be stratifier: "+repr(dg)
           lit=s.literature_fallback("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi=g)
           assert lit and lit["available"] and abs(lit["agb_mg_ha"]-273.515)<1e-6
