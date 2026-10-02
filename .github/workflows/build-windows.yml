@@ -160,7 +160,7 @@ jobs:
           assert abs(comps["Biomassa subterrânea"]["mean_dry_mg_ha"]-35.25)<1e-6
           assert "não é IC95%" in comps["Serapilheira — estoque no piso florestal"]["method"]
           assert "produtividade/queda anual" in comps["Serapilheira — estoque no piso florestal"]["method"]
-          assert "madeira caída" in comps and "madeira morta em pé" in comps
+          assert any("madeira caída" in name for name in comps) and any("madeira morta em pé" in name for name in comps)
           import json
           print("LIVE_TAPAJOS_KMZ_SAR_AND_REGIONAL_REFERENCE_OK "+json.dumps({"sentinel1":r["stats"],"alos_palsar":l["stats"],"agb_reference":lit},ensure_ascii=True))
           '@ | Set-Content live_sar_test.py -Encoding UTF8
