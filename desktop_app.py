@@ -715,7 +715,9 @@ class App(tk.Tk):
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()
-        w=max(500,self.map_canvas.winfo_width()); h=max(280,self.map_canvas.winfo_height())
+        viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
+        display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
+        w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
         ratio=w/max(h,1)
         if ratio>=1:
             req_w=1200; req_h=max(320,min(1200,round(1200/ratio)))
@@ -833,6 +835,9 @@ class App(tk.Tk):
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
         for pts in polygons:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
         self.map_canvas.create_rectangle(0,view.height-24,view.width,view.height,fill="white",outline=""); self.map_canvas.create_text(view.width-8,view.height-12,anchor="e",text=copyright,fill="#333",font=("Segoe UI",8))
+        self.map_canvas.configure(scrollregion=(0,0,view.width,view.height))
+        self.map_canvas.xview_moveto(max(0.0,min(1.0,(view.width-max(1,self.map_canvas.winfo_width()))/(2*max(1,view.width)))))
+        self.map_canvas.yview_moveto(max(0.0,min(1.0,(view.height-max(1,self.map_canvas.winfo_height()))/(2*max(1,view.height)))))
         self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {1.36/max(self._map_extent_factor,1e-9):.2f}×. Uso exclusivo para visualização.")
 
     def _on_map_resize(self,event=None):
@@ -864,7 +869,9 @@ class App(tk.Tk):
     def _draw_offline_brazil_basemap(self,label="Mapa offline — NASA Blue Marble"):
         if self.gdf is None:return False
         try:
-            w=max(500,self.map_canvas.winfo_width()); h=max(280,self.map_canvas.winfo_height())
+            viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
+            display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
+            w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
             view,_=offline_brazil_preview(self.gdf,self._map_extent_factor,(w,h))
             self._satellite_map_visible=True; self._last_map_size=(w,h)
             self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all")
@@ -872,6 +879,7 @@ class App(tk.Tk):
             self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline="")
             self.map_canvas.create_text(w-8,h-12,anchor="e",text="NASA Blue Marble — fundo nacional offline",fill="#333",font=("Segoe UI",8))
             self.map_canvas.create_text(10,10,anchor="nw",text=label,fill="white",font=("Segoe UI",9,"bold"))
+            self.map_canvas.configure(scrollregion=(0,0,w,h))
             return True
         except Exception:
             return False
