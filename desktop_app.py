@@ -637,11 +637,11 @@ class App(tk.Tk):
             if key:
                 try:
                     view,_=google_image(rs)
-                    self.after(0,self._finish_satellite_map,generation,view,[],"Google Maps Static API",None,"Google",None)); return
+                    self.after(0,self._finish_satellite_map,generation,view,[],"Google Maps Static API",None,"Google",None); return
                 except Exception as e:errors.append("Google: "+str(e))
             try:
                 view=esri_image(rs)
-                self.after(0,self._finish_satellite_map,generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None)); return
+                self.after(0,self._finish_satellite_map,generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None); return
             except Exception as e:errors.append("Esri: "+str(e))
             self.after(0,self._finish_satellite_map,generation,None,[],"Google/Esri",None,None," | ".join(errors))
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
