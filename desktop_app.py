@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.4-PROFESSIONAL"
+APP_VERSION="3.24.5-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -829,7 +829,7 @@ class App(tk.Tk):
         code_txt="; ".join(f"{x['code'] or 'código N/D'} — {x['name']}: {x['percent']:.1f}% ({x['area_ha']:,.1f} ha)" for x in d.get("regioes_fitoecologicas",[])[:8])
         if code_txt:vtxt="Região fitoecológica (IBGE legenda_1): "+code_txt+" | "+vtxt
         self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nIBGE — Bioma(s): "+btxt+"\nIBGE 2026 — Vegetação: "+vtxt)
-        self.status.set("Perímetro e diagnóstico IBGE concluídos." if not d.get("vegetacao_error") else "Bioma IBGE concluído; fitofisionomia pendente sem bloquear a análise.")
+        self.status.set("Perímetro e diagnóstico IBGE concluídos." if not d.get("vegetacao_error") else "Bioma IBGE concluído; fitofisionomia não classificada — modelos que exigem classe IBGE ficam bloqueados; apenas rotas independentes da classe podem prosseguir.")
         if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
     def pick_soil(self):
         p=filedialog.askopenfilename(filetypes=[("GeoTIFF","*.tif *.tiff")])
@@ -1023,6 +1023,14 @@ class App(tk.Tk):
                 cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
                 ad=audit.get("asf_download") or {}
                 if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
+                matrix=audit.get("national_route_matrix") or {}
+                if matrix:
+                    diag.append("COBERTURA PREDITIVA NACIONAL: "+str(matrix.get("local_numeric_state")))
+                    diag.append("Escopo implementado: "+", ".join(matrix.get("supported_scope") or []))
+                    diag.append("Política: "+str(matrix.get("policy")))
+                    ifn=matrix.get("ifn_sfb_reference") or {}
+                    if ifn:
+                        diag.append("IFN/SFB: referência nacional/estadual para aferição e alometria; não é raster local da AOI. Fonte: "+str(ifn.get("url")))
                 for item in audit.get("processed_without_agb",[]):
                     diag.append(f"Pixel SAR PROCESSADO sem equação AGB compatível: {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
                     for z in item.get("stats",[]): diag.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
