@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.8-PROFESSIONAL"
+APP_VERSION="3.24.9-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1090,6 +1090,16 @@ class App(tk.Tk):
                 for item in audit.get("processed_without_agb",[]):
                     diag.append(f"Pixel SAR PROCESSADO sem equação AGB compatível: {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
                     for z in item.get("stats",[]): diag.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
+                ldiag=audit.get("lband_dualpol_diagnostic") or {}
+                if ldiag:
+                    diag += [
+                        "DIAGNÓSTICO L-BAND DUAL-POL:",
+                        f"  papel={ldiag.get('role')} | saturação={ldiag.get('saturation_risk')} | AGB quantitativa permitida={ldiag.get('quantitative_agb_from_dualpol_permitted')}",
+                        f"  HH={float(ldiag.get('hh_gamma0_db',float('nan'))):.2f} dB | HV={float(ldiag.get('hv_gamma0_db',float('nan'))):.2f} dB | HH-HV={float(ldiag.get('hh_minus_hv_db',float('nan'))):.2f} dB | HV/HH={float(ldiag.get('hv_over_hh_linear',float('nan'))):.3f} | RFDI={float(ldiag.get('rfdi',float('nan'))):.3f}",
+                        "  decisão: "+str(ldiag.get("reason")),
+                    ]
+                    for ref in ldiag.get("references",[]):
+                        diag.append("  referência: "+str(ref.get("source"))+" | DOI "+str(ref.get("doi"))+" | "+str(ref.get("note")))
                 for w in audit.get("warnings",[]): diag.append("Aviso: "+str(w))
             if sar.get("data_origin") in ("LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"):
                 diag += ["", "MÉTRICAS DE VALIDAÇÃO SAR: RMSE=N/D; MAE=N/D; viés=N/D; R²=N/D — faltam pares independentes parcela–pixel SAR.",
