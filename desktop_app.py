@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.5-PROFESSIONAL"
+APP_VERSION="3.24.6-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -447,7 +447,7 @@ def ui_smoke_test():
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
         s=ttk.Style(self)
@@ -565,14 +565,16 @@ class App(tk.Tk):
         self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
-    def show_google_map(self):
-        """Load optional satellite tiles without blocking the interface; retain AOI outline on errors."""
+    def show_google_map(self,refresh=False):
+        """Load satellite tiles asynchronously and bind the response to the current AOI generation."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
+        self._map_generation+=1; generation=self._map_generation
         self._satellite_map_visible=False
         key=self.google_maps_key.get().strip()
         provider="Google Maps" if key else "Esri World Imagery (público)"
         g=self.gdf.to_crs(4326).copy(); w=max(700,self.map_canvas.winfo_width()); h=max(300,self.map_canvas.winfo_height())
-        self.status.set(f"Carregando imagem de satélite ({provider}) em segundo plano..."); self.update_idletasks()
+        if not refresh:self.status.set(f"Carregando imagem de satélite ({provider}) em segundo plano...")
+        self.update_idletasks()
         def worker():
           try:
             minx,miny,maxx,maxy=map(float,g.total_bounds); tile=256
@@ -606,33 +608,45 @@ class App(tk.Tk):
                     for lon,lat in p.exterior.coords:
                         x,y=px(lon,lat); pts.extend((x,y))
                     if len(pts)>=6:points.append(pts)
-            self.after(0,self._finish_satellite_map,view,points,provider,zoom,copyright,None)
+            self.after(0,self._finish_satellite_map,generation,view,points,provider,zoom,copyright,None)
           except Exception as e:
-            self.after(0,self._finish_satellite_map,None,[],provider,None,None,str(e))
+            self.after(0,self._finish_satellite_map,generation,None,[],provider,None,None,str(e))
         threading.Thread(target=worker,daemon=True).start()
 
-    def _finish_satellite_map(self,view,polygons,provider,zoom,copyright,error):
+    def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
+        if generation!=self._map_generation or self.gdf is None:return
         if error:
             self._satellite_map_visible=False
             self._draw_aoi_outline("Imagem base indisponível; polígono vetorial carregado")
             self.status.set(f"{provider} indisponível; a AOI continua carregada e visível.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
             return
-        self._satellite_map_visible=True
+        self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
         for pts in polygons:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
         self.map_canvas.create_rectangle(0,view.height-24,view.width,view.height,fill="white",outline=""); self.map_canvas.create_text(view.width-8,view.height-12,anchor="e",text=copyright,fill="#333",font=("Segoe UI",8))
         self.status.set(f"{provider} carregado — zoom {zoom}. Uso exclusivo para visualização.")
 
     def _on_map_resize(self,event=None):
-        """Redraw the offline footprint after Tk has assigned the final canvas size."""
-        if self.gdf is None or self._satellite_map_visible:return
+        """Keep AOI and satellite base fitted after a real canvas resize."""
+        if self.gdf is None:return
         size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
         if size==self._last_map_size:return
+        if self._satellite_map_visible:
+            if self._map_refresh_job is not None:
+                try:self.after_cancel(self._map_refresh_job)
+                except Exception:pass
+            self._map_refresh_job=self.after(450,self._refresh_satellite_after_resize)
+            return
         if self._map_redraw_job is not None:
             try:self.after_cancel(self._map_redraw_job)
             except Exception:pass
         self._map_redraw_job=self.after(100,self._redraw_map_after_resize)
+
+    def _refresh_satellite_after_resize(self):
+        self._map_refresh_job=None
+        if self.gdf is not None:
+            self.show_google_map(refresh=True)
 
     def _redraw_map_after_resize(self):
         self._map_redraw_job=None
@@ -642,6 +656,7 @@ class App(tk.Tk):
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
         """Render the AOI in a local metric projection and fit it to the live canvas."""
         if self.gdf is None:return
+        self._satellite_map_visible=False
         g=self.gdf.to_crs(4326); union=g.geometry.union_all(); center=union.centroid
         from pyproj import CRS
         local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
@@ -756,6 +771,15 @@ class App(tk.Tk):
         self.project={"version":APP_VERSION}
         if old_vector and keep_geometry:self.project["vector"]=old_vector
         if not keep_geometry:self.gdf=None
+        self._map_generation+=1
+        self._satellite_map_visible=False
+        if getattr(self,"_map_refresh_job",None) is not None:
+            try:self.after_cancel(self._map_refresh_job)
+            except Exception:pass
+            self._map_refresh_job=None
+        if hasattr(self,"map_canvas"):
+            self.map_canvas.delete("all")
+            self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
         self.soil_raster=None
         self.sar_paths=[]
         self.inv=None
