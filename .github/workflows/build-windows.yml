@@ -21,6 +21,38 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_desktop.txt
           pip install pillow
+      - name: Build offline Brazil satellite basemap — NASA Blue Marble
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          $b1='https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-topography-bathymetry/january/world.topo.bathy.200401.3x21600x21600.B1.jpg'
+          $b2='https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-topography-bathymetry/january/world.topo.bathy.200401.3x21600x21600.B2.jpg'
+          Invoke-WebRequest -Uri $b1 -OutFile nasa_b1.jpg
+          Invoke-WebRequest -Uri $b2 -OutFile nasa_b2.jpg
+          @'
+          from PIL import Image
+          # NASA BMNG 500 m tile extents:
+          # B1 = 90N..0, 90W..0; B2 = 0..90S, 90W..0; 240 px/degree.
+          W,E,N,S=-75.0,-33.0,6.0,-35.0
+          px=240.0
+          x0=round((W+90.0)*px); x1=round((E+90.0)*px)
+          b1=Image.open("nasa_b1.jpg").convert("RGB")
+          b2=Image.open("nasa_b2.jpg").convert("RGB")
+          y1a=round((90.0-N)*px); y1b=round(90.0*px)
+          y2a=0; y2b=round((0.0-S)*px)
+          north=b1.crop((x0,y1a,x1,y1b))
+          south=b2.crop((x0,y2a,x1,y2b))
+          out=Image.new("RGB",(north.width,north.height+south.height))
+          out.paste(north,(0,0)); out.paste(south,(0,north.height))
+          # 1 km-class offline background: compact enough to ship, detailed enough for national/regional context.
+          out=out.resize((out.width//2,out.height//2),Image.Resampling.LANCZOS)
+          out.save("offline_brazil_basemap.jpg","JPEG",quality=88,optimize=True,progressive=True)
+          assert out.width>=5000 and out.height>=4900
+          print("OFFLINE_BRAZIL_BASEMAP_OK",out.size)
+          '@ | Set-Content make_offline_basemap.py -Encoding UTF8
+          python make_offline_basemap.py
+          Get-Item offline_brazil_basemap.jpg | Format-List Name,Length
+
       - name: Source self-test
         run: python desktop_app.py --self-test
       - name: Earthdata client import
@@ -77,6 +109,7 @@ jobs:
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
           assert "maps.googleapis.com/maps/api/staticmap" in src and "sentinel2_preview" in src and "World_Imagery" in src and "World_Street_Map" in src, "Google -> Sentinel-2 -> Esri Imagery -> Esri Street fallback chain missing"
+          assert "offline_brazil_preview" in src and "offline_brazil_basemap.jpg" in src and Path("offline_brazil_basemap.jpg").exists(), "packaged offline NASA Brazil basemap missing"
           assert "Fitofisionomia IBGE (legenda_1):" in src and "ibge_phys_display" in src and "ibge_biome_display" in src, "visible official IBGE phytophysiognomy panel missing"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
@@ -133,6 +166,9 @@ jobs:
           kmz=Path("acceptance/Teste_SAR_Biomassa_Tapajos.kmz").resolve()
           preflight=app.read_vector(kmz)
           assert len(preflight)>0, "KMZ preflight returned no geometry"
+          offline,_=app.offline_brazil_preview(preflight,1.36,(900,420))
+          assert offline.size==(900,420), "offline NASA basemap render failed"
+          print("OFFLINE_NASA_MAP_OK",offline.size)
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
           ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
@@ -367,11 +403,12 @@ jobs:
           '@ | Set-Content make_icon.py -Encoding UTF8
           python make_icon.py
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_brazil_basemap.jpg;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
         run: |
           Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
+          Copy-Item -Force 'offline_brazil_basemap.jpg' 'dist\Enform Verde\offline_brazil_basemap.jpg'
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
       - name: Verify packaged Python runtime
@@ -385,6 +422,9 @@ jobs:
           $header = Join-Path $root 'enform_header.png'
           if (!(Test-Path $header)) { throw 'enform_header.png is missing from packaged application' }
           if ((Get-Item $header).Length -lt 20000) { throw 'Approved high-resolution Enform mask is unexpectedly small' }
+          $offline = Join-Path $root 'offline_brazil_basemap.jpg'
+          if (!(Test-Path $offline)) { throw 'Offline Brazil basemap is missing from packaged application' }
+          if ((Get-Item $offline).Length -lt 1000000) { throw 'Offline Brazil basemap is unexpectedly small' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh
@@ -425,7 +465,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.13-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.14-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
