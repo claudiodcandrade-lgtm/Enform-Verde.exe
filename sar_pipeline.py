@@ -534,9 +534,70 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
         if stats:break
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,"provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,"pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
+SUPPORTED_NATIONAL_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica")
+SFB_IFN_BIOMASS_REFERENCE={
+    "source":"Serviço Florestal Brasileiro / SNIF / IFN — Painel de Biomassa e Carbono, versão 2025",
+    "url":"https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "scope":"federal dataset with published state-level spatial granularity; filters include biome and vegetation type",
+    "role":"national inventory benchmark/allometry catalogue; never a local AOI raster or plot-pixel SAR calibration by itself",
+    "equation_count":222,
+}
+
+def _canonical_biome_name(biome):
+    b=str(biome or "").strip().casefold()
+    aliases={"amazonia":"Amazônia","amazônia":"Amazônia","cerrado":"Cerrado","caatinga":"Caatinga",
+             "mata atlantica":"Mata Atlântica","mata atlântica":"Mata Atlântica"}
+    return aliases.get(b,str(biome or "").strip())
+
+def national_predictive_route_matrix(biome,phys,aoi=None,features=None):
+    """Return an auditable national route diagnosis without inventing a biome-wide AGB value.
+
+    Coverage means every supported IBGE class can be diagnosed and routed. It does
+    not mean that every class has a published executable SAR equation. Direct
+    products remain subject to runtime spatial/quality coverage; IFN/SFB summaries
+    are national/state benchmarks, not local AOI predictions.
+    """
+    b=_canonical_biome_name(biome); p=str(phys or "").strip()
+    supported=b in SUPPORTED_NATIONAL_BIOMES
+    routes=[
+      {"route":"ESA_BIOMASS_FP_AGB_L2B","kind":"direct_spatial_product","eligible":"runtime_check",
+       "reason":"priority P-band AGB product when the AOI is inside the official product domain and quality flags pass"},
+      {"route":"ESA_CCI_BIOMASS_V7","kind":"direct_spatial_product","eligible":"runtime_check",
+       "reason":"historical multissensor AGB product; used only after raw P/L/C processing attempts and with product uncertainty"},
+    ]
+    refs=[]
+    for m in MODEL_REGISTRY:
+        if m.get("execution_mode")=="direct_product": continue
+        if m.get("biome") not in (b,"*"): continue
+        item={"id":m.get("id"),"sensor":m.get("sensor"),"domain":m.get("domain"),
+              "executable":bool(m.get("executable")),"predictors":m.get("predictors") or [],
+              "constraints":m.get("constraints")}
+        if not m.get("executable"):
+            item["eligibility"]="reference_only"
+        elif features is None:
+            item["eligibility"]="requires_exact_predictors_and_domain_check"
+        else:
+            chosen=select_executable_model(b,p,features,aoi=aoi)
+            item["eligibility"]="eligible_now" if chosen and chosen.get("id")==m.get("id") else "ineligible_now"
+        refs.append(item)
+    lit=literature_fallback(b,p,aoi=aoi) if (supported and aoi is not None) else None
+    local_numeric=bool(lit and lit.get("available") and lit.get("agb_mg_ha") is not None)
+    if features is not None and supported:
+        chosen=select_executable_model(b,p,features,aoi=aoi)
+        local_numeric=local_numeric or bool(chosen)
+    state=("local_numeric_reference_available" if local_numeric else
+           ("runtime_product_check_required" if supported else "unsupported_biome_scope"))
+    return {"supported_biome":supported,"biome":b,"physiognomy":p,
+            "supported_scope":list(SUPPORTED_NATIONAL_BIOMES),
+            "local_numeric_state":state,"biome_mean_permitted":False,
+            "direct_product_routes":routes,"registered_model_routes":refs,
+            "regional_numeric_fallback":lit,
+            "ifn_sfb_reference":dict(SFB_IFN_BIOMASS_REFERENCE),
+            "policy":"No generic biome mean. A numeric AOI result requires a compatible spatial product, a domain-valid executable model, matched plot-sensor calibration, or a geofenced regional reference; otherwise report quantitative unavailability."}
+
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
-    audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
+    audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}\n    audit["national_route_matrix"]=national_predictive_route_matrix(biome,phys,aoi=gdf)
 
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=maap_search(gdf,"BiomassLevel2b",limit=100,product_type="FP_AGB_L2B")
