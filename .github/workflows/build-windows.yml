@@ -74,7 +74,7 @@ jobs:
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
-          assert "Esri World Imagery (público)" in src and "server.arcgisonline.com/ArcGIS/rest/services/World_Imagery" in src, "no-key satellite polygon map fallback missing"
+          assert "maps.googleapis.com/maps/api/staticmap" in src and "Maps Static API" in src, "Google Maps Static API polygon route missing"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -97,8 +97,9 @@ jobs:
           pipe=sar_src[sar_src.index("def automatic_pipeline"):]; assert pipe.index("biomass_l2b") < pipe.index("planetary_alos_palsar") < pipe.index("planetary_sentinel1_cog"), "SAR priority regression P > L > C"
           assert "planetary_sentinel1_cog" in sar_src and "planetarycomputer.microsoft.com/api/sas/v1/sign" in sar_src, "credential-free real Sentinel-1 pixel route missing"
           assert "planetary_alos_palsar" in sar_src and "alos-palsar-mosaic" in sar_src, "public L-band ALOS/PALSAR route missing"
+          assert "_jaxa_mosaic_gamma0_db" in sar_src and "np.square(a)" in sar_src, "JAXA mosaic gamma0 calibration regression"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
-          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Esri World Imagery (público)" in src, "satellite polygon visualization missing"
+          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "maps.googleapis.com/maps/api/staticmap" in src, "Google Static Maps polygon visualization missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
           assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
@@ -170,6 +171,8 @@ jobs:
           l=s.planetary_alos_palsar(g,"sar_ci_cache/alos",limit=4)
           assert l.get("stats"), "ALOS/PALSAR L-band returned no processed Tapajos pixels: "+str(l.get("errors"))
           assert sum(x.get("n",0) for x in l["stats"])>0
+          assert all(-35 < float(x["mean_db"]) < 5 for x in l["stats"]), "ALOS/PALSAR calibrated dB outside plausible range: "+repr(l["stats"])
+          assert all("DN^2" in x.get("calibration","") for x in l["stats"]), "JAXA DN-squared calibration provenance missing"
           lit=s.literature_fallback("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi=g)
           assert lit and lit["available"] and abs(lit["agb_mg_ha"]-273.515)<1e-6
           assert lit["sar_metrics"]["RMSE"] is None and lit["agb_range_mg_ha"][0]<lit["agb_mg_ha"]<lit["agb_range_mg_ha"][1]
@@ -250,6 +253,7 @@ jobs:
           '@ | Set-Content fallback_flow_test.py -Encoding UTF8
           python fallback_flow_test.py
           python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
+          python -c "import sar_pipeline as s; x=float(s._jaxa_mosaic_gamma0_db([6380.447538677919])[0]); assert -7.1 < x < -6.7, x; print('JAXA_MOSAIC_CALIBRATION_OK',x)"
 
       - name: Outside-Amazon national fallback gate — Cerrado
         shell: pwsh
@@ -364,7 +368,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.7-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.8-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
