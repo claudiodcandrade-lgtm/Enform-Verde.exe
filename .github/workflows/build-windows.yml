@@ -161,6 +161,11 @@ jobs:
           assert "não é IC95%" in comps["Serapilheira — estoque no piso florestal"]["method"]
           assert "produtividade/queda anual" in comps["Serapilheira — estoque no piso florestal"]["method"]
           assert any("madeira caída" in name for name in comps) and any("madeira morta em pé" in name for name in comps)
+          import geopandas as gpd
+          from shapely.geometry import box
+          outside_local=gpd.GeoDataFrame(geometry=[box(-54.96,-3.31,-54.94,-3.29)],crs="EPSG:4326")
+          distant=s.literature_fallback("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi=outside_local)
+          assert distant and distant["available"] and not distant["regional_components"], "Tapajos compartments must be geofenced to their actual study sites"
           import json
           print("LIVE_TAPAJOS_KMZ_SAR_AND_REGIONAL_REFERENCE_OK "+json.dumps({"sentinel1":r["stats"],"alos_palsar":l["stats"],"agb_reference":lit},ensure_ascii=True))
           '@ | Set-Content live_sar_test.py -Encoding UTF8

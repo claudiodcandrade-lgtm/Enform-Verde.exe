@@ -216,12 +216,45 @@ def literature_fallback(biome,phys,library_rows=None,location=None,aoi=None):
             return None
         if distance_km>35.0 or max_vertex_km>35.0:
             return None
+        def _inside_reference_domain(lon,lat,radius_km):
+            """Require the complete AOI exterior to remain near each component study site."""
+            max_dist=0.0
+            for poly in polys:
+                for x,y,*_ in poly.exterior.coords:
+                    _,_,d=geod.inv(float(x),float(y),float(lon),float(lat))
+                    max_dist=max(max_dist,abs(d)/1000)
+            return max_dist<=radius_km
         n1=n2=6; m1,m2=298.11,248.92; s1,s2=29.40,61.78
         n=n1+n2; mean=(n1*m1+n2*m2)/n
         # The paper reports plots grouped in just two spatial sites. Treating all
         # 12 plots as independent for a t prediction interval would overstate the
         # degrees of freedom. Publish a descriptive envelope, not a confidence interval.
         lower=max(0.0,min(m1-s1,m2-s2)); upper=max(m1+s1,m2+s2)
+        regional_components={}
+        if _inside_reference_domain(-54.952,-2.897,25.0):
+            regional_components["Biomassa subterrânea"]={
+                "mean_dry_mg_ha":35.25,"range_dry_mg_ha":[27.2,42.3],
+                "method":"média descritiva entre controle (biomassa total de raízes 34,2 ±6,0) e exclusão parcial de chuva (36,3 ±7,0); inclui raízes grossas >2 mm até 12 m e finas <2 mm até 6,1 m, vivas + mortas. Os ± são erros-padrão reportados; envelope entre média ± EP não é IC95% nem intervalo preditivo.",
+                "source":"Nepstad et al. (2002), Journal of Geophysical Research: Atmospheres, 107(D20), 8066, doi:10.1029/2001JD000360",
+                "url":"https://doi.org/10.1029/2001JD000360"}
+        if _inside_reference_domain(-54.94,-3.08,15.0):
+            regional_components.update({
+                "Necromassa — madeira caída":{
+                    "mean_dry_mg_ha":50.7,"range_dry_mg_ha":[49.6,51.8],
+                    "method":"estoque publicado em floresta não perturbada; envelope descritivo usando ±1,1 reportado no estudo; a natureza da dispersão não é interpretada como IC95%.",
+                    "source":"Keller et al. (2004), Coarse woody debris in undisturbed and logged forests in the eastern Brazilian Amazon, Global Change Biology 10(5)",
+                    "url":"https://research.fs.usda.gov/treesearch/30199"},
+                "Necromassa — madeira morta em pé":{
+                    "mean_dry_mg_ha":7.7,"range_dry_mg_ha":[5.7,9.7],
+                    "method":"estoque publicado em floresta não perturbada; envelope descritivo usando ±2,0 reportado no estudo; a natureza da dispersão não é interpretada como IC95%.",
+                    "source":"Palace et al. (2007), Necromass in undisturbed and logged forests in the Brazilian Amazon, Forest Ecology and Management",
+                    "url":"https://www.sciencedirect.com/science/article/pii/S0378112706010796"}})
+        if _inside_reference_domain(-54.9833,-3.0667,15.0):
+            regional_components["Serapilheira — estoque no piso florestal"]={
+                "mean_dry_mg_ha":6.0,"range_dry_mg_ha":[0.0,11.8],
+                "method":"estoque de forest floor reportado na FLONA Tapajós; envelope truncado em zero a partir de 6,0 ±5,8 Mg/ha; não é produtividade/queda anual e não é IC95%.",
+                "source":"McGroddy et al. (2008), Retention of phosphorus in highly weathered soils under a lowland Amazonian forest ecosystem, Journal of Geophysical Research: Biogeosciences",
+                "url":"https://doi.org/10.1029/2008JG000756"}
         return {"available":True,"agb_mg_ha":mean,"uncertainty_mg_ha":max(mean-lower,upper-mean),
                 "agb_range_mg_ha":[lower,upper],
                 "uncertainty_kind":"envelope descritivo entre médias de dois sítios ± DP intrassítio; não é IC95%, intervalo preditivo nem erro SAR",
@@ -230,28 +263,7 @@ def literature_fallback(biome,phys,library_rows=None,location=None,aoi=None):
                 "data_origin":"LITERATURA_MICRORREGIONAL","method":"média igualmente ponderada das duas médias publicadas (6 parcelas por sítio); envelope descritivo min(média do sítio−DP), max(média do sítio+DP), sem inferência de 95% por haver somente dois sítios independentes",
                 "n_plots":n,"n_independent_sites":2,"distance_from_km83_km":distance_km,
                 "site_means_mg_ha":{"km72":m1,"km117":m2},"site_sd_mg_ha":{"km72":s1,"km117":s2},
-                "regional_components":{
-                    "Biomassa subterrânea":{
-                        "mean_dry_mg_ha":35.25,"range_dry_mg_ha":[27.2,42.3],
-                        "method":"média descritiva entre controle (biomassa total de raízes 34,2 ±6,0) e exclusão parcial de chuva (36,3 ±7,0); inclui raízes grossas >2 mm até 12 m e finas <2 mm até 6,1 m, vivas + mortas. Os ± são erros-padrão reportados; envelope entre média ± EP não é IC95% nem intervalo preditivo.",
-                        "source":"Nepstad et al. (2002), Journal of Geophysical Research: Atmospheres, 107(D20), 8066, doi:10.1029/2001JD000360",
-                        "url":"https://doi.org/10.1029/2001JD000360"},
-                    "Necromassa — madeira caída":{
-                        "mean_dry_mg_ha":50.7,"range_dry_mg_ha":[49.6,51.8],
-                        "method":"estoque publicado em floresta não perturbada; envelope descritivo usando ±1,1 reportado no estudo; a natureza da dispersão não é interpretada como IC95%.",
-                        "source":"Keller et al. (2004), Coarse woody debris in undisturbed and logged forests in the eastern Brazilian Amazon, Global Change Biology 10(5)",
-                        "url":"https://research.fs.usda.gov/treesearch/30199"},
-                    "Necromassa — madeira morta em pé":{
-                        "mean_dry_mg_ha":7.7,"range_dry_mg_ha":[5.7,9.7],
-                        "method":"estoque publicado em floresta não perturbada; envelope descritivo usando ±2,0 reportado no estudo; a natureza da dispersão não é interpretada como IC95%.",
-                        "source":"Palace et al. (2007), Necromass in undisturbed and logged forests in the Brazilian Amazon, Forest Ecology and Management",
-                        "url":"https://www.sciencedirect.com/science/article/pii/S0378112706010796"},
-                    "Serapilheira — estoque no piso florestal":{
-                        "mean_dry_mg_ha":6.0,"range_dry_mg_ha":[0.0,11.8],
-                        "method":"estoque de forest floor reportado na FLONA Tapajós; envelope truncado em zero a partir de 6,0 ±5,8 Mg/ha; não é produtividade/queda anual e não é IC95%.",
-                        "source":"McGroddy et al. (2008), Retention of phosphorus in highly weathered soils under a lowland Amazonian forest ecosystem, Journal of Geophysical Research: Biogeosciences",
-                        "url":"https://doi.org/10.1029/2008JG000756"}
-                },
+                "regional_components":regional_components,
                 "sar_processed":False,"sar_metrics":{"RMSE":None,"MAE":None,"bias":None,"R2":None},
                 "limits":["resultado secundário agregado; não é calibração nem validação SAR","dois sítios independentes separados por cerca de 45 km","dado de 2010; incerteza alométrica e de transferência temporal não incluída integralmente","não gerar mapa AGB pixel a pixel a partir desta média"],
                 "note":"Estimativa de referência microrregional para AOI de floresta ombrófila densa situada até 35 km do km 83; não é uma equação SAR."}
