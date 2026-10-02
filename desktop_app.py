@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.11-PROFESSIONAL"
+APP_VERSION="3.24.12-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -444,7 +444,7 @@ def acceptance_test(kmz_path):
 def ui_smoke_test():
     root=App(); root.after(1200,root.destroy); root.mainloop()
 
-def sentinel2_preview(gdf,out_h=700):
+def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
     """Recent low-cloud Sentinel-2 L2A RGB preview and AOI pixel coordinates; no user API key."""
     import rasterio
     from rasterio.warp import transform_bounds, transform
@@ -469,8 +469,9 @@ def sentinel2_preview(gdf,out_h=700):
     with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
         with rasterio.open(href) as src:
             b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
-            dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0); margin=.18
-            wb=(bx[0]-dx*margin,bx[1]-dy*margin,bx[2]+dx*margin,bx[3]+dy*margin)
+            dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0)
+            factor=max(0.30,min(8.0,float(extent_factor))); cx=(bx[0]+bx[2])/2; cy=(bx[1]+bx[3])/2
+            wb=(cx-dx*factor/2,cy-dy*factor/2,cx+dx*factor/2,cy+dy*factor/2)
             win=from_bounds(*wb,transform=src.transform).round_offsets().round_lengths()
             out_w=max(700,min(1200,round(out_h*max(float(win.width),1.0)/max(float(win.height),1.0))))
             arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
@@ -600,13 +601,16 @@ class App(tk.Tk):
         ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
         ttk.Button(row,text="VISUALIZAR SATÉLITE + POLÍGONO",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
+        ttk.Button(row,text="−",width=3,command=self.map_zoom_out).pack(side="left",padx=(12,2))
+        ttk.Button(row,text="+",width=3,command=self.map_zoom_in).pack(side="left",padx=2)
+        ttk.Button(row,text="AJUSTAR AOI",command=self.map_zoom_fit).pack(side="left",padx=(2,8))
         keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
         ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
         ttk.Label(keyrow,text="Google opcional; fallback automático Sentinel-2 → Esri World Imagery",foreground="#666").pack(side="left")
         self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
-        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
         spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
@@ -615,7 +619,22 @@ class App(tk.Tk):
         self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
-    def show_google_map(self,refresh=False):
+    def map_zoom_in(self):
+        if self.gdf is None:return
+        self._map_extent_factor=max(0.30,self._map_extent_factor/1.5)
+        self.show_google_map(refresh=True,prefer_public=True)
+
+    def map_zoom_out(self):
+        if self.gdf is None:return
+        self._map_extent_factor=min(8.0,self._map_extent_factor*1.5)
+        self.show_google_map(refresh=True,prefer_public=True)
+
+    def map_zoom_fit(self):
+        if self.gdf is None:return
+        self._map_extent_factor=1.36
+        self.show_google_map(refresh=True,prefer_public=True)
+
+    def show_google_map(self,refresh=False,prefer_public=False):
         """Satellite visualization: Google when keyed, then Sentinel-2, then Esri, then offline vector."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         self._map_generation+=1; generation=self._map_generation
@@ -626,7 +645,7 @@ class App(tk.Tk):
             req_w=1200; req_h=max(320,min(1200,round(1200/ratio)))
         else:
             req_h=1200; req_w=max(320,min(1200,round(1200*ratio)))
-        key=self.google_maps_key.get().strip()
+        key=self.google_maps_key.get().strip(); extent_factor=max(0.30,min(8.0,float(self._map_extent_factor)))
         if not refresh:self.status.set("Carregando imagem de satélite e perímetro...")
         self.update_idletasks()
 
@@ -658,8 +677,8 @@ class App(tk.Tk):
 
         def esri_image(rs):
             minx,miny,maxx,maxy=map(float,g.total_bounds)
-            padx=max((maxx-minx)*0.08,0.0005); pady=max((maxy-miny)*0.08,0.0005)
-            bx=(minx-padx,miny-pady,maxx+padx,maxy+pady)
+            dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8); cx=(minx+maxx)/2; cy=(miny+maxy)/2
+            bx=(cx-dx*extent_factor/2,cy-dy*extent_factor/2,cx+dx*extent_factor/2,cy+dy*extent_factor/2)
             params={"bbox":",".join(f"{v:.8f}" for v in bx),"bboxSR":"4326","imageSR":"4326",
                     "size":f"{req_w},{req_h}","format":"jpg","f":"image","dpi":"96"}
             rr=requests.get("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export",params=params,timeout=(8,35))
@@ -684,14 +703,14 @@ class App(tk.Tk):
             if not rs:
                 self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"))
                 return
-            if key:
+            if key and not prefer_public:
                 try:
                     view=google_image(rs)
                     self._map_queue.put((generation,view,[],"Google Maps Static API",None,"Google",None))
                     return
                 except Exception as e:errors.append("Google: "+str(e))
             try:
-                p=sentinel2_preview(g)
+                p=sentinel2_preview(g,extent_factor=extent_factor)
                 copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {float(p.get('cloud_cover',0)):.1f}%"
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
@@ -726,7 +745,7 @@ class App(tk.Tk):
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
         for pts in polygons:self.map_canvas.create_polygon(*pts,fill="",outline="#FF8A00",width=3)
         self.map_canvas.create_rectangle(0,view.height-24,view.width,view.height,fill="white",outline=""); self.map_canvas.create_text(view.width-8,view.height-12,anchor="e",text=copyright,fill="#333",font=("Segoe UI",8))
-        self.status.set(f"{provider} carregado com o perímetro. Uso exclusivo para visualização.")
+        self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {1.36/max(self._map_extent_factor,1e-9):.2f}×. Uso exclusivo para visualização.")
 
     def _on_map_resize(self,event=None):
         """Keep AOI and satellite base fitted after a real canvas resize."""
@@ -747,7 +766,7 @@ class App(tk.Tk):
     def _refresh_satellite_after_resize(self):
         self._map_refresh_job=None
         if self.gdf is not None:
-            self.show_google_map(refresh=True)
+            self.show_google_map(refresh=True,prefer_public=True)
 
     def _redraw_map_after_resize(self):
         self._map_redraw_job=None
