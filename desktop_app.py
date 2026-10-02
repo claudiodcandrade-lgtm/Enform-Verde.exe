@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.12-PROFESSIONAL"
+APP_VERSION="3.24.13-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -608,7 +608,15 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Google opcional; fallback automático Sentinel-2 → Esri World Imagery",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri World Imagery → Esri World Street Map",foreground="#666").pack(side="left")
+        ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
+        self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
+        self.ibge_phys_display=tk.StringVar(value="Aguardando classificação legenda_1.")
+        ttk.Label(ibgebox,text="Bioma IBGE:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
+        ttk.Label(ibgebox,textvariable=self.ibge_biome_display,wraplength=840).grid(row=0,column=1,sticky="w",padx=(8,0))
+        ttk.Label(ibgebox,text="Fitofisionomia IBGE (legenda_1):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
+        ttk.Label(ibgebox,textvariable=self.ibge_phys_display,wraplength=840,foreground="#155D43").grid(row=1,column=1,sticky="w",padx=(8,0),pady=(4,0))
+        ibgebox.columnconfigure(1,weight=1)
         self.map_canvas=tk.Canvas(f,height=330,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0"); self.map_canvas.pack(fill="both",expand=True,pady=(2,6))
         self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36
         self.map_canvas.bind("<Configure>",self._on_map_resize)
@@ -675,13 +683,14 @@ class App(tk.Tk):
                 raise RuntimeError("resposta Google não é imagem")
             return Image.open(io.BytesIO(rr.content)).convert("RGB").resize((w,h),Image.Resampling.LANCZOS)
 
-        def esri_image(rs):
+        def esri_export(rs,service="World_Imagery",label="Esri"):
+
             minx,miny,maxx,maxy=map(float,g.total_bounds)
             dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8); cx=(minx+maxx)/2; cy=(miny+maxy)/2
             bx=(cx-dx*extent_factor/2,cy-dy*extent_factor/2,cx+dx*extent_factor/2,cy+dy*extent_factor/2)
             params={"bbox":",".join(f"{v:.8f}" for v in bx),"bboxSR":"4326","imageSR":"4326",
                     "size":f"{req_w},{req_h}","format":"jpg","f":"image","dpi":"96"}
-            rr=requests.get("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export",params=params,timeout=(8,35))
+            rr=requests.get(f"https://server.arcgisonline.com/ArcGIS/rest/services/{service}/MapServer/export",params=params,timeout=(8,35))
             rr.raise_for_status()
             if "image" not in (rr.headers.get("Content-Type") or "").lower():
                 raise RuntimeError("resposta Esri não é imagem")
@@ -716,10 +725,15 @@ class App(tk.Tk):
                 return
             except Exception as e:errors.append("Sentinel-2: "+str(e))
             try:
-                view=esri_image(rs)
+                view=esri_export(rs,"World_Imagery","Esri World Imagery")
                 self._map_queue.put((generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None))
                 return
-            except Exception as e:errors.append("Esri: "+str(e))
+            except Exception as e:errors.append("Esri Imagery: "+str(e))
+            try:
+                view=esri_export(rs,"World_Street_Map","Esri World Street Map")
+                self._map_queue.put((generation,view,[],"Esri World Street Map",None,"Esri / World Street Map",None))
+                return
+            except Exception as e:errors.append("Esri Street: "+str(e))
             self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
@@ -987,6 +1001,7 @@ class App(tk.Tk):
         self._ibge_pending=False
         if kind!="ok":
             self.project["ibge_diagnosis_error"]=value
+            if hasattr(self,"ibge_phys_display"):self.ibge_phys_display.set("Não determinada — falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
             self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nDiagnóstico IBGE pendente: "+value)
             if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
@@ -996,6 +1011,14 @@ class App(tk.Tk):
         primary=primary_ibge_physiognomy(d)
         if primary:self.phys.set(primary)
         elif d.get("vegetacao_error"):self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
+        if hasattr(self,"ibge_biome_display"):
+            self.ibge_biome_display.set(self.biome.get() or "Não determinado")
+        if hasattr(self,"ibge_phys_display"):
+            code=None
+            regs=d.get("regioes_fitoecologicas") or []
+            if regs and primary and regs[0].get("name")==primary:code=regs[0].get("code")
+            shown=self.phys.get() or "Não determinada"
+            self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else ""))
         btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
         vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"]) or ("PENDENTE: "+d.get("vegetacao_error","sem classe"))
         code_txt="; ".join(f"{x['code'] or 'código N/D'} — {x['name']}: {x['percent']:.1f}% ({x['area_ha']:,.1f} ha)" for x in d.get("regioes_fitoecologicas",[])[:8])
@@ -1225,7 +1248,7 @@ class App(tk.Tk):
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
                          "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
-            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia/região fitoecológica IBGE: {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
+            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
             for r in rows:
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
