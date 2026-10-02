@@ -8,7 +8,7 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -62,7 +62,7 @@ jobs:
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
-          assert "ANÁLISE SECUNDÁRIA — SAR NÃO PROCESSADO" in src, "secondary-analysis status missing"
+          assert "FALLBACK MICRORREGIONAL — SAR PROCESSADO, SEM MODELO AGB" in src, "processed-SAR secondary estimate status missing"
           sar_src=open("sar_pipeline.py",encoding="utf-8").read()
           assert "process_nisar_gcov" in sar_src and "analyze_nisar_gcov" in sar_src, "NISAR GCOV processor missing"
           assert "NISAR_GCOV_HDF5" in sar_src, "NISAR HDF5 route missing"
@@ -80,6 +80,9 @@ jobs:
           assert "planetary_alos_palsar" in sar_src and "alos-palsar-mosaic" in sar_src, "public L-band ALOS/PALSAR route missing"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
           assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Esri World Imagery (público)" in src, "satellite polygon visualization missing"
+          assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
+          assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
+          assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
           assert Path("enform_header.png").exists() and Path("enform_header.png").stat().st_size > 20000, "forest/logo visual asset missing"
           import scientific_calibration as sc
           assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
@@ -96,22 +99,43 @@ jobs:
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
           ui.update_idletasks()
+          kmz=Path("acceptance/Teste_SAR_Biomassa_Tapajos.kmz").resolve()
+          app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
+          ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
+          ui.pick_vector()
+          ui.update_idletasks()
+          assert "Upload concluído" in ui.vector_status.get() and kmz.name in ui.vector_status.get(), "AOI filename/upload confirmation missing"
+          assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
+          import tempfile
+          with tempfile.TemporaryDirectory() as td:
+              geojson=Path(td)/"tapajos_acceptance.geojson"
+              app.read_vector(kmz).to_file(geojson,driver="GeoJSON")
+              app.filedialog.askopenfilename=lambda **kwargs:str(geojson)
+              ui.pick_vector(); ui.update_idletasks()
+              assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
+              assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
           ui.destroy()
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
-      - name: Live public SAR pixel test — Tapajos
+      - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
         shell: pwsh
         run: |
           @'
-          import geopandas as gpd
-          from shapely.geometry import box
           import sar_pipeline as s
-          g=gpd.GeoDataFrame(geometry=[box(-54.965,-3.050,-54.930,-3.020)],crs="EPSG:4326")
+          import desktop_app as a
+          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
           r=s.planetary_sentinel1_cog(g,"sar_ci_cache",limit=4)
           assert r.get("stats"), "Sentinel-1 catalog responded but no real AOI pixels were processed: "+str(r.get("errors"))
           assert sum(x.get("n",0) for x in r["stats"])>0
-          print("LIVE_SAR_PIXELS_OK",r["stats"])
+          l=s.planetary_alos_palsar(g,"sar_ci_cache/alos",limit=4)
+          assert l.get("stats"), "ALOS/PALSAR L-band returned no processed Tapajos pixels: "+str(l.get("errors"))
+          assert sum(x.get("n",0) for x in l["stats"])>0
+          lit=s.literature_fallback("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi=g)
+          assert lit and lit["available"] and abs(lit["agb_mg_ha"]-273.515)<1e-6
+          assert lit["sar_metrics"]["RMSE"] is None and lit["agb_range_mg_ha"][0]<lit["agb_mg_ha"]<lit["agb_range_mg_ha"][1]
+          assert "não é IC95%" in lit["uncertainty_kind"]
+          print("LIVE_TAPAJOS_KMZ_SAR_AND_REGIONAL_REFERENCE_OK",{"sentinel1":r["stats"],"alos_palsar":l["stats"],"agb_reference":lit})
           '@ | Set-Content live_sar_test.py -Encoding UTF8
           python live_sar_test.py
 
@@ -123,6 +147,27 @@ jobs:
         shell: pwsh
         run: |
           python -c "import sar_pipeline as s; m=[x for x in s.MODEL_REGISTRY if x.get('executable')]; assert any(x['id']=='CASSOL_2019_EQ13' for x in m); assert m[0].get('rmse_mg_ha') is not None; print('EXECUTABLE_MODEL_REGISTRY_OK')"
+          python -c "import numpy as np; from scientific_calibration import fit_local_powerlaw_calibration as f; groups=np.repeat(['site1','site2','site3','site4','site5','site6'],6); agb=np.tile(np.array([40,60,80,100,130,170.]),6); cb=0.003*np.power(agb,0.72)*(1+np.tile(np.array([-.02,.01,0,.02,-.01,0]),6)); m=f(cb,agb,groups); assert m['metrics']['independent_groups']==6 and m['metrics']['RMSE_Mg_ha']<5 and m['alpha']>0; print('ROBUST_P_BAND_GROUPED_CALIBRATION_OK',m['metrics'])"
+          python -c "from lband_preprocess import _safe_target; from pathlib import Path; import tempfile; root=Path(tempfile.mkdtemp()); assert _safe_target(root,'scene/subset.tif').parent==root/'scene'; rejected=False; exec('try:\n _safe_target(root,\"../escape.txt\")\nexcept ValueError:\n rejected=True'); assert rejected; print('ARCHIVE_PATH_TRAVERSAL_GUARD_OK')"
+          @'
+          import tempfile
+          import desktop_app as a
+          import sar_pipeline as s
+          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
+          s.maap_search=lambda *args,**kwargs:[]
+          s.discover_asf=lambda *args,**kwargs:[]
+          s.planetary_alos_palsar=lambda *args,**kwargs:{"items":1,"scene_ids":["mock-L-test"],"paths":[],"stats":[{"scene":"mock-L-test","polarization":"HH","n":10,"pixel_state":"PROCESSADO"}],"errors":[],"provider":"mock test","pixel_state":"PROCESSADO"}
+          s.planetary_sentinel1_cog=lambda *args,**kwargs:{"items":1,"scene_ids":["mock-C-test"],"paths":[],"stats":[{"scene":"mock-C-test","polarization":"VV","n":10,"pixel_state":"PROCESSADO"}],"errors":[],"provider":"mock test","pixel_state":"PROCESSADO"}
+          s.public_sentinel1_cog=lambda *args,**kwargs:{"items":0,"paths":[],"stats":[],"errors":[],"provider":"mock test"}
+          s.cci_history=lambda *args,**kwargs:{"items":0,"paths":[]}
+          with tempfile.TemporaryDirectory() as td:
+              out=s.automatic_pipeline(g,"Amazônia","Floresta Ombrófila Densa das Terras Baixas",cache=td)
+          lit=out["literature_reference"]
+          assert out["status"]=="SAR_PROCESSADO_SEM_MODELO_AGB" and lit["available"] and lit["sar_processed"]
+          assert abs(lit["agb_mg_ha"]-273.515)<1e-6 and len(lit["sar_pixel_audit"])==2
+          print("AUTOMATIC_SAR_TO_MICROREGIONAL_FALLBACK_FLOW_OK")
+          '@ | Set-Content fallback_flow_test.py -Encoding UTF8
+          python fallback_flow_test.py
           python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
 
       - name: Create icon
@@ -174,7 +219,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.1-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.2-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30

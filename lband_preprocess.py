@@ -1,5 +1,5 @@
 import os, re, shutil, subprocess, zipfile, tarfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import numpy as np
 
 def detect_lband_product(path):
@@ -13,12 +13,48 @@ def detect_lband_product(path):
     if p.suffix.lower() in (".tif",".tiff"):return "GEOTIFF"
     return "UNKNOWN"
 
+def _safe_target(root,name):
+    # Archive member paths use POSIX separators even on Windows. Reject absolute,
+    # drive-qualified and parent traversal paths before creating any file.
+    raw=str(name).replace("\\","/"); parts=PurePosixPath(raw).parts
+    if not raw or raw.startswith("/") or any(p in ("..","") for p in parts):
+        raise ValueError(f"Unsafe archive member path: {name!r}")
+    target=(Path(root)/Path(*parts)).resolve(); base=Path(root).resolve()
+    if target!=base and base not in target.parents:raise ValueError(f"Archive member escapes target: {name!r}")
+    return target
+
+def _copy_stream(src,dst):
+    dst.parent.mkdir(parents=True,exist_ok=True)
+    with dst.open("wb") as out:shutil.copyfileobj(src,out,length=1024*1024)
+
 def extract_archive(path,out):
     p=Path(path);out=Path(out);out.mkdir(parents=True,exist_ok=True)
     if p.suffix.lower()==".zip":
-        with zipfile.ZipFile(p) as z:z.extractall(out)
+        total=0
+        with zipfile.ZipFile(p) as z:
+            members=z.infolist()
+            if len(members)>100000:raise ValueError("Archive contém número excessivo de arquivos.")
+            for info in members:
+                target=_safe_target(out,info.filename)
+                if info.is_dir():target.mkdir(parents=True,exist_ok=True);continue
+                total+=info.file_size
+                if total>8*1024**3:raise ValueError("Conteúdo expandido do archive excede 8 GiB.")
+                with z.open(info) as src:_copy_stream(src,target)
     elif p.suffix.lower() in (".tar",".gz",".tgz") or p.name.lower().endswith(".tar.gz"):
-        with tarfile.open(p) as t:t.extractall(out)
+        total=0
+        with tarfile.open(p) as t:
+            members=t.getmembers()
+            if len(members)>100000:raise ValueError("Archive contém número excessivo de arquivos.")
+            for info in members:
+                if info.issym() or info.islnk() or not (info.isfile() or info.isdir()):
+                    raise ValueError("Archive contém links ou tipos de arquivo não permitidos.")
+                target=_safe_target(out,info.name)
+                if info.isdir():target.mkdir(parents=True,exist_ok=True);continue
+                total+=info.size
+                if total>8*1024**3:raise ValueError("Conteúdo expandido do archive excede 8 GiB.")
+                src=t.extractfile(info)
+                if src is None:raise ValueError(f"Não foi possível ler membro {info.name!r}.")
+                with src:_copy_stream(src,target)
     else:return p
     return out
 
@@ -39,7 +75,7 @@ def calibrate_jaxa_l11(i,q,cf=-83.0):
     return db
 
 def preprocess_lband(path,workdir,dem=None):
-    """Professional gate: prefer JAXA L2.2 NRB/CEOS-ARD. Raw SLC requires a verified processor."""
+    """Prefer JAXA L2.2 NRB/CEOS-ARD. Raw SLC requires a verified processor."""
     src=extract_archive(path,Path(workdir)/"unpacked")
     kind=detect_lband_product(src)
     if kind in ("CEOS_ARD_NRB","GEOTIFF"):

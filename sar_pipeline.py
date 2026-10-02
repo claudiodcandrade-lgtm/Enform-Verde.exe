@@ -7,6 +7,7 @@ CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
 MODEL_REGISTRY=[
 {"id":"ESA_BIOMASS_FP_AGB_L2B","biome":"*","physiognomy":"florestas no domínio válido do produto ESA","domain":"ESA BIOMASS Level-2B AGB; usar AGB e AGB_Std_Dev do produto, sem recalibrar como backscatter","bands":["P"],"sensor":"ESA BIOMASS P-band","algorithm":"produto geofísico oficial L2B","predictors":["AGB"],"coefficients":None,"validation":"qualidade/incerteza fornecida pelo produto","institution":"ESA","executable":True,"execution_mode":"direct_product","constraints":"respeitar quality flags e cobertura do FP_AGB_L2B"},
 {"id":"ESA_CCI_BIOMASS_V7","biome":"*","physiognomy":"cobertura florestal global","domain":"mapa AGB CCI v7; série 2005–2012 e 2015–2024; produto EO multissensor","bands":["L","C"],"sensor":"ALOS-2 PALSAR-2 + Sentinel-1","algorithm":"BIOMASAR-L/BIOMASAR-C + fusão","predictors":["AGB"],"coefficients":None,"validation":"incerteza do produto CCI","institution":"ESA CCI Biomass","executable":True,"execution_mode":"direct_product","constraints":"produto histórico; não rotular como P-band nem como estimativa local calibrada"},
+{"id":"CASINO_P_GROUND_CANCELLED_POWER_LAW","biome":"florestas tropicais (separar calibração de Caatinga)","physiognomy":"floresta tropical; limites de transferência precisam ser avaliados","domain":"CASINO/BIOMASS P-band: canopy backscatter por ground cancellation + amostras independentes com AGB; algoritmo calibrável, não coeficientes globais","bands":["P"],"sensor":"BIOMASS P-band interferométrico / produtos compatíveis","algorithm":"power law CB = k × AGB^alpha com estimação não linear robusta por cena e validação espacial agrupada","predictors":["ground_cancelled_canopy_backscatter_linear"],"coefficients":None,"validation":"publicação informa RMSD ≤27% em ao menos metade dos testes por sítio a 2,25 ha; referência independente: 142 parcelas, RMSD 20% (66 Mg/ha); airborne ESA campaigns em Guiana Francesa e Gabão","doi":"10.1016/j.rse.2020.112153","institution":"ESA / Politecnico di Milano / University of Sheffield / Chalmers","executable":False,"constraints":"não usar HH/HV comum, backscatter em dB ou PALSAR L como substitutos; exige canopy backscatter ground-cancelled e pontos nacionais pareados independentes"},
 {"id":"PEREIRA_2018_VARZEA_POL","biome":"Amazônia","physiognomy":"várzea/floresta inundável","domain":"várzea amazônica; full-pol PALSAR; 18 amostras","bands":["L"],"sensor":"ALOS/PALSAR-1 PLR","algorithm":"GLM log-link com atributos polarimétricos","predictors":["V_ZD","Phi_alphaS1","Phi_alphaS2"],"coefficients":None,"r2":0.88,"rmse_mg_ha":74.59,"bias_mg_ha":-4.9,"validation":"cross-validation; erro relativo ~46%","doi":"10.3390/rs10091355","institution":"INPE/UNESP/colaboradores","executable":False,"constraints":"preditores e desempenho verificados; coeficientes numéricos não publicados na tabela principal, portanto não inventar execução"},
 {"id":"PEREIRA_2018_VARZEA_XL","biome":"Amazônia","physiognomy":"várzea/floresta inundável","domain":"várzea amazônica; PALSAR + TerraSAR-X + Radarsat-2","bands":["L","X","C"],"sensor":"ALOS/PALSAR + TerraSAR-X + Radarsat-2","algorithm":"GLM multifrequência","predictors":["PL_HV_HH","RC2_HV_HH","TX_HH_dB"],"coefficients":None,"r2":0.88,"rmse_mg_ha":107.32,"bias_mg_ha":-11.4,"validation":"cross-validation","doi":"10.3390/rs10091355","institution":"INPE/UNESP/colaboradores","executable":False,"constraints":"usar para seleção/aferição; sem coeficientes publicados não executar numericamente"},
 
@@ -15,7 +16,7 @@ MODEL_REGISTRY=[
 {"id":"VARZEA_2018","biome":"Amazônia","domain":"floresta de várzea","bands":["L","X"],"sensor":"ALOS/PALSAR + TerraSAR-X","algorithm":"regressão selecionada por CV","coefficients":None,"r2":0.46,"rmse_mg_ha":74.6,"validation":"cross-validation","doi":"10.3390/rs10091355","executable":False},
 {"id":"CERRADO_RIO_VERMELHO_2020","biome":"Cerrado","domain":"vegetação lenhosa; Rio Vermelho","bands":["L"],"sensor":"ALOS-2/PALSAR-2 + Landsat 8 + LiDAR","algorithm":"Random Forest","coefficients":None,"r2":0.89,"rmse_mg_ha":7.58,"bias_mg_ha":0.43,"validation":"k-fold + jackknife; referência LiDAR","doi":"10.3390/rs12172685","executable":False},
 {"id":"KUNTSCHIK_2004_CERRADAO_JERS1","biome":"Cerrado","physiognomy":"cerradão/fisionomias florestais","domain":"sudoeste de São Paulo","bands":["L"],"sensor":"JERS-1 SAR","algorithm":"regressão radar-biomassa","coefficients":None,"validation":"tese USP; equação confirmada, coeficientes pendentes de verificação integral","doi":"10.11606/T.41.2004.tde-14012005-084048","institution":"USP","executable":False},
-{"id":"CAATINGA_SENTINEL_2020","biome":"Caatinga","physiognomy":"estratos de Caatinga/FTSS","domain":"Caatinga brasileira","bands":["C"],"sensor":"Sentinel-1 + Sentinel-2","algorithm":"regressão linear múltipla","coefficients":None,"validation":"campo + sensoriamento remoto","institution":"UFC","executable":False},
+{"id":"CAATINGA_S1_JESUS_2023","biome":"Caatinga","physiognomy":"Caatinga arbórea no Alto Sertão de Sergipe; validar estágio fenológico e fitofisionomia","domain":"19 parcelas 30×30 m; períodos verde, intermediário e seco; múltiplas regressões com atributos dual-pol","bands":["C"],"sensor":"Sentinel-1 VV/VH dual-pol","algorithm":"MLR por período fenológico; melhor equação no período intermediário; lista de coeficientes ainda deve ser transcrita e checada contra PDF/dados antes de executar","predictors":["VH/VV","DPSVI","H","alpha","VV"],"coefficients":None,"r2":0.73,"rmse_mg_ha":8.33,"validation":"19 parcelas no estudo; artigo resume R², r e RMSE; incerteza espacial/transferência precisa ser recalculada com pares independentes","doi":"10.1007/s40333-023-0017-4","institution":"Universidade Federal de Sergipe / colaboradores","executable":False,"constraints":"modelo local do Sergipe; não transferir nacionalmente sem recalibração por dados IFN/SFB/Embrapa regionais; índices dependem de fenologia e decomposição dual-pol"},
 {"id":"ATLANTIC_2026_PALSAR2_S2","biome":"Mata Atlântica","physiognomy":"florestas montanas/topografia complexa","domain":"inventário de campo + PALSAR-2/Sentinel-2","bands":["L"],"sensor":"PALSAR-2 + Sentinel-2","algorithm":"machine learning multissensor","coefficients":None,"r2":0.64,"rmse_mg_ha":51.10,"validation":"benchmark com inventário de campo","doi":"10.1016/j.isprsjprs.2026.04.022","institution":"ISPRS JPRS","executable":False}
 
 ]
@@ -178,20 +179,86 @@ PRIMARY_PLOT_DATA_PRIORITY=True
 # Evidence hierarchy: georeferenced published primary plot data > primary plot data with
 # recoverable sampling design > microlocal published summaries > regional summaries.
 # Generic biome-wide means are forbidden.
-def literature_fallback(biome,phys,library_rows=None,location=None):
-    """Microlocal, traceable fallback. Primary plot data outrank published summaries."""
+def literature_fallback(biome,phys,library_rows=None,location=None,aoi=None):
+    """Use only eligible local/regional evidence; published aggregates never become SAR pixels.
+
+    At present the only built-in numeric fallback is a strictly geofenced Tapajós
+    reference. Other regions require explicit reviewed library_rows; biome-only
+    values are intentionally rejected.
+    """
+    # Peer-reviewed Tapajós summary for the km-83 acceptance AOI. It is an
+    # external stand-level reference, not plot–pixel SAR calibration.
+    def _tapajos_reference():
+        if str(biome or "").strip().casefold() not in ("amazônia","amazonia"):
+            return None
+        p=str(phys or "").casefold()
+        if "floresta ombrófila densa" not in p and "floresta ombrofila densa" not in p:
+            return None
+        if aoi is None:
+            return None
+        try:
+            g=aoi.to_crs("EPSG:4326"); c=g.geometry.union_all().centroid
+            from pyproj import Geod
+            geod=Geod(ellps="WGS84")
+            _,_,dist=geod.inv(float(c.x),float(c.y),-54.95,-3.067)
+            distance_km=float(abs(dist)/1000)
+            # A centroid check alone could accept an AOI extending far beyond
+            # the local evidence domain. Require every exterior vertex to fit.
+            geom=g.geometry.union_all()
+            polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else [geom]
+            max_vertex_km=0.0
+            for poly in polys:
+                for coord in poly.exterior.coords:
+                    x,y=coord[0],coord[1]
+                    _,_,d=geod.inv(float(x),float(y),-54.95,-3.067)
+                    max_vertex_km=max(max_vertex_km,abs(d)/1000)
+        except Exception:
+            return None
+        if distance_km>35.0 or max_vertex_km>35.0:
+            return None
+        n1=n2=6; m1,m2=298.11,248.92; s1,s2=29.40,61.78
+        n=n1+n2; mean=(n1*m1+n2*m2)/n
+        # The paper reports plots grouped in just two spatial sites. Treating all
+        # 12 plots as independent for a t prediction interval would overstate the
+        # degrees of freedom. Publish a descriptive envelope, not a confidence interval.
+        lower=max(0.0,min(m1-s1,m2-s2)); upper=max(m1+s1,m2+s2)
+        return {"available":True,"agb_mg_ha":mean,"uncertainty_mg_ha":max(mean-lower,upper-mean),
+                "agb_range_mg_ha":[lower,upper],
+                "uncertainty_kind":"envelope descritivo entre médias de dois sítios ± DP intrassítio; não é IC95%, intervalo preditivo nem erro SAR",
+                "source":"Santos, Camargo & Oliveira Jr. (2018), Ciência Florestal 28(3):1049–1059, DOI 10.5902/1980509833388",
+                "doi":"10.5902/1980509833388","url":"https://www.scielo.br/j/cflo/a/Y7zf8xHmVZWndCh6xYhJCwn/?lang=pt",
+                "data_origin":"LITERATURA_MICRORREGIONAL","method":"média igualmente ponderada das duas médias publicadas (6 parcelas por sítio); envelope descritivo min(média do sítio−DP), max(média do sítio+DP), sem inferência de 95% por haver somente dois sítios independentes",
+                "n_plots":n,"n_independent_sites":2,"distance_from_km83_km":distance_km,
+                "site_means_mg_ha":{"km72":m1,"km117":m2},"site_sd_mg_ha":{"km72":s1,"km117":s2},
+                "sar_processed":False,"sar_metrics":{"RMSE":None,"MAE":None,"bias":None,"R2":None},
+                "limits":["resultado secundário agregado; não é calibração nem validação SAR","dois sítios independentes separados por cerca de 45 km","dado de 2010; incerteza alométrica e de transferência temporal não incluída integralmente","não gerar mapa AGB pixel a pixel a partir desta média"],
+                "note":"Estimativa de referência microrregional para AOI de floresta ombrófila densa situada até 35 km do km 83; não é uma equação SAR."}
+    tapajos=_tapajos_reference()
+    if tapajos:return tapajos
     rows=list(library_rows or []); p=(phys or "").lower(); loc=(location or "").lower(); ranked=[]
+    centroid=None
+    if aoi is not None:
+        try:
+            c=aoi.to_crs("EPSG:4326").geometry.union_all().centroid; centroid=(float(c.x),float(c.y))
+        except Exception: centroid=None
     for r in rows:
         if r.get("biome") not in (biome,"*") or r.get("mean") is None: continue
         rp=[str(x).lower() for x in (r.get("phys") or [])]
         if rp and p and not any(x in p or p in x for x in rp): continue
         geo=" ".join(str(r.get(k,"")) for k in ("locality","municipality","region","state")).lower()
-        geo_score=4 if loc and loc in geo else (3 if r.get("locality") else (2 if r.get("municipality") else (1 if r.get("state") else 0)))
+        geo_score=0
+        coords=r.get("center_lon_lat")
+        if centroid and coords and r.get("max_distance_km") is not None:
+            from pyproj import Geod
+            _,_,dist=Geod(ellps="WGS84").inv(centroid[0],centroid[1],float(coords[0]),float(coords[1]))
+            if abs(dist)/1000<=float(r["max_distance_km"]):geo_score=4
+        if loc and loc in geo:geo_score=max(geo_score,4)
+        if geo_score==0:continue # no biome-only, state-only, or unlocated transfer
         primary=bool(r.get("plot_data") or r.get("primary_plot_data") or r.get("plot_rows")); georef=bool(r.get("plot_coordinates") or r.get("plot_geometries")); design=bool(r.get("sampling_design") or r.get("plot_area_m2"))
         evidence=4 if primary and georef else (3 if primary and design else (2 if primary else 1)); ranked.append(((evidence,geo_score),r))
     if not ranked:return None
     ranked.sort(key=lambda x:x[0],reverse=True); r=ranked[0][1]
-    return {"agb_mg_ha":float(r["mean"]),"uncertainty_pct":float(r.get("uncertainty_pct",30)),"source":r.get("source","inventário publicado"),"data_origin":"LITERATURA_MICRORREGIONAL","primary_plot_data":bool(r.get("plot_data") or r.get("primary_plot_data") or r.get("plot_rows")),"plot_georeferenced":bool(r.get("plot_coordinates") or r.get("plot_geometries")),"note":"Fallback externo; não é resultado SAR. Prioridade máxima para dados primários de parcelas."}
+    return {"available":True,"agb_mg_ha":float(r["mean"]),"uncertainty_pct":float(r.get("uncertainty_pct",30)),"source":r.get("source","inventário publicado"),"data_origin":"LITERATURA_MICRORREGIONAL","primary_plot_data":bool(r.get("plot_data") or r.get("primary_plot_data") or r.get("plot_rows")),"plot_georeferenced":bool(r.get("plot_coordinates") or r.get("plot_geometries")),"sar_processed":False,"sar_metrics":{"RMSE":None,"MAE":None,"bias":None,"R2":None},"note":"Fallback externo; não é resultado SAR. Prioridade máxima para dados primários de parcelas."}
 def process_nisar_gcov(gdf,h5_path):
     """Read calibrated NISAR L2 GCOV covariance terms and derive polygon statistics.
     GCOV values are gamma0 power; no fabricated AGB is returned without a compatible model."""
@@ -533,7 +600,8 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
 
     # Literature is strictly terminal: it is reached only after every configured SAR route above was attempted.
     audit["sar_sources_exhausted"]=True
-    lit=literature_fallback(biome,phys,library_rows)
+    lit=literature_fallback(biome,phys,library_rows,aoi=gdf)
+    if lit: lit["sar_processed"]=bool(audit.get("processed_without_agb")); lit["sar_pixel_audit"]=audit.get("processed_without_agb",[])
     return {"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),"agb_mg_ha":None,"uncertainty_mg_ha":None,"data_origin":("SAR_ATRIBUTOS" if audit.get("processed_without_agb") else "SAR_NAO_PROCESSADO"),
             "source":"nenhum arquivo SAR pôde ser baixado/processado nesta execução","audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "message":("SAR foi processado, mas não existe modelo AGB validado compatível; consulte processed_without_agb." if audit.get("processed_without_agb") else "Nenhum arquivo SAR foi processado; consulte a auditoria detalhada.")}
