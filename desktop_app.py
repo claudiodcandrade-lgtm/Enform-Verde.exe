@@ -444,6 +444,56 @@ def acceptance_test(kmz_path):
 def ui_smoke_test():
     root=App(); root.after(1200,root.destroy); root.mainloop()
 
+def sentinel2_preview(gdf,out_h=700):
+    """Return a recent low-cloud Sentinel-2 L2A RGB preview plus AOI pixel coordinates."""
+    import rasterio
+    from rasterio.warp import transform_bounds, transform
+    from rasterio.windows import from_bounds
+    g=gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
+    body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",json=body,timeout=(10,60)); rr.raise_for_status()
+    items=rr.json().get("features",[]); cand=[]
+    for it in items:
+        visual=(it.get("assets") or {}).get("visual")
+        if not visual or not visual.get("href"):continue
+        props=it.get("properties") or {}
+        cloud=float(props.get("eo:cloud_cover",100.0) if props.get("eo:cloud_cover") is not None else 100.0)
+        dt=str(props.get("datetime") or "")
+        cand.append((cloud,dt,it,visual["href"]))
+    if not cand:raise RuntimeError("Nenhuma cena Sentinel-2 L2A RGB encontrada para a AOI.")
+    low=[x for x in cand if x[0]<=20.0]
+    chosen=sorted(low,key=lambda x:x[1],reverse=True)[0] if low else sorted(cand,key=lambda x:(x[0],x[1]),reverse=False)[0]
+    cloud,dt,it,unsigned=chosen
+    sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
+    with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+        with rasterio.open(href) as src:
+            b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
+            dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0); margin=.18
+            wb=(bx[0]-dx*margin,bx[1]-dy*margin,bx[2]+dx*margin,bx[3]+dy*margin)
+            win=from_bounds(*wb,transform=src.transform).round_offsets().round_lengths()
+            out_w=max(700,min(1200,round(out_h*max(float(win.width),1.0)/max(float(win.height),1.0))))
+            arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
+                         resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
+            rgb=np.moveaxis(arr,0,2)
+            if rgb.dtype!=np.uint8:
+                valid=rgb[np.isfinite(rgb)&(rgb>0)]
+                hi=float(np.percentile(valid,99)) if valid.size else 1.0
+                rgb=np.clip(rgb/max(hi,1e-9)*255,0,255).astype(np.uint8)
+            view=Image.fromarray(rgb,"RGB"); wt=src.window_transform(win); polygons=[]
+            for geom0 in g.geometry:
+                geoms=list(geom0.geoms) if geom0.geom_type=="MultiPolygon" else ([geom0] if geom0.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    coords=list(poly.exterior.coords)
+                    lon=[p[0] for p in coords]; lat=[p[1] for p in coords]
+                    xx,yy=transform("EPSG:4326",src.crs,lon,lat); pts=[]
+                    for x,y in zip(xx,yy):
+                        col,row=(~wt)*(x,y)
+                        pts.extend([float(col)*out_w/max(float(win.width),1.0),float(row)*out_h/max(float(win.height),1.0)])
+                    if len(pts)>=6:polygons.append(pts)
+    return {"image":view,"polygons":polygons,"scene_id":it.get("id"),"datetime":dt,"cloud_cover":cloud,
+            "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual"}
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
@@ -564,65 +614,17 @@ class App(tk.Tk):
     def show_sentinel2_map(self,refresh=False):
         """Load a recent low-cloud Sentinel-2 L2A RGB scene and overlay the AOI; no user API key."""
         if self.gdf is None:return messagebox.showwarning("Imagem de satélite","Carregue/resolva o polígono primeiro.")
-        self._map_generation+=1; generation=self._map_generation
-        self._satellite_map_visible=False
-        g=self.gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
+        self._map_generation+=1; generation=self._map_generation; self._satellite_map_visible=False
+        g=self.gdf.copy()
         if not refresh:self.status.set("Buscando Sentinel-2 L2A recente no Planetary Computer...")
         self.update_idletasks()
         def worker():
             try:
-                import rasterio
-                from rasterio.warp import transform_bounds, transform
-                from rasterio.windows import from_bounds
-                body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
-                      "sortby":[{"field":"properties.datetime","direction":"desc"}]}
-                rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",json=body,timeout=(10,60)); rr.raise_for_status()
-                items=rr.json().get("features",[])
-                cand=[]
-                for it in items:
-                    visual=(it.get("assets") or {}).get("visual")
-                    if not visual or not visual.get("href"):continue
-                    props=it.get("properties") or {}
-                    cloud=float(props.get("eo:cloud_cover",100.0) if props.get("eo:cloud_cover") is not None else 100.0)
-                    dt=str(props.get("datetime") or "")
-                    cand.append((cloud,dt,it,visual["href"]))
-                if not cand:raise RuntimeError("Nenhuma cena Sentinel-2 L2A RGB encontrada para a AOI.")
-                low=[x for x in cand if x[0]<=20.0]
-                chosen=sorted(low,key=lambda x:x[1],reverse=True)[0] if low else sorted(cand,key=lambda x:(x[0],x[1]))[0]
-                cloud,dt,it,unsigned=chosen
-                sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
-                with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
-                    with rasterio.open(href) as src:
-                        b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
-                        dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0); margin=.18
-                        wb=(bx[0]-dx*margin,bx[1]-dy*margin,bx[2]+dx*margin,bx[3]+dy*margin)
-                        win=from_bounds(*wb,transform=src.transform).round_offsets().round_lengths()
-                        out_h=700; out_w=max(700,min(1200,round(out_h*max(win.width,1)/max(win.height,1))))
-                        arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
-                                     resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
-                        rgb=np.moveaxis(arr,0,2)
-                        if rgb.dtype!=np.uint8:
-                            valid=rgb[np.isfinite(rgb)&(rgb>0)]
-                            hi=float(np.percentile(valid,99)) if valid.size else 1.0
-                            rgb=np.clip(rgb/max(hi,1e-9)*255,0,255).astype(np.uint8)
-                        view=Image.fromarray(rgb,"RGB")
-                        wt=src.window_transform(win); polygons=[]
-                        for geom0 in g.geometry:
-                            geoms=list(geom0.geoms) if geom0.geom_type=="MultiPolygon" else ([geom0] if geom0.geom_type=="Polygon" else [])
-                            for poly in geoms:
-                                coords=list(poly.exterior.coords)
-                                lon=[p[0] for p in coords]; lat=[p[1] for p in coords]
-                                xx,yy=transform("EPSG:4326",src.crs,lon,lat); pts=[]
-                                for x,y in zip(xx,yy):
-                                    col,row=(~wt)*(x,y)
-                                    pts.extend([float(col)*out_w/max(float(win.width),1.0),float(row)*out_h/max(float(win.height),1.0)])
-                                if len(pts)>=6:polygons.append(pts)
-                self.after(0,self._finish_satellite_map,generation,view,polygons,
-                           "Sentinel-2 L2A / Microsoft Planetary Computer",None,
-                           f"Sentinel-2 L2A • {(dt or '')[:10]} • nuvens da cena {cloud:.1f}%",None)
+                p=sentinel2_preview(g)
+                copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {float(p.get('cloud_cover',0)):.1f}%"
+                self.after(0,self._finish_satellite_map,generation,p["image"],p["polygons"],p["provider"],None,copyright,None)
             except Exception as e:
-                self.after(0,self._finish_satellite_map,generation,None,[],
-                           "Sentinel-2 L2A / Microsoft Planetary Computer",None,None,str(e))
+                self.after(0,self._finish_satellite_map,generation,None,[],"Sentinel-2 L2A / Microsoft Planetary Computer",None,None,str(e))
         threading.Thread(target=worker,name="EnformSentinel2Map",daemon=True).start()
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
