@@ -101,6 +101,8 @@ jobs:
           assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Esri World Imagery (público)" in src, "satellite polygon visualization missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
+          assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
+          assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
           assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
           assert Path("enform_header.png").exists() and Path("enform_header.png").stat().st_size > 20000, "forest/logo visual asset missing"
           import scientific_calibration as sc
@@ -135,6 +137,16 @@ jobs:
               ui.pick_vector(); ui.update_idletasks()
               assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
+              ui._satellite_map_visible=False
+              ui.map_canvas.configure(width=960,height=420)
+              ui.update_idletasks(); ui._on_map_resize(); ui.update_idletasks(); ui._redraw_map_after_resize(); ui.update_idletasks()
+              polys=[i for i in ui.map_canvas.find_all() if ui.map_canvas.type(i)=="polygon"]
+              assert polys, "AOI disappeared after map resize"
+              bb=ui.map_canvas.bbox(polys[0]); cw=max(1,ui.map_canvas.winfo_width()); ch=max(1,ui.map_canvas.winfo_height())
+              assert ((bb[2]-bb[0])/cw > .45 or (bb[3]-bb[1])/ch > .45), "AOI is not fitted to resized map canvas: "+repr((bb,cw,ch))
+              old_generation=ui._map_generation
+              ui._reset_analysis_state()
+              assert ui._map_generation>old_generation and not ui._satellite_map_visible, "new input must invalidate stale satellite map responses"
           ui.destroy()
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
@@ -346,7 +358,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.5-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.6-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
