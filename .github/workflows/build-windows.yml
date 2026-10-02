@@ -233,6 +233,44 @@ jobs:
           python fallback_flow_test.py
           python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
 
+      - name: Outside-Amazon national fallback gate — Cerrado
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          @'
+          import json, tempfile
+          import geopandas as gpd
+          from shapely.geometry import box
+          import desktop_app as a
+          import sar_pipeline as s
+          from national_fallback import national_agb_fallback
+
+          # Small natural-vegetation AOI in the Cerrado domain. This is a national-route
+          # integration gate, not a claim that one local equation represents the biome.
+          g=gpd.GeoDataFrame(geometry=[box(-47.96,-15.98,-47.94,-15.96)],crs="EPSG:4326")
+          d=a.diagnose_ibge(g)
+          biome=(d.get("biomas") or [["",0,0]])[0][0]
+          phys=a.primary_ibge_physiognomy(d)
+          assert "Cerrado" in biome, "IBGE did not identify Cerrado: "+repr(d)
+          assert phys, "IBGE did not return a phytoregion outside Amazonia: "+repr(d)
+
+          # Real public SAR pixels must be processable outside Amazonia.
+          c=s.planetary_sentinel1_cog(g,"sar_ci_cache_cerrado/s1",limit=4)
+          l=s.planetary_alos_palsar(g,"sar_ci_cache_cerrado/alos",limit=4)
+          assert c.get("stats") and sum(x.get("n",0) for x in c["stats"])>0, "No real Sentinel-1 Cerrado pixels"
+          assert l.get("stats") and sum(x.get("n",0) for x in l["stats"])>0, "No real ALOS/PALSAR Cerrado pixels"
+
+          # If no compatible quantitative SAR model is available, AGB still must be
+          # returned by the hierarchical evidence model with an explicit uncertainty bound.
+          fb=national_agb_fallback("Cerrado",phys,aoi=g)
+          assert fb and fb["agb_mg_ha"]>0
+          lo,hi=fb["agb_range_mg_ha"]
+          assert 0 <= lo <= fb["agb_mg_ha"] <= hi and hi>lo
+          assert fb["data_origin"]=="MODELAGEM_LITERATURA_HIERARQUICA"
+          print("OUTSIDE_AMAZON_NATIONAL_FALLBACK_OK "+json.dumps({"biome":biome,"phys":phys,"agb":fb["agb_mg_ha"],"range":fb["agb_range_mg_ha"],"s1_pixels":sum(x.get("n",0) for x in c["stats"]),"l_pixels":sum(x.get("n",0) for x in l["stats"])},ensure_ascii=True))
+          '@ | Set-Content national_cerrado_gate.py -Encoding UTF8
+          python national_cerrado_gate.py
+
       - name: Catalog equation and recalibration contract tests
         run: python -m unittest discover -s tests -v
 
@@ -308,7 +346,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.4-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.5-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
