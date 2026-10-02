@@ -101,6 +101,7 @@ jobs:
           assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Esri World Imagery (público)" in src, "satellite polygon visualization missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
+          assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
           assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
           assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
           assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
@@ -137,6 +138,11 @@ jobs:
               ui.pick_vector(); ui.update_idletasks()
               assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
+              # Simulate total basemap/network failure: the core map must remain usable.
+              current_gen=ui._map_generation
+              ui._finish_satellite_map(current_gen,None,[],"Esri World Imagery",None,None,"offline test")
+              ui.update_idletasks()
+              assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "tile failure must leave offline AOI visible"
               ui._satellite_map_visible=False
               ui.map_canvas.configure(width=960,height=420)
               ui.update_idletasks(); ui._on_map_resize(); ui.update_idletasks(); ui._redraw_map_after_resize(); ui.update_idletasks()
@@ -358,7 +364,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.6-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.7-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
