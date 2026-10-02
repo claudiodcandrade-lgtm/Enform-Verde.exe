@@ -171,6 +171,24 @@ jobs:
           '@ | Set-Content live_sar_test.py -Encoding UTF8
           python live_sar_test.py
 
+      - name: Official IBGE phytoregion classification — real Tapajos AOI
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          @'
+          import json
+          import desktop_app as a
+          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
+          d=a.diagnose_ibge(g)
+          region=a.primary_ibge_physiognomy(d)
+          assert region and "Floresta Ombrófila Densa" in region, "IBGE legenda_1 did not identify expected Tapajos phytoregion: "+repr(d)
+          classes=d.get("regioes_fitoecologicas") or []
+          assert classes and classes[0]["name"]==region and classes[0]["code"], "dominant IBGE phytoregion code/name/area is incomplete: "+repr(d)
+          assert 0 < classes[0]["percent"] <= 100 and classes[0]["area_ha"] > 0
+          print("OFFICIAL_IBGE_TAPAJOS_CLASSIFICATION_OK "+json.dumps({"region":region,"classes":classes,"source":d.get("fonte_vegetacao")},ensure_ascii=True))
+          '@ | Set-Content ibge_acceptance_test.py -Encoding UTF8
+          python ibge_acceptance_test.py
+
       - name: Live SICAR polygon lookup
         shell: pwsh
         run: |
