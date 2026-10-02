@@ -11,13 +11,13 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.23.0"
+APP_VERSION="3.24.0-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
 SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
- "soil":"Vasques et al. (2021), Embrapa Solos/PronaSolos, COS 0–30 cm, 1 km + incerteza",
+ "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100/200 cm + diagnóstico de incerteza",
  "deadwood":"Freitas et al. (2021), Embrapa Amazônia Ocidental — necromassa lenhosa",
  "litter":"Embrapa Amazônia Oriental — estudos de serapilheira; proxy só para triagem",
 }
@@ -590,7 +590,7 @@ class App(tk.Tk):
         txt=("REGRAS DO MOTOR\n• MEDIDO: derivado diretamente do inventário/raster fornecido.\n• MODELADO: proxy/equação publicada, identificado com fonte e domínio.\n• NÃO ESTIMADO: quando não existe suporte defensável.\n\n"
              f"BGB: relação raiz/parte aérea {ROOT_RATIO:.2f}, faixa {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}; {SOURCES['protocol']}.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
-             f"Solo: {SOURCES['soil']}. O produto nacional tem resolução nativa de 1 km; o programa não faz falso downscaling.\n"
+             f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
              f"Necromassa: {SOURCES['deadwood']}; proxy de triagem recebe incerteza elevada e nunca é rotulado como medido.\n"
              "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
         self._set(self.src,txt)
