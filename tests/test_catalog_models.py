@@ -3,6 +3,11 @@ import sys
 import types
 import numpy as np
 import pandas as pd
+try:
+    import geopandas as gpd
+    from shapely.geometry import box
+except ImportError:
+    gpd=box=None
 
 # Requests is only used by live network routes, which these deterministic
 # evaluator tests deliberately do not call.
@@ -41,6 +46,17 @@ class CatalogModelExecutionTests(unittest.TestCase):
     def test_missing_coefficient_reference_cannot_be_run_as_published_model(self):
         with self.assertRaisesRegex(ValueError,"não executável"):
             sar.execute_registered_model("CAATINGA_S1_JESUS_2023",{"VH":0.2})
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_regional_model_selection_requires_aoi_inside_declared_domain(self):
+        model=next(m for m in sar.MODEL_REGISTRY if m["id"]=="NARVAES_2023_CENTRAL_AMAZON")
+        features={p:1.0 for p in model["predictors"]}
+        phys="floresta tropical com estágios primário, exploração seletiva e sucessão"
+        self.assertIsNone(sar.select_executable_model("Amazônia",phys,features))
+        local=gpd.GeoDataFrame(geometry=[box(-54.96,-3.07,-54.94,-3.06)],crs="EPSG:4326")
+        distant=gpd.GeoDataFrame(geometry=[box(-47,-10,-46.9,-9.9)],crs="EPSG:4326")
+        self.assertEqual(sar.select_executable_model("Amazônia",phys,features,aoi=local)["id"],model["id"])
+        self.assertIsNone(sar.select_executable_model("Amazônia",phys,features,aoi=distant))
 
 
 if __name__ == "__main__":
