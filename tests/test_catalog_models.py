@@ -45,6 +45,14 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["n_valid_pixels"],16)
         self.assertEqual(out["height_mean_m"],24.0)
 
+    def test_sar_height_remains_available_when_no_agb_model_matches(self):
+        zonal={"canopy_height.tif":{"mean":18.0,"sd":4.0,"n":9,"min":11.0,"max":25.0}}
+        with patch.object(sar,"_zonal",side_effect=lambda _gdf,path:zonal[str(path)]):
+            out=sar.process_real_sar(object(),["canopy_height.tif"],"Amazônia","Floresta")
+        self.assertIsNone(out["agb_mg_ha"])
+        self.assertEqual(out["height_mean_m"],18.0)
+        self.assertEqual(out["height_n_valid_pixels"],9)
+
 
     def test_narvaes_published_equation_uses_exact_feature_contract(self):
         x={"sigma0_HH_db":-15,"Pv_db":0.2,"alpha_S2_deg":20,
