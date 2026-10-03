@@ -1316,7 +1316,7 @@ class App(tk.Tk):
             diag=[]
             if audit:
                 diag=["","TRILHA SAR:"]
-                bb=audit.get("biomass_l2b") or {}; diag.append(f"BIOMASS P L2B catalogado: {bb.get(\'count\',0)} | operacional={bb.get(\'operational_count\',0)} | IOC={bb.get(\'ioc_count\',0)}")
+                bb=audit.get("biomass_l2b") or {}; diag.append("BIOMASS P L2B catalogado: %s | operacional=%s | IOC=%s" % (bb.get("count",0),bb.get("operational_count",0),bb.get("ioc_count",0)))
                 cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
                 ad=audit.get("asf_download") or {}
                 if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
