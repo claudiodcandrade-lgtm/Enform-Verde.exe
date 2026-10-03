@@ -769,7 +769,7 @@ class App(tk.Tk):
         self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
         self.map_canvas.grid(row=0,column=0,sticky="nsew"); self.map_vscroll.grid(row=0,column=1,sticky="ns"); self.map_hscroll.grid(row=1,column=0,sticky="ew")
         map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
-        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36; self._map_provider="OFFLINE_NASA_IBGE"
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
         self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
@@ -790,20 +790,27 @@ class App(tk.Tk):
         elif getattr(event,"delta",0)<0:self.map_zoom_out()
         return "break"
 
+    def _apply_map_zoom(self):
+        if self.gdf is None:return
+        if getattr(self,"_map_provider","").startswith("OFFLINE"):
+            self._draw_offline_brazil_basemap("NASA Blue Marble + IBGE 2025/BC250 — offline")
+        else:
+            self.show_google_map(refresh=True,prefer_public=True)
+
     def map_zoom_in(self):
         if self.gdf is None:return
         self._map_extent_factor=max(0.30,self._map_extent_factor/1.5)
-        self.show_google_map(refresh=True,prefer_public=True)
+        self._apply_map_zoom()
 
     def map_zoom_out(self):
         if self.gdf is None:return
         self._map_extent_factor=min(8.0,self._map_extent_factor*1.5)
-        self.show_google_map(refresh=True,prefer_public=True)
+        self._apply_map_zoom()
 
     def map_zoom_fit(self):
         if self.gdf is None:return
         self._map_extent_factor=1.36
-        self.show_google_map(refresh=True,prefer_public=True)
+        self._apply_map_zoom()
 
     def show_google_map(self,refresh=False,prefer_public=False):
         """Satellite visualization: Google when keyed, then Sentinel-2, then Esri, then offline vector."""
@@ -933,6 +940,7 @@ class App(tk.Tk):
         self.map_canvas.configure(scrollregion=(0,0,view.width,view.height))
         self.map_canvas.xview_moveto(max(0.0,min(1.0,(view.width-max(1,self.map_canvas.winfo_width()))/(2*max(1,view.width)))))
         self.map_canvas.yview_moveto(max(0.0,min(1.0,(view.height-max(1,self.map_canvas.winfo_height()))/(2*max(1,view.height)))))
+        self._map_provider=str(provider or "ONLINE")
         self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {1.36/max(self._map_extent_factor,1e-9):.2f}×. Uso exclusivo para visualização.")
 
     def _on_map_resize(self,event=None):
@@ -968,7 +976,7 @@ class App(tk.Tk):
             display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
             w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
             view,_=offline_brazil_preview(self.gdf,self._map_extent_factor,(w,h))
-            self._satellite_map_visible=True; self._last_map_size=(w,h)
+            self._satellite_map_visible=True; self._last_map_size=(w,h); self._map_provider="OFFLINE_NASA_IBGE"
             self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all")
             self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
             self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline="")
