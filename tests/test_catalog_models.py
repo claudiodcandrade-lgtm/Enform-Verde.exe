@@ -20,6 +20,49 @@ import sar_pipeline as sar
 
 
 class CatalogModelExecutionTests(unittest.TestCase):
+    def test_biomass_catalog_discovers_agb_and_height_without_conflating_them(self):
+        agb={"id":"tile_FP_AGB_L2B","properties":{"datetime":"2026-08-01"},
+             "assets":{"product":{"href":"https://example.test/agb.zip","type":"application/zip","title":"AGB product"}}}
+        fh={"id":"tile_FP_FH__L2B","properties":{"datetime":"2026-08-02"},
+            "assets":{"product":{"href":"https://example.test/fh.zip","type":"application/zip","title":"Forest height product"}}}
+        calls=[]
+        def fake_search(_gdf,collection,limit=100,product_type=None):
+            calls.append((collection,product_type))
+            rows={"FP_AGB_L2B":[agb],"FP_FH__L2B":[fh]}
+            return rows.get(product_type,[])
+        with patch.object(sar,"maap_search",side_effect=fake_search):
+            items=sar.biomass_l2b_search(object())
+        self.assertEqual(set(calls),{
+            ("BiomassLevel2b","FP_AGB_L2B"),("BiomassLevel2b","FP_FH__L2B"),
+            ("BiomassLevel2bIOC","FP_AGB_L2B"),("BiomassLevel2bIOC","FP_FH__L2B")})
+        self.assertEqual({x["_product_type"] for x in items},{"FP_AGB_L2B","FP_FH__L2B"})
+        self.assertEqual(sar._biomass_product_assets(fh,"FP_AGB_L2B"),[])
+        self.assertEqual(sar._biomass_product_assets(agb,"FP_AGB_L2B"),[("product","https://example.test/agb.zip")])
+
+    def test_biomass_catalog_audit_preserves_product_and_asset_metadata(self):
+        item={"id":"tile_FP_FH__L2B","bbox":[-55,-4,-54,-3],
+              "properties":{"datetime":"2026-08-02"},
+              "assets":{"height":{"href":"https://example.test/fh.tif","type":"image/tiff","roles":["data"]}},
+              "_collection":"BiomassLevel2b","_stage":"OPERATIONAL"}
+        summary=sar._biomass_catalog_summary(item)
+        self.assertEqual(summary["product_types"],["FP_FH__L2B"])
+        self.assertEqual(summary["assets"][0]["key"],"height")
+        self.assertEqual(summary["bbox"],item["bbox"])
+
+    def test_height_only_biomass_catalog_does_not_attempt_agb_download(self):
+        fh={"id":"tile_FP_FH__L2B","properties":{"datetime":"2026-08-02"},
+            "assets":{"product":{"href":"https://example.test/fh.zip","type":"application/zip","title":"Forest height product"}},
+            "_collection":"BiomassLevel2b","_stage":"OPERATIONAL","_product_type":"FP_FH__L2B"}
+        with patch.object(sar,"biomass_l2b_search",return_value=[fh]), \
+             patch.object(sar,"_download") as download, \
+             patch.object(sar,"maap_access_token") as token:
+            out=sar.download_maap_agb(object(),"dummy-token","/tmp/enform-test-cache")
+        self.assertFalse(out["available"])
+        self.assertEqual(out["fh_items"],1)
+        self.assertIn("não substitui AGB",out["reason"])
+        download.assert_not_called()
+        token.assert_not_called()
+
     def test_raster_role_classifier_distinguishes_backscatter_height_and_uncertainty(self):
         cases={
             "sigma0_HH.tif":"HH",
