@@ -8,7 +8,7 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 35
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,6 +53,120 @@ jobs:
           '@ | Set-Content make_offline_basemap.py -Encoding UTF8
           python make_offline_basemap.py
           Get-Item offline_brazil_basemap.jpg | Format-List Name,Length
+
+      - name: Build offline IBGE administrative and infrastructure map
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          @'
+          import io, json, gzip, zipfile, urllib.request, tempfile, os, re, shutil
+          from pathlib import Path
+          import geopandas as gpd
+          from shapely.geometry import mapping
+
+          work=Path("ibge_offline_build"); work.mkdir(exist_ok=True)
+          mun_url="https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2025/Brasil/BR_Municipios_2025.zip"
+          bc_url="https://geoftp.ibge.gov.br/cartas_e_mapas/bases_cartograficas_continuas/bc250/versao2025/shapefiles/bc_250_shapefiles_2026_03_03.zip"
+
+          def download(url,path):
+              if path.exists(): return
+              req=urllib.request.Request(url,headers={"User-Agent":"Enform-Verde-build"})
+              with urllib.request.urlopen(req,timeout=180) as r, open(path,"wb") as f:
+                  shutil.copyfileobj(r,f,length=8*1024*1024)
+
+          mun_zip=work/"municipios.zip"; bc_zip=work/"bc250.zip"
+          download(mun_url,mun_zip); download(bc_url,bc_zip)
+
+          def extract_matching(zpath,tokens,outdir):
+              outdir.mkdir(parents=True,exist_ok=True)
+              stems=set()
+              with zipfile.ZipFile(zpath) as z:
+                  for n in z.namelist():
+                      base=Path(n).name.lower()
+                      if base.endswith(".shp") and any(t in base for t in tokens):
+                          stems.add(Path(n).with_suffix("").as_posix())
+                  for stem in stems:
+                      for ext in (".shp",".shx",".dbf",".prj",".cpg"):
+                          target_name=stem+ext
+                          names={n.lower():n for n in z.namelist()}
+                          real=names.get(target_name.lower())
+                          if real:
+                              target=outdir/Path(real).name
+                              with z.open(real) as src, open(target,"wb") as dst: shutil.copyfileobj(src,dst)
+              return sorted(outdir.glob("*.shp"))
+
+          # Municipal polygons
+          mun_dir=work/"mun"
+          with zipfile.ZipFile(mun_zip) as z:z.extractall(mun_dir)
+          mun_shp=next(mun_dir.rglob("*Municipios*.shp"))
+          mun=gpd.read_file(mun_shp).to_crs(4326)
+          name_col=next((c for c in mun.columns if c.upper() in ("NM_MUN","NM_MUNICIP","NOME")),None)
+          code_col=next((c for c in mun.columns if c.upper() in ("CD_MUN","CD_GEOCMU","GEOCODIGO")),None)
+          mun["geometry"]=mun.geometry.simplify(0.004,preserve_topology=True)
+
+          uf_map={"11":"RO","12":"AC","13":"AM","14":"RR","15":"PA","16":"AP","17":"TO","21":"MA","22":"PI","23":"CE","24":"RN","25":"PB","26":"PE","27":"AL","28":"SE","29":"BA","31":"MG","32":"ES","33":"RJ","35":"SP","41":"PR","42":"SC","43":"RS","50":"MS","51":"MT","52":"GO","53":"DF"}
+          features={"ufs":[],"municipios":[],"rodovias":[],"ferrovias":[],"hidrovias":[],"drenagem":[],"aeroportos":[],"localidades":[]}
+
+          def add_feat(layer,geom,props=None):
+              if geom is None or geom.is_empty:return
+              b=list(map(float,geom.bounds))
+              features[layer].append({"bbox":b,"properties":props or {},"geometry":mapping(geom)})
+
+          for _,r in mun.iterrows():
+              geom=r.geometry
+              rp=geom.representative_point()
+              nm=str(r.get(name_col,"")) if name_col else ""
+              cd=str(r.get(code_col,"")) if code_col else ""
+              add_feat("municipios",geom,{"name":nm,"code":cd,"label":[float(rp.x),float(rp.y)]})
+
+          if code_col:
+              tmp=mun.copy(); tmp["UFKEY"]=tmp[code_col].astype(str).str[:2]
+              for uf,grp in tmp.groupby("UFKEY"):
+                  geom=grp.geometry.union_all().simplify(0.008,preserve_topology=True)
+                  add_feat("ufs",geom,{"sigla":uf_map.get(str(uf),str(uf)),"name":uf_map.get(str(uf),str(uf))})
+
+          # BC250 selected national infrastructure layers
+          specs={
+            "rodovias":["trecho_rodoviario","rodovia"],
+            "ferrovias":["trecho_ferroviario","ferrovia"],
+            "hidrovias":["trecho_hidroviario","hidrovia"],
+            "drenagem":["trecho_drenagem"],
+            "aeroportos":["aerodromo","aeroporto"],
+            "localidades":["localidade"]
+          }
+          for layer,tokens in specs.items():
+              shpfiles=extract_matching(bc_zip,tokens,work/("bc_"+layer))
+              for shp in shpfiles:
+                  try:gdf=gpd.read_file(shp).to_crs(4326)
+                  except Exception:continue
+                  name_candidates=[c for c in gdf.columns if c.upper() in ("NM_LOCALIDADE","NM_MUNICIP","NOME","NM_NOME","NOME_GEO","NM_GEOGRAF")]
+                  ncol=name_candidates[0] if name_candidates else None
+                  if layer not in ("aeroportos","localidades"):
+                      gdf["geometry"]=gdf.geometry.simplify(0.0025,preserve_topology=True)
+                  for _,r in gdf.iterrows():
+                      geom=r.geometry
+                      if geom is None or geom.is_empty:continue
+                      props={}
+                      if ncol and r.get(ncol) is not None:props["name"]=str(r.get(ncol))
+                      add_feat(layer,geom,props)
+
+          # Hard contract: essential layers must exist; infrastructure may vary in exact filename but roads/localities must resolve.
+          assert len(features["ufs"])>=27, len(features["ufs"])
+          assert len(features["municipios"])>=5569, len(features["municipios"])
+          assert len(features["rodovias"])>0, "BC250 road layer not found"
+          assert len(features["localidades"])>0, "BC250 locality layer not found"
+
+          payload={"source":{
+              "municipios":"IBGE Malha Municipal Digital 2025",
+              "infraestrutura":"IBGE Base Cartografica Continua do Brasil 1:250.000, versao 2025",
+              "crs":"EPSG:4326"},
+              "layers":features}
+          with gzip.open("offline_ibge_map.json.gz","wt",encoding="utf-8",compresslevel=9) as f:
+              json.dump(payload["layers"],f,ensure_ascii=False,separators=(",",":"))
+          print("OFFLINE_IBGE_MAP_OK",{k:len(v) for k,v in features.items()},Path("offline_ibge_map.json.gz").stat().st_size)
+          '@ | Set-Content make_ibge_offline.py -Encoding UTF8
+          python make_ibge_offline.py
+          Get-Item offline_ibge_map.json.gz | Format-List Name,Length
 
       - name: Source self-test
         run: python desktop_app.py --self-test
@@ -401,6 +515,23 @@ jobs:
           '@ | Set-Content earthaccess_contract.py -Encoding UTF8
           python earthaccess_contract.py
 
+      - name: Quantitative low-biomass L-band model contract
+        shell: pwsh
+        run: |
+          @'
+          import math
+          import sar_pipeline as s
+          A,B,C,alpha=0.016429,0.11013,0.0,0.2675
+          target=20.0
+          sigma=A*(target**alpha)*(1-math.exp(-B*target))+C
+          db=10*math.log10(sigma)
+          r=s.yu_saatchi_tropical_shrubland_agb([{"polarization":"HV","mean_db":db,"sd_db":0.5,"scene":"synthetic"}],"Cerrado","Savana Arborizada")
+          assert r and abs(r["agb_mg_ha"]-target)<0.05, r
+          assert r["data_origin"].startswith("SAR_L_PALSAR")
+          print("YU_SAATCHI_INVERSION_OK",r["agb_mg_ha"],db)
+          '@ | Set-Content yu_saatchi_contract.py -Encoding UTF8
+          python yu_saatchi_contract.py
+
       - name: Catalog equation and recalibration contract tests
         run: python -m unittest discover -s tests -v
 
@@ -418,14 +549,18 @@ jobs:
           '@ | Set-Content make_icon.py -Encoding UTF8
           python make_icon.py
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_brazil_basemap.jpg;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_brazil_basemap.jpg;." --add-data "offline_ibge_map.json.gz;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
         run: |
           Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
           Copy-Item -Force 'offline_brazil_basemap.jpg' 'dist\Enform Verde\offline_brazil_basemap.jpg'
+          Copy-Item -Force 'offline_ibge_map.json.gz' 'dist\Enform Verde\offline_ibge_map.json.gz'
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
+          Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
+          Move-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.zip' 'acceptance\Teste_SAR_Cerrado_DF.kmz'
+          Copy-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Cerrado_DF.kmz'
       - name: Verify packaged Python runtime
         shell: pwsh
         run: |
@@ -440,6 +575,9 @@ jobs:
           $offline = Join-Path $root 'offline_brazil_basemap.jpg'
           if (!(Test-Path $offline)) { throw 'Offline Brazil basemap is missing from packaged application' }
           if ((Get-Item $offline).Length -lt 1000000) { throw 'Offline Brazil basemap is unexpectedly small' }
+          $ibge = Join-Path $root 'offline_ibge_map.json.gz'
+          if (!(Test-Path $ibge)) { throw 'Offline IBGE map bundle is missing from packaged application' }
+          if ((Get-Item $ibge).Length -lt 1000000) { throw 'Offline IBGE map bundle is unexpectedly small' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh
@@ -476,11 +614,11 @@ jobs:
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
           A análise espacial aceita vetor local e tenta consulta pública do SICAR, SIGEF e Embrapa quando houver internet.
-          O pacote inclui acceptance\Teste_SAR_Biomassa_Tapajos.kmz para testar a AOI de referência.
+          O pacote inclui acceptance\Teste_SAR_Biomassa_Tapajos.kmz e acceptance\Teste_SAR_Cerrado_DF.kmz; o segundo testa a rota quantitativa L-band de baixa biomassa.
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.15-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.16-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
