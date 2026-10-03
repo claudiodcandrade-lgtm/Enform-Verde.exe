@@ -203,6 +203,24 @@ def process_real_sar(gdf,paths,biome="",phys=""):
 
 
 MAAP_STAC="https://catalog.maap.eo.esa.int/catalogue/"
+BIOMASS_L2B_PRODUCT_TYPES=("FP_AGB_L2B","FP_FH__L2B")
+def _biomass_item_product_types(item):
+    """Return BIOMASS L2B product types evidenced by item/asset metadata."""
+    props=item.get("properties") or {}; assets=item.get("assets") or {}
+    evidence=" ".join([str(item.get("id") or ""),str(props)," ".join(
+        str(k)+" "+str(v.get("title") or "")+" "+str(v.get("href") or "")
+        for k,v in assets.items())]).upper()
+    return [product for product in BIOMASS_L2B_PRODUCT_TYPES if product in evidence]
+
+def _biomass_catalog_summary(item):
+    props=item.get("properties") or {}
+    return {"id":item.get("id"),"datetime":props.get("datetime") or props.get("start_datetime"),
+            "collection":item.get("_collection"),"stage":item.get("_stage"),
+            "product_types":_biomass_item_product_types(item),"bbox":item.get("bbox"),
+            "assets":[{"key":k,"title":v.get("title"),"type":v.get("type"),
+                       "roles":v.get("roles"),"href":v.get("href")}
+                      for k,v in (item.get("assets") or {}).items()]}
+
 MAAP_TOKEN_URL="https://iam.maap.eo.esa.int/realms/esa-maap/protocol/openid-connect/token"
 def maap_access_token(offline_token):
     if not offline_token:raise ValueError("Informe o offline token ESA MAAP. Ele não é armazenado pelo Enform Verde.")
@@ -216,20 +234,25 @@ def maap_search(gdf,collection,limit=50,product_type=None):
     r=requests.post(MAAP_STAC+"search",json=body,timeout=(10,60));r.raise_for_status()
     fs=r.json().get("features",[])
     if product_type:
-        fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{})))]
+        fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{}))+" "+str(x.get("assets",{})))]
     return sorted(fs,key=lambda x:str((x.get("properties") or {}).get("datetime") or (x.get("properties") or {}).get("start_datetime") or ""),reverse=True)
 def biomass_l2b_search(gdf,limit=100):
-    """Search operational + IOC BIOMASS L2B collections; prefer operational products."""
+    """Discover both official AGB and forest-height L2B products; retain their distinct roles."""
     out=[]
     for collection,stage in (("BiomassLevel2b","OPERATIONAL"),("BiomassLevel2bIOC","IOC")):
-        try:
-            items=maap_search(gdf,collection,limit=limit,product_type="FP_AGB_L2B")
+        for product_type in BIOMASS_L2B_PRODUCT_TYPES:
+            try: items=maap_search(gdf,collection,limit=limit,product_type=product_type)
+            except Exception: continue
             for it in items:
-                z=dict(it); z["_collection"]=collection; z["_stage"]=stage; out.append(z)
-        except Exception:
-            continue
+                z=dict(it); z["_collection"]=collection; z["_stage"]=stage
+                z["_product_type"]=product_type; out.append(z)
+    unique={}
+    for item in out:
+        unique[(item.get("_collection"),item.get("id"),item.get("_product_type"))]=item
+    out=list(unique.values())
+    out.sort(key=lambda it:str((it.get("properties") or {}).get("datetime") or (it.get("properties") or {}).get("start_datetime") or ""),reverse=True)
     out.sort(key=lambda it:(0 if it.get("_stage")=="OPERATIONAL" else 1,
-                            -int(bool((it.get("properties") or {}).get("datetime")))))
+                            0 if it.get("_product_type")=="FP_AGB_L2B" else 1))
     return out
 
 def _download(url,out,token=None):
@@ -240,14 +263,16 @@ def _download(url,out,token=None):
             for c in r.iter_content(8*1024*1024):
                 if c:f.write(c)
     return str(out)
-def _biomass_product_assets(item):
+def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
     out=[]
     for k,a in (item.get("assets") or {}).items():
         href=a.get("href",""); typ=(a.get("type") or "").lower(); roles=[str(x).lower() for x in (a.get("roles") or [])]
         if not href:continue
         name=(k+" "+href+" "+str(a.get("title") or "")).lower()
-        if ("agb" in name or "biomass" in name or "data" in roles or "product" in roles or
-            href.lower().split("?")[0].endswith((".tif",".tiff",".zip")) or "geotiff" in typ or "zip" in typ):
+        is_archive=href.lower().split("?")[0].endswith(".zip") or "zip" in typ
+        is_agb=any(x in name for x in ("agb","biomass","fp_agb_l2b"))
+        generic=is_archive and product_type in _biomass_item_product_types(item)
+        if product_type=="FP_AGB_L2B" and (is_agb or generic):
             out.append((k,href))
     return out
 
@@ -279,19 +304,32 @@ def _raster_assets(item):
     return out
 def download_maap_agb(gdf,offline_token,cache):
     items=biomass_l2b_search(gdf,limit=100)
-    if not items:return {"available":False,"paths":[],"items":0,"reason":"FP_AGB_L2B sem cobertura no polígono"}
-    token=maap_access_token(offline_token) if offline_token else None
+    agb_items=[it for it in items if it.get("_product_type","FP_AGB_L2B")=="FP_AGB_L2B"]
+    fh_items=[it for it in items if it.get("_product_type")=="FP_FH__L2B"]
+    if not agb_items:return {"available":False,"paths":[],"items":len(items),"agb_items":0,
+                            "fh_items":len(fh_items),"height_catalog_items":[_biomass_catalog_summary(it) for it in fh_items[:50]],
+                            "reason":"FP_AGB_L2B sem cobertura; FP_FH__L2B de altura não substitui AGB"}
+    token=None; token_loaded=False
     Path(cache).mkdir(parents=True,exist_ok=True);paths=[];errors=[]
-    for it in items:
-        for k,url in _biomass_product_assets(it):
+    for it in agb_items:
+        for k,url in _biomass_product_assets(it,"FP_AGB_L2B"):
             base=Path(url.split("?")[0]).name or (it.get("id","biomass")+"_"+k)
             p=Path(cache)/(it.get("id","biomass")+"_"+base)
             try:
-                if not p.exists():_download(url,p,token)
+                if not p.exists():
+                    try:_download(url,p,None)
+                    except Exception as e:
+                        status=getattr(getattr(e,"response",None),"status_code",None)
+                        if not offline_token or status not in (401,403):raise
+                        if not token_loaded:token=maap_access_token(offline_token);token_loaded=True
+                        _download(url,p,token)
                 paths.extend(_extract_biomass_agb_assets(p,Path(cache)/(it.get("id","biomass")+"_extracted")))
             except Exception as e:errors.append(str(e))
         if paths:break
-    return {"available":bool(paths),"paths":paths,"items":len(items),"reason":None if paths else "produto catalogado, mas COG AGB/AGB_Std_Dev não foi recuperado","errors":errors[:5]}
+    return {"available":bool(paths),"paths":paths,"items":len(items),"agb_items":len(agb_items),
+            "fh_items":len(fh_items),"height_catalog_items":[_biomass_catalog_summary(it) for it in fh_items[:50]],
+            "reason":None if paths else "FP_AGB_L2B catalogado, mas COG AGB/AGB_Std_Dev não foi recuperado",
+            "errors":errors[:5]}
 
 def cci_history(gdf,cache,offline_token=None):
     # ESA MAAP local collection. Search is public; asset access may require ESA bearer token.
@@ -839,7 +877,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=biomass_l2b_search(gdf,limit=100)
     except Exception as e: l2items=[]; audit["warnings"].append("BIOMASS catálogo: "+str(e))
-    audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"access_policy":"BiomassLevel2b e BiomassLevel2bIOC; FP_AGB_L2B público/open-free quando o ativo científico estiver publicado para a AOI"}
+    audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"products_discovered":{p:sum(1 for x in l2items if x.get("_product_type")==p) for p in BIOMASS_L2B_PRODUCT_TYPES},"items":[_biomass_catalog_summary(x) for x in l2items[:50]],"access_policy":"BiomassLevel2b e BiomassLevel2bIOC; FP_AGB_L2B e FP_FH__L2B descobertos separadamente; ativo público conforme publicação e configuração MAAP"}
     # Download/read the official L2B product bundle. Open products are attempted without credentials first;
     # an ESA MAAP token is used only when the catalogue asset is technically protected.
     if l2items:
