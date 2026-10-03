@@ -77,6 +77,13 @@ def _draw_offline_ibge(d,bx,ow,oh):
                 if len(pts)>=2:d.line(pts,fill=fill,width=width,joint="curve")
     # administrative context
     draw_lines("ufs",(255,255,255,235),max(2,round(ow/700)))
+    for feat in layers.get("ufs",[]):
+        if not _feature_intersects_bbox(feat,bx):continue
+        props=feat.get("properties") or {}; c=props.get("label")
+        if not c:continue
+        x,y=px(c[0],c[1]); label=props.get("sigla") or props.get("name")
+        if label and 6<x<ow-6 and 6<y<oh-6:
+            d.text((x,y),str(label),anchor="mm",fill=(255,255,255,245),stroke_width=2,stroke_fill=(0,0,0,185))
     if span<=14.0:draw_lines("municipios",(235,235,235,165),max(1,round(ow/1600)))
     # infrastructure from official IBGE BC250
     draw_lines("rodovias",(255,210,70,225),max(1,round(ow/900)))
