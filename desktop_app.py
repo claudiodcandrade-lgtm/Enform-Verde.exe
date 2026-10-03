@@ -93,6 +93,7 @@ def _draw_offline_ibge(d,bx,ow,oh):
     # point infrastructure/localities
     for layer,fill,radius,maxspan in [
         ("aeroportos",(255,130,80,240),3,18.0),
+        ("portos",(255,180,70,240),3,18.0),
         ("localidades",(255,255,255,230),2,7.0)]:
         if span>maxspan:continue
         for feat in layers.get(layer,[]):
