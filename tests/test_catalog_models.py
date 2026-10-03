@@ -38,6 +38,8 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual({x["_product_type"] for x in items},{"FP_AGB_L2B","FP_FH__L2B"})
         self.assertEqual(sar._biomass_product_assets(fh,"FP_AGB_L2B"),[])
         self.assertEqual(sar._biomass_product_assets(agb,"FP_AGB_L2B"),[("product","https://example.test/agb.zip")])
+        generic_agb={"id":"tile_FP_AGB_L2B","assets":{"data":{"href":"https://example.test/tile.tif","roles":["data"],"type":"image/tiff"}}}
+        self.assertEqual(sar._biomass_product_assets(generic_agb,"FP_AGB_L2B"),[("data","https://example.test/tile.tif")])
 
     def test_biomass_catalog_audit_preserves_product_and_asset_metadata(self):
         item={"id":"tile_FP_FH__L2B","bbox":[-55,-4,-54,-3],
