@@ -427,7 +427,7 @@ jobs:
       - name: Professional scientific contracts
         shell: pwsh
         run: |
-          python -c "import sar_pipeline as s; m=[x for x in s.MODEL_REGISTRY if x.get('executable')]; assert any(x['id']=='CASSOL_2019_EQ13' for x in m); assert m[0].get('rmse_mg_ha') is not None; print('EXECUTABLE_MODEL_REGISTRY_OK')"
+          python -c "import sar_pipeline as s; m=[x for x in s.MODEL_REGISTRY if x.get('executable')]; assert any(x['id']=='CASSOL_2019_EQ13' for x in m); assert any(x.get('execution_mode')!='direct_product' and x.get('rmse_mg_ha') is not None for x in m); print('EXECUTABLE_MODEL_REGISTRY_OK')"
           python -c "import numpy as np; from scientific_calibration import fit_local_powerlaw_calibration as f; groups=np.repeat(['site1','site2','site3','site4','site5','site6'],6); agb=np.tile(np.array([40,60,80,100,130,170.]),6); cb=0.003*np.power(agb,0.72)*(1+np.tile(np.array([-.02,.01,0,.02,-.01,0]),6)); m=f(cb,agb,groups); assert m['metrics']['independent_groups']==6 and m['metrics']['RMSE_Mg_ha']<5 and m['alpha']>0; print('ROBUST_P_BAND_GROUPED_CALIBRATION_OK',m['metrics'])"
           python -c "from lband_preprocess import _safe_target; from pathlib import Path; import tempfile; root=Path(tempfile.mkdtemp()); assert _safe_target(root,'scene/subset.tif').parent==root/'scene'; rejected=False; exec('try:\n _safe_target(root,\"../escape.txt\")\nexcept ValueError:\n rejected=True'); assert rejected; print('ARCHIVE_PATH_TRAVERSAL_GUARD_OK')"
           @'
