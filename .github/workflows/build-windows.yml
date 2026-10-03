@@ -516,6 +516,27 @@ jobs:
           '@ | Set-Content earthaccess_contract.py -Encoding UTF8
           python earthaccess_contract.py
 
+      - name: Live Cerrado ALOS-PALSAR quantitative AGB — actual pixels
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          @'
+          import tempfile
+          from pathlib import Path
+          import desktop_app as app
+          import sar_pipeline as s
+          g=app.read_vector("acceptance/Teste_SAR_Cerrado_DF.kml")
+          al=s.planetary_alos_palsar(g,Path(tempfile.mkdtemp(prefix="cerrado_sar_")))
+          assert al.get("stats"), "No public ALOS/PALSAR pixels returned for Cerrado test AOI"
+          pols={str(x.get("polarization","")).upper() for x in al["stats"]}
+          assert "HV" in pols, "HV polarization missing from public ALOS/PALSAR test"
+          r=s.yu_saatchi_tropical_shrubland_agb(al["stats"],"Cerrado","Savana Arborizada")
+          assert r is not None, "Real Cerrado HV is outside quantitative low-biomass model domain; choose another AOI rather than forcing AGB"
+          assert 0 < r["agb_mg_ha"] <= 100 and r["data_origin"].startswith("SAR_L_PALSAR")
+          print("LIVE_CERRADO_SAR_AGB_OK",r["agb_mg_ha"],r["uncertainty_mg_ha"],[(x.get("polarization"),x.get("mean_db")) for x in al["stats"]])
+          '@ | Set-Content live_cerrado_sar_agb.py -Encoding UTF8
+          python live_cerrado_sar_agb.py
+
       - name: Quantitative low-biomass L-band model contract
         shell: pwsh
         run: |
