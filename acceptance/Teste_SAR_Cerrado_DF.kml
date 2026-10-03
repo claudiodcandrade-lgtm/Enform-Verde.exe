@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Teste SAR Cerrado DF - baixa biomassa</name>
+  <description>AOI de teste para rota quantitativa ALOS/PALSAR L-band HV em fitofisionomia savanica/cerrado de baixa biomassa. Uso de teste; modelo global Yu &amp; Saatchi 2016 deve respeitar dominio operacional &lt;=100 Mg/ha.</description>
+  <Placemark>
+    <name>Teste SAR Cerrado DF</name>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>
+      -47.9500,-15.9600,0
+      -47.9300,-15.9600,0
+      -47.9300,-15.9400,0
+      -47.9500,-15.9400,0
+      -47.9500,-15.9600,0
+    </coordinates></LinearRing></outerBoundaryIs></Polygon>
+  </Placemark>
+</Document>
+</kml>
