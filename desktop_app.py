@@ -591,7 +591,16 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
     low=[x for x in cand if x[0]<=20.0]
     chosen=sorted(low,key=lambda x:x[1],reverse=True)[0] if low else sorted(cand,key=lambda x:(x[0],x[1]))[0]
     cloud,dt,it,unsigned=chosen
-    sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
+    href=None; sign_error=None
+    for attempt in range(3):
+        try:
+            sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45))
+            sg.raise_for_status(); href=sg.json()["href"]; break
+        except Exception as e:
+            sign_error=e
+            if attempt<2:
+                import time; time.sleep(1.2*(attempt+1))
+    if not href:raise RuntimeError("Falha temporária ao assinar ativo Sentinel-2 após 3 tentativas: "+str(sign_error))
     with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
         with rasterio.open(href) as src:
             b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
