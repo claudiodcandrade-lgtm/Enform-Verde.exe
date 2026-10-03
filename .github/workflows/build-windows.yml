@@ -549,6 +549,22 @@ jobs:
           '@ | Set-Content live_cerrado_sar_agb.py -Encoding UTF8
           python live_cerrado_sar_agb.py
 
+      - name: Live BIOMASS P-band catalog check — high-biomass AfriSAR site
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          @'
+          import json
+          import desktop_app as app
+          import sar_pipeline as s
+          g=app.read_vector("acceptance/Teste_SAR_Alta_Biomassa_Lope_Gabon.kml")
+          items=s.biomass_l2b_search(g,limit=20)
+          agb=[x for x in items if x.get("_product_type")=="FP_AGB_L2B"]
+          fh=[x for x in items if x.get("_product_type")=="FP_FH__L2B"]
+          print("LIVE_BIOMASS_HIGH_BIOMASS_CATALOG_CHECK",json.dumps({"aoi":"AfriSAR Lopé, Gabão","agb_l2b_tiles":len(agb),"height_only_tiles":len(fh),"agb_items":[s._biomass_catalog_summary(x) for x in agb[:3]]},ensure_ascii=True))
+          '@ | Set-Content live_biomass_high_biomass_catalog.py -Encoding UTF8
+          python live_biomass_high_biomass_catalog.py
+
       - name: Quantitative low-biomass L-band model contract
         shell: pwsh
         run: |
@@ -592,6 +608,7 @@ jobs:
           Copy-Item -Force 'offline_ibge_map.json.gz' 'dist\Enform Verde\offline_ibge_map.json.gz'
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
+          Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
           Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
           Move-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.zip' 'acceptance\Teste_SAR_Cerrado_DF.kmz'
           Copy-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Cerrado_DF.kmz'
@@ -652,7 +669,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.20-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.21-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
