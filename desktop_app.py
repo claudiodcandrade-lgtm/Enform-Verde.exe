@@ -670,10 +670,13 @@ class App(tk.Tk):
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
         self.ibge_phys_display=tk.StringVar(value="Aguardando classificação legenda_1.")
+        self.aoi_area_display=tk.StringVar(value="Aguardando perímetro.")
         ttk.Label(ibgebox,text="Bioma IBGE:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
         ttk.Label(ibgebox,textvariable=self.ibge_biome_display,wraplength=840).grid(row=0,column=1,sticky="w",padx=(8,0))
         ttk.Label(ibgebox,text="Fitofisionomia IBGE (legenda_1):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
         ttk.Label(ibgebox,textvariable=self.ibge_phys_display,wraplength=840,foreground="#155D43").grid(row=1,column=1,sticky="w",padx=(8,0),pady=(4,0))
+        ttk.Label(ibgebox,text="Área do polígono:",font=("Segoe UI",9,"bold")).grid(row=2,column=0,sticky="nw",pady=(4,0))
+        ttk.Label(ibgebox,textvariable=self.aoi_area_display,foreground="#155D43").grid(row=2,column=1,sticky="w",padx=(8,0),pady=(4,0))
         ibgebox.columnconfigure(1,weight=1)
 
         map_frame=ttk.Frame(f); map_frame.pack(fill="both",expand=True,pady=(2,6))
@@ -1017,7 +1020,9 @@ class App(tk.Tk):
         old_vector=self.project.get("vector")
         self.project={"version":APP_VERSION}
         if old_vector and keep_geometry:self.project["vector"]=old_vector
-        if not keep_geometry:self.gdf=None
+        if not keep_geometry:
+            self.gdf=None
+            if hasattr(self,"aoi_area_display"):self.aoi_area_display.set("Aguardando perímetro.")
         self._map_generation+=1
         self._satellite_map_visible=False
         if getattr(self,"_map_refresh_job",None) is not None:
@@ -1082,6 +1087,7 @@ class App(tk.Tk):
 
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
+        if hasattr(self,"aoi_area_display"):self.aoi_area_display.set(f"{m['area_ha']:,.2f} ha")
         self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {m['area_ha']:,.2f} ha\nCentroide: {m['centroid'][1]:.6f}, {m['centroid'][0]:.6f}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
         self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
         self.status.set(f"Perímetro carregado: {src}; diagnóstico IBGE em segundo plano."); self.update_idletasks()
