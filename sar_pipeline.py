@@ -196,7 +196,10 @@ def process_real_sar(gdf,paths,biome="",phys=""):
     refs=[m for m in MODEL_REGISTRY if m["biome"]==biome]
     feats={x["role"]:x.get("mean") for x in stats if x.get("role") in ("HH","HV","VV","VH")}
     blocker=sar_agb_blocker(biome,phys,feats,aoi=gdf)
-    return {"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"agb_blocker":blocker,"message":"SAR processado; AGB bloqueada por incompatibilidade explícita de preditores/modelo. Consulte agb_blocker."}
+    out={"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"agb_blocker":blocker,"message":"SAR processado; AGB bloqueada por incompatibilidade explícita de preditores/modelo. Consulte agb_blocker."}
+    if height is not None:
+        out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"]})
+    return out
 
 
 MAAP_STAC="https://catalog.maap.eo.esa.int/catalogue/"
