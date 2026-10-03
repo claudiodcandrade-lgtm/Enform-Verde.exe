@@ -269,9 +269,12 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
         href=a.get("href",""); typ=(a.get("type") or "").lower(); roles=[str(x).lower() for x in (a.get("roles") or [])]
         if not href:continue
         name=(k+" "+href+" "+str(a.get("title") or "")).lower()
-        is_archive=href.lower().split("?")[0].endswith(".zip") or "zip" in typ
+        suffix=href.lower().split("?")[0]
+        is_archive=suffix.endswith(".zip") or "zip" in typ
         is_agb=any(x in name for x in ("agb","biomass","fp_agb_l2b"))
-        generic=is_archive and product_type in _biomass_item_product_types(item)
+        generic=(product_type in _biomass_item_product_types(item) and
+                 (is_archive or suffix.endswith((".tif",".tiff")) or "geotiff" in typ or
+                  "data" in roles or "product" in roles))
         if product_type=="FP_AGB_L2B" and (is_agb or generic):
             out.append((k,href))
     return out
