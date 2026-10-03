@@ -156,6 +156,10 @@ jobs:
           assert len(features["ufs"])>=27, len(features["ufs"])
           assert len(features["municipios"])>=5569, len(features["municipios"])
           assert len(features["rodovias"])>0, "BC250 road layer not found"
+          assert len(features["ferrovias"])>0, "BC250 railway layer not found"
+          assert len(features["hidrovias"])>0, "BC250 waterway layer not found"
+          assert len(features["drenagem"])>0, "BC250 drainage layer not found"
+          assert len(features["aeroportos"])+len(features["portos"])>0, "BC250 airport/port infrastructure not found"
           assert len(features["localidades"])>0, "BC250 locality layer not found"
 
           payload={"source":{
@@ -229,6 +233,7 @@ jobs:
           assert "offline_brazil_preview" in src and "offline_brazil_basemap.jpg" in src and Path("offline_brazil_basemap.jpg").exists(), "packaged offline NASA Brazil basemap missing"
           assert "Fitofisionomia IBGE (legenda_1):" in src and "ibge_phys_display" in src and "ibge_biome_display" in src, "visible official IBGE phytophysiognomy panel missing"
           assert "Área do polígono:" in src and "aoi_area_display" in src, "visible polygon area field missing"
+          assert "IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades" in src, "offline IBGE map legend missing"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
