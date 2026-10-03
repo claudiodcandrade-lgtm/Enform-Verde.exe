@@ -349,9 +349,9 @@ jobs:
           assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
           assert 0 <= float(p["cloud_cover"]) <= 100
           print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
-          p2=a.sentinel2_preview(g,out_h=420,extent_factor=2.04)
-          assert p2["image"].height==420 and p2["polygons"], "zoom-out Sentinel-2 preview failed"
-          print("SENTINEL2_ZOOM_EXTENT_OK",p2["scene_id"],p2["image"].size)
+          offline_zoom,_=a.offline_brazil_preview(g,extent_factor=2.04,out_size=(900,420))
+          assert offline_zoom.size==(900,420), "offline geographic zoom preview failed"
+          print("OFFLINE_ZOOM_EXTENT_OK",offline_zoom.size)
           '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
           python live_sentinel2_preview.py
 
