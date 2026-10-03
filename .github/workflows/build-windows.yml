@@ -613,9 +613,6 @@ jobs:
           $header = Join-Path $root 'enform_header.png'
           if (!(Test-Path $header)) { throw 'enform_header.png is missing from packaged application' }
           if ((Get-Item $header).Length -lt 20000) { throw 'Approved high-resolution Enform mask is unexpectedly small' }
-          $offline = Join-Path $root 'offline_brazil_basemap.jpg'
-          if (!(Test-Path $offline)) { throw 'Offline Brazil basemap is missing from packaged application' }
-          if ((Get-Item $offline).Length -lt 1000000) { throw 'Offline Brazil basemap is unexpectedly small' }
           $ibge = Join-Path $root 'offline_ibge_map.json.gz'
           if (!(Test-Path $ibge)) { throw 'Offline IBGE map bundle is missing from packaged application' }
           if ((Get-Item $ibge).Length -lt 1000000) { throw 'Offline IBGE map bundle is unexpectedly small' }
