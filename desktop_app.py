@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.15-PROFESSIONAL"
+APP_VERSION="3.24.16-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -33,6 +33,32 @@ def app_resource(name):
     return q
 
 OFFLINE_BRAZIL_BOUNDS=(-75.0,-35.0,-33.0,6.0)  # west,south,east,north
+_OFFLINE_IBGE_CACHE=None
+def _offline_ibge_states():
+    global _OFFLINE_IBGE_CACHE
+    if _OFFLINE_IBGE_CACHE is not None:return _OFFLINE_IBGE_CACHE
+    p=app_resource("offline_ibge_uf_2025.geojson")
+    if not p.exists():_OFFLINE_IBGE_CACHE=[]; return _OFFLINE_IBGE_CACHE
+    try:
+        js=json.loads(p.read_text(encoding="utf-8"))
+        out=[]
+        for feat in js.get("features",[]):
+            props=feat.get("properties") or {}; geom=feat.get("geometry") or {}
+            sigla=props.get("SIGLA_UF") or props.get("sigla_uf") or props.get("CD_UF") or ""
+            name=props.get("NM_UF") or props.get("nm_uf") or sigla
+            out.append({"sigla":str(sigla),"name":str(name),"geometry":geom})
+        _OFFLINE_IBGE_CACHE=out
+    except Exception:_OFFLINE_IBGE_CACHE=[]
+    return _OFFLINE_IBGE_CACHE
+
+def _iter_geojson_rings(geom):
+    typ=(geom or {}).get("type"); c=(geom or {}).get("coordinates") or []
+    if typ=="Polygon":
+        for ring in c[:1]:yield ring
+    elif typ=="MultiPolygon":
+        for poly in c:
+            if poly:yield poly[0]
+
 
 def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
     """Render AOI over the packaged NASA Blue Marble Brazil mosaic without network access."""
@@ -54,6 +80,31 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
     ow,oh=map(int,out_size); crop=crop.resize((ow,oh),Image.Resampling.LANCZOS)
     from PIL import ImageDraw
     d=ImageDraw.Draw(crop,"RGBA")
+    # Official IBGE 2025 state boundaries, simplified and packaged for offline orientation.
+    for st in _offline_ibge_states():
+        geom=st.get("geometry") or {}
+        allpts=[]
+        for ring in _iter_geojson_rings(geom):
+            pts=[]
+            for coord in ring:
+                lon,lat=float(coord[0]),float(coord[1])
+                if bx[0]-1<=lon<=bx[2]+1 and bx[1]-1<=lat<=bx[3]+1:
+                    x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*ow
+                    y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
+                    pts.append((x,y)); allpts.extend([(lon,lat)])
+                elif pts:
+                    # keep segment continuity conservative when a ring exits the view
+                    pass
+            if len(pts)>=2:d.line(pts,fill=(255,255,255,210),width=max(1,round(ow/900)))
+        # UF labels only when enough geographic context is visible.
+        if allpts and (bx[2]-bx[0])>=2.0:
+            xs=[p[0] for p in allpts]; ys=[p[1] for p in allpts]
+            lon=sum(xs)/len(xs); lat=sum(ys)/len(ys)
+            x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*ow
+            y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
+            if 8<x<ow-8 and 8<y<oh-8:
+                label=st.get("sigla") or st.get("name")
+                d.text((x,y),label,anchor="mm",fill=(255,255,255,235),stroke_width=2,stroke_fill=(0,0,0,180))
     for geom in g.geometry:
         geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
         for poly in geoms:
@@ -661,11 +712,12 @@ class App(tk.Tk):
         ttk.Button(row,text="−",width=3,command=self.map_zoom_out).pack(side="left",padx=(12,2))
         ttk.Button(row,text="+",width=3,command=self.map_zoom_in).pack(side="left",padx=2)
         ttk.Button(row,text="AJUSTAR AOI",command=self.map_zoom_fit).pack(side="left",padx=(2,8))
+        ttk.Label(row,text="Zoom: botões ± ou roda do mouse",foreground="#666").pack(side="left",padx=(6,0))
         keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
         ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri Imagery → Esri Street → NASA Blue Marble offline",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri Imagery → Esri Street → NASA Blue Marble + IBGE 2025 offline",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -689,6 +741,10 @@ class App(tk.Tk):
         map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
         self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36
         self.map_canvas.bind("<Configure>",self._on_map_resize)
+        self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
+        self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
+        self.map_canvas.bind("<Button-5>",lambda e:self.map_zoom_out())
+        self.map_canvas.bind("<Double-Button-1>",lambda e:self.map_zoom_fit())
         self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
         self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
 
@@ -697,6 +753,12 @@ class App(tk.Tk):
         spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
         self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
+
+    def _on_map_wheel(self,event):
+        if self.gdf is None:return "break"
+        if getattr(event,"delta",0)>0:self.map_zoom_in()
+        elif getattr(event,"delta",0)<0:self.map_zoom_out()
+        return "break"
 
     def map_zoom_in(self):
         if self.gdf is None:return
@@ -809,7 +871,7 @@ class App(tk.Tk):
             except Exception as e:errors.append("Esri Street: "+str(e))
             try:
                 view,_=offline_brazil_preview(g,extent_factor,(w,h))
-                self._map_queue.put((generation,view,[],"NASA Blue Marble offline",None,"NASA Blue Marble — fundo nacional offline",None))
+                self._map_queue.put((generation,view,[],"NASA Blue Marble offline",None,"NASA Blue Marble + limites estaduais IBGE 2025 — offline",None))
                 return
             except Exception as e:errors.append("Offline NASA: "+str(e))
             self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri/NASA",None,None," | ".join(errors)))
