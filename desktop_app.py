@@ -34,31 +34,78 @@ def app_resource(name):
 
 OFFLINE_BRAZIL_BOUNDS=(-75.0,-35.0,-33.0,6.0)  # west,south,east,north
 _OFFLINE_IBGE_CACHE=None
-def _offline_ibge_states():
+def _offline_ibge_layers():
     global _OFFLINE_IBGE_CACHE
     if _OFFLINE_IBGE_CACHE is not None:return _OFFLINE_IBGE_CACHE
-    p=app_resource("offline_ibge_uf_2025.geojson")
-    if not p.exists():_OFFLINE_IBGE_CACHE=[]; return _OFFLINE_IBGE_CACHE
+    p=app_resource("offline_ibge_map.json.gz")
+    if not p.exists():_OFFLINE_IBGE_CACHE={}; return _OFFLINE_IBGE_CACHE
     try:
-        js=json.loads(p.read_text(encoding="utf-8"))
-        out=[]
-        for feat in js.get("features",[]):
-            props=feat.get("properties") or {}; geom=feat.get("geometry") or {}
-            sigla=props.get("SIGLA_UF") or props.get("sigla_uf") or props.get("CD_UF") or ""
-            name=props.get("NM_UF") or props.get("nm_uf") or sigla
-            out.append({"sigla":str(sigla),"name":str(name),"geometry":geom})
-        _OFFLINE_IBGE_CACHE=out
-    except Exception:_OFFLINE_IBGE_CACHE=[]
+        import gzip
+        with gzip.open(p,"rt",encoding="utf-8") as fh:_OFFLINE_IBGE_CACHE=json.load(fh)
+    except Exception:_OFFLINE_IBGE_CACHE={}
     return _OFFLINE_IBGE_CACHE
 
-def _iter_geojson_rings(geom):
+def _feature_intersects_bbox(feat,bx):
+    b=feat.get("bbox")
+    if not b:return True
+    return not (b[2]<bx[0] or b[0]>bx[2] or b[3]<bx[1] or b[1]>bx[3])
+
+def _geom_lines(geom):
     typ=(geom or {}).get("type"); c=(geom or {}).get("coordinates") or []
-    if typ=="Polygon":
-        for ring in c[:1]:yield ring
+    if typ=="LineString":yield c
+    elif typ=="MultiLineString":
+        for ln in c:yield ln
+    elif typ=="Polygon":
+        if c:yield c[0]
     elif typ=="MultiPolygon":
         for poly in c:
             if poly:yield poly[0]
+    elif typ=="Point":
+        yield [c]
 
+def _draw_offline_ibge(d,bx,ow,oh):
+    layers=_offline_ibge_layers()
+    span=max(bx[2]-bx[0],bx[3]-bx[1])
+    def px(lon,lat):
+        return ((float(lon)-bx[0])/max(bx[2]-bx[0],1e-12)*ow,
+                (bx[3]-float(lat))/max(bx[3]-bx[1],1e-12)*oh)
+    def draw_lines(layer,fill,width=1):
+        for feat in layers.get(layer,[]):
+            if not _feature_intersects_bbox(feat,bx):continue
+            for line in _geom_lines(feat.get("geometry")):
+                pts=[px(c[0],c[1]) for c in line if len(c)>=2]
+                if len(pts)>=2:d.line(pts,fill=fill,width=width,joint="curve")
+    # administrative context
+    draw_lines("ufs",(255,255,255,235),max(2,round(ow/700)))
+    if span<=14.0:draw_lines("municipios",(235,235,235,165),max(1,round(ow/1600)))
+    # infrastructure from official IBGE BC250
+    draw_lines("rodovias",(255,210,70,225),max(1,round(ow/900)))
+    draw_lines("ferrovias",(55,55,55,235),max(1,round(ow/900)))
+    if span<=18.0:draw_lines("hidrovias",(80,205,255,220),max(1,round(ow/1100)))
+    if span<=12.0:draw_lines("drenagem",(80,175,235,150),1)
+    # point infrastructure/localities
+    for layer,fill,radius,maxspan in [
+        ("aeroportos",(255,130,80,240),3,18.0),
+        ("localidades",(255,255,255,230),2,7.0)]:
+        if span>maxspan:continue
+        for feat in layers.get(layer,[]):
+            if not _feature_intersects_bbox(feat,bx):continue
+            g=feat.get("geometry") or {}
+            if g.get("type")!="Point":continue
+            c=g.get("coordinates") or []
+            if len(c)<2:continue
+            x,y=px(c[0],c[1]); d.ellipse((x-radius,y-radius,x+radius,y+radius),fill=fill,outline=(0,0,0,180))
+            name=(feat.get("properties") or {}).get("name")
+            if name and span<=3.5:d.text((x+4,y-3),str(name)[:34],fill=(255,255,255,235),stroke_width=2,stroke_fill=(0,0,0,170))
+    # municipal labels only when zoomed sufficiently
+    if span<=3.0:
+        for feat in layers.get("municipios",[]):
+            if not _feature_intersects_bbox(feat,bx):continue
+            props=feat.get("properties") or {}
+            c=props.get("label")
+            if not c:continue
+            x,y=px(c[0],c[1])
+            if 4<x<ow-4 and 4<y<oh-4:d.text((x,y),str(props.get("name") or "")[:30],anchor="mm",fill=(255,255,255,230),stroke_width=2,stroke_fill=(0,0,0,170))
 
 def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
     """Render AOI over the packaged NASA Blue Marble Brazil mosaic without network access."""
@@ -80,31 +127,7 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
     ow,oh=map(int,out_size); crop=crop.resize((ow,oh),Image.Resampling.LANCZOS)
     from PIL import ImageDraw
     d=ImageDraw.Draw(crop,"RGBA")
-    # Official IBGE 2025 state boundaries, simplified and packaged for offline orientation.
-    for st in _offline_ibge_states():
-        geom=st.get("geometry") or {}
-        allpts=[]
-        for ring in _iter_geojson_rings(geom):
-            pts=[]
-            for coord in ring:
-                lon,lat=float(coord[0]),float(coord[1])
-                if bx[0]-1<=lon<=bx[2]+1 and bx[1]-1<=lat<=bx[3]+1:
-                    x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*ow
-                    y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
-                    pts.append((x,y)); allpts.extend([(lon,lat)])
-                elif pts:
-                    # keep segment continuity conservative when a ring exits the view
-                    pass
-            if len(pts)>=2:d.line(pts,fill=(255,255,255,210),width=max(1,round(ow/900)))
-        # UF labels only when enough geographic context is visible.
-        if allpts and (bx[2]-bx[0])>=2.0:
-            xs=[p[0] for p in allpts]; ys=[p[1] for p in allpts]
-            lon=sum(xs)/len(xs); lat=sum(ys)/len(ys)
-            x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*ow
-            y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
-            if 8<x<ow-8 and 8<y<oh-8:
-                label=st.get("sigla") or st.get("name")
-                d.text((x,y),label,anchor="mm",fill=(255,255,255,235),stroke_width=2,stroke_fill=(0,0,0,180))
+    _draw_offline_ibge(d,bx,ow,oh)
     for geom in g.geometry:
         geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
         for poly in geoms:
@@ -717,7 +740,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri Imagery → Esri Street → NASA Blue Marble + IBGE 2025 offline",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri Imagery → Esri Street → NASA Blue Marble + IBGE 2025/BC250 offline",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -871,7 +894,7 @@ class App(tk.Tk):
             except Exception as e:errors.append("Esri Street: "+str(e))
             try:
                 view,_=offline_brazil_preview(g,extent_factor,(w,h))
-                self._map_queue.put((generation,view,[],"NASA Blue Marble offline",None,"NASA Blue Marble + limites estaduais IBGE 2025 — offline",None))
+                self._map_queue.put((generation,view,[],"NASA Blue Marble offline",None,"NASA Blue Marble + IBGE 2025/BC250 — estados, municípios e infraestrutura offline",None))
                 return
             except Exception as e:errors.append("Offline NASA: "+str(e))
             self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri/NASA",None,None," | ".join(errors)))
