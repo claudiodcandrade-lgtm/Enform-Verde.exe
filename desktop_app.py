@@ -114,6 +114,10 @@ def _draw_offline_ibge(d,bx,ow,oh):
             if not c:continue
             x,y=px(c[0],c[1])
             if 4<x<ow-4 and 4<y<oh-4:d.text((x,y),str(props.get("name") or "")[:30],anchor="mm",fill=(255,255,255,230),stroke_width=2,stroke_fill=(0,0,0,170))
+    # compact orientation legend
+    legend="IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades"
+    d.rectangle((6,oh-42,min(ow-6,720),oh-8),fill=(0,0,0,145),outline=(255,255,255,110))
+    d.text((12,oh-25),legend,anchor="lm",fill=(255,255,255,235))
 
 def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
     """Render AOI over the packaged NASA Blue Marble Brazil mosaic without network access."""
