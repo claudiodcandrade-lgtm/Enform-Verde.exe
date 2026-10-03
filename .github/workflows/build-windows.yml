@@ -123,7 +123,8 @@ jobs:
               tmp=mun.copy(); tmp["UFKEY"]=tmp[code_col].astype(str).str[:2]
               for uf,grp in tmp.groupby("UFKEY"):
                   geom=grp.geometry.union_all().simplify(0.008,preserve_topology=True)
-                  add_feat("ufs",geom,{"sigla":uf_map.get(str(uf),str(uf)),"name":uf_map.get(str(uf),str(uf))})
+                  rp=geom.representative_point()
+                  add_feat("ufs",geom,{"sigla":uf_map.get(str(uf),str(uf)),"name":uf_map.get(str(uf),str(uf)),"label":[float(rp.x),float(rp.y)]})
 
           # BC250 selected national infrastructure layers
           specs={
