@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 import sys
 import types
 import numpy as np
@@ -19,6 +20,40 @@ import sar_pipeline as sar
 
 
 class CatalogModelExecutionTests(unittest.TestCase):
+    def test_raster_role_classifier_distinguishes_backscatter_height_and_uncertainty(self):
+        cases={
+            "sigma0_HH.tif":"HH",
+            "sigma0_HV_db.tif":"HV",
+            "AGB_Mg_ha.tif":"AGB",
+            "AGB_Std_Dev.tif":"UNCERTAINTY",
+            "canopy_height_m.tif":"HEIGHT",
+            "height_uncertainty.tif":"UNCERTAINTY",
+        }
+        for name,expected in cases.items():
+            with self.subTest(name=name):self.assertEqual(sar.role(name),expected)
+
+    def test_agb_product_without_uncertainty_does_not_claim_statistical_error(self):
+        zonal={
+            "agb.tif":{"mean":300.0,"sd":42.0,"n":16,"min":250.0,"max":370.0},
+            "canopy_height.tif":{"mean":24.0,"sd":5.0,"n":16,"min":14.0,"max":32.0},
+        }
+        with patch.object(sar,"_zonal",side_effect=lambda _gdf,path:zonal[str(path)]):
+            out=sar.process_real_sar(object(),["agb.tif","canopy_height.tif"],"Amazônia","Floresta")
+        self.assertEqual(out["agb_mg_ha"],300.0)
+        self.assertIsNone(out["uncertainty_mg_ha"])
+        self.assertEqual(out["spatial_sd_mg_ha"],42.0)
+        self.assertEqual(out["n_valid_pixels"],16)
+        self.assertEqual(out["height_mean_m"],24.0)
+
+    def test_sar_height_remains_available_when_no_agb_model_matches(self):
+        zonal={"canopy_height.tif":{"mean":18.0,"sd":4.0,"n":9,"min":11.0,"max":25.0}}
+        with patch.object(sar,"_zonal",side_effect=lambda _gdf,path:zonal[str(path)]):
+            out=sar.process_real_sar(object(),["canopy_height.tif"],"Amazônia","Floresta")
+        self.assertIsNone(out["agb_mg_ha"])
+        self.assertEqual(out["height_mean_m"],18.0)
+        self.assertEqual(out["height_n_valid_pixels"],9)
+
+
     def test_narvaes_published_equation_uses_exact_feature_contract(self):
         x={"sigma0_HH_db":-15,"Pv_db":0.2,"alpha_S2_deg":20,
            "Phi_S2_deg":-30,"Phi_S3_deg":45,"tau_m_deg":12}

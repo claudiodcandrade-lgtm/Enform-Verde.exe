@@ -98,7 +98,14 @@ def _zonal(gdf,path):
         return {"mean":float(a.mean()),"sd":float(a.std(ddof=1)) if len(a)>1 else 0.0,"n":int(len(a)),"min":float(a.min()),"max":float(a.max())}
 def role(path):
     n=Path(path).name.lower()
-    if any(x in n for x in ["uncert","sigma","stderr","stddev","rmse"]):return "UNCERTAINTY"
+    # Sigma0 is the backscatter measurement, not an uncertainty layer. Check
+    # explicit uncertainty tokens and avoid the old sigma substring trap.
+    tokens=set(re.split(r"[^a-z0-9]+",n))
+    if (any(x in tokens for x in ("uncertainty","uncert","stderr","stddev","rmse","variance"))
+        or "std_dev" in n or "standard_deviation" in n
+        or ("sigma" in tokens and not any(x in tokens for x in ("sigma0","hh","hv","vv","vh")))):
+        return "UNCERTAINTY"
+    if any(x in tokens for x in ("height","canopyheight","chm","fh")):return "HEIGHT"
     if any(x in n for x in ["agb","biomass","biomassa"]):return "AGB"
     for p in ("hh","hv","vv","vh"):
         if re.search(r"(^|[_-])"+p+r"([_.-]|$)",n):return p.upper()
@@ -167,21 +174,32 @@ def sar_agb_blocker(biome,phys,available_features=None,aoi=None):
 
 def process_real_sar(gdf,paths,biome="",phys=""):
     if not paths:raise ValueError("Nenhum produto SAR/raster de biomassa foi fornecido.")
-    stats=[];agb=None;unc=None
+    stats=[];agb=None;unc=None;height=None
     for p in paths:
         rr=role(p);z=_zonal(gdf,p);z.update({"path":str(p),"role":rr});stats.append(z)
         if rr=="AGB":agb=z["mean"]
         elif rr=="UNCERTAINTY":unc=z["mean"]
+        elif rr=="HEIGHT":height=z
     if agb is not None:
         if not 0<=agb<=1500:raise ValueError("Raster AGB fora de faixa plausível; confirme unidades Mg/ha.")
         if unc is None:
-            a=next(x for x in stats if x["role"]=="AGB");unc=a["sd"]/math.sqrt(max(a["n"],1));kind="erro-padrão espacial; não substitui erro do modelo"
-        else:kind="camada de incerteza do produto"
-        return {"status":"SAR_PROCESSADO","agb_mg_ha":agb,"uncertainty_mg_ha":unc,"uncertainty_kind":kind,"stats":stats,**_provenance("SAR","produto SAR/AGB efetivamente processado",product="raster AGB")}
+            a=next(x for x in stats if x["role"]=="AGB");kind="não fornecida pelo produto; dispersão espacial reportada separadamente"
+        else:kind="média zonal da camada de incerteza de pixel do produto; não é erro de validação local"
+        out={"status":"SAR_PROCESSADO","agb_mg_ha":agb,"uncertainty_mg_ha":unc,
+             "uncertainty_kind":kind,"stats":stats,
+             "spatial_sd_mg_ha":next(x["sd"] for x in stats if x["role"]=="AGB"),
+             "n_valid_pixels":next(x["n"] for x in stats if x["role"]=="AGB"),
+             **_provenance("SAR","produto SAR/AGB efetivamente processado",product="raster AGB")}
+        if height is not None:
+            out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"]})
+        return out
     refs=[m for m in MODEL_REGISTRY if m["biome"]==biome]
     feats={x["role"]:x.get("mean") for x in stats if x.get("role") in ("HH","HV","VV","VH")}
     blocker=sar_agb_blocker(biome,phys,feats,aoi=gdf)
-    return {"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"agb_blocker":blocker,"message":"SAR processado; AGB bloqueada por incompatibilidade explícita de preditores/modelo. Consulte agb_blocker."}
+    out={"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"agb_blocker":blocker,"message":"SAR processado; AGB bloqueada por incompatibilidade explícita de preditores/modelo. Consulte agb_blocker."}
+    if height is not None:
+        out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"]})
+    return out
 
 
 MAAP_STAC="https://catalog.maap.eo.esa.int/catalogue/"
