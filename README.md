@@ -21,3 +21,7 @@ A rota prioritária para florestas densas é o produto geofísico ESA BIOMASS P-
 A aceitação adiciona a AOI de consulta do sítio AfriSAR Lopé (Gabão), com mapa AGB a 50 m derivado de parcelas de campo e LiDAR (ORNL DAAC DOI 10.3334/ORNLDAAC/1681). O workflow consulta a cobertura de `FP_AGB_L2B`; a ausência de tile é reportada como indisponibilidade, não como falha do modelo. O mapa AfriSAR é benchmark derivado: seus pixels não são parcelas independentes e não validam por si só AGB P-band.
 
 O candidato CASINO P-band (Soja et al. 2021, DOI 10.1016/j.rse.2020.112153) está registrado como modelo calibrável, não como equação pronta: requer canopy backscatter ground-cancelled e alvos locais de AGB com validação espacial independente. Referências de PALSAR full-pol continuam limitadas aos respectivos preditores, sensor e domínio publicados. Sem esses insumos, a saída permanece bloqueada para estimativa local calibrada.
+
+## Mapa-base IBGE offline
+
+O fundo padrão do mapa é gerado localmente a partir da malha municipal IBGE 2025 e da Base Cartográfica Contínua do Brasil 1:250.000 (BC250): limites de estados e municípios, rodovias, ferrovias, hidrografia, hidrovias, aeroportos, portos e localidades. A interface rasteriza essas camadas para a visualização e sobrepõe o polígono estudado. O aplicativo empacota os dados em `offline_ibge_map.json.gz` e não depende de mosaico de satélite para mostrar a AOI. Imagem de satélite segue opcional.
