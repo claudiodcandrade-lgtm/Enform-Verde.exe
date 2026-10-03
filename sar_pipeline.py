@@ -18,6 +18,10 @@ MODEL_REGISTRY=[
 {"id":"VARZEA_2018","biome":"Amazônia","domain":"floresta de várzea","bands":["L","X"],"sensor":"ALOS/PALSAR + TerraSAR-X","algorithm":"regressão selecionada por CV","coefficients":None,"r2":0.46,"rmse_mg_ha":74.6,"validation":"cross-validation","doi":"10.3390/rs10091355","executable":False},
 {"id":"YU_SAATCHI_2016_TROPICAL_SHRUBLAND_HV","biome":"Cerrado","physiognomy":"savana/cerrado/campo arbustivo; excluir cerradão e formações florestais densas","domain":"tropical shrubland/savanna, baixa a moderada biomassa; aplicação operacional conservadora <=100 Mg/ha e hard stop 155 Mg/ha","bands":["L"],"sensor":"ALOS/PALSAR L-band HV","algorithm":"inversão numérica de sigma0=A*x^alpha*(1-exp(-B*x))+C","predictors":["sigma0_HV_linear"],"coefficients":{"A":0.016429,"B":0.11013,"C":0.0,"alpha":0.2675},"validation":"ajuste empírico global por classe de floresta; L-band indicado principalmente para AGB <100 Mg/ha; não é calibração local brasileira","doi":"10.3390/rs8060522","institution":"NASA/JPL","executable":True,"execution_mode":"analytic_inverse","constraints":"usar somente HV L-band calibrado em potência linear; fitofisionomia savânica/arbustiva; rejeitar solução >100 Mg/ha para uso quantitativo operacional e sempre declarar incerteza de transferência"},
 {"id":"CERRADO_RIO_VERMELHO_2020","biome":"Cerrado","domain":"vegetação lenhosa; Rio Vermelho","bands":["L"],"sensor":"ALOS-2/PALSAR-2 + Landsat 8 + LiDAR","algorithm":"Random Forest","coefficients":None,"r2":0.89,"rmse_mg_ha":7.58,"bias_mg_ha":0.43,"validation":"k-fold + jackknife; referência LiDAR","doi":"10.3390/rs12172685","executable":False},
+{"id":"AFRICA_MITCHARD_2009_SAVANNA_L","biome":"referência externa — savana/woodland","physiognomy":"vegetação lenhosa de savana e woodland; análogo inicial somente para Cerrado aberto e de baixa biomassa","domain":"253 parcelas em quatro sítios de Camarões, Uganda e Moçambique; transferibilidade entre sítios africanos testada","bands":["L"],"sensor":"ALOS PALSAR L-band, polarização cruzada HV","algorithm":"relação empírica entre retroespalhamento HV e AGB lenhosa","predictors":["PALSAR_HV_backscatter"],"coefficients":None,"validation":"até ~150 Mg/ha: acurácia reportada de cerca de ±20%; erros aumentam com umidade, estrutura, topografia, calibração/geolocalização e alometria; validação entre sítios africanos","doi":"10.1029/2009GL040692","institution":"University of Leeds / colaboradores africanos","executable":False,"constraints":"referência de forma do modelo e domínio de baixa biomassa; não transferir coeficientes nem erro para o Cerrado; não inclui adequadamente gramíneas e fustes <10 cm; exige comparação/calibração com parcelas brasileiras"},
+{"id":"AFRICA_BOUVET_2018_SAVANNA_PALSAR","biome":"referência externa — savana/woodland","physiognomy":"savanas e woodlands africanos; analogia mais plausível para savanas abertas/lenhosas do Cerrado","domain":"mapa continental 25 m; mosaico ALOS PALSAR L-band de 2010; exclui floresta densa e áreas sem vegetação; domínio reportado até ~85 Mg/ha","bands":["L"],"sensor":"ALOS PALSAR L-band","algorithm":"modelo direto backscatter–AGB e inversão Bayesiana, estratificada por sazonalidade seca/úmida","predictors":["PALSAR_backscatter","seasonal_stratum"],"coefficients":None,"validation":"cross-validation e comparação com LiDAR; RMSD reportado de 8–17 Mg/ha; métrica e validação africanas, não brasileiras","doi":"10.1016/j.rse.2017.12.030","institution":"CESBIO / instituições colaboradoras","executable":False,"constraints":"referência quantitativa para teste em baixa biomassa lenhosa; teto reportado ~85 Mg/ha e máscaras de classe; não extrapolar para cerradão, matas de galeria ou AGB total com gramíneas"},
+{"id":"AFRICA_MERMOZ_2014_CAMEROON_PALSAR","biome":"referência externa — savana de Camarões","physiognomy":"savana de Camarões; análogo estrutural a testar em estratos abertos do Cerrado","domain":"mapeamento local com ALOS PALSAR e parcelas de campo; incertezas de inventário, SAR e biomassa explicitamente avaliadas","bands":["L"],"sensor":"ALOS PALSAR L-band, Fine Beam Dual Polarization e mosaico","algorithm":"regressão com parâmetros reduzidos após pré-processamento e redução de speckle","predictors":["PALSAR_backscatter","field_AGB"],"coefficients":None,"validation":"desenvolvido com dados in situ; métricas e coeficientes devem ser extraídos do artigo/suplemento antes de qualquer reprodução","doi":"10.1016/j.rse.2014.01.029","institution":"CESBIO / instituições colaboradoras","executable":False,"constraints":"benchmark metodológico, não equação transferível; recuperar texto integral/suplemento e confirmar polarizações, sazonalidade e desenho de validação"},
+{"id":"AFRICA_GREATER_KRUGER_2018_PALSAR2","biome":"referência externa — savana natural","physiognomy":"savana natural do Greater Kruger, África do Sul","domain":"produto AGBD/cobertura 100 m; ALOS-2 PALSAR-2 ScanSAR, setembro de 2018; ajuste com parcelas de 1 ha de campo e LiDAR aéreo","bands":["L"],"sensor":"ALOS-2 PALSAR-2 ScanSAR","algorithm":"Power Law Model calibrado para savanas naturais; raster publicado serve como benchmark espacial","predictors":["PALSAR2_ScanSAR"],"coefficients":None,"validation":"produto NASA ORNL DAAC; independência do mapa de referência para teste cruzado a auditar antes do uso","doi":"10.3334/ORNLDAAC/2512","institution":"NASA ORNL DAAC / SavannaBio","executable":False,"constraints":"resolução 100 m e domínio de savana africana; não chamar pixels do produto publicado de parcelas nem usar o mapa como validação independente sem rastrear as parcelas/treino"},
 {"id":"KUNTSCHIK_2004_CERRADAO_JERS1","biome":"Cerrado","physiognomy":"cerradão/fisionomias florestais","domain":"sudoeste de São Paulo","bands":["L"],"sensor":"JERS-1 SAR","algorithm":"regressão radar-biomassa","coefficients":None,"validation":"tese USP; equação confirmada, coeficientes pendentes de verificação integral","doi":"10.11606/T.41.2004.tde-14012005-084048","institution":"USP","executable":False},
 {"id":"CAATINGA_S1_JESUS_2023","biome":"Caatinga","physiognomy":"Caatinga arbórea no Alto Sertão de Sergipe; validar estágio fenológico e fitofisionomia","domain":"19 parcelas 30×30 m; períodos verde, intermediário e seco; múltiplas regressões com atributos dual-pol","bands":["C"],"sensor":"Sentinel-1 VV/VH dual-pol","algorithm":"MLR por período fenológico; melhor equação no período intermediário; lista de coeficientes ainda deve ser transcrita e checada contra PDF/dados antes de executar","predictors":["VH/VV","DPSVI","H","alpha","VV"],"coefficients":None,"r2":0.73,"rmse_mg_ha":8.33,"validation":"19 parcelas no estudo; artigo resume R², r e RMSE; incerteza espacial/transferência precisa ser recalculada com pares independentes","doi":"10.1007/s40333-023-0017-4","institution":"Universidade Federal de Sergipe / colaboradores","executable":False,"constraints":"modelo local do Sergipe; não transferir nacionalmente sem recalibração por dados IFN/SFB/Embrapa regionais; índices dependem de fenologia e decomposição dual-pol"},
 {"id":"ATLANTIC_2026_PALSAR2_S2","biome":"Mata Atlântica","physiognomy":"florestas montanas/topografia complexa","domain":"inventário de campo + PALSAR-2/Sentinel-2","bands":["L"],"sensor":"PALSAR-2 + Sentinel-2","algorithm":"machine learning multissensor","coefficients":None,"r2":0.64,"rmse_mg_ha":51.10,"validation":"benchmark com inventário de campo","doi":"10.1016/j.isprsjprs.2026.04.022","institution":"ISPRS JPRS","executable":False}
@@ -203,6 +207,24 @@ def process_real_sar(gdf,paths,biome="",phys=""):
 
 
 MAAP_STAC="https://catalog.maap.eo.esa.int/catalogue/"
+BIOMASS_L2B_PRODUCT_TYPES=("FP_AGB_L2B","FP_FH__L2B")
+def _biomass_item_product_types(item):
+    """Return BIOMASS L2B product types evidenced by item/asset metadata."""
+    props=item.get("properties") or {}; assets=item.get("assets") or {}
+    evidence=" ".join([str(item.get("id") or ""),str(props)," ".join(
+        str(k)+" "+str(v.get("title") or "")+" "+str(v.get("href") or "")
+        for k,v in assets.items())]).upper()
+    return [product for product in BIOMASS_L2B_PRODUCT_TYPES if product in evidence]
+
+def _biomass_catalog_summary(item):
+    props=item.get("properties") or {}
+    return {"id":item.get("id"),"datetime":props.get("datetime") or props.get("start_datetime"),
+            "collection":item.get("_collection"),"stage":item.get("_stage"),
+            "product_types":_biomass_item_product_types(item),"bbox":item.get("bbox"),
+            "assets":[{"key":k,"title":v.get("title"),"type":v.get("type"),
+                       "roles":v.get("roles"),"href":v.get("href")}
+                      for k,v in (item.get("assets") or {}).items()]}
+
 MAAP_TOKEN_URL="https://iam.maap.eo.esa.int/realms/esa-maap/protocol/openid-connect/token"
 def maap_access_token(offline_token):
     if not offline_token:raise ValueError("Informe o offline token ESA MAAP. Ele não é armazenado pelo Enform Verde.")
@@ -216,20 +238,25 @@ def maap_search(gdf,collection,limit=50,product_type=None):
     r=requests.post(MAAP_STAC+"search",json=body,timeout=(10,60));r.raise_for_status()
     fs=r.json().get("features",[])
     if product_type:
-        fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{})))]
+        fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{}))+" "+str(x.get("assets",{})))]
     return sorted(fs,key=lambda x:str((x.get("properties") or {}).get("datetime") or (x.get("properties") or {}).get("start_datetime") or ""),reverse=True)
 def biomass_l2b_search(gdf,limit=100):
-    """Search operational + IOC BIOMASS L2B collections; prefer operational products."""
+    """Discover both official AGB and forest-height L2B products; retain their distinct roles."""
     out=[]
     for collection,stage in (("BiomassLevel2b","OPERATIONAL"),("BiomassLevel2bIOC","IOC")):
-        try:
-            items=maap_search(gdf,collection,limit=limit,product_type="FP_AGB_L2B")
+        for product_type in BIOMASS_L2B_PRODUCT_TYPES:
+            try: items=maap_search(gdf,collection,limit=limit,product_type=product_type)
+            except Exception: continue
             for it in items:
-                z=dict(it); z["_collection"]=collection; z["_stage"]=stage; out.append(z)
-        except Exception:
-            continue
+                z=dict(it); z["_collection"]=collection; z["_stage"]=stage
+                z["_product_type"]=product_type; out.append(z)
+    unique={}
+    for item in out:
+        unique[(item.get("_collection"),item.get("id"),item.get("_product_type"))]=item
+    out=list(unique.values())
+    out.sort(key=lambda it:str((it.get("properties") or {}).get("datetime") or (it.get("properties") or {}).get("start_datetime") or ""),reverse=True)
     out.sort(key=lambda it:(0 if it.get("_stage")=="OPERATIONAL" else 1,
-                            -int(bool((it.get("properties") or {}).get("datetime")))))
+                            0 if it.get("_product_type")=="FP_AGB_L2B" else 1))
     return out
 
 def _download(url,out,token=None):
@@ -240,14 +267,19 @@ def _download(url,out,token=None):
             for c in r.iter_content(8*1024*1024):
                 if c:f.write(c)
     return str(out)
-def _biomass_product_assets(item):
+def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
     out=[]
     for k,a in (item.get("assets") or {}).items():
         href=a.get("href",""); typ=(a.get("type") or "").lower(); roles=[str(x).lower() for x in (a.get("roles") or [])]
         if not href:continue
         name=(k+" "+href+" "+str(a.get("title") or "")).lower()
-        if ("agb" in name or "biomass" in name or "data" in roles or "product" in roles or
-            href.lower().split("?")[0].endswith((".tif",".tiff",".zip")) or "geotiff" in typ or "zip" in typ):
+        suffix=href.lower().split("?")[0]
+        is_archive=suffix.endswith(".zip") or "zip" in typ
+        is_agb=any(x in name for x in ("agb","biomass","fp_agb_l2b"))
+        generic=(product_type in _biomass_item_product_types(item) and
+                 (is_archive or suffix.endswith((".tif",".tiff")) or "geotiff" in typ or
+                  "data" in roles or "product" in roles))
+        if product_type=="FP_AGB_L2B" and (is_agb or generic):
             out.append((k,href))
     return out
 
@@ -279,19 +311,32 @@ def _raster_assets(item):
     return out
 def download_maap_agb(gdf,offline_token,cache):
     items=biomass_l2b_search(gdf,limit=100)
-    if not items:return {"available":False,"paths":[],"items":0,"reason":"FP_AGB_L2B sem cobertura no polígono"}
-    token=maap_access_token(offline_token) if offline_token else None
+    agb_items=[it for it in items if it.get("_product_type","FP_AGB_L2B")=="FP_AGB_L2B"]
+    fh_items=[it for it in items if it.get("_product_type")=="FP_FH__L2B"]
+    if not agb_items:return {"available":False,"paths":[],"items":len(items),"agb_items":0,
+                            "fh_items":len(fh_items),"height_catalog_items":[_biomass_catalog_summary(it) for it in fh_items[:50]],
+                            "reason":"FP_AGB_L2B sem cobertura; FP_FH__L2B de altura não substitui AGB"}
+    token=None; token_loaded=False
     Path(cache).mkdir(parents=True,exist_ok=True);paths=[];errors=[]
-    for it in items:
-        for k,url in _biomass_product_assets(it):
+    for it in agb_items:
+        for k,url in _biomass_product_assets(it,"FP_AGB_L2B"):
             base=Path(url.split("?")[0]).name or (it.get("id","biomass")+"_"+k)
             p=Path(cache)/(it.get("id","biomass")+"_"+base)
             try:
-                if not p.exists():_download(url,p,token)
+                if not p.exists():
+                    try:_download(url,p,None)
+                    except Exception as e:
+                        status=getattr(getattr(e,"response",None),"status_code",None)
+                        if not offline_token or status not in (401,403):raise
+                        if not token_loaded:token=maap_access_token(offline_token);token_loaded=True
+                        _download(url,p,token)
                 paths.extend(_extract_biomass_agb_assets(p,Path(cache)/(it.get("id","biomass")+"_extracted")))
             except Exception as e:errors.append(str(e))
         if paths:break
-    return {"available":bool(paths),"paths":paths,"items":len(items),"reason":None if paths else "produto catalogado, mas COG AGB/AGB_Std_Dev não foi recuperado","errors":errors[:5]}
+    return {"available":bool(paths),"paths":paths,"items":len(items),"agb_items":len(agb_items),
+            "fh_items":len(fh_items),"height_catalog_items":[_biomass_catalog_summary(it) for it in fh_items[:50]],
+            "reason":None if paths else "FP_AGB_L2B catalogado, mas COG AGB/AGB_Std_Dev não foi recuperado",
+            "errors":errors[:5]}
 
 def cci_history(gdf,cache,offline_token=None):
     # ESA MAAP local collection. Search is public; asset access may require ESA bearer token.
@@ -839,7 +884,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=biomass_l2b_search(gdf,limit=100)
     except Exception as e: l2items=[]; audit["warnings"].append("BIOMASS catálogo: "+str(e))
-    audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"access_policy":"BiomassLevel2b e BiomassLevel2bIOC; FP_AGB_L2B público/open-free quando o ativo científico estiver publicado para a AOI"}
+    audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"products_discovered":{p:sum(1 for x in l2items if x.get("_product_type")==p) for p in BIOMASS_L2B_PRODUCT_TYPES},"items":[_biomass_catalog_summary(x) for x in l2items[:50]],"access_policy":"BiomassLevel2b e BiomassLevel2bIOC; FP_AGB_L2B e FP_FH__L2B descobertos separadamente; ativo público conforme publicação e configuração MAAP"}
     # Download/read the official L2B product bundle. Open products are attempted without credentials first;
     # an ESA MAAP token is used only when the catalogue asset is technically protected.
     if l2items:
