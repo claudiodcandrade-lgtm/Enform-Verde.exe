@@ -195,15 +195,36 @@ def process_real_sar(gdf,paths,biome="",phys=""):
              "n_valid_pixels":next(x["n"] for x in stats if x["role"]=="AGB"),
              **_provenance("SAR","produto SAR/AGB efetivamente processado",product="raster AGB")}
         if height is not None:
-            out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"]})
+            out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"],
+                        "height_interpretation":_height_interpretation(height.get("path"))})
         return out
     refs=[m for m in MODEL_REGISTRY if m["biome"]==biome]
     feats={x["role"]:x.get("mean") for x in stats if x.get("role") in ("HH","HV","VV","VH")}
     blocker=sar_agb_blocker(biome,phys,feats,aoi=gdf)
     out={"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"agb_blocker":blocker,"message":"SAR processado; AGB bloqueada por incompatibilidade explícita de preditores/modelo. Consulte agb_blocker."}
     if height is not None:
-        out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"]})
+        out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"],
+                    "height_interpretation":_height_interpretation(height.get("path"))})
     return out
+
+def _height_interpretation(path):
+    """Describe height product semantics without conflating band backscatter."""
+    n=Path(str(path or "")).name.casefold()
+    if "fp_fh" in n or ("biomass" in n and "fh" in n):
+        return {"observable":"forest height (ESA BIOMASS FP_FH__L2B)","band":"P",
+                "meaning":"produto de altura florestal; não é AGB nem altura total de cada árvore",
+                "agb_inference_permitted":False}
+    if any(k in n for k in ("tandem", "tan-dem", "tdx", "polinsar", "insar_height")):
+        return {"observable":"altura interferométrica/centro de fase X-band (conforme algoritmo do produto)","band":"X",
+                "meaning":"requer altura do terreno/DEM e validação de suporte; não é AGB",
+                "agb_inference_permitted":False}
+    if any(k in n for k in ("alos", "palsar", "nisar", "lband", "l_band")):
+        return {"observable":"camada de altura derivada de produto L-band; algoritmo não identificável pelo nome do arquivo",
+                "band":"L","meaning":"verificar documentação e definição do produto antes de usar",
+                "agb_inference_permitted":False}
+    return {"observable":"altura/cobertura estrutural em metros; sensor e definição não identificados pelo arquivo",
+            "band":None,"meaning":"altura raster não implica AGB sem modelo compatível e validação",
+            "agb_inference_permitted":False}
 
 
 MAAP_STAC="https://catalog.maap.eo.esa.int/catalogue/"

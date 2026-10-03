@@ -11,8 +11,9 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
+from inventory_structure import summarize_inventory_csv
 
-APP_VERSION="3.24.19-PROFESSIONAL"
+APP_VERSION="3.24.20-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1121,6 +1122,8 @@ class App(tk.Tk):
         self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
+        ttk.Button(f,text="RESUMIR INVENTÁRIO (DAP + ÁREA BASAL)",command=self.summarize_inventory_ui).pack(anchor="w",pady=(6,2))
+        ttk.Label(f,text="Gera estatísticas de campo por inventário/parcela; não cria pares SAR nem calibra AGB.",wraplength=900).pack(anchor="w",pady=(0,6))
         source_box=ttk.Frame(f); source_box.pack(fill="both",expand=True,pady=8)
         self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
         source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
@@ -1133,6 +1136,29 @@ class App(tk.Tk):
              f"Necromassa: {SOURCES['deadwood']}; proxy de triagem recebe incerteza elevada e nunca é rotulado como medido.\n"
              "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
         self._set(self.src,txt)
+
+    def summarize_inventory_ui(self):
+        src=filedialog.askopenfilename(title="Selecione CSV harmonizado de inventário",filetypes=[("CSV","*.csv"),("Todos","*.*")])
+        if not src:return
+        try:
+            result=summarize_inventory_csv(src)
+            dest=filedialog.asksaveasfilename(title="Salvar resumo estrutural",defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
+            if not dest:return
+            wb=Workbook(); ws=wb.active; ws.title="Por inventário"
+            summaries=result["inventory_summary"]
+            if not summaries:raise ValueError("Nenhuma árvore viva com DAP válido foi encontrada.")
+            ws.append(list(summaries[0]))
+            for row in summaries:ws.append([row.get(k) for k in summaries[0]])
+            wp=wb.create_sheet("Por parcela"); plots=result["plot_summary"]
+            if plots:
+                wp.append(list(plots[0]))
+                for row in plots:wp.append([row.get(k) for k in plots[0]])
+            wm=wb.create_sheet("Método e limites")
+            wm.append(["Item","Descrição"]); wm.append(["Método",result["method"]])
+            for limitation in result["limitations"]:wm.append(["Limite",limitation])
+            wb.save(dest)
+            messagebox.showinfo("Inventário",f"Resumo salvo. Métricas de campo sem pareamento SAR:\n{dest}")
+        except Exception as e:messagebox.showerror("Inventário",str(e))
     def _bind_text_scroll(self,w):
         """Make disabled long-form reports scroll by wheel as well as scrollbar."""
         def wheel(event):
@@ -1517,6 +1543,13 @@ class App(tk.Tk):
                     for ref in ldiag.get("references",[]):
                         diag.append("  referência: "+str(ref.get("source"))+" | DOI "+str(ref.get("doi"))+" | "+str(ref.get("note")))
                 for w in audit.get("warnings",[]): diag.append("Aviso: "+str(w))
+            if sar.get("height_mean_m") is not None:
+                hi=sar.get("height_interpretation") or {}
+                diag += ["", "ALTURA ESTRUTURAL SAR:",
+                         f"média zonal={float(sar['height_mean_m']):.2f} m | DP espacial={float(sar.get('height_sd_m') or 0):.2f} m | pixels válidos={sar.get('height_n_valid_pixels','N/D')}",
+                         "observável: "+str(hi.get("observable","camada de altura; sem semântica conhecida")),
+                         "interpretação: "+str(hi.get("meaning","não é estimativa de AGB")),
+                         "A altura SAR não determina sozinha DAP médio, densidade de fustes, área basal ou AGB; combinar com inventário/alometria compatíveis e validação espacial independente."]
             if sar.get("data_origin") in ("LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"):
                 diag += ["", "MÉTRICAS DE VALIDAÇÃO SAR: RMSE=N/D; MAE=N/D; viés=N/D; R²=N/D — faltam pares independentes parcela–pixel SAR.",
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
