@@ -19,6 +19,19 @@ import sar_pipeline as sar
 
 
 class CatalogModelExecutionTests(unittest.TestCase):
+    def test_raster_role_classifier_distinguishes_backscatter_height_and_uncertainty(self):
+        cases={
+            "sigma0_HH.tif":"HH",
+            "sigma0_HV_db.tif":"HV",
+            "AGB_Mg_ha.tif":"AGB",
+            "AGB_Std_Dev.tif":"UNCERTAINTY",
+            "canopy_height_m.tif":"HEIGHT",
+            "height_uncertainty.tif":"UNCERTAINTY",
+        }
+        for name,expected in cases.items():
+            with self.subTest(name=name):self.assertEqual(sar.role(name),expected)
+
+
     def test_narvaes_published_equation_uses_exact_feature_contract(self):
         x={"sigma0_HH_db":-15,"Pv_db":0.2,"alpha_S2_deg":20,
            "Phi_S2_deg":-30,"Phi_S3_deg":45,"tau_m_deg":12}
