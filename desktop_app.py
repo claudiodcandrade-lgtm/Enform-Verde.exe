@@ -1,4 +1,5 @@
-import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests
+import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid
+from datetime import datetime, timezone
 from pathlib import Path
 import tkinter as tk
 import webbrowser
@@ -11,7 +12,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 
-APP_VERSION="3.24.16-PROFESSIONAL"
+APP_VERSION="3.24.17-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -638,7 +639,7 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue()
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue()
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
         s=ttk.Style(self)
@@ -677,6 +678,7 @@ class App(tk.Tk):
         ttk.Label(action,text="Análise de carbono",style="Title.TLabel").pack(side="left")
         ttk.Button(action,text="Salvar relatório",command=self.save_report).pack(side="right",padx=(8,0))
         ttk.Button(action,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=(8,0))
+        ttk.Button(action,text="APAGAR PESQUISA",command=self.clear_research).pack(side="right",padx=(8,0))
         self.global_execute_btn=ttk.Button(action,text="EXECUTAR ANÁLISE",command=self.execute,style="Run.TButton")
         self.global_execute_btn.pack(side="right",padx=(8,0))
 
@@ -796,6 +798,7 @@ class App(tk.Tk):
         self.spatial_text=tk.Text(spatial_box,height=7,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
         spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
         self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.spatial_text)
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
     def _on_map_wheel(self,event):
@@ -1076,6 +1079,7 @@ class App(tk.Tk):
         self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
         remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
         self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.remote_text)
         self._set(self.remote_text,"A análise é automática e SAR-FIRST. Rotas públicas são tentadas sem credenciais; Earthdata Login é opcional para liberar NISAR/ASF protegido.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
 
     def _test_cdse(self):
@@ -1113,6 +1117,7 @@ class App(tk.Tk):
         self.res=tk.Text(result_box,height=23,wrap="word",yscrollcommand=lambda *a:result_scroll.set(*a))
         result_scroll=ttk.Scrollbar(result_box,orient="vertical",command=self.res.yview)
         self.res.pack(side="left",fill="both",expand=True); result_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.res)
         self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
@@ -1120,6 +1125,7 @@ class App(tk.Tk):
         self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
         source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
         self.src.pack(side="left",fill="both",expand=True); source_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.src)
         txt=("REGRAS DO MOTOR\n• MEDIDO: derivado diretamente do inventário/raster fornecido.\n• MODELADO: proxy/equação publicada, identificado com fonte e domínio.\n• NÃO ESTIMADO: quando não existe suporte defensável.\n\n"
              f"BGB: relação raiz/parte aérea {ROOT_RATIO:.2f}, faixa {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}; {SOURCES['protocol']}.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
@@ -1127,9 +1133,27 @@ class App(tk.Tk):
              f"Necromassa: {SOURCES['deadwood']}; proxy de triagem recebe incerteza elevada e nunca é rotulado como medido.\n"
              "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
         self._set(self.src,txt)
-    def _set(self,w,t): w.config(state="normal"); w.delete("1.0","end"); w.insert("1.0",t); w.config(state="disabled")
+    def _bind_text_scroll(self,w):
+        """Make disabled long-form reports scroll by wheel as well as scrollbar."""
+        def wheel(event):
+            if getattr(event,"num",None)==4: step=-3
+            elif getattr(event,"num",None)==5: step=3
+            else:
+                delta=int(getattr(event,"delta",0) or 0)
+                if not delta:return "break"
+                step=-max(1,abs(delta)//120)*(1 if delta>0 else -1)
+            w.yview_scroll(step,"units")
+            return "break"
+        w.bind("<MouseWheel>",wheel)
+        w.bind("<Button-4>",wheel); w.bind("<Button-5>",wheel)
+
+    def _set(self,w,t):
+        w.config(state="normal"); w.delete("1.0","end"); w.insert("1.0",t); w.config(state="disabled")
+        try:w.yview_moveto(0.0)
+        except tk.TclError:pass
     def _reset_analysis_state(self,keep_geometry=False):
         """Invalida integralmente qualquer resultado derivado da consulta anterior."""
+        self._analysis_generation+=1
         self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False
         old_vector=self.project.get("vector")
         self.project={"version":APP_VERSION}
@@ -1159,6 +1183,20 @@ class App(tk.Tk):
         self.status.set("Estado anterior descartado. Preparando nova consulta.")
         if hasattr(self,"vector_status") and not keep_geometry:self.vector_status.set("Nenhum arquivo vetorial carregado.")
         self.update_idletasks()
+
+    def clear_research(self):
+        """Clear the inquiry and ignore any late response from its worker thread."""
+        self._reset_analysis_state(keep_geometry=False)
+        self.car.set(""); self.ccir.set("")
+        self._analysis_running=False
+        for name in ("pipeline_btn","global_execute_btn"):
+            button=getattr(self,name,None)
+            if button is not None:
+                try:button.state(["!disabled"])
+                except tk.TclError:pass
+        if hasattr(self,"spatial_text"):
+            self._set(self.spatial_text,"Pesquisa apagada. Carregue um novo perímetro.")
+        self.status.set("Pesquisa apagada. Carregue um novo perímetro para iniciar outra análise.")
 
     def car_lookup(self):
         self._reset_analysis_state()
@@ -1282,6 +1320,7 @@ class App(tk.Tk):
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
         edl_token=self.edl_token.get().strip(); edl_user=self.edl_user.get().strip(); edl_password=self.edl_password.get(); cdse_token=self.cdse_token.get().strip()
         cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
+        self._analysis_generation+=1; run_id=self._analysis_generation
         self._analysis_running=True; self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando e processando SAR em segundo plano…")
         def worker():
@@ -1289,14 +1328,17 @@ class App(tk.Tk):
                 sar=automatic_pipeline(gdf,biome,phys,token,edl_user=edl_user,edl_password=edl_password,edl_token=edl_token,cdse_token=cdse_token,cdse_client_id=cdse_client_id,cdse_client_secret=cdse_client_secret)
                 try: soil_profiles=pronasolos_soc_profiles(gdf)
                 except Exception as e: soil_profiles={"error":str(e)}
-                self._analysis_queue.put(("ok",{"sar":sar,"soil":soil_profiles}))
-            except Exception:self._analysis_queue.put(("error",traceback.format_exc()))
+                self._analysis_queue.put((run_id,"ok",{"sar":sar,"soil":soil_profiles}))
+            except Exception:self._analysis_queue.put((run_id,"error",traceback.format_exc()))
         threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
         self.after(120,self._poll_analysis)
 
     def _poll_analysis(self):
-        try:kind,payload=self._analysis_queue.get_nowait()
+        try:run_id,kind,payload=self._analysis_queue.get_nowait()
         except queue.Empty:
+            if self._analysis_running:self.after(120,self._poll_analysis)
+            return
+        if run_id!=self._analysis_generation:
             if self._analysis_running:self.after(120,self._poll_analysis)
             return
         self._analysis_running=False; self.pipeline_btn.state(["!disabled"]); self.global_execute_btn.state(["!disabled"])
@@ -1305,10 +1347,12 @@ class App(tk.Tk):
             self.status.set("Falha controlada — programa permanece responsivo.")
             return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
         self.status.set("SAR consultado; calculando carbono…")
-        self.after(1,lambda:self._execute_main(precomputed_sar=payload.get("sar"),precomputed_soil=payload.get("soil")))
+        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil")) if rid==self._analysis_generation else None)
 
     def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
+        self.project["analysis_run_id"]=uuid.uuid4().hex[:12].upper()
+        self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
         for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
             self.project.pop(k,None)
         current_car=self.car.get().strip().upper()
@@ -1357,7 +1401,7 @@ class App(tk.Tk):
                     self.project["sar_warning"]=msg
                 else:
                     # Report actual SAR operations while withholding unsupported AGB/carbon numbers.
-                    audit=sar.get("audit") or {}; lines=["RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA",f"Projeto: {self.name.get()}",f"Área da AOI: {area:,.2f} ha",f"Bioma: {self.biome.get() or 'não determinado'} | Fitofisionomia: {self.phys.get() or 'não determinada'}","", "Motivo: "+str(msg), "", "O SAR foi processado, mas o catálogo não contém equação validada compatível com os preditores e o domínio desta AOI. Não se publica AGB nem carbono sem suporte defensável.","", "PRODUTOS E PIXELS PROCESSADOS:"]
+                    audit=sar.get("audit") or {}; lines=["RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Área da AOI: {area:,.2f} ha",f"Bioma: {self.biome.get() or 'não determinado'} | Fitofisionomia: {self.phys.get() or 'não determinada'}","", "Motivo: "+str(msg), "", "O SAR foi processado, mas o catálogo não contém equação validada compatível com os preditores e o domínio desta AOI. Não se publica AGB nem carbono sem suporte defensável.","", "PRODUTOS E PIXELS PROCESSADOS:"]
                     processed=audit.get("processed_without_agb") or []
                     for item in processed:
                         lines.append(f"• {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
@@ -1478,7 +1522,7 @@ class App(tk.Tk):
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
                          "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
-            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
+            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
             for r in rows:
                 err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
