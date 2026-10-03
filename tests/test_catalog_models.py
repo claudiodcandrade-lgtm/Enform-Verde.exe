@@ -127,6 +127,18 @@ class CatalogModelExecutionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"não executável"):
             sar.execute_registered_model("CAATINGA_S1_JESUS_2023",{"VH":0.2})
 
+    def test_african_savanna_models_are_benchmarks_not_transferable_cerrado_equations(self):
+        ids={"AFRICA_MITCHARD_2009_SAVANNA_L","AFRICA_BOUVET_2018_SAVANNA_PALSAR",
+             "AFRICA_MERMOZ_2014_CAMEROON_PALSAR","AFRICA_GREATER_KRUGER_2018_PALSAR2"}
+        entries={m["id"]:m for m in sar.MODEL_REGISTRY if m["id"] in ids}
+        self.assertEqual(set(entries),ids)
+        for model in entries.values():
+            self.assertFalse(model["executable"])
+            self.assertIsNone(model.get("coefficients"))
+            self.assertTrue(model.get("doi"))
+        self.assertIn("85 Mg/ha",entries["AFRICA_BOUVET_2018_SAVANNA_PALSAR"]["domain"])
+        self.assertIn("253 parcelas",entries["AFRICA_MITCHARD_2009_SAVANNA_L"]["domain"])
+
     def test_national_route_matrix_covers_supported_biomes_without_generic_means(self):
         samples={
             "Amazônia":"Floresta Ombrófila Densa",
