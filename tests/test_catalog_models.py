@@ -117,7 +117,7 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["band"],"P")
         self.assertEqual(out["product"],"FP_AGB_L2B")
         self.assertEqual(out["model_id"],"ESA_BIOMASS_FP_AGB_L2B")
-        self.assertIn("não é erro local",out["uncertainty_kind"])
+        self.assertIn("não erro local",out["uncertainty_kind"])
 
     def test_sar_height_remains_available_when_no_agb_model_matches(self):
         zonal={"canopy_height.tif":{"mean":18.0,"sd":4.0,"n":9,"min":11.0,"max":25.0}}
