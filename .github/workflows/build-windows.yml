@@ -264,6 +264,7 @@ jobs:
           assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
           assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
           assert "def map_zoom_in" in src and "def map_zoom_out" in src and "def map_zoom_fit" in src and "_map_extent_factor" in src, "geographic map zoom controls missing"
+          assert "def _apply_map_zoom" in src and "_map_provider" in src and "OFFLINE_NASA_IBGE" in src, "offline map zoom must be immediate and network-independent"
           assert "map_hscroll" in src and "map_vscroll" in src and "scrollregion" in src, "map/tab scrollbars missing"
           assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
           assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
