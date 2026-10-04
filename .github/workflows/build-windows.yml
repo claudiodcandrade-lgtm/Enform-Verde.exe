@@ -595,6 +595,28 @@ jobs:
           '@ | Set-Content cci_live_contract.py -Encoding UTF8
           python cci_live_contract.py
 
+      - name: Probe live BIOMASS FH coverage over inventory-supported Tapajos AOIs
+        shell: pwsh
+        run: |
+          @'
+          import geopandas as gpd
+          from shapely.geometry import box
+          import sar_pipeline as s
+          aois={
+            "PF_HIGH_8_11":box(-54.9804,-2.9399,-54.9785,-2.9336),
+            "SF_LOW_21_23":box(-54.9842,-3.1151,-54.9828,-3.1109),
+          }
+          for name,geom in aois.items():
+              g=gpd.GeoDataFrame(geometry=[geom],crs="EPSG:4326")
+              items=s.biomass_l2b_search(g,limit=100)
+              fh=[x for x in items if x.get("_product_type")=="FP_FH__L2B"]
+              agb=[x for x in items if x.get("_product_type")=="FP_AGB_L2B"]
+              print("BIOMASS_COVERAGE_PROBE",name,"FH",len(fh),"AGB",len(agb))
+              for x in fh[:3]:
+                  print("FH_ITEM",name,x.get("id"),x.get("_stage"),x.get("_collection"))
+          '@ | Set-Content biomass_fh_probe.py -Encoding UTF8
+          python biomass_fh_probe.py
+
       - name: Catalog equation and recalibration contract tests
         run: python -m unittest discover -s tests -v
 
@@ -621,6 +643,11 @@ jobs:
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'
+          Copy-Item -Force 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_PF_Alta.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Altura_Estrutura_Tapajos_PF_Alta.kml'
+          Copy-Item -Force 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_SF_Baixa.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Altura_Estrutura_Tapajos_SF_Baixa.kml'
+          New-Item -ItemType Directory -Force 'dist\Enform Verde\data' | Out-Null
+          Copy-Item -Force 'data\tapajos_ornl1552_structure_v1.csv' 'dist\Enform Verde\data\tapajos_ornl1552_structure_v1.csv'
+          Copy-Item -Force 'TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md' 'dist\Enform Verde\TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
           Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
           Move-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.zip' 'acceptance\Teste_SAR_Cerrado_DF.kmz'
@@ -640,6 +667,9 @@ jobs:
           if (!(Test-Path $ibge)) { throw 'Offline IBGE map bundle is missing from packaged application' }
           if ((Get-Item $ibge).Length -lt 1000000) { throw 'Offline IBGE map bundle is unexpectedly small' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'))) { throw 'High-biomass Brazilian SAR AOI is missing from package' }
+          if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_PF_Alta.kml'))) { throw 'PF H100-structure AOI is missing from package' }
+          if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_SF_Baixa.kml'))) { throw 'SF H100-structure AOI is missing from package' }
+          if (!(Test-Path (Join-Path $root 'data\tapajos_ornl1552_structure_v1.csv'))) { throw 'Tapajos ORNL structure table is missing from package' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh
