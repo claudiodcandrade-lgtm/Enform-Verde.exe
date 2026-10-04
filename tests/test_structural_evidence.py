@@ -16,6 +16,13 @@ class StructuralEvidenceTests(unittest.TestCase):
         se,method=evidence_se(e)
         self.assertGreater(se,0); self.assertIn("IQR",method)
 
+    def test_median_iqr_is_not_mixed_into_mean_meta_analysis(self):
+        med=StructuralEvidence("M","Inst","Caatinga","Caatinga","NE","AGB","Mg/ha",center_type="median",mean=43,iqr_low=25,iqr_high=61,n_plots=70)
+        avg=StructuralEvidence("A","Inst","Caatinga","Caatinga","NE","AGB","Mg/ha",mean=50,sd=10,n_plots=25)
+        out=random_effects_summary([med,avg])
+        self.assertEqual(out["k"],1)
+        self.assertIn(("M","center_not_mean"),out["excluded_studies"])
+
     def test_range_only_is_envelope_not_weight(self):
         a=StructuralEvidence("A","Inst","Mata Atlântica","Semidecidual","MG","AGB","Mg/ha",mean=180,range_low=100,range_high=260)
         b=StructuralEvidence("B","Inst","Mata Atlântica","Semidecidual","RJ","AGB","Mg/ha",mean=75,sd=12,n_plots=63)
