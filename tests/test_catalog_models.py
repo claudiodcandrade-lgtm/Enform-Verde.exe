@@ -71,6 +71,8 @@ class CatalogModelExecutionTests(unittest.TestCase):
             "sigma0_HV_db.tif":"HV",
             "AGB_Mg_ha.tif":"AGB",
             "AGB_Std_Dev.tif":"UNCERTAINTY",
+            "N00W060_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif":"UNCERTAINTY",
+            "N00W060_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif":"AGB",
             "canopy_height_m.tif":"HEIGHT",
             "height_uncertainty.tif":"UNCERTAINTY",
         }
@@ -143,6 +145,32 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["height_mean_m"],18.0)
         self.assertEqual(out["height_n_valid_pixels"],9)
 
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_cci_v7_tile_convention_for_brazilian_acceptance_aois(self):
+        tapajos=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.930,-3.02)],crs="EPSG:4326")
+        cerrado=gpd.GeoDataFrame(geometry=[box(-47.950,-15.960,-47.930,-15.940)],crs="EPSG:4326")
+        self.assertEqual(sar._cci_v7_tile_ids(tapajos),["N00W060"])
+        self.assertEqual(sar._cci_v7_tile_ids(cerrado),["S10W050"])
+        names=[x["name"] for x in sar._cci_v7_urls(tapajos,2024)]
+        self.assertIn("N00W060_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif",names)
+        self.assertIn("N00W060_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif",names)
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_cci_v7_discovery_download_contract(self):
+        import tempfile
+        tapajos=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.930,-3.02)],crs="EPSG:4326")
+        def fake_download(url,out,token=None):
+            from pathlib import Path
+            Path(out).write_bytes(b"TIFF")
+            return str(out)
+        with tempfile.TemporaryDirectory() as td, patch.object(sar,"_download",side_effect=fake_download):
+            out=sar.cci_history(tapajos,td)
+        self.assertTrue(out["available"])
+        self.assertEqual(out["version"],"7.0")
+        self.assertEqual(out["year"],2024)
+        self.assertEqual(out["tiles"],["N00W060"])
+        self.assertEqual({sar.role(p) for p in out["paths"]},{"AGB","UNCERTAINTY"})
 
     def test_narvaes_published_equation_uses_exact_feature_contract(self):
         x={"sigma0_HH_db":-15,"Pv_db":0.2,"alpha_S2_deg":20,
