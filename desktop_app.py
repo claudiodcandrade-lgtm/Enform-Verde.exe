@@ -1496,8 +1496,8 @@ class App(tk.Tk):
                 dry=float(component["mean_dry_mg_ha"]); bounds=list(map(float,component["range_dry_mg_ha"]))
                 note=(f"biomassa seca={dry:,.2f} Mg/ha; faixa descritiva={bounds[0]:,.2f}–{bounds[1]:,.2f} Mg/ha; "
                       f"fração C operacional={CARBON_FRACTION:.2f}; a faixa não é IC95% nem erro SAR. "+str(component.get("method","")))
-                parts.append((cname,dry*CARBON_FRACTION,"REFERÊNCIA MICRORREGIONAL",note,
-                              "estoque de referência publicado; não é predição SAR nem medição da AOI",component.get("source","literatura científica regional")))
+                parts.append((cname,dry*CARBON_FRACTION,component.get("status","REFERÊNCIA MICRORREGIONAL"),note,
+                              component.get("method","estoque de referência publicado; não é predição SAR nem medição da AOI"),component.get("source","literatura científica regional")))
             # Estimate belowground biomass from the SAR-derived AGB when a local
             # measured root inventory is unavailable. Cairns et al. tropical-forest
             # equation is an explicitly generalized model; its residual prediction
@@ -1512,7 +1512,9 @@ class App(tk.Tk):
                   "method":"Equação alométrica agregada tropical: BGB=exp(−1,0587+0,8836·ln(AGB)); aplicada à AGB SAR. A faixa propaga somente a faixa/incerteza AGB informada pelo SAR; erro residual da equação não publicado/indisponível e não está incluído. Generalizada; não equivale a raízes medidas na AOI.",
                   "source":"Cairns et al. (1997), Root biomass allocation in the world's upland forests, Oecologia 111:1–11, doi:10.1007/s004420050201",
                   "url":"https://doi.org/10.1007/s004420050201",
-                  "uncertainty_kind":"faixa propagada da AGB SAR; erro alométrico residual N/D"}
+                  "uncertainty_kind":"faixa propagada da AGB SAR; erro alométrico residual N/D",
+                  "status":"MODELO ALOMÉTRICO DERIVADO DE AGB SAR",
+                  "origin":"MODELAGEM_ALOMETRIA_SAR"}
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
                 parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
@@ -1528,7 +1530,7 @@ class App(tk.Tk):
             agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
             rows=[]
             for name,val,status,note,method,source in parts:
-                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA_MICRORREGIONAL" if name in regional_components else "MODELADO"))))
+                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else (regional_components[name].get("origin","LITERATURA_MICRORREGIONAL") if name in regional_components else "MODELADO"))))
                 if name=="Biomassa aérea":
                     ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("envelope descritivo; sem cobertura probabilística declarada" if "envelope descritivo" in agb_metric else ("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo")) if sar_unc else "N/D")
                 elif name in regional_components:
@@ -1553,7 +1555,7 @@ class App(tk.Tk):
                 rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
                              "erro_abs_tc":ea,"erro_pct":ep,"erro_metrica":metric,"nivel_confianca":level})
             # Propagate only quantified independent 1-sigma components; report coverage of uncertainty.
-            q=[r for r in rows if r.get("erro_abs_tc") is not None and r.get("origem") not in ("LITERATURA_MICRORREGIONAL","LITERATURA_SECUNDARIA","MODELAGEM_LITERATURA_HIERARQUICA")]
+            q=[r for r in rows if r.get("erro_abs_tc") is not None and r.get("origem") not in ("LITERATURA_MICRORREGIONAL","LITERATURA_SECUNDARIA","MODELAGEM_LITERATURA_HIERARQUICA","MODELAGEM_ALOMETRIA_SAR")]
             total_sigma=math.sqrt(sum(r["erro_abs_tc"]**2 for r in q)) if q else None
             total_err_pct=(total_sigma/total*100) if total_sigma is not None and total else None
             self.project["total_uncertainty"]={"sigma_tc_ha":total_sigma,"pct":total_err_pct,"quantified_components":len(q),"total_components":len(rows),
