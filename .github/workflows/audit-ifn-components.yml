@@ -85,7 +85,7 @@ jobs:
               page_url = urljoin(BASE, path)
               page = session.get(page_url, timeout=60)
               page.raise_for_status()
-              hrefs = re.findall(r'href=["\\']([^"\\']+/download/[^"\\']+)["\\']', page.text, flags=re.I)
+              hrefs = re.findall(r'href="([^"]+/download/[^"]+)"', page.text, flags=re.I)
               urls = {}
               for href in hrefs:
                   full = urljoin(BASE, href.replace("&amp;", "&"))
