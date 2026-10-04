@@ -1491,10 +1491,7 @@ class App(tk.Tk):
             soil_error=soil_profiles.get("error") if soil_profiles else "PronaSolos não retornou perfil."
             parts=[
               ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","produto SAR ou referência secundária, conforme origem",sar.get("source",sar.get("status","produto processado")))]
-            regional_components=dict(sar.get("regional_components") or {})
-            # BGB is always allometric; discard any measured/reference root stock
-            # so that the component is consistently estimated from the same AGB.
-            regional_components.pop("Biomassa subterrânea",None)
+            regional_components=sar.get("regional_components") or {}
             for cname,component in regional_components.items():
                 dry=float(component["mean_dry_mg_ha"]); bounds=list(map(float,component["range_dry_mg_ha"]))
                 note=(f"biomassa seca={dry:,.2f} Mg/ha; faixa descritiva={bounds[0]:,.2f}–{bounds[1]:,.2f} Mg/ha; "
@@ -1504,7 +1501,7 @@ class App(tk.Tk):
             # Always estimate belowground biomass allometrically from AGB. Cairns et al. tropical-forest
             # equation is an explicitly generalized model; its residual prediction
             # error is not supplied here and is kept separate from propagated SAR error.
-            if agb>0:
+            if "Biomassa subterrânea" not in regional_components and agb>0:
                 bgb=math.exp(-1.0587+0.8836*math.log(max(agb,1e-9)))
                 blo=max(0.0,agb_lo); bhi=max(blo,agb_hi)
                 regional_components["Biomassa subterrânea"]={
