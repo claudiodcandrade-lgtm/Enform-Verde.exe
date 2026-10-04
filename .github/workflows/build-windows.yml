@@ -618,10 +618,28 @@ jobs:
               print("BIOMASS_COVERAGE_PROBE",name,"FH",len(fh),"AGB",len(agb))
               try:
                   l1=s.maap_search(g,"BiomassLevel1c",limit=1000)
-                  print("BIOMASS_L1C_COVERAGE",name,"items",len(l1))
-                  for x in l1[:5]:
+                  ids=[str(x.get("id") or "") for x in l1]
+                  import re
+                  cycles=sorted({m.group(1) for ident in ids for m in [re.search(r"_C(\\d+)_",ident)] if m})
+                  tracks=sorted({m.group(1) for ident in ids for m in [re.search(r"_T(\\d+)_F(\\d+)",ident)] if m})
+                  print("BIOMASS_L1C_COVERAGE",name,"items",len(l1),"cycles",cycles,"track_frames",tracks)
+                  for x in l1:
                       p=x.get("properties") or {}
-                      print("BIOMASS_L1C_ITEM",name,x.get("id"),p.get("datetime") or p.get("start_datetime"),p.get("end_datetime"))
+                      assets=x.get("assets") or {}
+                      print("BIOMASS_L1C_ITEM",name,x.get("id"),p.get("datetime") or p.get("start_datetime"),p.get("end_datetime"),"assets",list(assets))
+                  if l1:
+                      x=l1[0]
+                      for key,a in (x.get("assets") or {}).items():
+                          href=a.get("href")
+                          roles=[str(z).lower() for z in (a.get("roles") or [])]
+                          if href and ("data" in roles or "measurement" in key.lower()):
+                              try:
+                                  q=requests.get(href,headers={"Range":"bytes=0-0"},stream=True,timeout=(10,30))
+                                  print("BIOMASS_L1C_ASSET_ACCESS",name,key,q.status_code,q.headers.get("Content-Range") or q.headers.get("Content-Length"))
+                                  q.close()
+                              except Exception as ae:
+                                  print("BIOMASS_L1C_ASSET_ACCESS_ERROR",name,key,type(ae).__name__,str(ae)[:180])
+                              break
               except Exception as e:
                   print("BIOMASS_L1C_QUERY_ERROR",name,type(e).__name__,str(e)[:240])
               for x in fh[:3]:
