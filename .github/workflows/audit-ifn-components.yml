@@ -34,6 +34,7 @@ jobs:
           DATASETS = {
               "fallen_wood": "/pt_BR/dataset/ifn-madeira-caida-por-uf_disp-set2025",
               "litter_corrected": "/pt_BR/dataset/ifn-serapilheira-por-uf_disp-set2025",
+              "panel_sfb": "/pt_BR/dataset/painel-de-biomassa-e-carbono",
           }
           session = requests.Session()
           session.headers["User-Agent"] = "Enform-Verde-IFN-open-data-audit/1.0"
@@ -47,6 +48,10 @@ jobs:
               if len(body) > 50_000_000:
                   raise RuntimeError(f"{name}: resource exceeds 50 MB audit limit")
               result = {"filename": name, "url": url, "bytes": len(body)}
+              if name.lower().find("necromassa") >= 0 or name.lower().find("equacoes") >= 0 or name.lower().find("testeequacoes") >= 0 or name.lower().find("metadados") >= 0:
+                  from pathlib import Path
+                  Path("panel_sfb").mkdir(exist_ok=True)
+                  Path("panel_sfb", name).write_bytes(body)
               lower = name.lower()
               if lower.endswith(".xlsx"):
                   wb = load_workbook(io.BytesIO(body), read_only=True, data_only=True)
@@ -133,6 +138,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ifn-compartment-schema-audit
-          path: ifn_component_schema_audit.json
+          path: |
+            ifn_component_schema_audit.json
+            panel_sfb/*
           retention-days: 30
           compression-level: 6
