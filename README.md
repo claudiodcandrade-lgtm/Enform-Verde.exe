@@ -25,3 +25,14 @@ O candidato CASINO P-band (Soja et al. 2021, DOI 10.1016/j.rse.2020.112153) est�
 ## Mapa-base IBGE offline
 
 O fundo padrão do mapa é gerado localmente a partir da malha municipal IBGE 2025 e da Base Cartográfica Contínua do Brasil 1:250.000 (BC250): limites de estados e municípios, rodovias, ferrovias, hidrografia, hidrovias, aeroportos, portos e localidades. A interface rasteriza essas camadas para a visualização e sobrepõe o polígono estudado. O aplicativo empacota os dados em `offline_ibge_map.json.gz` e não depende de mosaico de satélite para mostrar a AOI. Imagem de satélite segue opcional.
+# Política SAR para biomassa e altura
+
+1. Quando coberto e liberado pelo catálogo, `ESA BIOMASS FP_AGB_L2B` fornece a estimativa AGB primária e sua camada de desvio-padrão do produto. Ela é reportada como incerteza do produto, separada da dispersão espacial e sem alegação de validação local.
+2. `ESA BIOMASS FP_FH__L2B` é consultado separadamente e pode fornecer altura superior do dossel (H100). Essa camada não é convertida em AGB. O relatório mantém a altura SAR ao lado da AGB sempre que ambos estiverem disponíveis.
+3. Fora da cobertura desses produtos, apenas modelos com sensor, polarização, domínio fitofisionômico e preditores compatíveis podem produzir AGB quantitativa. L-band dual-pol não é promovido a modelo de alta biomassa por si só. Referências e inventários não pareados servem como contexto/prior, não como calibração SAR.
+4. Recalibração brasileira exige inventário de parcelas com localização/suporte espacial, período compatível e resposta AGB documentada, além de pixel SAR coincidente. A validação é agrupada por sítio. DAP/área basal medidos em campo são preditores estruturais preferenciais; alturas de campo são usadas apenas para auditoria independente, pois têm maior erro de mensuração.
+5. A fitofisionomia permanece determinada pelo diagnóstico IBGE vigente nesta versão. Se nenhum produto/modelo AGB compatível processar, o resultado declara essa lacuna e separa claramente qualquer referência bibliográfica da estimativa SAR.
+
+## AOI brasileira de aceitação SAR
+
+`acceptance/Teste_SAR_Cerrado_DF.kml` é o polígono de aceitação no Cerrado do Distrito Federal (aprox. 475 ha; limites −15,960/−15,940° latitude e −47,950/−47,930° longitude). Na execução de aceitação anterior, pixels reais ALOS/PALSAR HV produziram AGB de 16,75 Mg/ha pelo modelo publicado Yu & Saatchi (2016); a dispersão espacial propagada foi ±11,24 Mg/ha. O resultado é uma prova de processamento SAR ponta a ponta para vegetação savânica de baixa biomassa, não validação local: usa equação global transferida, o limite operacional é AGB ≤100 Mg/ha e ±11,24 não é intervalo de confiança nem inclui o erro de transferência. O arquivo pode ser aberto em QGIS, Google Earth ou carregado na aplicação para repetir a aceitação. Para floresta densa/alta biomassa, use a rota P-band ESA BIOMASS quando o produto oficial cobrir a AOI; não transfira a equação de savana.

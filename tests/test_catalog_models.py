@@ -117,6 +117,24 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["model_id"],"ESA_BIOMASS_FP_AGB_L2B")
         self.assertIn("não erro local",out["uncertainty_kind"])
 
+    def test_official_fh_height_is_carried_alongside_primary_agb_result(self):
+        items=[
+            {"id":"agb_tile","_product_type":"FP_AGB_L2B","_stage":"OPERATIONAL","_collection":"BiomassLevel2b"},
+            {"id":"fh_tile","_product_type":"FP_FH__L2B","_stage":"OPERATIONAL","_collection":"BiomassLevel2b"}]
+        product={"status":"SAR_PROCESSADO","agb_mg_ha":310.0,"uncertainty_mg_ha":40.0,
+                 "uncertainty_kind":"produto ESA","stats":[],"spatial_sd_mg_ha":12.0,"n_valid_pixels":10}
+        height={"height_mean_m":26.0,"height_sd_m":3.0,"height_n_valid_pixels":8,
+                "height_interpretation":{"observable":"forest height"}}
+        with patch.object(sar,"biomass_l2b_search",return_value=items), \
+             patch.object(sar,"download_maap_height",return_value={"paths":["fh.tif"],"available":True}), \
+             patch.object(sar,"process_real_sar",side_effect=[height,product]), \
+             patch.object(sar,"download_maap_agb",return_value={"paths":["agb.tif"],"available":True}):
+            out=sar.automatic_pipeline(object(),"Amazônia","Floresta Ombrófila Densa",cache="/tmp/enform-fh-agb")
+        self.assertEqual(out["agb_mg_ha"],310.0)
+        self.assertEqual(out["data_origin"],"SAR_P_BIOMASS_FP_AGB_L2B")
+        self.assertEqual(out["sar_height"]["height_mean_m"],26.0)
+        self.assertEqual(out["sar_height"]["product"],"FP_FH__L2B")
+
     def test_sar_height_remains_available_when_no_agb_model_matches(self):
         zonal={"canopy_height.tif":{"mean":18.0,"sd":4.0,"n":9,"min":11.0,"max":25.0}}
         with patch.object(sar,"_zonal",side_effect=lambda _gdf,path:zonal[str(path)]):
