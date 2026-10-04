@@ -1515,6 +1515,11 @@ class App(tk.Tk):
                   "uncertainty_kind":"faixa propagada da AGB SAR; erro alométrico residual N/D",
                   "status":"MODELO ALOMÉTRICO DERIVADO DE AGB SAR",
                   "origin":"MODELAGEM_ALOMETRIA_SAR"}
+                c=regional_components["Biomassa subterrânea"]
+                dry=float(c["mean_dry_mg_ha"]); bounds=list(map(float,c["range_dry_mg_ha"]))
+                note=(f"biomassa seca={dry:,.2f} Mg/ha; faixa descrita={bounds[0]:,.2f}–{bounds[1]:,.2f} Mg/ha; "
+                      f"fração C operacional={CARBON_FRACTION:.2f}; "+c["method"])
+                parts.append(("Biomassa subterrânea",dry*CARBON_FRACTION,c["status"],note,c["method"],c["source"]))
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
                 parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
