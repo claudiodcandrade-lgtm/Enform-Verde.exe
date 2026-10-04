@@ -633,7 +633,7 @@ jobs:
                       tested=set()
                       for x in l1:
                           ident=str(x.get("id") or "")
-                          m=re.search(r"_(T\\d+_F\\d+)_",ident)
+                          m=re.search(r"_(T\d+_F\d+)_",ident)
                           orbit_frame=m.group(1) if m else "unknown_track_frame"
                           for key,a in (x.get("assets") or {}).items():
                               k=key.lower()
