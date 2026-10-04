@@ -157,6 +157,120 @@ def yu_saatchi_tropical_shrubland_agb(stats,biome,phys):
             "limits":["aplicação restrita a Cerrado/savana não florestal","AGB operacional <=100 Mg/ha; hard domain do ajuste 155 Mg/ha",
                       "modelo global por classe ecológica; requer validação local para uso de inventário regulatório/creditício"]}
 
+TAPAJOS_HEIGHT_STRUCTURE_MODELS={
+    "PF_SLF":{
+        "model_id":"TAPAJOS_PF_SLF_H100_G_V1",
+        "coefficient_k":0.4092378415295996,
+        "n_plots":16,"spatial_blocks":4,
+        "cv_rmse_mg_ha":26.649861368192365,"cv_mae_mg_ha":21.661665504659965,
+        "cv_bias_mg_ha":-0.8328583034468249,"cv_r2":0.8788969494824688,
+        "g_domain":[15.921469046279583,31.26701504411778],
+        "h100_domain":[19.956,34.104],"agb_reference_domain":[164.46042188046076,424.93701722288324],
+        "field_dap_min_cm":10,
+    },
+    "SF":{
+        "model_id":"TAPAJOS_SF_H100_G_V1",
+        "coefficient_k":0.2945481254115913,
+        "n_plots":14,"spatial_blocks":3,
+        "cv_rmse_mg_ha":17.55081844680108,"cv_mae_mg_ha":11.514999715209187,
+        "cv_bias_mg_ha":5.496318377648255,"cv_r2":0.8390477392612594,
+        "g_domain":[1.4582299204241205,16.920969890611822],
+        "h100_domain":[8.435999999999998,28.70799999999999],
+        "agb_reference_domain":[4.364544247344407,138.23684901148718],
+        "field_dap_min_cm":5,
+    }
+}
+TAPAJOS_STRUCTURE_ZONES=[
+    {"zone_id":"TAPAJOS_PF_8_11_HIGH","stage":"PF_SLF","plots":[8,9,10,11],
+     "bbox":[-54.9805,-2.9400,-54.9784,-2.9335],
+     "basal_area_m2_ha":26.777591962941827,"basal_area_sd_m2_ha":2.996066381172428,
+     "inventory_agb_mean_mg_ha":346.33136276411136,
+     "inventory_source":"ORNL DAAC 1552 — PF plots 8–11"},
+    {"zone_id":"TAPAJOS_SF_21_23_LOW","stage":"SF","plots":[21,22,23],
+     "bbox":[-54.9843,-3.1152,-54.9827,-3.1108],
+     "basal_area_m2_ha":2.284585027246419,"basal_area_sd_m2_ha":1.2686015817800564,
+     "inventory_agb_mean_mg_ha":7.4736528472679025,
+     "inventory_source":"ORNL DAAC 1552 — SF plots 21–23"},
+]
+MODEL_REGISTRY.extend([
+    {"id":"TAPAJOS_PF_SLF_H100_G_V1","biome":"Amazônia","physiognomy":"Floresta Ombrófila Densa — primária ou exploração seletiva",
+     "domain":"Tapajós ORNL 1552, PF+SLF; G e H100 dentro do domínio observado",
+     "bands":["P"],"sensor":"ESA BIOMASS FP_FH__L2B ou altura SAR H100 compatível",
+     "algorithm":"AGB = 0.4092378415 × G × H100; G de inventário local e H100 SAR",
+     "predictors":["H100_SAR_m","G_inventory_m2_ha"],"coefficients":{"k":0.4092378415295996},
+     "r2":0.8788969494824688,"rmse_mg_ha":26.649861368192365,
+     "validation":"leave-spatial-block-out interno, 16 parcelas / 4 blocos; resposta Chave 2014, não destrutiva",
+     "doi":"10.3334/ORNLDAAC/1552","institution":"ORNL DAAC / calibração Enform sobre dados públicos",
+     "executable":True,"execution_mode":"height_structure_local",
+     "constraints":"somente zonas de estrutura horizontal cadastradas; H100 deve ser produto SAR compatível; RMSE não inclui erro do FH SAR"},
+    {"id":"TAPAJOS_SF_H100_G_V1","biome":"Amazônia","physiognomy":"floresta secundária",
+     "domain":"Tapajós ORNL 1552, SF; G e H100 dentro do domínio observado",
+     "bands":["P"],"sensor":"ESA BIOMASS FP_FH__L2B ou altura SAR H100 compatível",
+     "algorithm":"AGB = 0.2945481254 × G × H100; G de inventário local e H100 SAR",
+     "predictors":["H100_SAR_m","G_inventory_m2_ha"],"coefficients":{"k":0.2945481254115913},
+     "r2":0.8390477392612594,"rmse_mg_ha":17.55081844680108,
+     "validation":"leave-spatial-block-out interno, 14 parcelas / 3 blocos; resposta Chave 2014, não destrutiva",
+     "doi":"10.3334/ORNLDAAC/1552","institution":"ORNL DAAC / calibração Enform sobre dados públicos",
+     "executable":True,"execution_mode":"height_structure_local",
+     "constraints":"somente zonas de estrutura horizontal cadastradas; H100 deve ser produto SAR compatível; RMSE não inclui erro do FH SAR"}
+])
+
+def tapajos_inventory_structure_zone(gdf):
+    """Return a registered local horizontal-structure support only if AOI fits inside it."""
+    try:
+        w,s,e,n=gdf.to_crs(4326).geometry.union_all().bounds
+    except Exception:
+        return None
+    tol=1e-9
+    for z in TAPAJOS_STRUCTURE_ZONES:
+        zw,zs,ze,zn=z["bbox"]
+        if w>=zw-tol and s>=zs-tol and e<=ze+tol and n<=zn+tol:
+            return dict(z)
+    return None
+
+def tapajos_h100_structure_agb(gdf,sar_height,biome="",phys=""):
+    """Estimate AGB from SAR H100 + local inventory basal area inside strict Tapajos supports."""
+    if str(biome or "").strip().casefold() not in ("amazônia","amazonia"):
+        return None
+    zone=tapajos_inventory_structure_zone(gdf)
+    if not zone:return None
+    try:h=float((sar_height or {}).get("height_mean_m"))
+    except Exception:return None
+    if not math.isfinite(h) or h<=0:return None
+    m=TAPAJOS_HEIGHT_STRUCTURE_MODELS[zone["stage"]]
+    g=float(zone["basal_area_m2_ha"])
+    hlo,hhi=m["h100_domain"]; glo,ghi=m["g_domain"]
+    if not (hlo<=h<=hhi and glo<=g<=ghi):
+        return {"status":"SAR_HEIGHT_STRUCTURE_BLOCKED","agb_mg_ha":None,
+                "data_origin":"SAR_P_HEIGHT_X_INVENTORY_STRUCTURE",
+                "reason":"H100 SAR ou área basal fora do domínio observado da calibração local",
+                "height_mean_m":h,"basal_area_m2_ha":g,"height_domain_m":m["h100_domain"],
+                "basal_area_domain_m2_ha":m["g_domain"],"zone":zone,"model_id":m["model_id"]}
+    k=float(m["coefficient_k"]); agb=k*g*h
+    g_spatial_sensitivity=abs(k*h*float(zone["basal_area_sd_m2_ha"]))
+    return {"status":"SAR_PROCESSADO","agb_mg_ha":float(agb),
+            "uncertainty_mg_ha":float(m["cv_rmse_mg_ha"]),
+            "uncertainty_kind":"RMSE leave-spatial-block-out do modelo G×H100 contra AGB alométrica Chave-2014; NÃO inclui erro de medição/transferência do produto FH SAR",
+            "spatial_structure_sensitivity_mg_ha":float(g_spatial_sensitivity),
+            "data_origin":"SAR_P_HEIGHT_X_INVENTORY_STRUCTURE",
+            "source":"ESA BIOMASS FP_FH__L2B/H100 × estrutura horizontal ORNL DAAC 1552",
+            "sensor":"ESA BIOMASS","band":"P","product":"FP_FH__L2B + inventário estrutural local",
+            "model_id":m["model_id"],"height_mean_m":h,
+            "height_sd_m":(sar_height or {}).get("height_sd_m"),
+            "height_n_valid_pixels":(sar_height or {}).get("height_n_valid_pixels"),
+            "height_definition":"H100 = média das 100 árvores mais altas/ha",
+            "basal_area_m2_ha":g,"basal_area_sd_m2_ha":float(zone["basal_area_sd_m2_ha"]),
+            "inventory_plots":zone["plots"],"inventory_source":zone["inventory_source"],
+            "inventory_agb_reference_mean_mg_ha":zone["inventory_agb_mean_mg_ha"],
+            "calibration":{"n_plots":m["n_plots"],"spatial_blocks":m["spatial_blocks"],
+                           "RMSE_Mg_ha":m["cv_rmse_mg_ha"],"MAE_Mg_ha":m["cv_mae_mg_ha"],
+                           "bias_Mg_ha":m["cv_bias_mg_ha"],"R2":m["cv_r2"],
+                           "reference":"AGB de parcela calculada por Chave et al. 2014 a partir de DAP, altura total e densidade da madeira"},
+            "validation_state":"SAR_CALCULADO_ERRO_PROVISORIO_SEM_VALIDACAO_FH_LOCAL",
+            "limits":["uso restrito ao suporte espacial das parcelas cadastradas",
+                      "referência AGB é alométrica, não destrutiva",
+                      "RMSE mede o modelo estrutural dentro de Tapajós e não valida o erro do produto SAR H100"]}
+
 def sar_agb_blocker(biome,phys,available_features=None,aoi=None):
     """Explain exactly why processed SAR cannot yet produce defensible AGB."""
     available=set((available_features or {}).keys())
@@ -1039,6 +1153,13 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 audit["biomass_height_l2b"]["zonal_height"]=sar_height
         except Exception as e:
             audit["biomass_height_l2b"]={"available":False,"reason":str(e)}
+    height_structure_estimate=None
+    if sar_height:
+        try:
+            height_structure_estimate=tapajos_h100_structure_agb(gdf,sar_height,biome,phys)
+            audit["height_structure_model"]=height_structure_estimate
+        except Exception as e:
+            audit["height_structure_model"]={"status":"ERROR","reason":str(e)}
     # Download/read the official L2B product bundle. Open products are attempted without credentials first;
     # an ESA MAAP token is used only when the catalogue asset is technically protected.
     if l2items:
@@ -1057,10 +1178,19 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 pr["uncertainty_kind"]=("média zonal de AGB_Std_Dev do produto ESA; incerteza do produto, não erro local de validação"
                     if pr.get("uncertainty_mg_ha") is not None else
                     "produto não forneceu camada AGB_Std_Dev legível; dispersão espacial reportada à parte, sem erro local validado")
+                if height_structure_estimate and height_structure_estimate.get("agb_mg_ha") is not None:
+                    pr["height_structure_comparison"]=height_structure_estimate
                 return pr
         except Exception as e:audit["warnings"].append("BIOMASS P download/process: "+str(e))
         if not offline_token:
             audit["warnings"].append("BIOMASS L2B localizado, mas o ativo científico não pôde ser lido anonimamente. Se o catálogo exigir autenticação técnica, informe ESA MAAP Long-Lasting Token.")
+
+    # Height-first local route: if official P-band H100 exists and the AOI has
+    # measured horizontal structure, estimate AGB before falling back to lower bands.
+    if height_structure_estimate and height_structure_estimate.get("agb_mg_ha") is not None:
+        height_structure_estimate["audit"]=audit
+        height_structure_estimate["paths"]=(sar_height or {}).get("paths",[])
+        return height_structure_estimate
 
     # 2 — Public L-band first: ALOS/PALSAR annual mosaic, no user credentials.
     try:
