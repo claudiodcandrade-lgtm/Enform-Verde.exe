@@ -2,6 +2,7 @@ import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base
 from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
+from decimal import Decimal, ROUND_HALF_UP
 import tkinter as tk
 import webbrowser
 from tkinter import ttk, filedialog, messagebox
@@ -28,9 +29,11 @@ ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
 CARBON_FRACTION=0.47
 
 def format_ptbr(value,decimals=2):
-    """Format a numeric result for Brazilian readers without changing stored values."""
+    """Format a numeric result for Brazilian readers with half-up rounding."""
     if value is None:return "N/D"
-    raw=f"{float(value):,.{int(decimals)}f}"
+    places=int(decimals)
+    rounded=Decimal(str(value)).quantize(Decimal(1).scaleb(-places),rounding=ROUND_HALF_UP)
+    raw=f"{rounded:,.{places}f}"
     return raw.replace(",","\x00").replace(".",",").replace("\x00",".")
 
 def app_resource(name):
