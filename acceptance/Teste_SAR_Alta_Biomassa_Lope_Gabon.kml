@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>AfriSAR Lopé — AOI de consulta BIOMASS P-band</name>
+    <description>Polígono de consulta de catálogo no domínio do mapa AfriSAR Lopé (Gabão), aproximadamente 62 km². O sítio contém floresta fechada e savana aberta. Usar para teste de cobertura e aceitação do software, não como parcela nem validação independente. Mapa de referência AGB: Saatchi et al. 2019, ORNL DAAC, DOI 10.3334/ORNLDAAC/1681.</description>
+    <Placemark>
+      <name>Lopé site envelope (catalog check only)</name>
+      <Polygon><outerBoundaryIs><LinearRing><coordinates>
+        11.555000,-0.232000,0 11.630000,-0.232000,0 11.630000,-0.165000,0 11.555000,-0.165000,0 11.555000,-0.232000,0
+      </coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+  </Document>
+</kml>

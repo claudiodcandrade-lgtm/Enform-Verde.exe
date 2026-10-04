@@ -13,7 +13,7 @@ from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MOD
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 
-APP_VERSION="3.24.20-PROFESSIONAL"
+APP_VERSION="3.24.21-PROFESSIONAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -78,25 +78,25 @@ def _draw_offline_ibge(d,bx,ow,oh):
                 pts=[px(c[0],c[1]) for c in line if len(c)>=2]
                 if len(pts)>=2:d.line(pts,fill=fill,width=width,joint="curve")
     # administrative context
-    draw_lines("ufs",(255,255,255,235),max(2,round(ow/700)))
+    draw_lines("ufs",(54,75,61,235),max(2,round(ow/700)))
     for feat in layers.get("ufs",[]):
         if not _feature_intersects_bbox(feat,bx):continue
         props=feat.get("properties") or {}; c=props.get("label")
         if not c:continue
         x,y=px(c[0],c[1]); label=props.get("sigla") or props.get("name")
         if label and 6<x<ow-6 and 6<y<oh-6:
-            d.text((x,y),str(label),anchor="mm",fill=(255,255,255,245),stroke_width=2,stroke_fill=(0,0,0,185))
-    if span<=14.0:draw_lines("municipios",(235,235,235,165),max(1,round(ow/1600)))
+            d.text((x,y),str(label),anchor="mm",fill=(48,66,53,255),stroke_width=2,stroke_fill=(248,247,239,240))
+    if span<=14.0:draw_lines("municipios",(139,151,137,190),max(1,round(ow/1600)))
     # infrastructure from official IBGE BC250
-    draw_lines("rodovias",(255,210,70,225),max(1,round(ow/900)))
-    draw_lines("ferrovias",(55,55,55,235),max(1,round(ow/900)))
-    if span<=18.0:draw_lines("hidrovias",(80,205,255,220),max(1,round(ow/1100)))
-    if span<=12.0:draw_lines("drenagem",(80,175,235,150),1)
+    draw_lines("rodovias",(191,91,43,225),max(1,round(ow/900)))
+    draw_lines("ferrovias",(91,79,71,235),max(1,round(ow/900)))
+    if span<=18.0:draw_lines("hidrovias",(35,126,176,235),max(1,round(ow/1100)))
+    if span<=12.0:draw_lines("drenagem",(80,157,190,190),1)
     # point infrastructure/localities
     for layer,fill,radius,maxspan in [
-        ("aeroportos",(255,130,80,240),3,18.0),
-        ("portos",(255,180,70,240),3,18.0),
-        ("localidades",(255,255,255,230),2,7.0)]:
+        ("aeroportos",(185,75,43,245),3,18.0),
+        ("portos",(191,119,38,245),3,18.0),
+        ("localidades",(62,82,68,240),2,7.0)]:
         if span>maxspan:continue
         for feat in layers.get(layer,[]):
             if not _feature_intersects_bbox(feat,bx):continue
@@ -115,30 +115,34 @@ def _draw_offline_ibge(d,bx,ow,oh):
             c=props.get("label")
             if not c:continue
             x,y=px(c[0],c[1])
-            if 4<x<ow-4 and 4<y<oh-4:d.text((x,y),str(props.get("name") or "")[:30],anchor="mm",fill=(255,255,255,230),stroke_width=2,stroke_fill=(0,0,0,170))
+            if 4<x<ow-4 and 4<y<oh-4:d.text((x,y),str(props.get("name") or "")[:30],anchor="mm",fill=(45,61,50,245),stroke_width=2,stroke_fill=(248,247,239,240))
     # compact orientation legend
     legend="IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades"
-    d.rectangle((6,oh-42,min(ow-6,720),oh-8),fill=(0,0,0,145),outline=(255,255,255,110))
-    d.text((12,oh-25),legend,anchor="lm",fill=(255,255,255,235))
+    d.rectangle((6,oh-42,min(ow-6,720),oh-8),fill=(250,249,242,235),outline=(93,111,97,220))
+    d.text((12,oh-25),legend,anchor="lm",fill=(42,60,48,255))
 
 def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
-    """Render AOI over the packaged NASA Blue Marble Brazil mosaic without network access."""
-    path=app_resource("offline_brazil_basemap.jpg")
-    if not path.exists():raise FileNotFoundError("offline_brazil_basemap.jpg ausente")
+    """Rasterize IBGE municipal/admin/infrastructure layers locally, with no network or imagery dependency."""
     g=gdf.to_crs(4326).copy(); minx,miny,maxx,maxy=map(float,g.total_bounds)
     dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8); f=max(0.30,min(8.0,float(extent_factor)))
     cx=(minx+maxx)/2; cy=(miny+maxy)/2
     bx=[cx-dx*f/2,cy-dy*f/2,cx+dx*f/2,cy+dy*f/2]
     W,S,E,N=OFFLINE_BRAZIL_BOUNDS
     bx=[max(W,bx[0]),max(S,bx[1]),min(E,bx[2]),min(N,bx[3])]
-    if bx[0]>=bx[2] or bx[1]>=bx[3]:raise ValueError("AOI fora da cobertura do mosaico offline do Brasil")
-    im=Image.open(path).convert("RGB"); iw,ih=im.size
-    def srcxy(lon,lat):
-        x=(lon-W)/(E-W)*iw; y=(N-lat)/(N-S)*ih
-        return x,y
-    x0,y0=srcxy(bx[0],bx[3]); x1,y1=srcxy(bx[2],bx[1])
-    crop=im.crop((max(0,int(x0)),max(0,int(y0)),min(iw,int(math.ceil(x1))),min(ih,int(math.ceil(y1)))))
-    ow,oh=map(int,out_size); crop=crop.resize((ow,oh),Image.Resampling.LANCZOS)
+    if bx[0]>=bx[2] or bx[1]>=bx[3]:raise ValueError("AOI fora da cobertura do mapa IBGE offline do Brasil")
+    layers=_offline_ibge_layers()
+    if len(layers.get("municipios",[]))<5000:
+        raise FileNotFoundError("Camada de municípios IBGE offline ausente ou incompleta.")
+    ow,oh=map(int,out_size)
+    midlat=(bx[1]+bx[3])/2; coslat=max(0.25,math.cos(math.radians(midlat)))
+    target=max(ow,1)/max(oh,1); xspan=(bx[2]-bx[0])*coslat; yspan=bx[3]-bx[1]
+    if xspan/yspan<target:
+        new_lon_span=yspan*target/coslat
+        bx[0]=max(W,cx-new_lon_span/2); bx[2]=min(E,cx+new_lon_span/2)
+    else:
+        new_lat_span=xspan/target
+        bx[1]=max(S,cy-new_lat_span/2); bx[3]=min(N,cy+new_lat_span/2)
+    crop=Image.new("RGB",(ow,oh),(238,241,232))
     from PIL import ImageDraw
     d=ImageDraw.Draw(crop,"RGBA")
     _draw_offline_ibge(d,bx,ow,oh)
@@ -155,7 +159,6 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
                 d.polygon(pts,fill=(255,138,0,42),outline=(255,138,0,255))
                 d.line(pts,width=max(3,round(ow/400)),fill=(255,138,0,255),joint="curve")
     return crop,bx
-
 
 def agb_mexiana(dbh_cm):
     return 0.1184*np.power(np.asarray(dbh_cm,dtype=float),2.53)
@@ -764,7 +767,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Google opcional; fallback: Sentinel-2 → Esri Imagery → Esri Street → NASA Blue Marble + IBGE 2025/BC250 offline",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Fundo padrão: mapa IBGE 2025/BC250 offline; imagens online são opcionais.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -786,7 +789,7 @@ class App(tk.Tk):
         self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
         self.map_canvas.grid(row=0,column=0,sticky="nsew"); self.map_vscroll.grid(row=0,column=1,sticky="ns"); self.map_hscroll.grid(row=1,column=0,sticky="ew")
         map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
-        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36; self._map_provider="OFFLINE_NASA_IBGE"
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36; self._map_provider="OFFLINE_IBGE"
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
         self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
@@ -811,7 +814,7 @@ class App(tk.Tk):
     def _apply_map_zoom(self):
         if self.gdf is None:return
         if getattr(self,"_map_provider","").startswith("OFFLINE"):
-            self._draw_offline_brazil_basemap("NASA Blue Marble + IBGE 2025/BC250 — offline")
+            self._draw_offline_brazil_basemap("Mapa cartográfico IBGE 2025/BC250 — offline")
         else:
             self.show_google_map(refresh=True,prefer_public=True)
 
@@ -926,10 +929,10 @@ class App(tk.Tk):
             except Exception as e:errors.append("Esri Street: "+str(e))
             try:
                 view,_=offline_brazil_preview(g,extent_factor,(w,h))
-                self._map_queue.put((generation,view,[],"NASA Blue Marble offline",None,"NASA Blue Marble + IBGE 2025/BC250 — estados, municípios e infraestrutura offline",None))
+                self._map_queue.put((generation,view,[],"IBGE offline",None,"IBGE 2025/BC250 — estados, municípios, hidrografia e infraestrutura; rasterização local",None))
                 return
-            except Exception as e:errors.append("Offline NASA: "+str(e))
-            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri/NASA",None,None," | ".join(errors)))
+            except Exception as e:errors.append("Mapa IBGE offline: "+str(e))
+            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri/IBGE",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
         self.after(80,self._poll_map_queue)
@@ -946,7 +949,7 @@ class App(tk.Tk):
         if generation!=self._map_generation or self.gdf is None:return
         if error:
             self._satellite_map_visible=False
-            if not self._draw_offline_brazil_basemap("Mapa offline — NASA Blue Marble"):
+            if not self._draw_offline_brazil_basemap("Mapa cartográfico IBGE — offline"):
                 self._draw_aoi_outline("Perímetro carregado — visualização vetorial")
             self.status.set("Fontes online indisponíveis; fundo nacional offline mantido.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
@@ -987,18 +990,18 @@ class App(tk.Tk):
         if self.gdf is not None and not self._satellite_map_visible:
             self._draw_aoi_outline("AOI — visualização vetorial; base satélite indisponível")
 
-    def _draw_offline_brazil_basemap(self,label="Mapa offline — NASA Blue Marble"):
+    def _draw_offline_brazil_basemap(self,label="Mapa cartográfico IBGE — offline"):
         if self.gdf is None:return False
         try:
             viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
             display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
             w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
             view,_=offline_brazil_preview(self.gdf,self._map_extent_factor,(w,h))
-            self._satellite_map_visible=True; self._last_map_size=(w,h); self._map_provider="OFFLINE_NASA_IBGE"
+            self._satellite_map_visible=True; self._last_map_size=(w,h); self._map_provider="OFFLINE_IBGE"
             self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all")
             self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
             self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline="")
-            self.map_canvas.create_text(w-8,h-12,anchor="e",text="NASA Blue Marble — fundo nacional offline",fill="#333",font=("Segoe UI",8))
+            self.map_canvas.create_text(w-8,h-12,anchor="e",text="IBGE 2025/BC250 — mapa vetorial rasterizado localmente",fill="#333",font=("Segoe UI",8))
             self.map_canvas.create_text(10,10,anchor="nw",text=label,fill="white",font=("Segoe UI",9,"bold"))
             self.map_canvas.configure(scrollregion=(0,0,w,h))
             return True

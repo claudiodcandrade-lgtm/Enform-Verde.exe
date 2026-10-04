@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -23,40 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_desktop.txt
           pip install pillow
-      - name: Build offline Brazil satellite basemap — NASA Blue Marble
-        shell: pwsh
-        timeout-minutes: 8
-        run: |
-          $b1='https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-topography-bathymetry/january/world.topo.bathy.200401.3x21600x21600.B1.jpg'
-          $b2='https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-topography-bathymetry/january/world.topo.bathy.200401.3x21600x21600.B2.jpg'
-          Invoke-WebRequest -Uri $b1 -OutFile nasa_b1.jpg
-          Invoke-WebRequest -Uri $b2 -OutFile nasa_b2.jpg
-          @'
-          from PIL import Image
-          Image.MAX_IMAGE_PIXELS=None  # fixed, trusted NASA BMNG source tiles
-          # NASA BMNG 500 m tile extents:
-          # B1 = 90N..0, 90W..0; B2 = 0..90S, 90W..0; 240 px/degree.
-          W,E,N,S=-75.0,-33.0,6.0,-35.0
-          px=240.0
-          x0=round((W+90.0)*px); x1=round((E+90.0)*px)
-          b1=Image.open("nasa_b1.jpg").convert("RGB")
-          b2=Image.open("nasa_b2.jpg").convert("RGB")
-          y1a=round((90.0-N)*px); y1b=round(90.0*px)
-          y2a=0; y2b=round((0.0-S)*px)
-          north=b1.crop((x0,y1a,x1,y1b))
-          south=b2.crop((x0,y2a,x1,y2b))
-          out=Image.new("RGB",(north.width,north.height+south.height))
-          out.paste(north,(0,0)); out.paste(south,(0,north.height))
-          # 1 km-class offline background: compact enough to ship, detailed enough for national/regional context.
-          out=out.resize((out.width//2,out.height//2),Image.Resampling.LANCZOS)
-          out.save("offline_brazil_basemap.jpg","JPEG",quality=88,optimize=True,progressive=True)
-          assert out.width>=5000 and out.height>=4900
-          print("OFFLINE_BRAZIL_BASEMAP_OK",out.size)
-          '@ | Set-Content make_offline_basemap.py -Encoding UTF8
-          python make_offline_basemap.py
-          Get-Item offline_brazil_basemap.jpg | Format-List Name,Length
-
       - name: Build offline IBGE administrative and infrastructure map
+        id: ibge_map_build
+        continue-on-error: true
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -176,6 +146,26 @@ jobs:
           python make_ibge_offline.py
           Get-Item offline_ibge_map.json.gz | Format-List Name,Length
 
+      - name: Reuse previous packaged offline IBGE map if official FTP is unavailable
+        if: steps.ibge_map_build.outcome == 'failure'
+        uses: actions/download-artifact@v4
+        with:
+          name: Enform-Verde-Windows-v3.24.20-PROFESSIONAL
+          run-id: 37159724978
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ibge-map-cache
+
+      - name: Verify offline IBGE map asset
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'offline_ibge_map.json.gz')) {
+            $cached = Get-ChildItem 'ibge-map-cache' -Filter 'offline_ibge_map.json.gz' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (!$cached) { throw 'IBGE offline map generation and prior build cache are both unavailable.' }
+            Copy-Item $cached.FullName 'offline_ibge_map.json.gz' -Force
+          }
+          if ((Get-Item 'offline_ibge_map.json.gz').Length -lt 1000000) { throw 'Offline IBGE map bundle is incomplete.' }
+          Get-Item 'offline_ibge_map.json.gz' | Format-List Name,Length
+
       - name: Source self-test
         run: python desktop_app.py --self-test
       - name: Earthdata client import
@@ -235,7 +225,7 @@ jobs:
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
           assert "maps.googleapis.com/maps/api/staticmap" in src and "sentinel2_preview" in src and "World_Imagery" in src and "World_Street_Map" in src, "Google -> Sentinel-2 -> Esri Imagery -> Esri Street fallback chain missing"
-          assert "offline_brazil_preview" in src and "offline_brazil_basemap.jpg" in src and Path("offline_brazil_basemap.jpg").exists(), "packaged offline NASA Brazil basemap missing"
+          assert "offline_brazil_preview" in src and "offline_ibge_map.json.gz" in src and Path("offline_ibge_map.json.gz").exists(), "packaged offline IBGE map missing"
           assert "Fitofisionomia IBGE (legenda_1):" in src and "ibge_phys_display" in src and "ibge_biome_display" in src, "visible official IBGE phytophysiognomy panel missing"
           assert "Área do polígono:" in src and "aoi_area_display" in src, "visible polygon area field missing"
           assert "IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades" in src, "offline IBGE map legend missing"
@@ -275,7 +265,7 @@ jobs:
           assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
           assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
           assert "def map_zoom_in" in src and "def map_zoom_out" in src and "def map_zoom_fit" in src and "_map_extent_factor" in src, "geographic map zoom controls missing"
-          assert "def _apply_map_zoom" in src and "_map_provider" in src and "OFFLINE_NASA_IBGE" in src, "offline map zoom must be immediate and network-independent"
+          assert "def _apply_map_zoom" in src and "_map_provider" in src and "OFFLINE_IBGE" in src, "offline map zoom must be immediate and network-independent"
           assert "map_hscroll" in src and "map_vscroll" in src and "scrollregion" in src, "map/tab scrollbars missing"
           assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
           assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
@@ -302,8 +292,9 @@ jobs:
           assert area>0, "AOI area must be positive"
           print("VISIBLE_AOI_AREA_OK",area)
           offline,_=app.offline_brazil_preview(preflight,1.36,(900,420))
-          assert offline.size==(900,420), "offline NASA basemap render failed"
-          print("OFFLINE_NASA_MAP_OK",offline.size)
+          assert offline.size==(900,420), "offline IBGE map render failed"
+          assert len(app._offline_ibge_layers().get("municipios",[]))>=5569, "offline IBGE municipal layer missing"
+          print("OFFLINE_IBGE_MAP_OK",offline.size)
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
           ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
@@ -332,7 +323,7 @@ jobs:
               current_gen=ui._map_generation
               ui._finish_satellite_map(current_gen,None,[],"Esri World Imagery",None,None,"offline test")
               ui.update_idletasks()
-              assert ui._satellite_map_visible and any(ui.map_canvas.type(i)=="image" for i in ui.map_canvas.find_all()), "online map failure must leave packaged offline NASA basemap with AOI visible"
+              assert ui._satellite_map_visible and any(ui.map_canvas.type(i)=="image" for i in ui.map_canvas.find_all()), "online map failure must leave packaged offline IBGE map with AOI visible"
               ui._satellite_map_visible=False
               ui.map_canvas.configure(width=960,height=420)
               ui.update_idletasks(); ui._on_map_resize(); ui.update_idletasks(); ui._redraw_map_after_resize(); ui.update_idletasks()
@@ -549,6 +540,22 @@ jobs:
           '@ | Set-Content live_cerrado_sar_agb.py -Encoding UTF8
           python live_cerrado_sar_agb.py
 
+      - name: Live BIOMASS P-band catalog check — high-biomass AfriSAR site
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          @'
+          import json
+          import desktop_app as app
+          import sar_pipeline as s
+          g=app.read_vector("acceptance/Teste_SAR_Alta_Biomassa_Lope_Gabon.kml")
+          items=s.biomass_l2b_search(g,limit=20)
+          agb=[x for x in items if x.get("_product_type")=="FP_AGB_L2B"]
+          fh=[x for x in items if x.get("_product_type")=="FP_FH__L2B"]
+          print("LIVE_BIOMASS_HIGH_BIOMASS_CATALOG_CHECK",json.dumps({"aoi":"AfriSAR Lopé, Gabão","agb_l2b_tiles":len(agb),"height_only_tiles":len(fh),"agb_items":[s._biomass_catalog_summary(x) for x in agb[:3]]},ensure_ascii=True))
+          '@ | Set-Content live_biomass_high_biomass_catalog.py -Encoding UTF8
+          python live_biomass_high_biomass_catalog.py
+
       - name: Quantitative low-biomass L-band model contract
         shell: pwsh
         run: |
@@ -583,15 +590,15 @@ jobs:
           '@ | Set-Content make_icon.py -Encoding UTF8
           python make_icon.py
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_brazil_basemap.jpg;." --add-data "offline_ibge_map.json.gz;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_ibge_map.json.gz;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
         run: |
           Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
-          Copy-Item -Force 'offline_brazil_basemap.jpg' 'dist\Enform Verde\offline_brazil_basemap.jpg'
           Copy-Item -Force 'offline_ibge_map.json.gz' 'dist\Enform Verde\offline_ibge_map.json.gz'
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
+          Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
           Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
           Move-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.zip' 'acceptance\Teste_SAR_Cerrado_DF.kmz'
           Copy-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Cerrado_DF.kmz'
@@ -606,9 +613,6 @@ jobs:
           $header = Join-Path $root 'enform_header.png'
           if (!(Test-Path $header)) { throw 'enform_header.png is missing from packaged application' }
           if ((Get-Item $header).Length -lt 20000) { throw 'Approved high-resolution Enform mask is unexpectedly small' }
-          $offline = Join-Path $root 'offline_brazil_basemap.jpg'
-          if (!(Test-Path $offline)) { throw 'Offline Brazil basemap is missing from packaged application' }
-          if ((Get-Item $offline).Length -lt 1000000) { throw 'Offline Brazil basemap is unexpectedly small' }
           $ibge = Join-Path $root 'offline_ibge_map.json.gz'
           if (!(Test-Path $ibge)) { throw 'Offline IBGE map bundle is missing from packaged application' }
           if ((Get-Item $ibge).Length -lt 1000000) { throw 'Offline IBGE map bundle is unexpectedly small' }
@@ -652,7 +656,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.20-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.21-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
