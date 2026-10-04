@@ -105,8 +105,8 @@ def role(path):
     # Sigma0 is the backscatter measurement, not an uncertainty layer. Check
     # explicit uncertainty tokens and avoid the old sigma substring trap.
     tokens=set(re.split(r"[^a-z0-9]+",n))
-    if (any(x in tokens for x in ("uncertainty","uncert","stderr","stddev","rmse","variance"))
-        or "std_dev" in n or "standard_deviation" in n
+    if (any(x in tokens for x in ("uncertainty","uncert","stderr","stddev","rmse","variance","sd"))
+        or "std_dev" in n or "standard_deviation" in n or "agb_sd" in n
         or ("sigma" in tokens and not any(x in tokens for x in ("sigma0","hh","hv","vv","vh")))):
         return "UNCERTAINTY"
     if any(x in tokens for x in ("height","canopyheight","chm","fh")):return "HEIGHT"
@@ -418,29 +418,86 @@ def download_maap_height(gdf,offline_token,cache,items=None):
             "reason":None if paths else "FP_FH__L2B catalogado, mas raster de altura não foi recuperado",
             "errors":errors[:5]}
 
+CCI_V7_GEOTIFF_ROOT="https://data.cci.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
+CCI_V7_YEARS=(2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2012,2011,2010,2009,2008,2007,2006,2005)
+
+def _cci_v7_tile_ids(gdf):
+    """Return 10-degree CCI GeoTIFF tile ids intersecting AOI.
+
+    Latitude encodes the northernmost tile row (N00 spans -10..0);
+    longitude encodes the westernmost column (W060 spans -60..-50).
+    """
+    import math
+    w,s,e,n=gdf.to_crs(4326).geometry.union_all().bounds
+    eps=1e-10
+    lon0=math.floor(w/10.0)*10
+    lon1=math.floor((e-eps)/10.0)*10
+    north0=math.ceil(n/10.0)*10
+    north1=math.ceil((s+eps)/10.0)*10
+    out=[]; north=north0
+    while north>=north1:
+        lat=("N" if north>=0 else "S")+f"{abs(int(north)):02d}"
+        west=lon0
+        while west<=lon1:
+            lon=("E" if west>=0 else "W")+f"{abs(int(west)):03d}"
+            out.append(lat+lon); west+=10
+        north-=10
+    return sorted(set(out))
+
+def _cci_v7_urls(gdf,year):
+    urls=[]
+    for tile in _cci_v7_tile_ids(gdf):
+        for var in ("AGB","AGB_SD"):
+            name=f"{tile}_ESACCI-BIOMASS-L4-{var}-MERGED-100m-{int(year)}-fv7.0.tif"
+            urls.append({"tile":tile,"variable":var,"name":name,
+                         "url":f"{CCI_V7_GEOTIFF_ROOT}/{int(year)}/{name}"})
+    return urls
+
 def cci_history(gdf,cache,offline_token=None):
-    # ESA MAAP local collection. Search is public; asset access may require ESA bearer token.
-    items=[]
-    collections_tried=[]
-    for collection in ("CCIBiomassV5.01","CCIBiomassV7"):
-        collections_tried.append(collection)
-        try:
-            items=maap_search(gdf,collection,limit=100)
-        except Exception:
-            items=[]
-        if items:break
-    if not items:return {"available":False,"paths":[],"items":0,"collections_tried":collections_tried}
+    """Acquire latest ESA CCI Biomass v7 GeoTIFFs, then MAAP v5.01 fallback."""
+    cache=Path(cache); cache.mkdir(parents=True,exist_ok=True)
+    errors=[]; attempted=[]
+    for year in CCI_V7_YEARS:
+        specs=_cci_v7_urls(gdf,year)
+        year_paths=[]; ok=True
+        for spec in specs:
+            target=cache/spec["name"]; attempted.append(spec["url"])
+            try:
+                if not target.exists(): _download(spec["url"],target,None)
+                year_paths.append(str(target))
+            except Exception as e:
+                ok=False
+                errors.append(f'{year} {spec["tile"]} {spec["variable"]}: {type(e).__name__}: {e}')
+                break
+        if ok and year_paths and any(role(p)=="AGB" for p in year_paths):
+            return {"available":True,"paths":year_paths,"items":len(specs),
+                    "collection":"CEDA/ESA CCI Biomass v7.0","version":"7.0","year":int(year),
+                    "resolution_m":100,"tiles":_cci_v7_tile_ids(gdf),
+                    "source":"ESA CCI Open Data / CEDA","attempted_urls":attempted,
+                    "errors":errors[:8]}
+    # Compatibility only: older MAAP local CCI collection.
+    items=[]; collections_tried=["CCIBiomassV5.01"]
+    try: items=maap_search(gdf,"CCIBiomassV5.01",limit=100)
+    except Exception as e: errors.append("MAAP v5.01: "+str(e))
+    if not items:
+        return {"available":False,"paths":[],"items":0,"collections_tried":collections_tried,
+                "version":"7.0","tiles":_cci_v7_tile_ids(gdf),"attempted_urls":attempted,
+                "errors":errors[:8]}
     token=maap_access_token(offline_token) if offline_token else None
-    Path(cache).mkdir(parents=True,exist_ok=True);paths=[]
+    paths=[]
     for it in items:
         for k,url in _raster_assets(it):
-            if any(x in k.lower()+url.lower() for x in ["agb","biomass","uncert","std"]):
-                p=Path(cache)/("cci_"+Path(url.split("?")[0]).name)
+            if any(x in (k.lower()+url.lower()) for x in ("agb","biomass","uncert","std")):
+                p=cache/("cci_"+Path(url.split("?")[0]).name)
                 try:
                     if not p.exists():_download(url,p,token)
                     paths.append(str(p))
-                except Exception:pass
-    return {"available":True,"paths":paths,"items":len(items),"collection":collection,"collections_tried":collections_tried}
+                except Exception as e:errors.append("MAAP asset: "+str(e))
+    return {"available":bool(paths),"paths":paths,"items":len(items),
+            "collection":"CCIBiomassV5.01","version":"5.01","year":None,
+            "resolution_m":100,"tiles":_cci_v7_tile_ids(gdf),
+            "collections_tried":collections_tried,"errors":errors[:8]}
+
 LITERATURE=[
 {"biome":"Amazônia","phys":["secund","sucess"],"mean":None,"rmse":38.7,"bias":2.1,"r2":0.51,"cv":"bootstrap 100 repetições; 80/20","source":"Cassol et al. 2019","doi":"10.3390/rs11010059","note":"referência de desempenho; média AGB não extraída para fallback"},
 {"biome":"Amazônia","phys":["várzea","varzea","aluvial"],"mean":None,"rmse":74.6,"bias":None,"r2":0.46,"cv":"cross-validation","source":"Martins et al. 2018","doi":"10.3390/rs10091355","note":"referência L-band várzea; média não usada sem valor compatível"},
@@ -1114,9 +1171,24 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
 
     # 5 — CCI derived AGB is last quantitative fallback, never ahead of raw P/L processing.
     try:
-        cci=cci_history(gdf,Path(cache)/"cci",offline_token or None); audit["cci"]={"count":cci["items"],"downloaded":len(cci["paths"])}
-        if cci["paths"]:
-            pr=process_real_sar(gdf,cci["paths"],biome,phys); pr["audit"]=audit; pr["paths"]=cci["paths"]; pr["historical"]=True; pr["data_origin"]="SAR_DERIVED_CCI"; return pr
+        cci=cci_history(gdf,Path(cache)/"cci",offline_token or None)
+        audit["cci"]={"count":cci.get("items",0),"downloaded":len(cci.get("paths",[])),
+                      "version":cci.get("version"),"year":cci.get("year"),
+                      "resolution_m":cci.get("resolution_m"),"tiles":cci.get("tiles",[]),
+                      "source":cci.get("source"),"errors":cci.get("errors",[])[:8]}
+        if cci.get("paths"):
+            pr=process_real_sar(gdf,cci["paths"],biome,phys)
+            pr["audit"]=audit; pr["paths"]=cci["paths"]; pr["historical"]=True
+            pr["data_origin"]="SAR_DERIVED_CCI"
+            pr["source"]="ESA CCI Biomass v"+str(cci.get("version") or "")+" — produto L4 multissensor derivado de SAR"
+            pr["sensor"]="Sentinel-1/Envisat ASAR + ALOS/PALSAR (composição conforme o ano do produto)"
+            pr["band"]="C+L"; pr["product"]="ESA CCI Biomass AGB"
+            pr["model_id"]="ESA_CCI_BIOMASS_V7" if str(cci.get("version","")).startswith("7") else "ESA_CCI_BIOMASS_V5_01"
+            pr["product_year"]=cci.get("year"); pr["resolution_m"]=cci.get("resolution_m")
+            pr["cci_tiles"]=cci.get("tiles",[])
+            if pr.get("uncertainty_mg_ha") is not None:
+                pr["uncertainty_kind"]="média zonal da camada AGB_SD do ESA CCI; desvio-padrão do produto, não erro local de validação"
+            return pr
     except Exception as e: audit["cci"]={"error":str(e)}
 
     # Literature is strictly terminal: it is reached only after every configured SAR route above was attempted.
