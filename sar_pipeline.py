@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np, requests
 from scientific_calibration import SCIENTIFIC_INVENTORY_REGISTRY, saturation_audit, glcm_features, multiscale_texture, rank_external_evidence, fit_local_ensemble
 from national_fallback import national_agb_fallback
+from structural_evidence import StructuralEvidence, evidence_se, random_effects_summary, harmonize_primary_plot_rows
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
 MODEL_REGISTRY=[
