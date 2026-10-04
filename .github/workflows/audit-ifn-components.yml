@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install audit dependencies
-        run: python -m pip install requests openpyxl
+        run: python -m pip install requests openpyxl pypdf
       - name: Inspect official state-level litter and fallen-wood resources
         run: |
           python - <<'PY'
@@ -78,6 +78,11 @@ jobs:
                           if len(preview) < 8:
                               preview.append(row)
                   result.update({"delimiter": dialect.delimiter, "nonempty_rows": nrows, "first_rows": preview})
+              elif lower.endswith(".pdf"):
+                  from pypdf import PdfReader
+                  pdf = PdfReader(io.BytesIO(body))
+                  result["pages"] = len(pdf.pages)
+                  result["text"] = "\\n".join((page.extract_text() or "") for page in pdf.pages)[:60000]
               else:
                   result["error"] = "unsupported_file_extension"
               return result
@@ -92,7 +97,7 @@ jobs:
               for href in hrefs:
                   full = urljoin(BASE, href.replace("&amp;", "&"))
                   filename = unquote(PurePosixPath(urlsplit(full).path).name)
-                  if filename.lower().endswith((".csv", ".xlsx")):
+                  if filename.lower().endswith((".csv", ".xlsx", ".pdf")):
                       urls[filename] = full
               if not urls:
                   failures.append(f"{key}: no CSV/XLSX download links found on official dataset page")
