@@ -573,6 +573,28 @@ jobs:
           '@ | Set-Content yu_saatchi_contract.py -Encoding UTF8
           python yu_saatchi_contract.py
 
+      - name: Verify ESA CCI v7 2024 Brazilian tiles are published
+        shell: pwsh
+        run: |
+          @'
+          import requests
+          base="https://data.cci.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff/2024"
+          files=[
+            "N00W060_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif",
+            "N00W060_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif",
+            "S10W050_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif",
+            "S10W050_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif",
+          ]
+          for name in files:
+              u=base+"/"+name
+              r=requests.get(u,headers={"Range":"bytes=0-0"},timeout=(10,60),stream=True)
+              if r.status_code not in (200,206):
+                  raise RuntimeError(f"CCI v7 asset unavailable: {r.status_code} {u}")
+              print("CCI_V7_ASSET_OK",name,r.status_code,r.headers.get("Content-Range") or r.headers.get("Content-Length"))
+              r.close()
+          '@ | Set-Content cci_live_contract.py -Encoding UTF8
+          python cci_live_contract.py
+
       - name: Catalog equation and recalibration contract tests
         run: python -m unittest discover -s tests -v
 
@@ -658,7 +680,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.21-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.22-PROFESSIONAL
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
