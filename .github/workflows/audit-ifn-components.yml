@@ -1,0 +1,126 @@
+name: Audit official IFN compartment tables
+
+on:
+  push:
+    branches: [sar-agb-height-integration-v3.24.22]
+    paths:
+      - .github/workflows/audit-ifn-components.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inspect official state-level litter and fallen-wood resources
+        run: |
+          python - <<'PY'
+          import csv, io, json, re, sys
+          from pathlib import PurePosixPath
+          from urllib.parse import urljoin, urlsplit, unquote
+          import requests
+          from openpyxl import load_workbook
+
+          BASE = "https://dados.florestal.gov.br"
+          DATASETS = {
+              "fallen_wood": "/pt_BR/dataset/ifn-madeira-caida-por-uf_disp-set2025",
+              "litter_corrected": "/pt_BR/dataset/ifn-serapilheira-por-uf_disp-set2025",
+          }
+          session = requests.Session()
+          session.headers["User-Agent"] = "Enform-Verde-IFN-open-data-audit/1.0"
+          audit = {"agency": "Serviço Florestal Brasileiro", "license": "CC BY (as shown in SFB portal)",
+                   "datasets": {}}
+
+          def inspect_resource(name, url):
+              resp = session.get(url, timeout=120)
+              resp.raise_for_status()
+              body = resp.content
+              if len(body) > 50_000_000:
+                  raise RuntimeError(f"{name}: resource exceeds 50 MB audit limit")
+              result = {"filename": name, "url": url, "bytes": len(body)}
+              lower = name.lower()
+              if lower.endswith(".xlsx"):
+                  wb = load_workbook(io.BytesIO(body), read_only=True, data_only=True)
+                  result["sheets"] = {}
+                  for ws in wb.worksheets:
+                      rows = ws.iter_rows(values_only=True)
+                      preview = []
+                      nrows = 0
+                      for row in rows:
+                          values = [None if x is None else str(x) for x in row]
+                          if any(x not in (None, "") for x in values):
+                              nrows += 1
+                              if len(preview) < 8:
+                                  preview.append(values)
+                      result["sheets"][ws.title] = {"nonempty_rows": nrows, "first_rows": preview}
+              elif lower.endswith(".csv"):
+                  text = body.decode("utf-8-sig", errors="replace")
+                  sample = text[:8192]
+                  try:
+                      dialect = csv.Sniffer().sniff(sample, delimiters=",;\\t|")
+                  except csv.Error:
+                      dialect = csv.excel
+                  reader = csv.reader(io.StringIO(text), dialect)
+                  preview = []
+                  nrows = 0
+                  for row in reader:
+                      if any(x.strip() for x in row):
+                          nrows += 1
+                          if len(preview) < 8:
+                              preview.append(row)
+                  result.update({"delimiter": dialect.delimiter, "nonempty_rows": nrows, "first_rows": preview})
+              else:
+                  result["error"] = "unsupported_file_extension"
+              return result
+
+          failures = []
+          for key, path in DATASETS.items():
+              page_url = urljoin(BASE, path)
+              page = session.get(page_url, timeout=60)
+              page.raise_for_status()
+              hrefs = re.findall(r'href=["\\']([^"\\']+/download/[^"\\']+)["\\']', page.text, flags=re.I)
+              urls = {}
+              for href in hrefs:
+                  full = urljoin(BASE, href.replace("&amp;", "&"))
+                  filename = unquote(PurePosixPath(urlsplit(full).path).name)
+                  if filename.lower().endswith((".csv", ".xlsx")):
+                      urls[filename] = full
+              if not urls:
+                  failures.append(f"{key}: no CSV/XLSX download links found on official dataset page")
+                  continue
+              files = []
+              for filename, url in sorted(urls.items()):
+                  try:
+                      files.append(inspect_resource(filename, url))
+                  except Exception as exc:
+                      failures.append(f"{key}/{filename}: {type(exc).__name__}: {exc}")
+              audit["datasets"][key] = {"dataset_page": page_url, "file_count": len(files), "files": files}
+          audit["failures"] = failures
+          with open("ifn_component_schema_audit.json", "w", encoding="utf-8") as f:
+              json.dump(audit, f, ensure_ascii=False, indent=2)
+          print(json.dumps({k: {"file_count": v.get("file_count"), "files": [
+              {"filename": x["filename"], "bytes": x["bytes"],
+               "sheets": {sn: {"nonempty_rows": sv["nonempty_rows"], "first_rows": sv["first_rows"]}
+                          for sn, sv in x.get("sheets", {}).items()},
+               "delimiter": x.get("delimiter"), "nonempty_rows": x.get("nonempty_rows"),
+               "first_rows": x.get("first_rows"), "error": x.get("error")}
+              for x in v.get("files", [])]}
+              for k, v in audit["datasets"].items()}, "failures": failures},
+              ensure_ascii=False, indent=2))
+          if not all(audit["datasets"].get(k, {}).get("file_count", 0) for k in DATASETS):
+              sys.exit(1)
+          PY
+      - name: Upload schema and sample audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifn-compartment-schema-audit
+          path: ifn_component_schema_audit.json
+          retention-days: 30
+          compression-level: 6
