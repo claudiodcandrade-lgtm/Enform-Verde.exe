@@ -532,7 +532,7 @@ def download_maap_height(gdf,offline_token,cache,items=None):
             "reason":None if paths else "FP_FH__L2B catalogado, mas raster de altura não foi recuperado",
             "errors":errors[:5]}
 
-CCI_V7_GEOTIFF_ROOT="https://data.cci.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
+CCI_V7_GEOTIFF_ROOT="https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
 CCI_V7_YEARS=(2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2012,2011,2010,2009,2008,2007,2006,2005)
 
 def _cci_v7_tile_ids(gdf):
