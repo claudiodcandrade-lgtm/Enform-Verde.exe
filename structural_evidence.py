@@ -131,3 +131,52 @@ def harmonize_primary_plot_rows(rows, inventory_id, plot_area_ha, dbh_field="dbh
                     "mean_field_height_m":sum(heights)/len(heights) if heights else None,
                     "data_level":"primary_plot","synthetic":False})
     return out
+
+
+def harmonize_ifn_dap10_rows(rows, plot_area_ha):
+    """Harmonize official SFB/IFN DAP>=10 rows into real sampling-unit structure.
+
+    Official fields used: bioma, uf, mun, lon_pc, lat_pc, UA, Subunidade,
+    Subparcela, DAP, HT, SA, PS and HAB. plot_area_ha is mandatory because
+    structural expansion to per-hectare units must follow the applicable IFN
+    sampling design; this function never guesses area.
+    """
+    from collections import defaultdict, Counter
+    if plot_area_ha is None or float(plot_area_ha)<=0:
+        raise ValueError("plot_area_ha must be supplied from the applicable IFN sampling design.")
+    area=float(plot_area_ha); groups=defaultdict(list)
+    for r in rows:
+        try:d=float(r.get("DAP"))
+        except Exception:continue
+        if not math.isfinite(d) or d<=0:continue
+        # SA=4 is standing dead according to official IFN metadata.
+        if str(r.get("SA") or "").strip()=="4":continue
+        key=(str(r.get("UA") or "").strip(),str(r.get("Subunidade") or "").strip(),str(r.get("Subparcela") or "").strip())
+        if not key[0]:continue
+        try:h=float(r.get("HT")) if r.get("HT") not in (None,"","NA") else None
+        except Exception:h=None
+        try:lon=float(r.get("lon_pc")) if r.get("lon_pc") not in (None,"","NA") else None
+        except Exception:lon=None
+        try:lat=float(r.get("lat_pc")) if r.get("lat_pc") not in (None,"","NA") else None
+        except Exception:lat=None
+        groups[key].append({"dbh":d,"height":h,"biome":r.get("bioma"),"uf":r.get("uf"),
+                            "municipality":r.get("mun"),"lon":lon,"lat":lat,
+                            "ps":str(r.get("PS") or ""), "habit":str(r.get("HAB") or "")})
+    out=[]
+    for (ua,sub,subplot),trees in sorted(groups.items()):
+        ba=sum(math.pi*(t["dbh"]/200.0)**2 for t in trees)
+        hs=[t["height"] for t in trees if t["height"] is not None and math.isfinite(t["height"]) and t["height"]>0]
+        habits=Counter(t["habit"] for t in trees if t["habit"])
+        ps=Counter(t["ps"] for t in trees if t["ps"])
+        first=trees[0]
+        out.append({"inventory_id":"SFB_IFN_DAP10","UA":ua,"Subunidade":sub,"Subparcela":subplot,
+                    "biome":first["biome"],"uf":first["uf"],"municipality":first["municipality"],
+                    "lon_pc":first["lon"],"lat_pc":first["lat"],"plot_area_ha":area,
+                    "n_live_stems":len(trees),"stems_ha":len(trees)/area,
+                    "mean_dbh_cm":sum(t["dbh"] for t in trees)/len(trees),
+                    "basal_area_m2_ha":ba/area,
+                    "mean_field_height_m":sum(hs)/len(hs) if hs else None,
+                    "habit_counts":dict(habits),"sociological_position_counts":dict(ps),
+                    "data_level":"primary_plot","synthetic":False,
+                    "source":"SFB/IFN official DAP>=10 open data"})
+    return out
