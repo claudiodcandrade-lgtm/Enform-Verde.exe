@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install audit dependencies
+        run: python -m pip install requests openpyxl
       - name: Inspect official state-level litter and fallen-wood resources
         run: |
           python - <<'PY'
