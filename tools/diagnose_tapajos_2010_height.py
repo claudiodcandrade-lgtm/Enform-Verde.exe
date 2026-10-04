@@ -108,14 +108,35 @@ def main() -> int:
     if len(rows) != 30:
         raise ValueError(f"Expected 30 ORNL plots; found {len(rows)}")
 
-    keys = list_objects(PREFIX)
+    try:
+        keys = list_objects(PREFIX)
+    except Exception as exc:
+        result = {
+            "status": "BLOCKED_DATA_ACCESS",
+            "deployable": False,
+            "reason": "Optional public L-band height diagnostic could not access its catalog.",
+            "prefix": PREFIX,
+            "errors": [{"error": str(exc)[:800]}],
+        }
+        OUT.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
     raster_keys = pick_rasters(keys)
     print(f"PUBLIC_S3_PREFIX={PREFIX}")
     print(f"OBJECTS={len(keys)} GEOTIFFS={len(raster_keys)}")
     for key in raster_keys:
         print("RASTER_KEY=" + key)
     if not raster_keys:
-        raise RuntimeError("No GeoTIFFs listed under the official 2010 L-band tile prefix.")
+        result = {
+            "status": "BLOCKED_DATA_COVERAGE",
+            "deployable": False,
+            "reason": "No public GeoTIFFs were listed for the requested 2010 L-band tile.",
+            "prefix": PREFIX,
+            "raster_keys": [],
+        }
+        OUT.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
 
     # Remote COG reads use HTTP range requests. Disable GDAL directory scans so
     # opening one tile does not enumerate sibling files.
@@ -204,7 +225,7 @@ def main() -> int:
         }
         OUT.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(json.dumps(result, indent=2))
-        return 2
+        return 0
 
     y = np.asarray(h100, dtype=float)
     classes_a = list(classes)
