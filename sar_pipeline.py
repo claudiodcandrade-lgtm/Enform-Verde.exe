@@ -2,7 +2,7 @@ import math,re,hashlib,time,zipfile
 from pathlib import Path
 import numpy as np, requests
 from scientific_calibration import SCIENTIFIC_INVENTORY_REGISTRY, saturation_audit, glcm_features, multiscale_texture, rank_external_evidence, fit_local_ensemble
-from national_fallback import national_agb_fallback
+from national_fallback import national_agb_fallback, inventory_fallback_gate
 from structural_evidence import StructuralEvidence, evidence_se, random_effects_summary, harmonize_primary_plot_rows
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
@@ -1322,23 +1322,30 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             return pr
     except Exception as e: audit["cci"]={"error":str(e)}
 
-    # Literature is strictly terminal: it is reached only after every configured SAR route above was attempted.
+    # Inventory/literature AGB is permitted only when SAR unavailability is
+    # established; processed SAR pixels/height or unresolved errors block it.
     audit["sar_sources_exhausted"]=True
-    lit=literature_fallback(biome,phys,library_rows,aoi=gdf)
-    if not lit:
-        lit=national_agb_fallback(biome,phys,aoi=gdf)
+    sar_processed=bool(audit.get("processed_without_agb")) or bool(sar_height)
+    fallback_gate=inventory_fallback_gate(sar_processed,audit.get("warnings",[]))
+    audit["inventory_fallback_gate"]=fallback_gate
+    lit=None
+    if fallback_gate["eligible"]:
+        lit=literature_fallback(biome,phys,library_rows,aoi=gdf)
+        if not lit:
+            lit=national_agb_fallback(biome,phys,aoi=gdf)
     if lit:
-        lit["sar_processed"]=bool(audit.get("processed_without_agb"))
-        lit["sar_pixel_audit"]=audit.get("processed_without_agb",[])
-    sar_processed=bool(audit.get("processed_without_agb"))
+        lit["sar_processed"]=False
+        lit["sar_pixel_audit"]=[]
     result={"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if sar_processed else "SAR_NAO_PROCESSADO"),
             "agb_mg_ha":None,"uncertainty_mg_ha":None,
             "data_origin":("SAR_ATRIBUTOS_ESTRATIFICADORES" if sar_processed else "SAR_NAO_PROCESSADO"),
             "source":("pixels SAR reais processados; sem equação AGB quantitativa compatível no domínio científico"
                       if sar_processed else "nenhum arquivo SAR pôde ser baixado/processado nesta execução"),
             "audit":audit,"literature_reference":lit,"sar_attempted_first":True,
-            "message":("SAR real processado. O dual-pol disponível é usado como evidência física/estratificadora; AGB quantitativa permanece no fallback regional até existir modelo compatível."
-                       if sar_processed else "Nenhum arquivo SAR foi processado; consulte a auditoria detalhada.")}
+            "inventory_fallback_gate":fallback_gate,
+            "message":("SAR real processado, mas não há modelo AGB quantitativo compatível e validado; AGB não será substituída por fallback de inventário."
+                       if sar_processed else ("AGB de fallback disponível porque as rotas SAR foram consultadas sem observáveis utilizáveis nem falha técnica pendente."
+                       if fallback_gate["eligible"] else "SAR não foi processado, mas persistem erros/bloqueios não resolvidos; AGB de fallback foi retida até confirmar a inviabilidade SAR."))}
     if sar_height:
         result["sar_height"]=sar_height
         result.update({k:v for k,v in sar_height.items() if k.startswith("height_")})

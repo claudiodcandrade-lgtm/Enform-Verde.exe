@@ -53,6 +53,31 @@ def _robust_pool(records, label):
         stat=f"mediana de {len(records)} referências e envelope das fontes"
     return {"center":center,"low":low,"high":high,"stat":stat,"label":label,"records":records}
 
+_NO_COVERAGE_MARKERS = (
+    "sem pixels", "no pixels", "sem cena", "sem cenas", "no scene", "no scenes",
+    "nenhuma cena", "nenhum produto", "sem produto", "no products", "no items",
+    "sem cobertura", "no coverage", "sem resultados", "empty result",
+)
+
+def inventory_fallback_gate(sar_processed, warnings=()):
+    """Permit inventory/literature AGB only after confirmed SAR unavailability.
+
+    Unknown warnings are treated as unresolved technical/access failures and
+    block fallback; processed SAR pixels or a valid SAR height product always
+    block the non-SAR estimate.
+    """
+    warning_list=[str(w) for w in (warnings or ())]
+    if sar_processed:
+        return {"eligible":False,"reason":"SAR foi processado; fallback não-SAR não pode substituir AGB SAR ausente.",
+                "unresolved_warnings":[],"evidence":"observável SAR processado"}
+    unresolved=[w for w in warning_list
+                if not any(marker in w.casefold() for marker in _NO_COVERAGE_MARKERS)]
+    if unresolved:
+        return {"eligible":False,"reason":"falha técnica/acesso não resolvida; ausência de SAR ainda não foi comprovada.",
+                "unresolved_warnings":unresolved,"evidence":"avisos que exigem resolução"}
+    return {"eligible":True,"reason":"rotas SAR consultadas sem falha técnica pendente e sem observáveis/pixels utilizáveis.",
+            "unresolved_warnings":[],"evidence":"ausência operacional de cobertura/processamento confirmada"}
+
 def national_agb_fallback(biome, physiognomy, aoi=None):
     """Return a mandatory modelled AGB estimate for the four scoped Brazilian biomes.
 

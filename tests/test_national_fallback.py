@@ -5,10 +5,16 @@ try:
 except ImportError:
     gpd=box=None
 
-from national_fallback import national_agb_fallback
+from national_fallback import national_agb_fallback, inventory_fallback_gate
 import sar_pipeline as sar
 
 class NationalFallbackTests(unittest.TestCase):
+    def test_inventory_fallback_gate_requires_confirmed_sar_unavailability(self):
+        self.assertTrue(inventory_fallback_gate(False,[])["eligible"])
+        self.assertTrue(inventory_fallback_gate(False,["Sentinel-1: sem pixels processados"])["eligible"])
+        self.assertFalse(inventory_fallback_gate(True,[])["eligible"])
+        self.assertFalse(inventory_fallback_gate(False,["Earthdata authentication rejected"])["eligible"])
+
     def test_all_scoped_biomes_always_return_agb_and_uncertainty(self):
         cases=[
           ("Amazônia","Floresta Ombrófila Aberta"),
@@ -36,7 +42,7 @@ class NationalFallbackTests(unittest.TestCase):
         self.assertNotEqual(semidec["agb_mg_ha"],secondary["agb_mg_ha"])
 
     @unittest.skipUnless(gpd and box,"geospatial dependencies required")
-    def test_pipeline_uses_national_fallback_after_processed_sar_without_model(self):
+    def test_pipeline_withholds_inventory_agb_after_processed_sar_without_model(self):
         g=gpd.GeoDataFrame(geometry=[box(-47.96,-15.98,-47.94,-15.96)],crs="EPSG:4326")
         real=(sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history)
         try:
@@ -47,12 +53,11 @@ class NationalFallbackTests(unittest.TestCase):
             sar.public_sentinel1_cog=lambda *a,**k:{"items":0,"paths":[],"stats":[],"errors":[],"provider":"test"}
             sar.cci_history=lambda *a,**k:{"items":0,"paths":[]}
             out=sar.automatic_pipeline(g,"Cerrado","Savana Arborizada",cache="test_cache_national")
-            lit=out["literature_reference"]
             self.assertEqual(out["status"],"SAR_PROCESSADO_SEM_MODELO_AGB")
-            self.assertTrue(lit["sar_processed"])
-            self.assertEqual(lit["data_origin"],"MODELAGEM_LITERATURA_HIERARQUICA")
-            self.assertGreater(lit["agb_mg_ha"],0)
-            self.assertEqual(len(lit["agb_range_mg_ha"]),2)
+            self.assertIsNone(out["literature_reference"])
+            self.assertIsNone(out["agb_mg_ha"])
+            self.assertFalse(out["inventory_fallback_gate"]["eligible"])
+            self.assertIn("não será substituída",out["message"])
         finally:
             sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history=real
 
