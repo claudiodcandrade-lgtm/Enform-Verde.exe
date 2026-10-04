@@ -89,6 +89,16 @@ def _draw_offline_ibge(d,bx,ow,oh):
             for line in _geom_lines(feat.get("geometry")):
                 pts=[px(c[0],c[1]) for c in line if len(c)>=2]
                 if len(pts)>=2:d.line(pts,fill=fill,width=width,joint="curve")
+    # Subtle municipality fills improve the thematic base while preserving boundaries.
+    if span<=14.0:
+        for feat in layers.get("municipios",[]):
+            if not _feature_intersects_bbox(feat,bx):continue
+            geom=feat.get("geometry") or {}; typ=geom.get("type"); coords=geom.get("coordinates") or []
+            polys=([coords] if typ=="Polygon" else coords if typ=="MultiPolygon" else [])
+            for poly in polys:
+                if not poly:continue
+                ring=poly[0]; pts=[px(c[0],c[1]) for c in ring if len(c)>=2]
+                if len(pts)>=4:d.polygon(pts,fill=(227,236,222,255))
     # administrative context
     draw_lines("ufs",(54,75,61,235),max(2,round(ow/700)))
     for feat in layers.get("ufs",[]):
@@ -172,8 +182,8 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
                 y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
                 pts.append((x,y))
             if len(pts)>=4:
-                overlay_draw.polygon(pts,fill=(255,138,0,80),outline=(255,138,0,245))
-                overlay_draw.line(pts,width=max(3,round(ow/400)),fill=(255,138,0,245),joint="curve")
+                overlay_draw.polygon(pts,fill=(255,138,0,28),outline=(255,138,0,155))
+                overlay_draw.line(pts,width=max(2,round(ow/650)),fill=(255,138,0,155),joint="curve")
     crop=Image.alpha_composite(crop.convert("RGBA"),overlay).convert("RGB")
     return crop,bx
 
@@ -398,10 +408,15 @@ def _shares(project,theme,fields):
     total=float(inter["_ha"].sum())
     if total<=0:return []
     out=[]
+    aoi_area=float(p.geometry.union_all().area/10000)
+    covered=min(total,aoi_area)
+    missing=max(0.0,aoi_area-covered)
     for field in fields:
         if field and field in inter.columns:
             g=inter.groupby(field,dropna=False)["_ha"].sum().sort_values(ascending=False)
-            out.append((field,[(str(k),float(v),float(v/total*100)) for k,v in g.items() if v>0]))
+            classes=[(str(k) if pd.notna(k) else "Não classificado",float(v),float(v/aoi_area*100)) for k,v in g.items() if v>0]
+            if missing>max(0.01,aoi_area*1e-8):classes.append(("Sem cobertura IBGE",missing,float(missing/aoi_area*100)))
+            out.append((field,classes))
     return out
 
 def _shares_with_code(project,theme,name_field,code_field):
@@ -1321,7 +1336,11 @@ class App(tk.Tk):
             regs=d.get("regioes_fitoecologicas") or []
             if regs and primary and regs[0].get("name")==primary:code=regs[0].get("code")
             shown=self.phys.get() or "Não determinada"
-            self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else ""))
+            groups=d.get("vegetacao") or []
+            l1=next((x.get("classes",[]) for x in groups if x.get("campo")=="legenda_1"),[])
+            coverage=" | ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in l1[:6])
+            mix=("Composição IBGE: "+coverage) if coverage else "Composição IBGE indisponível"
+            self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else "")+"\n"+mix)
         btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
         vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"]) or ("PENDENTE: "+d.get("vegetacao_error","sem classe"))
         code_txt="; ".join(f"{x['code'] or 'código N/D'} — {x['name']}: {x['percent']:.1f}% ({x['area_ha']:,.1f} ha)" for x in d.get("regioes_fitoecologicas",[])[:8])
@@ -1479,6 +1498,21 @@ class App(tk.Tk):
                       f"fração C operacional={CARBON_FRACTION:.2f}; a faixa não é IC95% nem erro SAR. "+str(component.get("method","")))
                 parts.append((cname,dry*CARBON_FRACTION,"REFERÊNCIA MICRORREGIONAL",note,
                               "estoque de referência publicado; não é predição SAR nem medição da AOI",component.get("source","literatura científica regional")))
+            # Estimate belowground biomass from the SAR-derived AGB when a local
+            # measured root inventory is unavailable. Cairns et al. tropical-forest
+            # equation is an explicitly generalized model; its residual prediction
+            # error is not supplied here and is kept separate from propagated SAR error.
+            if "Biomassa subterrânea" not in regional_components and agb>0:
+                bgb=math.exp(-1.0587+0.8836*math.log(max(agb,1e-9)))
+                blo=max(0.0,agb_lo); bhi=max(blo,agb_hi)
+                regional_components["Biomassa subterrânea"]={
+                  "mean_dry_mg_ha":bgb,
+                  "range_dry_mg_ha":[math.exp(-1.0587+0.8836*math.log(max(blo,1e-9))),
+                                     math.exp(-1.0587+0.8836*math.log(max(bhi,1e-9)))],
+                  "method":"Equação alométrica agregada tropical: BGB=exp(−1,0587+0,8836·ln(AGB)); aplicada à AGB SAR. A faixa propaga somente a faixa/incerteza AGB informada pelo SAR; erro residual da equação não publicado/indisponível e não está incluído. Generalizada; não equivale a raízes medidas na AOI.",
+                  "source":"Cairns et al. (1997), Root biomass allocation in the world's upland forests, Oecologia 111:1–11, doi:10.1007/s004420050201",
+                  "url":"https://doi.org/10.1007/s004420050201",
+                  "uncertainty_kind":"faixa propagada da AGB SAR; erro alométrico residual N/D"}
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
                 parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
@@ -1504,7 +1538,11 @@ class App(tk.Tk):
                     metric="envelope descritivo da fonte × fração C operacional; não é IC95%, erro preditivo ou erro SAR"
                     level="dispersão/faixa de estudos locais; sem cobertura probabilística declarada"
                 elif name=="Biomassa subterrânea":
-                    ea=None; ep=None; metric="N/D — sem dados compatíveis"; level="não estimado"
+                    c=regional_components[name]; bounds=list(map(float,c["range_dry_mg_ha"]))
+                    ea=max(float(c["mean_dry_mg_ha"])-bounds[0],bounds[1]-float(c["mean_dry_mg_ha"]))*CARBON_FRACTION
+                    ep=(ea/val*100 if val else None)
+                    metric="incerteza da AGB SAR propagada pela equação; erro residual alométrico N/D"
+                    level="incerteza parcial; não inclui erro residual da equação Cairns"
                 elif name.startswith("Solo "):
                     depth=name.replace("Solo ",""); sp=soil_profiles.get(depth,{})
                     sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=sd; ep=(sd/val*100 if val else None)
