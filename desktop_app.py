@@ -14,7 +14,7 @@ from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MOD
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 
-APP_VERSION="3.24.26-CANDIDATE"
+APP_VERSION="3.24.27-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -26,6 +26,12 @@ SOURCES={
 }
 ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
 CARBON_FRACTION=0.47
+
+def format_ptbr(value,decimals=2):
+    """Format a numeric result for Brazilian readers without changing stored values."""
+    if value is None:return "N/D"
+    raw=f"{float(value):,.{int(decimals)}f}"
+    return raw.replace(",","\x00").replace(".",",").replace("\x00",".")
 
 def app_resource(name):
     base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
@@ -582,6 +588,7 @@ def self_test():
     assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8
     assert ROOT_LOW<ROOT_RATIO<ROOT_HIGH
     assert abs(CARBON_FRACTION-0.47)<1e-9
+    assert format_ptbr(12345.678,2)=="12.345,68" and format_ptbr(12.5,0)=="13"
     if sys.stdout is not None:print("ENFORM_VERDE_SELF_TEST_OK")
 
 def acceptance_test(kmz_path):
@@ -1619,10 +1626,10 @@ class App(tk.Tk):
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
                          "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
-            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
+            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {format_ptbr(area,2)} ha",""]+diag
             for r in rows:
-                err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
-                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
+                err=(f"±{format_ptbr(r['erro_abs_tc'],2)} tC/ha ({format_ptbr(r['erro_pct'],1)}%)" if r.get('erro_pct') is not None else "N/D")
+                lines += [f"{r['parametro']}",f"  {format_ptbr(r['tc'],2)} tC/ha  |  {format_ptbr(r['tco2'],2)} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
             if not p030: lines += ["Solo 0–30 cm","  NÃO CALCULADO — PronaSolos não retornou as três camadas necessárias nesta execução.","  Diagnóstico: "+str(soil_error),""]
             missing=[]
             if "Biomassa subterrânea" not in regional_components: missing.append("biomassa subterrânea")
@@ -1630,9 +1637,9 @@ class App(tk.Tk):
             if not any(n.startswith("Serapilheira") for n in regional_components): missing.append("serapilheira")
             lines += ["COMPARTIMENTOS NÃO SOMADOS", ("Nenhum compartimento adicional elegível ficou sem estimativa nesta execução." if not missing else "; ".join(missing)+": não estimada por falta de dados/modelos regionais compatíveis."),
                       *( ["Referências microrregionais são benchmarks secundários; não equivalem a medição da AOI nem a modelos alométricos/SAR calibrados."] if regional_components else [] ), "",
-                      "TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {total:,.2f} tC/ha  |  {co2:,.2f} tCO₂e/ha",f"  Total na área: {total*area:,.0f} tC  |  {co2*area:,.0f} tCO₂e","",
+                      "TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {format_ptbr(total,2)} tC/ha  |  {format_ptbr(co2,2)} tCO₂e/ha",f"  Total na área: {format_ptbr(total*area,0)} tC  |  {format_ptbr(co2*area,0)} tCO₂e","",
                       "QUALIDADE: resultado de triagem/planejamento remoto. O relatório distingue SAR efetivamente processado de referência bibliográfica secundária e não substitui inventário de campo."]
-            self._set(self.remote_text,f"Biomassa aérea: {agc:,.2f} tC/ha | {agc*44/12:,.2f} tCO₂e/ha\nFaixa de referência: {agc_lo:,.2f}–{agc_hi:,.2f} tC/ha | {agc_lo*44/12:,.2f}–{agc_hi*44/12:,.2f} tCO₂e/ha")
+            self._set(self.remote_text,f"Biomassa aérea: {format_ptbr(agc,2)} tC/ha | {format_ptbr(agc*44/12,2)} tCO₂e/ha\nFaixa de referência: {format_ptbr(agc_lo,2)}–{format_ptbr(agc_hi,2)} tC/ha | {format_ptbr(agc_lo*44/12,2)}–{format_ptbr(agc_hi*44/12,2)} tCO₂e/ha")
             self._set(self.res,"\n".join(lines)); self.project["last_result"]="\n".join(lines); self.nb.select(self.tabs[3]); self.status.set("Estimativa remota concluída.")
         except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
 
@@ -1664,10 +1671,10 @@ class App(tk.Tk):
         put(ws,[["Entrada","Projeto",None,None,"Informado","cadastro",None,self.name.get()],
                 ["Diagnóstico IBGE","Bioma dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Biomas 2025",self.biome.get()],
                 ["Diagnóstico IBGE","Fitofisionomia/região fitoecológica dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Vegetação 2026",self.phys.get()],
-                ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{area:,.2f} ha"],
+                ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{format_ptbr(area,2)} ha"],
                 ["Entrada","Sensor/produto selecionado",None,None,"Informado","SAR/multissensor","ESA/fornecedor",self.sensor.get()],
                 ["Resultado","Carbono total por hectare",total,totalco2,"CONSOLIDADO","soma dos compartimentos","Enform","somente compartimentos disponíveis"],
-                ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{total*area:,.0f} tC | {totalco2*area:,.0f} tCO₂e"]])
+                ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{format_ptbr(total*area,0)} tC | {format_ptbr(totalco2*area,0)} tCO₂e"]])
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
         for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
