@@ -8,8 +8,8 @@ Liberar a versão Windows `3.24.22-PROFESSIONAL` somente depois que a mesma cabe
 
 ## Estado atual do PR
 - PR #48 aberto.
-- Cabeça atual: `81f122728929c7c77da732830a00fff5fdb5e5c1`.
-- Workflow atual: run #355 / `37216005034`.
+- Cabeça atual: `5bfc345b11cbe79a3383d259287db4443e9536fb`.
+- Workflow atual: run #360 / `37216278155` (queued na última checagem).
 - Não mesclar antes do término bem-sucedido desse run ou de uma cabeça posterior.
 
 ## Evoluções já incorporadas
@@ -118,9 +118,13 @@ O portal SFB confirma arquivos CSV DAP>=10 por UF e DAP>=5, além de unidades am
 
 ### Integração ao pacote
 - `sar_pipeline.py` importa o motor `structural_evidence`, garantindo inclusão no executável.
+- `harmonize_ifn_dap10_rows()` usa os campos oficiais IFN `bioma/uf/mun/lon_pc/lat_pc/UA/Subunidade/Subparcela/DAP/HT/SA/PS/HAB`, exclui SA=4 da estrutura viva e exige explicitamente a área amostral do desenho IFN; nunca inventa área por parcela.
 - Workflow copia `data/structural_inventory_sources_v1.csv` para o pacote Windows.
+- Workflow copia `data/structural_aggregate_evidence_v1.csv`, com resultados consolidados por estudo (Amazônia, Cerrado, Mata Atlântica e Caatinga).
 - Workflow verifica a presença do registro nacional no pacote.
 - `tests/test_structural_evidence.py` protege:
+  - mediana/IQR não é misturada automaticamente com meta-análise de médias;
+  - harmonização IFN exige área amostral explícita;
   - não criação de parcelas sintéticas;
   - conversão IQR explicitamente rotulada;
   - faixa min–máx sem peso estatístico;
@@ -142,7 +146,7 @@ Preservar:
 - Windows autônomo sem Python instalado.
 
 ## Próximas ações obrigatórias
-1. Aguardar/conferir run #355 da cabeça `81f1227...`.
+1. Aguardar/conferir run #360 da cabeça `5bfc345...` (ou run posterior se este prompt gerar nova cabeça).
 2. Se falhar: corrigir somente a causa comprovada, atualizar esta trilha e disparar novo run.
 3. Se passar:
    - baixar/verificar artefato `Enform-Verde-Windows-v3.24.22-PROFESSIONAL`;
