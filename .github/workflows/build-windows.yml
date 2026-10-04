@@ -620,8 +620,8 @@ jobs:
                   l1=s.maap_search(g,"BiomassLevel1c",limit=1000)
                   ids=[str(x.get("id") or "") for x in l1]
                   import re
-                  cycles=sorted({m.group(1) for ident in ids for m in [re.search(r"_C(\\d+)_",ident)] if m})
-                  tracks=sorted({m.group(1) for ident in ids for m in [re.search(r"_T(\\d+)_F(\\d+)",ident)] if m})
+                  cycles=sorted({m.group(1) for ident in ids for m in [re.search(r"_C(\d+)_",ident)] if m})
+                  tracks=sorted({m.group(1) for ident in ids for m in [re.search(r"_T(\d+)_F(\d+)",ident)] if m})
                   print("BIOMASS_L1C_COVERAGE",name,"items",len(l1),"cycles",cycles,"track_frames",tracks)
                   for x in l1:
                       p=x.get("properties") or {}
