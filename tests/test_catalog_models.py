@@ -107,9 +107,7 @@ class CatalogModelExecutionTests(unittest.TestCase):
         product={"status":"SAR_PROCESSADO","agb_mg_ha":412.0,"uncertainty_mg_ha":73.0,
                  "uncertainty_kind":"média zonal de AGB_Std_Dev do produto ESA; incerteza do produto, não erro local de validação",
                  "stats":[],"spatial_sd_mg_ha":68.0,"n_valid_pixels":25}
-        with patch.object(sar,"biomass_l2b_search",return_value=[tile]), \\
-             patch.object(sar,"download_maap_agb",return_value={"paths":["FP_AGB_L2B_AGB.tif"],"available":True}), \\
-             patch.object(sar,"process_real_sar",return_value=product):
+        with patch.object(sar,"biomass_l2b_search",return_value=[tile]), patch.object(sar,"download_maap_agb",return_value={"paths":["FP_AGB_L2B_AGB.tif"],"available":True}), patch.object(sar,"process_real_sar",return_value=product):
             out=sar.automatic_pipeline(object(),"Amazônia","Floresta Ombrófila Densa",cache="/tmp/enform-high-agb-test")
         self.assertEqual(out["agb_mg_ha"],412.0)
         self.assertEqual(out["data_origin"],"SAR_P_BIOMASS_FP_AGB_L2B")
