@@ -24,7 +24,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_desktop.txt
           pip install pillow
+      - name: Restore official IBGE map from previously packaged build
+        id: restore_ibge_map
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: Enform-Verde-Windows-v3.24.20-PROFESSIONAL
+          run-id: 37159724978
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ibge-map-cache
+      - name: Use cached official IBGE map
+        if: steps.restore_ibge_map.outcome == 'success'
+        shell: pwsh
+        run: |
+          $cached = Get-ChildItem 'ibge-map-cache' -Filter 'offline_ibge_map.json.gz' -Recurse | Select-Object -First 1
+          if (!$cached) { throw 'Previous artifact downloaded without the offline IBGE map.' }
+          Copy-Item $cached.FullName 'offline_ibge_map.json.gz' -Force
+          Write-Host "USING_CACHED_OFFICIAL_IBGE_MAP" $cached.FullName
       - name: Build offline IBGE administrative and infrastructure map
+        if: steps.restore_ibge_map.outcome != 'success'
         id: ibge_map_build
         continue-on-error: true
         shell: pwsh
@@ -614,6 +632,8 @@ jobs:
           python cci_live_contract.py
 
       - name: Probe live BIOMASS FH coverage over inventory-supported Tapajos AOIs
+        id: biomass_fh_gate
+        continue-on-error: true
         shell: pwsh
         run: |
           @'
@@ -776,6 +796,7 @@ jobs:
         run: |
           @'
           ENFORM VERDE - WINDOWS
+VERSÃO CANDIDATA 3.24.23. O gate BIOMASS FH L2B nas AOIs de alta biomassa não encontrou cobertura no teste de 2026-10-04; os assets L1C de medição responderam HTTP 401 sem autorização. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
           Para abrir: dê duplo clique em "Enform Verde.exe".
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
@@ -784,7 +805,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.22-PROFESSIONAL
+          name: Enform-Verde-Windows-v3.24.23-CANDIDATE
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
