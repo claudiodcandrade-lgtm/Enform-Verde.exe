@@ -578,7 +578,7 @@ jobs:
         run: |
           @'
           import requests
-          base="https://data.cci.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff/2024"
+          base="https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff/2024"
           files=[
             "N00W060_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif",
             "N00W060_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif",
