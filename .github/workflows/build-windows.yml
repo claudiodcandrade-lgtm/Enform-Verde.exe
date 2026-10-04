@@ -600,6 +600,7 @@ jobs:
         run: |
           @'
           import geopandas as gpd
+          import requests
           from shapely.geometry import box
           import sar_pipeline as s
           aois={
@@ -628,17 +629,32 @@ jobs:
                       assets=x.get("assets") or {}
                       print("BIOMASS_L1C_ITEM",name,x.get("id"),p.get("datetime") or p.get("start_datetime"),p.get("end_datetime"),"assets",list(assets))
                   if l1:
-                      x=l1[0]
-                      for key,a in (x.get("assets") or {}).items():
-                          href=a.get("href")
-                          roles=[str(z).lower() for z in (a.get("roles") or [])]
-                          if href and ("data" in roles or "measurement" in key.lower()):
+                      # Probe only real BIOMASS measurement assets, never XML schemas or quicklook imagery.
+                      tested=set()
+                      for x in l1:
+                          ident=str(x.get("id") or "")
+                          m=re.search(r"_(T\\d+_F\\d+)_",ident)
+                          orbit_frame=m.group(1) if m else "unknown_track_frame"
+                          for key,a in (x.get("assets") or {}).items():
+                              k=key.lower()
+                              if not any(token in k for token in ("enclosure_i_phase_tiff","enclosure_i_abs_tiff","enclosure_nc")):
+                                  continue
+                              if (orbit_frame,key) in tested:
+                                  continue
+                              tested.add((orbit_frame,key))
+                              href=a.get("href")
+                              if not href:
+                                  print("BIOMASS_L1C_ASSET_ACCESS_ERROR",name,key,"missing_href")
+                                  continue
                               try:
                                   q=requests.get(href,headers={"Range":"bytes=0-0"},stream=True,timeout=(10,30))
-                                  print("BIOMASS_L1C_ASSET_ACCESS",name,key,q.status_code,q.headers.get("Content-Range") or q.headers.get("Content-Length"))
+                                  print("BIOMASS_L1C_ASSET_ACCESS",name,orbit_frame,key,q.status_code,q.headers.get("Content-Range") or q.headers.get("Content-Length"))
                                   q.close()
                               except Exception as ae:
-                                  print("BIOMASS_L1C_ASSET_ACCESS_ERROR",name,key,type(ae).__name__,str(ae)[:180])
+                                  print("BIOMASS_L1C_ASSET_ACCESS_ERROR",name,orbit_frame,key,type(ae).__name__,str(ae)[:180])
+                              if len(tested)>=4:
+                                  break
+                          if len(tested)>=4:
                               break
               except Exception as e:
                   print("BIOMASS_L1C_QUERY_ERROR",name,type(e).__name__,str(e)[:240])
