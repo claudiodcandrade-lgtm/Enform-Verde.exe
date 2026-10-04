@@ -20,6 +20,9 @@ def main():
         if not FIELDS.issubset(reader.fieldnames or []):
             raise SystemExit(f"Missing catalog columns: {FIELDS - set(reader.fieldnames or [])}")
         rows = list(reader)
+        for line_number, row in enumerate(rows, start=2):
+            if None in row or any(value is None for value in row.values()):
+                raise SystemExit(f"Malformed CSV column count at line {line_number}")
     ids = [row.get("source_id", "").strip() for row in rows]
     if len(ids) != len(set(ids)):
         raise SystemExit("Duplicate source_id in SAR registry")
