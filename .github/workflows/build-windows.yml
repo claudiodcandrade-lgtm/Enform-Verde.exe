@@ -616,6 +616,14 @@ jobs:
               any_fh = any_fh or bool(fh)
               any_agb = any_agb or bool(agb)
               print("BIOMASS_COVERAGE_PROBE",name,"FH",len(fh),"AGB",len(agb))
+              try:
+                  l1=s.maap_search(g,"BiomassLevel1c",limit=1000)
+                  print("BIOMASS_L1C_COVERAGE",name,"items",len(l1))
+                  for x in l1[:5]:
+                      p=x.get("properties") or {}
+                      print("BIOMASS_L1C_ITEM",name,x.get("id"),p.get("datetime") or p.get("start_datetime"),p.get("end_datetime"))
+              except Exception as e:
+                  print("BIOMASS_L1C_QUERY_ERROR",name,type(e).__name__,str(e)[:240])
               for x in fh[:3]:
                   print("FH_ITEM",name,x.get("id"),x.get("_stage"),x.get("_collection"))
           if not any_fh:
