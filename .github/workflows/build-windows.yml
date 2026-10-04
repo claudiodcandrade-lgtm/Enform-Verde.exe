@@ -606,14 +606,20 @@ jobs:
             "PF_HIGH_8_11":box(-54.9804,-2.9399,-54.9785,-2.9336),
             "SF_LOW_21_23":box(-54.9842,-3.1151,-54.9828,-3.1109),
           }
+          any_fh=False
+          any_agb=False
           for name,geom in aois.items():
               g=gpd.GeoDataFrame(geometry=[geom],crs="EPSG:4326")
               items=s.biomass_l2b_search(g,limit=100)
               fh=[x for x in items if x.get("_product_type")=="FP_FH__L2B"]
               agb=[x for x in items if x.get("_product_type")=="FP_AGB_L2B"]
+              any_fh = any_fh or bool(fh)
+              any_agb = any_agb or bool(agb)
               print("BIOMASS_COVERAGE_PROBE",name,"FH",len(fh),"AGB",len(agb))
               for x in fh[:3]:
                   print("FH_ITEM",name,x.get("id"),x.get("_stage"),x.get("_collection"))
+          if not any_fh:
+              raise RuntimeError("Acceptance blocked: no ESA BIOMASS FP_FH__L2B covers either inventory-supported Tapajos AOI; do not mark high-biomass SAR-height model as passed.")
           '@ | Set-Content biomass_fh_probe.py -Encoding UTF8
           python biomass_fh_probe.py
 
