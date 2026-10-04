@@ -35,6 +35,7 @@ jobs:
           from pathlib import Path
           import geopandas as gpd
           from shapely.geometry import mapping
+          from offline_map_tiles import write_quadrant_tiles
 
           work=Path("ibge_offline_build"); work.mkdir(exist_ok=True)
           mun_url="https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2025/Brasil/BR_Municipios_2025.zip"
@@ -141,6 +142,8 @@ jobs:
               "layers":features}
           with gzip.open("offline_ibge_map.json.gz","wt",encoding="utf-8",compresslevel=9) as f:
               json.dump(payload["layers"],f,ensure_ascii=False,separators=(",",":"))
+          quadrant_info=write_quadrant_tiles(features,Path("offline_ibge_tiles"),(-75.0,-35.0,-33.0,6.0),5.0)
+          print("OFFLINE_IBGE_QUADRANTS_OK",quadrant_info)
           print("OFFLINE_IBGE_MAP_OK",{k:len(v) for k,v in features.items()},Path("offline_ibge_map.json.gz").stat().st_size)
           '@ | Set-Content make_ibge_offline.py -Encoding UTF8
           python make_ibge_offline.py
@@ -165,6 +168,23 @@ jobs:
           }
           if ((Get-Item 'offline_ibge_map.json.gz').Length -lt 1000000) { throw 'Offline IBGE map bundle is incomplete.' }
           Get-Item 'offline_ibge_map.json.gz' | Format-List Name,Length
+
+      - name: Build on-demand IBGE quadrants from previous cache when needed
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'offline_ibge_tiles/index.json')) {
+            @'
+            import gzip,json
+            from pathlib import Path
+            from offline_map_tiles import write_quadrant_tiles
+            with gzip.open("offline_ibge_map.json.gz","rt",encoding="utf-8") as fh:
+                layers=json.load(fh)
+            print("OFFLINE_IBGE_QUADRANTS_CACHE_OK",write_quadrant_tiles(layers,Path("offline_ibge_tiles"),(-75.0,-35.0,-33.0,6.0),5.0))
+            '@ | Set-Content make_offline_quadrants.py -Encoding UTF8
+            python make_offline_quadrants.py
+          }
+          if (!(Test-Path 'offline_ibge_tiles/index.json')) { throw 'Offline IBGE quadrant index was not generated.' }
+          Get-Item 'offline_ibge_tiles/index.json' | Format-List Name,Length
 
       - name: Source self-test
         run: python desktop_app.py --self-test
@@ -688,6 +708,7 @@ jobs:
         run: |
           Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
           Copy-Item -Force 'offline_ibge_map.json.gz' 'dist\Enform Verde\offline_ibge_map.json.gz'
+          Copy-Item -Recurse -Force 'offline_ibge_tiles' 'dist\Enform Verde\offline_ibge_tiles'
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'
@@ -716,6 +737,9 @@ jobs:
           $ibge = Join-Path $root 'offline_ibge_map.json.gz'
           if (!(Test-Path $ibge)) { throw 'Offline IBGE map bundle is missing from packaged application' }
           if ((Get-Item $ibge).Length -lt 1000000) { throw 'Offline IBGE map bundle is unexpectedly small' }
+          $tileIndex = Join-Path $root 'offline_ibge_tiles\index.json'
+          if (!(Test-Path $tileIndex)) { throw 'Offline IBGE quadrant index is missing from package' }
+          if (!(Get-ChildItem (Join-Path $root 'offline_ibge_tiles') -Filter 'q_*.json.gz').Count) { throw 'Offline IBGE quadrant files are missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'))) { throw 'High-biomass Brazilian SAR AOI is missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_PF_Alta.kml'))) { throw 'PF H100-structure AOI is missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_SF_Baixa.kml'))) { throw 'SF H100-structure AOI is missing from package' }

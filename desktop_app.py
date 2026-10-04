@@ -1,4 +1,5 @@
 import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid
+from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
 import tkinter as tk
@@ -36,15 +37,26 @@ def app_resource(name):
 
 OFFLINE_BRAZIL_BOUNDS=(-75.0,-35.0,-33.0,6.0)  # west,south,east,north
 _OFFLINE_IBGE_CACHE=None
-def _offline_ibge_layers():
-    global _OFFLINE_IBGE_CACHE
-    if _OFFLINE_IBGE_CACHE is not None:return _OFFLINE_IBGE_CACHE
-    p=app_resource("offline_ibge_map.json.gz")
-    if not p.exists():_OFFLINE_IBGE_CACHE={}; return _OFFLINE_IBGE_CACHE
-    try:
-        import gzip
-        with gzip.open(p,"rt",encoding="utf-8") as fh:_OFFLINE_IBGE_CACHE=json.load(fh)
-    except Exception:_OFFLINE_IBGE_CACHE={}
+_OFFLINE_IBGE_TILE_CACHE=OrderedDict()
+def _offline_ibge_layers(bx=None):
+    global _OFFLINE_IBGE_CACHE,_OFFLINE_IBGE_TILE_CACHE
+    if _OFFLINE_IBGE_CACHE is None:
+        index=app_resource("offline_ibge_tiles/index.json")
+        if index.exists():
+            try:_OFFLINE_IBGE_CACHE={"_tile_root":index.parent,"_manifest":json.loads(index.read_text(encoding="utf-8"))}
+            except Exception:_OFFLINE_IBGE_CACHE={}
+        else:
+            p=app_resource("offline_ibge_map.json.gz")
+            if not p.exists():_OFFLINE_IBGE_CACHE={}
+            else:
+                try:
+                    import gzip
+                    with gzip.open(p,"rt",encoding="utf-8") as fh:_OFFLINE_IBGE_CACHE=json.load(fh)
+                except Exception:_OFFLINE_IBGE_CACHE={}
+    if "_manifest" in _OFFLINE_IBGE_CACHE:
+        if bx is None:return {"__manifest__":_OFFLINE_IBGE_CACHE["_manifest"]}
+        from offline_map_tiles import load_quadrants_for_bbox
+        return load_quadrants_for_bbox(_OFFLINE_IBGE_CACHE["_tile_root"],bx,_OFFLINE_IBGE_CACHE["_manifest"],_OFFLINE_IBGE_TILE_CACHE,max_cached_tiles=8)
     return _OFFLINE_IBGE_CACHE
 
 def _feature_intersects_bbox(feat,bx):
@@ -66,7 +78,7 @@ def _geom_lines(geom):
         yield [c]
 
 def _draw_offline_ibge(d,bx,ow,oh):
-    layers=_offline_ibge_layers()
+    layers=_offline_ibge_layers(bx)
     span=max(bx[2]-bx[0],bx[3]-bx[1])
     def px(lon,lat):
         return ((float(lon)-bx[0])/max(bx[2]-bx[0],1e-12)*ow,
@@ -131,7 +143,9 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
     bx=[max(W,bx[0]),max(S,bx[1]),min(E,bx[2]),min(N,bx[3])]
     if bx[0]>=bx[2] or bx[1]>=bx[3]:raise ValueError("AOI fora da cobertura do mapa IBGE offline do Brasil")
     layers=_offline_ibge_layers()
-    if len(layers.get("municipios",[]))<5000:
+    manifest=layers.get("__manifest__")
+    municipality_count=manifest.get("feature_counts",{}).get("municipios",0) if manifest else len(layers.get("municipios",[]))
+    if municipality_count<5000:
         raise FileNotFoundError("Camada de municípios IBGE offline ausente ou incompleta.")
     ow,oh=map(int,out_size)
     midlat=(bx[1]+bx[3])/2; coslat=max(0.25,math.cos(math.radians(midlat)))
@@ -146,6 +160,8 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
     from PIL import ImageDraw
     d=ImageDraw.Draw(crop,"RGBA")
     _draw_offline_ibge(d,bx,ow,oh)
+    overlay=Image.new("RGBA",(ow,oh),(0,0,0,0))
+    overlay_draw=ImageDraw.Draw(overlay,"RGBA")
     for geom in g.geometry:
         geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
         for poly in geoms:
@@ -156,8 +172,9 @@ def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
                 y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
                 pts.append((x,y))
             if len(pts)>=4:
-                d.polygon(pts,fill=(255,138,0,42),outline=(255,138,0,255))
-                d.line(pts,width=max(3,round(ow/400)),fill=(255,138,0,255),joint="curve")
+                overlay_draw.polygon(pts,fill=(255,138,0,80),outline=(255,138,0,245))
+                overlay_draw.line(pts,width=max(3,round(ow/400)),fill=(255,138,0,245),joint="curve")
+    crop=Image.alpha_composite(crop.convert("RGBA"),overlay).convert("RGB")
     return crop,bx
 
 def agb_mexiana(dbh_cm):
