@@ -598,6 +598,7 @@ jobs:
           Copy-Item -Force 'offline_ibge_map.json.gz' 'dist\Enform Verde\offline_ibge_map.json.gz'
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
+          Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
           Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
           Move-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.zip' 'acceptance\Teste_SAR_Cerrado_DF.kmz'
@@ -616,6 +617,7 @@ jobs:
           $ibge = Join-Path $root 'offline_ibge_map.json.gz'
           if (!(Test-Path $ibge)) { throw 'Offline IBGE map bundle is missing from packaged application' }
           if ((Get-Item $ibge).Length -lt 1000000) { throw 'Offline IBGE map bundle is unexpectedly small' }
+          if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'))) { throw 'High-biomass Brazilian SAR AOI is missing from package' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh
@@ -652,7 +654,7 @@ jobs:
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
           A análise espacial aceita vetor local e tenta consulta pública do SICAR, SIGEF e Embrapa quando houver internet.
-          O pacote inclui acceptance\Teste_SAR_Biomassa_Tapajos.kmz e acceptance\Teste_SAR_Cerrado_DF.kmz; o segundo testa a rota quantitativa L-band de baixa biomassa.
+          O pacote inclui acceptance\Teste_SAR_Cerrado_DF.kmz (baixa biomassa) e acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml (AOI candidata de alta biomassa; requer modelo AGB SAR compatível, não aceitar fallback bibliográfico como resultado SAR).
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
