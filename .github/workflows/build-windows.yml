@@ -305,7 +305,13 @@ jobs:
           print("VISIBLE_AOI_AREA_OK",area)
           offline,_=app.offline_brazil_preview(preflight,1.36,(900,420))
           assert offline.size==(900,420), "offline IBGE map render failed"
-          assert len(app._offline_ibge_layers().get("municipios",[]))>=5569, "offline IBGE municipal layer missing"
+          offline_context=app._offline_ibge_layers()
+          if "__manifest__" in offline_context:
+              assert offline_context["__manifest__"].get("feature_counts",{}).get("municipios",0)>=5569, "offline IBGE municipal index missing"
+          else:
+              assert len(offline_context.get("municipios",[]))>=5569, "offline IBGE municipal layer missing"
+          tapajos_tiles=app._offline_ibge_layers([-55.0,-4.0,-54.0,-3.0])
+          assert tapajos_tiles.get("municipios"), "offline IBGE Tapajos quadrant failed to load municipal features"
           print("OFFLINE_IBGE_MAP_OK",offline.size)
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
           ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
