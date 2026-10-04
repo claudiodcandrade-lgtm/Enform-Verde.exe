@@ -65,3 +65,16 @@ def load_quadrants_for_bbox(root,bounds,manifest,cache=None,max_cached_tiles=8):
 
 def _intersects(a,b):
     return not a or not (a[2]<b[0] or a[0]>b[2] or a[3]<b[1] or a[1]>b[3])
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Build compressed on-demand quadrants from an offline IBGE map gzip.")
+    parser.add_argument("map_gzip", help="Path to offline_ibge_map.json.gz")
+    parser.add_argument("output_dir", help="Directory for quadrant tiles and index.json")
+    args = parser.parse_args()
+    with gzip.open(args.map_gzip, "rt", encoding="utf-8") as fh:
+        source_layers = json.load(fh)
+    if not isinstance(source_layers, dict):
+        raise SystemExit("Offline map bundle must contain a layer object.")
+    result = write_quadrant_tiles(source_layers, Path(args.output_dir), (-75.0, -35.0, -33.0, 6.0), 5.0)
+    print("OFFLINE_IBGE_QUADRANTS_CACHE_OK", result)
