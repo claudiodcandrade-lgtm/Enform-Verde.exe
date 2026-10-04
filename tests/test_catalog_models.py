@@ -90,6 +90,33 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["n_valid_pixels"],16)
         self.assertEqual(out["height_mean_m"],24.0)
 
+    def test_high_biomass_p_band_product_retains_agb_uncertainty_and_spatial_spread_separately(self):
+        zonal={"FP_AGB_L2B_AGB.tif":{"mean":412.0,"sd":68.0,"n":25,"min":270.0,"max":590.0},
+               "FP_AGB_L2B_AGB_Std_Dev.tif":{"mean":73.0,"sd":12.0,"n":25,"min":49.0,"max":105.0}}
+        with patch.object(sar,"_zonal",side_effect=lambda _gdf,path:zonal[str(path)]):
+            out=sar.process_real_sar(object(),list(zonal),"Amazônia","Floresta Ombrófila Densa")
+        self.assertEqual(out["agb_mg_ha"],412.0)
+        self.assertEqual(out["uncertainty_mg_ha"],73.0)
+        self.assertIn("não é erro de validação local",out["uncertainty_kind"])
+        self.assertEqual(out["spatial_sd_mg_ha"],68.0)
+        self.assertEqual(out["n_valid_pixels"],25)
+
+    def test_automatic_pipeline_labels_official_high_biomass_product_as_p_band(self):
+        tile={"id":"tile_FP_AGB_L2B","properties":{"datetime":"2026-08-01"},
+              "_product_type":"FP_AGB_L2B","_stage":"OPERATIONAL","_collection":"BiomassLevel2b"}
+        product={"status":"SAR_PROCESSADO","agb_mg_ha":412.0,"uncertainty_mg_ha":73.0,
+                 "uncertainty_kind":"média zonal de AGB_Std_Dev do produto ESA; incerteza do produto, não erro local de validação",
+                 "stats":[],"spatial_sd_mg_ha":68.0,"n_valid_pixels":25}
+        with patch.object(sar,"biomass_l2b_search",return_value=[tile]), patch.object(sar,"download_maap_agb",return_value={"paths":["FP_AGB_L2B_AGB.tif"],"available":True}), patch.object(sar,"process_real_sar",return_value=product):
+            out=sar.automatic_pipeline(object(),"Amazônia","Floresta Ombrófila Densa",cache="/tmp/enform-high-agb-test")
+        self.assertEqual(out["agb_mg_ha"],412.0)
+        self.assertEqual(out["data_origin"],"SAR_P_BIOMASS_FP_AGB_L2B")
+        self.assertEqual(out["sensor"],"ESA BIOMASS")
+        self.assertEqual(out["band"],"P")
+        self.assertEqual(out["product"],"FP_AGB_L2B")
+        self.assertEqual(out["model_id"],"ESA_BIOMASS_FP_AGB_L2B")
+        self.assertIn("não erro local",out["uncertainty_kind"])
+
     def test_sar_height_remains_available_when_no_agb_model_matches(self):
         zonal={"canopy_height.tif":{"mean":18.0,"sd":4.0,"n":9,"min":11.0,"max":25.0}}
         with patch.object(sar,"_zonal",side_effect=lambda _gdf,path:zonal[str(path)]):
