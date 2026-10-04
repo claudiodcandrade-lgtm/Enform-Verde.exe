@@ -105,15 +105,20 @@ jobs:
           audit["failures"] = failures
           with open("ifn_component_schema_audit.json", "w", encoding="utf-8") as f:
               json.dump(audit, f, ensure_ascii=False, indent=2)
-          print(json.dumps({k: {"file_count": v.get("file_count"), "files": [
-              {"filename": x["filename"], "bytes": x["bytes"],
-               "sheets": {sn: {"nonempty_rows": sv["nonempty_rows"], "first_rows": sv["first_rows"]}
-                          for sn, sv in x.get("sheets", {}).items()},
-               "delimiter": x.get("delimiter"), "nonempty_rows": x.get("nonempty_rows"),
-               "first_rows": x.get("first_rows"), "error": x.get("error")}
-              for x in v.get("files", [])]}
-              for k, v in audit["datasets"].items()}, "failures": failures},
-              ensure_ascii=False, indent=2))
+          summary = {}
+          for dataset_key, dataset_value in audit["datasets"].items():
+              summary[dataset_key] = {"file_count": dataset_value.get("file_count", 0), "files": []}
+              for file_value in dataset_value.get("files", []):
+                  summary[dataset_key]["files"].append({
+                      "filename": file_value["filename"],
+                      "bytes": file_value["bytes"],
+                      "sheets": file_value.get("sheets", {}),
+                      "delimiter": file_value.get("delimiter"),
+                      "nonempty_rows": file_value.get("nonempty_rows"),
+                      "first_rows": file_value.get("first_rows"),
+                      "error": file_value.get("error"),
+                  })
+          print(json.dumps({"datasets": summary, "failures": failures}, ensure_ascii=False, indent=2))
           if not all(audit["datasets"].get(k, {}).get("file_count", 0) for k in DATASETS):
               sys.exit(1)
           PY
