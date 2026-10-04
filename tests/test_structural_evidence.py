@@ -1,5 +1,5 @@
 import unittest
-from structural_evidence import StructuralEvidence, evidence_se, random_effects_summary, harmonize_primary_plot_rows
+from structural_evidence import StructuralEvidence, evidence_se, random_effects_summary, harmonize_primary_plot_rows, harmonize_ifn_dap10_rows
 
 class StructuralEvidenceTests(unittest.TestCase):
     def test_aggregate_results_never_become_synthetic_plots(self):
@@ -37,6 +37,17 @@ class StructuralEvidenceTests(unittest.TestCase):
         out=harmonize_primary_plot_rows(trees,"TEST",0.1)
         self.assertEqual(len(out),2)
         self.assertTrue(all(not r["synthetic"] for r in out))
+        self.assertGreater(out[0]["basal_area_m2_ha"],0)
+
+    def test_ifn_harmonizer_uses_official_fields_and_requires_area(self):
+        rows=[
+          {"bioma":"Cerrado","uf":"DF","mun":"Teste","lon_pc":"-47.9","lat_pc":"-15.9","UA":"10","Subunidade":"A","Subparcela":"1","DAP":"20","HT":"8","SA":"1","PS":"2","HAB":"1"},
+          {"bioma":"Cerrado","uf":"DF","mun":"Teste","lon_pc":"-47.9","lat_pc":"-15.9","UA":"10","Subunidade":"A","Subparcela":"1","DAP":"30","HT":"10","SA":"4","PS":"3","HAB":"1"},
+        ]
+        with self.assertRaises(ValueError): harmonize_ifn_dap10_rows(rows,None)
+        out=harmonize_ifn_dap10_rows(rows,0.1)
+        self.assertEqual(len(out),1); self.assertEqual(out[0]["n_live_stems"],1)
+        self.assertEqual(out[0]["biome"],"Cerrado"); self.assertFalse(out[0]["synthetic"])
         self.assertGreater(out[0]["basal_area_m2_ha"],0)
 
 if __name__=="__main__": unittest.main()
