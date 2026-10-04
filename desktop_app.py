@@ -14,7 +14,7 @@ from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MOD
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 
-APP_VERSION="3.24.24-CANDIDATE"
+APP_VERSION="3.24.25-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
