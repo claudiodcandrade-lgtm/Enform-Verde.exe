@@ -25,6 +25,7 @@ class StructuralEvidence:
     region: str
     metric: str
     unit: str
+    center_type: str = "mean"
     mean: float | None = None
     sd: float | None = None
     se: float | None = None
@@ -65,6 +66,8 @@ def random_effects_summary(records: Iterable[StructuralEvidence]):
     rows=list(records)
     usable=[]; excluded=[]
     for e in rows:
+        if str(e.center_type).casefold() != "mean":
+            excluded.append((e.source_id,"center_not_mean")); continue
         if e.mean is None:
             excluded.append((e.source_id,"missing_mean")); continue
         se,method=evidence_se(e)
