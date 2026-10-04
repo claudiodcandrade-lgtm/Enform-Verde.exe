@@ -8,8 +8,8 @@ Liberar a versão Windows `3.24.22-PROFESSIONAL` somente depois que a mesma cabe
 
 ## Estado atual do PR
 - PR #48 aberto.
-- Cabeça atual: `5bfc345b11cbe79a3383d259287db4443e9536fb`.
-- Workflow atual: run #360 / `37216278155` (queued na última checagem).
+- Cabeça atual: `e4d1ec086df354ec6ad2d5d682c51a54592fd5d5`.
+- Workflow atual: novo run deve ser usado para a cabeça congelada após esta atualização do prompt.
 - Não mesclar antes do término bem-sucedido desse run ou de uma cabeça posterior.
 
 ## Evoluções já incorporadas
@@ -111,7 +111,14 @@ Inclui como base:
 - Delitti et al. Cerrado;
 - Oliveira et al. Cerrado DF.
 
-O registro inicial NÃO deve ser chamado de exaustivo. Continuar ampliando com Embrapa, IFN/SFB/SNIF, UFRA, Museu Goeldi, INPA, INPE, UFLA, UFV, UFPR, UFT, UnB, USP e outras instituições idôneas.
+O registro foi ampliado com Embrapa Amazônia Oriental (FOD terra firme; 80 parcelas; parcelas permanentes), UnB Paraopeba, UFV Viçosa e estudos/estações da Caatinga, incluindo Embrapa Semiárido. A biblioteca continua incremental: novos inventários institucionais devem ser acrescentados à medida que a publicação/dataset seja recuperado e auditado.
+
+### Evidência agregada adicional por bioma
+- Amazônia: classes estruturais Embrapa Amazônia Oriental, Tapajós e referências regionais.
+- Cerrado: UnB Paraopeba, Cerradão/Delitti, Distrito Federal e Rio Vermelho.
+- Mata Atlântica: IFN/RJ, UFV Viçosa e sínteses por estágio.
+- Caatinga: Embrapa Semiárido Petrolina, Iguatu-CE, Contendas do Sincorá-BA e Fazenda Almas/Cariri-PB.
+- Métricas são mantidas separadas: densidade, área basal, AGB, biomassa total, DAP e altura; não misturar estimandos em uma mesma síntese.
 
 ### Cobertura IFN
 O portal SFB confirma arquivos CSV DAP>=10 por UF e DAP>=5, além de unidades amostrais e outros componentes. Priorizar a transformação desses arquivos em tabelas estruturais por UA/subunidade e cruzamento por bioma/fitofisionomia.
@@ -146,7 +153,7 @@ Preservar:
 - Windows autônomo sem Python instalado.
 
 ## Próximas ações obrigatórias
-1. Aguardar/conferir run #360 da cabeça `5bfc345...` (ou run posterior se este prompt gerar nova cabeça).
+1. Conferir o workflow da cabeça final gerada por esta atualização do prompt; ignorar runs anteriores.
 2. Se falhar: corrigir somente a causa comprovada, atualizar esta trilha e disparar novo run.
 3. Se passar:
    - baixar/verificar artefato `Enform-Verde-Windows-v3.24.22-PROFESSIONAL`;
