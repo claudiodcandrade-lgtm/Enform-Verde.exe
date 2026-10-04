@@ -196,6 +196,20 @@ jobs:
           if (!(Test-Path 'offline_ibge_tiles/index.json')) { throw 'Offline IBGE quadrant index was not generated.' }
           Get-Item 'offline_ibge_tiles/index.json' | Format-List Name,Length
 
+      - name: Diagnose 2010 L-band H100 at Tapajos ORNL plots
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        timeout-minutes: 12
+        run: python tools/diagnose_tapajos_2010_height.py
+      - name: Upload 2010 H100 diagnostic report
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tapajos-2010-height-diagnostic-${{ github.run_number }}
+          path: tapajos_2010_h100_diagnostic.json
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Source self-test
         run: python desktop_app.py --self-test
       - name: Earthdata client import
