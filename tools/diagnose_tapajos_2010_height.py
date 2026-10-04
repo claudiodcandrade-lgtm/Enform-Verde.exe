@@ -224,8 +224,19 @@ def main() -> int:
         base_m = metrics(y[keep], pred_base[keep])
         improves = sar_m["rmse_m"] < base_m["rmse_m"]
         status = "SAR_SIGNAL_BEATS_CLASS_BASELINE_EXPLORATORY" if improves else "NO_DEFENSIBLE_SAR_HEIGHT_SIGNAL"
+    pf = np.asarray([c == "PF" for c in classes_a], dtype=bool)
+    pf_correlations = None
+    if int(pf.sum()) >= 3:
+        pf_correlations = {
+            "n_pf": int(pf.sum()),
+            "h100_range_m": [float(y[pf].min()), float(y[pf].max())],
+            "hh_h100_pearson_r": float(np.corrcoef(hh[pf], y[pf])[0, 1]),
+            "hv_h100_pearson_r": float(np.corrcoef(hv[pf], y[pf])[0, 1]),
+            "warning": "descriptive only; PF subset has few spatial blocks and is not independent validation",
+        }
     result = {
         "status": status,
+        "high_biomass_PF_descriptive": pf_correlations,
         "deployable": False,
         "product": "Digital Earth Africa/JAXA 2010 annual ALOS PALSAR HH/HV mosaic",
         "product_kind": "L-band dual-polarization gamma0 backscatter; not a direct height product",
