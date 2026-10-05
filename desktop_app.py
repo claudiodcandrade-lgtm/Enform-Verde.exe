@@ -1007,10 +1007,16 @@ class App(tk.Tk):
         self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {1.36/max(self._map_extent_factor,1e-9):.2f}×. Uso exclusivo para visualização.")
 
     def _on_map_resize(self,event=None):
-        """Keep AOI and satellite base fitted after a real canvas resize."""
+        """Keep the selected basemap fitted after a real canvas resize."""
         if self.gdf is None:return
         size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
         if size==self._last_map_size:return
+        if self._map_provider=="OFFLINE_IBGE":
+            if self._map_redraw_job is not None:
+                try:self.after_cancel(self._map_redraw_job)
+                except Exception:pass
+            self._map_redraw_job=self.after(100,self._redraw_map_after_resize)
+            return
         if self._satellite_map_visible:
             if self._map_refresh_job is not None:
                 try:self.after_cancel(self._map_refresh_job)
@@ -1029,7 +1035,12 @@ class App(tk.Tk):
 
     def _redraw_map_after_resize(self):
         self._map_redraw_job=None
-        if self.gdf is not None and not self._satellite_map_visible:
+        if self.gdf is None:return
+        if self._map_provider=="OFFLINE_IBGE":
+            if not self._draw_offline_brazil_basemap():
+                self._draw_aoi_outline("Falha ao redesenhar base raster IBGE; verifique os dados locais")
+            return
+        if not self._satellite_map_visible:
             self._draw_aoi_outline("AOI — visualização vetorial; base satélite indisponível")
 
     def _draw_offline_brazil_basemap(self,label="Mapa cartográfico IBGE — offline"):
@@ -1047,7 +1058,9 @@ class App(tk.Tk):
             self.map_canvas.create_text(10,10,anchor="nw",text=label,fill="white",font=("Segoe UI",9,"bold"))
             self.map_canvas.configure(scrollregion=(0,0,w,h))
             return True
-        except Exception:
+        except Exception as exc:
+            try:self.status.set(f"Falha na base raster IBGE offline: {exc}")
+            except Exception:pass
             return False
 
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
