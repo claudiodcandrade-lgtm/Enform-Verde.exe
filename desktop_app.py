@@ -15,7 +15,7 @@ from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MOD
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 
-APP_VERSION="3.24.27-CANDIDATE"
+APP_VERSION="3.24.28-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -462,6 +462,33 @@ def primary_ibge_physiognomy(diagnosis):
             if classes:return str(classes[0][0])
     return ""
 
+def ibge_area_summary_lines(diagnosis):
+    """Readable IBGE coverage summary with correct area/percentage ordering."""
+    groups={str(x.get("campo","")).casefold():x.get("classes") or []
+            for x in (diagnosis or {}).get("vegetacao",[])}
+    lines=[]
+    labels=(("legenda_1","Fitofisionomia/região fitoecológica IBGE (legenda_1)"),
+            ("legenda_2","Tipo de cobertura vegetal IBGE (legenda_2)"))
+    for field,label in labels:
+        rows=groups.get(field) or []
+        if not rows:
+            continue
+        lines.append(label+":")
+        for row in rows:
+            if len(row)<3:
+                continue
+            name,area_ha,percent=row[:3]
+            try:
+                lines.append(f"  {name} — {format_ptbr(float(area_ha),2)} ha "
+                             f"({format_ptbr(float(percent),2)}% da AOI)")
+            except (TypeError,ValueError):
+                continue
+    if not any(line.startswith("Fitofisionomia/região") for line in lines):
+        error=(diagnosis or {}).get("vegetacao_error")
+        lines.append("Fitofisionomia/região fitoecológica IBGE (legenda_1): "
+                     +("não disponível — "+str(error) if error else "sem classe intersectada"))
+    return lines
+
 def diagnose_ibge(project):
     """IBGE diagnosis with bbox-only reads; national 355 MB vegetation ZIP is never expanded/read wholesale."""
     root=_ibge_cache(); veg=root/"vegetacao_2026"; bio=root/"biomas_2025"
@@ -841,9 +868,15 @@ class App(tk.Tk):
         self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
 
         spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
-        self.spatial_text=tk.Text(spatial_box,height=7,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
+        self.spatial_text=tk.Text(spatial_box,height=7,wrap="none",
+            yscrollcommand=lambda *a:spatial_scroll.set(*a),
+            xscrollcommand=lambda *a:spatial_hscroll.set(*a))
         spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
-        self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
+        spatial_hscroll=ttk.Scrollbar(spatial_box,orient="horizontal",command=self.spatial_text.xview)
+        spatial_box.rowconfigure(0,weight=1); spatial_box.columnconfigure(0,weight=1)
+        self.spatial_text.grid(row=0,column=0,sticky="nsew")
+        spatial_scroll.grid(row=0,column=1,sticky="ns")
+        spatial_hscroll.grid(row=1,column=0,sticky="ew")
         self._bind_text_scroll(self.spatial_text)
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
@@ -1342,33 +1375,21 @@ class App(tk.Tk):
         self._ibge_pending=False
         if kind!="ok":
             self.project["ibge_diagnosis_error"]=value
-            if hasattr(self,"ibge_phys_display"):self.ibge_phys_display.set("Não determinada — falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
-            self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
-            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nDiagnóstico IBGE pendente: "+value)
-            if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
-            return
-        d=value; self.project["ibge_diagnosis"]=d
-        if d["biomas"]:self.biome.set(d["biomas"][0][0])
-        primary=primary_ibge_physiognomy(d)
-        if primary:self.phys.set(primary)
-        elif d.get("vegetacao_error"):self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
-        if hasattr(self,"ibge_biome_display"):
-            self.ibge_biome_display.set(self.biome.get() or "Não determinado")
-        if hasattr(self,"ibge_phys_display"):
-            code=None
+            if hasattr(self,"ibge_phys_display"):
             regs=d.get("regioes_fitoecologicas") or []
-            if regs and primary and regs[0].get("name")==primary:code=regs[0].get("code")
+            code=next((x.get("code") for x in regs if primary and x.get("name")==primary),None)
             shown=self.phys.get() or "Não determinada"
             groups=d.get("vegetacao") or []
-            l1=next((x.get("classes",[]) for x in groups if x.get("campo")=="legenda_1"),[])
-            coverage=" | ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in l1[:6])
+            l1=next((x.get("classes",[]) for x in groups if str(x.get("campo","")).casefold()=="legenda_1"),[])
+            coverage=" | ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in l1)
             mix=("Composição IBGE: "+coverage) if coverage else "Composição IBGE indisponível"
-            self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else "")+"\n"+mix)
-        btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
-        vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"]) or ("PENDENTE: "+d.get("vegetacao_error","sem classe"))
-        code_txt="; ".join(f"{x['code'] or 'código N/D'} — {x['name']}: {x['percent']:.1f}% ({x['area_ha']:,.1f} ha)" for x in d.get("regioes_fitoecologicas",[])[:8])
-        if code_txt:vtxt="Região fitoecológica (IBGE legenda_1): "+code_txt+" | "+vtxt
-        self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nIBGE — Bioma(s): "+btxt+"\nIBGE 2026 — Vegetação: "+vtxt)
+            self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else "")+"\\n"+mix)
+        btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d["biomas"])
+        code_txt="\\n".join(f"  código {x['code'] or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
+        ibge_lines=["Bioma(s) IBGE: "+btxt]+ibge_area_summary_lines(d)
+        if code_txt:ibge_lines.append("Código(s) das regiões fitoecológicas (IBGE):\\n"+code_txt)
+        current=self.spatial_text.get("1.0","end").strip()
+        self._set(self.spatial_text,current+"\\n\\n"+"\\n".join(ibge_lines))
         self.status.set("Perímetro e diagnóstico IBGE concluídos." if not d.get("vegetacao_error") else "Bioma IBGE concluído; fitofisionomia não classificada — modelos que exigem classe IBGE ficam bloqueados; apenas rotas independentes da classe podem prosseguir.")
         if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
     def pick_soil(self):
