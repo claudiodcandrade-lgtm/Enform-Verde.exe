@@ -1376,6 +1376,19 @@ class App(tk.Tk):
         if kind!="ok":
             self.project["ibge_diagnosis_error"]=value
             if hasattr(self,"ibge_phys_display"):
+                self.ibge_phys_display.set("Não determinada — falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
+            self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\\n\\nDiagnóstico IBGE pendente: "+str(value))
+            if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
+            return
+        d=value; self.project["ibge_diagnosis"]=d
+        if d.get("biomas"):self.biome.set(d["biomas"][0][0])
+        primary=primary_ibge_physiognomy(d)
+        if primary:self.phys.set(primary)
+        elif d.get("vegetacao_error"):self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
+        if hasattr(self,"ibge_biome_display"):
+            self.ibge_biome_display.set(self.biome.get() or "Não determinado")
+        if hasattr(self,"ibge_phys_display"):
             regs=d.get("regioes_fitoecologicas") or []
             code=next((x.get("code") for x in regs if primary and x.get("name")==primary),None)
             shown=self.phys.get() or "Não determinada"
@@ -1384,9 +1397,9 @@ class App(tk.Tk):
             coverage=" | ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in l1)
             mix=("Composição IBGE: "+coverage) if coverage else "Composição IBGE indisponível"
             self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else "")+"\\n"+mix)
-        btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d["biomas"])
-        code_txt="\\n".join(f"  código {x['code'] or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
-        ibge_lines=["Bioma(s) IBGE: "+btxt]+ibge_area_summary_lines(d)
+        btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d.get("biomas",[]))
+        code_txt="\\n".join(f"  código {x.get('code') or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
+        ibge_lines=["Bioma(s) IBGE: "+(btxt or "não determinado")]+ibge_area_summary_lines(d)
         if code_txt:ibge_lines.append("Código(s) das regiões fitoecológicas (IBGE):\\n"+code_txt)
         current=self.spatial_text.get("1.0","end").strip()
         self._set(self.spatial_text,current+"\\n\\n"+"\\n".join(ibge_lines))
