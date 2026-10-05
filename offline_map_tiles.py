@@ -12,34 +12,49 @@ def write_quadrant_tiles(layers,output_dir,bounds=(-75.0,-35.0,-33.0,6.0),tile_d
     if size<=0 or west>=east or south>=north:raise ValueError("Invalid bounds or tile size")
     for old in root.glob("q_*.json.gz"):old.unlink()
     nx=int(math.ceil((east-west)/size));ny=int(math.ceil((north-south)/size))
-    feature_counts={k:len(v) for k,v in layers.items()};tiles={}
+    feature_counts={k:len(v) for k,v in layers.items()}
+    nx=int(math.ceil((east-west)/size));ny=int(math.ceil((north-south)/size))
+    contents={}
     for iy in range(ny):
         y0=south+iy*size;y1=min(north,y0+size)
         for ix in range(nx):
-            x0=west+ix*size;x1=min(east,x0+size);cell=box(x0,y0,x1,y1)
-            contents={k:[] for k in layers}
-            for layer,features in layers.items():
-                for feature in features:
-                    fb=feature.get("bbox")
-                    if fb and (fb[2]<x0 or fb[0]>x1 or fb[3]<y0 or fb[1]>y1):continue
-                    if not feature.get("geometry"):continue
-                    try:
-                        geom=shape(feature["geometry"])
-                        if not geom.is_valid:geom=geom.buffer(0)
-                        clipped=geom.intersection(cell)
+            x0=west+ix*size;x1=min(east,x0+size)
+            contents[f"{ix}_{iy}"]={"bbox":[x0,y0,x1,y1],"layers":{k:[] for k in layers}}
+    # Assign each feature only to tiles intersected by its bounding box; this avoids
+    # scanning every feature for every tile on each national map build.
+    for layer,features in layers.items():
+        for feature in features:
+            fb=feature.get("bbox")
+            if not fb or not feature.get("geometry"):continue
+            if fb[2]<west or fb[0]>east or fb[3]<south or fb[1]>north:continue
+            ix0=max(0,min(nx-1,int(math.floor((max(west,fb[0])-west)/size))))
+            iy0=max(0,min(ny-1,int(math.floor((max(south,fb[1])-south)/size))))
+            ix1=max(0,min(nx-1,int(math.floor((min(east,fb[2])-west)/size))))
+            iy1=max(0,min(ny-1,int(math.floor((min(north,fb[3])-south)/size))))
+            try:
+                geom=shape(feature["geometry"])
+                if not geom.is_valid:geom=geom.buffer(0)
+            except Exception:continue
+            for iy in range(iy0,iy1+1):
+                for ix in range(ix0,ix1+1):
+                    key=f"{ix}_{iy}";meta=contents[key]["bbox"]
+                    if fb[2]<meta[0] or fb[0]>meta[2] or fb[3]<meta[1] or fb[1]>meta[3]:continue
+                    try:clipped=geom.intersection(box(*meta))
                     except Exception:continue
                     if clipped.is_empty:continue
                     parts=list(clipped.geoms) if isinstance(clipped,GeometryCollection) else [clipped]
                     for part in parts:
                         if part.is_empty or part.geom_type not in ("Point","MultiPoint","LineString","MultiLineString","Polygon","MultiPolygon"):continue
                         item=dict(feature);item["geometry"]=mapping(part);item["bbox"]=[float(v) for v in part.bounds]
-                        contents[layer].append(item)
-            counts={k:len(v) for k,v in contents.items()}
-            if not any(counts.values()):continue
-            key=f"{ix}_{iy}";filename=f"q_{key}.json.gz"
-            with gzip.open(root/filename,"wt",encoding="utf-8",compresslevel=6) as fh:
-                json.dump(contents,fh,ensure_ascii=False,separators=(",",":"))
-            tiles[key]={"file":filename,"bbox":[x0,y0,x1,y1],"counts":counts}
+                        contents[key]["layers"][layer].append(item)
+    tiles={}
+    for key,tile in contents.items():
+        counts={k:len(v) for k,v in tile["layers"].items()}
+        if not any(counts.values()):continue
+        filename=f"q_{key}.json.gz"
+        with gzip.open(root/filename,"wt",encoding="utf-8",compresslevel=6) as fh:
+            json.dump(tile["layers"],fh,ensure_ascii=False,separators=(",",":"))
+        tiles[key]={"file":filename,"bbox":tile["bbox"],"counts":counts}
     manifest={"format_version":1,"bounds":[west,south,east,north],"tile_degrees":size,
               "feature_counts":feature_counts,"tile_count":len(tiles),"tiles":tiles}
     (root/"index.json").write_text(json.dumps(manifest,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
