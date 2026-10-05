@@ -380,10 +380,10 @@ jobs:
               ui._satellite_map_visible=False
               ui.map_canvas.configure(width=960,height=420)
               ui.update_idletasks(); ui._on_map_resize(); ui.update_idletasks(); ui._redraw_map_after_resize(); ui.update_idletasks()
-              polys=[i for i in ui.map_canvas.find_all() if ui.map_canvas.type(i)=="polygon"]
-              assert polys, "AOI disappeared after map resize"
-              bb=ui.map_canvas.bbox(polys[0]); cw=max(1,ui.map_canvas.winfo_width()); ch=max(1,ui.map_canvas.winfo_height())
-              assert ((bb[2]-bb[0])/cw > .45 or (bb[3]-bb[1])/ch > .45), "AOI is not fitted to resized map canvas: "+repr((bb,cw,ch))
+              aoi_images=[i for i in ui.map_canvas.find_withtag("aoi_visible") if ui.map_canvas.type(i)=="image"]
+              assert aoi_images, "raster IBGE basemap with translucent AOI disappeared after map resize"
+              bb=ui.map_canvas.bbox(aoi_images[0]); cw=max(1,ui.map_canvas.winfo_width()); ch=max(1,ui.map_canvas.winfo_height())
+              assert bb and ((bb[2]-bb[0])/cw > .45 or (bb[3]-bb[1])/ch > .45), "IBGE raster with AOI is not fitted to resized map canvas: "+repr((bb,cw,ch))
               old_generation=ui._map_generation
               ui._reset_analysis_state()
               assert ui._map_generation>old_generation and not ui._satellite_map_visible, "new input must invalidate stale satellite map responses"
