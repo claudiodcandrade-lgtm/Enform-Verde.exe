@@ -14,6 +14,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
+from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
 
 APP_VERSION="3.24.28-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
