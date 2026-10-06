@@ -845,7 +845,7 @@ jobs:
         run: |
           @'
           ENFORM VERDE - WINDOWS
-          VERSÃO CANDIDATA 3.24.30. O gate BIOMASS FH L2B nas AOIs de alta biomassa não encontrou cobertura no teste de 2026-10-04; os assets L1C de medição responderam HTTP 401 sem autorização. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
+          VERSÃO CANDIDATA 3.24.31. O gate BIOMASS FH L2B nas AOIs de alta biomassa não encontrou cobertura no teste de 2026-10-04; os assets L1C de medição responderam HTTP 401 sem autorização. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
           Para abrir: dê duplo clique em "Enform Verde.exe".
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
