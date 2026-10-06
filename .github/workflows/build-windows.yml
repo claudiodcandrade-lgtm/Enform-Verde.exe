@@ -876,7 +876,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.35-CANDIDATE
+          name: Enform-Verde-Windows-v3.24.36-CANDIDATE
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30

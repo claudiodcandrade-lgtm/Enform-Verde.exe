@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, tapajos_litter_stock_component
+from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, tapajos_litter_stock_component, santo_ambrosio_litter_stock_component
 
 try:
     import geopandas as gpd
@@ -77,6 +77,37 @@ class CarbonCompartmentTests(unittest.TestCase):
         local=gpd.GeoDataFrame(geometry=[box(-54.984,-3.068,-54.982,-3.065)],crs="EPSG:4326")
         self.assertIsNone(tapajos_litter_stock_component("Cerrado","Floresta Ombrófila Densa",local))
         self.assertIsNone(tapajos_litter_stock_component("Amazônia","Savana Arborizada",local))
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_tapajos_acceptance_polygon_without_declared_crs_still_resolves_litter(self):
+        # KML readers can preserve longitude/latitude coordinates without CRS metadata.
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.93,-3.02)])
+        r=tapajos_litter_stock_component("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi)
+        self.assertIsNotNone(r)
+        self.assertEqual(r["evidence_type"],"standing_litter_dry_mass")
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_santo_ambrosio_local_litter_stock_has_sampling_ci_and_domain_gate(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-49.60,-0.12,-49.41,0.045)],crs="EPSG:4326")
+        r=santo_ambrosio_litter_stock_component("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi)
+        self.assertIsNotNone(r)
+        self.assertEqual(r["n_independent_units"],17)
+        self.assertEqual(r["mean_dry_mg_ha"],14.3876)
+        self.assertAlmostEqual(r["range_dry_mg_ha"][0],9.613,places=2)
+        self.assertAlmostEqual(r["range_dry_mg_ha"][1],19.162,places=2)
+        self.assertIn("não quantifica transferência",r["method"])
+        self.assertIsNone(santo_ambrosio_litter_stock_component("Cerrado","Floresta Ombrófila Densa",aoi))
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_kmz_without_declared_crs_still_resolves_tapajos_litter_reference(self):
+        from carbon_compartments import aoi_to_wgs84
+        # Some KML/KMZ readers preserve lon/lat coordinates but omit CRS metadata.
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.93,-3.02)])
+        normalized=aoi_to_wgs84(aoi)
+        self.assertEqual(normalized.crs.to_epsg(),4326)
+        r=tapajos_litter_stock_component("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi)
+        self.assertIsNotNone(r)
+        self.assertEqual(r["evidence_type"],"standing_litter_dry_mass")
 
 if __name__=="__main__":
     unittest.main()

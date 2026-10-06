@@ -16,9 +16,10 @@ from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 from official_inventory_harvest import harvest_redape, harvest_sinaflor, PNLA_PORTAL, INSTITUTIONAL_PORTALS, SOURCE_HIERARCHY
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
-from carbon_compartments import tapajos_litter_stock_component, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
+from carbon_compartments import tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, tapajos_necromass_components, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
+from mapbiomas_zonal import mapbiomas_class_percentages
 
-APP_VERSION="3.24.35-CANDIDATE"
+APP_VERSION="3.24.36-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1570,6 +1571,13 @@ class App(tk.Tk):
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
+            try:
+                mapbiomas_summary=mapbiomas_class_percentages(self.gdf,year=2025)
+                mapbiomas_summary["error"]=None
+            except Exception as exc:
+                mapbiomas_summary={"classes":[],"mapped_area_ha":0.0,"collection":11,"year":2025,
+                                   "error":f"{type(exc).__name__}: {exc}"}
+            self.project["mapbiomas_zonal"]=mapbiomas_summary
             if precomputed_sar is not None:
                 sar=precomputed_sar
             elif self.sar_paths:
@@ -1580,13 +1588,19 @@ class App(tk.Tk):
             self.project["sar_result"]=sar
             # Resolve direct standing litter stock independently of the AGB/SAR route.
             regional_components=sar.setdefault("regional_components",{})
+            tapajos_necromass=tapajos_necromass_components(self.biome.get(),self.phys.get(),self.gdf)
+            regional_components.update(tapajos_necromass)
             if not any("necromassa aérea" in str(k).casefold() for k in regional_components):
                 uf=infer_uf_from_aoi(self.gdf)
                 ifn=ifn_necromass_component(self.biome.get(),uf,app_resource("data/ifn_necromass_biome_uf_v1.csv"))
                 if ifn: regional_components["Necromassa aérea — referência direta IFN por bioma×UF"]=ifn
             if not any("serapilheira" in str(k).casefold() for k in regional_components):
-                litter=tapajos_litter_stock_component(self.biome.get(),self.phys.get(),self.gdf)
-                if litter: regional_components["Serapilheira — estoque de massa seca no piso florestal"]=litter
+                litter=santo_ambrosio_litter_stock_component(self.biome.get(),self.phys.get(),self.gdf)
+                if litter:
+                    regional_components["Serapilheira — estoque gravimétrico local Santo Ambrósio"]=litter
+                else:
+                    litter=tapajos_litter_stock_component(self.biome.get(),self.phys.get(),self.gdf)
+                    if litter: regional_components["Serapilheira — estoque de massa seca no piso florestal"]=litter
             # Contract: a numerical AGB is a SAR result only when provenance explicitly says SAR.
             if sar.get("agb_mg_ha") is not None and not str(sar.get("data_origin","")).startswith("SAR"):
                 self.project["reference_result"]=sar
@@ -1718,17 +1732,26 @@ class App(tk.Tk):
               ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={format_ptbr(agb,1)} Mg/ha; incerteza={format_ptbr(sar_unc,1)} Mg/ha; carbono={format_ptbr(CARBON_FRACTION,2)}; faixa C={format_ptbr(agc_lo,2)}–{format_ptbr(agc_hi,2)} tC/ha","produto SAR ou referência secundária, conforme origem",sar.get("source",sar.get("status","produto processado")))]
             regional_components=sar.get("regional_components") or {}
             for cname,component in regional_components.items():
-                dry=float(component["mean_dry_mg_ha"])
-                raw_bounds=component.get("range_dry_mg_ha")
-                bounds=list(map(float,raw_bounds)) if isinstance(raw_bounds,(list,tuple)) and len(raw_bounds)==2 else None
                 uncertainty=str(component.get("uncertainty_kind") or "incerteza não informada")
-                note=(f"biomassa seca={format_ptbr(dry,2)} Mg/ha; "
-                      +(f"intervalo={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg/ha; " if bounds else "intervalo não informado; ")
-                      +f"fração C operacional={format_ptbr(CARBON_FRACTION,2)}; incerteza: {uncertainty}. "
-                      +str(component.get("method","")))
+                if component.get("mean_tc_ha") is not None:
+                    stock_tc=float(component["mean_tc_ha"])
+                    raw_bounds=component.get("range_tc_ha")
+                    bounds=list(map(float,raw_bounds)) if isinstance(raw_bounds,(list,tuple)) and len(raw_bounds)==2 else None
+                    note=(f"estoque de carbono medido={format_ptbr(stock_tc,2)} Mg C/ha; "
+                          +(f"IC/faixa publicada={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg C/ha; " if bounds else "intervalo não informado; ")
+                          +f"incerteza: {uncertainty}. "+str(component.get("method","")))
+                else:
+                    dry=float(component["mean_dry_mg_ha"])
+                    raw_bounds=component.get("range_dry_mg_ha")
+                    bounds=list(map(float,raw_bounds)) if isinstance(raw_bounds,(list,tuple)) and len(raw_bounds)==2 else None
+                    stock_tc=dry*CARBON_FRACTION
+                    note=(f"biomassa seca={format_ptbr(dry,2)} Mg/ha; "
+                          +(f"intervalo={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg/ha; " if bounds else "intervalo não informado; ")
+                          +f"fração C operacional={format_ptbr(CARBON_FRACTION,2)}; incerteza: {uncertainty}. "
+                          +str(component.get("method","")))
                 if component.get("include_in_total") is False:
                     note += " Excluído do total por incompatibilidade espacial/fitofisionômica."
-                parts.append((cname,dry*CARBON_FRACTION,component.get("status","REFERÊNCIA MICRORREGIONAL"),note,
+                parts.append((cname,stock_tc,component.get("status","REFERÊNCIA MICRORREGIONAL"),note,
                               component.get("method","estoque de referência publicado; não é predição SAR nem medição da AOI"),component.get("source","literatura científica regional")))
             # Always estimate belowground biomass allometrically from AGB. Cairns et al. tropical-forest
             # equation is an explicitly generalized model; its residual prediction
@@ -1786,9 +1809,13 @@ class App(tk.Tk):
                 if name=="Biomassa aérea":
                     ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("envelope descritivo; sem cobertura probabilística declarada" if "envelope descritivo" in agb_metric else ("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo")) if sar_unc else "N/D")
                 elif name in regional_components:
-                    c=regional_components[name]; raw_bounds=c.get("range_dry_mg_ha")
+                    c=regional_components[name]
+                    if c.get("mean_tc_ha") is not None:
+                        center=float(c["mean_tc_ha"]); raw_bounds=c.get("range_tc_ha"); factor=1.0
+                    else:
+                        center=float(c["mean_dry_mg_ha"]); raw_bounds=c.get("range_dry_mg_ha"); factor=CARBON_FRACTION
                     bounds=list(map(float,raw_bounds)) if isinstance(raw_bounds,(list,tuple)) and len(raw_bounds)==2 else None
-                    ea=(max(float(c["mean_dry_mg_ha"])-bounds[0],bounds[1]-float(c["mean_dry_mg_ha"]))*CARBON_FRACTION) if bounds else None
+                    ea=(max(center-bounds[0],bounds[1]-center)*factor) if bounds else None
                     ep=(ea/val*100 if ea is not None and val else None)
                     metric=str(c.get("uncertainty_kind") or "faixa descritiva sem cobertura probabilística declarada")
                     level=("IC da média publicado/reconstruído; erro de transferência à AOI não incluído" if component_has_confidence_interval(c) else "envelope da referência; cobertura probabilística não declarada")
@@ -1874,6 +1901,14 @@ class App(tk.Tk):
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
                          "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{format_ptbr(float(sar.get('distance_from_km83_km',float('nan'))),2)} km."]
             lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {format_ptbr(area,2)} ha",""]+diag
+            lines += ["",f"COBERTURA E USO DO SOLO — MAPBIOMAS COLEÇÃO {mapbiomas_summary.get('collection',11)} / {mapbiomas_summary.get('year',2025)}",
+                      "Percentuais das classes cartográficas na AOI; a legenda de cobertura/uso não substitui a classificação detalhada de fitofisionomias IBGE."]
+            if mapbiomas_summary.get("classes"):
+                lines.append(f"Área válida mapeada: {format_ptbr(mapbiomas_summary.get('mapped_area_ha',0),2)} ha")
+                for mc in mapbiomas_summary["classes"]:
+                    lines.append(f"  {mc['class_name']} (código {mc['class_code']}): {format_ptbr(mc['area_ha'],2)} ha ({format_ptbr(mc['area_pct'],2)}%) — agrupamento: {mc['crosswalk_group']}")
+            else:
+                lines.append("NÃO CALCULADO: "+str(mapbiomas_summary.get("error","sem pixels válidos")))
             for r in rows:
                 err=(f"±{format_ptbr(r['erro_abs_tc'],2)} tC/ha ({format_ptbr(r['erro_pct'],1)}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {format_ptbr(r['tc'],2)} tC/ha  |  {format_ptbr(r['tco2'],2)} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
@@ -1899,7 +1934,7 @@ class App(tk.Tk):
                 lines += ["AGB SAR POR CLASSE IBGE","  NÃO CALCULADA: selecione uma camada vetorial IBGE de fitofisionomias para cruzar a AOI e calcular cada classe separadamente.",""]
             missing=[]
             if "Biomassa subterrânea" not in regional_components: missing.append("biomassa subterrânea")
-            if not any(str(n).startswith("Necromassa aérea") for n in regional_components): missing.append("necromassa aérea")
+            if not any(str(n).startswith("Necromassa aérea") and c.get("include_in_total") is not False for n,c in regional_components.items()): missing.append("necromassa aérea (a referência agregada IFN não é compatível com a classe da AOI)")
             if not any(str(n).startswith("Necromassa subterrânea") for n in regional_components): missing.append("necromassa subterrânea")
             if not any(n.startswith("Serapilheira") for n in regional_components): missing.append("serapilheira")
             lines += ["COMPARTIMENTOS NÃO SOMADOS", ("Nenhum compartimento adicional elegível ficou sem estimativa nesta execução." if not missing else "; ".join(missing)+": não estimada por falta de dados/modelos regionais compatíveis."),

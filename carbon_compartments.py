@@ -5,6 +5,28 @@ and allometric deadwood proxies are explicitly excluded.
 """
 from __future__ import annotations
 
+def aoi_to_wgs84(aoi):
+    """Normalize common AOI objects and infer EPSG:4326 only from lon/lat bounds.
+
+    KML/KMZ readers can return valid geographic coordinates without attaching a
+    CRS. Treating those as unknown caused regional stock references to silently
+    disappear. Projected coordinates are never guessed.
+    """
+    import geopandas as gpd
+    if isinstance(aoi, gpd.GeoDataFrame):
+        frame=aoi.copy()
+    elif isinstance(aoi, gpd.GeoSeries):
+        frame=gpd.GeoDataFrame(geometry=aoi.copy())
+    else:
+        frame=gpd.GeoDataFrame(geometry=[aoi],crs="EPSG:4326")
+    if frame.crs is None:
+        bounds=frame.total_bounds
+        west,south,east,north=map(float,bounds)
+        if not (-180<=west<=east<=180 and -90<=south<=north<=90):
+            raise ValueError("AOI sem CRS e coordenadas não reconhecíveis como longitude/latitude")
+        frame=frame.set_crs("EPSG:4326")
+    return frame.to_crs("EPSG:4326")
+
 def tapajos_litter_stock_component(biome, physiognomy, aoi):
     """Closest direct standing-stock inventory for the matching Tapajos physiognomy.
 
@@ -22,7 +44,7 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
     if aoi is None:
         return None
     try:
-        g=aoi.to_crs("EPSG:4326")
+        g=aoi_to_wgs84(aoi)
         from pyproj import Geod
         geod=Geod(ellps="WGS84")
         geom=g.geometry.union_all()
@@ -60,6 +82,54 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
         "standard_error_dry_mg_ha":se,
         "degrees_of_freedom":5,
         "evidence_type":"standing_litter_dry_mass"
+    }
+
+def santo_ambrosio_litter_stock_component(biome, physiognomy, aoi):
+    """Local gravimetric litter-stock summary for the Santo Ambrósio forest AOI.
+
+    The reported 17 quadrats support the sampling interval for the farm-level
+    mean only. They do not quantify class-specific or transfer uncertainty.
+    Apply only to an AOI matching the known farm footprint and a compatible
+    dense ombrophilous forest class.
+    """
+    import math
+    if str(biome or "").strip().casefold() not in ("amazônia", "amazonia") or aoi is None:
+        return None
+    p=str(physiognomy or "").casefold()
+    if "floresta ombrófila densa" not in p and "floresta ombrofila densa" not in p:
+        return None
+    try:
+        frame=aoi_to_wgs84(aoi)
+        west,south,east,north=map(float,frame.total_bounds)
+        centroid=frame.geometry.union_all().centroid
+        # CAR footprint envelope recorded for Fazenda Santo Ambrósio, Chaves/PA.
+        if not (-49.678 <= west < east <= -49.333 and -0.153 <= south < north <= 0.078):
+            return None
+        if not (-49.658 <= centroid.x <= -49.353 and -0.133 <= centroid.y <= 0.058):
+            return None
+        area_ha=float(frame.to_crs("EPSG:6933").geometry.union_all().area/10000.0)
+        if not 20000 <= area_ha <= 60000:
+            return None
+    except Exception:
+        return None
+    n=17
+    mean=14.3876
+    sd=9.2863
+    se=sd/math.sqrt(n)
+    margin=2.1199*se  # t(0.975, df=16)
+    return {
+        "mean_dry_mg_ha":mean,
+        "range_dry_mg_ha":[max(0.0,mean-margin),mean+margin],
+        "method":"estoque gravimétrico local de serapilheira: 17 quadrados de 0,5×0,5 m, massa seca após secagem a 70 °C até peso constante. Média 14,3876 Mg/ha, DP 9,2863 Mg/ha; IC95% t bilateral da média, gl=16. O IC representa somente erro amostral sob independência; não quantifica transferência entre classes ou representatividade espacial total da fazenda.",
+        "source":"Inventário da Fazenda Santo Ambrósio — resumo local de 17 amostras gravimétricas de serapilheira",
+        "status":"ESTOQUE GRAVIMÉTRICO LOCAL — IC95% AMOSTRAL; TRANSFERÊNCIA NÃO INCLUÍDA",
+        "origin":"INVENTARIO_DIRETO_LOCAL",
+        "uncertainty_kind":"IC95% t da média (n=17, gl=16); erro de transferência/classificação não estimado",
+        "n_independent_units":n,
+        "standard_error_dry_mg_ha":se,
+        "degrees_of_freedom":n-1,
+        "evidence_type":"standing_litter_dry_mass",
+        "include_in_total":True,
     }
 
 def component_has_confidence_interval(component):
@@ -107,7 +177,7 @@ def infer_uf_from_aoi(aoi, cache_dir=None):
         id_field=next((k for k in ("id","codarea","CD_UF","CD_GEOCUF") if k in states.columns),None)
         if id_field is None:return None
         states=states.to_crs("EPSG:6933")
-        geom=aoi.to_crs("EPSG:6933").geometry.union_all()
+        geom=aoi_to_wgs84(aoi).to_crs("EPSG:6933").geometry.union_all()
         areas=states.geometry.intersection(geom).area
         if len(areas)==0 or float(areas.max())<=0:return None
         raw=str(states.iloc[int(areas.argmax())][id_field]).zfill(2)
