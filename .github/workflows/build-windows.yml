@@ -274,6 +274,9 @@ jobs:
           assert "maps.googleapis.com/maps/api/staticmap" in src and "sentinel2_preview" in src and "World_Imagery" in src and "World_Street_Map" in src, "Google -> Sentinel-2 -> Esri Imagery -> Esri Street fallback chain missing"
           assert "offline_brazil_preview" in src and "offline_ibge_map.json.gz" in src and Path("offline_ibge_map.json.gz").exists(), "packaged offline IBGE map missing"
           assert "Fitofisionomia IBGE (legenda_1):" in src and "ibge_phys_display" in src and "ibge_biome_display" in src, "visible official IBGE phytophysiognomy panel missing"
+          assert "def pick_ibge_physiognomy" in src and "AGB SAR POR CLASSE IBGE" in src and "AGB por Fitofisionomia" in src, "per-class IBGE SAR reporting/export missing"
+          import gravimetric_stock as gs
+          assert gs.litter_stock_from_quadrats([250,500],[0.25,0.25])["n_independent_units"] == 2, "gravimetric module runtime contract failed"
           assert "Área do polígono:" in src and "aoi_area_display" in src, "visible polygon area field missing"
           assert "IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades" in src, "offline IBGE map legend missing"
           assert "RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA" in src, "SAR-only diagnostic report missing"
