@@ -49,6 +49,9 @@ class NationalFallbackTests(unittest.TestCase):
         components=r.get("regional_components") or {}
         self.assertNotIn("Biomassa subterrânea",components)
         self.assertFalse(any(name.startswith("Necromassa") for name in components))
+        self.assertIn("Serapilheira — estoque no piso florestal",components)
+        self.assertIn("forest floor",components["Serapilheira — estoque no piso florestal"]["method"].lower())
+        self.assertNotIn("produtividade/queda anual",components["Serapilheira — estoque no piso florestal"]["method"])
 
     @unittest.skipUnless(gpd and box,"geospatial dependencies required")
     def test_pipeline_withholds_inventory_agb_after_processed_sar_without_model(self):
