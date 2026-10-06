@@ -121,3 +121,9 @@ def ifn_necromass_component(biome, uf, csv_path):
         }
     except Exception:
         return None
+
+def rows_for_compartment(analysis_rows, prefix):
+    """Select analysis rows for a named workbook sheet by stable compartment prefix."""
+    prefix=str(prefix or "")
+    return [row for row in (analysis_rows or [])
+            if str(row.get("parametro","")).startswith(prefix)]
