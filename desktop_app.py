@@ -1601,7 +1601,37 @@ class App(tk.Tk):
                     else:
                         lines += ["", "RESULTADO PARCIAL — SOLO", "  Carbono do solo 0–30 cm não estimado: "+str(soil_profiles.get("error","camada PronaSolos sem valores válidos."))]
                         self.project["analysis_rows"]=[]
-                    lines += ["", "AGB, biomassa subterrânea, necromassa e serapilheira permanecem não estimadas nesta execução; não foram substituídas por valores sem suporte compatível."]
+                    # Preserve independently measured stocks even when the SAR route has no AGB model.
+                    independent_rows=[]
+                    independent_total_tc_ha=0.0
+                    for cname,component in (sar.get("regional_components") or {}).items():
+                        dry=component.get("mean_dry_mg_ha")
+                        if dry is None: continue
+                        dry=float(dry); tc=dry*CARBON_FRACTION
+                        bounds=component.get("range_dry_mg_ha")
+                        bounds=list(map(float,bounds)) if isinstance(bounds,(list,tuple)) and len(bounds)==2 else None
+                        tc_bounds=[max(0.0,bounds[0]*CARBON_FRACTION),bounds[1]*CARBON_FRACTION] if bounds else None
+                        include=component.get("include_in_total",True)
+                        uncertainty=str(component.get("uncertainty_kind") or "incerteza não informada")
+                        note=(f"estoque seco={format_ptbr(dry,2)} Mg/ha; carbono={format_ptbr(tc,2)} tC/ha; "
+                              +(f"IC/faixa convertida={format_ptbr(tc_bounds[0],2)}–{format_ptbr(tc_bounds[1],2)} tC/ha; " if tc_bounds else "intervalo não informado; ")
+                              +f"incerteza: {uncertainty}. "+str(component.get("method","")))
+                        lines += ["", f"COMPARTIMENTO INDEPENDENTE — {cname}", f"  {format_ptbr(tc,2)} tC/ha | {format_ptbr(tc*44/12,2)} tCO₂e/ha | {note}"]
+                        if not include: lines.append("  Excluído do total da AOI: referência sem compatibilidade espacial/fitofisionômica suficiente.")
+                        else: independent_total_tc_ha += tc
+                        err=max(abs(tc-tc_bounds[0]),abs(tc_bounds[1]-tc)) if tc_bounds else None
+                        independent_rows.append({"parametro":cname,"tc":tc,"tco2":tc*44/12,"origem":component.get("origin","INVENTARIO_DIRETO"),
+                          "status":component.get("status","ESTOQUE DIRETO DE REFERÊNCIA"),"metodo":component.get("method",""),
+                          "fonte":component.get("source",""),"obs":note,"erro_abs_tc":err,
+                          "erro_pct":(err/tc*100 if err is not None and tc else None),
+                          "erro_metrica":uncertainty,"nivel_confianca":uncertainty,"include_in_total":include})
+                    if independent_rows:
+                        self.project.setdefault("analysis_rows",[]).extend(independent_rows)
+                        self.project["partial_independent_carbon_total_tc_ha"]=independent_total_tc_ha
+                        lines += ["", f"Subtotal dos compartimentos independentes incluídos no total (sem AGB/solo): {format_ptbr(independent_total_tc_ha,2)} tC/ha."]
+                    else:
+                        lines += ["", "Nenhum compartimento independente tem inventário compatível disponível para esta AOI."]
+                    lines += ["", "AGB e biomassa subterrânea permanecem não estimadas sem modelo/dado compatível; necromassa ou serapilheira só aparecem acima quando há referência direta elegível."]
                     lines += ["", "Métricas de validação AGB: RMSE, MAE, viés e R² não são aplicáveis sem modelo treinado/validado compatível. Incerteza da AGB: não estimável.", "Estado: PROCESSAMENTO SAR REAL CONCLUÍDO; ESTIMATIVA AGB PENDENTE DE MODELO/PARCELAS COMPATÍVEIS."]
                     report="\n".join(lines); self.project["partial_sar_analysis"]={"area_ha":area,"sar_result":sar,"report":report}; self.project["area_ha"]=area; self.project["last_result"]=report
                     self._set(self.remote_text,"SAR processado na AOI. AGB não estimada por falta de modelo validado compatível; consulte a trilha, os pixels processados e o motivo no relatório.")
