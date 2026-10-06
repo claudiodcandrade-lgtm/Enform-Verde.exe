@@ -15,7 +15,7 @@ from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MOD
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
-from carbon_compartments import tapajos_litter_stock_component, ifn_necromass_component, infer_uf_from_aoi
+from carbon_compartments import tapajos_litter_stock_component, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment
 
 APP_VERSION="3.24.34-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
@@ -1841,7 +1841,7 @@ class App(tk.Tk):
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
         for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
             sh=wb.create_sheet(sheet); setup(sh,"Enform Verde — "+sheet)
-            rr=[r for r in ar if r["parametro"]==param]
+            rr=rows_for_compartment(ar,param)
             data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
             if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
             put(sh,data)
