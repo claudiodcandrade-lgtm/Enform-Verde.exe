@@ -15,7 +15,7 @@ from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MOD
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
-from carbon_compartments import tapajos_litter_stock_component, empty_compartment
+from carbon_compartments import tapajos_litter_stock_component, ifn_necromass_component, infer_uf_from_aoi
 
 APP_VERSION="3.24.34-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
@@ -1540,6 +1540,10 @@ class App(tk.Tk):
             self.project["sar_result"]=sar
             # Resolve direct standing litter stock independently of the AGB/SAR route.
             regional_components=sar.setdefault("regional_components",{})
+            if not any("necromassa aérea" in str(k).casefold() for k in regional_components):
+                uf=infer_uf_from_aoi(self.gdf)
+                ifn=ifn_necromass_component(self.biome.get(),uf,app_resource("data/ifn_necromass_biome_uf_v1.csv"))
+                if ifn: regional_components["Necromassa aérea — referência direta IFN por bioma×UF"]=ifn
             if not any("serapilheira" in str(k).casefold() for k in regional_components):
                 litter=tapajos_litter_stock_component(self.biome.get(),self.phys.get(),self.gdf)
                 if litter: regional_components["Serapilheira — estoque de massa seca no piso florestal"]=litter
