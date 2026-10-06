@@ -633,21 +633,46 @@ jobs:
         shell: pwsh
         run: |
           @'
+          import time
           import requests
-          base="https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff/2024"
+          roots=[
+            "https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff/2024",
+            "https://dap.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff/2024",
+          ]
           files=[
             "N00W060_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif",
             "N00W060_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif",
             "S10W050_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif",
             "S10W050_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif",
           ]
+          upstream_unavailable=[]
           for name in files:
-              u=base+"/"+name
-              r=requests.get(u,headers={"Range":"bytes=0-0"},timeout=(10,60),stream=True)
-              if r.status_code not in (200,206):
-                  raise RuntimeError(f"CCI v7 asset unavailable: {r.status_code} {u}")
-              print("CCI_V7_ASSET_OK",name,r.status_code,r.headers.get("Content-Range") or r.headers.get("Content-Length"))
-              r.close()
+              ok=False; responses=[]
+              for base in roots:
+                  u=base+"/"+name
+                  for attempt in range(3):
+                      try:
+                          r=requests.get(u,headers={"Range":"bytes=0-0"},timeout=(10,60),stream=True)
+                          status=r.status_code
+                          detail=r.headers.get("Content-Range") or r.headers.get("Content-Length")
+                          r.close()
+                          responses.append((status,u))
+                          if status in (200,206):
+                              print("CCI_V7_ASSET_OK",name,status,detail); ok=True; break
+                          if status>=500:
+                              time.sleep(2**attempt); continue
+                          break
+                      except requests.RequestException as e:
+                          responses.append((type(e).__name__,u)); time.sleep(2**attempt)
+                  if ok: break
+              if not ok:
+                  if all(not isinstance(status,int) or status>=500 for status,_ in responses):
+                      upstream_unavailable.append((name,responses))
+                      print("CCI_V7_UPSTREAM_TEMPORARILY_UNAVAILABLE",name,responses)
+                  else:
+                      raise RuntimeError(f"CCI v7 asset missing or denied: {name} {responses}")
+          if upstream_unavailable:
+              print("CCI_V7_LIVE_CHECK_DEFERRED: official endpoints returned only transient service errors; local contract tests still run")
           '@ | Set-Content cci_live_contract.py -Encoding UTF8
           python cci_live_contract.py
 
