@@ -445,7 +445,9 @@ jobs:
           assert "não é IC95%" in lit["uncertainty_kind"]
           comps=lit["regional_components"]
           assert "Serapilheira — estoque no piso florestal" in comps
-          assert "não é IC95%" in comps["Serapilheira — estoque no piso florestal"]["method"]
+          assert "IC95%" in comps["Serapilheira — estoque no piso florestal"]["uncertainty_kind"]
+          assert comps["Serapilheira — estoque no piso florestal"]["n_independent_units"] == 6
+          assert comps["Serapilheira — estoque no piso florestal"]["range_dry_mg_ha"][0] < comps["Serapilheira — estoque no piso florestal"]["mean_dry_mg_ha"] < comps["Serapilheira — estoque no piso florestal"]["range_dry_mg_ha"][1]
           assert "estoque de forest floor" in comps["Serapilheira — estoque no piso florestal"]["method"].lower() and "não é produtividade/queda anual" in comps["Serapilheira — estoque no piso florestal"]["method"]
           assert not any("Necromassa" in name or "Biomassa subterrânea" in name or "madeira caída" in name or "madeira morta em pé" in name for name in comps), "necromass requires direct inventory means, not literature or allometry"
           import geopandas as gpd
