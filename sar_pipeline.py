@@ -561,6 +561,7 @@ def download_maap_height(gdf,offline_token,cache,items=None):
             "errors":errors[:5]}
 
 CCI_V7_GEOTIFF_ROOT="https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
+CCI_V7_GEOTIFF_ALT_ROOT="https://dap.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
 CCI_V7_YEARS=(2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2012,2011,2010,2009,2008,2007,2006,2005)
 
 def _cci_v7_tile_ids(gdf):
@@ -603,14 +604,31 @@ def cci_history(gdf,cache,offline_token=None):
         specs=_cci_v7_urls(gdf,year)
         year_paths=[]; ok=True
         for spec in specs:
-            target=cache/spec["name"]; attempted.append(spec["url"])
-            try:
-                if not target.exists(): _download(spec["url"],target,None)
-                year_paths.append(str(target))
-            except Exception as e:
+            target=cache/spec["name"]
+            if target.exists() and target.stat().st_size>0:
+                year_paths.append(str(target)); continue
+            last_error=None
+            for root in (CCI_V7_GEOTIFF_ROOT, CCI_V7_GEOTIFF_ALT_ROOT):
+                url=f'{root}/{int(year)}/{spec["name"]}'
+                attempted.append(url)
+                partial=target.with_name(target.name+".part")
+                try:
+                    if partial.exists(): partial.unlink()
+                    _download(url,partial,None)
+                    partial.replace(target)
+                    last_error=None
+                    break
+                except Exception as e:
+                    last_error=e
+                    try:
+                        if partial.exists(): partial.unlink()
+                    except OSError:
+                        pass
+            if last_error is not None:
                 ok=False
-                errors.append(f'{year} {spec["tile"]} {spec["variable"]}: {type(e).__name__}: {e}')
+                errors.append(f'{year} {spec["tile"]} {spec["variable"]}: {type(last_error).__name__}: {last_error}')
                 break
+            year_paths.append(str(target))
         if ok and year_paths and any(role(p)=="AGB" for p in year_paths):
             return {"available":True,"paths":year_paths,"items":len(specs),
                     "collection":"CEDA/ESA CCI Biomass v7.0","version":"7.0","year":int(year),
