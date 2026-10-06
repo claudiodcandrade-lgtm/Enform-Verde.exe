@@ -6,6 +6,7 @@ from pathlib import Path
 from official_inventory_harvest import (
     classify_tabular_resource,
     evaluate_private_licensing_inventory,
+    evaluate_totalized_inventory,
     SOURCE_HIERARCHY,
 )
 
@@ -50,9 +51,29 @@ class OfficialInventoryHarvestTests(unittest.TestCase):
         )
         self.assertFalse(bad["may_support_estimate"])
 
+    def test_totalized_institutional_inventory_requires_published_error(self):
+        allowed = evaluate_totalized_inventory(
+            recognized_institution=True,
+            published_margin_of_error=True,
+            class_match=True,
+            spatial_match=True,
+            independent_sample_units=12,
+        )
+        self.assertTrue(allowed["may_support_estimate"])
+        self.assertEqual(allowed["source_hierarchy_rank"], 2)
+        blocked = evaluate_totalized_inventory(
+            recognized_institution=True,
+            published_margin_of_error=False,
+            class_match=True,
+            spatial_match=True,
+            independent_sample_units=12,
+        )
+        self.assertFalse(blocked["may_support_estimate"])
+
     def test_source_hierarchy_puts_recognized_research_before_licensing_records(self):
         self.assertEqual([x["rank"] for x in SOURCE_HIERARCHY], [1, 2, 3, 4, 5])
         self.assertEqual(SOURCE_HIERARCHY[0]["label"], "institucional_parcela_aberta")
+        self.assertEqual(SOURCE_HIERARCHY[2]["label"], "base_publica_oficial")
         self.assertEqual(SOURCE_HIERARCHY[-1]["label"], "inventario_privado_de_licenciamento")
 
 
