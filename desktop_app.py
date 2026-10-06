@@ -1708,8 +1708,8 @@ class App(tk.Tk):
                          "observável: "+str(hi.get("observable","camada de altura; sem semântica conhecida")),
                          "interpretação: "+str(hi.get("meaning","não é estimativa de AGB")),
                          "A altura SAR não determina sozinha DAP médio, densidade de fustes, área basal ou AGB; combinar com inventário/alometria compatíveis e validação espacial independente."]
-                if sar.get("height_prediction_uncertainty_mean_m") is not None:
-                    diag.append("incerteza preditiva média por pixel, informada pelo produto: "+format_ptbr(float(sar["height_prediction_uncertainty_mean_m"]),2)+" m")
+                if sar.get("height_standard_error_pixel_zonal_mean_m") is not None:
+                    diag.append("média zonal do erro padrão de altura por pixel, informada pelo produto: "+format_ptbr(float(sar["height_standard_error_pixel_zonal_mean_m"]),2)+" m")
                 if sar.get("height_error_kind"):
                     diag.append("tipo de erro de altura: "+str(sar["height_error_kind"]))
             if sar.get("data_origin") in ("LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"):
