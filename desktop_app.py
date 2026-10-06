@@ -1678,7 +1678,7 @@ class App(tk.Tk):
             agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
             rows=[]
             for name,val,status,note,method,source in parts:
-                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else (regional_components[name].get("origin","LITERATURA_MICRORREGIONAL") if name in regional_components else "MODELADO"))))
+                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else (regional_components[name].get("origin","LITERATURA_MICRORREGIONAL") if name in regional_components else ("NAO_ESTIMADO" if str(status).startswith("NÃO ESTIMADA") else "MODELADO")))))
                 if name=="Biomassa aérea":
                     ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("envelope descritivo; sem cobertura probabilística declarada" if "envelope descritivo" in agb_metric else ("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo")) if sar_unc else "N/D")
                 elif name in regional_components:
@@ -1793,7 +1793,8 @@ class App(tk.Tk):
                 lines += ["AGB SAR POR CLASSE IBGE","  NÃO CALCULADA: selecione uma camada vetorial IBGE de fitofisionomias para cruzar a AOI e calcular cada classe separadamente.",""]
             missing=[]
             if "Biomassa subterrânea" not in regional_components: missing.append("biomassa subterrânea")
-            if not any(n.startswith("Necromassa") for n in regional_components): missing.append("necromassa")
+            if not any(str(n).startswith("Necromassa aérea") for n in regional_components): missing.append("necromassa aérea")
+            if not any(str(n).startswith("Necromassa subterrânea") for n in regional_components): missing.append("necromassa subterrânea")
             if not any(n.startswith("Serapilheira") for n in regional_components): missing.append("serapilheira")
             lines += ["COMPARTIMENTOS NÃO SOMADOS", ("Nenhum compartimento adicional elegível ficou sem estimativa nesta execução." if not missing else "; ".join(missing)+": não estimada por falta de dados/modelos regionais compatíveis."),
                       *( ["Referências microrregionais são benchmarks secundários; não equivalem a medição da AOI nem a modelos alométricos/SAR calibrados."] if regional_components else [] ), "",
