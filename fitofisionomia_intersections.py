@@ -89,14 +89,11 @@ def zonal_raster_by_ibge_class(aoi_gdf, ibge_gdf, class_field, raster_path):
                 values=np.array([],dtype=float)
             rec={k:v for k,v in row.items() if k!="geometry"}
             if not len(values):
-                rec.update({"mean":None,"sd":None,"n":0,"min":None,"max":None,
-                            "raster_total":None,"raster_total_unit":"pixel_value × ha; interpret only for per-ha density rasters"})
+                rec.update({"mean":None,"sd":None,"n":0,"min":None,"max":None})
             else:
                 mean=float(values.mean())
                 rec.update({"mean":mean,"sd":float(values.std(ddof=1)) if len(values)>1 else 0.0,
-                            "n":int(len(values)),"min":float(values.min()),"max":float(values.max()),
-                            "raster_total":mean*float(row["area_ha"]),
-                            "raster_total_unit":"pixel_value × ha; for Mg/ha this is Mg"})
+                            "n":int(len(values)),"min":float(values.min()),"max":float(values.max())})
             out.append(rec)
     return {"raster_path":str(Path(raster_path)),"class_field":class_field,
             "area_aoi_ha":audit["area_aoi_ha"],"area_classified_ha":audit["area_classified_ha"],
