@@ -1,4 +1,7 @@
+import tempfile
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 import pandas as pd
 from height_calibration import validate_sar_height_pairs
 
@@ -22,13 +25,52 @@ class SarHeightAgreementTests(unittest.TestCase):
         self.assertEqual(out["height_n_valid_pixels"],12)
         self.assertIn("TanDEM-X",out["sensor"])
 
-    def test_gtdx_height_rejects_negative_or_nonfinite_error(self):
+    def test_gtdx_height_rejects_negative_error(self):
         from sar_pipeline import _gtdx_height_summary
         with self.assertRaises(ValueError):
             _gtdx_height_summary(
                 {"mean":31.2,"sd":2.5,"n":12},
                 {"mean":-1,"sd":0,"n":12},
                 "height_amazon_25m.tif","height_uncertainty_amazon_25m.tif")
+
+    def test_gtdx_downloader_retrieves_height_and_matching_uncertainty(self):
+        import sar_pipeline as sp
+        class Geometry:
+            @property
+            def bounds(self): return (-55.0,-4.0,-54.0,-3.0)
+            def union_all(self): return self
+        class GDF:
+            geometry=Geometry()
+            def to_crs(self,*args,**kwargs): return self
+        class Response:
+            def __init__(self,payload=None): self.payload=payload; self.status_code=200
+            def raise_for_status(self): return None
+            def json(self): return self.payload
+            def __enter__(self): return self
+            def __exit__(self,*args): return False
+            def iter_content(self,chunk_size):
+                yield b"test-geotiff"
+        class Session:
+            def __init__(self): self.calls=[]
+            def get(self,url,**kwargs):
+                self.calls.append(url)
+                if "cmr.earthdata.nasa.gov" in url:
+                    return Response({"feed":{"entry":[{"links":[
+                        {"href":"https://data.example/height_amazon_25m.tif"},
+                        {"href":"https://data.example/height_uncertainty_amazon_25m.tif"}]}]}})
+                return Response()
+        session=Session()
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(sp,"_earthaccess_requests_session",return_value=(session,{"available":True})), \
+             patch.object(sp,"_zonal",side_effect=[
+                 {"mean":31.2,"sd":2.5,"n":4},{"mean":1.6,"sd":0.4,"n":4}]):
+            out=sp.download_gtdx_height(GDF(),cache=td)
+            self.assertTrue(out["available"])
+            self.assertEqual(out["height_mean_m"],31.2)
+            self.assertEqual(out["height_standard_error_m"],1.6)
+            self.assertFalse(out["height_definition_compatible_with_H100"])
+            self.assertTrue((Path(td)/"height_amazon_25m.tif").exists())
+            self.assertTrue((Path(td)/"height_uncertainty_amazon_25m.tif").exists())
 
 
 if __name__ == "__main__":
