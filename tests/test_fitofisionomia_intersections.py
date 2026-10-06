@@ -4,7 +4,7 @@ import rasterio
 from rasterio.transform import from_origin
 from shapely.geometry import box
 
-from fitofisionomia_intersections import ibge_class_intersections, zonal_raster_by_ibge_class
+from fitofisionomia_intersections import (ibge_class_intersections, zonal_raster_by_ibge_class, resolve_physiognomy_class)
 
 def _layers():
     aoi = gpd.GeoDataFrame({"id":[1]}, geometry=[box(0,0,2,1)], crs="EPSG:4326")
@@ -32,3 +32,21 @@ def test_zonal_stats_are_computed_inside_each_ibge_intersection(tmp_path):
     assert got["Savana"]["mean"] == 20.0
     assert got["Floresta"]["raster_total"] > 0
     assert got["Savana"]["n"] == 1
+
+
+def test_low_confidence_uses_ibge_reference_instead_of_indeterminate():
+    result = resolve_physiognomy_class("Floresta ombrófila", 0.61, "Floresta ombrófila densa", 0.80)
+    assert result["physiognomy"] == "Floresta ombrófila densa"
+    assert result["method"] == "IBGE"
+    assert result["ibge_fallback"] is True
+
+def test_high_confidence_keeps_algorithm_class():
+    result = resolve_physiognomy_class("Savana", 0.91, "Floresta", 0.80)
+    assert result["physiognomy"] == "Savana"
+    assert result["method"] == "algorithm"
+    assert result["ibge_fallback"] is False
+
+def test_low_confidence_without_ibge_reference_raises_coverage_error():
+    import pytest
+    with pytest.raises(ValueError, match="sem classe IBGE"):
+        resolve_physiognomy_class("Savana", 0.4, None, 0.8)
