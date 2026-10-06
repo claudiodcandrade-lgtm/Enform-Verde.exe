@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+<name>Tapajós PF — altura SAR × estrutura horizontal — alta biomassa</name>
+<description>Suporte local das parcelas ORNL 1552 PF 8–11. Estrutura horizontal: G médio 26.7776 m2/ha (DP 2.9961). O status só é garantido quando FP_FH__L2B/H100 for efetivamente processado.</description>
+<ExtendedData><Data name="inventory"><value>ORNL DAAC 1552</value></Data><Data name="plots"><value>8,9,10,11</value></Data><Data name="model"><value>TAPAJOS_PF_SLF_H100_G_V1</value></Data></ExtendedData>
+<Placemark><name>PF alta biomassa — parcelas 8–11</name><Polygon><outerBoundaryIs><LinearRing><coordinates>
+-54.9805,-2.9335,0 -54.9784,-2.9335,0 -54.9784,-2.9400,0 -54.9805,-2.9400,0 -54.9805,-2.9335,0
+</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>
+</Document></kml>
