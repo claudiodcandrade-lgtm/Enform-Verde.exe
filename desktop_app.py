@@ -37,6 +37,15 @@ def format_ptbr(value,decimals=2):
     raw=f"{rounded:,.{places}f}"
     return raw.replace(",","\x00").replace(".",",").replace("\x00",".")
 
+def format_result_json(value):
+    """Render diagnostic numeric values using pt-BR separators without changing stored data."""
+    if isinstance(value,bool) or value is None:return value
+    if isinstance(value,(int,float,Decimal)):
+        return format_ptbr(value,0 if isinstance(value,int) else 6)
+    if isinstance(value,dict):return {str(k):format_result_json(v) for k,v in value.items()}
+    if isinstance(value,(list,tuple)):return [format_result_json(v) for v in value]
+    return value
+
 def app_resource(name):
     base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
     p=base/name
@@ -619,7 +628,7 @@ def self_test():
     assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8
     assert ROOT_LOW<ROOT_RATIO<ROOT_HIGH
     assert abs(CARBON_FRACTION-0.47)<1e-9
-    assert format_ptbr(12345.678,2)=="12.345,68" and format_ptbr(1234567.8,2)=="1.234.567,80" and format_ptbr(12.5,0)=="13" and format_ptbr(-1234.5,1)=="-1.234,5"
+    assert format_ptbr(12345.678,2)=="12.345,68" and format_ptbr(1234567.8,2)=="1.234.567,80" and format_ptbr(12.5,0)=="13" and format_ptbr(-1234.5,1)=="-1.234,5" and format_result_json({"a":12345.25})=={"a":"12.345,250000"}
     if sys.stdout is not None:print("ENFORM_VERDE_SELF_TEST_OK")
 
 def acceptance_test(kmz_path):
@@ -1555,9 +1564,9 @@ class App(tk.Tk):
                     processed=audit.get("processed_without_agb") or []
                     for item in processed:
                         lines.append(f"• {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
-                        for z in item.get("stats") or []: lines.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
+                        for z in item.get("stats") or []: lines.append("  "+json.dumps(format_result_json(z),ensure_ascii=False,sort_keys=True))
                         if item.get("scene_ids"): lines.append("  Cenas: "+", ".join(map(str,item["scene_ids"])))
-                    for z in sar.get("stats") or []: lines.append("• raster processado: "+json.dumps(z,ensure_ascii=False,sort_keys=True))
+                    for z in sar.get("stats") or []: lines.append("• raster processado: "+json.dumps(format_result_json(z),ensure_ascii=False,sort_keys=True))
                     for w in audit.get("warnings") or []: lines.append("Aviso: "+str(w))
                     lines += ["", "Métricas de validação AGB: RMSE, MAE, viés e R² não são aplicáveis sem modelo treinado/validado compatível. Incerteza da AGB: não estimável.", "Estado: PROCESSAMENTO SAR REAL CONCLUÍDO; ESTIMATIVA AGB PENDENTE DE MODELO/PARCELAS COMPATÍVEIS."]
                     report="\n".join(lines); self.project["partial_sar_analysis"]={"area_ha":area,"sar_result":sar,"report":report}; self.project["area_ha"]=area; self.project["last_result"]=report
@@ -1606,12 +1615,12 @@ class App(tk.Tk):
                 parts.append(("Biomassa subterrânea",dry*CARBON_FRACTION,c["status"],note,c["method"],c["source"]))
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
-                parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {format_ptbr(p030["spatial_sd_tc_ha"],2)} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
+                parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{format_ptbr(p030["n_samples"],0)} amostras do mapa 90 m; DP espacial {format_ptbr(p030["spatial_sd_tc_ha"],2)} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
             total=sum(x[1] for x in parts); co2=total*44/12
             # Deeper SOC profiles are reported independently and are NOT summed again into Carbono Total.
             for depth in ("0–60 cm","0–100 cm","0–200 cm"):
                 p=soil_profiles.get(depth) if soil_profiles else None
-                if p:parts.append((f"Solo {depth}",p["tc_ha"],"MAPEAMENTO DIGITAL",f'{p["n_samples"]} amostras do mapa 90 m; DP espacial {format_ptbr(p["spatial_sd_tc_ha"],2)} tC/ha; não somado novamente ao Carbono Total',f"PronaSolos 90 m: soma das camadas até {depth.split('–')[1]}","Embrapa Solos/PronaSolos"))
+                if p:parts.append((f"Solo {depth}",p["tc_ha"],"MAPEAMENTO DIGITAL",f'{format_ptbr(p["n_samples"],0)} amostras do mapa 90 m; DP espacial {format_ptbr(p["spatial_sd_tc_ha"],2)} tC/ha; não somado novamente ao Carbono Total',f"PronaSolos 90 m: soma das camadas até {depth.split('–')[1]}","Embrapa Solos/PronaSolos"))
             if soil_error:self.project["soil_warning"]=soil_error
             # Statistical/uncertainty metadata. Never label a descriptive range as a confidence interval.
             agb_abs=(sar_unc*CARBON_FRACTION) if sar_unc else None
@@ -1655,10 +1664,10 @@ class App(tk.Tk):
             diag=[]
             if audit:
                 diag=["","TRILHA SAR:"]
-                bb=audit.get("biomass_l2b") or {}; diag.append("BIOMASS P L2B catalogado: %s | operacional=%s | IOC=%s" % (bb.get("count",0),bb.get("operational_count",0),bb.get("ioc_count",0)))
-                cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
+                bb=audit.get("biomass_l2b") or {}; diag.append("BIOMASS P L2B catalogado: %s | operacional=%s | IOC=%s" % tuple(format_ptbr(bb.get(k,0),0) for k in ("count","operational_count","ioc_count")))
+                cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {format_ptbr(cc.get('downloaded',0),0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
                 ad=audit.get("asf_download") or {}
-                if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
+                if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={format_ptbr(ad.get('candidate_count'),0)}")
                 matrix=audit.get("national_route_matrix") or {}
                 if matrix:
                     diag.append("COBERTURA PREDITIVA NACIONAL: "+str(matrix.get("local_numeric_state")))
@@ -1695,7 +1704,7 @@ class App(tk.Tk):
             if sar.get("height_mean_m") is not None:
                 hi=sar.get("height_interpretation") or {}
                 diag += ["", "ALTURA ESTRUTURAL SAR:",
-                         f"média zonal={format_ptbr(float(sar['height_mean_m']),2)} m | DP espacial={format_ptbr(float(sar.get('height_sd_m') or 0),2)} m | pixels válidos={sar.get('height_n_valid_pixels','N/D')}",
+                         f"média zonal={format_ptbr(float(sar['height_mean_m']),2)} m | DP espacial={format_ptbr(float(sar.get('height_sd_m') or 0),2)} m | pixels válidos={format_ptbr(sar.get('height_n_valid_pixels'),0)}",
                          "observável: "+str(hi.get("observable","camada de altura; sem semântica conhecida")),
                          "interpretação: "+str(hi.get("meaning","não é estimativa de AGB")),
                          "A altura SAR não determina sozinha DAP médio, densidade de fustes, área basal ou AGB; combinar com inventário/alometria compatíveis e validação espacial independente."]
@@ -1721,10 +1730,10 @@ class App(tk.Tk):
                     ur=unc_classes.get(name,{}); hr=height_classes.get(name,{})
                     lines.append(f"  {name}: {format_ptbr(cr.get('area_ha'),2)} ha ({format_ptbr(cr.get('area_share_pct'),2)}%)")
                     if cr.get("agb_mean_mg_ha") is not None:
-                        lines.append(f"    AGB média: {format_ptbr(cr.get('agb_mean_mg_ha'),2)} Mg/ha; total na interseção: {format_ptbr(cr.get('agb_total_mg'),2)} Mg; pixels válidos: {cr.get('n',0)}")
+                        lines.append(f"    AGB média: {format_ptbr(cr.get('agb_mean_mg_ha'),2)} Mg/ha; total na interseção: {format_ptbr(cr.get('agb_total_mg'),2)} Mg; pixels válidos: {format_ptbr(cr.get('n',0),0)}")
                     else: lines.append("    AGB: sem pixels válidos nessa classe.")
                     if ur.get("mean") is not None: lines.append(f"    Incerteza média fornecida pelo produto: {format_ptbr(ur.get('mean'),2)} unidades/ha (não é erro local de validação).")
-                    if hr.get("mean") is not None: lines.append(f"    Altura média: {format_ptbr(hr.get('mean'),2)} m; pixels válidos: {hr.get('n',0)}.")
+                    if hr.get("mean") is not None: lines.append(f"    Altura média: {format_ptbr(hr.get('mean'),2)} m; pixels válidos: {format_ptbr(hr.get('n',0),0)}.")
                 lines.append("")
             else:
                 lines += ["AGB SAR POR CLASSE IBGE","  NÃO CALCULADA: selecione uma camada vetorial IBGE de fitofisionomias para cruzar a AOI e calcular cada classe separadamente.",""]
@@ -1761,7 +1770,8 @@ class App(tk.Tk):
                 sh.row_dimensions[i].height=32
                 for j,v in enumerate(row,1):
                     c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.border=Border(top=thin,bottom=thin,left=thin,right=thin); c.alignment=Alignment(vertical="center",wrap_text=True)
-                    if j in (3,4) and isinstance(v,(int,float)): c.number_format='[$-416]#.##0,00'
+                    if isinstance(v,(int,float)) and not isinstance(v,bool):
+                        c.number_format='[$-416]#.##0' if float(v).is_integer() else '[$-416]#.##0,00'
                 sh.cell(i,2).font=Font(bold=True,color=green)
         area=self.project["area_ha"]; total=self.project["total_tc_ha"]; totalco2=self.project["total_tco2_ha"]; ar=self.project["analysis_rows"]
         ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
