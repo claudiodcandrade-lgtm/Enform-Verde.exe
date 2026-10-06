@@ -560,6 +560,20 @@ def download_maap_height(gdf,offline_token,cache,items=None):
             "reason":None if paths else "FP_FH__L2B catalogado, mas raster de altura não foi recuperado",
             "errors":errors[:5]}
 
+HEIGHT_PRIORITY_BIOMES=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga")
+def height_scope_contract(biome=None,physiognomy=None):
+    """National request policy; per-AOI coverage and error remain product-gated."""
+    return {
+        "requested_biomes":list(HEIGHT_PRIORITY_BIOMES),
+        "aoi_biome":str(biome or ""),
+        "aoi_ibge_physiognomy":str(physiognomy or ""),
+        "search_policy":"Query ESA BIOMASS FP_FH__L2B P-band for each AOI, independent of biome/physiognomy; do not infer coverage from mission-wide goals.",
+        "priority":"ESA BIOMASS FP_FH__L2B where actual AOI pixels are available and valid.",
+        "fallback":"GTDX ORNL 2298 TanDEM-X InSAR + GEDI only where its delivered pantropical rasters overlap the AOI; documented coverage includes the Amazon Basin, not all five Brazilian biomes.",
+        "class_policy":"Report height by IBGE physiognomy for valid pixels; preserve no-data and flag physiognomies where a forest-canopy-height metric is not scientifically defined.",
+        "error_policy":"Carry product-provided pixel uncertainty or a documented validation error. Within-AOI pixel SD is spatial dispersion, not measurement error; never substitute it for product error.",
+        "status":"AOI_SPECIFIC_COVERAGE_AND_ERROR_REQUIRED"
+    }
 GTDX_COLLECTION_ID="C2883623174-ORNL_CLOUD"
 GTDX_HEIGHT_SOURCE="ORNL DAAC 2298 — altura GEDI–TanDEM-X InSAR"
 def _gtdx_height_summary(height_stats, uncertainty_stats, height_path, uncertainty_path):
@@ -1242,6 +1256,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
     audit["national_route_matrix"]=national_predictive_route_matrix(biome,phys,aoi=gdf)
+    audit["height_scope"]=height_scope_contract(biome,phys)
 
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=biomass_l2b_search(gdf,limit=100)
