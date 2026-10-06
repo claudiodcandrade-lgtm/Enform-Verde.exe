@@ -31,6 +31,12 @@ def write_quadrant_tiles(layers,output_dir,bounds=(-75.0,-35.0,-33.0,6.0),tile_d
             iy0=max(0,min(ny-1,int(math.floor((max(south,fb[1])-south)/size))))
             ix1=max(0,min(nx-1,int(math.floor((min(east,fb[2])-west)/size))))
             iy1=max(0,min(ny-1,int(math.floor((min(north,fb[3])-south)/size))))
+            # Most local features fit entirely within one 5-degree tile. Keep
+            # their original GeoJSON directly and reserve expensive GEOS
+            # intersections for features crossing tile boundaries.
+            if ix0==ix1 and iy0==iy1:
+                contents[f"{ix0}_{iy0}"]["layers"][layer].append(feature)
+                continue
             try:
                 geom=shape(feature["geometry"])
                 if not geom.is_valid:geom=geom.buffer(0)
