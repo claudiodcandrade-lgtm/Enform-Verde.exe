@@ -6,7 +6,14 @@ and allometric deadwood proxies are explicitly excluded.
 from __future__ import annotations
 
 def tapajos_litter_stock_component(biome, physiognomy, aoi):
-    """Direct standing forest-floor dry-mass reference, geofenced to the study site."""
+    """Closest direct standing-stock inventory for the matching Tapajos physiognomy.
+
+    Uses only the first, pre-treatment control sampling (April 1999): three
+    independent plots in each of two interdigitated soil types. The published
+    cell errors are SEs. The six plot observations are pooled, and a two-sided
+    95% Student-t interval (df=5) is reconstructed from the reported SEs.
+    Repeated seasons and fertilized plots are deliberately excluded.
+    """
     if str(biome or "").strip().casefold() not in ("amazônia", "amazonia"):
         return None
     p=str(physiognomy or "").casefold()
@@ -30,15 +37,28 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
             return None
     except Exception:
         return None
+    # McGroddy et al. Table 5, Apr. 1999 untreated controls:
+    # sandy clay 4.4 (SE 0.6), sandy loam 5.5 (SE 1.4), n=3 each.
+    import math
+    n=6
+    mean=(4.4+5.5)/2
+    pooled_sd=math.sqrt((2*(3*0.6**2)+2*(3*1.4**2)
+                         +3*(4.4-mean)**2+3*(5.5-mean)**2)/(n-1))
+    se=pooled_sd/math.sqrt(n)
+    # t(0.975, df=5)=2.5706; clamp the lower stock bound at zero.
+    margin=2.5706*se
     return {
-        "mean_dry_mg_ha":6.0,
-        "range_dry_mg_ha":[0.0,11.8],
-        "method":"massa seca do estoque de forest floor medida em parcelas controle na FLONA Tapajós; média publicada 6,0 ± 5,8 Mg/ha. Referência local, não medição da AOI; amplitude truncada em zero, não IC95%.",
-        "source":"McGroddy et al. (2008), Journal of Geophysical Research: Biogeosciences 113, G04012",
+        "mean_dry_mg_ha":mean,
+        "range_dry_mg_ha":[max(0.0,mean-margin),mean+margin],
+        "method":"média gravimétrica do estoque de forest floor em parcelas-controle na FLONA Tapajós, abril/1999, antes de intervenção; duas classes de solo interdigitadas, n=3 parcelas independentes por classe (n total=6). IC95% t bilateral, gl=5, reconstruído das médias e erros-padrão publicados. Não é medição da AOI; transferência espacial limitada a 15 km e à classe IBGE Floresta Ombrófila Densa.",
+        "source":"McGroddy et al. (2008), Journal of Geophysical Research: Biogeosciences 113, G04012, Tabela 5",
         "url":"https://doi.org/10.1029/2008JG000756",
-        "status":"ESTOQUE GRAVIMÉTRICO LOCAL — REFERÊNCIA",
-        "origin":"LITERATURA_MICRORREGIONAL",
-        "uncertainty_kind":"média ± dispersão publicada; amplitude descritiva, sem cobertura probabilística declarada",
+        "status":"ESTOQUE GRAVIMÉTRICO DE REFERÊNCIA — MESMA CLASSE E MICRORREGIÃO",
+        "origin":"INVENTARIO_DIRETO_MICRORREGIONAL",
+        "uncertainty_kind":"IC95% t da média entre seis parcelas independentes; não incorpora erro de transferência para a AOI",
+        "n_independent_units":n,
+        "standard_error_dry_mg_ha":se,
+        "degrees_of_freedom":5,
         "evidence_type":"standing_litter_dry_mass"
     }
 
