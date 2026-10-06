@@ -14,13 +14,13 @@ class SarHeightAgreementTests(unittest.TestCase):
         self.assertIsNone(out["calibrated_height_m"])
         self.assertIsNone(out["local_validation_error_m"])
 
-    def test_gtdx_height_keeps_prediction_uncertainty_and_not_h100(self):
+    def test_gtdx_height_keeps_pixel_standard_error_and_not_h100(self):
         from sar_pipeline import _gtdx_height_summary
         out=_gtdx_height_summary(
             {"mean":31.2,"sd":2.5,"n":12},
             {"mean":1.6,"sd":0.4,"n":12},
             "height_amazon_25m.tif","height_uncertainty_amazon_25m.tif")
-        self.assertEqual(out["height_prediction_uncertainty_mean_m"],1.6)
+        self.assertEqual(out["height_standard_error_pixel_zonal_mean_m"],1.6)
         self.assertFalse(out["height_definition_compatible_with_H100"])
         self.assertEqual(out["height_n_valid_pixels"],12)
         self.assertIn("TanDEM-X",out["sensor"])
@@ -67,7 +67,7 @@ class SarHeightAgreementTests(unittest.TestCase):
             out=sp.download_gtdx_height(GDF(),cache=td)
             self.assertTrue(out["available"])
             self.assertEqual(out["height_mean_m"],31.2)
-            self.assertEqual(out["height_prediction_uncertainty_mean_m"],1.6)
+            self.assertEqual(out["height_standard_error_pixel_zonal_mean_m"],1.6)
             self.assertFalse(out["height_definition_compatible_with_H100"])
             self.assertTrue((Path(td)/"height_amazon_25m.tif").exists())
             self.assertTrue((Path(td)/"height_uncertainty_amazon_25m.tif").exists())
