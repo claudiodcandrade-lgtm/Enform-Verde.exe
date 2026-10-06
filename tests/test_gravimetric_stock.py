@@ -23,7 +23,8 @@ class GravimetricStockTests(unittest.TestCase):
 
     def test_carbon_stock_uses_measured_carbon_fraction(self):
         r=carbon_stock_from_mass([10,20,30],[0.45,0.50,0.55])
-        self.assertAlmostEqual(r["mean"],10.0)
+        self.assertAlmostEqual(r["mean"],31.0/3.0)
+        self.assertEqual(r["plot_carbon_stocks_tc_ha"],[4.5,10.0,16.5])
         self.assertGreater(r["margin_error"],0)
 
     def test_necromass_sums_pieces_by_transect_before_error(self):
