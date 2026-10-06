@@ -560,6 +560,79 @@ def download_maap_height(gdf,offline_token,cache,items=None):
             "reason":None if paths else "FP_FH__L2B catalogado, mas raster de altura não foi recuperado",
             "errors":errors[:5]}
 
+GTDX_COLLECTION_ID="C2883623174-ORNL_CLOUD"
+GTDX_HEIGHT_SOURCE="ORNL DAAC 2298 — altura GEDI–TanDEM-X InSAR"
+def _gtdx_height_summary(height_stats, uncertainty_stats, height_path, uncertainty_path):
+    """Build a height-only GTDX result; preserve its per-pixel product standard error."""
+    mean=float(height_stats["mean"]); se=float(uncertainty_stats["mean"])
+    if not (math.isfinite(mean) and mean>0 and math.isfinite(se) and se>=0):
+        raise ValueError("Altura/erro padrão GTDX inválido.")
+    return {"status":"SAR_ALTURA_PROCESSADA","available":True,
+            "height_mean_m":mean,"height_sd_m":float(height_stats["sd"]),
+            "height_n_valid_pixels":int(height_stats["n"]),
+            "height_standard_error_m":se,
+            "height_error_kind":"erro padrão do produto por pixel, média zonal (m); não é erro local de validação",
+            "height_metric":"altura média do dossel GTDX; não equivale automaticamente a H100",
+            "height_definition_compatible_with_H100":False,
+            "height_interpretation":{"observable":"altura do dossel GEDI–TanDEM-X",
+              "band":"X (TanDEM-X InSAR) + referência GEDI",
+              "meaning":"altura média estimada por fusão InSAR–GEDI; não é AGB nem H100 sem conversão validada",
+              "agb_inference_permitted":False},
+            "product":"Pantropical Forest Height and Biomass from GEDI and TanDEM-X Data Fusion",
+            "product_id":"ORNLDAAC/2298","sensor":"TanDEM-X InSAR calibrado com GEDI",
+            "band":"X","source":GTDX_HEIGHT_SOURCE,
+            "height_path":str(height_path),"height_uncertainty_path":str(uncertainty_path),
+            "height_uncertainty_source":"height_uncertainty_amazon_25m.tif — erro padrão médio do produto (m)",
+            "height_years":"TanDEM-X 2011–2020; GEDI 2019–2021"}
+def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None):
+    """Download Amazon 25 m canopy-height and SE COGs through authenticated Earthdata CMR."""
+    cache=Path(cache or Path.home()/".enform_verde"/"sar"/"gtdx_height")
+    cache.mkdir(parents=True,exist_ok=True)
+    session,state=_earthaccess_requests_session(edl_user,edl_password,edl_token)
+    if session is None:return {"available":False,"reason":state.get("reason"),"auth_state":state}
+    west,south,east,north=map(float,gdf.to_crs(4326).geometry.union_all().bounds)
+    params={"collection_concept_id":GTDX_COLLECTION_ID,
+            "bounding_box":f"{west},{south},{east},{north}","page_size":200}
+    try:
+        response=session.get("https://cmr.earthdata.nasa.gov/search/granules.json",params=params,timeout=(15,90))
+        response.raise_for_status(); entries=response.json().get("feed",{}).get("entry",[])
+        wanted={"height_amazon_25m.tif":None,"height_uncertainty_amazon_25m.tif":None}
+        for entry in entries:
+            candidates=list(entry.get("links",[]) or [])
+            candidates.extend((entry.get("umm",{}).get("RelatedUrls",[]) or []))
+            for link in candidates:
+                href=link.get("href") or link.get("URL") or ""
+                name=Path(href.split("?",1)[0]).name.casefold()
+                for key in wanted:
+                    if name==key:wanted[key]=href
+        if not all(wanted.values()):
+            return {"available":False,"reason":"CMR não retornou os COGs de altura e incerteza Amazon 25 m.",
+                    "collection_id":GTDX_COLLECTION_ID,"cmr_entries":len(entries),"auth_state":state}
+        paths={}
+        for name,url in wanted.items():
+            target=cache/name
+            if not target.exists() or target.stat().st_size==0:
+                partial=target.with_suffix(target.suffix+".part")
+                try:
+                    with session.get(url,stream=True,timeout=(20,600)) as response:
+                        response.raise_for_status()
+                        with open(partial,"wb") as out:
+                            for chunk in response.iter_content(8*1024*1024):
+                                if chunk:out.write(chunk)
+                    partial.replace(target)
+                except Exception:
+                    partial.unlink(missing_ok=True);raise
+            paths[name]=target
+        h=_zonal(gdf,paths["height_amazon_25m.tif"])
+        u=_zonal(gdf,paths["height_uncertainty_amazon_25m.tif"])
+        result=_gtdx_height_summary(h,u,paths["height_amazon_25m.tif"],paths["height_uncertainty_amazon_25m.tif"])
+        result.update({"cmr_entries":len(entries),"auth_state":state,"uncertainty_pixels":int(u["n"]),
+                       "warning":"Produto de altura SAR–GEDI independente do ESA BIOMASS; não aplicar modelo G×H100 sem equivalência/validação."})
+        return result
+    except Exception as exc:
+        return {"available":False,"reason":type(exc).__name__+": "+str(exc)[:500],
+                "collection_id":GTDX_COLLECTION_ID,"auth_state":state}
+
 CCI_V7_GEOTIFF_ROOT="https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
 CCI_V7_GEOTIFF_ALT_ROOT="https://dap.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
 CCI_V7_YEARS=(2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2012,2011,2010,2009,2008,2007,2006,2005)
@@ -1199,8 +1272,19 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 audit["biomass_height_l2b"]["zonal_height"]=sar_height
         except Exception as e:
             audit["biomass_height_l2b"]={"available":False,"reason":str(e)}
+    # ESA BIOMASS FP_FH__L2B is primary. If unavailable, use the
+    # official ORNL GEDI–TanDEM-X InSAR height+SE product over the Amazon.
+    if not sar_height:
+        try:
+            gtdx=download_gtdx_height(gdf,edl_user,edl_password,edl_token,Path(cache)/"gtdx_height")
+            audit["gtdx_height"]=gtdx
+            if gtdx.get("available"):
+                sar_height={k:v for k,v in gtdx.items() if k.startswith("height_")}
+                sar_height.update({k:gtdx[k] for k in ("product","product_id","sensor","band","source") if k in gtdx})
+        except Exception as e:
+            audit["gtdx_height"]={"available":False,"reason":str(e)}
     height_structure_estimate=None
-    if sar_height:
+    if sar_height and sar_height.get("height_definition_compatible_with_H100",True):
         try:
             height_structure_estimate=tapajos_h100_structure_agb(gdf,sar_height,biome,phys)
             audit["height_structure_model"]=height_structure_estimate
