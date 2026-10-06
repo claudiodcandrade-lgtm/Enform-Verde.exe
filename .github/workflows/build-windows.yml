@@ -283,7 +283,7 @@ jobs:
           assert "active_input_id" in src and "current_car" in src, "fresh-input identity guard missing"
           assert "self.active_source=None; self.active_input_id=None" in src, "startup query state not initialized"
           assert "Bioma e fitofisionomia não são entradas" not in src, "obsolete opening notice still present"
-          assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
+          assert "Erro/incerteza" in src and "Nível estatístico" in src, "statistical uncertainty output missing"; assert "direct_tc=component.get(\"mean_tc_ha\")" in src and "range_tc_ha" in src, "no-AGB partial report must preserve direct carbon-stock intervals"; assert "threading.Thread" in src and "_poll_analysis" in src, "async analysis worker missing"; assert "0–200 cm" in src and "pronasolos_soc_profiles" in src, "PronaSolos multi-depth SOC missing"; assert "sicar:sicar_imoveis_" in src and "2.0.0" in src, "CAR WFS fallback missing"; assert "SAR_L_DISPONIVEL_CREDENCIAL_NECESSARIA" not in open("sar_pipeline.py",encoding="utf-8").read(), "L-band catalogue must not block analysis"
           assert "enform_header.png" in src and "Approved high-resolution Enform mask" in src, "approved high-resolution mask missing"
           header_block=src[src.index('visual=base/"enform_header.png"'):src.index("# Global action bar")]
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
@@ -867,7 +867,7 @@ jobs:
         run: |
           @'
           ENFORM VERDE - WINDOWS
-          VERSÃO CANDIDATA 3.24.35. O gate BIOMASS FH L2B nas AOIs de alta biomassa não encontrou cobertura no teste de 2026-10-04; os assets L1C de medição responderam HTTP 401 sem autorização. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
+          VERSÃO CANDIDATA 3.24.37. O gate BIOMASS FH L2B nas AOIs de alta biomassa não encontrou cobertura no teste de 2026-10-04; os assets L1C de medição responderam HTTP 401 sem autorização. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
           Para abrir: dê duplo clique em "Enform Verde.exe".
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
@@ -876,7 +876,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.36-CANDIDATE
+          name: Enform-Verde-Windows-v3.24.37-CANDIDATE
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
