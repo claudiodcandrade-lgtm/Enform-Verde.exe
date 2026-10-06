@@ -563,15 +563,15 @@ def download_maap_height(gdf,offline_token,cache,items=None):
 GTDX_COLLECTION_ID="C2883623174-ORNL_CLOUD"
 GTDX_HEIGHT_SOURCE="ORNL DAAC 2298 — altura GEDI–TanDEM-X InSAR"
 def _gtdx_height_summary(height_stats, uncertainty_stats, height_path, uncertainty_path):
-    """Build a height-only GTDX result; preserve its per-pixel prediction uncertainty."""
-    mean=float(height_stats["mean"]); unc=float(uncertainty_stats["mean"])
-    if not (math.isfinite(mean) and mean>0 and math.isfinite(unc) and unc>=0):
-        raise ValueError("Altura/incerteza preditiva GTDX inválida.")
+    """Build a height-only GTDX result; preserve the product per-pixel standard error."""
+    mean=float(height_stats["mean"]); pixel_se_mean=float(uncertainty_stats["mean"])
+    if not (math.isfinite(mean) and mean>0 and math.isfinite(pixel_se_mean) and pixel_se_mean>=0):
+        raise ValueError("Altura/erro padrão GTDX inválido.")
     return {"status":"SAR_ALTURA_PROCESSADA","available":True,
             "height_mean_m":mean,"height_sd_m":float(height_stats["sd"]),
             "height_n_valid_pixels":int(height_stats["n"]),
-            "height_prediction_uncertainty_mean_m":unc,
-            "height_error_kind":"média zonal da incerteza preditiva por pixel (m); não é RMSE local de validação nem incerteza da média da AOI",
+            "height_standard_error_pixel_zonal_mean_m":pixel_se_mean,
+            "height_error_kind":"média zonal dos erros padrão de estimativa por pixel informados pelo produto (m); não é RMSE local nem erro padrão da média da AOI",
             "height_metric":"altura do dossel calibrada com GEDI RH98; não equivale automaticamente a H100",
             "height_definition_compatible_with_H100":False,
             "height_interpretation":{"observable":"altura do dossel GEDI–TanDEM-X",
@@ -582,10 +582,10 @@ def _gtdx_height_summary(height_stats, uncertainty_stats, height_path, uncertain
             "product_id":"ORNLDAAC/2298","sensor":"TanDEM-X InSAR calibrado com GEDI",
             "band":"X","source":GTDX_HEIGHT_SOURCE,
             "height_path":str(height_path),"height_uncertainty_path":str(uncertainty_path),
-            "height_uncertainty_source":"height_uncertainty_amazon_25m.tif — incerteza preditiva por pixel; média zonal em metros",
+            "height_uncertainty_source":"height_uncertainty_amazon_25m.tif — erro padrão da estimativa por pixel; média zonal em metros",
             "height_years":"TanDEM-X 2011–2020; GEDI 2019–2021"}
 def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None):
-    """Download Amazon 25 m canopy-height and prediction-uncertainty COGs through authenticated Earthdata CMR."""
+    """Download Amazon 25 m canopy-height and per-pixel standard-error COGs through authenticated Earthdata CMR."""
     cache=Path(cache or Path.home()/".enform_verde"/"sar"/"gtdx_height")
     cache.mkdir(parents=True,exist_ok=True)
     session,state=_earthaccess_requests_session(edl_user,edl_password,edl_token)
