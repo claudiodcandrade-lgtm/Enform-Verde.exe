@@ -303,8 +303,13 @@ def _load_official_ibge_vegetation_local(aoi_gdf):
     import pyogrio
     from pyproj import CRS, Transformer
 
-    if aoi_gdf is None or not len(aoi_gdf) or aoi_gdf.crs is None:
-        raise ValueError("AOI válida com CRS é necessária para aplicar o fallback IBGE.")
+    # SAR unit tests and callers without vector geometry may still process raster
+    # assets; simply withhold class-wise overlay when no usable AOI is supplied.
+    try:
+        if aoi_gdf is None or not len(aoi_gdf) or aoi_gdf.crs is None:
+            return None,None
+    except (TypeError,AttributeError):
+        return None,None
     local_appdata=os.environ.get("LOCALAPPDATA")
     root=(Path(local_appdata)/"Enform Verde"/"data"/"IBGE" if local_appdata
           else Path.home()/".cache"/"enform-verde"/"IBGE")
@@ -391,13 +396,20 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
     stats=[];agb=None;unc=None;height=None
     class_stats={}
     class_audit=None
+    ibge_load_error=None
     if ibge_physiognomy_gdf is None:
-        ibge_physiognomy_gdf,ibge_class_field=_load_official_ibge_vegetation_local(gdf)
+        try:
+            ibge_physiognomy_gdf,ibge_class_field=_load_official_ibge_vegetation_local(gdf)
+        except Exception as exc:
+            # Keep the SAR raster result usable and expose the missing map fallback
+            # as a diagnostic; do not discard measured pixels when public IBGE is offline.
+            ibge_load_error=type(exc).__name__+": "+str(exc)[:400]
+            ibge_physiognomy_gdf,ibge_class_field=None,None
     else:
         # The first IBGE legend is the phytophysiognomy/phytoecological region.
         fields={str(c).casefold():str(c) for c in ibge_physiognomy_gdf.columns}
         ibge_class_field=fields.get("legenda_1",ibge_class_field)
-    if not ibge_class_field:
+    if ibge_physiognomy_gdf is not None and not ibge_class_field:
         raise ValueError("Campo oficial IBGE legenda_1 não identificado.")
     from fitofisionomia_intersections import zonal_raster_by_ibge_class
     ibge_metadata=getattr(ibge_physiognomy_gdf,"attrs",{}) or {}
@@ -439,6 +451,7 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
         else:
             out["fitofisionomia_status"]="CAMADA_IBGE_FITOFISIONOMIA_AUSENTE"
             out["fitofisionomia_warning"]="Resultado agregado da AOI não substitui cálculo individual por classe IBGE."
+            if ibge_load_error:out["fitofisionomia_error"]=ibge_load_error
         if height is not None:
             out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"],
                         "height_interpretation":_height_interpretation(height.get("path"))})
