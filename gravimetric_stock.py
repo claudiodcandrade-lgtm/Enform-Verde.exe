@@ -91,7 +91,21 @@ def litter_depth_mass_calibration(depth_cm, dry_mass_g, sampled_area_m2, target_
             "degrees_freedom":int(df),"critical_method":method,
             "uncertainty_note":"IC da média e intervalo de predição individual são distintos; aplicar somente à classe, estação e protocolo amostrados."}
 
-def necromass_line_intersect_stock(diameters_cm, density_kg_m3, transect_length_m,
+def carbon_stock_from_mass(plot_dry_mg_ha, carbon_fraction, cluster_ids=None, confidence=0.95):
+    """Convert paired dry-mass observations to tC/ha using measured dry-mass C fractions."""
+    dry=np.asarray(list(plot_dry_mg_ha),dtype=float)
+    frac=np.asarray(list(carbon_fraction),dtype=float)
+    if len(dry)!=len(frac) or len(dry)==0:
+        raise ValueError("Informe biomassa seca e fração C medida para cada unidade.")
+    if np.any(~np.isfinite(dry)) or np.any(dry<0) or np.any(~np.isfinite(frac)) or np.any((frac<0)|(frac>1)):
+        raise ValueError("Biomassa deve ser >=0 e fração C deve estar entre 0 e 1.")
+    carbon=dry*frac
+    summary=summarize_plot_stocks(carbon,cluster_ids,confidence)
+    summary.update({"plot_carbon_stocks_tc_ha":carbon.tolist(),"unit":"tC/ha",
+                    "method":"massa seca por parcela × fração de C medida em amostra pareada"})
+    return summary
+
+def necromass_line_intersect_stock(diameters_cm, density_kg_m3, transect_length_m, transect_ids,
                                   cluster_ids=None, confidence=0.95):
     """Estimate fallen wood dry stock from line-intersect diameters and decay-class density.
 
@@ -100,16 +114,24 @@ def necromass_line_intersect_stock(diameters_cm, density_kg_m3, transect_length_
     ds=list(diameters_cm); rhos=list(density_kg_m3)
     if len(ds)!=len(rhos):raise ValueError("Cada peça precisa de diâmetro e densidade.")
     if not ds:raise ValueError("Informe os registros de peças interceptadas por transecto.")
-    if len(transect_length_m)!=len(ds):raise ValueError("transect_length_m deve indicar o comprimento percorrido para cada peça.")
-    stock=[]
-    for d,rho,length in zip(ds,rhos,transect_length_m):
+    if not(len(transect_length_m)==len(transect_ids)==len(ds)):raise ValueError("Comprimento e identificador do transecto devem existir para cada peça.")
+    if cluster_ids is not None and len(cluster_ids)!=len(ds):raise ValueError("cluster_ids deve indicar a UA independente de cada peça.")
+    pieces_by_transect={}; cluster_by_transect={}
+    for d,rho,length,tid,cluster in zip(ds,rhos,transect_length_m,transect_ids,
+                                         cluster_ids if cluster_ids is not None else transect_ids):
         d=float(d); rho=float(rho); length=float(length)
         if not all(math.isfinite(v) for v in (d,rho,length)) or d<0 or rho<=0 or length<=0:
             raise ValueError("Diâmetro >=0, densidade >0 e comprimento de transecto >0 são obrigatórios.")
-        # Convert each observation to a per-ha transect contribution; aggregate by independent cluster below.
-        stock.append((math.pi**2/(8*length))*((d/100.0)**2)*rho*10.0)
-    summary=summarize_plot_stocks(stock,cluster_ids,confidence)
-    summary.update({"transect_contributions_mg_ha":stock,"unit":"Mg matéria seca/ha",
-                    "formula":"(π²/(8L)) × Σ(d_m² × ρ_kg/m³) × 10",
+        if tid not in pieces_by_transect:
+            pieces_by_transect[tid]=0.0; cluster_by_transect[tid]=cluster
+        elif cluster_by_transect[tid]!=cluster:
+            raise ValueError("Um transecto não pode pertencer a mais de uma UA.")
+        # Sum all intercepted pieces within the same transect before inferential statistics.
+        pieces_by_transect[tid]+=(math.pi**2/(8*length))*((d/100.0)**2)*rho*10.0
+    transect_stocks=list(pieces_by_transect.values())
+    transect_clusters=[cluster_by_transect[k] for k in pieces_by_transect]
+    summary=summarize_plot_stocks(transect_stocks,transect_clusters if cluster_ids is not None else None,confidence)
+    summary.update({"transect_contributions_mg_ha":transect_stocks,"unit":"Mg matéria seca/ha",
+                    "formula":"por transecto: (π²/(8L)) × Σ(d_m² × ρ_kg/m³) × 10",
                     "density_requirement":"ρ seca medida/validada por espécie ou estado de decomposição; não substituir por densidade de madeira viva sem justificativa"})
     return summary
