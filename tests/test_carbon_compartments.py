@@ -62,7 +62,7 @@ class CarbonCompartmentTests(unittest.TestCase):
         self.assertGreater(r["range_dry_mg_ha"][1],r["mean_dry_mg_ha"])
         self.assertIn("IC95%",r["uncertainty_kind"])
         self.assertEqual(r["evidence_type"],"standing_litter_dry_mass")
-        self.assertNotIn("queda anual",r["method"])
+        self.assertIn("não é produtividade/queda anual",r["method"])
 
     @unittest.skipUnless(gpd and box, "geospatial dependencies required")
     def test_tapajos_litter_does_not_transfer_outside_study_class_or_biome(self):
