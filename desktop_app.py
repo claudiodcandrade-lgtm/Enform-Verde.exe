@@ -16,7 +16,7 @@ from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
 
-APP_VERSION="3.24.32-CANDIDATE"
+APP_VERSION="3.24.33-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1223,7 +1223,7 @@ class App(tk.Tk):
             layer=read_vector(p)
             names=list(layer.columns)
             normalized={re.sub(r"[^a-z0-9]","",str(x).casefold()):x for x in names if str(x)!="geometry"}
-            preferred=("fitofisionomia","fisionomia","legenda","vegetacao","classe","descricao","nome")
+            preferred=("legenda1","fitofisionomia","fisionomia","legenda","vegetacao","classe","descricao","nome")
             field=next((normalized[k] for k in preferred if k in normalized),None)
             if field is None:
                 candidates=[x for x in names if str(x)!="geometry" and layer[x].notna().any()]
