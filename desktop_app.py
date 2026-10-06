@@ -1166,7 +1166,9 @@ class App(tk.Tk):
         self.pipeline_btn=ttk.Button(row,text="EXECUTAR ANÁLISE SAR",command=self.execute,style="Run.TButton"); self.pipeline_btn.pack(side="left")
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
         ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
-        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
+        ttk.Button(row,text="CAMADA IBGE FITOFISIONOMIAS",command=self.pick_ibge_physiognomy).pack(side="left",padx=8)
+        self.sar_paths=[]; self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
+        self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
         remote_box=ttk.Frame(f); remote_box.pack(fill="both",expand=True,pady=8)
         self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
         remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
@@ -1202,6 +1204,30 @@ class App(tk.Tk):
         self.sar_paths=list(ps); self.project["sar_paths"]=list(ps)
         self._set(self.remote_text,"Produtos selecionados:\n"+"\n".join(self.sar_paths)+"\n\nClique em EXECUTAR ANÁLISE.")
         self.status.set(f"{len(ps)} produto(s) SAR selecionado(s).")
+
+    def pick_ibge_physiognomy(self):
+        p=filedialog.askopenfilename(title="Selecione a camada vetorial oficial de fitofisionomias do IBGE",
+            filetypes=[("Vetores","*.gpkg *.shp *.geojson *.json *.zip"),("Todos","*.*")])
+        if not p:return
+        try:
+            layer=read_vector(p)
+            names=list(layer.columns)
+            normalized={re.sub(r"[^a-z0-9]","",str(x).casefold()):x for x in names if str(x)!="geometry"}
+            preferred=("fitofisionomia","fisionomia","legenda","vegetacao","classe","descricao","nome")
+            field=next((normalized[k] for k in preferred if k in normalized),None)
+            if field is None:
+                candidates=[x for x in names if str(x)!="geometry" and layer[x].notna().any()]
+                if len(candidates)==1:field=candidates[0]
+            if field is None:
+                raise ValueError("Não identifiquei automaticamente o campo da classe IBGE. Campos disponíveis: "+", ".join(str(x) for x in names))
+            self.ibge_physiognomy_gdf=layer; self.ibge_class_field=field
+            self.project["ibge_physiognomy_vector"]=p; self.project["ibge_physiognomy_class_field"]=str(field)
+            self.status.set("Camada de fitofisionomias IBGE carregada; classe: "+str(field))
+            self._set(self.remote_text,"Camada de fitofisionomias selecionada: "+Path(p).name+"\\nCampo de classe: "+str(field)+"\\nAs estatísticas SAR serão calculadas em cada interseção AOI × classe IBGE.")
+        except Exception as e:
+            self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
+            self.status.set("Camada de fitofisionomias IBGE não carregada.")
+            messagebox.showerror("Fitofisionomias IBGE",str(e))
 
     def _results(self):
         f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
@@ -1496,7 +1522,8 @@ class App(tk.Tk):
             if precomputed_sar is not None:
                 sar=precomputed_sar
             elif self.sar_paths:
-                sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get())
+                sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get(),
+                    self.ibge_physiognomy_gdf,self.ibge_class_field)
             else:
                 raise RuntimeError("Pipeline automático sem resultado do worker.")
             self.project["sar_result"]=sar
