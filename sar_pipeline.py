@@ -304,6 +304,15 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
         rr=role(p);z=_zonal(gdf,p);z.update({"path":str(p),"role":rr});stats.append(z)
         if ibge_physiognomy_gdf is not None:
             cz=zonal_raster_by_ibge_class(gdf,ibge_physiognomy_gdf,ibge_class_field,p)
+            for row in cz["classes"]:
+                row["raster_role"]=rr
+                if rr=="AGB" and row.get("mean") is not None:
+                    row["agb_mean_mg_ha"]=row["mean"]
+                    row["agb_total_mg"]=row["mean"]*row["area_ha"]
+                elif rr=="UNCERTAINTY":
+                    row["uncertainty_mean_product_units_per_ha"]=row.get("mean")
+                elif rr=="HEIGHT":
+                    row["height_mean_m"]=row.get("mean")
             class_stats[rr]=cz
             class_audit={k:v for k,v in cz.items() if k not in ("classes","raster_path","class_field")}
         if rr=="AGB":agb=z["mean"]
