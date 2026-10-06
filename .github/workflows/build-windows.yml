@@ -442,10 +442,10 @@ jobs:
           assert lit["sar_metrics"]["RMSE"] is None and lit["agb_range_mg_ha"][0]<lit["agb_mg_ha"]<lit["agb_range_mg_ha"][1]
           assert "não é IC95%" in lit["uncertainty_kind"]
           comps=lit["regional_components"]
-          assert abs(comps["Biomassa subterrânea"]["mean_dry_mg_ha"]-35.25)<1e-6
+          assert "Serapilheira — estoque no piso florestal" in comps
           assert "não é IC95%" in comps["Serapilheira — estoque no piso florestal"]["method"]
           assert "produtividade/queda anual" in comps["Serapilheira — estoque no piso florestal"]["method"]
-          assert any("madeira caída" in name for name in comps) and any("madeira morta em pé" in name for name in comps)
+          assert not any("Necromassa" in name or "Biomassa subterrânea" in name or "madeira caída" in name or "madeira morta em pé" in name for name in comps), "necromass requires direct inventory means, not literature or allometry"
           import geopandas as gpd
           from shapely.geometry import box
           outside_local=gpd.GeoDataFrame(geometry=[box(-54.96,-3.31,-54.94,-3.29)],crs="EPSG:4326")
