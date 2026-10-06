@@ -287,7 +287,7 @@ jobs:
           assert "LITERATURA_SECUNDARIA" in src, "secondary-analysis fallback provenance missing"
           assert "FALLBACK MICRORREGIONAL — SAR PROCESSADO, SEM MODELO AGB" in src, "processed-SAR secondary estimate status missing"
           assert src.count("ttk.Scrollbar(")>=4, "visible scrollbars missing from report and data panels"
-          assert "Nenhum compartimento adicional elegível" in src and "Serapilheira — estoque no piso florestal" in open("sar_pipeline.py",encoding="utf-8").read(), "regional additional biomass compartments or stock-vs-flux distinction missing"
+          assert "Necromassa subterrânea — raízes mortas" in src and "tapajos_litter_stock_component" in src, "necromass reporting or independent gravimetric litter resolver missing"
           sar_src=open("sar_pipeline.py",encoding="utf-8").read()
           assert "process_nisar_gcov" in sar_src and "analyze_nisar_gcov" in sar_src, "NISAR GCOV processor missing"
           assert "NISAR_GCOV_HDF5" in sar_src, "NISAR HDF5 route missing"
@@ -446,7 +446,7 @@ jobs:
           comps=lit["regional_components"]
           assert "Serapilheira — estoque no piso florestal" in comps
           assert "não é IC95%" in comps["Serapilheira — estoque no piso florestal"]["method"]
-          assert "produtividade/queda anual" in comps["Serapilheira — estoque no piso florestal"]["method"]
+          assert "forest floor" in comps["Serapilheira — estoque no piso florestal"]["method"].lower() and "produtividade/queda anual" not in comps["Serapilheira — estoque no piso florestal"]["method"]
           assert not any("Necromassa" in name or "Biomassa subterrânea" in name or "madeira caída" in name or "madeira morta em pé" in name for name in comps), "necromass requires direct inventory means, not literature or allometry"
           import geopandas as gpd
           from shapely.geometry import box
@@ -785,6 +785,7 @@ jobs:
           Copy-Item -Force 'data\structural_aggregate_evidence_v1.csv' 'dist\Enform Verde\data\structural_aggregate_evidence_v1.csv'
           Copy-Item -Force 'data\carbon_compartment_sources_brazil_v1.csv' 'dist\Enform Verde\data\carbon_compartment_sources_brazil_v1.csv'
           Copy-Item -Force 'data\sar_data_sources_brazil_v1.csv' 'dist\Enform Verde\data\sar_data_sources_brazil_v1.csv'
+          Copy-Item -Force 'data\ifn_necromass_biome_uf_v1.csv' 'dist\Enform Verde\data\ifn_necromass_biome_uf_v1.csv'
           Copy-Item -Force 'TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md' 'dist\Enform Verde\TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
           Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
@@ -815,6 +816,7 @@ jobs:
           if (!(Test-Path (Join-Path $root 'data\structural_aggregate_evidence_v1.csv'))) { throw 'Aggregated structural evidence table is missing from package' }
           if (!(Test-Path (Join-Path $root 'data\carbon_compartment_sources_brazil_v1.csv'))) { throw 'Carbon compartment evidence catalog is missing from package' }
           if (!(Test-Path (Join-Path $root 'data\sar_data_sources_brazil_v1.csv'))) { throw 'National SAR source catalog is missing from package' }
+          if (!(Test-Path (Join-Path $root 'data\ifn_necromass_biome_uf_v1.csv'))) { throw 'IFN deadwood inventory means are missing from package' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh
@@ -847,7 +849,7 @@ jobs:
         run: |
           @'
           ENFORM VERDE - WINDOWS
-          VERSÃO CANDIDATA 3.24.32. O gate BIOMASS FH L2B nas AOIs de alta biomassa não encontrou cobertura no teste de 2026-10-04; os assets L1C de medição responderam HTTP 401 sem autorização. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
+          VERSÃO CANDIDATA 3.24.34. O gate BIOMASS FH L2B nas AOIs de alta biomassa não encontrou cobertura no teste de 2026-10-04; os assets L1C de medição responderam HTTP 401 sem autorização. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
           Para abrir: dê duplo clique em "Enform Verde.exe".
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
@@ -856,7 +858,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.32-CANDIDATE
+          name: Enform-Verde-Windows-v3.24.34-CANDIDATE
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30
