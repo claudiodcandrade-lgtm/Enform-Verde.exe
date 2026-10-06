@@ -19,7 +19,7 @@ from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_cali
 from carbon_compartments import tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, tapajos_necromass_components, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
 from mapbiomas_zonal import mapbiomas_class_percentages
 
-APP_VERSION="3.24.36-CANDIDATE"
+APP_VERSION="3.24.37-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1661,17 +1661,23 @@ class App(tk.Tk):
                     independent_rows=[]
                     independent_total_tc_ha=0.0
                     for cname,component in (sar.get("regional_components") or {}).items():
+                        direct_tc=component.get("mean_tc_ha")
                         dry=component.get("mean_dry_mg_ha")
-                        if dry is None: continue
-                        dry=float(dry); tc=dry*CARBON_FRACTION
-                        bounds=component.get("range_dry_mg_ha")
-                        bounds=list(map(float,bounds)) if isinstance(bounds,(list,tuple)) and len(bounds)==2 else None
-                        tc_bounds=[max(0.0,bounds[0]*CARBON_FRACTION),bounds[1]*CARBON_FRACTION] if bounds else None
+                        if direct_tc is None and dry is None: continue
+                        direct_tc= float(direct_tc) if direct_tc is not None else None
+                        dry=float(dry) if dry is not None else None
+                        tc=direct_tc if direct_tc is not None else dry*CARBON_FRACTION
+                        raw_bounds=(component.get("range_tc_ha") if direct_tc is not None else component.get("range_dry_mg_ha"))
+                        bounds=list(map(float,raw_bounds)) if isinstance(raw_bounds,(list,tuple)) and len(raw_bounds)==2 else None
+                        tc_bounds=([max(0.0,bounds[0]),bounds[1]] if direct_tc is not None else
+                                   ([max(0.0,bounds[0]*CARBON_FRACTION),bounds[1]*CARBON_FRACTION] if bounds else None))
                         include=component.get("include_in_total",True)
                         uncertainty=str(component.get("uncertainty_kind") or "incerteza não informada")
                         interval_label="IC95%" if component_has_confidence_interval(component) else "faixa descritiva"
-                        note=(f"estoque seco={format_ptbr(dry,2)} Mg/ha; carbono={format_ptbr(tc,2)} tC/ha; "
-                              +(f"{interval_label} convertida={format_ptbr(tc_bounds[0],2)}–{format_ptbr(tc_bounds[1],2)} tC/ha; " if tc_bounds else "intervalo não informado; ")
+                        stock_label=(f"estoque direto de carbono={format_ptbr(direct_tc,2)} tC/ha; " if direct_tc is not None else
+                                     f"estoque seco={format_ptbr(dry,2)} Mg/ha; carbono={format_ptbr(tc,2)} tC/ha; ")
+                        note=(stock_label
+                              +(f"{interval_label}={format_ptbr(tc_bounds[0],2)}–{format_ptbr(tc_bounds[1],2)} tC/ha; " if tc_bounds else "intervalo não informado; ")
                               +f"incerteza: {uncertainty}. "+str(component.get("method","")))
                         lines += ["", f"COMPARTIMENTO INDEPENDENTE — {cname}", f"  {format_ptbr(tc,2)} tC/ha | {format_ptbr(tc*44/12,2)} tCO₂e/ha | {note}"]
                         if not include: lines.append("  Excluído do total da AOI: referência sem compatibilidade espacial/fitofisionômica suficiente.")
