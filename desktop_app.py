@@ -1666,7 +1666,7 @@ class App(tk.Tk):
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
                 parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{format_ptbr(p030["n_samples"],0)} amostras do mapa 90 m; DP espacial {format_ptbr(p030["spatial_sd_tc_ha"],2)} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
-            total=sum((x[1] or 0.0) for x in parts); co2=total*44/12
+            total=sum((x[1] or 0.0) for x in parts if not (x[0] in regional_components and regional_components[x[0]].get("include_in_total") is False)); co2=total*44/12
             # Deeper SOC profiles are reported independently and are NOT summed again into Carbono Total.
             for depth in ("0–60 cm","0–100 cm","0–200 cm"):
                 p=soil_profiles.get(depth) if soil_profiles else None
