@@ -619,7 +619,7 @@ def self_test():
     assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8
     assert ROOT_LOW<ROOT_RATIO<ROOT_HIGH
     assert abs(CARBON_FRACTION-0.47)<1e-9
-    assert format_ptbr(12345.678,2)=="12.345,68" and format_ptbr(12.5,0)=="13"
+    assert format_ptbr(12345.678,2)=="12.345,68" and format_ptbr(1234567.8,2)=="1.234.567,80" and format_ptbr(12.5,0)=="13" and format_ptbr(-1234.5,1)=="-1.234,5"
     if sys.stdout is not None:print("ENFORM_VERDE_SELF_TEST_OK")
 
 def acceptance_test(kmz_path):
@@ -989,7 +989,7 @@ class App(tk.Tk):
                 except Exception as e:errors.append("Google: "+str(e))
             try:
                 p=sentinel2_preview(g,extent_factor=extent_factor)
-                copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {float(p.get('cloud_cover',0)):.1f}%"
+                copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2: "+str(e))
@@ -1038,7 +1038,7 @@ class App(tk.Tk):
         self.map_canvas.xview_moveto(max(0.0,min(1.0,(view.width-max(1,self.map_canvas.winfo_width()))/(2*max(1,view.width)))))
         self.map_canvas.yview_moveto(max(0.0,min(1.0,(view.height-max(1,self.map_canvas.winfo_height()))/(2*max(1,view.height)))))
         self._map_provider=str(provider or "ONLINE")
-        self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {1.36/max(self._map_extent_factor,1e-9):.2f}×. Uso exclusivo para visualização.")
+        self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {format_ptbr(1.36/max(self._map_extent_factor,1e-9),2)}×. Uso exclusivo para visualização.")
 
     def _on_map_resize(self,event=None):
         """Keep the selected basemap fitted after a real canvas resize."""
@@ -1130,7 +1130,7 @@ class App(tk.Tk):
         self.map_canvas.create_line(bx,by-5,bx,by+4,fill="#24382D",width=2); self.map_canvas.create_line(bx+bar_px,by-5,bx+bar_px,by+4,fill="#24382D",width=2)
         self.map_canvas.create_text(bx+bar_px/2,by-7,text=f"{bar_m/1000:g} km",anchor="s",fill="#24382D",font=("Segoe UI",8,"bold"))
         b4326=g.total_bounds
-        bbox_txt=f"{b4326[0]:.5f}, {b4326[1]:.5f}  →  {b4326[2]:.5f}, {b4326[3]:.5f}"
+        bbox_txt=f"{format_ptbr(b4326[0],5)}; {format_ptbr(b4326[1],5)}  →  {format_ptbr(b4326[2],5)}; {format_ptbr(b4326[3],5)}"
         self.map_canvas.create_text(12,h-12,anchor="sw",text=bbox_txt,fill="#4A5B54",font=("Segoe UI",8))
 
     def _remote(self):
@@ -1248,7 +1248,7 @@ class App(tk.Tk):
         self.src.pack(side="left",fill="both",expand=True); source_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.src)
         txt=("REGRAS DO MOTOR\n• MEDIDO: derivado diretamente do inventário/raster fornecido.\n• MODELADO: proxy/equação publicada, identificado com fonte e domínio.\n• NÃO ESTIMADO: quando não existe suporte defensável.\n\n"
-             f"BGB: relação raiz/parte aérea {ROOT_RATIO:.2f}, faixa {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}; {SOURCES['protocol']}.\n"
+             f"BGB: relação raiz/parte aérea {format_ptbr(ROOT_RATIO,2)}, faixa {format_ptbr(ROOT_LOW,2)}–{format_ptbr(ROOT_HIGH,2)}; {SOURCES['protocol']}.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
              f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
              f"Necromassa: {SOURCES['deadwood']}; proxy de triagem recebe incerteza elevada e nunca é rotulado como medido.\n"
@@ -1383,8 +1383,8 @@ class App(tk.Tk):
 
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
-        if hasattr(self,"aoi_area_display"):self.aoi_area_display.set(f"{m['area_ha']:,.2f} ha")
-        self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {m['area_ha']:,.2f} ha\nCentroide: {m['centroid'][1]:.6f}, {m['centroid'][0]:.6f}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
+        if hasattr(self,"aoi_area_display"):self.aoi_area_display.set(f"{format_ptbr(m['area_ha'],2)} ha")
+        self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {format_ptbr(m['area_ha'],2)} ha\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
         self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
         self.status.set(f"Perímetro carregado: {src}; diagnóstico IBGE em segundo plano."); self.update_idletasks()
         self._ibge_generation+=1; generation=self._ibge_generation; geometry=self.gdf.copy(); self._ibge_pending=True
@@ -1551,7 +1551,7 @@ class App(tk.Tk):
                     self.project["sar_warning"]=msg
                 else:
                     # Report actual SAR operations while withholding unsupported AGB/carbon numbers.
-                    audit=sar.get("audit") or {}; lines=["RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Área da AOI: {area:,.2f} ha",f"Bioma: {self.biome.get() or 'não determinado'} | Fitofisionomia: {self.phys.get() or 'não determinada'}","", "Motivo: "+str(msg), "", "O SAR foi processado, mas o catálogo não contém equação validada compatível com os preditores e o domínio desta AOI. Não se publica AGB nem carbono sem suporte defensável.","", "PRODUTOS E PIXELS PROCESSADOS:"]
+                    audit=sar.get("audit") or {}; lines=["RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Área da AOI: {format_ptbr(area,2)} ha",f"Bioma: {self.biome.get() or 'não determinado'} | Fitofisionomia: {self.phys.get() or 'não determinada'}","", "Motivo: "+str(msg), "", "O SAR foi processado, mas o catálogo não contém equação validada compatível com os preditores e o domínio desta AOI. Não se publica AGB nem carbono sem suporte defensável.","", "PRODUTOS E PIXELS PROCESSADOS:"]
                     processed=audit.get("processed_without_agb") or []
                     for item in processed:
                         lines.append(f"• {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
@@ -1575,12 +1575,12 @@ class App(tk.Tk):
             soil_profiles=precomputed_soil if isinstance(precomputed_soil,dict) else {}
             soil_error=soil_profiles.get("error") if soil_profiles else "PronaSolos não retornou perfil."
             parts=[
-              ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","produto SAR ou referência secundária, conforme origem",sar.get("source",sar.get("status","produto processado")))]
+              ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={format_ptbr(agb,1)} Mg/ha; incerteza={format_ptbr(sar_unc,1)} Mg/ha; carbono={format_ptbr(CARBON_FRACTION,2)}; faixa C={format_ptbr(agc_lo,2)}–{format_ptbr(agc_hi,2)} tC/ha","produto SAR ou referência secundária, conforme origem",sar.get("source",sar.get("status","produto processado")))]
             regional_components=sar.get("regional_components") or {}
             for cname,component in regional_components.items():
                 dry=float(component["mean_dry_mg_ha"]); bounds=list(map(float,component["range_dry_mg_ha"]))
-                note=(f"biomassa seca={dry:,.2f} Mg/ha; faixa descritiva={bounds[0]:,.2f}–{bounds[1]:,.2f} Mg/ha; "
-                      f"fração C operacional={CARBON_FRACTION:.2f}; a faixa não é IC95% nem erro SAR. "+str(component.get("method","")))
+                note=(f"biomassa seca={format_ptbr(dry,2)} Mg/ha; faixa descritiva={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg/ha; "
+                      f"fração C operacional={format_ptbr(CARBON_FRACTION,2)}; a faixa não é IC95% nem erro SAR. "+str(component.get("method","")))
                 parts.append((cname,dry*CARBON_FRACTION,component.get("status","REFERÊNCIA MICRORREGIONAL"),note,
                               component.get("method","estoque de referência publicado; não é predição SAR nem medição da AOI"),component.get("source","literatura científica regional")))
             # Always estimate belowground biomass allometrically from AGB. Cairns et al. tropical-forest
@@ -1601,17 +1601,17 @@ class App(tk.Tk):
                   "origin":"MODELAGEM_ALOMETRIA_SAR"}
                 c=regional_components["Biomassa subterrânea"]
                 dry=float(c["mean_dry_mg_ha"]); bounds=list(map(float,c["range_dry_mg_ha"]))
-                note=(f"biomassa seca={dry:,.2f} Mg/ha; faixa descrita={bounds[0]:,.2f}–{bounds[1]:,.2f} Mg/ha; "
-                      f"fração C operacional={CARBON_FRACTION:.2f}; "+c["method"])
+                note=(f"biomassa seca={format_ptbr(dry,2)} Mg/ha; faixa descrita={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg/ha; "
+                      f"fração C operacional={format_ptbr(CARBON_FRACTION,2)}; "+c["method"])
                 parts.append(("Biomassa subterrânea",dry*CARBON_FRACTION,c["status"],note,c["method"],c["source"]))
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
-                parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
+                parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {format_ptbr(p030["spatial_sd_tc_ha"],2)} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
             total=sum(x[1] for x in parts); co2=total*44/12
             # Deeper SOC profiles are reported independently and are NOT summed again into Carbono Total.
             for depth in ("0–60 cm","0–100 cm","0–200 cm"):
                 p=soil_profiles.get(depth) if soil_profiles else None
-                if p:parts.append((f"Solo {depth}",p["tc_ha"],"MAPEAMENTO DIGITAL",f'{p["n_samples"]} amostras do mapa 90 m; DP espacial {p["spatial_sd_tc_ha"]:,.2f} tC/ha; não somado novamente ao Carbono Total',f"PronaSolos 90 m: soma das camadas até {depth.split('–')[1]}","Embrapa Solos/PronaSolos"))
+                if p:parts.append((f"Solo {depth}",p["tc_ha"],"MAPEAMENTO DIGITAL",f'{p["n_samples"]} amostras do mapa 90 m; DP espacial {format_ptbr(p["spatial_sd_tc_ha"],2)} tC/ha; não somado novamente ao Carbono Total',f"PronaSolos 90 m: soma das camadas até {depth.split('–')[1]}","Embrapa Solos/PronaSolos"))
             if soil_error:self.project["soil_warning"]=soil_error
             # Statistical/uncertainty metadata. Never label a descriptive range as a confidence interval.
             agb_abs=(sar_unc*CARBON_FRACTION) if sar_unc else None
@@ -1637,7 +1637,7 @@ class App(tk.Tk):
                 elif name.startswith("Solo "):
                     depth=name.replace("Solo ",""); sp=soil_profiles.get(depth,{})
                     sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=sd; ep=(sd/val*100 if val else None)
-                    metric=f"DP espacial={sd:,.2f} tC/ha ({ep:.1f}% da média)" if ep is not None else "DP espacial N/D"
+                    metric=f"DP espacial={format_ptbr(sd,2)} tC/ha ({format_ptbr(ep,1)}% da média)" if ep is not None else "DP espacial N/D"
                     level="variabilidade espacial do mapa; não IC95% nem erro de predição"
                 else:
                     ea=None; ep=None; metric="proxy bibliográfico/modelado sem distribuição de erro validada"; level="erro estatístico N/D"
@@ -1686,7 +1686,7 @@ class App(tk.Tk):
                     diag += [
                         "DIAGNÓSTICO L-BAND DUAL-POL:",
                         f"  papel={ldiag.get('role')} | saturação={ldiag.get('saturation_risk')} | AGB quantitativa permitida={ldiag.get('quantitative_agb_from_dualpol_permitted')}",
-                        f"  HH={float(ldiag.get('hh_gamma0_db',float('nan'))):.2f} dB | HV={float(ldiag.get('hv_gamma0_db',float('nan'))):.2f} dB | HH-HV={float(ldiag.get('hh_minus_hv_db',float('nan'))):.2f} dB | HV/HH={float(ldiag.get('hv_over_hh_linear',float('nan'))):.3f} | RFDI={float(ldiag.get('rfdi',float('nan'))):.3f}",
+                        f"  HH={format_ptbr(float(ldiag.get('hh_gamma0_db',float('nan'))),2)} dB | HV={format_ptbr(float(ldiag.get('hv_gamma0_db',float('nan'))),2)} dB | HH-HV={format_ptbr(float(ldiag.get('hh_minus_hv_db',float('nan'))),2)} dB | HV/HH={format_ptbr(float(ldiag.get('hv_over_hh_linear',float('nan'))),3)} | RFDI={format_ptbr(float(ldiag.get('rfdi',float('nan'))),3)}",
                         "  decisão: "+str(ldiag.get("reason")),
                     ]
                     for ref in ldiag.get("references",[]):
@@ -1695,7 +1695,7 @@ class App(tk.Tk):
             if sar.get("height_mean_m") is not None:
                 hi=sar.get("height_interpretation") or {}
                 diag += ["", "ALTURA ESTRUTURAL SAR:",
-                         f"média zonal={float(sar['height_mean_m']):.2f} m | DP espacial={float(sar.get('height_sd_m') or 0):.2f} m | pixels válidos={sar.get('height_n_valid_pixels','N/D')}",
+                         f"média zonal={format_ptbr(float(sar['height_mean_m']),2)} m | DP espacial={format_ptbr(float(sar.get('height_sd_m') or 0),2)} m | pixels válidos={sar.get('height_n_valid_pixels','N/D')}",
                          "observável: "+str(hi.get("observable","camada de altura; sem semântica conhecida")),
                          "interpretação: "+str(hi.get("meaning","não é estimativa de AGB")),
                          "A altura SAR não determina sozinha DAP médio, densidade de fustes, área basal ou AGB; combinar com inventário/alometria compatíveis e validação espacial independente."]
@@ -1703,7 +1703,7 @@ class App(tk.Tk):
                 diag += ["", "MÉTRICAS DE VALIDAÇÃO SAR: RMSE=N/D; MAE=N/D; viés=N/D; R²=N/D — faltam pares independentes parcela–pixel SAR.",
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
                          "Incerteza: "+str(sar.get("uncertainty_kind")),
-                         "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
+                         "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{format_ptbr(float(sar.get('distance_from_km83_km',float('nan'))),2)} km."]
             lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {format_ptbr(area,2)} ha",""]+diag
             for r in rows:
                 err=(f"±{format_ptbr(r['erro_abs_tc'],2)} tC/ha ({format_ptbr(r['erro_pct'],1)}%)" if r.get('erro_pct') is not None else "N/D")
@@ -1761,7 +1761,7 @@ class App(tk.Tk):
                 sh.row_dimensions[i].height=32
                 for j,v in enumerate(row,1):
                     c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.border=Border(top=thin,bottom=thin,left=thin,right=thin); c.alignment=Alignment(vertical="center",wrap_text=True)
-                    if j in (3,4) and isinstance(v,(int,float)): c.number_format='#,##0.00'
+                    if j in (3,4) and isinstance(v,(int,float)): c.number_format='[$-416]#.##0,00'
                 sh.cell(i,2).font=Font(bold=True,color=green)
         area=self.project["area_ha"]; total=self.project["total_tc_ha"]; totalco2=self.project["total_tco2_ha"]; ar=self.project["analysis_rows"]
         ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
@@ -1806,9 +1806,9 @@ class App(tk.Tk):
         sh=wb.create_sheet("Diagnóstico IBGE"); setup(sh,"Enform Verde — Diagnóstico territorial IBGE")
         diag=self.project.get("ibge_diagnosis",{})
         idata=[]
-        for n,ha,pct in diag.get("biomas",[]): idata.append(["Bioma",n,None,None,"IBGE oficial","interseção espacial","IBGE — Biomas 2025",f"{ha:,.2f} ha | {pct:.2f}% da área"])
+        for n,ha,pct in diag.get("biomas",[]): idata.append(["Bioma",n,None,None,"IBGE oficial","interseção espacial","IBGE — Biomas 2025",f"{format_ptbr(ha,2)} ha | {format_ptbr(pct,2)}% da área"])
         for grp in diag.get("vegetacao",[]):
-            for n,ha,pct in grp.get("classes",[]): idata.append(["Vegetação "+grp.get("campo",""),n,None,None,"IBGE oficial 2026","interseção espacial","IBGE — Vegetação 2026",f"{ha:,.2f} ha | {pct:.2f}% da área"])
+            for n,ha,pct in grp.get("classes",[]): idata.append(["Vegetação "+grp.get("campo",""),n,None,None,"IBGE oficial 2026","interseção espacial","IBGE — Vegetação 2026",f"{format_ptbr(ha,2)} ha | {format_ptbr(pct,2)}% da área"])
         if not idata:idata=[["Diagnóstico","IBGE",None,None,"NÃO DISPONÍVEL","—","IBGE","A consulta/interseção não foi concluída nesta execução."]]
         put(sh,idata)
         sh=wb.create_sheet("Sensores SAR"); setup(sh,"Enform Verde — Sensores SAR")
