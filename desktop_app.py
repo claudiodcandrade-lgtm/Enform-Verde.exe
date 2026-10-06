@@ -1546,7 +1546,10 @@ class App(tk.Tk):
                 lit=sar.get("literature_reference") or {}
                 if lit.get("available"):
                     # Always deliver an analysis, but never relabel literature as SAR.
-                    sar=dict(lit); sar["data_origin"]=lit.get("data_origin") or ("LITERATURA_MICRORREGIONAL" if lit.get("data_origin")=="LITERATURA_MICRORREGIONAL" else "LITERATURA_SECUNDARIA")
+                    original_components=sar.get("regional_components") or {}
+                    sar=dict(lit)
+                    if original_components: sar.setdefault("regional_components",original_components)
+                    sar["data_origin"]=lit.get("data_origin") or ("LITERATURA_MICRORREGIONAL" if lit.get("data_origin")=="LITERATURA_MICRORREGIONAL" else "LITERATURA_SECUNDARIA")
                     if sar["data_origin"]=="MODELAGEM_LITERATURA_HIERARQUICA":
                         sar["status"]=("FALLBACK MODELADO HIERÁRQUICO — SAR PROCESSADO, SEM MODELO AGB" if lit.get("sar_processed") else "FALLBACK MODELADO HIERÁRQUICO — SAR NÃO PROCESSADO")
                     else:
@@ -1568,6 +1571,27 @@ class App(tk.Tk):
                         if item.get("scene_ids"): lines.append("  Cenas: "+", ".join(map(str,item["scene_ids"])))
                     for z in sar.get("stats") or []: lines.append("• raster processado: "+json.dumps(format_result_json(z),ensure_ascii=False,sort_keys=True))
                     for w in audit.get("warnings") or []: lines.append("Aviso: "+str(w))
+                    soil_profiles=precomputed_soil if isinstance(precomputed_soil,dict) else {}
+                    soil030=soil_profiles.get("0–30 cm") if isinstance(soil_profiles,dict) else None
+                    self.project["area_ha"]=area
+                    if soil030 and soil030.get("tc_ha") is not None:
+                        soil_tc=float(soil030["tc_ha"]); soil_co2=soil_tc*44/12
+                        soil_sd=soil030.get("spatial_sd_tc_ha")
+                        soil_sd=float(soil_sd) if soil_sd is not None else None
+                        soil_note="Estoque de carbono orgânico PronaSolos 90 m; profundidade acumulada 0–30 cm. Não somado a perfis acumulados mais profundos."
+                        lines += ["", "RESULTADO PARCIAL — SOLO",f"  0–30 cm: {format_ptbr(soil_tc,2)} tC/ha | {format_ptbr(soil_co2,2)} tCO₂e/ha | área={format_ptbr(area,2)} ha | total={format_ptbr(soil_tc*area,0)} tC",
+                                  "  Incerteza: "+(f"DP espacial={format_ptbr(soil_sd,2)} tC/ha; não é IC95% nem erro de predição." if soil_sd is not None else "N/D.")]
+                        self.project["analysis_rows"]=[{"parametro":"Solo 0–30 cm","tc":soil_tc,"tco2":soil_co2,"origem":"MAPEAMENTO",
+                          "status":"ESTIMATIVA PARCIAL — SEM AGB","metodo":soil_note,"fonte":soil030.get("source","PronaSolos/Embrapa Solos"),
+                          "obs":"Resultado de solo independente; não representa o estoque total da vegetação.",
+                          "erro_abs_tc":soil_sd,"erro_pct":(soil_sd/soil_tc*100 if soil_sd is not None and soil_tc else None),
+                          "erro_metrica":"DP espacial do mapa; não IC95% nem erro de predição",
+                          "nivel_confianca":"variabilidade espacial do raster"}]
+                        self.project["partial_soil_analysis"]={"area_ha":area,"soil_0_30_tc_ha":soil_tc,"soil_0_30_tco2_ha":soil_co2}
+                    else:
+                        lines += ["", "RESULTADO PARCIAL — SOLO", "  Carbono do solo 0–30 cm não estimado: "+str(soil_profiles.get("error","camada PronaSolos sem valores válidos."))]
+                        self.project["analysis_rows"]=[]
+                    lines += ["", "AGB, biomassa subterrânea, necromassa e serapilheira permanecem não estimadas nesta execução; não foram substituídas por valores sem suporte compatível."]
                     lines += ["", "Métricas de validação AGB: RMSE, MAE, viés e R² não são aplicáveis sem modelo treinado/validado compatível. Incerteza da AGB: não estimável.", "Estado: PROCESSAMENTO SAR REAL CONCLUÍDO; ESTIMATIVA AGB PENDENTE DE MODELO/PARCELAS COMPATÍVEIS."]
                     report="\n".join(lines); self.project["partial_sar_analysis"]={"area_ha":area,"sar_result":sar,"report":report}; self.project["area_ha"]=area; self.project["last_result"]=report
                     self._set(self.remote_text,"SAR processado na AOI. AGB não estimada por falta de modelo validado compatível; consulte a trilha, os pixels processados e o motivo no relatório.")
