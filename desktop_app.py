@@ -1708,6 +1708,25 @@ class App(tk.Tk):
                 err=(f"±{format_ptbr(r['erro_abs_tc'],2)} tC/ha ({format_ptbr(r['erro_pct'],1)}%)" if r.get('erro_pct') is not None else "N/D")
                 lines += [f"{r['parametro']}",f"  {format_ptbr(r['tc'],2)} tC/ha  |  {format_ptbr(r['tco2'],2)} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
             if not p030: lines += ["Solo 0–30 cm","  NÃO CALCULADO — PronaSolos não retornou as três camadas necessárias nesta execução.","  Diagnóstico: "+str(soil_error),""]
+            class_layers=(sar.get("fitofisionomia_raster_stats") or {})
+            agb_classes=(class_layers.get("AGB") or {}).get("classes",[])
+            if sar.get("fitofisionomia_status")=="INTERSECAO_IBGE_PROCESSADA":
+                audit=sar.get("fitofisionomia_area_audit") or {}
+                lines += ["AGB SAR POR CLASSE IBGE — INTERSEÇÕES DA AOI",f"Área classificada: {format_ptbr(audit.get('area_classified_ha'),2)} ha; sem classe: {format_ptbr(audit.get('area_unclassified_ha'),2)} ha ({format_ptbr(audit.get('area_unclassified_pct'),2)}%)"]
+                unc_classes={(x.get("physiognomy")):x for x in (class_layers.get("UNCERTAINTY") or {}).get("classes",[])}
+                height_classes={(x.get("physiognomy")):x for x in (class_layers.get("HEIGHT") or {}).get("classes",[])}
+                for cr in agb_classes:
+                    name=cr.get("physiognomy","Classe IBGE sem nome")
+                    ur=unc_classes.get(name,{}); hr=height_classes.get(name,{})
+                    lines.append(f"  {name}: {format_ptbr(cr.get('area_ha'),2)} ha ({format_ptbr(cr.get('area_share_pct'),2)}%)")
+                    if cr.get("agb_mean_mg_ha") is not None:
+                        lines.append(f"    AGB média: {format_ptbr(cr.get('agb_mean_mg_ha'),2)} Mg/ha; total na interseção: {format_ptbr(cr.get('agb_total_mg'),2)} Mg; pixels válidos: {cr.get('n',0)}")
+                    else: lines.append("    AGB: sem pixels válidos nessa classe.")
+                    if ur.get("mean") is not None: lines.append(f"    Incerteza média fornecida pelo produto: {format_ptbr(ur.get('mean'),2)} unidades/ha (não é erro local de validação).")
+                    if hr.get("mean") is not None: lines.append(f"    Altura média: {format_ptbr(hr.get('mean'),2)} m; pixels válidos: {hr.get('n',0)}.")
+                lines.append("")
+            else:
+                lines += ["AGB SAR POR CLASSE IBGE","  NÃO CALCULADA: selecione uma camada vetorial IBGE de fitofisionomias para cruzar a AOI e calcular cada classe separadamente.",""]
             missing=[]
             if "Biomassa subterrânea" not in regional_components: missing.append("biomassa subterrânea")
             if not any(n.startswith("Necromassa") for n in regional_components): missing.append("necromassa")
@@ -1760,6 +1779,24 @@ class App(tk.Tk):
             data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
             if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
             put(sh,data)
+        sar_result=self.project.get("sar_result") or {}
+        class_layers=(sar_result.get("fitofisionomia_raster_stats") or {})
+        class_rows=(class_layers.get("AGB") or {}).get("classes",[])
+        sh=wb.create_sheet("AGB por Fitofisionomia"); setup(sh,"Enform Verde — AGB SAR por interseção IBGE")
+        class_headers=["Classe IBGE","Área (ha)","Área (%)","AGB média (Mg/ha)","AGB total (Mg)","Pixels válidos","Incerteza média do produto","Altura média (m)"]
+        for j,h in enumerate(class_headers,1): sh.cell(3,j,h).value=h
+        unc_by={x.get("physiognomy"):x for x in (class_layers.get("UNCERTAINTY") or {}).get("classes",[])}
+        hgt_by={x.get("physiognomy"):x for x in (class_layers.get("HEIGHT") or {}).get("classes",[])}
+        data=[]
+        for cr in class_rows:
+            name=cr.get("physiognomy")
+            data.append([name,cr.get("area_ha"),cr.get("area_share_pct"),cr.get("agb_mean_mg_ha"),
+                         cr.get("agb_total_mg"),cr.get("n"),unc_by.get(name,{}).get("mean"),hgt_by.get(name,{}).get("mean")])
+        if not data:data=[["NÃO CALCULADO — camada IBGE de fitofisionomias ausente ou sem raster AGB",None,None,None,None,None,None,None]]
+        put(sh,data)
+        sh["A2"]="Interseção espacial AOI × classe IBGE; erro do produto e altura são camadas separadas. AGB total = média Mg/ha × área da classe."
+        sh.merge_cells("A2:H2")
+        sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
         sh=wb.create_sheet("Carbono do Solo"); setup(sh,"Enform Verde — Carbono orgânico do solo")
         soil_rows=[r for r in ar if r["parametro"].startswith("Solo ")]
         soil_data=[["MAPEAMENTO — PronaSolos",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]+" | "+r.get("erro_metrica","")] for r in soil_rows]
