@@ -246,7 +246,7 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
       "agb_mg_ha":pooled["center"],
       "agb_range_mg_ha":[pooled["low"],pooled["high"]],
       "uncertainty_mg_ha":max(pooled["center"]-pooled["low"],pooled["high"]-pooled["center"]),
-      "uncertainty_kind":"limite de incerteza operacional por "+pooled["stat"]+"; não é validação SAR nem IC95% universal da AOI",
+      "uncertainty_kind":"limite de incerteza operacional por "+pooled["stat"]+"; "+"; ".join(dict.fromkeys(r.get("uncertainty_kind","") for r in rec if r.get("uncertainty_kind")))+"; não é validação SAR nem IC95% universal da AOI",
       "data_origin":"MODELAGEM_LITERATURA_HIERARQUICA",
       "method":"fallback hierárquico obrigatório após esgotamento das rotas SAR/produtos espaciais; seleção por bioma + fitofisionomia e síntese robusta das referências brasileiras/regionais disponíveis",
       "source":"; ".join(dict.fromkeys(r["source"] for r in rec)),
