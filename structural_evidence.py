@@ -14,7 +14,7 @@ import math
 from dataclasses import dataclass
 from typing import Iterable
 
-SUPPORTED_BIOMES=("Amazônia","Cerrado","Mata Atlântica","Caatinga")
+SUPPORTED_BIOMES=("Amazônia","Cerrado","Mata Atlântica","Caatinga","Pantanal")
 
 @dataclass(frozen=True)
 class StructuralEvidence:
