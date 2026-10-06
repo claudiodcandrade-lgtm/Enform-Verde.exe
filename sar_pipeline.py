@@ -803,6 +803,12 @@ def literature_fallback(biome,phys,library_rows=None,location=None,aoi=None):
         # Only direct forest-inventory means, stratified by IBGE physiognomy and region,
         # may be reported. No compatible inventory estimate is packaged for this AOI.
         regional_components={}
+        if _inside_reference_domain(-54.9833,-3.0667,15.0):
+            regional_components["Serapilheira — estoque no piso florestal"]={
+                "mean_dry_mg_ha":6.0,"range_dry_mg_ha":[0.0,11.8],
+                "method":"estoque de forest floor reportado na FLONA Tapajós; envelope truncado em zero a partir de 6,0 ±5,8 Mg/ha; não é produtividade/queda anual e não é IC95%.",
+                "source":"McGroddy et al. (2008), Retention of phosphorus in highly weathered soils under a lowland Amazonian forest ecosystem, Journal of Geophysical Research: Biogeosciences",
+                "url":"https://doi.org/10.1029/2008JG000756"}
         return {"available":True,"agb_mg_ha":mean,"uncertainty_mg_ha":max(mean-lower,upper-mean),
                 "agb_range_mg_ha":[lower,upper],
                 "uncertainty_kind":"envelope descritivo entre médias de dois sítios ± DP intrassítio; não é IC95%, intervalo preditivo nem erro SAR",
