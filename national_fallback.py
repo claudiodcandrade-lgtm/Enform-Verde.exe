@@ -16,7 +16,7 @@ interval for the target AOI.
 import math
 import statistics
 
-SUPPORTED_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica")
+SUPPORTED_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica","Pantanal")
 
 def _norm(x):
     return str(x or "").casefold().replace("ã","a").replace("á","a").replace("â","a").replace("é","e").replace("ê","e").replace("í","i").replace("ó","o").replace("ô","o").replace("õ","o").replace("ú","u").replace("ç","c")
@@ -174,6 +174,38 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
                   "revisão 2000–2021; total 218 ± 94,2 Mg/ha",
                   uncertainty_kind="média ± DP entre estudos; não é IC95% da AOI")]
             label="Mata Atlântica — síntese ampla"
+
+    elif "pantanal" in b:
+        # Local field evidence from the Southeast Pantanal (Barros et al., 2022).
+        # Only two classes with numeric means and reported dispersion are enabled;
+        # the paper's other classes are not assigned values from the abstract.
+        # Values are aboveground carbon (Mg C/ha), converted to dry biomass with
+        # the app's explicit operational carbon fraction. The source does not
+        # identify whether ± is SD or SE, so it is carried as a descriptive
+        # envelope and never presented as an AOI confidence interval.
+        if any(k in p for k in ("floresta riparia","floresta ripária","mata ciliar","floresta ciliar")):
+            carbon_mean, carbon_spread = 184.1, 42.0
+            class_label = "floresta ripária"
+        elif any(k in p for k in ("savana gramineo-lenhosa","savana gramíneo-lenhosa","gramineo-lenhosa","gramíneo-lenhosa")):
+            carbon_mean, carbon_spread = 26.6, 19.1
+            class_label = "savana gramíneo-lenhosa"
+        else:
+            return None
+        fraction=0.47
+        mean=carbon_mean/fraction
+        spread=carbon_spread/fraction
+        rec=[_record(mean,max(0.0,mean-spread),mean+spread,
+             "Barros et al. (2022), Aboveground carbon stock in phytophysiognomies of the Southeast Pantanal, Brazil",
+             "https://doi.org/10.1007/s40415-022-00808-1",
+             f"estoque de C publicado para {class_label}: {carbon_mean} ± {carbon_spread} Mg C/ha; convertido em biomassa seca com fração C operacional {fraction}; dispersão ± sem tipo especificado no resumo",
+             uncertainty_kind="dispersão publicada ± (tipo não informado no resumo), convertida por fração C operacional; envelope descritivo, não IC95% do alvo")]
+        label=f"Pantanal sudeste — {class_label}; transferência espacial restrita ao domínio do estudo"
+        if aoi is not None:
+            # Evidence is geographically limited to southeast Pantanal; do not
+            # export this fallback to the whole biome on a biome label alone.
+            d=_aoi_distance_km(aoi,-57.7,-19.5)
+            if d is not None and d>200.0:
+                return None
 
     elif "amazonia" in b:
         if "floresta ombrofila aberta" in p or "floresta aberta" in p:
