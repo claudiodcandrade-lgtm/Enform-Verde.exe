@@ -1585,6 +1585,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             "message":("SAR real processado, mas não há modelo AGB quantitativo compatível e validado; AGB não será substituída por fallback de inventário."
                        if sar_processed else ("AGB de fallback disponível porque as rotas SAR foram consultadas sem observáveis utilizáveis nem falha técnica pendente."
                        if fallback_gate["eligible"] else "SAR não foi processado, mas persistem erros/bloqueios não resolvidos; AGB de fallback foi retida até confirmar a inviabilidade SAR."))}
+    if 'class_stats' in locals() and class_audit is not None:
+        result["fitofisionomia_status"]="INTERSECAO_IBGE_PROCESSADA"
+        result["fitofisionomia_area_audit"]=class_audit
+        result["fitofisionomia_raster_stats"]=class_stats
+        result["fitofisionomia_source"]=ibge_metadata.get("source","camada IBGE carregada pelo operador; confirmar versão oficial")
     if sar_height:
         result["sar_height"]=sar_height
         result.update({k:v for k,v in sar_height.items() if k.startswith("height_")})
