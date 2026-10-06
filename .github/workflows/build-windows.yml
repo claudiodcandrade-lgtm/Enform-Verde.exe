@@ -24,6 +24,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_desktop.txt
           pip install pillow
+      - name: Inspect public IFN necromass and point schemas
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          @'
+          import requests, pandas as pd
+          panel_url="https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/f5902766-14e3-46b8-bdc4-99bc09693161/download/dadosabertos_dadosnecromassa_painelbiomassacarbono_snif_fonte_ifn_sfb.csv"
+          panel=pd.read_csv(panel_url,sep=";",encoding="utf-8-sig",dtype=str)
+          print("IFN_PANEL_LIVE",len(panel),list(panel.columns),panel.head(2).to_dict("records"))
+          endpoint="https://smapas.florestal.gov.br/server/rest/services/DadosAbertos-IFN/dataset_ifn_tb_pontos_lote/FeatureServer/0/query"
+          r=requests.get(endpoint,params={"where":"1=1","outFields":"no_conglomerado,no_uf,no_municipio,no_bioma","returnGeometry":"true","outSR":"4326","f":"json","resultRecordCount":3},timeout=45)
+          r.raise_for_status(); js=r.json()
+          print("IFN_POINTS_LIVE",js.get("fields"),js.get("features",[])[:2])
+          assert panel.shape[0]>0 and len(js.get("features",[]))>0
+          '@ | Set-Content inspect_ifn_live.py -Encoding UTF8
+          python inspect_ifn_live.py
       - name: Restore official IBGE map from previously packaged build
         id: restore_ibge_map
         uses: actions/download-artifact@v4
