@@ -25,6 +25,43 @@ class SarHeightAgreementTests(unittest.TestCase):
         self.assertEqual(out["height_n_valid_pixels"],12)
         self.assertIn("TanDEM-X",out["sensor"])
 
+    def test_gtdx_attempts_public_download_without_earthdata_credentials(self):
+        import sar_pipeline as sp
+        class Geometry:
+            @property
+            def bounds(self): return (-55.0,-4.0,-54.0,-3.0)
+            def union_all(self): return self
+        class GDF:
+            geometry=Geometry()
+            def to_crs(self,*args,**kwargs): return self
+        class Response:
+            status_code=200
+            def __init__(self,payload=None): self.payload=payload
+            def raise_for_status(self): return None
+            def json(self): return self.payload
+            def __enter__(self): return self
+            def __exit__(self,*args): return False
+            def iter_content(self,chunk_size): yield b"public-test"
+        class Session:
+            def __init__(self): self.calls=[]
+            def get(self,url,**kwargs):
+                self.calls.append(url)
+                if "cmr.earthdata.nasa.gov" in url:
+                    return Response({"feed":{"entry":[{"links":[
+                        {"href":"https://data.example/height_amazon_25m.tif"},
+                        {"href":"https://data.example/height_uncertainty_amazon_25m.tif"}]}]}})
+                return Response()
+        session=Session()
+        with tempfile.TemporaryDirectory() as td, \\
+             patch.object(sp,"_earthaccess_requests_session",return_value=(None,{"reason":"no credentials"})), \\
+             patch.object(sp.requests,"Session",return_value=session), \\
+             patch.object(sp,"_zonal",side_effect=[
+                 {"mean":30.0,"sd":2.0,"n":3},{"mean":1.4,"sd":0.3,"n":3}]):
+            out=sp.download_gtdx_height(GDF(),cache=td)
+        self.assertTrue(out["available"])
+        self.assertEqual(out["access_route"],"tentativa pública sem autenticação")
+        self.assertIn("cmr.earthdata.nasa.gov",session.calls[0])
+
     def test_gtdx_height_rejects_negative_error(self):
         from sar_pipeline import _gtdx_height_summary
         with self.assertRaises(ValueError):
