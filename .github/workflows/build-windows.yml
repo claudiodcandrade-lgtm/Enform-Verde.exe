@@ -753,6 +753,7 @@ jobs:
           Copy-Item -Force 'data\tapajos_ornl1552_structure_v1.csv' 'dist\Enform Verde\data\tapajos_ornl1552_structure_v1.csv'
           Copy-Item -Force 'data\structural_inventory_sources_v1.csv' 'dist\Enform Verde\data\structural_inventory_sources_v1.csv'
           Copy-Item -Force 'data\structural_aggregate_evidence_v1.csv' 'dist\Enform Verde\data\structural_aggregate_evidence_v1.csv'
+          Copy-Item -Force 'data\carbon_compartment_sources_brazil_v1.csv' 'dist\Enform Verde\data\carbon_compartment_sources_brazil_v1.csv'
           Copy-Item -Force 'data\sar_data_sources_brazil_v1.csv' 'dist\Enform Verde\data\sar_data_sources_brazil_v1.csv'
           Copy-Item -Force 'TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md' 'dist\Enform Verde\TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
@@ -782,6 +783,7 @@ jobs:
           if (!(Test-Path (Join-Path $root 'data\tapajos_ornl1552_structure_v1.csv'))) { throw 'Tapajos ORNL structure table is missing from package' }
           if (!(Test-Path (Join-Path $root 'data\structural_inventory_sources_v1.csv'))) { throw 'National structural inventory registry is missing from package' }
           if (!(Test-Path (Join-Path $root 'data\structural_aggregate_evidence_v1.csv'))) { throw 'Aggregated structural evidence table is missing from package' }
+          if (!(Test-Path (Join-Path $root 'data\carbon_compartment_sources_brazil_v1.csv'))) { throw 'Carbon compartment evidence catalog is missing from package' }
           if (!(Test-Path (Join-Path $root 'data\sar_data_sources_brazil_v1.csv'))) { throw 'National SAR source catalog is missing from package' }
           Write-Host "Embedded runtime: $($dll.FullName)"
       - name: Compiled EXE self-test from clean copied folder
