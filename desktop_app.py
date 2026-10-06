@@ -15,6 +15,7 @@ from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MOD
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
+from carbon_compartments import tapajos_litter_stock_component, empty_compartment
 
 APP_VERSION="3.24.33-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
@@ -1537,6 +1538,11 @@ class App(tk.Tk):
             else:
                 raise RuntimeError("Pipeline automático sem resultado do worker.")
             self.project["sar_result"]=sar
+            # Resolve direct standing litter stock independently of the AGB/SAR route.
+            regional_components=sar.setdefault("regional_components",{})
+            if not any("serapilheira" in str(k).casefold() for k in regional_components):
+                litter=tapajos_litter_stock_component(self.biome.get(),self.phys.get(),self.gdf)
+                if litter: regional_components["Serapilheira — estoque de massa seca no piso florestal"]=litter
             # Contract: a numerical AGB is a SAR result only when provenance explicitly says SAR.
             if sar.get("agb_mg_ha") is not None and not str(sar.get("data_origin","")).startswith("SAR"):
                 self.project["reference_result"]=sar
@@ -1637,10 +1643,26 @@ class App(tk.Tk):
                 note=(f"biomassa seca={format_ptbr(dry,2)} Mg/ha; faixa descrita={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg/ha; "
                       f"fração C operacional={format_ptbr(CARBON_FRACTION,2)}; "+c["method"])
                 parts.append(("Biomassa subterrânea",dry*CARBON_FRACTION,c["status"],note,c["method"],c["source"]))
+            # Keep absent necromass visible as a failed compartment, never silently omit it.
+            if not any(str(x[0]).startswith("Necromassa aérea") for x in parts):
+                parts.append(("Necromassa aérea — madeira caída",None,"NÃO ESTIMADA — inventário direto compatível não localizado para a fitofisionomia/região",
+                    "N/D; não se aplica equação alométrica. A tabela IFN disponível não tem coordenadas para cruzamento com a classe IBGE da AOI.",
+                    "Inventário direto por UA, estratificado por fitofisionomia e microrregião; sem transferência não validada.",
+                    "SFB/IFN — Painel de Biomassa e Carbono; dados abertos de necromassa"))
+            if not any(str(x[0]).startswith("Necromassa subterrânea") for x in parts):
+                parts.append(("Necromassa subterrânea — raízes mortas",None,"NÃO ESTIMADA — estoque total não suportado por dados diretos compatíveis",
+                    "N/D; raízes vivas, biomassa subterrânea viva, proporções vivas/mortas ou alometria não substituem necromassa medida.",
+                    "Exige massa seca areal de raízes mortas com profundidade, fração de tamanho, parcela independente e incerteza.",
+                    "Nenhuma fonte primária regional compatível disponível para esta AOI"))
+            if not any(str(x[0]).startswith("Serapilheira") for x in parts):
+                parts.append(("Serapilheira — estoque de massa seca",None,"NÃO ESTIMADA — gravimetria compatível indisponível",
+                    "N/D; profundidade e queda anual de liteira não foram convertidas em estoque.",
+                    "Massa seca em quadrados de área conhecida, ou calibração gravimétrica local pareada.",
+                    "Sem fonte primária compatível para a fitofisionomia/região"))
             p030=soil_profiles.get("0–30 cm") if soil_profiles else None
             if p030:
                 parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{format_ptbr(p030["n_samples"],0)} amostras do mapa 90 m; DP espacial {format_ptbr(p030["spatial_sd_tc_ha"],2)} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
-            total=sum(x[1] for x in parts); co2=total*44/12
+            total=sum((x[1] or 0.0) for x in parts); co2=total*44/12
             # Deeper SOC profiles are reported independently and are NOT summed again into Carbono Total.
             for depth in ("0–60 cm","0–100 cm","0–200 cm"):
                 p=soil_profiles.get(depth) if soil_profiles else None
@@ -1674,7 +1696,7 @@ class App(tk.Tk):
                     level="variabilidade espacial do mapa; não IC95% nem erro de predição"
                 else:
                     ea=None; ep=None; metric="proxy bibliográfico/modelado sem distribuição de erro validada"; level="erro estatístico N/D"
-                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
+                rows.append({"parametro":name,"tc":val,"tco2":(val*44/12 if val is not None else None),"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
                              "erro_abs_tc":ea,"erro_pct":ep,"erro_metrica":metric,"nivel_confianca":level})
             # Propagate only quantified independent 1-sigma components; report coverage of uncertainty.
             q=[r for r in rows if r.get("erro_abs_tc") is not None and r.get("origem") not in ("LITERATURA_MICRORREGIONAL","LITERATURA_SECUNDARIA","MODELAGEM_LITERATURA_HIERARQUICA","MODELAGEM_ALOMETRIA_SAR")]
