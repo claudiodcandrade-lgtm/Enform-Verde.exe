@@ -1651,9 +1651,16 @@ class App(tk.Tk):
               ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={format_ptbr(agb,1)} Mg/ha; incerteza={format_ptbr(sar_unc,1)} Mg/ha; carbono={format_ptbr(CARBON_FRACTION,2)}; faixa C={format_ptbr(agc_lo,2)}–{format_ptbr(agc_hi,2)} tC/ha","produto SAR ou referência secundária, conforme origem",sar.get("source",sar.get("status","produto processado")))]
             regional_components=sar.get("regional_components") or {}
             for cname,component in regional_components.items():
-                dry=float(component["mean_dry_mg_ha"]); bounds=list(map(float,component["range_dry_mg_ha"]))
-                note=(f"biomassa seca={format_ptbr(dry,2)} Mg/ha; faixa descritiva={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg/ha; "
-                      f"fração C operacional={format_ptbr(CARBON_FRACTION,2)}; a faixa não é IC95% nem erro SAR. "+str(component.get("method","")))
+                dry=float(component["mean_dry_mg_ha"])
+                raw_bounds=component.get("range_dry_mg_ha")
+                bounds=list(map(float,raw_bounds)) if isinstance(raw_bounds,(list,tuple)) and len(raw_bounds)==2 else None
+                uncertainty=str(component.get("uncertainty_kind") or "incerteza não informada")
+                note=(f"biomassa seca={format_ptbr(dry,2)} Mg/ha; "
+                      +(f"intervalo={format_ptbr(bounds[0],2)}–{format_ptbr(bounds[1],2)} Mg/ha; " if bounds else "intervalo não informado; ")
+                      +f"fração C operacional={format_ptbr(CARBON_FRACTION,2)}; incerteza: {uncertainty}. "
+                      +str(component.get("method","")))
+                if component.get("include_in_total") is False:
+                    note += " Excluído do total por incompatibilidade espacial/fitofisionômica."
                 parts.append((cname,dry*CARBON_FRACTION,component.get("status","REFERÊNCIA MICRORREGIONAL"),note,
                               component.get("method","estoque de referência publicado; não é predição SAR nem medição da AOI"),component.get("source","literatura científica regional")))
             # Always estimate belowground biomass allometrically from AGB. Cairns et al. tropical-forest
