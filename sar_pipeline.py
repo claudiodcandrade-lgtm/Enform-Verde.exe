@@ -291,15 +291,116 @@ def sar_agb_blocker(biome,phys,available_features=None,aoi=None):
                                "faltam preditores exigidos pelo modelo executável mais próximo"),
             "closest_model":candidates[0] if candidates else None}
 
+def _load_official_ibge_vegetation_local(aoi_gdf):
+    """Fetch the public IBGE 2026 vegetation archive and locally select AOI map units.
+
+    The property geometry stays on the user's machine. Only the national public
+    dataset is downloaded; spatial overlay is performed locally.
+    """
+    import os, tempfile, zipfile
+    import geopandas as gpd
+    import pandas as pd
+    import pyogrio
+    from pyproj import CRS, Transformer
+
+    if aoi_gdf is None or not len(aoi_gdf) or aoi_gdf.crs is None:
+        raise ValueError("AOI válida com CRS é necessária para aplicar o fallback IBGE.")
+    local_appdata=os.environ.get("LOCALAPPDATA")
+    root=(Path(local_appdata)/"Enform Verde"/"data"/"IBGE" if local_appdata
+          else Path.home()/".cache"/"enform-verde"/"IBGE")
+    root.mkdir(parents=True,exist_ok=True)
+    archive_path=root/"vege_area_2026.zip"
+    url=("https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/"
+         "vetores/escala_250_mil/versao_2026/vege_area.zip")
+
+    def valid_archive(path):
+        try:
+            with zipfile.ZipFile(path) as z:
+                return any(n.casefold().endswith(".shp") for n in z.namelist())
+        except (OSError,zipfile.BadZipFile):
+            return False
+
+    if not valid_archive(archive_path):
+        archive_path.unlink(missing_ok=True)
+        fd,tmp_name=tempfile.mkstemp(prefix="ibge-vegetation-",suffix=".part",dir=root)
+        os.close(fd); tmp=Path(tmp_name)
+        try:
+            with requests.get(url,stream=True,timeout=(30,180),
+                              headers={"User-Agent":"Enform-Verde/3.24.33"}) as response:
+                response.raise_for_status()
+                with tmp.open("wb") as stream:
+                    for chunk in response.iter_content(1024*1024):
+                        if chunk: stream.write(chunk)
+            if tmp.stat().st_size<1_000_000 or not valid_archive(tmp):
+                raise RuntimeError("O arquivo obtido não é um pacote vetorial IBGE válido.")
+            tmp.replace(archive_path)
+        except Exception as exc:
+            tmp.unlink(missing_ok=True)
+            raise RuntimeError(
+                "Não foi possível obter o mapa oficial de vegetação IBGE 2026. "
+                "Conecte a internet ou carregue uma camada oficial local. "
+                "A geometria da propriedade não foi enviada. Detalhe: "+str(exc)
+            ) from exc
+
+    aoi=aoi_gdf.to_crs("EPSG:4326")
+    west,south,east,north=map(float,aoi.total_bounds)
+    if not all(math.isfinite(v) for v in (west,south,east,north)) or west>=east or south>=north:
+        raise ValueError("A AOI não possui limites válidos para a interseção IBGE.")
+    parts=[]
+    with zipfile.ZipFile(archive_path) as z:
+        members=[name for name in z.namelist() if name.casefold().endswith(".shp")]
+    if not members:
+        raise RuntimeError("O arquivo IBGE não contém shapefiles de vegetação.")
+
+    for member in members:
+        vsi="/vsizip/"+archive_path.resolve().as_posix()+"/"+member
+        try:
+            info=pyogrio.read_info(vsi)
+            fields={str(x).casefold():str(x) for x in info.get("fields",[])}
+            field=fields.get("legenda_1")
+            if not field: continue
+            src_crs=CRS.from_user_input(info.get("crs") or "EPSG:4674")
+            transformer=Transformer.from_crs("EPSG:4326",src_crs,always_xy=True)
+            bbox=transformer.transform_bounds(west,south,east,north,densify_pts=21)
+            bounds=info.get("total_bounds")
+            if bounds is not None and len(bounds)==4:
+                if bounds[2]<bbox[0] or bounds[0]>bbox[2] or bounds[3]<bbox[1] or bounds[1]>bbox[3]:
+                    continue
+            part=gpd.read_file(vsi,bbox=bbox,columns=[field],engine="pyogrio")
+            if len(part):
+                part=part[part[field].notna()].to_crs("EPSG:4326")
+                if len(part): parts.append(part[[field,"geometry"]])
+        except Exception:
+            continue
+    if not parts:
+        raise RuntimeError("O mapa oficial não retornou polígonos IBGE legenda_1 na extensão da AOI.")
+    result=gpd.GeoDataFrame(pd.concat(parts,ignore_index=True),geometry="geometry",crs="EPSG:4326")
+    aoi_geom=aoi.geometry.union_all()
+    result=result[result.geometry.notna() & ~result.geometry.is_empty]
+    result=result[result.geometry.intersects(aoi_geom)].copy()
+    if result.empty:
+        raise RuntimeError("A base IBGE 2026 não cobre a AOI; o cálculo por fitofisionomia foi bloqueado.")
+    result.attrs["source"]="IBGE, Base de Dados Espacial Vegetação 1:250.000, versão 2026"
+    result.attrs["source_url"]=url
+    result.attrs["class_field"]="legenda_1"
+    result.attrs["automatic_local_cache"]=True
+    return result,"legenda_1"
+
 def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_class_field=None):
     if not paths:raise ValueError("Nenhum produto SAR/raster de biomassa foi fornecido.")
     stats=[];agb=None;unc=None;height=None
     class_stats={}
     class_audit=None
-    if ibge_physiognomy_gdf is not None:
-        if not ibge_class_field:
-            raise ValueError("Informe o campo de classe da camada IBGE.")
-        from fitofisionomia_intersections import zonal_raster_by_ibge_class
+    if ibge_physiognomy_gdf is None:
+        ibge_physiognomy_gdf,ibge_class_field=_load_official_ibge_vegetation_local(gdf)
+    else:
+        # The first IBGE legend is the phytophysiognomy/phytoecological region.
+        fields={str(c).casefold():str(c) for c in ibge_physiognomy_gdf.columns}
+        ibge_class_field=fields.get("legenda_1",ibge_class_field)
+    if not ibge_class_field:
+        raise ValueError("Campo oficial IBGE legenda_1 não identificado.")
+    from fitofisionomia_intersections import zonal_raster_by_ibge_class
+    ibge_metadata=getattr(ibge_physiognomy_gdf,"attrs",{}) or {}
     for p in paths:
         rr=role(p);z=_zonal(gdf,p);z.update({"path":str(p),"role":rr});stats.append(z)
         if ibge_physiognomy_gdf is not None:
@@ -315,6 +416,8 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
                     row["height_mean_m"]=row.get("mean")
             class_stats[rr]=cz
             class_audit={k:v for k,v in cz.items() if k not in ("classes","raster_path","class_field")}
+            class_audit["classification_source"]=ibge_metadata.get("source","camada IBGE carregada pelo operador")
+            class_audit["classification_version"]=ibge_metadata.get("source_version",ibge_metadata.get("source","versão não informada"))
         if rr=="AGB":agb=z["mean"]
         elif rr=="UNCERTAINTY":unc=z["mean"]
         elif rr=="HEIGHT":height=z
@@ -332,7 +435,7 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
             out["fitofisionomia_status"]="INTERSECAO_IBGE_PROCESSADA"
             out["fitofisionomia_area_audit"]=class_audit
             out["fitofisionomia_raster_stats"]=class_stats
-            out["fitofisionomia_source"]="camada vetorial fornecida pelo operador; confirmar versão oficial IBGE"
+            out["fitofisionomia_source"]=ibge_metadata.get("source","camada IBGE carregada pelo operador; confirmar versão oficial")
         else:
             out["fitofisionomia_status"]="CAMADA_IBGE_FITOFISIONOMIA_AUSENTE"
             out["fitofisionomia_warning"]="Resultado agregado da AOI não substitui cálculo individual por classe IBGE."
