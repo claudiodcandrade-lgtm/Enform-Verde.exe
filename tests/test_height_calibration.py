@@ -11,10 +11,6 @@ class SarHeightAgreementTests(unittest.TestCase):
         self.assertIsNone(out["calibrated_height_m"])
         self.assertIsNone(out["local_validation_error_m"])
 
-
-if __name__ == "__main__":
-    unittest.main()
-
     def test_gtdx_height_keeps_product_standard_error_and_not_h100(self):
         from sar_pipeline import _gtdx_height_summary
         out=_gtdx_height_summary(
@@ -33,3 +29,7 @@ if __name__ == "__main__":
                 {"mean":31.2,"sd":2.5,"n":12},
                 {"mean":-1,"sd":0,"n":12},
                 "height_amazon_25m.tif","height_uncertainty_amazon_25m.tif")
+
+
+if __name__ == "__main__":
+    unittest.main()
