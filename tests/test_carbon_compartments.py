@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from carbon_compartments import ifn_necromass_component, tapajos_litter_stock_component
+from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, tapajos_litter_stock_component
 
 try:
     import geopandas as gpd
@@ -21,6 +21,21 @@ class CarbonCompartmentTests(unittest.TestCase):
         self.assertIn("não traz coordenadas nem classe IBGE",r["method"])
         self.assertIsNone(ifn_necromass_component("Pantanal","Mato Grosso do Sul",DATA))
         self.assertIsNone(ifn_necromass_component("Amazônia","São Paulo",DATA))
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_uf_intersection_reads_cached_official_shape_and_selects_maximum_overlap(self):
+        import json, tempfile
+        from shapely.geometry import mapping
+        features=[
+          {"type":"Feature","properties":{"id":"15"},"geometry":mapping(box(-56,-5,-53,-2))},
+          {"type":"Feature","properties":{"id":"13"},"geometry":mapping(box(-70,-10,-60,-2))}
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            target=Path(tmp)/"unidades_federacao_ibge_minima.geojson"
+            target.write_text(json.dumps({"type":"FeatureCollection","features":features}),encoding="utf-8")
+            target.write_text(target.read_text(encoding="utf-8")+" "*1200,encoding="utf-8")
+            aoi=gpd.GeoDataFrame(geometry=[box(-55,-4,-54,-3)],crs="EPSG:4326")
+            self.assertEqual(infer_uf_from_aoi(aoi,tmp),"Pará")
 
     @unittest.skipUnless(gpd and box, "geospatial dependencies required")
     def test_tapajos_standing_litter_stock_is_available_and_geofenced(self):
