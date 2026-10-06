@@ -17,7 +17,7 @@ from inventory_structure import summarize_inventory_csv
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
 from carbon_compartments import tapajos_litter_stock_component, empty_compartment
 
-APP_VERSION="3.24.33-CANDIDATE"
+APP_VERSION="3.24.34-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
