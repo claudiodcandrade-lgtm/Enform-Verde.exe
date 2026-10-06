@@ -16,7 +16,7 @@ from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
 
-APP_VERSION="3.24.29-CANDIDATE"
+APP_VERSION="3.24.30-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1260,7 +1260,7 @@ class App(tk.Tk):
              f"BGB: relação raiz/parte aérea {format_ptbr(ROOT_RATIO,2)}, faixa {format_ptbr(ROOT_LOW,2)}–{format_ptbr(ROOT_HIGH,2)}; {SOURCES['protocol']}.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
              f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
-             f"Necromassa: {SOURCES['deadwood']}; proxy de triagem recebe incerteza elevada e nunca é rotulado como medido.\n"
+             "Necromassa acima e abaixo do solo: usar somente médias de inventário florestal diretamente observado, estratificadas pela fitofisionomia IBGE e região, priorizando microrregião; sem inventário compatível, reportar NÃO ESTIMÁVEL. É proibido estimar necromassa por alometria ou por relações com biomassa viva.\n"
              "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
         self._set(self.src,txt)
 
