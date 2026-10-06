@@ -241,6 +241,18 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertIn("85 Mg/ha",entries["AFRICA_BOUVET_2018_SAVANNA_PALSAR"]["domain"])
         self.assertIn("253 parcelas",entries["AFRICA_MITCHARD_2009_SAVANNA_L"]["domain"])
 
+    def test_sar_height_search_contract_covers_all_five_priority_biomes(self):
+        expected=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga")
+        for biome in expected:
+            with self.subTest(biome=biome):
+                scope=sar.height_scope_contract(biome,"fitofisionomia IBGE de teste")
+                self.assertEqual(tuple(scope["requested_biomes"]),expected)
+                self.assertIn("for each AOI",scope["search_policy"])
+                self.assertEqual(scope["aoi_biome"],biome)
+                self.assertIn("not all five",scope["fallback"])
+                self.assertIn("spatial dispersion, not measurement error",scope["error_policy"])
+                self.assertEqual(scope["status"],"AOI_SPECIFIC_COVERAGE_AND_ERROR_REQUIRED")
+
     def test_national_route_matrix_covers_supported_biomes_without_generic_means(self):
         samples={
             "Amazônia":"Floresta Ombrófila Densa",
