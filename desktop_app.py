@@ -25,7 +25,7 @@ SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
  "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100/200 cm + diagnóstico de incerteza",
  "deadwood":"SFB/IFN — médias de inventário por estrato; raízes finas mortas no Tapajós: NASA LBA-ECO / ORNL DAAC 1116",
- "litter":"Embrapa Amazônia Oriental — estudos de serapilheira; proxy só para triagem",
+ "litter":"McGroddy et al. (2008) — massa seca do estoque de forest floor na FLONA Tapajós; referência gravimétrica local geocercada",
 }
 ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
 CARBON_FRACTION=0.47
@@ -1261,8 +1261,8 @@ class App(tk.Tk):
              f"BGB: relação raiz/parte aérea {format_ptbr(ROOT_RATIO,2)}, faixa {format_ptbr(ROOT_LOW,2)}–{format_ptbr(ROOT_HIGH,2)}; {SOURCES['protocol']}.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
              f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
-             "Necromassa acima e abaixo do solo: usar somente médias de inventário florestal diretamente observado, estratificadas por fitofisionomia IBGE e região, priorizando microrregião; não usar alometria. Fonte candidata registrada para Tapajós: ORNL DAAC 1116 (raízes finas mortas, <2 mm, camada 0–10 cm), com arquivos brutos sujeitos a autenticação Earthdata; até reagrupamento por parcela/solo/data, necromassa subterrânea total permanece NÃO ESTIMÁVEL.\n"
-             "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
+             "Necromassa acima e abaixo do solo: não aplicar alometria. Madeira caída pode mostrar a média direta SFB/IFN por bioma×UF quando disponível, mas a tabela ainda não tem coordenadas nem classe IBGE; fica fora do total da AOI até validação por fitofisionomia. Necromassa subterrânea exige massa seca de raízes mortas por área e profundidade, com parcelas independentes; ORNL DAAC 1116 é evidência limitada a raízes finas (<2 mm), não ao estoque subterrâneo total.\n"
+             "Serrapilheira: Tapajós usa referência de massa seca do estoque no piso florestal, independente da AGB/SAR e restrita à fitofisionomia/localidade compatíveis. Fora desse domínio, só estoque gravimétrico ou calibração massa–profundidade local; queda anual e profundidade isolada não são estoque.")
         self._set(self.src,txt)
 
     def summarize_inventory_ui(self):
