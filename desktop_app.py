@@ -1708,6 +1708,10 @@ class App(tk.Tk):
                          "observável: "+str(hi.get("observable","camada de altura; sem semântica conhecida")),
                          "interpretação: "+str(hi.get("meaning","não é estimativa de AGB")),
                          "A altura SAR não determina sozinha DAP médio, densidade de fustes, área basal ou AGB; combinar com inventário/alometria compatíveis e validação espacial independente."]
+                if sar.get("height_standard_error_m") is not None:
+                    diag.append("erro padrão da altura informado pelo produto: "+format_ptbr(float(sar["height_standard_error_m"]),2)+" m")
+                if sar.get("height_error_kind"):
+                    diag.append("tipo de erro de altura: "+str(sar["height_error_kind"]))
             if sar.get("data_origin") in ("LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"):
                 diag += ["", "MÉTRICAS DE VALIDAÇÃO SAR: RMSE=N/D; MAE=N/D; viés=N/D; R²=N/D — faltam pares independentes parcela–pixel SAR.",
                          "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
