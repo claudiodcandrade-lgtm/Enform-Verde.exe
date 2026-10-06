@@ -50,7 +50,7 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
     return {
         "mean_dry_mg_ha":mean,
         "range_dry_mg_ha":[max(0.0,mean-margin),mean+margin],
-        "method":"média gravimétrica do estoque de forest floor em parcelas-controle na FLONA Tapajós, abril/1999, antes de intervenção; duas classes de solo interdigitadas, n=3 parcelas independentes por classe (n total=6). IC95% t bilateral, gl=5, reconstruído das médias e erros-padrão publicados. Não é medição da AOI nem produtividade/queda anual; transferência espacial limitada a 15 km e à classe IBGE Floresta Ombrófila Densa.",
+        "method":"média gravimétrica do estoque de forest floor em parcelas-controle na FLONA Tapajós, abril/1999, antes de intervenção; duas classes de solo interdigitadas, n=3 parcelas independentes por classe (n total=6). IC95% t bilateral, gl=5, reconstruído das médias e erros-padrão publicados. Não é medição direta da AOI; não é produtividade/queda anual; transferência espacial limitada a 15 km e à classe IBGE Floresta Ombrófila Densa.",
         "source":"McGroddy et al. (2008), Journal of Geophysical Research: Biogeosciences 113, G04012, Tabela 5",
         "url":"https://doi.org/10.1029/2008JG000756",
         "status":"ESTOQUE GRAVIMÉTRICO DE REFERÊNCIA — MESMA CLASSE E MICRORREGIÃO",
