@@ -589,7 +589,13 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
     cache=Path(cache or Path.home()/".enform_verde"/"sar"/"gtdx_height")
     cache.mkdir(parents=True,exist_ok=True)
     session,state=_earthaccess_requests_session(edl_user,edl_password,edl_token)
-    if session is None:return {"available":False,"reason":state.get("reason"),"auth_state":state}
+    authenticated=session is not None
+    if session is None:
+        # CMR metadata and some public ORNL COG endpoints may be readable without
+        # an Earthdata session. Attempt that route before reporting an auth block.
+        session=requests.Session()
+        state={**(state or {}),"available":True,"method":"anonymous_public_CMR_attempt",
+               "authenticated":False}
     west,south,east,north=map(float,gdf.to_crs(4326).geometry.union_all().bounds)
     params={"collection_concept_id":GTDX_COLLECTION_ID,
             "bounding_box":f"{west},{south},{east},{north}","page_size":200}
@@ -627,7 +633,8 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
         u=_zonal(gdf,paths["height_uncertainty_amazon_25m.tif"])
         result=_gtdx_height_summary(h,u,paths["height_amazon_25m.tif"],paths["height_uncertainty_amazon_25m.tif"])
         result.update({"cmr_entries":len(entries),"auth_state":state,"uncertainty_pixels":int(u["n"]),
-                       "warning":"Produto de altura SAR–GEDI independente do ESA BIOMASS; não aplicar modelo G×H100 sem equivalência/validação."})
+                       "warning":"Produto de altura SAR–GEDI independente do ESA BIOMASS; não aplicar modelo G×H100 sem equivalência/validação.",
+                       "access_route":"Earthdata autenticado" if authenticated else "tentativa pública sem autenticação"})
         return result
     except Exception as exc:
         return {"available":False,"reason":type(exc).__name__+": "+str(exc)[:500],
