@@ -201,10 +201,13 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
              uncertainty_kind="dispersão publicada ± (tipo não informado no resumo), convertida por fração C operacional; envelope descritivo, não IC95% do alvo")]
         label=f"Pantanal sudeste — {class_label}; transferência espacial restrita ao domínio do estudo"
         if aoi is not None:
-            # Evidence is geographically limited to southeast Pantanal; do not
-            # export this fallback to the whole biome on a biome label alone.
-            d=_aoi_distance_km(aoi,-57.7,-19.5)
-            if d is not None and d>200.0:
+            # The study's sample sites include Fazenda Rio Negro (19°33'11"S,
+            # 56°13'44"W) and Dona Aracy (19°55'15"S, 56°22'16"W). Keep the
+            # fallback within 75 km of either site; never transfer it nationwide.
+            sites=[(-56.2289,-19.5531),(-56.3711,-19.9208)]
+            distances=[_aoi_distance_km(aoi,lon,lat) for lon,lat in sites]
+            distances=[d for d in distances if d is not None]
+            if distances and min(distances)>75.0:
                 return None
 
     elif "amazonia" in b:
