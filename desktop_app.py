@@ -14,6 +14,7 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
+from official_inventory_harvest import harvest_redape, harvest_sinaflor, PNLA_PORTAL, INSTITUTIONAL_PORTALS, SOURCE_HIERARCHY
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
 from carbon_compartments import tapajos_litter_stock_component, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
 
@@ -1251,7 +1252,8 @@ class App(tk.Tk):
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
         ttk.Button(f,text="RESUMIR INVENTÁRIO (DAP + ÁREA BASAL)",command=self.summarize_inventory_ui).pack(anchor="w",pady=(6,2))
-        ttk.Label(f,text="Gera estatísticas de campo por inventário/parcela; não cria pares SAR nem calibra AGB.",wraplength=900).pack(anchor="w",pady=(0,6))
+        ttk.Button(f,text="AMPLIAR BIBLIOTECA — INSTITUIÇÕES, PNLA E SINAFLO",command=self.harvest_official_inventory_ui).pack(anchor="w",pady=2)
+        ttk.Label(f,text="Busca bases abertas institucionais e oficiais, baixa recursos do REDAPE e do Sinaflor e abre o PNLA para localizar estudos públicos por processo. Inventários privados só entram no último nível e com margem de erro publicada.",wraplength=1000).pack(anchor="w",pady=(0,6))
         source_box=ttk.Frame(f); source_box.pack(fill="both",expand=True,pady=8)
         self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
         source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
@@ -1264,6 +1266,44 @@ class App(tk.Tk):
              "Necromassa acima e abaixo do solo: não aplicar alometria. Madeira caída pode mostrar a média direta SFB/IFN por bioma×UF quando disponível, mas a tabela ainda não tem coordenadas nem classe IBGE; fica fora do total da AOI até validação por fitofisionomia. Necromassa subterrânea exige massa seca de raízes mortas por área e profundidade, com parcelas independentes; ORNL DAAC 1116 é evidência limitada a raízes finas (<2 mm), não ao estoque subterrâneo total.\n"
              "Serrapilheira: Tapajós usa referência de massa seca do estoque no piso florestal, independente da AGB/SAR e restrita à fitofisionomia/localidade compatíveis. Fora desse domínio, só estoque gravimétrico ou calibração massa–profundidade local; queda anual e profundidade isolada não são estoque.")
         self._set(self.src,txt)
+
+    def harvest_official_inventory_ui(self):
+        base=filedialog.askdirectory(title="Escolha a pasta da biblioteca ampliada de inventários")
+        if not base:return
+        root=Path(base)/"Enform_Verde_Biblioteca_Inventarios"
+        self.status.set("Consultando REDAPE e Sinaflor; abrindo pesquisa pública do PNLA…")
+        self._set(self.src,"Coleta em andamento. Esta janela continuará responsiva.\n\nPrioridade: parcelas georreferenciadas abertas de instituições reconhecidas; depois inventários institucionais totalizados com erro documentado; dados oficiais do IFN/SFB e Sinaflor no mesmo nível de origem oficial; por último, inventários privados de licenciamento somente com autorização e margem de erro publicada.")
+        webbrowser.open(PNLA_PORTAL)
+        def collect():
+            results={}
+            errors={}
+            for name,fn,folder in (("REDAPE",harvest_redape,"01_REDAPE_Embrapa"),("SINAFLO",harvest_sinaflor,"02_SINAFLO_IBAMA")):
+                try:results[name]=fn(root/folder)
+                except Exception as exc:errors[name]=f"{type(exc).__name__}: {exc}"
+            def finish():
+                lines=["BIBLIOTECA DE INVENTÁRIOS — COLETA DE FONTES OFICIAIS",""]
+                for name,manifest in results.items():
+                    items=manifest.get("resources",[])
+                    downloaded=sum(1 for x in items if x.get("download_status")=="baixado")
+                    lines += [f"{name}: {len(items)} recursos catalogados; {downloaded} baixados."]
+                    tiers={}
+                    for item in items:
+                        tier=item.get("evidence_tier","registro_para_triagem")
+                        tiers[tier]=tiers.get(tier,0)+1
+                    lines += [f"  Triagem: {tiers}"]
+                for name,error in errors.items():lines += [f"{name}: falha na coleta — {error}"]
+                lines += ["","HIERARQUIA DE USO"]
+                lines += [f"{x['rank']}. {x['label']}: {x['description']}" for x in SOURCE_HIERARCHY]
+                lines += ["","Nenhum arquivo foi automaticamente promovido a calibração ou cálculo. Confira parcela/unidade amostral, georreferenciamento, data, fitofisionomia, método, licença e incerteza."]
+                lines += ["Inventários privados de licenciamento exigem acesso autorizado e margem de erro publicada; sem isso ficam fora dos cálculos."]
+                lines += ["","Repositórios institucionais para triagem complementar:"]
+                lines += [f"{x['institution']}: {x['url']} — {x['method']}" for x in INSTITUTIONAL_PORTALS]
+                lines += ["","Arquivos e manifestos salvos em:",str(root)]
+                self._set(self.src,"\n".join(lines))
+                self.status.set("Coleta de catálogos concluída.")
+                messagebox.showinfo("Biblioteca de inventários",f"Coleta concluída. Consulte os manifestos e arquivos em:\n{root}")
+            self.after(0,finish)
+        threading.Thread(target=collect,daemon=True).start()
 
     def summarize_inventory_ui(self):
         src=filedialog.askopenfilename(title="Selecione CSV harmonizado de inventário",filetypes=[("CSV","*.csv"),("Todos","*.*")])
