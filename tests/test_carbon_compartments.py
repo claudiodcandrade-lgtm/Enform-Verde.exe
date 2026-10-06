@@ -22,6 +22,12 @@ class CarbonCompartmentTests(unittest.TestCase):
         self.assertEqual(len(rows_for_compartment(rows,"Serapilheira")),1)
         self.assertEqual(rows_for_compartment(rows,"Biomassa aérea")[0]["tc"],3.0)
 
+    def test_confidence_interval_flag_is_source_specific(self):
+        from carbon_compartments import component_has_confidence_interval
+        self.assertTrue(component_has_confidence_interval({"uncertainty_kind":"IC95% t da média; erro de transferência não incluído"}))
+        self.assertTrue(component_has_confidence_interval({"uncertainty_kind":"IC aproximado de 95% da média"}))
+        self.assertFalse(component_has_confidence_interval({"uncertainty_kind":"envelope descritivo sem cobertura probabilística"}))
+
     def test_direct_ifn_necromass_uses_biome_and_state_and_preserves_transfer_limit(self):
         r=ifn_necromass_component("Amazônia","Pará",DATA)
         self.assertIsNotNone(r)

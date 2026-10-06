@@ -62,6 +62,13 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
         "evidence_type":"standing_litter_dry_mass"
     }
 
+def component_has_confidence_interval(component):
+    """Return True only when the source explicitly describes a 95% confidence interval."""
+    kind=str((component or {}).get("uncertainty_kind") or "").casefold()
+    return any(marker in kind for marker in (
+        "ic95", "ic aproximado de 95%", "intervalo de confiança de 95%"
+    ))
+
 def empty_compartment(name, reason):
     return {
         "mean_dry_mg_ha":None, "range_dry_mg_ha":None,
