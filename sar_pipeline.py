@@ -291,11 +291,21 @@ def sar_agb_blocker(biome,phys,available_features=None,aoi=None):
                                "faltam preditores exigidos pelo modelo executável mais próximo"),
             "closest_model":candidates[0] if candidates else None}
 
-def process_real_sar(gdf,paths,biome="",phys=""):
+def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_class_field=None):
     if not paths:raise ValueError("Nenhum produto SAR/raster de biomassa foi fornecido.")
     stats=[];agb=None;unc=None;height=None
+    class_stats={}
+    class_audit=None
+    if ibge_physiognomy_gdf is not None:
+        if not ibge_class_field:
+            raise ValueError("Informe o campo de classe da camada IBGE.")
+        from fitofisionomia_intersections import zonal_raster_by_ibge_class
     for p in paths:
         rr=role(p);z=_zonal(gdf,p);z.update({"path":str(p),"role":rr});stats.append(z)
+        if ibge_physiognomy_gdf is not None:
+            cz=zonal_raster_by_ibge_class(gdf,ibge_physiognomy_gdf,ibge_class_field,p)
+            class_stats[rr]=cz
+            class_audit={k:v for k,v in cz.items() if k not in ("classes","raster_path","class_field")}
         if rr=="AGB":agb=z["mean"]
         elif rr=="UNCERTAINTY":unc=z["mean"]
         elif rr=="HEIGHT":height=z
@@ -309,6 +319,14 @@ def process_real_sar(gdf,paths,biome="",phys=""):
              "spatial_sd_mg_ha":next(x["sd"] for x in stats if x["role"]=="AGB"),
              "n_valid_pixels":next(x["n"] for x in stats if x["role"]=="AGB"),
              **_provenance("SAR","produto SAR/AGB efetivamente processado",product="raster AGB")}
+        if ibge_physiognomy_gdf is not None:
+            out["fitofisionomia_status"]="INTERSECAO_IBGE_PROCESSADA"
+            out["fitofisionomia_area_audit"]=class_audit
+            out["fitofisionomia_raster_stats"]=class_stats
+            out["fitofisionomia_source"]="camada vetorial fornecida pelo operador; confirmar versão oficial IBGE"
+        else:
+            out["fitofisionomia_status"]="CAMADA_IBGE_FITOFISIONOMIA_AUSENTE"
+            out["fitofisionomia_warning"]="Resultado agregado da AOI não substitui cálculo individual por classe IBGE."
         if height is not None:
             out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"],
                         "height_interpretation":_height_interpretation(height.get("path"))})
