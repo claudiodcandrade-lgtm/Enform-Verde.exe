@@ -52,9 +52,9 @@ class SarHeightAgreementTests(unittest.TestCase):
                         {"href":"https://data.example/height_uncertainty_amazon_25m.tif"}]}]}})
                 return Response()
         session=Session()
-        with tempfile.TemporaryDirectory() as td, \\
-             patch.object(sp,"_earthaccess_requests_session",return_value=(None,{"reason":"no credentials"})), \\
-             patch.object(sp.requests,"Session",return_value=session), \\
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(sp,"_earthaccess_requests_session",return_value=(None,{"reason":"no credentials"})), \
+             patch.object(sp.requests,"Session",return_value=session), \
              patch.object(sp,"_zonal",side_effect=[
                  {"mean":30.0,"sd":2.0,"n":3},{"mean":1.4,"sd":0.3,"n":3}]):
             out=sp.download_gtdx_height(GDF(),cache=td)
