@@ -46,3 +46,19 @@ A camada vetorial de fitofisionomias do IBGE pode ser carregada na aba SAR. Quan
 O catálogo `data/carbon_compartment_sources_brazil_v1.csv` reúne fontes de estoque gravimétrico de serrapilheira e necromassa para os cinco biomas, com unidade, desenho, domínio, estatística disponível e limitações. Fluxo anual de queda de liteira nunca é substituído por estoque acumulado.
 
 O módulo `gravimetric_stock.py` converte massa seca por quadrado, estima calibração profundidade–massa pareada e estima madeira morta por transecto e densidade seca por decomposição. A margem de erro usa as unidades independentes (parcelas/UA); subamostras são agregadas antes do intervalo. Se não houver pelo menos duas unidades independentes ou se a densidade/fração de C não tiver erro medido, a lacuna é declarada em vez de inventar um IC.
+
+## Descoberta de inventários florestais e planos de manejo
+
+Na aba **Base Científica e Modelos**, o botão **Ampliar Biblioteca — Instituições, PNLA e Sinaflor** executa consultas públicas ao repositório de dados de pesquisa REDAPE/Embrapa (API Dataverse) e aos conjuntos oficiais Sinaflor do IBAMA (API CKAN), arquivando recursos e metadados em uma biblioteca local com manifestos JSON/CSV. O botão também abre o PNLA para localizar processos e estudos publicados pelos órgãos licenciadores.
+
+O PNLA agrega informações básicas de processos de licenciamento, mas não oferece uma API nacional documentada para baixar em lote todos os estudos anexos; a disponibilidade de cada documento depende do órgão licenciador. Para triagem institucional complementar, a interface apresenta rotas públicas de Alice e Infoteca-e/Embrapa, INPA, Museu Goeldi, UFRA, UFV, UFLA, UFT, UFPR e UnB.
+
+### Hierarquia de evidências
+
+1. Parcelas abertas, georreferenciadas e medidas por instituições científicas reconhecidas.
+2. Inventários institucionais totalizados, desde que classe, domínio, unidades independentes e margem de erro estejam publicados.
+3. Dados oficiais IFN/SFB e Sinaflor ficam no mesmo nível hierárquico de origem pública oficial. A classificação do conteúdo continua separando autorização/processo de observação efetiva de inventário.
+4. Metadados PNLA servem para localizar estudos; não são, por si, inventários.
+5. Inventários privados anexos a processos de licenciamento são último recurso. Só podem apoiar estimativa quando obtidos por acesso autorizado e quando o estudo publica margem de erro, além de compatibilidade geográfica, fitofisionômica e amostral.
+
+A triagem não promove automaticamente qualquer arquivo a calibração SAR ou cálculo de carbono. Cada dataset precisa de validação de parcela/unidade amostral, coordenadas e CRS, período, fitofisionomia, método, área amostrada, licença e incerteza. Recursos individuais acima de 250 MiB e coleta acumulada acima de 2 GiB permanecem identificados no catálogo para obtenção seletiva posterior.
