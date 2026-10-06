@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, tapajos_litter_stock_component
+from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, tapajos_litter_stock_component
 
 try:
     import geopandas as gpd
@@ -11,6 +11,17 @@ except ImportError:
 DATA=Path(__file__).resolve().parents[1]/"data"/"ifn_necromass_biome_uf_v1.csv"
 
 class CarbonCompartmentTests(unittest.TestCase):
+    def test_excel_sheets_select_prefixed_necromass_and_litter_rows(self):
+        rows=[
+          {"parametro":"Necromassa aérea — referência direta IFN","tc":1.0},
+          {"parametro":"Necromassa subterrânea — raízes mortas","tc":None},
+          {"parametro":"Serapilheira — estoque de massa seca","tc":2.0},
+          {"parametro":"Biomassa aérea","tc":3.0},
+        ]
+        self.assertEqual(len(rows_for_compartment(rows,"Necromassa")),2)
+        self.assertEqual(len(rows_for_compartment(rows,"Serapilheira")),1)
+        self.assertEqual(rows_for_compartment(rows,"Biomassa aérea")[0]["tc"],3.0)
+
     def test_direct_ifn_necromass_uses_biome_and_state_and_preserves_transfer_limit(self):
         r=ifn_necromass_component("Amazônia","Pará",DATA)
         self.assertIsNotNone(r)
