@@ -1818,7 +1818,7 @@ class App(tk.Tk):
                     ea=(max(center-bounds[0],bounds[1]-center)*factor) if bounds else None
                     ep=(ea/val*100 if ea is not None and val else None)
                     metric=str(c.get("uncertainty_kind") or "faixa descritiva sem cobertura probabilística declarada")
-                    level=("IC da média publicado/reconstruído; erro de transferência à AOI não incluído" if component_has_confidence_interval(c) else "envelope da referência; cobertura probabilística não declarada")
+                    level=("intervalo preditivo 95% do estrato IFN bioma×UF; classe e transferência não quantificadas" if "intervalo preditivo aproximado de 95%" in str(c.get("uncertainty_kind","")) else ("IC da média publicado/reconstruído; erro de transferência à AOI não incluído" if component_has_confidence_interval(c) else "envelope da referência; cobertura probabilística não declarada"))
                 elif name=="Biomassa subterrânea":
                     c=regional_components[name]; bounds=list(map(float,c["range_dry_mg_ha"]))
                     ea=max(float(c["mean_dry_mg_ha"])-bounds[0],bounds[1]-float(c["mean_dry_mg_ha"]))*CARBON_FRACTION

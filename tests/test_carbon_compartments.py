@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, tapajos_litter_stock_component, santo_ambrosio_litter_stock_component
+from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, tapajos_necromass_components
 
 try:
     import geopandas as gpd
@@ -34,8 +34,10 @@ class CarbonCompartmentTests(unittest.TestCase):
         self.assertEqual(r["evidence_type"],"direct_ifn_aboveground_necromass")
         self.assertGreater(r["mean_dry_mg_ha"],0)
         self.assertGreater(r["n_independent_units"],1)
-        self.assertFalse(r["include_in_total"])
+        self.assertTrue(r["include_in_total"])
         self.assertIn("não traz coordenadas nem classe IBGE",r["method"])
+        self.assertIn("intervalo preditivo aproximado de 95%",r["uncertainty_kind"])
+        self.assertGreater(r["range_dry_mg_ha"][1]-r["mean_dry_mg_ha"],r["sd_between_ua_mg_ha"])
         self.assertIsNone(ifn_necromass_component("Pantanal","Mato Grosso do Sul",DATA))
         self.assertIsNone(ifn_necromass_component("Amazônia","São Paulo",DATA))
 
@@ -97,6 +99,16 @@ class CarbonCompartmentTests(unittest.TestCase):
         self.assertAlmostEqual(r["range_dry_mg_ha"][1],19.162,places=2)
         self.assertIn("não quantifica transferência",r["method"])
         self.assertIsNone(santo_ambrosio_litter_stock_component("Cerrado","Floresta Ombrófila Densa",aoi))
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_tapajos_direct_deadwood_stocks_are_reported_separately_and_geofenced(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.93,-3.02)])
+        rows=tapajos_necromass_components("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi)
+        self.assertEqual(set(rows),{"Necromassa aérea — madeira morta caída (CWD)","Necromassa aérea — madeira morta em pé (CWD)"})
+        self.assertAlmostEqual(rows["Necromassa aérea — madeira morta caída (CWD)"]["mean_tc_ha"],32.0)
+        self.assertIn("IC95%",rows["Necromassa aérea — madeira morta em pé (CWD)"]["uncertainty_kind"])
+        outside=gpd.GeoDataFrame(geometry=[box(-55.4,-3.05,-55.35,-3.02)])
+        self.assertEqual(tapajos_necromass_components("Amazônia","Floresta Ombrófila Densa",outside),{})
 
     @unittest.skipUnless(gpd and box, "geospatial dependencies required")
     def test_kmz_without_declared_crs_still_resolves_tapajos_litter_reference(self):

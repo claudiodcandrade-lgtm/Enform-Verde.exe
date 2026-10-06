@@ -132,11 +132,56 @@ def santo_ambrosio_litter_stock_component(biome, physiognomy, aoi):
         "include_in_total":True,
     }
 
+def tapajos_necromass_components(biome, physiognomy, aoi):
+    """Published direct coarse-wood carbon stocks, geofenced to Tapajós forest.
+
+    Pyle et al. report downed and standing CWD stocks separately for Tapajós
+    subsites. Published 95% intervals are retained as carbon, avoiding an
+    unsupported conversion to dry mass. Transfer uncertainty to the AOI is not
+    included and the result is not used outside the local terra-firme domain.
+    """
+    if str(biome or "").strip().casefold() not in ("amazônia", "amazonia") or aoi is None:
+        return {}
+    p=str(physiognomy or "").casefold()
+    if "floresta ombrófila densa" not in p and "floresta ombrofila densa" not in p:
+        return {}
+    try:
+        frame=aoi_to_wgs84(aoi)
+        from pyproj import Geod
+        geod=Geod(ellps="WGS84")
+        geom=frame.geometry.union_all()
+        polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else [geom]
+        max_km=0.0
+        for poly in polys:
+            for x,y,*_ in poly.exterior.coords:
+                _,_,d=geod.inv(float(x),float(y),-54.9833,-3.0667)
+                max_km=max(max_km,abs(d)/1000)
+        if max_km>15.0:return {}
+    except Exception:
+        return {}
+    common={
+        "method":"estoque diretamente medido de coarse woody debris (CWD) na FLONA Tapajós; média publicada de quatro subáreas (km 67, km 72 e km 117), IC95% publicado com bootstrap. O intervalo é amostral entre subáreas e não inclui erro de transferência até a AOI; estudo de floresta de terra firme, não extrapolar para várzea/mangue.",
+        "source":"Pyle et al. (2008), Dynamics of carbon, biomass, and structure in two Amazonian forests, JGR Biogeosciences; Tabela 2, DOI 10.1029/2007JG000592",
+        "url":"https://doi.org/10.1029/2007JG000592",
+        "status":"NECROMASSA DIRETA — REFERÊNCIA MICRORREGIONAL TAPAJÓS; IC95% PUBLICADO",
+        "origin":"INVENTARIO_DIRETO_MICRORREGIONAL",
+        "uncertainty_kind":"IC95% publicado/bootstrapping; incerteza de transferência espacial não incluída",
+        "sampling_units_reported":4,
+        "evidence_type":"direct_coarse_woody_debris_carbon_stock",
+    }
+    return {
+        "Necromassa aérea — madeira morta caída (CWD)":{**common,"mean_tc_ha":32.0,"range_tc_ha":[28.3,35.7],
+            "method":common["method"]+" CWD caída: 32,0 Mg C/ha (IC95% 28,3–35,7)."},
+        "Necromassa aérea — madeira morta em pé (CWD)":{**common,"mean_tc_ha":8.7,"range_tc_ha":[7.4,10.0],
+            "method":common["method"]+" CWD em pé: 8,7 Mg C/ha (IC95% 7,4–10,0)."},
+    }
+
 def component_has_confidence_interval(component):
     """Return True only when the source explicitly describes a 95% confidence interval."""
     kind=str((component or {}).get("uncertainty_kind") or "").casefold()
     return any(marker in kind for marker in (
-        "ic95", "ic aproximado de 95%", "intervalo de confiança de 95%"
+        "ic95", "ic aproximado de 95%", "intervalo de confiança de 95%",
+        "intervalo preditivo aproximado de 95%"
     ))
 
 def empty_compartment(name, reason):
@@ -202,19 +247,29 @@ def ifn_necromass_component(biome, uf, csv_path):
         if not row:return None
         n=int(row["n_ua"]); mean=float(row["mean_dry_mg_ha"]); sd=float(row["sd_between_ua_mg_ha"])
         if n<2 or not all(math.isfinite(x) for x in (mean,sd)) or mean<0 or sd<0:return None
-        # Student-t critical for df>=30 is close to 1.96; a conservative 1.96 SE
-        # is labeled an approximate sampling interval, not AOI prediction error.
-        margin=1.96*sd/math.sqrt(n)
+        # Last-resort, design-level prediction interval for one AOI-like unit.
+        # The state/biome UA SD is the predictive dispersion; using only the
+        # standard error of the statewide mean would materially understate it.
+        try:
+            from scipy.stats import t as student_t
+            critical=float(student_t.ppf(0.975,n-1))
+        except Exception:
+            critical={1:12.706,2:4.303,3:3.182,4:2.776,5:2.571,6:2.447,7:2.365,
+                      8:2.306,9:2.262,10:2.228,11:2.201,12:2.179,13:2.160,
+                      14:2.145,15:2.131,16:2.120,17:2.110,18:2.101,19:2.093,
+                      20:2.086,21:2.080,22:2.074,23:2.069,24:2.064,25:2.060,
+                      26:2.056,27:2.052,28:2.048,29:2.045,30:2.042}.get(n-1,1.96)
+        margin=critical*sd*math.sqrt(1.0+1.0/n)
         return {
           "mean_dry_mg_ha":mean,"range_dry_mg_ha":[max(0.0,mean-margin),mean+margin],
-          "method":f"média direta de necromassa aérea IFN/SFB, agrupada por bioma {biome} × UF {uf}; {n} unidades amostrais independentes (UA). IC aproximado de 95% da média entre UAs. A tabela publicada não traz coordenadas nem classe IBGE; este valor é referência estadual agregada, não estimativa validada para a fitofisionomia da AOI.",
+          "method":f"média direta de necromassa aérea IFN/SFB, agrupada por bioma {biome} × UF {uf}; {n} unidades amostrais independentes (UA). Intervalo preditivo aproximado de 95% para uma nova unidade, calculado com t({n-1}) × DP entre UAs × √(1+1/n), truncado em zero. Último nível da hierarquia quando não existe inventário por classe/proximidade. A tabela publicada não traz coordenadas nem classe IBGE; a extrapolação assume permutabilidade dentro do estrato bioma×UF e não valida correspondência da fitofisionomia da AOI.",
           "source":"SFB/IFN, Painel de Biomassa e Carbono — dados abertos de necromassa por UA (t matéria seca/ha)",
-          "status":"INVENTÁRIO DIRETO IFN — REFERÊNCIA BIOMA×UF; FITOFISIONOMIA NÃO ESTRATIFICADA",
+          "status":"FALLBACK ÚLTIMA HIERARQUIA — IFN BIOMA×UF; FITOFISIONOMIA NÃO ESTRATIFICADA",
           "origin":"INVENTARIO_DIRETO_IFN",
-          "uncertainty_kind":"IC aproximado de 95% da média entre UAs; não inclui erro de transferência espacial/classe",
+          "uncertainty_kind":"intervalo preditivo aproximado de 95% t da variabilidade entre UAs; assume permutabilidade no estrato bioma×UF; classe e transferência ecológica não quantificadas",
           "n_independent_units":n,"n_ua":n,"sd_between_ua_mg_ha":sd,
           "evidence_type":"direct_ifn_aboveground_necromass",
-          "include_in_total":False
+          "include_in_total":True
         }
     except Exception:
         return None
