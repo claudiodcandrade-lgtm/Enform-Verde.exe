@@ -1,5 +1,5 @@
 import unittest
-from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock
+from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
 
 class GravimetricStockTests(unittest.TestCase):
     def test_litter_stock_unit_conversion_and_margin(self):
@@ -21,9 +21,16 @@ class GravimetricStockTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             litter_depth_mass_calibration([1,2],[100,200],[0.25,0.25],1.5)
 
-    def test_necromass_line_intersect_requires_decay_density(self):
-        r=necromass_line_intersect_stock([10,20],[600,300],[10,10],cluster_ids=["UA1","UA2"])
+    def test_carbon_stock_uses_measured_carbon_fraction(self):
+        r=carbon_stock_from_mass([10,20,30],[0.45,0.50,0.55])
+        self.assertAlmostEqual(r["mean"],10.0)
+        self.assertGreater(r["margin_error"],0)
+
+    def test_necromass_sums_pieces_by_transect_before_error(self):
+        r=necromass_line_intersect_stock([10,20,10],[600,300,600],[10,10,10],
+            transect_ids=["T1","T1","T2"],cluster_ids=["UA1","UA1","UA2"])
         self.assertEqual(r["n_independent_units"],2)
+        self.assertEqual(len(r["transect_contributions_mg_ha"]),2)
         self.assertGreater(r["mean"],0)
         self.assertIn("decomposição",r["density_requirement"])
 
