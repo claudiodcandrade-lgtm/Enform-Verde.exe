@@ -100,3 +100,34 @@ def zonal_raster_by_ibge_class(aoi_gdf, ibge_gdf, class_field, raster_path):
             "area_unclassified_ha":audit["area_unclassified_ha"],
             "area_unclassified_pct":audit["area_unclassified_pct"],
             "area_crs":audit["crs_area"],"classes":out}
+
+
+def resolve_physiognomy_class(predicted_class, confidence, ibge_reference_class,
+                              confidence_threshold=0.80):
+    """Use the classifier above threshold and the IBGE label otherwise.
+
+    The returned method identifies the source. Missing/invalid classifier
+    confidence invokes IBGE fallback. If neither source can assign a class,
+    raise an explicit coverage error instead of emitting an indeterminate label.
+    """
+    threshold = float(confidence_threshold)
+    if not math.isfinite(threshold) or not 0.0 <= threshold <= 1.0:
+        raise ValueError("O limiar de confiança deve estar entre 0 e 1.")
+    try:
+        score = float(confidence)
+    except (TypeError, ValueError):
+        score = float("nan")
+    label = str(predicted_class).strip() if predicted_class is not None else ""
+    if label and math.isfinite(score) and threshold <= score <= 1.0:
+        return {"physiognomy": label, "method": "algorithm",
+                "confidence": score, "ibge_fallback": False}
+    ibge_label = (str(ibge_reference_class).strip()
+                  if ibge_reference_class is not None else "")
+    if ibge_label:
+        return {"physiognomy": ibge_label, "method": "IBGE",
+                "confidence": score if math.isfinite(score) else None,
+                "ibge_fallback": True}
+    raise ValueError(
+        "Classificação algorítmica abaixo do limiar e sem classe IBGE "
+        "de referência; verificar cobertura da camada oficial."
+    )
