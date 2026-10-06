@@ -1,6 +1,6 @@
 import unittest
-
-from carbon_compartments import tapajos_litter_stock_component
+from pathlib import Path
+from carbon_compartments import ifn_necromass_component, tapajos_litter_stock_component
 
 try:
     import geopandas as gpd
@@ -8,7 +8,20 @@ try:
 except ImportError:
     gpd=box=None
 
+DATA=Path(__file__).resolve().parents[1]/"data"/"ifn_necromass_biome_uf_v1.csv"
+
 class CarbonCompartmentTests(unittest.TestCase):
+    def test_direct_ifn_necromass_uses_biome_and_state_and_preserves_transfer_limit(self):
+        r=ifn_necromass_component("Amazônia","Pará",DATA)
+        self.assertIsNotNone(r)
+        self.assertEqual(r["evidence_type"],"direct_ifn_aboveground_necromass")
+        self.assertGreater(r["mean_dry_mg_ha"],0)
+        self.assertGreater(r["n_independent_units"],1)
+        self.assertFalse(r["include_in_total"])
+        self.assertIn("não traz coordenadas nem classe IBGE",r["method"])
+        self.assertIsNone(ifn_necromass_component("Pantanal","Mato Grosso do Sul",DATA))
+        self.assertIsNone(ifn_necromass_component("Amazônia","São Paulo",DATA))
+
     @unittest.skipUnless(gpd and box, "geospatial dependencies required")
     def test_tapajos_standing_litter_stock_is_available_and_geofenced(self):
         aoi=gpd.GeoDataFrame(geometry=[box(-54.984,-3.068,-54.982,-3.065)],crs="EPSG:4326")
