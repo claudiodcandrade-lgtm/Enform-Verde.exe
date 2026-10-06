@@ -23,7 +23,7 @@ ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#3441
 SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
  "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100/200 cm + diagnóstico de incerteza",
- "deadwood":"Freitas et al. (2021), Embrapa Amazônia Ocidental — necromassa lenhosa",
+ "deadwood":"SFB/IFN — médias de inventário por estrato; raízes finas mortas no Tapajós: NASA LBA-ECO / ORNL DAAC 1116",
  "litter":"Embrapa Amazônia Oriental — estudos de serapilheira; proxy só para triagem",
 }
 ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
@@ -1260,7 +1260,7 @@ class App(tk.Tk):
              f"BGB: relação raiz/parte aérea {format_ptbr(ROOT_RATIO,2)}, faixa {format_ptbr(ROOT_LOW,2)}–{format_ptbr(ROOT_HIGH,2)}; {SOURCES['protocol']}.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
              f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
-             "Necromassa acima e abaixo do solo: usar somente médias de inventário florestal diretamente observado, estratificadas pela fitofisionomia IBGE e região, priorizando microrregião; sem inventário compatível, reportar NÃO ESTIMÁVEL. É proibido estimar necromassa por alometria ou por relações com biomassa viva.\n"
+             "Necromassa acima e abaixo do solo: usar somente médias de inventário florestal diretamente observado, estratificadas por fitofisionomia IBGE e região, priorizando microrregião; não usar alometria. Fonte candidata registrada para Tapajós: ORNL DAAC 1116 (raízes finas mortas, <2 mm, camada 0–10 cm), com arquivos brutos sujeitos a autenticação Earthdata; até reagrupamento por parcela/solo/data, necromassa subterrânea total permanece NÃO ESTIMÁVEL.\n"
              "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
         self._set(self.src,txt)
 
