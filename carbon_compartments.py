@@ -116,7 +116,8 @@ def ifn_necromass_component(biome, uf, csv_path):
           "origin":"INVENTARIO_DIRETO_IFN",
           "uncertainty_kind":"IC aproximado de 95% da média entre UAs; não inclui erro de transferência espacial/classe",
           "n_independent_units":n,"n_ua":n,"sd_between_ua_mg_ha":sd,
-          "evidence_type":"direct_ifn_aboveground_necromass",\n          "include_in_total":False
+          "evidence_type":"direct_ifn_aboveground_necromass",
+          "include_in_total":False
         }
     except Exception:
         return None
