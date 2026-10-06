@@ -42,6 +42,15 @@ class NationalFallbackTests(unittest.TestCase):
         self.assertNotEqual(semidec["agb_mg_ha"],secondary["agb_mg_ha"])
 
     @unittest.skipUnless(gpd and box,"geospatial dependencies required")
+    def test_tapajos_necromass_not_inferred_from_literature_or_mixed_roots(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.95,-3.07,-54.94,-3.06)],crs="EPSG:4326")
+        r=sar.literature_fallback("Amazônia","Floresta Ombrófila Densa",aoi=aoi)
+        self.assertTrue(r and r["available"])
+        components=r.get("regional_components") or {}
+        self.assertNotIn("Biomassa subterrânea",components)
+        self.assertFalse(any(name.startswith("Necromassa") for name in components))
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies required")
     def test_pipeline_withholds_inventory_agb_after_processed_sar_without_model(self):
         g=gpd.GeoDataFrame(geometry=[box(-47.96,-15.98,-47.94,-15.96)],crs="EPSG:4326")
         real=(sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history)
