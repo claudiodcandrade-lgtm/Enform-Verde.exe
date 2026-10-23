@@ -16,10 +16,10 @@ from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
 from official_inventory_harvest import harvest_redape, harvest_sinaflor, PNLA_PORTAL, INSTITUTIONAL_PORTALS, SOURCE_HIERARCHY
 from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
-from carbon_compartments import tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, tapajos_necromass_components, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
+from carbon_compartments import tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, pantanal_nhecolandia_litter_carbon_component, tapajos_necromass_components, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
 from mapbiomas_zonal import mapbiomas_class_percentages
 
-APP_VERSION="3.24.37-CANDIDATE"
+APP_VERSION="3.24.38-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -27,7 +27,7 @@ SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
  "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100/200 cm + diagnóstico de incerteza",
  "deadwood":"SFB/IFN — médias de inventário por estrato; raízes finas mortas no Tapajós: NASA LBA-ECO / ORNL DAAC 1116",
- "litter":"McGroddy et al. (2008) — massa seca do estoque de forest floor na FLONA Tapajós; referência gravimétrica local geocercada",
+ "litter":"Nunes (2015) + Nascimento et al. (2024) — Pantanal/Nhecolândia com IC95% amostral; também Tapajós e Santo Ambrósio geocercados",
 }
 ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
 CARBON_FRACTION=0.47
@@ -1600,7 +1600,11 @@ class App(tk.Tk):
                     regional_components["Serapilheira — estoque gravimétrico local Santo Ambrósio"]=litter
                 else:
                     litter=tapajos_litter_stock_component(self.biome.get(),self.phys.get(),self.gdf)
-                    if litter: regional_components["Serapilheira — estoque de massa seca no piso florestal"]=litter
+                    if litter:
+                        regional_components["Serapilheira — estoque de massa seca no piso florestal"]=litter
+                    else:
+                        litter=pantanal_nhecolandia_litter_carbon_component(self.biome.get(),self.phys.get(),self.gdf)
+                        if litter: regional_components["Serapilheira — carbono regional Pantanal/Nhecolândia"]=litter
             # Contract: a numerical AGB is a SAR result only when provenance explicitly says SAR.
             if sar.get("agb_mg_ha") is not None and not str(sar.get("data_origin","")).startswith("SAR"):
                 self.project["reference_result"]=sar
