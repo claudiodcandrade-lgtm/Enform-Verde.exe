@@ -54,7 +54,7 @@ def acquisition_display(scene):
     """Clearly distinguish annual ESA CCI L4 reference periods from SAR scene timestamps."""
     import re
     path=str(scene.get("path") or scene.get("scene") or "")
-    m=re.search(r"ESACCI-BIOMASS-L4-(?:AGB|AGB_SD)-MERGED-100m-(20\\d{2})-fv[0-9.]+\\.tif",path,re.I)
+    m=re.search(r"ESACCI-BIOMASS-L4-(?:AGB|AGB_SD)-MERGED-100m-(20\d{2})-fv[0-9.]+\.tif",path,re.I)
     if m:
         year=m.group(1)
         return {"brasilia":"NÃO SE APLICA — produto anual composto",
