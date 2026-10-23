@@ -48,3 +48,24 @@ def summarize_catalog_acquisition(items):
     return {"latest":ordered[0] if ordered and ordered[0]["acquisition_utc"] else None,
             "items":ordered, "date_policy":"aquisição real, mais recente primeiro; data desconhecida após datadas",
             "warning":"A cena mais nova só pode ser utilizada se polarização, produto, cobertura e modelo forem compatíveis. O mosaico composto exige datas por cena."}
+
+
+def acquisition_display(scene):
+    """Clearly distinguish annual ESA CCI L4 reference periods from SAR scene timestamps."""
+    import re
+    path=str(scene.get("path") or scene.get("scene") or "")
+    m=re.search(r"ESACCI-BIOMASS-L4-(?:AGB|AGB_SD)-MERGED-100m-(20\\d{2})-fv[0-9.]+\\.tif",path,re.I)
+    if m:
+        year=m.group(1)
+        return {"brasilia":"NÃO SE APLICA — produto anual composto",
+                "utc":"NÃO SE APLICA — produto anual composto",
+                "reference_period":year,
+                "explanation":"ESA CCI Biomass L4: mapa anual multissensor; não é cena de aquisição instantânea. Não atribuir hora da data de referência ou de processamento como aquisição."}
+    dt=scene.get("acquisition_utc")
+    br=scene.get("acquisition_brasilia")
+    if dt and br:
+        return {"brasilia":str(br),"utc":str(dt),"reference_period":None,"explanation":None}
+    return {"brasilia":"NÃO IDENTIFICADO NOS METADADOS",
+            "utc":"NÃO IDENTIFICADO NOS METADADOS",
+            "reference_period":None,
+            "explanation":"Verificar metadados do produto/catálogo de origem; não assumir horário a partir de nome, criação ou download do arquivo."}
