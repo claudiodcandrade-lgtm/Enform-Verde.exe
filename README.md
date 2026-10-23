@@ -25,3 +25,40 @@ O candidato CASINO P-band (Soja et al. 2021, DOI 10.1016/j.rse.2020.112153) est�
 ## Mapa-base IBGE offline
 
 O fundo padrão do mapa é gerado localmente a partir da malha municipal IBGE 2025 e da Base Cartográfica Contínua do Brasil 1:250.000 (BC250): limites de estados e municípios, rodovias, ferrovias, hidrografia, hidrovias, aeroportos, portos e localidades. A interface rasteriza essas camadas para a visualização e sobrepõe o polígono estudado. O aplicativo empacota os dados em `offline_ibge_map.json.gz` e não depende de mosaico de satélite para mostrar a AOI. Imagem de satélite segue opcional.
+# Política SAR para biomassa e altura
+
+1. Quando coberto e liberado pelo catálogo, `ESA BIOMASS FP_AGB_L2B` fornece a estimativa AGB primária e sua camada de desvio-padrão do produto. Ela é reportada como incerteza do produto, separada da dispersão espacial e sem alegação de validação local.
+2. `ESA BIOMASS FP_FH__L2B` é consultado separadamente e pode fornecer altura superior do dossel (H100). Essa camada não é convertida em AGB. O relatório mantém a altura SAR ao lado da AGB sempre que ambos estiverem disponíveis.
+3. Fora da cobertura desses produtos, apenas modelos com sensor, polarização, domínio fitofisionômico e preditores compatíveis podem produzir AGB quantitativa. L-band dual-pol não é promovido a modelo de alta biomassa por si só. Referências e inventários não pareados servem como contexto/prior, não como calibração SAR.
+4. Recalibração brasileira exige inventário de parcelas com localização/suporte espacial, período compatível e resposta AGB documentada, além de pixel SAR coincidente. A validação é agrupada por sítio. DAP/área basal medidos em campo são preditores estruturais preferenciais; alturas de campo são usadas apenas para auditoria independente, pois têm maior erro de mensuração.
+5. A fitofisionomia permanece determinada pelo diagnóstico IBGE vigente nesta versão. Se nenhum produto/modelo AGB compatível processar, o resultado declara essa lacuna e separa claramente qualquer referência bibliográfica da estimativa SAR.
+
+## AOI brasileira de aceitação SAR
+
+`acceptance/Teste_SAR_Cerrado_DF.kml` é o polígono de aceitação no Cerrado do Distrito Federal (aprox. 475 ha; limites −15,960/−15,940° latitude e −47,950/−47,930° longitude). Na execução de aceitação anterior, pixels reais ALOS/PALSAR HV produziram AGB de 16,75 Mg/ha pelo modelo publicado Yu & Saatchi (2016); a dispersão espacial propagada foi ±11,24 Mg/ha. O resultado é uma prova de processamento SAR ponta a ponta para vegetação savânica de baixa biomassa, não validação local: usa equação global transferida, o limite operacional é AGB ≤100 Mg/ha e ±11,24 não é intervalo de confiança nem inclui o erro de transferência. O arquivo pode ser aberto em QGIS, Google Earth ou carregado na aplicação para repetir a aceitação. Para floresta densa/alta biomassa, use a rota P-band ESA BIOMASS quando o produto oficial cobrir a AOI; não transfira a equação de savana.
+
+Para alta biomassa, `acceptance/Teste_SAR_Alta_Biomassa_Tapajos.kml` usa a AOI Tapajós já percorrida pelo teste de processamento SAR. A classe de referência local/regional é Floresta Ombrófila Densa de Terras Baixas, dossel emergente (Dbe), com diagnóstico dominante a confirmar pela interseção IBGE ao executar. A síntese publicada do Plano de Manejo da FLONA informa 313 Mg/ha de biomassa seca acima do solo nessa classe; é uma referência contextual, não AGB derivada do SAR. O teste anterior processou pixels reais, mas terminou sem AGB SAR quantitativa compatível. Esta AOI está pronta para validar cobertura e processar `FP_AGB_L2B`; a disponibilidade do tile ESA deve ser verificada no catálogo no momento da execução, e a estimativa não deve ser fabricada se o tile/modelo pareado estiver ausente.
+
+## Estratificação IBGE e gravimetria por compartimento
+
+A camada vetorial de fitofisionomias do IBGE pode ser carregada na aba SAR. Quando fornecida, o programa intersecta a AOI com cada classe em EPSG:5880, calcula área classificada e não classificada e resume separadamente AGB, altura e incerteza dos rasters em cada interseção. Os resultados ficam no relatório e na planilha, na aba “AGB por Fitofisionomia”. Sem a camada vetorial, a análise SAR geral segue disponível e o relatório declara que a decomposição por classe IBGE não foi feita.
+
+O catálogo `data/carbon_compartment_sources_brazil_v1.csv` reúne fontes de estoque gravimétrico de serrapilheira e necromassa para os cinco biomas, com unidade, desenho, domínio, estatística disponível e limitações. Fluxo anual de queda de liteira nunca é substituído por estoque acumulado.
+
+O módulo `gravimetric_stock.py` converte massa seca por quadrado, estima calibração profundidade–massa pareada e estima madeira morta por transecto e densidade seca por decomposição. A margem de erro usa as unidades independentes (parcelas/UA); subamostras são agregadas antes do intervalo. Se não houver pelo menos duas unidades independentes ou se a densidade/fração de C não tiver erro medido, a lacuna é declarada em vez de inventar um IC.
+
+## Descoberta de inventários florestais e planos de manejo
+
+Na aba **Base Científica e Modelos**, o botão **Ampliar Biblioteca — Instituições, PNLA e Sinaflor** executa consultas públicas ao repositório de dados de pesquisa REDAPE/Embrapa (API Dataverse) e aos conjuntos oficiais Sinaflor do IBAMA (API CKAN), arquivando recursos e metadados em uma biblioteca local com manifestos JSON/CSV. O botão também abre o PNLA para localizar processos e estudos publicados pelos órgãos licenciadores.
+
+O PNLA agrega informações básicas de processos de licenciamento, mas não oferece uma API nacional documentada para baixar em lote todos os estudos anexos; a disponibilidade de cada documento depende do órgão licenciador. Para triagem institucional complementar, a interface apresenta rotas públicas de Alice e Infoteca-e/Embrapa, INPA, Museu Goeldi, UFRA, UFV, UFLA, UFT, UFPR e UnB.
+
+### Hierarquia de evidências
+
+1. Parcelas abertas, georreferenciadas e medidas por instituições científicas reconhecidas.
+2. Inventários institucionais totalizados, desde que classe, domínio, unidades independentes e margem de erro estejam publicados.
+3. Dados oficiais IFN/SFB e Sinaflor ficam no mesmo nível hierárquico de origem pública oficial. A classificação do conteúdo continua separando autorização/processo de observação efetiva de inventário.
+4. Metadados PNLA servem para localizar estudos; não são, por si, inventários.
+5. Inventários privados anexos a processos de licenciamento são último recurso. Só podem apoiar estimativa quando obtidos por acesso autorizado e quando o estudo publica margem de erro, além de compatibilidade geográfica, fitofisionômica e amostral.
+
+A triagem não promove automaticamente qualquer arquivo a calibração SAR ou cálculo de carbono. Cada dataset precisa de validação de parcela/unidade amostral, coordenadas e CRS, período, fitofisionomia, método, área amostrada, licença e incerteza. Recursos individuais acima de 250 MiB e coleta acumulada acima de 2 GiB permanecem identificados no catálogo para obtenção seletiva posterior.

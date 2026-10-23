@@ -71,6 +71,8 @@ class CatalogModelExecutionTests(unittest.TestCase):
             "sigma0_HV_db.tif":"HV",
             "AGB_Mg_ha.tif":"AGB",
             "AGB_Std_Dev.tif":"UNCERTAINTY",
+            "N00W060_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif":"UNCERTAINTY",
+            "N00W060_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif":"AGB",
             "canopy_height_m.tif":"HEIGHT",
             "height_uncertainty.tif":"UNCERTAINTY",
         }
@@ -117,6 +119,24 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["model_id"],"ESA_BIOMASS_FP_AGB_L2B")
         self.assertIn("não erro local",out["uncertainty_kind"])
 
+    def test_official_fh_height_is_carried_alongside_primary_agb_result(self):
+        items=[
+            {"id":"agb_tile","_product_type":"FP_AGB_L2B","_stage":"OPERATIONAL","_collection":"BiomassLevel2b"},
+            {"id":"fh_tile","_product_type":"FP_FH__L2B","_stage":"OPERATIONAL","_collection":"BiomassLevel2b"}]
+        product={"status":"SAR_PROCESSADO","agb_mg_ha":310.0,"uncertainty_mg_ha":40.0,
+                 "uncertainty_kind":"produto ESA","stats":[],"spatial_sd_mg_ha":12.0,"n_valid_pixels":10}
+        height={"height_mean_m":26.0,"height_sd_m":3.0,"height_n_valid_pixels":8,
+                "height_interpretation":{"observable":"forest height"}}
+        with patch.object(sar,"biomass_l2b_search",return_value=items), \
+             patch.object(sar,"download_maap_height",return_value={"paths":["fh.tif"],"available":True}), \
+             patch.object(sar,"process_real_sar",side_effect=[height,product]), \
+             patch.object(sar,"download_maap_agb",return_value={"paths":["agb.tif"],"available":True}):
+            out=sar.automatic_pipeline(object(),"Amazônia","Floresta Ombrófila Densa",cache="/tmp/enform-fh-agb")
+        self.assertEqual(out["agb_mg_ha"],310.0)
+        self.assertEqual(out["data_origin"],"SAR_P_BIOMASS_FP_AGB_L2B")
+        self.assertEqual(out["sar_height"]["height_mean_m"],26.0)
+        self.assertEqual(out["sar_height"]["product"],"FP_FH__L2B")
+
     def test_sar_height_remains_available_when_no_agb_model_matches(self):
         zonal={"canopy_height.tif":{"mean":18.0,"sd":4.0,"n":9,"min":11.0,"max":25.0}}
         with patch.object(sar,"_zonal",side_effect=lambda _gdf,path:zonal[str(path)]):
@@ -125,6 +145,61 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["height_mean_m"],18.0)
         self.assertEqual(out["height_n_valid_pixels"],9)
 
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_cci_v7_tile_convention_for_brazilian_acceptance_aois(self):
+        tapajos=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.930,-3.02)],crs="EPSG:4326")
+        cerrado=gpd.GeoDataFrame(geometry=[box(-47.950,-15.960,-47.930,-15.940)],crs="EPSG:4326")
+        self.assertEqual(sar._cci_v7_tile_ids(tapajos),["N00W060"])
+        self.assertEqual(sar._cci_v7_tile_ids(cerrado),["S10W050"])
+        names=[x["name"] for x in sar._cci_v7_urls(tapajos,2024)]
+        self.assertIn("N00W060_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2024-fv7.0.tif",names)
+        self.assertIn("N00W060_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2024-fv7.0.tif",names)
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_cci_v7_discovery_download_contract(self):
+        import tempfile
+        tapajos=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.930,-3.02)],crs="EPSG:4326")
+        def fake_download(url,out,token=None):
+            from pathlib import Path
+            Path(out).write_bytes(b"TIFF")
+            return str(out)
+        with tempfile.TemporaryDirectory() as td, patch.object(sar,"_download",side_effect=fake_download):
+            out=sar.cci_history(tapajos,td)
+        self.assertTrue(out["available"])
+        self.assertEqual(out["version"],"7.0")
+        self.assertEqual(out["year"],2024)
+        self.assertEqual(out["tiles"],["N00W060"])
+        self.assertEqual({sar.role(p) for p in out["paths"]},{"AGB","UNCERTAINTY"})
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_tapajos_height_structure_models_use_h100_and_local_horizontal_support(self):
+        high=gpd.GeoDataFrame(geometry=[box(-54.9804,-2.9399,-54.9785,-2.9336)],crs="EPSG:4326")
+        low=gpd.GeoDataFrame(geometry=[box(-54.9842,-3.1151,-54.9828,-3.1109)],crs="EPSG:4326")
+        out_high=sar.tapajos_h100_structure_agb(high,{"height_mean_m":31.162,"height_sd_m":2.0,"height_n_valid_pixels":8},"Amazônia","Floresta Ombrófila Densa")
+        out_low=sar.tapajos_h100_structure_agb(low,{"height_mean_m":9.70533333333333,"height_sd_m":1.0,"height_n_valid_pixels":4},"Amazônia","Floresta secundária")
+        self.assertEqual(out_high["data_origin"],"SAR_P_HEIGHT_X_INVENTORY_STRUCTURE")
+        self.assertAlmostEqual(out_high["agb_mg_ha"],341.4857834621912,places=6)
+        self.assertAlmostEqual(out_low["agb_mg_ha"],6.530915207983871,places=6)
+        self.assertEqual(out_high["height_definition"],"H100 = média das 100 árvores mais altas/ha")
+        self.assertIn("NÃO inclui",out_high["uncertainty_kind"])
+        outside=gpd.GeoDataFrame(geometry=[box(-55.1,-3.2,-55.0,-3.1)],crs="EPSG:4326")
+        self.assertIsNone(sar.tapajos_h100_structure_agb(outside,{"height_mean_m":30},"Amazônia","Floresta"))
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_height_only_biomass_product_can_drive_local_agb_before_lband(self):
+        high=gpd.GeoDataFrame(geometry=[box(-54.9804,-2.9399,-54.9785,-2.9336)],crs="EPSG:4326")
+        fh={"id":"fh_tile","_product_type":"FP_FH__L2B","_stage":"OPERATIONAL","_collection":"BiomassLevel2b"}
+        height={"height_mean_m":31.162,"height_sd_m":2.0,"height_n_valid_pixels":8,
+                "height_interpretation":{"observable":"H100"}}
+        with patch.object(sar,"biomass_l2b_search",return_value=[fh]), \
+             patch.object(sar,"download_maap_height",return_value={"paths":["fh.tif"],"available":True}), \
+             patch.object(sar,"process_real_sar",return_value=height), \
+             patch.object(sar,"download_maap_agb",return_value={"paths":[],"available":False}):
+            out=sar.automatic_pipeline(high,"Amazônia","Floresta Ombrófila Densa",cache="/tmp/enform-height-structure")
+        self.assertEqual(out["status"],"SAR_PROCESSADO")
+        self.assertEqual(out["data_origin"],"SAR_P_HEIGHT_X_INVENTORY_STRUCTURE")
+        self.assertAlmostEqual(out["agb_mg_ha"],341.4857834621912,places=6)
 
     def test_narvaes_published_equation_uses_exact_feature_contract(self):
         x={"sigma0_HH_db":-15,"Pv_db":0.2,"alpha_S2_deg":20,
@@ -165,6 +240,18 @@ class CatalogModelExecutionTests(unittest.TestCase):
             self.assertTrue(model.get("doi"))
         self.assertIn("85 Mg/ha",entries["AFRICA_BOUVET_2018_SAVANNA_PALSAR"]["domain"])
         self.assertIn("253 parcelas",entries["AFRICA_MITCHARD_2009_SAVANNA_L"]["domain"])
+
+    def test_sar_height_search_contract_covers_all_five_priority_biomes(self):
+        expected=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga")
+        for biome in expected:
+            with self.subTest(biome=biome):
+                scope=sar.height_scope_contract(biome,"fitofisionomia IBGE de teste")
+                self.assertEqual(tuple(scope["requested_biomes"]),expected)
+                self.assertIn("for each AOI",scope["search_policy"])
+                self.assertEqual(scope["aoi_biome"],biome)
+                self.assertIn("not all five",scope["fallback"])
+                self.assertIn("spatial dispersion, not measurement error",scope["error_policy"])
+                self.assertEqual(scope["status"],"AOI_SPECIFIC_COVERAGE_AND_ERROR_REQUIRED")
 
     def test_national_route_matrix_covers_supported_biomes_without_generic_means(self):
         samples={

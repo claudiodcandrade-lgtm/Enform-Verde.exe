@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "review_date": "2026-10-23",
+  "reviewed_head_commit": "2fba0fef5df27a3b3904534f341f16b5adf6a6c6",
+  "build": {
+    "workflow_run_id": 40034715113,
+    "conclusion": "success",
+    "artifact_id": 12537220748
+  },
+  "scientific_approval": "NOT_APPROVED",
+  "required_evidence": [
+    "Executable model weights and integrity hash per class",
+    "Paired predictions produced on real SAR observations",
+    "Georeferenced independently collected ground-truth records",
+    "No overlap with model training or calibration units",
+    "Per-class confusion matrices, sample sizes, and Wilson confidence bounds",
+    "Documented temporal, spatial and ecological validity domains"
+  ],
+  "class_results": [
+    {
+      "class_name": "Milho",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Soja",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Sorgo",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Café",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Cana-de-açúcar",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Arroz",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Feijão",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Citros",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Floresta plantada",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Eucalipto",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    },
+    {
+      "class_name": "Pinus",
+      "scientific_status": "NOT_VALIDATED",
+      "validation_dataset": null,
+      "paired_real_sar_predictions": 0,
+      "independent_reference_n": 0,
+      "model_weights_verified": false,
+      "approval": false
+    }
+  ],
+  "notes": [
+    "A successful Windows build does not validate scientific classification performance.",
+    "Planted forests and uncertain-origin canopy must never be counted as native vegetation carbon.",
+    "No synthetic fixtures, existing maps or another team's published accuracy may be counted as independent validation of Enform Verde."
+  ]
+}
