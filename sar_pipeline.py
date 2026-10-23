@@ -88,7 +88,7 @@ def discover_asf(gdf,limit=25):
 def discover_cdse(gdf,limit=25):
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
     try:
-        r=requests.post(CDSE_STAC,json={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit},timeout=(10,45));r.raise_for_status();fs=r.json().get("features",[])
+        r=requests.post(CDSE_STAC,json={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]},timeout=(10,45));r.raise_for_status();fs=r.json().get("features",[])
         return {"provider":"Copernicus Data Space","dataset":"Sentinel-1 GRD","band":"C","count":len(fs),"items":[{"id":x.get("id"),"datetime":x.get("properties",{}).get("datetime")} for x in fs]}
     except Exception as e:return {"provider":"Copernicus Data Space","dataset":"Sentinel-1 GRD","band":"C","count":0,"items":[],"error":str(e)}
 def discover_sar(gdf):
