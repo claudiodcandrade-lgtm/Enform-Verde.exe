@@ -426,7 +426,24 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
     from fitofisionomia_intersections import zonal_raster_by_ibge_class
     ibge_metadata=getattr(ibge_physiognomy_gdf,"attrs",{}) or {}
     for p in paths:
-        rr=role(p);z=_zonal(gdf,p);z.update({"path":str(p),"role":rr});stats.append(z)
+        rr=role(p);z=_zonal(gdf,p);z.update({"path":str(p),"role":rr})
+        # Product processing time is not acquisition time. Read only explicit,
+        # timezone-aware acquisition metadata from the opened GeoTIFF.
+        try:
+            from sar_acquisition_time import annotate_acquisition
+            import rasterio
+            with rasterio.open(p) as scene_raster:
+                tags=scene_raster.tags()
+            acquired=annotate_acquisition({"id":str(p),"properties":tags})
+            z.update({k:acquired[k] for k in
+                      ("acquisition_utc","acquisition_brasilia","acquisition_timezone",
+                       "acquisition_status")})
+        except Exception as exc:
+            z["acquisition_utc"]=None
+            z["acquisition_brasilia"]=None
+            z["acquisition_status"]="METADADOS_AQUISICAO_INDISPONIVEIS"
+            z["acquisition_warning"]=str(exc)[:180]
+        stats.append(z)
         if ibge_physiognomy_gdf is not None:
             cz=zonal_raster_by_ibge_class(gdf,ibge_physiognomy_gdf,ibge_class_field,p)
             for row in cz["classes"]:
