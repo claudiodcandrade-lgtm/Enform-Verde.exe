@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, tapajos_necromass_components
+from carbon_compartments import ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, tapajos_necromass_components, pantanal_nhecolandia_litter_carbon_component, component_has_confidence_interval
 
 try:
     import geopandas as gpd
@@ -120,6 +120,23 @@ class CarbonCompartmentTests(unittest.TestCase):
         r=tapajos_litter_stock_component("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi)
         self.assertIsNotNone(r)
         self.assertEqual(r["evidence_type"],"standing_litter_dry_mass")
+
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_pantanal_nhecolandia_litter_carbon_fallback_has_sampling_ci_and_domain_gate(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-56.66,-18.99,-56.64,-18.97)],crs="EPSG:4326")
+        r=pantanal_nhecolandia_litter_carbon_component("Pantanal","Savana Estépica",aoi)
+        self.assertIsNotNone(r)
+        self.assertAlmostEqual(r["mean_tc_ha"],2.8706,places=3)
+        self.assertEqual(r["n_independent_units"],39)
+        self.assertLess(r["range_tc_ha"][0],r["mean_tc_ha"])
+        self.assertGreater(r["range_tc_ha"][1],r["mean_tc_ha"])
+        self.assertTrue(component_has_confidence_interval(r))
+        self.assertIn("erro de transferência",r["uncertainty_kind"])
+        self.assertIn("não é observação direta da AOI",r["method"])
+        outside=gpd.GeoDataFrame(geometry=[box(-57.3,-19.4,-57.2,-19.3)],crs="EPSG:4326")
+        self.assertIsNone(pantanal_nhecolandia_litter_carbon_component("Pantanal","Savana",outside))
+        self.assertIsNone(pantanal_nhecolandia_litter_carbon_component("Cerrado","Savana",aoi))
 
 if __name__=="__main__":
     unittest.main()
