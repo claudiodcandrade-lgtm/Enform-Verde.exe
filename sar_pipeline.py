@@ -91,7 +91,18 @@ def discover_cdse(gdf,limit=25):
         r=requests.post(CDSE_STAC,json={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit},timeout=(10,45));r.raise_for_status();fs=r.json().get("features",[])
         return {"provider":"Copernicus Data Space","dataset":"Sentinel-1 GRD","band":"C","count":len(fs),"items":[{"id":x.get("id"),"datetime":x.get("properties",{}).get("datetime")} for x in fs]}
     except Exception as e:return {"provider":"Copernicus Data Space","dataset":"Sentinel-1 GRD","band":"C","count":0,"items":[],"error":str(e)}
-def discover_sar(gdf):return discover_asf(gdf)+[discover_cdse(gdf)]
+def discover_sar(gdf):
+    """Refresh catalogue, sort acquisitions by date, and report Brasília time."""
+    from sar_acquisition_time import summarize_catalog_acquisition
+    sources=discover_asf(gdf)+[discover_cdse(gdf)]
+    for source in sources:
+        if isinstance(source.get("items"),list):
+            stamp=summarize_catalog_acquisition(source["items"])
+            source["items"]=stamp["items"]
+            source["latest_acquisition"]=stamp["latest"]
+            source["acquisition_policy"]=stamp["date_policy"]
+            source["acquisition_warning"]=stamp["warning"]
+    return sources
 def _zonal(gdf,path):
     import rasterio
     from rasterio.mask import mask
