@@ -17,6 +17,23 @@ def normalize(value):
 def native_class(name, source, class_metadata=None):
     """IBGE phytoregion alone is potential vegetation, not current native cover."""
     text=normalize(name)
+    # Requisito eliminatório: silvicultura jamais integra carbono nativo,
+    # mesmo com fonte IBGE+MAPBIOMAS ou rótulo SAR supostamente validado.
+    planted_terms=('silvicultura','floresta plantada','florestas plantadas',
+                   'floresta de producao','reflorestamento','eucalipt',
+                   'eucalyptus','pinus','pinheiro plantado','plantio florestal')
+    if any(term in text for term in planted_terms):
+        return False
+    uncertain_terms=('cobertura arborea','origem nao determinada',
+                     'floresta de origem incerta','natural ou plantada')
+    if any(term in text for term in uncertain_terms):
+        return None
+    meta=(class_metadata or {}).get(name,{})
+    if isinstance(meta,dict):
+        if meta.get('planted_forest') is True or meta.get('is_silviculture') is True:
+            return False
+        if meta.get('native_origin_confirmed') is False:
+            return None
     if any(word in text for word in ('areas cultivadas','area cultivada','soja','milho','sorgo','cafe','citr','cacau','cocoa','banana','silvicultura','plantad','eucalipt','pinus','agroflorest','lavoura','agricultura','antropic','urbaniz','mineracao')):
         return False
     if 'pastagem' in text and 'nativ' not in text:return False
