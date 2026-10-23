@@ -125,7 +125,7 @@ def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None):
                            transform * (values.shape[1], row + 1), transform * (0, row + 1)]
                 lons, lats = to_wgs84.transform([p[0] for p in corners], [p[1] for p in corners])
                 area, _ = geod.polygon_area_perimeter(lons, lats)
-                areas.append(abs(area))
+                areas.append(abs(area) / values.shape[1])
             result = summarize_class_grid(values, mask, areas, nodata=src.nodata)
             result.update({
                 "collection": COLLECTION, "year": int(year), "resolution_m": RESOLUTION_M,
