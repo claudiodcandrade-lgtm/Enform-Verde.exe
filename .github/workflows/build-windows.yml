@@ -219,6 +219,7 @@ jobs:
         run: python tools/diagnose_tapajos_2010_height.py
       - name: Upload 2010 H100 diagnostic report
         if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: tapajos-2010-height-diagnostic-${{ github.run_number }}
