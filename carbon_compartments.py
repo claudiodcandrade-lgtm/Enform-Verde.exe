@@ -279,3 +279,66 @@ def rows_for_compartment(analysis_rows, prefix):
     prefix=str(prefix or "")
     return [row for row in (analysis_rows or [])
             if str(row.get("parametro","")).startswith(prefix)]
+
+
+def pantanal_nhecolandia_litter_carbon_component(biome, physiognomy, aoi):
+    """Regional Pantanal/Nhecolandia litter-carbon fallback with sampling-only CI.
+
+    Nunes (2015) reports dry litter stock at independent landscape points for
+    cordilheiras and capoes. Nascimento et al. (2024) reports dry-mass carbon
+    fractions by vegetation class. We combine dry-season point means with those
+    fractions, weighting habitats by Nunes' sample allocation. The interval is
+    sampling uncertainty only; spatial and habitat-transfer errors are unknown.
+    """
+    import math
+    if "pantanal" not in str(biome or "").strip().casefold() or aoi is None:
+        return None
+    try:
+        frame=aoi_to_wgs84(aoi)
+        from pyproj import Geod
+        geod=Geod(ellps="WGS84")
+        geom=frame.geometry.union_all()
+        polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else [geom]
+        # Conservative Nhecolandia domain around Fazenda Nhumirim; reject an
+        # AOI if any exterior vertex lies farther than 35 km from the study area.
+        max_km=0.0
+        for poly in polys:
+            for x,y,*_ in poly.exterior.coords:
+                _,_,d=geod.inv(float(x),float(y),-56.65,-18.98)
+                max_km=max(max_km,abs(d)/1000.0)
+        if max_km>35.0:
+            return None
+    except Exception:
+        return None
+
+    # Nunes (2015), Appendix I: dry-season means and SE across independent
+    # points: cordilheiras n=26, 0.6675769 kg/m2; capoes n=13, 0.3436923 kg/m2.
+    # Convert kg/m2 to Mg dry matter/ha (x10). Carbon fractions from Nascimento
+    # et al. (2024): CORD.N 52.2 +/- 1.6 percentage points (n=36), CAP 47.8
+    # +/- 3.1 pp (n=20). Use sample-allocation weights, not AOI area fractions.
+    n_cord,n_cap=26,13
+    mass_cord,mass_cap=0.6675769*10.0,0.3436923*10.0
+    se_mass_cord,se_mass_cap=0.03732*10.0,0.07520*10.0
+    frac_cord,frac_cap=0.522,0.478
+    se_frac_cord,se_frac_cap=0.016/math.sqrt(36.0),0.031/math.sqrt(20.0)
+    w_cord,w_cap=n_cord/(n_cord+n_cap),n_cap/(n_cord+n_cap)
+    mean=w_cord*mass_cord*frac_cord+w_cap*mass_cap*frac_cap
+    var=(w_cord**2*((frac_cord*se_mass_cord)**2+(mass_cord*se_frac_cord)**2)
+         +w_cap**2*((frac_cap*se_mass_cap)**2+(mass_cap*se_frac_cap)**2))
+    se=math.sqrt(var)
+    margin=2.1788*se  # conservative t critical, df=12
+    return {
+        "mean_tc_ha":mean,
+        "range_tc_ha":[max(0.0,mean-margin),mean+margin],
+        "method":"Fallback regional de serapilheira do Pantanal/Nhecolândia, estação seca. Estoque seco por pontos independentes de Nunes (2015), Apêndice I: cordilheiras n=26, média 0,66758 kg/m²; capões n=13, média 0,34369 kg/m²; conversão ×10 para Mg/ha. Frações de carbono medidas por Nascimento et al. (2024): CORD.N 52,2% (DP 1,6 p.p., n=36) e CAP 47,8% (DP 3,1 p.p., n=20). Média ponderada pela alocação amostral de Nunes, não pela proporção de habitats na AOI. IC95% aproximado (delta method, t gl=12) cobre somente erro amostral; erro de transferência espacial/ecológica e mistura de habitats da AOI não foram medidos. Aplicar apenas na Nhecolândia, até 35 km de Nhumirim; não é observação direta da AOI.",
+        "source":"Nunes (2015), tese UFMS, Apêndice I, tabelas 4/6/8; Nascimento et al. (2024), Anais da Academia Brasileira de Ciências, DOI 10.1590/0001-3765202420240709",
+        "url":"https://posgraduacao.ufms.br/portal/trabalho-arquivos/download/4532",
+        "status":"FALLBACK REGIONAL PANTANAL/NHECOLÂNDIA — IC95% AMOSTRAL; TRANSFERÊNCIA NÃO QUANTIFICADA",
+        "origin":"INVENTARIO_DIRETO_MICRORREGIONAL",
+        "uncertainty_kind":"IC95% aproximado delta/t da amostragem de pontos e frações C; erro de transferência espacial, classe e mistura de habitats não quantificado",
+        "n_independent_units":n_cord+n_cap,
+        "standard_error_tc_ha":se,
+        "degrees_of_freedom":12,
+        "evidence_type":"standing_litter_dry_stock_plus_measured_carbon_fraction",
+        "include_in_total":True,
+    }
