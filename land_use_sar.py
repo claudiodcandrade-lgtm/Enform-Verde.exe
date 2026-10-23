@@ -66,7 +66,9 @@ def partition_land_use(aoi, layers):
             continue
         if layer.crs is None:
             raise ValueError('Camada de classificação sem CRS.')
-        projected = layer.to_crs(AREA_CRS)
+        projected = layer.to_crs(AREA_CRS).copy()
+        projected['geometry'] = projected.geometry.make_valid()
+        projected = projected[projected.geometry.notna() & ~projected.geometry.is_empty]
         # Conflicting labels within one source are gaps, not first-row wins.
         conflicts = []
         for pos, row in enumerate(projected.itertuples()):
@@ -161,7 +163,7 @@ def classify_config(aoi, config_path, output_dir):
     from rasterio.mask import mask
     from shapely.geometry import shape, mapping
     from sklearn.ensemble import RandomForestClassifier
-    from sklearn.metrics import pairwise_distances
+    from sklearn.neighbors import NearestNeighbors
     from carbon_compartments import aoi_to_wgs84
     cfg_path = Path(config_path)
     cfg = json.loads(cfg_path.read_text(encoding='utf-8'))
@@ -204,10 +206,12 @@ def classify_config(aoi, config_path, output_dir):
     center = domain.centroid
     metric = points.to_crs(f'+proj=aeqd +lat_0={center.y} +lon_0={center.x} +datum=WGS84 +units=m')
     xy = np.column_stack((metric.geometry.x, metric.geometry.y))
-    if min(pairwise_distances(xy[test], xy[train|calibration]).min(), pairwise_distances(xy[calibration],xy[train]).min()) < MIN_DISTANCE_M:
+    def nearest_distance(query, reference):
+        return float(NearestNeighbors(n_neighbors=1).fit(reference).kneighbors(query)[0].min())
+    if min(nearest_distance(xy[test],xy[train|calibration]), nearest_distance(xy[calibration],xy[train])) < MIN_DISTANCE_M:
         raise ValueError('Treino/calibração/validação a menos de 1 km; risco de vazamento espacial.')
-    dd = pairwise_distances(xy[test]); np.fill_diagonal(dd, np.inf)
-    if dd.min() < MIN_DISTANCE_M:
+    distances = NearestNeighbors(n_neighbors=2).fit(xy[test]).kneighbors(xy[test])[0]
+    if distances[:,1].min() < MIN_DISTANCE_M:
         raise ValueError('Pontos de validação a menos de 1 km; independência não demonstrada.')
     names = [f['name'] for f in cfg['features']]
     with rasterio.open(raster_path) as src:

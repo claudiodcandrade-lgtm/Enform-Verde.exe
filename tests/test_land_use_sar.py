@@ -83,6 +83,15 @@ class LandUseTests(unittest.TestCase):
             refs.loc[1,'unit_id']=refs.loc[0,'unit_id'];refs.to_file(Path(d)/'points.geojson',driver='GeoJSON')
             with self.assertRaisesRegex(ValueError,'unidade independente'):classify_config(aoi,config,Path(d)/'out')
 
+    def test_spatial_validation_leakage_is_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            config,aoi,refs=self.fixture(d)
+            test_index=refs.index[refs.split=='validation'][0]
+            refs.loc[test_index,'geometry']=refs.loc[0,'geometry']
+            refs.to_file(Path(d)/'points.geojson',driver='GeoJSON')
+            with self.assertRaisesRegex(ValueError,'vazamento espacial'):
+                classify_config(aoi,config,Path(d)/'out')
+
     def test_land_use_only_excel_does_not_invent_zero_carbon(self):
         from types import SimpleNamespace
         from unittest.mock import patch
