@@ -1279,6 +1279,12 @@ class App(tk.Tk):
             cov=discover_sar(self.gdf); self.project["sar_catalog"]=cov
             txt=["REGISTROS RETORNADOS PELOS CATÁLOGOS SAR","(descoberta ≠ download ≠ processamento ≠ uso na estimativa)"]
             for x in cov:txt.append(f"{x['provider']} — {x['dataset']} ({x['band']}): {x['count']} registro(s) retornado(s)"+((" — "+x["error"]) if x.get("error") else ""))
+            for x in cov:
+                latest=x.get("latest_acquisition")
+                if latest:
+                    txt.append(f"  Aquisição mais recente no catálogo: {latest.get('acquisition_brasilia')} (Brasília) | UTC {latest.get('acquisition_utc')} | cena {latest.get('id')}")
+                else:
+                    txt.append("  Sem data/hora de aquisição verificável no retorno do catálogo.")
             txt += ["","Para uso quantitativo, o produto ainda precisa ser elegível, baixado, pré-processado e associado a modelo/produto AGB compatível."]
             self._set(self.remote_text,"\n".join(txt)); self.status.set("Descoberta SAR concluída.")
         except Exception as e:self.status.set("Falha na descoberta SAR."); messagebox.showerror("SAR",str(e))
@@ -1832,6 +1838,29 @@ class App(tk.Tk):
                 for label,gate in report.get("gates",{}).items():
                     data.append([level,label,gate["n_independent"],gate["correct"],gate["precision"],gate["precision_wilson95_lower"],str(gate["eligible"]),report.get("uncertainty")])
             put(sh,data or [["Sem validação",None,None,None,None,None,"NÃO","; ".join(land.get("warnings",[]))]])
+        catalog=self.project.get("sar_catalog") or []
+        if catalog:
+            sh=wb.create_sheet("Aquisições SAR")
+            for col,value in enumerate(["Catálogo","Produto","Cena","Aquisição Brasília (UTC−3)","Aquisição UTC","Situação","Observação"],1):
+                sh.cell(1,col,value)
+            line=2
+            for source in catalog:
+                for scene in source.get("items",[]):
+                    values=[source.get("provider"),source.get("dataset"),scene.get("id"),
+                            scene.get("acquisition_brasilia"),scene.get("acquisition_utc"),
+                            scene.get("acquisition_status"),
+                            "Descoberta no catálogo; não comprova que a cena tenha sido processada"]
+                    for col,value in enumerate(values,1):
+                        sh.cell(line,col,value)
+                    line+=1
+            sh.freeze_panes="A2"
+            sh.column_dimensions["A"].width=25
+            sh.column_dimensions["B"].width=25
+            sh.column_dimensions["C"].width=42
+            sh.column_dimensions["D"].width=30
+            sh.column_dimensions["E"].width=30
+            sh.column_dimensions["F"].width=37
+            sh.column_dimensions["G"].width=76
         wb.save(p); self.status.set("Excel exportado com sucesso.")
 
     def save_report(self):
