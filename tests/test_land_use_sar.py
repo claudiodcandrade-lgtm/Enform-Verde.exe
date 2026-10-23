@@ -72,7 +72,7 @@ class LandUseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             config,aoi,_=self.fixture(d);polygons,r=classify_config(aoi,config,Path(d)/'out')
             self.assertGreater(r['eligible_pixels'],0);self.assertEqual(r['n_validation'],120)
-            self.assertIn('validation_multiclass_brier',r);self.assertTrue(all(g['eligible'] for g in r['gates'].values()))
+            self.assertIn('validation_multiclass_brier',r);self.assertTrue(r['gates']['Pastagem']['eligible']);self.assertFalse(r['gates']['Floresta']['eligible'])
             self.assertFalse(polygons.empty);self.assertTrue((Path(d)/'out'/'validacao_sar.json').exists())
 
     def test_pseudolabels_and_repeated_units_rejected(self):
@@ -120,3 +120,43 @@ class LandUseTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'fora do domínio'):classify_config(outside,config,Path(d)/'out')
 
 if __name__=='__main__':unittest.main()
+
+class NativeNamingTests(unittest.TestCase):
+    def test_ibge_only_names_preserving_structure(self):
+        from land_use_sar import name_native_from_ibge
+        a=gpd.GeoDataFrame([dict(class_name='Floresta',source='SAR_VALIDADO',taxonomy='SAR',geometry=box(0,0,10,10))],crs=6933)
+        ref=gpd.GeoDataFrame([dict(class_name='Savana Arborizada',geometry=box(0,0,10,10)),dict(class_name='Floresta Ombrófila Densa',geometry=box(20,0,30,10))],crs=6933)
+        result=name_native_from_ibge(a,ref)
+        self.assertEqual(result.iloc[0].class_name,'Floresta Ombrófila Densa')
+        self.assertEqual(result.iloc[0].source,'SAR_VALIDADO+IBGE')
+        self.assertIn('floresta',result.iloc[0].taxonomy)
+        self.assertFalse(any('dist' in c for c in result.columns))
+        self.assertAlmostEqual(result.geometry.area.sum(),100)
+
+    def test_height_contract_and_broad_classes(self):
+        from land_use_sar import native_height_contract,native_formation
+        self.assertIsNone(native_formation('Floresta Ombrófila Densa'))
+        self.assertEqual(native_formation('Formação campestre'),'campo')
+        cfg={'features':[dict(name='H',unit='m',source='SAR'),dict(name='U',unit='m',source='SAR')]}
+        self.assertIsNone(native_height_contract(cfg))
+        cfg['native_structure']=dict(height_feature='H',uncertainty_feature='U',validation_reference='institutional validation',uncertainty_kind='interval_half_width')
+        self.assertEqual(native_height_contract(cfg),(0,1))
+        cfg['features'][0]['source']='optical'
+        self.assertIsNone(native_height_contract(cfg))
+
+    def test_backscatter_without_height_cannot_override_native(self):
+        with tempfile.TemporaryDirectory() as d:
+            config,aoi,_=LandUseTests().fixture(d)
+            polygons,_=classify_config(aoi,config,Path(d)/'out')
+            self.assertNotIn('Floresta',set(polygons.class_name))
+            self.assertNotIn('Grupo: vegetação natural',set(polygons.class_name))
+
+    def test_cartographic_crop_without_independent_confidence_is_generic(self):
+        from unittest.mock import patch
+        aoi=gpd.GeoDataFrame(geometry=[box(0,0,10,10)],crs=6933)
+        mb=gpd.GeoDataFrame([dict(class_name='Soja',source='MAPBIOMAS',taxonomy='MapBiomas',geometry=box(0,0,10,10))],crs=6933)
+        with tempfile.TemporaryDirectory() as d, patch('land_use_sar.raster_class_polygons',return_value=mb):
+            result=run_land_use(aoi,d)
+            self.assertEqual(result['classes'][0]['class_name'],'Áreas cultivadas')
+            self.assertIs(result['classes'][0]['native_status'],False)
+            self.assertEqual(result['original_source_distributions'][0]['classes'][0]['class_name'],'Soja')

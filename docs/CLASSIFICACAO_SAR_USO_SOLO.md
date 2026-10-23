@@ -1,8 +1,8 @@
-# Classificação SAR de uso e cobertura — implementação candidata 3.24.39
+# Classificação SAR de uso e cobertura — implementação candidata 3.24.40
 
 ## Requisito do usuário
 
-Confiança mensurável é obrigatória e inegociável. Onde não for possível demonstrá-la, preservar IBGE / MapBiomas. Ordem implementada, conforme a última instrução: **SAR elegível → IBGE → MapBiomas → sem classificação**. IBGE e MapBiomas mantêm suas legendas; classes genéricas não se tornam subclasses IBGE.
+Confiança mensurável é obrigatória e inegociável. Onde não for possível demonstrá-la, preservar IBGE / MapBiomas. Ordem implementada, conforme a última instrução: **SAR elegível primeiro; nas lacunas, IBGE para fitofisionomia e MapBiomas para cobertura/uso atual; sem evidência, não classificado**. IBGE e MapBiomas mantêm suas legendas; classes genéricas não se tornam subclasses IBGE.
 
 ## O que está implementado
 
@@ -12,7 +12,11 @@ A interface permite carregar um contrato JSON e executar a classificação indep
 
 Cada célula é convertida em polígono e intersectada com o perímetro, incluindo frações das células de borda. As camadas são particionadas na ordem de prioridade; sobreposição contraditória dentro de uma fonte fica para o nível seguinte. Áreas usam EPSG:6933, projeção equivalente. Percentuais usam a AOI inteira, incluindo área não classificada, e fecham em 100%. São áreas cartográficas, não estimativas de área corrigidas pelo erro de classificação.
 
-A nova partição NÃO modifica silenciosamente modelos de carbono nem presume equivalência entre espécies agrícolas e inventários florestais. A estratificação de carbono pelos novos polígonos ainda exige modelos de compartimentos compatíveis por classe; o cálculo de carbono antigo está preservado.
+`native_carbon.py` aplica o novo requisito: carbono apenas em formações nativas confirmadas. Lavouras, perenes, pastagens plantadas, SAFs cultivados e silvicultura são apenas ocorrências, com área e percentual. Cada fitofisionomia nativa recebe chamadas independentes ao motor SAR, referências locais e PronaSolos sobre sua própria geometria. O total conhecido é soma de tC/ha × hectares da interseção por classe/compartimento; jamais média dominante × área total.
+
+Nas lacunas do SAR, IBGE fornece a fitofisionomia e MapBiomas a máscara de cobertura/uso atual. `legenda_1` isolada descreve região fitoecológica e não comprova que toda a região ainda esteja coberta por vegetação nativa. Assim, o cruzamento IBGE × máscara nativa MapBiomas detalha as formações, enquanto áreas agropecuárias atuais ficam fora do carbono. As previsões SAR elegíveis prevalecem sobre ambas. Sem evidência de cobertura nativa atual, a área é indicada como não confirmada e não recebe estoque.
+
+Não se calcula carbono em área sem classe confirmada. Valores ausentes não são zero; componentes/classes sem dado geram soma parcial com área quantificada e faltante explícitas. Erros de área, transferência e covariâncias não quantificados impedem um IC total; os erros individuais dos dados/produtos são preservados por classe. A equação genérica de raízes de floresta de terras altas não é aplicada automaticamente a campos, savanas, várzeas ou mangues. Uma nova aba Excel apresenta carbono por formação; o total da propriedade usa a soma das interseções nativas, incluindo solo somente nessas interseções.
 
 ## Confiança: critério operacional conservador
 
@@ -96,3 +100,17 @@ A busca/modelagem dessas classes não se limita a instituições brasileiras. Mi
 | Pastagens — produto técnico complementar, não artigo | AAFC *Prairie Grassland Land Cover*, https://open.canada.ca/data/en/dataset/17736d36-ffe3-40fc-ba73-383a90862123 | RF S1/S2, separação campo nativo/forrageiras perenes cultivadas; fonte oficial para comparação de legendas e dados. |
 
 Se o cultivo específico não atingir confiança mensurável, publicar apenas o grupo agropecuário quando ele tiver validação própria elegível; caso contrário manter IBGE / MapBiomas. Não identificar pastagem como plantada apenas pela altura baixa, nem cafezal/citros como floresta pela cobertura arbórea.
+
+Cada estimativa identifica nominalmente a fitofisionomia utilizada no modelo, fonte da classe, hectares e percentual da AOI. Quando só existe classe ampla de cobertura, o relatório declara que o subtipo fitofisionômico não foi determinado; não fabrica FOD Aluvial ou outra subclasse.
+
+## Regra final: formação nativa e nomenclatura IBGE
+
+Classificadores priorizam usos não naturais. Classes nativas elegíveis limitam-se a Floresta/Formação florestal, Savana/Formação savânica e Campo/Formação campestre. Rótulos detalhados e o grupo genérico vegetação natural não recebem prioridade. A classificação nativa exige contrato `native_structure` com `height_feature`, `uncertainty_feature`, `uncertainty_kind: interval_half_width` e `validation_reference`; ambos os atributos precisam de origem SAR e unidade m. Os limites do intervalo de altura devem permanecer no domínio observado e conservar a classe e probabilidade calibrada elegível. Esse teste de sensibilidade não substitui validação da altura nem constitui IC conjunto. Não há limiar universal de altura. Sem esses requisitos, conservar fallback cartográfico.
+
+O IBGE fornece apenas o nome compatível com a formação reconhecida: primeiro interseção local, depois referência compatível próxima dentre as feições disponíveis. Não exibir distância. A formação SAR fica na taxonomia da saída. Sem nome compatível, manter formação ampla. A busca depende da extensão do conjunto IBGE fornecido/cache; não implica busca nacional nem identidade florística demonstrada. Não há pesos nacionais validados embutidos.
+
+### Nome da cultura
+Mostrar a cultura somente quando elegível pelos gates independentes de alta confiança. Configurar culturas com parent `área cultivada` para que o fallback agregado, validado separadamente, seja exibido exatamente como **Área cultivada**. O grupo genérico uso agropecuário não comprova cultivo: não convertê-lo em área cultivada nem misturar pastagem/silvicultura. Sem confiança nem para cultivo, manter fallback cartográfico ou lacuna. Cultivos provenientes apenas da legenda MapBiomas são apresentados como Área cultivada; a legenda original permanece na auditoria.
+
+### Atualização prevalente: pastagem versus ciclo curto
+A classe de apresentação agregada é **Áreas cultivadas**. Só apresentar Pastagem separadamente quando houver a mesma validação independente de alta confiança exigida para culturas específicas. Quando não for possível separar pastagem e cultura de ciclo curto, usar Áreas cultivadas, desde que o grupo tenha validação própria. Referências de treino devem agrupar essas classes no parent `área cultivada`; o rótulo final desse parent é Áreas cultivadas. O rótulo é operacional e pode incluir pastagem na ambiguidade, sem afirmar uma cultura específica. A cartografia isolada de pastagem/cultura não demonstra a confiança local dessa separação; ambas são generalizadas na apresentação, com fonte original preservada na auditoria. Silvicultura permanece distinta.

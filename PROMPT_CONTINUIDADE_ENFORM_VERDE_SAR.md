@@ -1,3 +1,56 @@
+## Instrução mais recente — pastagem versus culturas de ciclo curto
+Só indicar pastagem separadamente quando houver alta confiança demonstrada para distingui-la das culturas de ciclo curto. Se essa distinção não for segura, usar **Áreas cultivadas**. Cultura específica somente com alta confiança. O grupo agregado precisa de validação independente própria; referências devem reunir pastagem e culturas no parent `área cultivada`. Não presumir certeza absoluta a partir de probabilidade do modelo. Silvicultura segue distinta. Esta instrução prevalece sobre a anterior que separava pastagens em todos os casos.
+
+## Última instrução: cultura somente com alta confiança
+Nas áreas cultivadas, indicar a cultura apenas se houver alta confiança demonstrada. Quando o cultivo estiver confirmado e o tipo não, indicar exatamente **Área cultivada**. O grupo exige validação própria; não converter pastagens, silvicultura ou uso agropecuário genérico em cultivo. Não estimar carbono nessas classes.
+
+# Atualização prioritária — 3.24.40 — regra final incorporada
+
+Classificadores priorizam usos não naturais. Para nativas, somente floresta/savana/campo com altura SAR, intervalo de incerteza, estabilidade nos limites e validação independente elegível. IBGE apenas nomeia a fitofisionomia compatível, sem apresentar distância nem modificar a formação reconhecida. Detalhes em docs/CLASSIFICACAO_SAR_USO_SOLO.md. Carbono somente nas interseções nativas, por nome/área/% de cada formação.
+
+Código candidato 3.24.40 em preparação para novo build. Consultar HEAD/Actions ao vivo antes de afirmar entrega. A última base comprovada é afdbba26abecfd881025ab1cf8bb2e03d78879c9 / Run509 / versão3.24.39. Nenhum modelo nacional validado vem embutido; atributos e referências compatíveis reais continuam necessários para prioridade SAR. Esta regra substitui identificação nativa detalhada por classificadores nos registros abaixo.
+
+# Continuidade — Enform Verde SAR — 23/10/2026 — v16 — carbono somente nativo
+
+## Requisitos mais recentes, que prevalecem sobre os registros anteriores
+
+1. A classificação algorítmica com confiança demonstrada prevalece sobre IBGE e MapBiomas em cada trecho reconhecido. Nas lacunas, usar IBGE para identificar a fitofisionomia e MapBiomas para cobertura/uso atual. Não exigir concordância com os mapas para aceitar um resultado SAR elegível.
+2. Confiança mensurável é básica e inegociável. Separar calibração, validação independente e escores internos; não chamar frequência de votos RF de confiança local conhecida.
+3. **Estimar carbono apenas em formações nativas confirmadas**, incluindo solo somente nas interseções nativas. Milho, soja, sorgo, outras lavouras, pastagens plantadas, café, citros, SAFs cultivados e silvicultura: indicar ocorrência, hectares e percentual; não estimar carbono nessas classes.
+4. Havendo várias fitofisionomias, estimar cada classe com seus próprios dados/modelos compatíveis e calcular C = soma de (tC/ha × ha da interseção) por classe e compartimento. Não aplicar a classe dominante à AOI inteira nem preencher classes sem dado com outra média.
+5. **Identificar claramente a fitofisionomia à qual cada estimativa se aplica**, sua fonte, área e percentual da AOI. Uma classe ampla MapBiomas/SAR não se transforma automaticamente em FOD Aluvial ou outra subclasse IBGE; declarar o nível de detalhamento efetivamente disponível.
+6. Para vegetação nativa, priorizar instituições brasileiras reconhecidas. Para culturas anuais/perenes, pastagens plantadas e florestas plantadas, métodos publicados de instituições reconhecidas de qualquer país são permitidos, com validação compatível no domínio de aplicação.
+
+## Situação de código e versões
+
+- PR #48 deve continuar aberto e não mesclado. Branch `sar-agb-height-integration-v3.24.22`.
+- Base GitHub confirmada antes desta alteração: `afdbba26abecfd881025ab1cf8bb2e03d78879c9`, candidata 3.24.39.
+- Run #509 (`40019919746`) da 3.24.39 concluiu success; artifact `Enform-Verde-Windows-v3.24.39-CANDIDATE`, ID `12530143569`, 522.509.748 bytes, SHA-256 `e07f32f73faac9160ce3dc202d087e286a6e809caf0a04c13059ce258de357f9`. Essa versão precede o requisito novo de carbono exclusivamente nativo por interseção.
+- **Nova candidata de implementação: 3.24.40**. Este prompt é escrito com o código, antes de confirmar o novo run/build. Consultar HEAD e Actions ao vivo; não declarar EXE 3.24.40 pronto sem build, teste em cópia limpa e artifact comprovados.
+- Não apagar artifacts antigos nem trocar a versão final preservada sem autorização. A 3.24.38/Run #505 permanece no histórico descrito abaixo. Não fazer merge/fechar o PR.
+
+## Implementação nova da 3.24.40
+
+- `native_carbon.py`: contabilização por interseção nativa com callback independente por fitofisionomia. Recorta geometrias à AOI, rejeita sobreposição, soma densidade × hectares por classe, identifica áreas quantificadas/faltantes e não usa ausência de dado como zero.
+- `land_use_sar.py`: previsões SAR elegíveis continuam primeiro. Nas lacunas, a máscara anual MapBiomas distingue cobertura nativa de usos agropecuários; IBGE detalha a fitofisionomia na máscara nativa. `legenda_1` isolada é região fitoecológica, não prova de cobertura nativa atual. Preservar mapas originais na auditoria.
+- `desktop_app.py`: o fluxo principal deixou de estimar a AOI inteira por uma classe dominante. O worker classifica primeiro e chama SAR/referências/PronaSolos somente para cada geometria nativa. Modelos, geofences, dados regionais e proveniência continuam no motor original.
+- Relatório e Excel mostram fitofisionomia usada no modelo, origem da classe, área (ha), % AOI, densidade, estoque na interseção, fonte e limitações. Nova aba `Carbono por Formação`. Perfis de solo mais profundos são informativos por formação, sem dupla soma; solo 0–30 cm entra no total apenas dentro das formações nativas.
+- IFN sem suporte por fitofisionomia permanece referência excluída do total. Serapilheira/necromassa são obtidas por inventários diretos compatíveis; não se usa alometria para matéria morta. A equação generalizada de raízes de floresta de terras altas não é extrapolada automaticamente para campos, savanas, mangues ou várzeas.
+- Dados/produtos SAR, altura e trilha são preservados por formação na auditoria. Carbono sem dado compatível fica explicitamente não estimado e o consolidado é soma parcial conhecida, não estoque total.
+- Incertezas individuais são preservadas por fonte e classe. Sem erro de área/transferência/covariâncias, não fabricar IC do estoque total. O IC95% da precisão da classificação não equivale a IC do carbono.
+- 94 testes locais passaram na etapa, incluindo nove testes de carbono nativo e dez testes de classificação/saída. Fixtures sintéticas verificam software, não acurácia científica local. O workflow conserva gates anteriores e atualiza os contratos que verificavam o antigo relatório agregado para conferir o relatório por formação e os testes de comportamento.
+
+## Pendências científicas / limites que permanecem
+
+Não há pesos nacionais SAR de classificação cientificamente validados embutidos. O RF adaptado exige contrato de atributos e referências independentes reais, calibração e validação compatíveis. Bibliografia não equivale a modelo pronto. Sem esses dados, a prioridade algorítmica fica desabilitada e os mapas fornecem a classificação de referência. Os métodos DL/SVM/full-pol catalogados não se tornaram adaptadores executáveis.
+
+Ainda não foi demonstrada classificação SAR operacional validada em Santo Ambrósio/Tapajós. Os limites antigos de altura/AGB Tapajós, necromassa e transferência de serapilheira permanecem. Não afirmar cobertura nacional completa, confiança universal ou erro total conhecido. A regra nativo/área ponderada está implementada, mas sua validação científica nas AOIs depende dos dados reais.
+
+Pesquisa e contrato: `docs/CLASSIFICACAO_SAR_USO_SOLO.md`. Conferir ao vivo a execução da 3.24.40 e, se falhar, corrigir somente a causa demonstrada antes da liberação.
+
+---
+## Histórico v15 e v14 preservado — requisitos substituídos acima quando houver conflito
+
 # Continuidade — Enform Verde SAR — 23/10/2026 — v15 — uso do solo / confiança
 
 ## Nova instrução autorizada e prioritária

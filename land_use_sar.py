@@ -240,6 +240,20 @@ def classify_config(aoi, config_path, output_dir):
         scores = probs.max(axis=1)
         validation_in_range = ((x[test] >= x[train].min(axis=0)) & (x[test] <= x[train].max(axis=0))).all(axis=1)
         scores = np.where(validation_in_range, scores, 0.0)
+        parents = {label: cfg['classes'][label]['parent'] for label in model.classes_}
+        def native_safe(values,label):
+            if parents[label]!='vegetação natural':return True
+            contract=native_height_contract(cfg)
+            if not native_formation(label) or contract is None:return False
+            hi,ui=contract
+            uncertainty=values[ui]
+            if not math.isfinite(uncertainty) or uncertainty<0 or values[hi]-uncertainty<0:return False
+            bounds=np.tile(values,(2,1));bounds[:,hi]=[values[hi]-uncertainty,values[hi]+uncertainty]
+            if not ((bounds>=x[train].min(axis=0)) & (bounds<=x[train].max(axis=0))).all():return False
+            bp=probabilities(bounds)
+            return bool((model.classes_[bp.argmax(axis=1)]==label).all() and (bp.max(axis=1)>=SCORE_THRESHOLD).all())
+        # Validation uses exactly the same native abstention as operational pixels.
+        scores=np.where([native_safe(v,l) for v,l in zip(x[test],pred)],scores,0.0)
         report = validation_report(labels[test], pred, scores)
         reliability=[]
         for low in np.arange(0,1,0.1):
@@ -249,7 +263,7 @@ def classify_config(aoi, config_path, output_dir):
         report['expected_calibration_error']=sum(r['n']*abs(r['mean_probability']-r['observed_accuracy']) for r in reliability)/int(test.sum())
         parents = {label: cfg['classes'][label]['parent'] for label in model.classes_}
         parent_names = sorted(set(parents.values()))
-        if any(v not in ('uso agropecuário', 'silvicultura', 'vegetação natural', 'água', 'outro') for v in parent_names):
+        if any(v not in ('área cultivada', 'uso agropecuário', 'silvicultura', 'vegetação natural', 'água', 'outro') for v in parent_names):
             raise ValueError('Grupo pai não reconhecido.')
         pp = np.column_stack([probs[:,[parents[c] == p for c in model.classes_]].sum(axis=1) for p in parent_names])
         parent_pred = np.asarray(parent_names)[pp.argmax(axis=1)]
@@ -266,7 +280,7 @@ def classify_config(aoi, config_path, output_dir):
         good = ~np.ma.getmaskarray(data).any(axis=0).ravel() & np.isfinite(flat).all(axis=1)
         # Reject covariate extrapolation; eligibility requires an in-domain feature vector.
         good &= ((flat >= x[train].min(axis=0)) & (flat <= x[train].max(axis=0))).all(axis=1)
-        labels_out = list(model.classes_) + ['Grupo: '+p for p in parent_names]
+        labels_out = list(model.classes_) + [('Áreas cultivadas' if p=='área cultivada' else 'Grupo: '+p) for p in parent_names]
         codes = {label:i+1 for i,label in enumerate(labels_out)}
         output = np.zeros(len(flat), dtype='uint16')
         confidence_grid = np.full(len(flat), -9999.0, dtype='float32')
@@ -278,13 +292,14 @@ def classify_config(aoi, config_path, output_dir):
             parent_prob = np.column_stack([prob[:,[parents[c] == p for c in model.classes_]].sum(axis=1) for p in parent_names])
             for j, idx in enumerate(indices):
                 label = detail[j]
-                if report['gates'][label]['eligible'] and prob[j].max() >= SCORE_THRESHOLD:
+                native_ok=native_safe(flat[idx],label)
+                if native_ok and report['gates'][label]['eligible'] and prob[j].max() >= SCORE_THRESHOLD:
                     output[idx] = codes[label]
                     confidence_grid[idx] = prob[j].max()
                 else:
                     parent = parent_names[parent_prob[j].argmax()]
-                    if parent_report['gates'][parent]['eligible'] and parent_prob[j].max() >= SCORE_THRESHOLD:
-                        output[idx] = codes['Grupo: '+parent]
+                    if parent!='vegetação natural' and parent_report['gates'][parent]['eligible'] and parent_prob[j].max() >= SCORE_THRESHOLD:
+                        output[idx] = codes['Áreas cultivadas' if parent=='área cultivada' else 'Grupo: '+parent]
                         confidence_grid[idx] = parent_prob[j].max()
         outdir = Path(output_dir); outdir.mkdir(parents=True,exist_ok=True)
         output_path = outdir/'sar_uso_validado.tif'
@@ -299,7 +314,7 @@ def classify_config(aoi, config_path, output_dir):
     with rasterio.open(confidence_path,'w',**profile) as dst:
         dst.write(confidence_grid.reshape(data.shape[1:]),1)
         dst.update_tags(meaning='Probabilidade calibrada da classe aceita; IC da precisão por classe em validacao_sar.json; não é garantia por pixel')
-    report.update({'confidence_raster':str(confidence_path), 'parent_validation':parent_report, 'source_config':str(cfg_path),
+    report.update({'class_metadata':cfg['classes'], 'native_structure':cfg.get('native_structure'), 'native_policy':'Somente floresta/savana/campo; altura SAR e intervalo; estabilidade nos limites não é IC de classificação; IBGE apenas nomeia', 'confidence_raster':str(confidence_path), 'parent_validation':parent_report, 'source_config':str(cfg_path),
                    'reference_url':cfg['reference_url'],'institution':cfg['institution'],
                    'publication_url':cfg['publication_url'],'sensor':cfg['sensor'], 'processing':cfg['processing'],
                    'period':cfg['period'], 'features':cfg['features'], 'n_train':int(train.sum()),
@@ -314,6 +329,69 @@ def classify_config(aoi, config_path, output_dir):
     return polygons, report
 
 
+def native_formation(name):
+    """Only broad structure; detailed native names belong to IBGE."""
+    from native_carbon import normalize
+    text=normalize(name).strip()
+    if text in ('floresta','formacao florestal'):return 'floresta'
+    if text in ('savana','formacao savanica'):return 'savana'
+    if text in ('campo','formacao campestre'):return 'campo'
+    return None
+
+
+def ibge_formation(name):
+    from native_carbon import normalize
+    text=normalize(name)
+    # Transition/contact legends do not unambiguously name a single formation.
+    if any(x in text for x in ('contato','tensao ecologica','transicao')):return None
+    if 'savana' in text or 'estepe' in text:return 'savana'
+    if 'camp' in text:return 'campo'
+    if 'florest' in text or text.startswith(('fod','foa','fes','fed')):return 'floresta'
+    return None
+
+
+def name_native_from_ibge(predicted, reference):
+    """IBGE names compatible native structure; no distance in user outputs."""
+    import geopandas as gpd
+    pieces=[]
+    ref=reference.to_crs(AREA_CRS) if reference is not None else None
+    for row in predicted.to_crs(AREA_CRS).itertuples():
+        formation=native_formation(row.class_name)
+        if not formation or ref is None:
+            pieces.append(dict(class_name=row.class_name,source=row.source,taxonomy=row.taxonomy,geometry=row.geometry));continue
+        compatible=ref[ref.class_name.map(ibge_formation)==formation]
+        remaining=row.geometry
+        # Keep distinct local IBGE names where the recognized patch intersects them.
+        for item in compatible.itertuples():
+            clipped=remaining.intersection(item.geometry)
+            if clipped.area>0:
+                pieces.append(dict(class_name=item.class_name,source='SAR_VALIDADO+IBGE',taxonomy='Formação SAR: '+formation+'; nome: IBGE legenda_1',geometry=clipped))
+                remaining=remaining.difference(clipped)
+        if remaining.area>0:
+            if not compatible.empty:
+                distances=compatible.geometry.distance(remaining)
+                nearest=compatible.loc[distances.idxmin()]
+                name,source=nearest.class_name,'SAR_VALIDADO+IBGE'
+                taxonomy='Formação SAR: '+formation+'; nome: IBGE legenda_1'
+            else:
+                name,source,taxonomy=row.class_name,row.source,'Formação SAR ampla; nome IBGE compatível indisponível'
+            pieces.append(dict(class_name=name,source=source,taxonomy=taxonomy,geometry=remaining))
+    return gpd.GeoDataFrame(pieces,crs=AREA_CRS).to_crs(predicted.crs) if pieces else predicted
+
+
+def native_height_contract(cfg):
+    """No universal height thresholds or implied validation from a citation."""
+    contract=cfg.get('native_structure',{})
+    features=cfg['features']
+    names=[f['name'] for f in features]
+    h,u=contract.get('height_feature'),contract.get('uncertainty_feature')
+    if not contract.get('validation_reference') or h not in names or u not in names:return None
+    hi,ui=names.index(h),names.index(u)
+    if hi==ui or any(features[i].get('source')!='SAR' or features[i].get('unit')!='m' for i in (hi,ui)):return None
+    if contract.get('uncertainty_kind')!='interval_half_width':return None
+    return hi,ui
+
+
 def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=None, ibge_field='legenda_1'):
     import geopandas as gpd
     from mapbiomas_zonal import RASTER_URL, YEAR
@@ -322,36 +400,68 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     if config_path:
         try:
             predicted, validation = classify_config(aoi,config_path,output_dir)
+            # Native detailed labels never override the maps directly.
+            metadata=validation.get('class_metadata',{})
+            keep=predicted.class_name.map(lambda n: metadata.get(n,{}).get('parent')!='vegetação natural' or native_formation(n) is not None)
+            predicted=predicted[keep & ~predicted.class_name.eq('Grupo: vegetação natural')]
             layers.append(predicted)
         except Exception as exc:
             warnings.append('SAR sem prioridade: '+str(exc))
     else:
         warnings.append('Sem modelo treinado/validado e atributos compatíveis; nenhum peso nacional vem embutido.')
-    if ibge is None or ibge.empty:
-        warnings.append('IBGE sem polígonos disponíveis; MapBiomas usado apenas nas lacunas cartográficas.')
-    if ibge is not None and not ibge.empty:
-        if ibge_field not in ibge.columns:
-            raise ValueError('Campo IBGE ausente.')
-        fallback = ibge[[ibge_field,'geometry']].dropna(subset=[ibge_field]).rename(columns={ibge_field:'class_name'}).copy()
-        fallback['source'], fallback['taxonomy'] = 'IBGE', 'IBGE legenda_1'
-        layers.append(fallback)
+    from native_carbon import native_class
+    raw_layers=list(layers)
+    mb=None
     try:
-        layers.append(raster_class_polygons(aoi,mapbiomas_path or RASTER_URL.format(year=YEAR)))
+        mb=raster_class_polygons(aoi,mapbiomas_path or RASTER_URL.format(year=YEAR))
+        raw_layers.append(mb.copy())
+        from mapbiomas_zonal import LEGEND
+        crop_names={LEGEND[c][0] for c in (18,19,20,39,40,41,46,47,48,62)}
+        mb.loc[mb.class_name.isin(crop_names | {'Pastagem'}),'class_name']='Áreas cultivadas'
     except Exception as exc:
         warnings.append('MapBiomas indisponível: '+str(exc))
+    reference=None
+    if ibge is not None and not ibge.empty:
+        if ibge_field not in ibge.columns:raise ValueError('Campo IBGE ausente.')
+        reference=ibge[[ibge_field,'geometry']].dropna(subset=[ibge_field]).rename(columns={ibge_field:'class_name'}).copy()
+        reference['source'],reference['taxonomy']='IBGE','IBGE legenda_1'
+        raw_layers.append(reference)
+    else:warnings.append('IBGE sem polígonos disponíveis; não há detalhamento fitofisionômico oficial.')
+    if layers:
+        layers[0]=name_native_from_ibge(layers[0],reference)
+    # IBGE legenda_1 describes phytoregions, not proof of current native cover.
+    # Below accepted SAR, MapBiomas masks current anthropic/native cover, and
+    # IBGE supplies the detailed physiognomy within its native intersections.
+    if mb is not None and not mb.empty:
+        native=mb.class_name.map(lambda name:native_class(name,'MAPBIOMAS') is True)
+        layers.append(mb[~native])
+        if reference is not None and native.any():
+            mask=mb[native].to_crs(reference.crs).geometry.union_all()
+            detail=reference.copy()
+            detail['geometry']=detail.geometry.make_valid().intersection(mask)
+            detail=detail[~detail.geometry.is_empty]
+            detail['source']='IBGE+MAPBIOMAS'
+            detail['taxonomy']='IBGE legenda_1 em cobertura nativa MapBiomas'
+            layers.append(detail)
+        layers.append(mb[native])
+    if reference is not None:layers.append(reference)
     source_distributions=[]
-    for layer in layers:
+    for layer in raw_layers:
         if layer is not None and not layer.empty:
-            _, source_audit=partition_land_use(aoi,[layer])
+            _,source_audit=partition_land_use(aoi,[layer])
             source_distributions.append(source_audit)
     polygons, summary = partition_land_use(aoi,layers)
     summary['original_source_distributions']=source_distributions
+    summary['priority']='SAR com confiança demonstrada; nas lacunas, IBGE para fitofisionomia e MapBiomas para uso/cobertura atual'
+    metadata=(validation or {}).get('class_metadata',{})
+    polygons['native_status']=[native_class(r.class_name,r.source,metadata) for r in polygons.itertuples()]
+    for row in summary['classes']:row['native_status']=native_class(row['class_name'],row['source'],metadata)
     outdir=Path(output_dir);outdir.mkdir(parents=True,exist_ok=True)
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
     summary.update({'warnings':warnings,'validation':validation,'vector_path':str(vector_path),
                     'mapbiomas_source':str(mapbiomas_path or RASTER_URL.format(year=YEAR)),
-                    'status':'SAR_ELEGIVEL' if any(r['source']=='SAR_VALIDADO' for r in summary['classes']) else 'FALLBACK_CARTOGRAFICO'})
+                    'status':'SAR_ELEGIVEL' if any(r['source'].startswith('SAR_VALIDADO') for r in summary['classes']) else 'FALLBACK_CARTOGRAFICO'})
     (outdir/'uso_solo_auditoria.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
     return summary
 
