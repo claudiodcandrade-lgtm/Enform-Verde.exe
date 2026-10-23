@@ -1679,8 +1679,10 @@ class App(tk.Tk):
         self.project["area_ha"]=native["area_aoi_ha"]
         known=native.get("known_total_tc")
         area=native["native_area_ha"]
-        self.project["total_tc_ha"]=(known/area if known is not None and area else 0.0)
-        self.project["total_tco2_ha"]=self.project["total_tc_ha"]*44/12
+        self.project["total_tc_ha"]=(known/area if known is not None and area else None)
+        self.project["total_tco2_ha"]=(self.project["total_tc_ha"]*44/12 if self.project["total_tc_ha"] is not None else None)
+        self.project["total_tc"]=known
+        self.project["total_tco2e"]=(known*44/12 if known is not None else None)
         self.project["total_is_partial"]=not native["complete"]
         rows=[]
         for item in native["components"]:
@@ -1711,16 +1713,20 @@ class App(tk.Tk):
                     if not isinstance(scene,dict):
                         continue
                     lines.append("  CENA PROCESSADA: "+str(scene.get("path") or scene.get("scene") or "arquivo não identificado"))
-                    lines.append("    Aquisição em Brasília (UTC−3): "+str(scene.get("acquisition_brasilia") or "NÃO DISPONÍVEL"))
-                    lines.append("    Aquisição UTC: "+str(scene.get("acquisition_utc") or "NÃO DISPONÍVEL"))
+                    from sar_acquisition_time import acquisition_display
+                    acquisition=acquisition_display(scene)
+                    lines.append("    Horário de aquisição (UTC -3): "+acquisition["brasilia"])
+                    lines.append("    Horário de aquisição (UTC): "+acquisition["utc"])
+                    if acquisition.get("reference_period"):lines.append("    Período de referência do produto: "+acquisition["reference_period"])
+                    if acquisition.get("explanation"):lines.append("    Observação temporal: "+acquisition["explanation"])
             for row in st["components"]:
                 if row["parametro"]=="Necromassa subterrânea":lines.append("  Necromassa subterrânea — raízes mortas")
-                value=(format_ptbr(row["tc"],2)+" tC/ha; "+format_ptbr(row["total_tc"],2)+" tC na interseção") if row["total_tc"] is not None else "NÃO ESTIMADO / EXCLUÍDO DO TOTAL"
+                value=(format_ptbr(row["tc"],2)+" tC/ha; "+format_ptbr(row["tc"]*44/12,2)+" tCO₂e/ha; "+format_ptbr(row["total_tc"],2)+" tC; "+format_ptbr(row["total_tc"]*44/12,2)+" tCO₂e na interseção") if row["total_tc"] is not None and row.get("tc") is not None else "NÃO ESTIMADO / EXCLUÍDO DO TOTAL"
                 lines += ["  "+row["parametro"]+": "+value,"    Fonte: "+str(row.get("fonte")),"    Método: "+str(row.get("metodo")),"    Erro/incerteza e limitação: "+str(row.get("obs")),"    Nível estatístico: conforme fonte por estrato; não há IC do total","    Intervalos/erro informados: "+json.dumps({k:row[k] for k in ("range_tc_ha","range_dry_mg_ha","agb_uncertainty_mg_ha","agb_range_mg_ha","spatial_sd_tc_ha") if row.get(k) is not None},ensure_ascii=False)]
             for depth,profile in (st.get("soil_profiles") or {}).items():
                 if depth!="0–30 cm" and isinstance(profile,dict) and profile.get("tc_ha") is not None:
                     lines.append("  Solo "+depth+": "+format_ptbr(profile["tc_ha"],2)+" tC/ha nesta formação; perfil informativo, não somado novamente ao total.")
-        lines += ["",("TOTAL" if native["complete"] else "SOMA PARCIAL CONHECIDA")+" NAS INTERSEÇÕES NATIVAS: "+(format_ptbr(known,2)+" tC" if known is not None else "NÃO ESTIMADO"),native["uncertainty_note"],""]
+        lines += ["",("TOTAL" if native["complete"] else "SOMA PARCIAL CONHECIDA")+" NAS INTERSEÇÕES NATIVAS: "+(format_ptbr(known,2)+" tC" if known is not None else "NÃO ESTIMADO"),"ESTOQUE EQUIVALENTE NAS INTERSEÇÕES NATIVAS: "+(format_ptbr(known*44/12,2)+" tCO₂e" if known is not None else "NÃO ESTIMADO"),"Densidades na área nativa: "+(format_ptbr(known/area,2)+" tC/ha; "+format_ptbr((known/area)*44/12,2)+" tCO₂e/ha" if known is not None and area else "NÃO ESTIMADO"),native["uncertainty_note"],""]
         lines+=land_use_report_lines(land,lambda v:format_ptbr(v,2))
         text="\n".join(lines)
         self.project["last_result"]=text
