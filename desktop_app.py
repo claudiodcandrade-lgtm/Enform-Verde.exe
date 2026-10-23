@@ -1703,6 +1703,16 @@ class App(tk.Tk):
             lines.append(st["class_name"]+": "+format_ptbr(st["area_ha"],2)+" ha ("+format_ptbr(st["area_pct"],2)+"% da AOI) — "+st["source"])
             lines.append("  FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: "+st["physiognomy"]+" — "+st["physiognomy_resolution"])
             lines.append("  Proveniência SAR/altura: "+json.dumps(st.get("sar_details") or {},ensure_ascii=False,default=str))
+            # Display actual raster acquisition separately from catalog discovery.
+            sar_details=st.get("sar_details") or {}
+            if isinstance(sar_details,dict):
+                actual_stats=sar_details.get("stats") or []
+                for scene in actual_stats:
+                    if not isinstance(scene,dict):
+                        continue
+                    lines.append("  CENA PROCESSADA: "+str(scene.get("path") or scene.get("scene") or "arquivo não identificado"))
+                    lines.append("    Aquisição em Brasília (UTC−3): "+str(scene.get("acquisition_brasilia") or "NÃO DISPONÍVEL"))
+                    lines.append("    Aquisição UTC: "+str(scene.get("acquisition_utc") or "NÃO DISPONÍVEL"))
             for row in st["components"]:
                 if row["parametro"]=="Necromassa subterrânea":lines.append("  Necromassa subterrânea — raízes mortas")
                 value=(format_ptbr(row["tc"],2)+" tC/ha; "+format_ptbr(row["total_tc"],2)+" tC na interseção") if row["total_tc"] is not None else "NÃO ESTIMADO / EXCLUÍDO DO TOTAL"
