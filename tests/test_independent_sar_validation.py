@@ -16,9 +16,9 @@ class IndependentSarValidationTests(unittest.TestCase):
           reference_source="field_fixture",reference_date="2026-01-01",
           observation_date="2026-01-01",independent_field_reference=independent,
           source_record_id=str(uid),biome="Mata Atlântica",state="MG")
-    def test_50_perfect_still_fails_conservative_wilson_gate(self):
+    def test_50_with_five_errors_fails_wilson_gate(self):
         with tempfile.TemporaryDirectory() as d:
-            p=self.make_csv(d,[self.row(i) for i in range(50)])
+            p=self.make_csv(d,[self.row(i,truth='Pinus' if i<5 else 'Eucalipto') for i in range(50)])
             r=validate_independent_predictions(p,model_sha256="synthetic",reference_url="https://example.org")
             self.assertFalse(r["gates"]["Eucalipto"]["eligible"])
             self.assertFalse(r["all_targets_validated"])
