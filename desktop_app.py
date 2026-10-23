@@ -1239,7 +1239,7 @@ class App(tk.Tk):
             if not ok:
                 self.land_use_state.set("Classificação não concluída: "+result); return
             self.project["land_use"]=result
-            self.project["area_ha"]=result["area_aoi_ha"]
+            if not self.project.get("analysis_rows"):self.project["area_ha"]=result["area_aoi_ha"]
             text="\n".join(land_use_report_lines(result,lambda v:format_ptbr(v,2)))
             self.project["last_result"]=text
             self._set(self.res,text);self.nb.select(self.tabs[3])
@@ -2074,6 +2074,12 @@ class App(tk.Tk):
                 ["Entrada","Sensor/produto selecionado",None,None,"Informado","SAR/multissensor","ESA/fornecedor",self.sensor.get()],
                 ["Resultado","Soma parcial por hectare" if is_partial else "Carbono total por hectare",total,totalco2,"PARCIAL" if is_partial else "CONSOLIDADO","soma dos compartimentos elegíveis","Enform","inclui somente compartimentos calculados e elegíveis"],
                 ["Resultado","Soma parcial da propriedade" if is_partial else "Carbono total da propriedade",None,None,"PARCIAL" if is_partial else "CONSOLIDADO","tC/ha × área","Enform",f"{format_ptbr(total*area,0)} tC | {format_ptbr(totalco2*area,0)} tCO₂e"]])
+        if not ar:
+            for row_number,label in [(9,"Carbono por hectare"),(10,"Carbono da propriedade")]:
+                ws.cell(row_number,2).value=label
+                ws.cell(row_number,3).value=None;ws.cell(row_number,4).value=None
+                ws.cell(row_number,5).value="NÃO CALCULADO"
+                ws.cell(row_number,8).value="Execução de uso do solo sem estimativa de carbono."
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
         for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:

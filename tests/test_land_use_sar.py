@@ -83,6 +83,25 @@ class LandUseTests(unittest.TestCase):
             refs.loc[1,'unit_id']=refs.loc[0,'unit_id'];refs.to_file(Path(d)/'points.geojson',driver='GeoJSON')
             with self.assertRaisesRegex(ValueError,'unidade independente'):classify_config(aoi,config,Path(d)/'out')
 
+    def test_land_use_only_excel_does_not_invent_zero_carbon(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from openpyxl import load_workbook
+        from desktop_app import App
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)/"land-use.xlsx"
+            text=SimpleNamespace(get=lambda:"Teste")
+            land={'classes':[{'class_name':'FOD','area_ha':1,'area_pct':100,'source':'IBGE','taxonomy':'IBGE'}],
+                  'method':'interseção','vector_path':'classes.geojson','validation':None,'warnings':['sem modelo']}
+            stub=SimpleNamespace(project={'area_ha':1,'land_use':land},name=text,biome=text,phys=text,sensor=text,
+                                 status=SimpleNamespace(set=lambda value:None))
+            with patch('desktop_app.filedialog.asksaveasfilename',return_value=str(path)):
+                App.export_excel(stub)
+            wb=load_workbook(path)
+            self.assertIsNone(wb['Resumo Executivo']['C9'].value)
+            self.assertEqual(wb['Resumo Executivo']['E9'].value,'NÃO CALCULADO')
+            self.assertEqual(wb['Uso do Solo']['A4'].value,'FOD')
+
     def test_sensor_and_domain_contract(self):
         with tempfile.TemporaryDirectory() as d:
             config,aoi,_=self.fixture(d)

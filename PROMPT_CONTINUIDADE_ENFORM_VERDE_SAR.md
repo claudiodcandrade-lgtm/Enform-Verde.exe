@@ -19,7 +19,7 @@ Nova candidata de código: 3.24.39. Consultar HEAD/Actions ao vivo antes de dize
 - Interface: configuração de classificação e botão independente de AGB; classificação também integrada ao fluxo geral; camada IBGE oficial obtida da rota/cache existente quando não selecionada manualmente. Relatório, Excel, GeoJSON de interseções, GeoTIFF de classes/confiança e JSON de auditoria.
 - A distribuição original de cada fonte fica preservada na auditoria, mesmo quando sobreposta por fonte prioritária. AOI inteira como denominador, nodata como lacuna explícita, recorte de células na borda, EPSG:6933 para área equivalente. EPSG:5880 é policônica, não deve ser descrita como equivalente.
 - `mapbiomas_zonal.py`: corrigida área por pixel, dividindo área geodésica da linha pela quantidade de colunas. Teste novo com GeoTIFF real local detecta a multiplicação anterior pela largura.
-- Testes locais: 83 passaram antes do commit; incluem 8 testes novos de classificação com dados **sintéticos**, apenas verificação computacional. Não são validação científica em Santo Ambrósio/Tapajós.
+- Testes locais: 84 passaram antes do commit; incluem 9 testes novos de classificação com dados **sintéticos**, apenas verificação computacional. Não são validação científica em Santo Ambrósio/Tapajós.
 - Pesquisa/contrato/limitações: `docs/CLASSIFICACAO_SAR_USO_SOLO.md`; fontes Embrapa, INPE, UnB, UFSM, ITA, Twente e métodos globais para café, citros, cereais, forrageiras e plantações.
 - Não foi validada aquisição automática de séries de classificação, nem pesos/modelos reais nas AOIs. O módulo usa GeoTIFF de atributos e referências institucionais reais fornecidos; as rotas existentes de AGB não criam esse contrato automaticamente.
 - A nova partição não altera modelos de carbono existentes. Estratificar carbono por ela exige integração explícita posterior com modelos compatíveis para cada classe. Preservar os avanços de AGB/altura, solo, necromassa, serapilheira, UI e exportações.
@@ -86,7 +86,7 @@ O usuário determinou usar o mapeamento MapBiomas para completar a cobertura fit
 - Para reportar percentuais de fitofisionomias IBGE, sobrepor os polígonos/classes espaciais IBGE à máscara MapBiomas e calcular área de interseção por classe, documentando o cruzamento e as classes sem correspondência. Reportar também a distribuição MapBiomas original para auditoria. Não preencher lacunas com a classe dominante da propriedade.
 - Estratificar os cálculos de carbono por área das classes compatíveis. Usar apenas a máscara florestal para AGB de inventários que amostram árvores florestais com DAP ≥10 cm; excluir formações savânicas/campos alagáveis desses modelos quando não houver suporte validado.
 
-Fonte pública: https://brasil.mapbiomas.org/iniciativas-e-produtos/cobertura-e-uso-da-terra/cobertura-30m/cobertura/  
+Fonte pública: https://brasil.mapbiomas.org/iniciativas-e-produtos/cobertura-e-uso-da-terra/cobertura-30m/cobertura/
 GeoTIFF C11 usado na preparação: https://storage.googleapis.com/mapbiomas-public/initiatives/brasil/collection11/lulc/coverage/brazil_coverage/brazil_coverage-col11_2025.tif
 
 ## Dados que não podem ser perdidos
