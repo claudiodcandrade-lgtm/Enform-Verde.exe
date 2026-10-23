@@ -38,6 +38,16 @@ class NativeCarbonTests(unittest.TestCase):
         self.assertAlmostEqual(r['components'][0]['missing_native_area_ha'],.5,places=5)
         self.assertFalse(r['complete']);self.assertIsNone(r['total_uncertainty'])
 
+    def test_silviculture_never_enters_native_carbon_regardless_of_source(self):
+        for source in ('MAPBIOMAS','IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE','SAR_VALIDADO'):
+            for name in ('Silvicultura','Floresta plantada','Eucalipto','Pinus'):
+                self.assertIs(native_class(name,source),False,(name,source))
+        for source in ('IBGE+MAPBIOMAS','SAR_VALIDADO'):
+            self.assertIsNone(native_class('Cobertura arbórea — origem não determinada',source))
+            self.assertIsNone(native_class('Floresta natural ou plantada',source))
+        self.assertFalse(native_class('Floresta Ombrófila Densa','IBGE+MAPBIOMAS',
+                                     {'Floresta Ombrófila Densa':{'planted_forest':True}}))
+
     def test_ibge_potential_region_without_current_cover_is_not_native_proof(self):
         self.assertIsNone(native_class('Floresta Ombrófila Densa','IBGE'))
         for label in ['Pastagem','Silvicultura','Café','Citrus','Soja']:
