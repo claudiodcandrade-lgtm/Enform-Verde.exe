@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 
 CROPS = ("Milho", "Soja", "Sorgo", "Café", "Cana-de-açúcar", "Arroz", "Feijão", "Citros")
+PLANTED_FOREST_CLASSES = ("Floresta plantada", "Eucalipto", "Pinus")
+CLASSIFIER_TARGETS = CROPS + PLANTED_FOREST_CLASSES
 SCORE_THRESHOLD = 0.90
 MIN_INDEPENDENT = 50
 MIN_PRECISION_LOWER = 0.90
@@ -35,7 +37,7 @@ def evaluate_crop_model(entry: dict, *, base_dir: str | Path = ".") -> dict:
     audit = {"crop": name, "eligible": False, "reasons": [], "source": entry.get("repository_url"),
              "model_id": entry.get("model_id"), "modality": entry.get("modality")}
     reasons = audit["reasons"]
-    if name not in CROPS:
+    if name not in CLASSIFIER_TARGETS:
         reasons.append("cultura não contemplada")
     for field in ("model_id", "model_version", "repository_url", "license", "sensor",
                   "processing", "period", "domain", "feature_schema", "modality",
