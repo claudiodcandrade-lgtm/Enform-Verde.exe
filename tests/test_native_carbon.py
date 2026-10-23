@@ -56,7 +56,7 @@ class NativeCarbonTests(unittest.TestCase):
             natural=next(r for r in rows if r['native_status'] is True)
             pasture=next(r for r in rows if r['native_status'] is False)
             self.assertEqual(natural['source'],'IBGE+MAPBIOMAS')
-            self.assertEqual(pasture['class_name'],'Pastagem')
+            self.assertEqual(pasture['class_name'],'Áreas cultivadas')
             self.assertAlmostEqual(natural['area_pct'],50,places=4)
 
     def test_accepted_sar_use_overrides_both_maps_and_excludes_crop_carbon(self):
