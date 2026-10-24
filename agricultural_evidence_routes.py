@@ -103,18 +103,24 @@ def plan_evidence_routes(*, task: str, crop: str | None = None,
             "policy": "A rota pode orientar aquisição e experimento; não concede aprovação científica automaticamente."}
 
 
-def build_pam_sar_panel(pam_path, sar_path, output_path=None) -> dict:
+def build_pam_sar_panel(pam_path, sar_path, weather_path=None, output_path=None) -> dict:
     """Join observed PAM N9 yield with crop-masked SAR aggregates.
 
-    SAR CSV requires product_key, territory_code, year, mask_validation_status,
-    mask_model_sha256, crop_mask_source, latest_acquisition_utc, age_days,
-    scenes_in_window, crop_phase and SAR features prefixed ``sar_``. Only a
-    mask marked INDEPENDENT_VALIDATION_APPROVED is admitted. This checks the
-    contract, not the truthfulness of the external validation report.
+    SAR CSV requires product_key, territory_code, year, spatial_block,
+    mask_validation_status, mask_model_sha256, crop_mask_source,
+    latest_acquisition_utc, age_days, scenes_in_window, crop_phase,
+    freshness_validation_status, SAR source URL, three independent SAR
+    validation flags, and features prefixed ``sar_``. Weather CSV requires the
+    PAM join keys, source and source URL, and numeric climate_/weather_ fields.
+    This checks the input contract, not the truthfulness of external reports.
     """
-    required = {"product_key", "territory_code", "year", "mask_validation_status",
+    if weather_path is None:
+        raise ValueError("independent climate panel required to assemble a model-ready panel")
+    required = {"product_key", "territory_code", "year", "spatial_block", "mask_validation_status",
                 "mask_model_sha256", "crop_mask_source", "latest_acquisition_utc",
-                "age_days", "scenes_in_window", "crop_phase"}
+                "age_days", "scenes_in_window", "crop_phase", "freshness_validation_status",
+                "sar_source_url", "sar_crop_validated", "sar_vigor_validated",
+                "sar_stress_validated"}
     def open_text(path):
         return gzip.open(path, "rt", encoding="utf-8-sig", newline="") if str(path).endswith(".gz") else open(path, encoding="utf-8-sig", newline="")
     with open_text(sar_path) as f:
@@ -137,8 +143,12 @@ def build_pam_sar_panel(pam_path, sar_path, output_path=None) -> dict:
         keys.add(key)
         if row["mask_validation_status"] != "INDEPENDENT_VALIDATION_APPROVED":
             continue
+        if row["freshness_validation_status"] != "CROP_PHASE_FRESHNESS_CALIBRATED":
+            continue
         if not row["mask_model_sha256"] or not row["crop_mask_source"]:
             raise ValueError("approved mask requires model SHA-256 and reference source")
+        if not row["spatial_block"].strip() or not row["sar_source_url"].strip():
+            raise ValueError("approved SAR aggregate requires spatial block and source URL")
         eligible_sar[key] = row
     pam = {}
     pam_sha = hashlib.sha256(Path(pam_path).read_bytes()).hexdigest()
@@ -150,14 +160,33 @@ def build_pam_sar_panel(pam_path, sar_path, output_path=None) -> dict:
             if key in pam:
                 raise ValueError("duplicate PAM yield key: " + repr(key))
             pam[key] = row
+    weather = {}
+    with open_text(weather_path) as f:
+        reader = csv.DictReader(f)
+        weather_required = {"product_key", "territory_code", "year", "weather_source", "weather_source_url"}
+        if not reader.fieldnames or not weather_required.issubset(reader.fieldnames):
+            raise ValueError("weather CSV missing: " + ", ".join(sorted(weather_required-set(reader.fieldnames or []))))
+        climate_features = [c for c in reader.fieldnames if c.startswith(("climate_", "weather_"))
+                            and c not in {"weather_source", "weather_source_url"}]
+        if not climate_features:
+            raise ValueError("weather CSV needs numeric climate_* or weather_* features")
+        for row in reader:
+            key = (row["product_key"], row["territory_code"], row["year"])
+            if key in weather:
+                raise ValueError("duplicate weather key: " + repr(key))
+            if not row["weather_source"].strip() or not row["weather_source_url"].strip():
+                raise ValueError("weather source and URL are mandatory")
+            weather[key] = row
     output = []
     for key, sar in eligible_sar.items():
         label = pam.get(key)
-        if not label:
+        wx = weather.get(key)
+        if not label or not wx:
             continue
-        record = {"crop": key[0], "territory_code": key[1], "season_year": int(key[2]),
+        record = {"crop": key[0], "municipality_code": key[1], "territory_code": key[1],
+                  "spatial_block": sar["spatial_block"], "season_year": int(key[2]),
                   "yield_t_ha": float(label["value_numeric"]) / 1000.0,
-                  "yield_source_url": label["source_url"],
+                  "yield_source_url": label.get("source_url") or label.get("source_url", ""),
                   "yield_license": "IBGE PAM; confirm terms before redistribution",
                   "sar_source_url": sar.get("sar_source_url", ""),
                   "sar_mask_sha256": sar["mask_model_sha256"],
@@ -167,10 +196,20 @@ def build_pam_sar_panel(pam_path, sar_path, output_path=None) -> dict:
                   "sar_scenes_in_window": int(sar["scenes_in_window"]),
                   "sar_crop_phase": sar["crop_phase"],
                   "sar_independent_mask_approved": True,
+                  "sar_crop_validated": sar["sar_crop_validated"],
+                  "sar_vigor_validated": sar["sar_vigor_validated"],
+                  "sar_stress_validated": sar["sar_stress_validated"],
+                  "weather_source": wx["weather_source"],
+                  "weather_source_url": wx["weather_source_url"],
                   "pam_source_sha256": pam_sha}
         for col in features:
             try:
                 record[col] = float(sar[col])
+            except (TypeError, ValueError):
+                record[col] = None
+        for col in climate_features:
+            try:
+                record[col] = float(wx[col])
             except (TypeError, ValueError):
                 record[col] = None
         output.append(record)
