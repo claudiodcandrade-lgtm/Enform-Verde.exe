@@ -1334,7 +1334,7 @@ class App(tk.Tk):
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
         ttk.Label(f,text="Classificação, fenologia, fitossanidade e previsão de safra; dados e incertezas independentes do carbono nativo.",
                   wraplength=1000).pack(anchor="w",pady=(4,10))
-        ttk.Button(f,text="CONSULTAR CLIMA DA ÁREA — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
+        ttk.Button(f,text="CONSULTAR CLIMA — INMET / NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
         box=ttk.Frame(f);box.pack(fill="both",expand=True)
         self.crop_res=tk.Text(box,height=24,wrap="word",yscrollcommand=lambda *a:scroll.set(*a))
         scroll=ttk.Scrollbar(box,orient="vertical",command=self.crop_res.yview)
@@ -1381,12 +1381,17 @@ class App(tk.Tk):
                   "NASA POWER: estimativa em grade, não estação meteorológica local.\\n"
                   "CPTEC: previsão, não observação de campo.")
         def worker():
+            from inmet_weather_client import fetch_inmet_nearby,weather_executive_lines
+            inmet=fetch_inmet_nearby(lat,lon)
+            power_summary=None
+            forecast_summary=None
             lines=["CLIMA DINÂMICO — ÁREA CULTIVADA",
                    f"Centroide (WGS84): {lat:.5f}, {lon:.5f}"]
             try:
                 from agricultural_weather import fetch_daily_weather,summarize_weather
                 weather=fetch_daily_weather(lat,lon,days=90)
                 summary=summarize_weather(weather)
+                power_summary=summary
                 lines.extend(["","NASA POWER — DADOS DIÁRIOS REAIS (GRADE)",
                               "Fonte: "+weather["source_url"],
                               "Período: "+weather["start"]+" a "+weather["end"],
@@ -1401,6 +1406,7 @@ class App(tk.Tk):
             try:
                 from cptec_forecast_client import forecast_by_coordinates
                 forecast=forecast_by_coordinates(lat,lon)
+                forecast_summary=forecast
                 lines.extend(["","CPTEC/INPE — PREVISÃO POR COORDENADAS",
                               "Fonte: "+forecast["source_url"],
                               "Consulta UTC: "+forecast["retrieved_utc"],
@@ -1409,10 +1415,11 @@ class App(tk.Tk):
                     lines.append("  "+str(period))
             except Exception as exc:
                 lines.append("CPTEC: INDISPONÍVEL — "+str(exc))
-            lines.extend(["","INMET/BDMEP: fonte catalogada, sem consulta automática nesta versão.",
-                          "CLIMATEMPO: requer contrato e credenciais.",
+            lines.extend(["","INMET/BDMEP: "+str(inmet.get("status"))+" — "+str(inmet.get("source_url")),
+                          "INMET observações: "+str(inmet),
                           "Fenologia, vigor e produtividade: não inferidos apenas a partir de meteorologia.",
                           "As estimativas de carbono nativo permanecem independentes."])
+            lines=weather_executive_lines(inmet,power_summary,forecast_summary,format_ptbr)+[""]+lines
             self.after(0,lambda result="\\n".join(lines):self._set(self.crop_res,result))
         threading.Thread(target=worker,daemon=True).start()
 
