@@ -61,7 +61,7 @@ Uma rota de dados só passa a “concluída” após download legal e auditável
 
 Na mesma área executiva, separada da auditoria, incluir as três leituras solicitadas e, no grupo **Previsão de safra**, os dois valores derivados:
 
-- **Idade provável da lavoura:** exibir idade/dias apenas com fenologia SAR validada e status de atualidade `cenas_recentes_identificadas`.
+- **Idade provável da lavoura:** unidade obrigatória em **meses**; exibir apenas com fenologia SAR validada e status de atualidade `cenas_recentes_identificadas`. Não converter dias a meses usando divisão fixa.
 - **Estado fitossanitário aparente:** apenas **Bom**, **Médio** ou **Ruim**, com modelo/avaliação e SAR atual validados; caso contrário “Indisponível”. Não é diagnóstico fitossanitário.
 - **Produtividade provável:** `sacas/ha` com conversão explícita para saca de 60 kg quando esse for o padrão usual documentado para a cultura (soja, milho, café em grão, arroz em casca, feijão, sorgo e trigo); cana, citros e demais culturas sem padrão adequado permanecem em `t/ha`. Fonte/conversão fica na auditoria.
 - **Produção provável:** produtividade provável × área efetivamente ocupada pela cultura dentro do polígono analisado. Exibir total em toneladas e, quando aplicável, equivalente em sacas de 60 kg. Propagar o intervalo preditivo para o total, condicionado à área fixa; se a área da cultura não estiver quantificada, exibir “Indisponível”, sem assumir que todo o polígono é lavoura.
@@ -72,7 +72,7 @@ Produtividade e produção só aparecem com `forecast_status="previsao_validada"
 
 Exibir, em leitura rápida e fora da trilha de auditoria, por unidade agrícola:
 
-- **Idade provável da lavoura:** idade/dias apenas quando houver estimativa fenológica SAR validada e atualidade `cenas_recentes_identificadas`; do contrário “Indisponível”.
+- **Idade provável da lavoura:** idade em **meses** apenas quando houver estimativa fenológica SAR validada e atualidade `cenas_recentes_identificadas`; do contrário “Indisponível”. O dashboard recebe `probable_crop_age_months`; o desktop recebe `probable_crop_age.months`.
 - **Estado fitossanitário aparente:** somente “Bom”, “Médio” ou “Ruim” quando classe, proveniência, validação independente e atualidade SAR forem adequadas. Caso contrário, “Indisponível”. Isso descreve sinal remoto aparente e não diagnóstico.
 - **Previsão de safra:** exibir valor em t/ha e intervalo apenas com status `previsao_validada` e intervalo coerente; caso contrário, “Bloqueada”. Uma estimativa pontual sem calibração não aparece como previsão.
 
