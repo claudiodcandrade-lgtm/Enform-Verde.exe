@@ -71,3 +71,24 @@ def validated_precision_interval(correct, total):
     return {"precision":p,"ci95":[max(0,center-half),min(1,center+half)],
             "sample_size":total,"uncertainty_type":"precision of accepted class; not area confidence interval"}
 
+
+SCIENTIFIC_ROUTES = {
+    "ilpf_spatial_unet":{"method":"U-Net","institution":"Embrapa Solos / UERJ",
+        "reference":"https://www.alice.cnptia.embrapa.br/handle/doc/1178498",
+        "task":"spatial candidate detection","ready":False},
+    "ilp_temporal_rf":{"method":"Random Forest","institution":"Embrapa Territorial / UNICAMP",
+        "reference":"https://www.alice.cnptia.embrapa.br/handle/doc/1175472",
+        "task":"crop-pasture temporal patterns","ready":False},
+    "ilp_planetscope_temporal":{"method":"temporal deep learning",
+        "reference":"https://www.sciencedirect.com/science/article/pii/S0034425723004376",
+        "task":"crop-pasture time series","ready":False},
+}
+
+def model_route_status(route):
+    """References do not become operational until fitted weights and local validation exist."""
+    entry=SCIENTIFIC_ROUTES.get(route)
+    if entry is None:
+        return {"operational":False,"reason":"rota desconhecida"}
+    return {"operational":bool(entry["ready"]),"reference":entry["reference"],
+            "reason":"modelo documentado, pesos e validacao local pendentes" if not entry["ready"] else "validado"}
+
