@@ -59,6 +59,7 @@ def fetch_inmet_nearby(lat,lon,days=7,max_distance_km=150):
                 temperatures=[x for row in rows if (x:=_number(row.get("TEM_INS"))) is not None]
                 # Hourly precipitation; missing hours invalidate a complete-period total.
                 rain=[x for row in rows if (x:=_number(row.get("CHUVA"))) is not None and x>=0]
+                if not temperatures and not rain:continue
                 result.update(status="observado",station=st.get("DC_NOME") or code,
                               station_code=code,distance_km=round(distance,1),
                               temperature_mean_c=round(sum(temperatures)/len(temperatures),2) if temperatures else None,
