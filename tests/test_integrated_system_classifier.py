@@ -1,11 +1,18 @@
 import unittest
-from integrated_system_classifier import identify_integrated_system
+from integrated_system_classifier import identify_integrated_system, validated_precision_interval, model_route_status
 
 def item(component, unit="T1", period="2026", confidence=0.98):
     return {"present":True,"validated":True,"confidence":confidence,
             "unit_id":unit,"period":period,"source":"referencia_"+component}
 
 class IntegratedSystemTests(unittest.TestCase):
+    def test_precision_interval_is_not_area_interval(self):
+        interval=validated_precision_interval(95,100)
+        self.assertLess(interval["ci95"][0],0.95)
+        self.assertGreater(interval["ci95"][1],0.95)
+        self.assertIsNone(validated_precision_interval(101,100))
+    def test_unverified_published_model_is_not_operational(self):
+        self.assertFalse(model_route_status("ilpf_spatial_unet")["operational"])
     def test_ilpf(self):
         evidence={c:item(c) for c in ("lavoura","pecuaria","floresta")}
         self.assertEqual(identify_integrated_system(evidence)["class_name"],"ILPF")
