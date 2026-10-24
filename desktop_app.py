@@ -1384,11 +1384,11 @@ class App(tk.Tk):
         else:
             executive.append("• Não determinado")
         age_assessment=land.get("probable_crop_age") if isinstance(land.get("probable_crop_age"),dict) else {}
-        age_value=age_assessment.get("days") if (age_assessment.get("status")=="validated" and
+        age_value=age_assessment.get("months") if (age_assessment.get("status")=="validated" and
                    age_assessment.get("freshness_status")=="cenas_recentes_identificadas") else None
         try:
             age_value=float(age_value)
-            age_text=(format_ptbr(age_value,1)+" dias" if age_value>=0 else
+            age_text=(format_ptbr(age_value,1)+" meses" if age_value>=0 else
                       "INDISPONÍVEL — sem estimativa fenológica SAR validada")
         except (TypeError,ValueError):
             age_text="INDISPONÍVEL — sem estimativa fenológica SAR validada"
