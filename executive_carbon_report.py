@@ -14,14 +14,21 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
                     "interval_tc_ha":[lo,hi]}
     dry=row.get("range_dry_mg_ha")
     if isinstance(dry,(list,tuple)) and len(dry)==2 and all(isinstance(x,(int,float)) for x in dry):
-        lo,hi=(x*carbon_fraction for x in dry)
+        # Published dry-mass bounds can be converted only when a documented C fraction is supplied.
+        fraction=row.get("carbon_fraction")
+        if not isinstance(fraction,(int,float)) or not 0<fraction<=1:
+            return {"absolute_tc_ha":None,"percent":None,"kind":"IC em massa seca disponível, mas fração de carbono específica não documentada"}
+        lo,hi=(x*fraction for x in dry)
         if lo<=hi:
             return {"absolute_tc_ha":(hi-lo)/2,"percent":100*(hi-lo)/(2*value),
                     "kind":"semiamplitude de IC amostral convertido de massa seca; transferência excluída",
                     "interval_tc_ha":[lo,hi]}
     sd=row.get("agb_uncertainty_mg_ha")
     if isinstance(sd,(int,float)) and sd>=0:
-        absolute=sd*carbon_fraction
+        fraction=row.get("carbon_fraction",carbon_fraction)
+        if not isinstance(fraction,(int,float)) or not 0<fraction<=1:
+            return {"absolute_tc_ha":None,"percent":None,"kind":"fração de carbono da AGB não documentada"}
+        absolute=sd*fraction
         return {"absolute_tc_ha":absolute,"percent":100*absolute/value,
                 "kind":"incerteza do produto AGB (Mg/ha) convertida a tC/ha; NÃO é IC95%"}
     spatial=row.get("spatial_sd_tc_ha")
