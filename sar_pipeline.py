@@ -1209,7 +1209,7 @@ def planetary_alos_palsar(gdf,cache,limit=12):
                         paths.append(a["href"])
             except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
         if len(stats)>=2:break
-    return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,"paths":paths,"stats":stats,"errors":errors,"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
+    return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,"paths":paths,"stats":stats,"errors":errors,"asset_keys_by_scene":[{"scene":it.get("id"),"keys":sorted((it.get("assets") or {}).keys())} for it in items],"missing_polarizations":[pol for pol in ("HH","HV") if not any(str(x.get("polarization","")).upper()==pol for x in stats)],"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
 def lband_dualpol_diagnostic(stats,biome="",phys="",prior_agb_mg_ha=None):
     """Summarize dual-pol L-band evidence and saturation risk without inventing an AGB regression."""
