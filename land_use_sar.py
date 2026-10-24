@@ -417,7 +417,10 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         raw_layers.append(mb.copy())
         from mapbiomas_zonal import LEGEND
         crop_names={LEGEND[c][0] for c in (18,19,20,39,40,41,46,47,48,62)}
-        mb.loc[mb.class_name.isin(crop_names | {'Pastagem'}),'class_name']='Áreas cultivadas'
+        # MapBiomas has a separate pasture class. Preserve it when that class is
+        # explicitly present; only aggregate crop classes that cannot be
+        # identified more specifically with independent validated evidence.
+        mb.loc[mb.class_name.isin(crop_names),'class_name']='Áreas cultivadas'
     except Exception as exc:
         warnings.append('MapBiomas indisponível: '+str(exc))
     reference=None

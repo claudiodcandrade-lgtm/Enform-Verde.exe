@@ -6,6 +6,18 @@ O GitHub Actions compila automaticamente o pacote operacional Windows. Após bai
 
 A compilação executa um autoteste do código-fonte e outro do executável compilado antes de publicar o artefato.
 
+## Monitoramento agrícola e meteorologia
+
+Quando uma classe de cultivo aparece na análise cartográfica, o painel prioriza o histórico diário em grade do NASA POWER para o monitoramento recente e usa a previsão CPTEC/INPE como complemento para o tempo futuro. O endpoint público do INMET testado não forneceu observações para a estação mais próxima; por isso a consulta não bloqueia nem exibe valores de estação inventados. NASA POWER é uma estimativa em grade, não medição local. A previsão CPTEC aparece em seção separada. BDMEP não é consultado automaticamente porque a exportação oficial observada exige solicitação e não foi confirmado um endpoint público integrado. Climatempo não é usado. O CPTEC/INPE exige atribuição de fonte e autorização para reutilização comercial dos produtos.
+
+As fontes reconhecidas não são fundidas em uma média única: NASA POWER cobre dados diários históricos recentes e CPTEC fornece previsões futuras, portanto não têm datas simultâneas comparáveis. O sistema não escolhe pesos arbitrários. Uma média ponderada só poderá ser ativada para variáveis e datas comuns depois de validação independente por região e época, com pesos derivados dos erros fora da amostra (e tratamento da covariância entre produtos); até lá, cada produto mantém seu valor, período e natureza claramente separados.
+
+MapBiomas mantém `Pastagem` separada de `Áreas cultivadas`; esta última é usada para culturas que o produto cartográfico não separa com confiança adequada. Classificadores específicos de culturas e previsão numérica de safra continuam bloqueados até haver pesos e dados compatíveis com SAR, validação independente no Brasil, indicadores remotos de vigor/estresse e erro preditivo documentado.
+
+O repositório inclui um treinamento SAR Random Forest configurável e uma calibração de probabilidades, mas não distribui amostras ou pesos nacionais prontos. As rotas científicas Embrapa/UERJ U-Net e Embrapa/Unicamp Random Forest para sistemas ILP/ILPF estão registradas como estudos candidatos, sem modelo executável incorporado. A classificação de sistema integrado continua exigindo evidências externas coincidentes na mesma unidade de manejo e período.
+
+Os arquivos `BIBLIOTECA_ALGORITMOS_AGRICOLAS_SAR.md`, `BIBLIOTECA_CIENTIFICA_FENOLOGIA_CLIMA_SAFRAS_2026.md` e `PRIORIDADE_MODELOS_PRETREINADOS_FENOLOGIA.md` registram os candidatos revisados e o estado de disponibilidade de pesos, licença, sensor e validação.
+
 ## Estrutura de inventários e calibração SAR
 
 A aba **Base Científica e Modelos** permite selecionar um CSV harmonizado e exportar médias de DAP e área basal por inventário/parcela. Área basal é calculada como `Σ π(DBH/2)² / área amostrada`; árvores mortas ficam fora da estrutura viva. O resumo marca explicitamente que estes inventários não têm pareamento SAR.

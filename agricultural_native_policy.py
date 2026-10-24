@@ -5,12 +5,32 @@ validated classifier outputs with provenance and calibration metadata.
 """
 from dataclasses import dataclass
 from typing import Mapping, Optional
+import unicodedata
 
 CROPS = frozenset({"soja", "milho", "sorgo", "café", "cana-de-açúcar", "arroz", "feijão", "citros"})
 NATIVE = frozenset({"vegetação nativa"})
 NON_NATIVE = frozenset({"pastagem", "áreas cultivadas", "área urbana", "corpo d'água"})
 MIN_CONFIDENCE = 0.90
 MIN_MARGIN = 0.15
+
+def has_cultivated_area(class_records) -> bool:
+    """True only for mapped crop/agriculture classes; pasture alone is not a crop."""
+    crop_keys = {unicodedata.normalize("NFKD", x).encode("ascii", "ignore").decode().casefold()
+                 for x in CROPS}
+    crop_keys.update({"areas cultivadas", "agricultura", "lavoura temporaria", "lavoura perene",
+                      "cana", "citrus"})
+    for item in class_records or ():
+        if not isinstance(item, Mapping):
+            continue
+        name = str(item.get("class_name", ""))
+        key = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().casefold()
+        try:
+            area = float(item.get("area_ha", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+        if key in crop_keys and area > 0:
+            return True
+    return False
 
 @dataclass(frozen=True)
 class LandUseDecision:

@@ -7,15 +7,15 @@ from datetime import datetime, timezone
 from math import asin, cos, radians, sin, sqrt, isfinite
 
 SOURCES = {
+ "NASA_POWER": {"type":"gridded_analysis","url":"https://power.larc.nasa.gov/api/temporal/daily/point",
+           "freshness_hours":72,"access":"public; gridded MERRA-2/GEOS-IT meteorology and GPM precipitation; not station observations"},
  "INMET": {"type":"observed_station","url":"https://tempo.inmet.gov.br/",
            "catalog":"https://portal.inmet.gov.br/paginas/catalogoaut",
            "freshness_hours":2,"access":"public portal; automatic API endpoint not guaranteed"},
  "BDMEP": {"type":"historical_station","url":"https://bdmep.inmet.gov.br/",
            "freshness_hours":2160,"access":"CSV export; email confirmation may be required"},
  "CPTEC": {"type":"weather_forecast","url":"https://servicos.cptec.inpe.br/XML/",
-           "freshness_hours":24,"access":"public XML, verify license for commercial use"},
- "CLIMATEMPO": {"type":"licensed_weather","url":"https://advisor.climatempo.com.br/",
-           "freshness_hours":24,"access":"contract and API credentials required"},
+           "freshness_hours":24,"access":"official forecast; attribution required; commercial reuse requires CPTEC/INPE authorization"},
  "EMBRAPA_CLIMAPI": {"type":"weather_forecast","url":"https://api.cnptia.embrapa.br/climapi/v1",
            "freshness_hours":6,"access":"AgroAPI subscription and bearer token required"}
 }

@@ -21,7 +21,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.24.40-CANDIDATE"
+APP_VERSION="3.24.41-CANDIDATE"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -747,7 +747,7 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue()
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue(); self._weather_query_generation=0; self._crop_monitoring_base_report=""
         self._style(); self._ui(); self.bind("<Return>",self.execute)
     def _style(self):
         s=ttk.Style(self)
@@ -1334,7 +1334,7 @@ class App(tk.Tk):
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
         ttk.Label(f,text="Classificação, fenologia, fitossanidade e previsão de safra; dados e incertezas independentes do carbono nativo.",
                   wraplength=1000).pack(anchor="w",pady=(4,10))
-        ttk.Button(f,text="CONSULTAR CLIMA — INMET / NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
+        ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
         box=ttk.Frame(f);box.pack(fill="both",expand=True)
         self.crop_res=tk.Text(box,height=24,wrap="word",yscrollcommand=lambda *a:scroll.set(*a))
         scroll=ttk.Scrollbar(box,orient="vertical",command=self.crop_res.yview)
@@ -1347,6 +1347,8 @@ class App(tk.Tk):
 
     def _present_cultivated_monitoring(self,land):
         """Show real classified-area evidence, never infer crop stage or yield."""
+        from agricultural_native_policy import has_cultivated_area
+        self._weather_query_generation+=1
         lines=["ENFORM VERDE — MONITORAMENTO DE ÁREAS CULTIVADAS",
                "Dados de uso e cobertura: "+str(land.get("status","não disponível")),
                "Acurácia da área/classificação: "+str(land.get("area_uncertainty") or "NÃO QUANTIFICADA"),
@@ -1359,7 +1361,8 @@ class App(tk.Tk):
         aoi_ha=float(self.project.get("area_ha") or 0)
         complete_coverage=aoi_ha>0 and abs(classified_ha-aoi_ha)<=max(0.05,0.001*aoi_ha)
         if native and not non_native and complete_coverage and land.get("status") not in ("error","erro","indisponivel"):
-            self._set(self.crop_res,"Não detectada a ocorrência de lavouras. Apenas vegetação nativa")
+            self._crop_monitoring_base_report="Não detectada a ocorrência de lavouras. Apenas vegetação nativa"
+            self._set(self.crop_res,self._crop_monitoring_base_report)
             return
         for item in classes:
             if item.get("native_status") is True:continue
@@ -1377,7 +1380,17 @@ class App(tk.Tk):
                       "INCERTEZA DE PREVISÃO (t/ha, %, t): NÃO QUANTIFICADA.",
                       "Modelos meteorológicos e agrícolas: NÃO EXECUTADOS nesta análise.",
                       "Os estoques de carbono são calculados exclusivamente na aba de formações nativas."])
-        self._set(self.crop_res,"\\n".join(lines))
+        self._crop_monitoring_base_report="\n".join(lines)
+        self._set(self.crop_res,self._crop_monitoring_base_report)
+        if has_cultivated_area(classes):
+            generation=self._weather_query_generation
+            analysis_id=self.project.get("analysis_run_id")
+            def start_weather_if_current():
+                if (generation==self._weather_query_generation
+                    and analysis_id==self.project.get("analysis_run_id")
+                    and self.gdf is not None):
+                    self.query_crop_weather()
+            self.after(100,start_weather_if_current)
 
     def query_crop_weather(self):
         """Retrieve actual weather asynchronously; never treat gridded weather as station measurements."""
@@ -1389,22 +1402,26 @@ class App(tk.Tk):
             lat,lon=float(point.y),float(point.x)
         except Exception as exc:
             return messagebox.showwarning("Clima","Não foi possível determinar o centroide: "+str(exc))
-        self._set(self.crop_res,"Consultando meteorologia para a área em segundo plano...\\n"
-                  "NASA POWER: estimativa em grade, não estação meteorológica local.\\n"
+        self._weather_query_generation+=1
+        query_id=self._weather_query_generation
+        analysis_id=self.project.get("analysis_run_id")
+        base_report=getattr(self,"_crop_monitoring_base_report","")
+        self._set(self.crop_res,(base_report+"\n\n" if base_report else "")+
+                  "Consultando meteorologia para a área em segundo plano...\n"
+                  "NASA POWER: estimativa em grade, não estação meteorológica local.\n"
                   "CPTEC: previsão, não observação de campo.")
         def worker():
-            from inmet_weather_client import fetch_inmet_nearby,weather_executive_lines
-            inmet=fetch_inmet_nearby(lat,lon)
+            from inmet_weather_client import weather_executive_lines
             power_summary=None
             forecast_summary=None
-            lines=["CLIMA DINÂMICO — ÁREA CULTIVADA",
+            details=["CLIMA DINÂMICO — ÁREA CULTIVADA",
                    f"Centroide (WGS84): {lat:.5f}, {lon:.5f}"]
             try:
                 from agricultural_weather import fetch_daily_weather,summarize_weather
                 weather=fetch_daily_weather(lat,lon,days=90)
                 summary=summarize_weather(weather)
                 power_summary=summary
-                lines.extend(["","NASA POWER — DADOS DIÁRIOS REAIS (GRADE)",
+                details.extend(["","NASA POWER — DADOS DIÁRIOS DA GRADE",
                               "Fonte: "+weather["source_url"],
                               "Período: "+weather["start"]+" a "+weather["end"],
                               "Consulta UTC: "+weather["retrieved_utc"],
@@ -1414,25 +1431,30 @@ class App(tk.Tk):
                               "Graus-dia base 10 °C (°C dia): "+str(summary["gdd_c_day"]),
                               "GDD descritivo, sem parametrização por cultura/cultivar."])
             except Exception as exc:
-                lines.append("NASA POWER: INDISPONÍVEL — "+str(exc))
+                details.append("NASA POWER: INDISPONÍVEL — "+str(exc))
             try:
                 from cptec_forecast_client import forecast_by_coordinates
                 forecast=forecast_by_coordinates(lat,lon)
                 forecast_summary=forecast
-                lines.extend(["","CPTEC/INPE — PREVISÃO POR COORDENADAS",
+                details.extend(["","CPTEC/INPE — PREVISÃO POR COORDENADAS",
                               "Fonte: "+forecast["source_url"],
                               "Consulta UTC: "+forecast["retrieved_utc"],
                               "Períodos retornados: "+str(len(forecast["periods"]))])
                 for period in forecast["periods"][:7]:
-                    lines.append("  "+str(period))
+                    details.append("  "+str(period))
             except Exception as exc:
-                lines.append("CPTEC: INDISPONÍVEL — "+str(exc))
-            lines.extend(["","INMET/BDMEP: "+str(inmet.get("status"))+" — "+str(inmet.get("source_url")),
-                          "INMET observações: "+str(inmet),
+                details.append("CPTEC: INDISPONÍVEL — "+str(exc))
+            details.extend(["","INMET: não consultado automaticamente nesta versão; o endpoint público testado não retornou observações para a estação mais próxima.",
+                          "BDMEP histórico: não consultado automaticamente; o portal oficial exige solicitação/exportação e não foi confirmado endpoint público integrado.",
                           "Fenologia, vigor e produtividade: não inferidos apenas a partir de meteorologia.",
                           "As estimativas de carbono nativo permanecem independentes."])
-            lines=weather_executive_lines(inmet,power_summary,forecast_summary,format_ptbr)+[""]+lines
-            self.after(0,lambda result="\\n".join(lines):self._set(self.crop_res,result))
+            dashboard=weather_executive_lines({"status":"indisponivel","reason":"endpoint público testado sem observações acessíveis; fonte substituída operacionalmente por NASA POWER (grade) e CPTEC/INPE (previsão)"},power_summary,forecast_summary,format_ptbr)
+            lines=([base_report,""] if base_report else [])+dashboard+["DETALHES E RASTREABILIDADE"]+details
+            def present(result="\n".join(lines)):
+                if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
+                    return
+                self._set(self.crop_res,result)
+            self.after(0,present)
         threading.Thread(target=worker,daemon=True).start()
 
     def _sources(self):
@@ -1536,6 +1558,8 @@ class App(tk.Tk):
     def _reset_analysis_state(self,keep_geometry=False):
         """Invalida integralmente qualquer resultado derivado da consulta anterior."""
         self._analysis_generation+=1
+        self._weather_query_generation+=1
+        self._crop_monitoring_base_report=""
         self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False
         old_vector=self.project.get("vector")
         self.project={"version":APP_VERSION}

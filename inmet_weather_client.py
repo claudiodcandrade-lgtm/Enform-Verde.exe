@@ -75,15 +75,15 @@ def fetch_inmet_nearby(lat,lon,days=7,max_distance_km=150):
     return result
 
 def weather_executive_lines(inmet=None,power=None,forecast=None,fmt=str):
-    lines=["PAINEL EXECUTIVO — METEOROLOGIA","PRIORIDADE: INMET (estações automáticas) → NASA POWER (grade) → CPTEC/INPE (previsão)",
-           "INMET/BDMEP — OBSERVAÇÕES"]
+    lines=["PAINEL EXECUTIVO — METEOROLOGIA","PRIORIDADE: NASA POWER para histórico recente em grade; CPTEC/INPE para previsão futura (produtos separados)",
+           "INMET — OBSERVAÇÕES DE ESTAÇÃO"]
     if inmet and inmet.get("status")=="observado":
         lines.extend(["Estação: "+str(inmet["station"])+" | distância: "+fmt(inmet["distance_km"])+" km",
                       "Período: "+str(inmet.get("period","N/D")),
                       "Temperatura média: "+(fmt(inmet["temperature_mean_c"])+" °C" if inmet.get("temperature_mean_c") is not None else "N/D"),
                       "Chuva registrada nas horas disponíveis: "+(fmt(inmet["rain_mm"])+" mm" if inmet.get("rain_mm") is not None else "N/D"),
                       "Registros horários: "+str(inmet["records"])+" | "+inmet.get("note","")])
-    else:lines.append("Sem observações INMET verificadas: "+str((inmet or {}).get("reason","consulta não realizada")))
+    else:lines.append("Não disponível nesta consulta: "+str((inmet or {}).get("reason","endpoint de observação não integrado")))
     lines.append("NASA POWER — GRADE SATELITAL/MODELADA")
     if power:
         for key,label,unit in [("mean_temperature_c","Temperatura média","°C"),("rain_mm","Precipitação","mm"),("gdd_c_day","Graus-dia base 10 °C","°C dia")]:
@@ -96,6 +96,8 @@ def weather_executive_lines(inmet=None,power=None,forecast=None,fmt=str):
         lines.append("Períodos recebidos: "+str(len(forecast.get("periods",[])))+"; não interpretar repetições como dias independentes.")
     else:lines.append("Previsão indisponível")
     lines.extend(["BDMEP: consulta automática histórica não habilitada sem acesso oficial confirmado.",
-                  "Observação pontual de estação, estimativa em grade e previsão são produtos distintos.",
+                  "NASA POWER é a fonte principal do monitoramento histórico recente; CPTEC/INPE complementa com previsão futura.",
+                  "Fontes não são combinadas numa média única: histórico em grade e previsão têm períodos e naturezas distintos.",
+                  "Média ponderada entre produtos só será apresentada quando houver datas, variáveis e escala compatíveis e pesos derivados de validação independente local/regional.",
                   "Fenologia, vigor e produtividade não são deduzidos somente desses dados.",""])
     return lines

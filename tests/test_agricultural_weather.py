@@ -1,7 +1,7 @@
 import io
 import unittest
 from datetime import datetime,timezone,timedelta
-from agricultural_weather_sources import rank_stations,quality_check_hourly,check_freshness
+from agricultural_weather_sources import SOURCES,rank_stations,quality_check_hourly,check_freshness
 from cptec_forecast_client import forecast_by_city,forecast_by_coordinates
 from agricultural_weather import fetch_daily_weather,summarize_weather
 
@@ -13,6 +13,9 @@ class FakeResponse:
 def opener(request,timeout):return FakeResponse(b"<cidade><previsao><dia>2026-10-25</dia><tempo>pn</tempo></previsao></cidade>")
 
 class WeatherTests(unittest.TestCase):
+    def test_unlicensed_climatempo_is_not_a_registered_source(self):
+        self.assertNotIn("CLIMATEMPO",SOURCES)
+
     def test_stations_nearest(self):
         stations=[{"latitude":-16,"longitude":-48,"name":"near"},
                   {"latitude":-23,"longitude":-46,"name":"far"}]

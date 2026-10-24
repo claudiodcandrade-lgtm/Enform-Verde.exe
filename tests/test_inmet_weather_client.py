@@ -23,6 +23,8 @@ class WeatherExecutiveTests(unittest.TestCase):
         self.assertTrue(lines[0].startswith("PAINEL EXECUTIVO"))
         self.assertTrue(any("sem estação" in x for x in lines))
         self.assertTrue(any("1473.84" in x for x in lines))
+        self.assertTrue(any("não são combinadas numa média única" in x for x in lines))
+        self.assertTrue(any("PRIORIDADE: NASA POWER para histórico recente em grade; CPTEC/INPE para previsão futura" in x for x in lines))
         self.assertFalse(any("Climatempo" in x for x in lines))
 
 if __name__=="__main__":unittest.main()

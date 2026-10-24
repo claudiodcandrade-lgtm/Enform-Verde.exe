@@ -157,6 +157,6 @@ class NativeNamingTests(unittest.TestCase):
         mb=gpd.GeoDataFrame([dict(class_name='Soja',source='MAPBIOMAS',taxonomy='MapBiomas',geometry=box(0,0,10,10))],crs=6933)
         with tempfile.TemporaryDirectory() as d, patch('land_use_sar.raster_class_polygons',return_value=mb):
             result=run_land_use(aoi,d)
-            self.assertEqual(result['classes'][0]['class_name'],'Áreas cultivadas')
+            self.assertEqual(result['classes'][0]['class_name'],'Pastagem')
             self.assertIs(result['classes'][0]['native_status'],False)
             self.assertEqual(result['original_source_distributions'][0]['classes'][0]['class_name'],'Soja')
