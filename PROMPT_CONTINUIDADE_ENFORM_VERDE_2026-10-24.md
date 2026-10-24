@@ -125,3 +125,12 @@ ATENÇÃO: renderizador independente ainda NÃO integrado à GUI Windows nem val
 - Execuções subsequentes 40113352007 (dashboard) e 40113351964 (build-windows) estavam em andamento na última consulta. Não afirmar aprovação sem status final e logs.
 - INMET confirmou acesso público horário aos últimos 90 dias, porém dados automáticos brutos não validados; BDMEP é base histórica. A ingestão horária ao vivo no executável e a integração CPTEC/Climatempo/Embrapa seguem pendentes.
 - Não disponibilizar ZIP como nova versão operacional sem build, smoke test do exe, teste das duas abas e validação das rotas SAR e agricultura.
+
+## Continuação operacional de 24/10/2026 — meteorologia na interface
+- CI dashboard anterior #40113352007 **aprovado** (testes de interface HTML e clientes meteorológicos simulados).
+- Implementado agricultural_weather.py: consulta HTTP real ao NASA POWER daily point para o centroide AOI, 90 dias, temperatura, chuva e graus-dia base 10°C, com fonte, data e ressalva de escala espacial.
+- desktop_app.py commit 7b74daed: botão na aba áreas cultivadas **CONSULTAR CLIMA DA ÁREA — NASA POWER / CPTEC**, execução em thread, mostra observações NASA POWER e previsões CPTEC por coordenadas, fontes, datas e falhas separadas. Não executa nem altera o motor de carbono nativo.
+- Adicionados testes unitários para NASA POWER em tests/test_agricultural_weather.py; syntax check CI inclui agricultural_weather.py.
+- Não confundir consulta climática operacional com fenologia/vigor/produtividade validados; estes continuam pendentes de séries orbitais e modelos independentes.
+- Build Windows #40113351964 continuava em andamento na última consulta; builds posteriores da branch incluem as mudanças de meteorologia. Não disponibilizar como versão operacional final sem CI e smoke test.
+- Próximas prioridades: INMET dados horários reais via API/CSV oficial verificado e QC; BDMEP CSV; Climatempo mediante token comercial; calibração/validação fenologia/vigor/safras; monitoramento contínuo por AOI e histórico em cache.
