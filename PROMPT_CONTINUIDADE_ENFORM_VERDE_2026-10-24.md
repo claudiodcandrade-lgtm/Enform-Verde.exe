@@ -119,3 +119,9 @@ ATENÇÃO: renderizador independente ainda NÃO integrado à GUI Windows nem val
 - BDMEP NÃO é BNDMET: interpretar menção do usuário como BDMEP, confirmar se outra base foi pretendida. BDMEP não é a fonte adequada para atualização horária.
 - Climatempo exige contratação/autorização e credenciais, não usar scraping. CPTEC informa restrições de uso comercial; verificar autorização antes de habilitar comercialmente. INMET alerta que observações automáticas brutas não são validadas.
 - Pendências: conexão ao fluxo Tkinter e execução assíncrona, estação INMET catálogo/dados com API verificada, BDMEP importação CSV, Climatempo integração autenticada após credenciais, fallback espacial grade meteorológica e comparação QC; checagem de licenças, testes HTTP reais, empacotamento Windows e previsão de safra.
+
+## Auditoria CI e build (24/10/2026)
+- Workflow de testes falhou na execução 40113266734 por erro de YAML: duas chamadas Python concatenadas como uma linha. Corrigido em cf57bf9f0ef1ea1843c2e27db61d4e4f50e71044 usando run: |.
+- Execuções subsequentes 40113352007 (dashboard) e 40113351964 (build-windows) estavam em andamento na última consulta. Não afirmar aprovação sem status final e logs.
+- INMET confirmou acesso público horário aos últimos 90 dias, porém dados automáticos brutos não validados; BDMEP é base histórica. A ingestão horária ao vivo no executável e a integração CPTEC/Climatempo/Embrapa seguem pendentes.
+- Não disponibilizar ZIP como nova versão operacional sem build, smoke test do exe, teste das duas abas e validação das rotas SAR e agricultura.
