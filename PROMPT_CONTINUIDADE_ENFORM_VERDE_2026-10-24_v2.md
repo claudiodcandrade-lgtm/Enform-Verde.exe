@@ -367,3 +367,36 @@ A última aquisição listada é de 23/10, aproximadamente um dia antes da consu
 ### Resultado adicional — janela recente e latência de publicação
 
 Foi assinado o asset VV da aquisição de 23/10/2026 e feito pedido `Range: bytes=0-1023`; a resposta foi HTTP 206, `Content-Range: bytes 0-1023/1863517334`, confirmando leitura parcial do COG recente da Sentinel‑1D. O cabeçalho TIFF começou com bytes válidos, mas a abertura por Rasterio/GDAL não concluiu a leitura geoespacial nesta tentativa. Portanto **nenhum valor VV/VH por pixel foi extraído ainda**. Os itens STAC consultados não expuseram `published` ou `created`; a latência entre aquisição e publicação continua não quantificada. Repetir a leitura Rasterio/GDAL com tratamento explícito do SAS e validar CRS/janela/nodata antes de declarar extração de pixel.
+
+## ADENDO DE CONCLUSÃO TÉCNICA — pixels SAR recentes e bloqueio de previsão por atualidade (24/10/2026)
+
+### Evidência SAR que substitui afirmações anteriores
+
+A tentativa de leitura que falhou por configuração de certificados foi repetida com a CA do sistema configurada explicitamente para GDAL/Rasterio, mantendo verificação TLS habilitada. O COG Sentinel‑1 RTC público do Microsoft Planetary Computer foi aberto e VV/VH foram lidos de fato por janela georreferenciada na cena `S1D_IW_GRDH_1SDV_20261023T084435_20261023T084500_005140_009BDC_rtc` (aquisição `2026-10-23T08:44:48.422103Z`), sobre a amostra de Brasília.
+
+- CRS do raster: EPSG:32723; tipo float32; nodata `-32768`; janela 3×3 com 9/9 pixels válidos em VV e VH.
+- Mediana da janela: VV `0.34589219`; VH `0.09606396` (valores nativos do produto RTC).
+- O item identifica gamma naught/RTC, mas não fornece unidade explícita nos metadados consultados. Não converter para dB, não nomear como potência calibrada em unidade específica e não tratar a amostra como estatística de lavoura.
+- Isso prova abertura geoespacial e leitura de pixels válidos sobre uma janela de teste; não prova que os pixels sejam soja/milho ou outra cultura, vigor fenológico validado, cobertura agrícola, latência sistemática de publicação ou correlação com PAM. `published`/`created` continuam ausentes. A leitura pontual não equivale à extração por polígono/cultura.
+
+Este resultado **corrige e substitui** os trechos anteriores deste prompt que diziam “nenhum valor por pixel foi extraído” ou que a leitura COG ainda precisava ser feita. O teste de range HTTP foi seguido por leitura Rasterio bem-sucedida. A lacuna de publicação e os bloqueios de máscara, fenologia e validação permanecem.
+
+### Alteração implementada no caminho de previsão
+
+`evaluate_yield_forecast` agora exige `freshness_provenance` explicitamente. A elegibilidade é negada se os critérios temporais não estiverem definidos, se o estado não indicar cenas recentes, se cultura/região não corresponderem, se faltar fase fenológica, se a idade exceder o limite por cultura/fase, se a quantidade mínima de cenas não for atingida ou se a aquisição for posterior à data de referência. `forecast_crop_yield` propaga essa proveniência como argumento obrigatório. Os testes cobrem atualidade ausente, SAR desatualizada e divergência de região; o forecast permanece condicionado também a evidência SAR independente, validação espaço-temporal e intervalo preditivo calibrado.
+
+### Verificação local e estado de entrega
+
+- Testes focados de atualidade SAR, forecast/incerteza e materializador PAM: **14 passaram** após disponibilizar a série PAM materializada no checkout para execução do teste.
+- Descoberta completa de testes: **183 executados; 16 ignorados; 6 erros por dependências ausentes/incompletas neste ambiente** (`requests`/`Session` e `geopandas`). Não atribuir esses erros ao código agrícola alterado; a suíte equivalente precisa ser confirmada no workflow Windows com dependências completas.
+- O gate de atualidade foi conectado ao módulo de qualidade e ao entry point de previsão, mas não há chamada desse entry point pelo desktop/interface identificada nesta revisão. Não afirmar integração visual.
+
+### Pendências científicas que continuam bloqueando correlação e previsão publicadas
+
+1. Disponibilizar máscara/labels independentes com licença adequada e validação SAR para cada cultura, região e safra; sem isso, pixel RTC não é pixel de cultura.
+2. Implementar extração por polígonos/unidades N9 e calendário fenológico validado, guardando cobertura, órbita, qualidade e incerteza por cena.
+3. Medir aquisição→publicação em observações repetidas e consultar cadência atual por AOI/cultura/fase; a amostra recente de Brasília não define atualização operacional geral.
+4. Parear SAR/clima/PAM e executar comparação baseline vs. SAR com holdout espaço-temporal independente e incerteza agrupada por blocos.
+5. Integrar a API de previsão ao fluxo da aplicação e produzir novo build Windows; a versão candidata anterior não contém essas mudanças.
+
+**Conclusão responsável:** a PAM foi materializada e auditada; há leitura real de VV/VH RTC recente e o gate de atualidade foi inserido no código de previsão. A correlação SAR–produtividade e a previsão operacional continuam não validadas e devem permanecer bloqueadas até fechar as cinco pendências acima. Prioridade para monitoramento fenológico continua sendo idade de aquisição e atualidade por AOI/fase, com abstensão explícita quando a evidência temporal não satisfizer critérios calibrados.
