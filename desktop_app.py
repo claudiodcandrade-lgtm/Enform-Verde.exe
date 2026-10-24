@@ -1368,9 +1368,9 @@ class App(tk.Tk):
                           "  Fonte: "+str(item.get("source","não informada")),
                           "  Classificação/validação: "+str(item.get("taxonomy","não documentada"))])
         lines.extend(["","CULTURA ESPECÍFICA E ESTÁGIO FENOLÓGICO: NÃO DETERMINADOS sem modelo validado.",
-                      "ESTADO FITOSSANITÁRIO: NÃO DETERMINADO. Anomalias não são diagnósticos de doenças.",
+                      "PADRÕES SAR INDICATIVOS DE ESTRESSE: somente quando detectáveis e validados; não permitem diagnosticar doenças ou pragas específicas.",
                       "PREVISÃO DE SAFRA: BLOQUEADA sem modelo matemático cientificamente validado que integre identificação da cultura por SAR, vigor, indicadores fitossanitários e climatologia.",
-                      "Critérios obrigatórios: identificação SAR validada; vigor e indicadores fitossanitários mensurados e validados (anomalias não equivalem a diagnóstico); séries climatológicas compatíveis; modelo integrado calibrado e validado independentemente para cultura, região e safra; erro preditivo e intervalo de previsão quantificados.",
+                      "Critérios obrigatórios: identificação SAR validada; vigor e padrões SAR remotos indicativos de possível estresse fitossanitário, com desempenho validado por estudos independentes (sem dados de campo da AOI; anomalias não equivalem a diagnóstico); séries climatológicas compatíveis; modelo integrado calibrado e validado independentemente para cultura, região e safra; erro preditivo e intervalo de previsão quantificados.",
                       "Na ausência de qualquer requisito, não calcular nem exibir estimativa numérica de produtividade ou produção.",
                       "PREVISÃO DE PRODUTIVIDADE (t/ha): NÃO DISPONÍVEL.",
                       "PREVISÃO DE PRODUÇÃO (t): NÃO DISPONÍVEL.",
