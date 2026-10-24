@@ -1790,6 +1790,8 @@ class App(tk.Tk):
                "Outros usos (somente ocorrência, sem carbono): "+format_ptbr(native["excluded_other_uses_ha"],2)+" ha",
                "Cobertura não confirmada (sem carbono): "+format_ptbr(native["unknown_cover_area_ha"],2)+" ha",
                native["method"],""]
+        from executive_carbon_report import executive_carbon_lines
+        lines = executive_carbon_lines(native,format_ptbr) + lines
         for st in native["strata"]:
             lines.append(st["class_name"]+": "+format_ptbr(st["area_ha"],2)+" ha ("+format_ptbr(st["area_pct"],2)+"% da AOI) — "+st["source"])
             lines.append("  FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: "+st["physiognomy"]+" — "+st["physiognomy_resolution"])
