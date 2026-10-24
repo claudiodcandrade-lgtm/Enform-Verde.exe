@@ -5,8 +5,14 @@ class YieldUncertaintyTests(unittest.TestCase):
     def setUp(self):
         self.base = dict(
             predicted_t_ha=5.0, model_id="model-1", crop="soja",
-            region="PR", season="2025/26", weather_provenance={"source":"NASA POWER"},
-            imagery_provenance={"source":"Sentinel-1"}, validation={
+            region="PR", season="2025/26",
+            weather_provenance={"sources":[{"name":"NASA POWER","role":"historical"}],
+                                "variables":["precipitation","temperature"],"period":"2025/26"},
+            imagery_provenance={
+                "crop_identification":{"modality":"SAR","sensor":"Sentinel-1","model_id":"crop-rf","crop":"soja","validation":{"independent_test":True,"in_domain":True}},
+                "phenology_vigor":{"modality":"SAR","sensor":"Sentinel-1","model_id":"vigor-model","validation":{"independent_test":True,"in_domain":True}},
+                "phytosanitary_signal":{"modality":"SAR","sensor":"Sentinel-1","model_id":"stress-model","diagnosis":"não determinado","validation":{"independent_test":True,"in_domain":True}}
+            }, validation={
                 "independent_test": True, "in_domain": True, "rmse_t_ha": 0.5,
                 "mae_t_ha": 0.4, "bias_t_ha": 0.0, "sample_count": 100,
                 "prediction_interval_validation": {
@@ -39,6 +45,22 @@ class YieldUncertaintyTests(unittest.TestCase):
         result=evaluate_yield_forecast(**args)
         self.assertEqual(result.status,"previsao_nao_habilitada")
         self.assertTrue(any("Cobertura empírica" in x for x in result.limitations))
+
+    def test_non_sar_crop_evidence_is_blocked(self):
+        args=dict(self.base)
+        args["imagery_provenance"]=dict(self.base["imagery_provenance"])
+        args["imagery_provenance"]["crop_identification"]=dict(args["imagery_provenance"]["crop_identification"],modality="optical")
+        result=evaluate_yield_forecast(**args)
+        self.assertEqual(result.status,"previsao_nao_habilitada")
+        self.assertTrue(any("SAR declarado: crop_identification" in x for x in result.limitations))
+
+    def test_missing_stress_indicator_is_blocked(self):
+        args=dict(self.base)
+        args["imagery_provenance"]=dict(self.base["imagery_provenance"])
+        args["imagery_provenance"].pop("phytosanitary_signal")
+        result=evaluate_yield_forecast(**args)
+        self.assertEqual(result.status,"previsao_nao_habilitada")
+        self.assertTrue(any("phytosanitary_signal" in x for x in result.limitations))
 
     def test_small_validation_sample_is_blocked(self):
         args=dict(self.base)

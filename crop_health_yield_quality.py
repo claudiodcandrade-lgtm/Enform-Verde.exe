@@ -18,27 +18,37 @@ class CropAssessment:
 
 def assess_crop_stress(*, indicators, baseline, observations_utc, sensor_sources,
                        model_validated=False, reference_region=None):
-    """Flag descriptive anomalies, not diseases or pest identity."""
+    """Report only remote SAR anomalies; never diagnose disease or pest."""
     notes = []
-    if not observations_utc or not sensor_sources:
-        notes.append("Sem observações datadas e fontes verificáveis")
+    sources = sensor_sources if isinstance(sensor_sources, (list, tuple)) else []
+    sar_only = bool(sources) and all(
+        isinstance(source, dict) and source.get("modality") == "SAR"
+        and source.get("sensor") and source.get("acquisition_utc")
+        for source in sources)
+    if not observations_utc or not sar_only:
+        notes.append("Observações datadas e proveniência SAR explícita são obrigatórias")
     if not model_validated:
-        notes.append("Modelo fitossanitário não validado para esta cultura e região")
+        notes.append("Modelo de anomalia não validado para esta cultura, fase e região")
     deviations = {}
-    for key, value in indicators.items():
-        ref = baseline.get(key)
+    for key, value in (indicators or {}).items():
+        ref = (baseline or {}).get(key)
         if not ref or len(ref) != 2 or ref[1] <= 0:
             continue
-        if all(isfinite(float(x)) for x in (value, *ref)):
-            deviations[key] = round((float(value) - float(ref[0])) / float(ref[1]), 3)
+        try:
+            if all(isfinite(float(x)) for x in (value, *ref)):
+                deviations[key] = round((float(value) - float(ref[0])) / float(ref[1]), 3)
+        except (TypeError, ValueError):
+            continue
     if not deviations:
         notes.append("Sem linha de base sazonal comparável")
-    return {"status": "indicadores_exploratorios" if deviations else "dados_insuficientes",
-            "standardized_anomalies": deviations,
+    eligible_signal = bool(deviations) and sar_only and bool(observations_utc)
+    return {"status": "anomalia_sar_indicativa" if eligible_signal else "dados_insuficientes",
+            "standardized_anomalies": deviations if eligible_signal else {},
             "phytosanitary_diagnosis": "não determinado",
-            "sources": list(sensor_sources), "observations_utc": list(observations_utc),
+            "sources": list(sources), "observations_utc": list(observations_utc or []),
             "region": reference_region, "limitations": notes + [
-                "Anomalia SAR/óptica não identifica etiologia de doença ou praga"]}
+                "Sinal SAR é inespecífico e não identifica doença, praga ou deficiência nutricional",
+                "Anomalia pode refletir fenologia, clima, manejo, inundação, geometria ou qualidade da observação"]}
 
 def _wilson_interval(successes, total, z=1.959963984540054):
     """Wilson score interval for empirical prediction-interval coverage."""
@@ -66,8 +76,29 @@ def evaluate_yield_forecast(*, predicted_t_ha, model_id, crop, region, season,
     validation = validation if isinstance(validation, dict) else {}
     if not model_id or not crop or not region or not season:
         errors.append("Modelo, cultura, região e safra obrigatórios")
-    if not weather_provenance or not imagery_provenance:
-        errors.append("Fontes meteorológicas e orbitais não verificadas")
+    if not isinstance(weather_provenance, dict) or not weather_provenance.get("sources"):
+        errors.append("Proveniência climática estruturada e fontes verificáveis obrigatórias")
+    elif not weather_provenance.get("variables") or not weather_provenance.get("period"):
+        errors.append("Variáveis e período climatológico precisam estar documentados")
+    if not isinstance(imagery_provenance, dict):
+        errors.append("Proveniência de imagem estruturada obrigatória")
+    else:
+        for evidence_name in ("crop_identification", "phenology_vigor", "phytosanitary_signal"):
+            evidence = imagery_provenance.get(evidence_name)
+            if not isinstance(evidence, dict):
+                errors.append("Evidência SAR ausente: " + evidence_name)
+                continue
+            if evidence.get("modality") != "SAR" or not evidence.get("sensor") or not evidence.get("model_id"):
+                errors.append("Evidência sem sensor/modelo SAR declarado: " + evidence_name)
+            ev = evidence.get("validation")
+            if not isinstance(ev, dict) or ev.get("independent_test") is not True or ev.get("in_domain") is not True:
+                errors.append("Validação SAR independente e no domínio ausente: " + evidence_name)
+        crop_ev = imagery_provenance.get("crop_identification")
+        if isinstance(crop_ev, dict) and crop_ev.get("crop") != crop:
+            errors.append("Cultura da evidência SAR não corresponde à cultura prevista")
+        health_ev = imagery_provenance.get("phytosanitary_signal")
+        if isinstance(health_ev, dict) and health_ev.get("diagnosis") not in (None, "não determinado"):
+            errors.append("Sinal SAR não pode ser apresentado como diagnóstico fitossanitário")
     if not validation.get("independent_test") or not validation.get("in_domain"):
         errors.append("Validação independente e domínio de aplicação não comprovados")
     for metric in ("rmse_t_ha", "mae_t_ha", "bias_t_ha", "sample_count"):
