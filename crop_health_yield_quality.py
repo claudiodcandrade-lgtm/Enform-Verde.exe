@@ -64,7 +64,7 @@ def _wilson_interval(successes, total, z=1.959963984540054):
 def evaluate_yield_forecast(*, predicted_t_ha, model_id, crop, region, season,
                             weather_provenance, imagery_provenance, validation,
                             prediction_interval_t_ha=None, uncertainty_t_ha=None,
-                            reference_date_utc=None):
+                            reference_date_utc=None, freshness_provenance=None):
     """Release a forecast only with independently calibrated predictive uncertainty.
 
     prediction_interval_t_ha must be a central, calibrated prediction interval
@@ -74,6 +74,31 @@ def evaluate_yield_forecast(*, predicted_t_ha, model_id, crop, region, season,
     """
     errors = []
     validation = validation if isinstance(validation, dict) else {}
+    # SAR freshness is an operational prerequisite for phenology and yield
+    # monitoring. Require an explicit, crop/region/phase-specific assessment.
+    fresh = freshness_provenance if isinstance(freshness_provenance, dict) else {}
+    criteria = fresh.get("freshness_criteria") if isinstance(fresh.get("freshness_criteria"), dict) else {}
+    if fresh.get("status") != "cenas_recentes_identificadas" or criteria.get("defined") is not True:
+        errors.append("Atualidade SAR não comprovada por critérios explícitos; previsão bloqueada")
+    else:
+        if fresh.get("crop") != crop or fresh.get("region") != region:
+            errors.append("Atualidade SAR não corresponde à cultura e região previstas")
+        if not fresh.get("phenological_phase"):
+            errors.append("Fase fenológica ausente na avaliação de atualidade SAR")
+        try:
+            age = float(fresh["age_days"])
+            max_age = float(criteria["max_age_days"])
+            count = int(fresh["scenes_in_series_window"])
+            minimum = int(criteria["minimum_scenes"])
+            acquired = datetime.fromisoformat(str(fresh["latest_acquisition_utc"]).replace("Z", "+00:00"))
+            if acquired.tzinfo is None or not isfinite(age) or age < 0 or age > max_age or count < minimum or not criteria.get("source"):
+                raise ValueError()
+            if reference_date_utc:
+                reference = datetime.fromisoformat(reference_date_utc.replace("Z", "+00:00"))
+                if reference.tzinfo is None or acquired > reference:
+                    raise ValueError()
+        except (KeyError, TypeError, ValueError, OverflowError):
+            errors.append("Aquisições SAR fora da atualidade, janela ou quantidade mínima definida")
     if not model_id or not crop or not region or not season:
         errors.append("Modelo, cultura, região e safra obrigatórios")
     if not isinstance(weather_provenance, dict) or not weather_provenance.get("sources"):
@@ -172,6 +197,7 @@ def evaluate_yield_forecast(*, predicted_t_ha, model_id, crop, region, season,
         uncertainty=half_width if not errors else None,
         provenance={"model": model_id, "crop": crop, "region": region, "season": season,
                     "weather": weather_provenance, "imagery": imagery_provenance,
+                    "sar_freshness": fresh,
                     "validation": validation, "prediction_interval": interval_out,
                     "reference_date_utc": reference_date_utc},
         limitations=tuple(errors))
