@@ -245,6 +245,12 @@ def tapajos_h100_structure_agb(gdf,sar_height,biome="",phys=""):
     """Estimate AGB from SAR H100 + local inventory basal area inside strict Tapajos supports."""
     if str(biome or "").strip().casefold() not in ("amazônia","amazonia"):
         return None
+    # GTDX GEDI/TanDEM-X RH98 is not H100. Enforce compatibility at the model boundary,
+    # not only in automatic_pipeline, so direct callers cannot bypass the scientific gate.
+    if (sar_height or {}).get("height_definition_compatible_with_H100") is False:
+        return {"status":"SAR_HEIGHT_STRUCTURE_BLOCKED","agb_mg_ha":None,
+                "reason":"Altura SAR disponível, mas definição incompatível com H100; requer conversão validada",
+                "data_origin":"SAR_HEIGHT_INCOMPATIBLE_H100"}
     zone=tapajos_inventory_structure_zone(gdf)
     if not zone:return None
     try:h=float((sar_height or {}).get("height_mean_m"))
