@@ -75,3 +75,15 @@ Objetivos:
 - Atualização automática da previsão após cada nova observação válida; registrar versões de modelos e permitir abstinência se qualidade insuficiente.
 - Preservar integralmente cálculo de carbono SOMENTE na vegetação nativa e todas as rotas anteriormente operacionais.
 - Próximas tarefas: verificar APIs e licenças; implementar adaptadores, pré-processamento, modelos com pesos e calibração reais, testes de ponta a ponta e integração Windows. Não declarar recurso concluído antes de validação.
+
+
+## Política adicional: prioridade a modelos efetivamente treinados (24/10/2026)
+Preferir pesos de inferência realmente disponíveis e fontes científicas/institucionais confiáveis. Verificar DOI, autores, afiliação, versão, licença de código e pesos, documentação de treino, rótulos, sensores, pré-processamento, métricas por classe/fase, partição independente e domínio. Diferenciar: (a) pesos publicados; (b) código para treinar; (c) artigo sem pesos. Nunca equiparar.
+Candidatos a auditar:
+- VITA, AAAI 2026, pesos https://huggingface.co/notadib/VITA e código https://github.com/neehan/VITA — previsão milho/soja em condados dos EUA, meteorologia NASA POWER. Transferência ao Brasil exige teste local e compatibilidade de escala.
+- Wadhwani AI, https://huggingface.co/wadhwani-ai/AI-Enhanced-Crop-Field-Data-Curation — XGBoost treinado com Sentinel-1/Sentinel-2 e referências do Mahalanobis National Crop Forecast Center, Índia; conferir classes, arquivos, licença, entradas e domínio.
+- S2-PhenoCNN, https://huggingface.co/kavayam/s2-phenocnn — pesos para milho, arroz, soja e sete fases fenológicas do arroz; apenas Sentinel-2, sem alegar cobertura SAR nem estágios de todas as culturas.
+- BreizhCrops, DOI 10.5194/isprs-archives-XLIII-B2-2020-1545-2020 — benchmark com pesos pré-treinados, Sentinel-2 e classes europeias.
+- CropTypeMapper, https://github.com/agroimpacts/croptypemapper — código e exemplo de inferência, requer obter e conferir parâmetros treinados.
+Não habilitar nenhum candidato sem ensaio reproduzível e validação local independente, por talhão, safra, região e fase; abstenção obrigatória em caso de incompatibilidade. Para fitossanidade não inferir doença específica a partir de anomalias; para safra reportar RMSE, MAE, viés, intervalos e horizonte.
+Status: seleção de candidatos e documentação; ainda NÃO foram integrados pesos nem executadas inferências reais.
