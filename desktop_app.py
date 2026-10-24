@@ -1352,7 +1352,13 @@ class App(tk.Tk):
                "Acurácia da área/classificação: "+str(land.get("area_uncertainty") or "NÃO QUANTIFICADA"),
                "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
                ""]
-        for item in land.get("classes",[]):
+        classes=land.get("classes",[])
+        non_native=[item for item in classes if item.get("native_status") is not True and float(item.get("area_ha") or 0)>0]
+        native=[item for item in classes if item.get("native_status") is True and float(item.get("area_ha") or 0)>0]
+        if native and not non_native and land.get("status") not in ("error","erro","indisponivel"):
+            self._set(self.crop_res,"Não detectada a ocorrência de lavouras. Apenas vegetação nativa")
+            return
+        for item in classes:
             if item.get("native_status") is True:continue
             lines.extend([str(item.get("class_name","Uso não determinado"))+": "+
                           format_ptbr(item.get("area_ha",0),2)+" ha",
