@@ -274,6 +274,8 @@ jobs:
           assert "generation==self._weather_query_generation" in src and "analysis_id==self.project.get(\"analysis_run_id\")" in src, "stale weather response guard missing"
           assert "ATUALIZAR PAINEL METEOROLÓGICO" in src and "INMET" in src and "BDMEP histórico" in src, "executive weather panel/source provenance missing"
           assert "Painel executivo" in src and "Auditoria técnica" in src and "self.crop_audit" in src, "executive summary and audit trail must use separate views"
+          reset=src[src.index("def _reset_analysis_state"):src.index("def clear_research")]
+          assert "self.crop_audit" in reset and "self.crop_res" in reset, "new research must clear both executive results and audit details"
           assert "CLIMATEMPO" not in weather_sources, "unlicensed Climatempo source must be absent"
           from agricultural_native_policy import has_cultivated_area
           assert has_cultivated_area([{"class_name":"Áreas cultivadas","area_ha":1.0}])

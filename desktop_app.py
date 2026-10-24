@@ -1589,6 +1589,11 @@ class App(tk.Tk):
         self._analysis_generation+=1
         self._weather_query_generation+=1
         self._crop_monitoring_base_report=""
+        self._crop_monitoring_audit_base=""
+        if hasattr(self,"crop_res"):
+            self._set(self.crop_res,"Aguardando nova análise.")
+        if hasattr(self,"crop_audit"):
+            self._set(self.crop_audit,"A auditoria anterior foi descartada. Aguardando nova análise.")
         self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False
         old_vector=self.project.get("vector")
         self.project={"version":APP_VERSION}
