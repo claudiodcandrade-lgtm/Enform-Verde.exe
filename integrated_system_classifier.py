@@ -57,3 +57,17 @@ def identify_integrated_system(evidence, *, minimum_confidence=0.90):
                    "reason":"coocorrência documentada; confirmar integração por manejo",
                    "unit_id":next(iter(units)),"period":next(iter(periods))})
     return result
+
+def validated_precision_interval(correct, total):
+    """95% Wilson interval for independent accepted predictions; not area error."""
+    from math import sqrt
+    if not isinstance(correct,int) or not isinstance(total,int) or total<1 or not 0<=correct<=total:
+        return None
+    z=1.959963984540054
+    p=correct/total
+    d=1+z*z/total
+    center=(p+z*z/(2*total))/d
+    half=z*sqrt(p*(1-p)/total+z*z/(4*total*total))/d
+    return {"precision":p,"ci95":[max(0,center-half),min(1,center+half)],
+            "sample_size":total,"uncertainty_type":"precision of accepted class; not area confidence interval"}
+
