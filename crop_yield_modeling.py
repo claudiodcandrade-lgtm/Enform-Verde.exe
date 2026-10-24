@@ -313,6 +313,7 @@ def train_crop_yield_model(
 def forecast_crop_yield(artifact_path: str | Path, features: dict, *,
                         crop: str, region: str, spatial_block: str, season: str,
                         weather_provenance: dict, imagery_provenance: dict,
+                        freshness_provenance: dict,
                         reference_date_utc: str | None = None):
     """Predict only within independently evaluated spatial blocks/domains."""
     stored = load(artifact_path)
@@ -356,5 +357,6 @@ def forecast_crop_yield(artifact_path: str | Path, features: dict, *,
         predicted_t_ha=prediction, model_id=manifest["model_id"], crop=crop,
         region=region, season=season, weather_provenance=weather_provenance,
         imagery_provenance=imagery_provenance, validation=validation,
-        prediction_interval_t_ha=interval, reference_date_utc=reference_date_utc)
+        prediction_interval_t_ha=interval, reference_date_utc=reference_date_utc,
+        freshness_provenance=freshness_provenance)
     return result
