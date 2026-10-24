@@ -233,7 +233,7 @@ jobs:
       - name: Source self-test
         run: python desktop_app.py --self-test
       - name: Native-only stratification and confidence regression tests
-        run: python -m unittest tests.test_native_carbon tests.test_land_use_sar tests.test_crop_model_registry tests.test_crop_yield_uncertainty tests.test_crop_map_training tests.test_crop_height_features tests.test_crop_regional_phenology tests.test_crop_fusion_inference tests.test_crop_fusion_batch tests.test_sar_acquisition_time tests.test_planted_forest_classifier tests.test_independent_sar_validation tests.test_external_reference_catalog tests.test_alos_scene_pair tests.test_integrated_system_classifier tests.test_executive_carbon_report tests.test_inmet_weather_client -v
+        run: python -m unittest tests.test_native_carbon tests.test_land_use_sar tests.test_crop_model_registry tests.test_crop_yield_uncertainty tests.test_crop_yield_modeling tests.test_crop_map_training tests.test_crop_height_features tests.test_crop_regional_phenology tests.test_crop_fusion_inference tests.test_crop_fusion_batch tests.test_sar_acquisition_time tests.test_planted_forest_classifier tests.test_independent_sar_validation tests.test_external_reference_catalog tests.test_alos_scene_pair tests.test_integrated_system_classifier tests.test_executive_carbon_report tests.test_inmet_weather_client -v
       - name: Pantanal fallback tests
         run: python -m unittest tests.test_pantanal_fallback -v
       - name: Earthdata client import
