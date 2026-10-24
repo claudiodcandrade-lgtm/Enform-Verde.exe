@@ -1329,31 +1329,35 @@ class App(tk.Tk):
         self._bind_text_scroll(self.res)
         self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
     def _cultivated_results(self):
-        """Dedicated cultivated-land executive panel; no native-carbon totals here."""
+        """Separate concise executive results from traceable technical audit."""
         f=self.tabs[5]
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
-        ttk.Label(f,text="Classificação, fenologia, fitossanidade e previsão de safra; dados e incertezas independentes do carbono nativo.",
-                  wraplength=1000).pack(anchor="w",pady=(4,10))
+        ttk.Label(f,text="Classificação e clima observados, com previsão de safra bloqueada até validação científica.",
+                  wraplength=1000).pack(anchor="w",pady=(4,8))
         ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
-        box=ttk.Frame(f);box.pack(fill="both",expand=True)
-        self.crop_res=tk.Text(box,height=24,wrap="word",yscrollcommand=lambda *a:scroll.set(*a))
-        scroll=ttk.Scrollbar(box,orient="vertical",command=self.crop_res.yview)
-        self.crop_res.pack(side="left",fill="both",expand=True);scroll.pack(side="right",fill="y")
-        self._bind_text_scroll(self.crop_res)
-        self._set(self.crop_res,"Execute a análise para consultar as classes agrícolas.\\n"
-                  "Cultura e fase fenológica: NÃO DETERMINADAS sem classificador treinado e validado.\\n"
-                  "Estado fitossanitário: NÃO DETERMINADO sem dados e validação específicos.\\n"
-                  "Previsão de safra e incerteza: NÃO DISPONÍVEIS sem modelo e erro validado.")
+        views=ttk.Notebook(f);views.pack(fill="both",expand=True)
+        exec_frame=ttk.Frame(views);audit_frame=ttk.Frame(views)
+        views.add(exec_frame,text="Painel executivo")
+        views.add(audit_frame,text="Auditoria técnica")
+        exec_box=ttk.Frame(exec_frame);exec_box.pack(fill="both",expand=True)
+        audit_box=ttk.Frame(audit_frame);audit_box.pack(fill="both",expand=True)
+        self.crop_res=tk.Text(exec_box,height=20,wrap="word",yscrollcommand=lambda *a:exec_scroll.set(*a))
+        exec_scroll=ttk.Scrollbar(exec_box,orient="vertical",command=self.crop_res.yview)
+        self.crop_res.pack(side="left",fill="both",expand=True);exec_scroll.pack(side="right",fill="y")
+        self.crop_audit=tk.Text(audit_box,height=20,wrap="word",yscrollcommand=lambda *a:audit_scroll.set(*a))
+        audit_scroll=ttk.Scrollbar(audit_box,orient="vertical",command=self.crop_audit.yview)
+        self.crop_audit.pack(side="left",fill="both",expand=True);audit_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.crop_res);self._bind_text_scroll(self.crop_audit)
+        self._set(self.crop_res,"Execute a análise para consultar as classes agrícolas.\n"
+                  "Cultura e fase fenológica: NÃO DETERMINADAS sem classificador treinado e validado.\n"
+                  "Estado fitossanitário: NÃO DETERMINADO sem indicadores SAR validados.\n"
+                  "Previsão de safra e intervalo preditivo: BLOQUEADOS sem modelo integrado e calibração independente.")
+        self._set(self.crop_audit,"A trilha de auditoria da análise será apresentada aqui.")
 
     def _present_cultivated_monitoring(self,land):
-        """Show real classified-area evidence, never infer crop stage or yield."""
+        """Present concise results and keep full evidence in a separate audit view."""
         from agricultural_native_policy import has_cultivated_area
         self._weather_query_generation+=1
-        lines=["ENFORM VERDE — MONITORAMENTO DE ÁREAS CULTIVADAS",
-               "Dados de uso e cobertura: "+str(land.get("status","não disponível")),
-               "Acurácia da área/classificação: "+str(land.get("area_uncertainty") or "NÃO QUANTIFICADA"),
-               "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
-               ""]
         classes=land.get("classes",[])
         non_native=[item for item in classes if item.get("native_status") is not True and float(item.get("area_ha") or 0)>0]
         native=[item for item in classes if item.get("native_status") is True and float(item.get("area_ha") or 0)>0]
@@ -1362,26 +1366,43 @@ class App(tk.Tk):
         complete_coverage=aoi_ha>0 and abs(classified_ha-aoi_ha)<=max(0.05,0.001*aoi_ha)
         if native and not non_native and complete_coverage and land.get("status") not in ("error","erro","indisponivel"):
             self._crop_monitoring_base_report="Não detectada a ocorrência de lavouras. Apenas vegetação nativa"
+            self._crop_monitoring_audit_base="Cobertura classificada integralmente como vegetação nativa.\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
             self._set(self.crop_res,self._crop_monitoring_base_report)
+            self._set(self.crop_audit,self._crop_monitoring_audit_base)
             return
+        executive=["PAINEL EXECUTIVO — MONITORAMENTO AGRÍCOLA",
+                   "Estado da classificação: "+str(land.get("status","não disponível")),
+                   "Área analisada: "+format_ptbr(aoi_ha,2)+" ha",
+                   "Área com classes reportadas: "+format_ptbr(classified_ha,2)+" ha",
+                   "Uso/cobertura não nativo:"]
+        if non_native:
+            for item in non_native:
+                executive.append("• "+str(item.get("class_name","Uso não determinado"))+" — "+
+                                 format_ptbr(item.get("area_ha",0),2)+" ha; fonte: "+
+                                 str(item.get("source","não informada")))
+        else:
+            executive.append("• Não determinado")
+        executive.extend(["","Cultura e fase fenológica: NÃO DETERMINADAS sem classificador validado.",
+                          "Padrões SAR indicativos de estresse: NÃO DETERMINADOS sem modelo validado.",
+                          "Previsão de safra: BLOQUEADA.",
+                          "Produtividade, produção e intervalo preditivo: NÃO DISPONÍVEIS.",
+                          "Carbono nativo: calculado separadamente na aba de formações nativas."])
+        audit=["AUDITORIA TÉCNICA — USO DO SOLO, CULTURAS E FONTES",
+               "Método: "+str(land.get("method","não informado")),
+               "Prioridade de fontes: "+str(land.get("priority","não informada")),
+               "Incerteza da área/classificação: "+str(land.get("area_uncertainty") or "não quantificada"),
+               "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
+               "Avisos:"]+[str(x) for x in land.get("warnings",[]) or ["nenhum"]]
+        audit.extend(["","Classes, fontes e metadados:"])
         for item in classes:
-            if item.get("native_status") is True:continue
-            lines.extend([str(item.get("class_name","Uso não determinado"))+": "+
-                          format_ptbr(item.get("area_ha",0),2)+" ha",
-                          "  Fonte: "+str(item.get("source","não informada")),
-                          "  Classificação/validação: "+str(item.get("taxonomy","não documentada"))])
-        lines.extend(["","CULTURA ESPECÍFICA E ESTÁGIO FENOLÓGICO: NÃO DETERMINADOS sem modelo validado.",
-                      "PADRÕES SAR INDICATIVOS DE ESTRESSE: somente quando detectáveis e validados; não permitem diagnosticar doenças ou pragas específicas.",
-                      "PREVISÃO DE SAFRA: BLOQUEADA sem modelo matemático cientificamente validado que integre identificação da cultura por SAR, vigor, indicadores fitossanitários e climatologia.",
-                      "Critérios obrigatórios: identificação SAR validada; vigor e padrões SAR remotos indicativos de possível estresse fitossanitário, com desempenho validado por estudos independentes (sem dados de campo da AOI; anomalias não equivalem a diagnóstico); séries climatológicas compatíveis; modelo integrado calibrado e validado independentemente para cultura, região e safra; erro preditivo e intervalo de previsão quantificados.",
-                      "Na ausência de qualquer requisito, não calcular nem exibir estimativa numérica de produtividade ou produção.",
-                      "PREVISÃO DE PRODUTIVIDADE (t/ha): NÃO DISPONÍVEL.",
-                      "PREVISÃO DE PRODUÇÃO (t): NÃO DISPONÍVEL.",
-                      "INCERTEZA DE PREVISÃO (t/ha, %, t): NÃO QUANTIFICADA.",
-                      "Modelos meteorológicos e agrícolas: NÃO EXECUTADOS nesta análise.",
-                      "Os estoques de carbono são calculados exclusivamente na aba de formações nativas."])
-        self._crop_monitoring_base_report="\n".join(lines)
+            audit.append(json.dumps(item,ensure_ascii=False,sort_keys=True,default=str))
+        validation=land.get("validation")
+        audit.extend(["","Validação e métricas:",json.dumps(validation,ensure_ascii=False,indent=2,default=str) if validation else "Nenhuma inferência SAR validada foi usada."])
+        audit.extend(["","Distribuições originais das fontes:",json.dumps(land.get("original_source_distributions",[]),ensure_ascii=False,indent=2,default=str)])
+        self._crop_monitoring_base_report="\n".join(executive)
+        self._crop_monitoring_audit_base="\n".join(audit)
         self._set(self.crop_res,self._crop_monitoring_base_report)
+        self._set(self.crop_audit,self._crop_monitoring_audit_base)
         if has_cultivated_area(classes):
             generation=self._weather_query_generation
             analysis_id=self.project.get("analysis_run_id")
@@ -1393,7 +1414,7 @@ class App(tk.Tk):
             self.after(100,start_weather_if_current)
 
     def query_crop_weather(self):
-        """Retrieve actual weather asynchronously; never treat gridded weather as station measurements."""
+        """Retrieve actual weather asynchronously; executive summary and audit remain separate."""
         if self.gdf is None:
             return messagebox.showwarning("Clima","Carregue primeiro o perímetro da área.")
         try:
@@ -1406,30 +1427,33 @@ class App(tk.Tk):
         query_id=self._weather_query_generation
         analysis_id=self.project.get("analysis_run_id")
         base_report=getattr(self,"_crop_monitoring_base_report","")
+        audit_base=getattr(self,"_crop_monitoring_audit_base","")
         self._set(self.crop_res,(base_report+"\n\n" if base_report else "")+
-                  "Consultando meteorologia para a área em segundo plano...\n"
-                  "NASA POWER: estimativa em grade, não estação meteorológica local.\n"
-                  "CPTEC: previsão, não observação de campo.")
+                  "Consultando meteorologia em segundo plano…\n"
+                  "NASA POWER: histórico recente em grade, não medição local.\n"
+                  "CPTEC/INPE: previsão futura.")
+        self._set(self.crop_audit,(audit_base+"\n\n" if audit_base else "")+
+                  "Consulta meteorológica pendente; resultados detalhados aparecerão aqui.")
         def worker():
             from inmet_weather_client import weather_executive_lines
             power_summary=None
             forecast_summary=None
             details=["CLIMA DINÂMICO — ÁREA CULTIVADA",
-                   f"Centroide (WGS84): {lat:.5f}, {lon:.5f}"]
+                     f"Centroide WGS84: {lat:.5f}, {lon:.5f}"]
             try:
                 from agricultural_weather import fetch_daily_weather,summarize_weather
                 weather=fetch_daily_weather(lat,lon,days=90)
                 summary=summarize_weather(weather)
                 power_summary=summary
                 details.extend(["","NASA POWER — DADOS DIÁRIOS DA GRADE",
-                              "Fonte: "+weather["source_url"],
-                              "Período: "+weather["start"]+" a "+weather["end"],
-                              "Consulta UTC: "+weather["retrieved_utc"],
-                              "Dias com temperatura: "+str(summary["temperature_days"]),
-                              "Temperatura média (°C): "+str(summary["mean_temperature_c"]),
-                              "Precipitação acumulada (mm): "+str(summary["rain_mm"]),
-                              "Graus-dia base 10 °C (°C dia): "+str(summary["gdd_c_day"]),
-                              "GDD descritivo, sem parametrização por cultura/cultivar."])
+                                "Fonte: "+weather["source_url"],
+                                "Período: "+weather["start"]+" a "+weather["end"],
+                                "Consulta UTC: "+weather["retrieved_utc"],
+                                "Dias com temperatura: "+str(summary["temperature_days"]),
+                                "Temperatura média (°C): "+str(summary["mean_temperature_c"]),
+                                "Precipitação acumulada (mm): "+str(summary["rain_mm"]),
+                                "Graus-dia base 10 °C (°C dia): "+str(summary["gdd_c_day"]),
+                                "GDD descritivo; não parametrizado por cultura ou cultivar."])
             except Exception as exc:
                 details.append("NASA POWER: INDISPONÍVEL — "+str(exc))
             try:
@@ -1437,23 +1461,28 @@ class App(tk.Tk):
                 forecast=forecast_by_coordinates(lat,lon)
                 forecast_summary=forecast
                 details.extend(["","CPTEC/INPE — PREVISÃO POR COORDENADAS",
-                              "Fonte: "+forecast["source_url"],
-                              "Consulta UTC: "+forecast["retrieved_utc"],
-                              "Períodos retornados: "+str(len(forecast["periods"]))])
+                                "Fonte: "+forecast["source_url"],
+                                "Consulta UTC: "+forecast["retrieved_utc"],
+                                "Períodos retornados: "+str(len(forecast["periods"]))])
                 for period in forecast["periods"][:7]:
                     details.append("  "+str(period))
             except Exception as exc:
-                details.append("CPTEC: INDISPONÍVEL — "+str(exc))
-            details.extend(["","INMET: não consultado automaticamente nesta versão; o endpoint público testado não retornou observações para a estação mais próxima.",
-                          "BDMEP histórico: não consultado automaticamente; o portal oficial exige solicitação/exportação e não foi confirmado endpoint público integrado.",
-                          "Fenologia, vigor e produtividade: não inferidos apenas a partir de meteorologia.",
-                          "As estimativas de carbono nativo permanecem independentes."])
-            dashboard=weather_executive_lines({"status":"indisponivel","reason":"endpoint público testado sem observações acessíveis; fonte substituída operacionalmente por NASA POWER (grade) e CPTEC/INPE (previsão)"},power_summary,forecast_summary,format_ptbr)
-            lines=([base_report,""] if base_report else [])+dashboard+["DETALHES E RASTREABILIDADE"]+details
-            def present(result="\n".join(lines)):
+                details.append("CPTEC/INPE: INDISPONÍVEL — "+str(exc))
+            details.extend(["","INMET: o endpoint público testado não retornou observações acessíveis para a estação mais próxima.",
+                            "BDMEP histórico: não consultado automaticamente; exportação pública exige solicitação.",
+                            "Fenologia, vigor, estresse fitossanitário e produtividade não são inferidos só da meteorologia.",
+                            "NASA POWER e CPTEC representam produtos distintos; não se calcula média ponderada sem datas e variáveis comparáveis e pesos validados.",
+                            "Estimativas de carbono nativo permanecem independentes."])
+            dashboard=weather_executive_lines(
+                {"status":"indisponivel","reason":"histórico local de estação não disponível; painel usa NASA POWER em grade e CPTEC/INPE para previsão"},
+                power_summary,forecast_summary,format_ptbr)
+            executive=([base_report,""] if base_report else [])+dashboard
+            audit_text=([audit_base,""] if audit_base else [])+details
+            def present():
                 if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
                     return
-                self._set(self.crop_res,result)
+                self._set(self.crop_res,"\n".join(executive))
+                self._set(self.crop_audit,"\n".join(audit_text))
             self.after(0,present)
         threading.Thread(target=worker,daemon=True).start()
 
