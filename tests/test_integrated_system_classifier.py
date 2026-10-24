@@ -1,5 +1,5 @@
 import unittest
-from integrated_system_classifier import identify_integrated_system, validated_precision_interval, model_route_status
+from integrated_system_classifier import identify_integrated_system, validated_precision_interval, model_route_status, classify_integrated_batch
 
 def item(component, unit="T1", period="2026", confidence=0.98):
     return {"present":True,"validated":True,"confidence":confidence,
@@ -13,6 +13,14 @@ class IntegratedSystemTests(unittest.TestCase):
         self.assertIsNone(validated_precision_interval(101,100))
     def test_unverified_published_model_is_not_operational(self):
         self.assertFalse(model_route_status("ilpf_spatial_unet")["operational"])
+    def test_batch_route_preserves_abstention(self):
+        rows=[{"observation_id":"A","components":{c:item(c) for c in ("lavoura","floresta")}},
+              {"observation_id":"B","components":{"lavoura":item("lavoura")}}]
+        report=classify_integrated_batch(rows)
+        self.assertEqual(report["accepted"],1)
+        self.assertEqual(report["abstained"],1)
+        self.assertEqual(report["results"][0]["class_name"],"ILF")
+        self.assertIsNone(report["results"][1]["class_name"])
     def test_ilpf(self):
         evidence={c:item(c) for c in ("lavoura","pecuaria","floresta")}
         self.assertEqual(identify_integrated_system(evidence)["class_name"],"ILPF")
