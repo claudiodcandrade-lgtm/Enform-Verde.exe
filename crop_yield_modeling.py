@@ -233,7 +233,13 @@ def train_crop_yield_model(
     if n_independent < _MIN_TEST_MUNICIPALITIES:
         raise ValueError("test set lost independent municipalities after deduplication")
 
-    feature_support = {}\n    for col in features:\n        values = train[col].dropna().astype(float)\n        q01, q25, q75, q99 = values.quantile([.01, .25, .75, .99])\n        feature_support[col] = {"q01": float(q01), "q99": float(q99),\n                                "iqr": float(q75-q25)}\n    manifest = {
+    feature_support = {}
+    for col in features:
+        values = train[col].dropna().astype(float)
+        q01, q25, q75, q99 = values.quantile([.01, .25, .75, .99])
+        feature_support[col] = {"q01": float(q01), "q99": float(q99),
+                                "iqr": float(q75-q25)}
+    manifest = {
         "schema_version": 1, "crop": crop, "model_id": f"ev-yield-{crop.casefold()}-{test_year}",
         "algorithm": selected_name, "feature_columns": features,
         "nominal_coverage": nominal_coverage, "conformal_radius_t_ha": radius,
@@ -244,10 +250,13 @@ def train_crop_yield_model(
                        "heldout_blocks": sorted(heldout), "n_independent": n_independent,
                        "n_covered": n_covered, "coverage": coverage,
                        "coverage_wilson95": coverage_ci, "nominal_coverage": nominal_coverage,
-                       "rmse_t_ha": rmse, "mae_t_ha": mae, "bias_t_ha": bias,\n                       "sample_count": n_independent,
+                       "rmse_t_ha": rmse, "mae_t_ha": mae, "bias_t_ha": bias,
+                       "sample_count": n_independent,
                        "median_baseline_mae_t_ha": baseline_mae,
                        "improvement_over_median": improvement,
-                       "internal_spatial_cv_mae_t_ha": cv_mae,\n                       "per_spatial_block": per_block,\n                       "eligible_spatial_blocks": sorted(eligible_blocks)},
+                       "internal_spatial_cv_mae_t_ha": cv_mae,
+                       "per_spatial_block": per_block,
+                       "eligible_spatial_blocks": sorted(eligible_blocks)},
         "training": {"n_rows": len(train), "n_municipalities": train["municipality_code"].nunique(),
                      "first_year": int(train["season_year"].min()),
                      "last_year": int(train["season_year"].max()),
@@ -255,7 +264,9 @@ def train_crop_yield_model(
                      "yield_licenses": sorted(data["yield_license"].astype(str).unique()),
                      "sar_sources": sorted(data["sar_source_url"].astype(str).unique()),
                      "weather_sources": sorted(data["weather_source"].astype(str).unique()),
-                     "weather_source_urls": sorted(data["weather_source_url"].astype(str).unique()),\n                     "panel_sha256": hashlib.sha256(pd.util.hash_pandas_object(data, index=True).values.tobytes()).hexdigest()},\n        "feature_support": feature_support,
+                     "weather_source_urls": sorted(data["weather_source_url"].astype(str).unique()),
+                     "panel_sha256": hashlib.sha256(pd.util.hash_pandas_object(data, index=True).values.tobytes()).hexdigest()},
+        "feature_support": feature_support,
         "limitations": ["Admin-level labels predict municipal/regional yield, not field yield.",
                         "Transferability applies only to tested held-out blocks and observed feature support.",
                         "SAR stress features indicate nonspecific anomalies; they do not diagnose disease or pests.",
