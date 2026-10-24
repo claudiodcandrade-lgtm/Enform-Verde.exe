@@ -59,3 +59,19 @@ Relatório da AOI 1.290,69 ha Floresta Ombrófila Densa: AGB 263,07 Mg/ha, carbo
 
 ## Próxima ação
 Verificar código real da aplicação e do workflow, identificar pontos de integração e testes. Não alegar finalização antes da execução e verificação dos critérios.
+
+
+## Ampliação de escopo — fitossanidade e previsão de safra (24/10/2026)
+Commit de módulo inicial: 80dd7633e634ee752ea2b5d80b16ff9a4bde8341, arquivo crop_health_yield_quality.py. Implementado SOMENTE contrato de avaliação e travas de evidência; não há ainda modelo treinado, dados meteorológicos conectados ou previsão operacional.
+
+Objetivos:
+- Detectar anomalias de vigor/estresse em séries SAR (VV/VH, retroespalhamento, coerência quando aplicável), fundidas com óptico (NDVI, NDRE, índices de água, temperatura superficial quando disponível) e clima. Comparar com linha de base por cultura, estádio fenológico, local, época e geometria de aquisição; produzir indicadores e mapas com datas e confiança.
+- Não afirmar diagnóstico específico de doença/praga por simples anomalia SAR. Identificação etiológica requer treinamento, referência de campo e validação específica. Distinguir seca, encharcamento, deficiência nutricional e fitopatologia somente se separabilidade demonstrada.
+- Ingerir dados meteorológicos dinâmicos com metadados de fonte, hora, resolução, qualidade, interpolação e atraso: INMET/estações, ERA5-Land (reanálise), NASA POWER (histórico), CHIRPS (chuva), previsões meteorológicas com horizonte explícito. Priorizar estação local qualificada quando disponível; não tratar reanálise como observação direta nem previsão como medição.
+- Calcular ET0 (FAO-56 Penman–Monteith quando entradas suficientes), déficit hídrico, graus-dia, chuva acumulada, radiação e indicadores de extremos; parametrizar solo, fenologia e irrigação. Não usar equações fora do domínio.
+- Previsão de produtividade (t/ha) e produção (t) por cultura e talhão, com área cultivada confirmada, horizonte, data de referência, intervalos de predição calibrados e métricas de erro. Comparar baseline estatístico (histórico regional), modelos agrometeorológicos, AquaCrop (FAO), DSSAT, APSIM, WOFOST quando parâmetros e licenças permitirem, e ML temporal com SAR+óptico+clima. Priorizar modelos que superem baseline em safras/regiões independentes.
+- Validar com colheitas observadas, particionamento por talhão, ano e região, evitando vazamento espacial/temporal; reportar MAE, RMSE, viés, R², erro percentual quando apropriado, cobertura de intervalos e erro por fase fenológica. Para previsão antes da colheita, não usar dados futuros na entrada.
+- No painel: estado da cultura, anomalias e sua severidade/qualidade, risco fitossanitário NÃO diagnóstico etiológico, produtividade prevista t/ha, produção t, intervalo de predição, fontes e última aquisição, última atualização meteorológica, estágio fenológico e rastreabilidade integral.
+- Atualização automática da previsão após cada nova observação válida; registrar versões de modelos e permitir abstinência se qualidade insuficiente.
+- Preservar integralmente cálculo de carbono SOMENTE na vegetação nativa e todas as rotas anteriormente operacionais.
+- Próximas tarefas: verificar APIs e licenças; implementar adaptadores, pré-processamento, modelos com pesos e calibração reais, testes de ponta a ponta e integração Windows. Não declarar recurso concluído antes de validação.
