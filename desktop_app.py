@@ -1334,6 +1334,7 @@ class App(tk.Tk):
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
         ttk.Label(f,text="Classificação, fenologia, fitossanidade e previsão de safra; dados e incertezas independentes do carbono nativo.",
                   wraplength=1000).pack(anchor="w",pady=(4,10))
+        ttk.Button(f,text="CONSULTAR CLIMA DA ÁREA — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
         box=ttk.Frame(f);box.pack(fill="both",expand=True)
         self.crop_res=tk.Text(box,height=24,wrap="word",yscrollcommand=lambda *a:scroll.set(*a))
         scroll=ttk.Scrollbar(box,orient="vertical",command=self.crop_res.yview)
@@ -1365,6 +1366,55 @@ class App(tk.Tk):
                       "Modelos meteorológicos e agrícolas: NÃO EXECUTADOS nesta análise.",
                       "Os estoques de carbono são calculados exclusivamente na aba de formações nativas."])
         self._set(self.crop_res,"\\n".join(lines))
+
+    def query_crop_weather(self):
+        """Retrieve actual weather asynchronously; never treat gridded weather as station measurements."""
+        if self.gdf is None:
+            return messagebox.showwarning("Clima","Carregue primeiro o perímetro da área.")
+        try:
+            geo=self.gdf.to_crs("EPSG:4326")
+            point=geo.geometry.union_all().centroid if hasattr(geo.geometry,"union_all") else geo.unary_union.centroid
+            lat,lon=float(point.y),float(point.x)
+        except Exception as exc:
+            return messagebox.showwarning("Clima","Não foi possível determinar o centroide: "+str(exc))
+        self._set(self.crop_res,"Consultando meteorologia para a área em segundo plano...\\n"
+                  "NASA POWER: estimativa em grade, não estação meteorológica local.\\n"
+                  "CPTEC: previsão, não observação de campo.")
+        def worker():
+            lines=["CLIMA DINÂMICO — ÁREA CULTIVADA",
+                   f"Centroide (WGS84): {lat:.5f}, {lon:.5f}"]
+            try:
+                from agricultural_weather import fetch_daily_weather,summarize_weather
+                weather=fetch_daily_weather(lat,lon,days=90)
+                summary=summarize_weather(weather)
+                lines.extend(["","NASA POWER — DADOS DIÁRIOS REAIS (GRADE)",
+                              "Fonte: "+weather["source_url"],
+                              "Período: "+weather["start"]+" a "+weather["end"],
+                              "Consulta UTC: "+weather["retrieved_utc"],
+                              "Dias com temperatura: "+str(summary["temperature_days"]),
+                              "Temperatura média (°C): "+str(summary["mean_temperature_c"]),
+                              "Precipitação acumulada (mm): "+str(summary["rain_mm"]),
+                              "Graus-dia base 10 °C (°C dia): "+str(summary["gdd_c_day"]),
+                              "GDD descritivo, sem parametrização por cultura/cultivar."])
+            except Exception as exc:
+                lines.append("NASA POWER: INDISPONÍVEL — "+str(exc))
+            try:
+                from cptec_forecast_client import forecast_by_coordinates
+                forecast=forecast_by_coordinates(lat,lon)
+                lines.extend(["","CPTEC/INPE — PREVISÃO POR COORDENADAS",
+                              "Fonte: "+forecast["source_url"],
+                              "Consulta UTC: "+forecast["retrieved_utc"],
+                              "Períodos retornados: "+str(len(forecast["periods"]))])
+                for period in forecast["periods"][:7]:
+                    lines.append("  "+str(period))
+            except Exception as exc:
+                lines.append("CPTEC: INDISPONÍVEL — "+str(exc))
+            lines.extend(["","INMET/BDMEP: fonte catalogada, sem consulta automática nesta versão.",
+                          "CLIMATEMPO: requer contrato e credenciais.",
+                          "Fenologia, vigor e produtividade: não inferidos apenas a partir de meteorologia.",
+                          "As estimativas de carbono nativo permanecem independentes."])
+            self.after(0,lambda result="\\n".join(lines):self._set(self.crop_res,result))
+        threading.Thread(target=worker,daemon=True).start()
 
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
