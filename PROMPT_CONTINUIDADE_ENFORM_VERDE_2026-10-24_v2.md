@@ -269,10 +269,12 @@ Uma consulta STAC ou um token SAS só demonstra acesso e disponibilidade de meta
 ## ATUALIZAÇÃO URGENTE — PAM materializada e rota pública para pixels Sentinel‑1 encontrada (24/10/2026)
 
 ### Dados PAM/SIDRA materializados nesta retomada
-Foi criado e executado `tools/build_sidra_pam_microregion_series.py`, com retries, validação do esquema SIDRA, preservação de valores suprimidos como ausentes e registro de proveniência. Arquivos gerados e versionáveis:
+Foi criado e executado `tools/build_sidra_pam_microregion_series.py`, com retries, validação do esquema SIDRA, preservação de valores suprimidos como ausentes e registro de proveniência. Arquivos produzidos localmente; o CI os materializa novamente e publica o conjunto validado:
 - `data/pam_microregion_yield_2015_2024.csv.gz`: 133.920 células — 8 produtos × 558 microrregiões N9 × 10 anos (2015–2024) × 3 variáveis. SHA‑256 atual: `3d73b520e88c7cd6cc527257d435341ef7eb1715fed378ac9be46f122e87f30f`.
 - `data/pam_microregion_yield_2015_2024.metadata.json`: URLs SIDRA, unidades, data/hora de extração, cobertura, contagem de supressões e reconciliação.
 - `tests/test_sidra_pam_materializer.py`: verifica integridade da série/checksum e que `...`, `..`, `-` e `X` não viram zero. Dois testes locais passaram.
+
+O CSV completo é gerado localmente e novamente no início do workflow Windows; o workflow publica CSV e metadados como artefato de dados por 30 dias para evitar consumir um arquivo incompleto ou desatualizado do checkout.
 
 Reconciliado rendimento oficial (kg/ha) com produção × 1000 / área colhida em todos os tripletos numéricos: 30.011 tripletos por variável no conjunto de oito produtos; a diferença relativa mediana por produto é menor que 0,03%, e praticamente todos estão dentro de 2%. Esta checagem atesta consistência das colunas PAM, não SAR nem produtividade de talhão. Os 14.629 valores ausentes/suprimidos por variável permanecem nulos. Para feijão e milho há poucos tripletos fora de 2%, que devem continuar auditados e não ser sobrescritos.
 
@@ -340,3 +342,5 @@ O usuário reforçou que a atualidade das aquisições SAR é fundamental para a
 4. Só disponibilizar análise fenológica atualizada após a aquisição recente e pixels válidos. Acesso a COG histórico ou inventário de metadados não satisfaz atualidade nem habilita previsão.
 
 **Estado após esta orientação:** requisito incorporado no prompt e gate de atualidade atualizado no código local; teste de range COG realizado; ainda faltam teste de atualidade com aquisição recente de 2026, leitura/decodificação de pixels geoespaciais, integração ao painel, máscara independente, correlação SAR–PAM e previsão validada. Não declarar esses itens concluídos.
+
+O gate atualizado foi verificado localmente em 3 testes de atualidade; os 2 testes PAM também passaram. O workflow Windows agora regenera e publica a série PAM, e inclui esses testes na suíte do PR.
