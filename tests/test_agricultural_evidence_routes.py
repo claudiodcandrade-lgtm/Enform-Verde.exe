@@ -29,12 +29,17 @@ class EvidenceRouteTests(unittest.TestCase):
                 w=csv.DictWriter(f,fieldnames=["product_key","territory_code","year","variable_code","value_numeric","source_url"])
                 w.writeheader(); w.writerow({"product_key":"soja_grao","territory_code":"11001","year":"2020","variable_code":"112","value_numeric":"3000","source_url":"https://sidra.ibge.gov.br/"})
             sar_path = Path(td)/"sar.csv"
-            fields=["product_key","territory_code","year","mask_validation_status","mask_model_sha256","crop_mask_source","latest_acquisition_utc","age_days","scenes_in_window","crop_phase","sar_vv_median"]
+            fields=["product_key","territory_code","year","spatial_block","mask_validation_status","mask_model_sha256","crop_mask_source","latest_acquisition_utc","age_days","scenes_in_window","crop_phase","freshness_validation_status","sar_source_url","sar_crop_validated","sar_vigor_validated","sar_stress_validated","sar_crop_class","sar_vigor_median","sar_stress_anomaly","sar_vv_median"]
             with sar_path.open("w",newline="") as f:
                 w=csv.DictWriter(f,fieldnames=fields); w.writeheader()
-                w.writerow(dict(product_key="soja_grao",territory_code="11001",year="2020",mask_validation_status="INDEPENDENT_VALIDATION_APPROVED",mask_model_sha256="a"*64,crop_mask_source="YieldSAT field records",latest_acquisition_utc="2020-02-01T12:00:00Z",age_days="2",scenes_in_window="4",crop_phase="vegetative",sar_vv_median="0.42"))
-                w.writerow(dict(product_key="soja_grao",territory_code="11001",year="2021",mask_validation_status="MAP_PSEUDOLABEL_ONLY",mask_model_sha256="",crop_mask_source="MapBiomas",latest_acquisition_utc="2021-02-01T12:00:00Z",age_days="2",scenes_in_window="4",crop_phase="vegetative",sar_vv_median="0.44"))
-            result=build_pam_sar_panel(pam_path,sar_path)
+                common=dict(spatial_block="north",mask_validation_status="INDEPENDENT_VALIDATION_APPROVED",mask_model_sha256="a"*64,crop_mask_source="YieldSAT field records",latest_acquisition_utc="2020-02-01T12:00:00Z",age_days="2",scenes_in_window="4",crop_phase="vegetative",freshness_validation_status="CROP_PHASE_FRESHNESS_CALIBRATED",sar_source_url="https://example.org/sar",sar_crop_validated="true",sar_vigor_validated="true",sar_stress_validated="true",sar_crop_class="1",sar_vigor_median="0.3",sar_stress_anomaly="0.1")
+                w.writerow(dict(product_key="soja_grao",territory_code="11001",year="2020",**common,sar_vv_median="0.42"))
+                w.writerow(dict(product_key="soja_grao",territory_code="11001",year="2021",**{**common,"mask_validation_status":"MAP_PSEUDOLABEL_ONLY","mask_model_sha256":"","crop_mask_source":"MapBiomas"},sar_vv_median="0.44"))
+            weather_path=Path(td)/"weather.csv"
+            with weather_path.open("w",newline="") as f:
+                w=csv.DictWriter(f,fieldnames=["product_key","territory_code","year","weather_source","weather_source_url","climate_precipitation"]); w.writeheader()
+                w.writerow(dict(product_key="soja_grao",territory_code="11001",year="2020",weather_source="NASA POWER",weather_source_url="https://example.org/weather",climate_precipitation="800"))
+            result=build_pam_sar_panel(pam_path,sar_path,weather_path)
             self.assertEqual(result["rows"],1)
             self.assertEqual(result["approved_mask_rows"],1)
 
