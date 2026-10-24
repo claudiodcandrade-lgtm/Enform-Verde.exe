@@ -1194,8 +1194,9 @@ def planetary_alos_palsar(gdf,cache,limit=12):
     stats=[]; errors=[]; scene_ids=[]; paths=[]
     for it in items:
         scene_ids.append(it.get("id")); assets=it.get("assets") or {}
-        for pol in ("HH","HV","hh","hv"):
-            a=assets.get(pol)
+        scene_stats=[]; scene_paths=[]
+        for pol in ("HH","HV"):
+            a=assets.get(pol) or assets.get(pol.lower())
             if not a or not a.get("href"):continue
             try:
                 sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":a["href"]},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
@@ -1205,10 +1206,13 @@ def planetary_alos_palsar(gdf,cache,limit=12):
                         v=np.ma.array(ar[0]).compressed(); v=v[np.isfinite(v)&(v>0)]
                         if not len(v):continue
                         db=_jaxa_mosaic_gamma0_db(v,-83.0)
-                        stats.append({"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean_dn":float(v.mean()),"mean_db":float(db.mean()),"sd_db":float(db.std(ddof=1)) if len(db)>1 else 0.0,"calibration":"JAXA gamma0 dB = 10*log10(DN^2)-83","pixel_state":"PROCESSADO"})
-                        paths.append(a["href"])
+                        scene_stats.append({"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean_dn":float(v.mean()),"mean_db":float(db.mean()),"sd_db":float(db.std(ddof=1)) if len(db)>1 else 0.0,"calibration":"JAXA gamma0 dB = 10*log10(DN^2)-83","pixel_state":"PROCESSADO"})
+                        scene_paths.append(a["href"])
             except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
-        if {"HH","HV"}.issubset({str(x.get("polarization","")).upper() for x in stats}):break
+        # Never combine HH and HV from different acquisition scenes in one dual-pol model.
+        if {"HH","HV"}.issubset({str(x.get("polarization","")).upper() for x in scene_stats}):
+            stats=scene_stats; paths=scene_paths; break
+        if len(scene_stats)>len(stats):stats=scene_stats; paths=scene_paths
     return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,"paths":paths,"stats":stats,"errors":errors,"asset_keys_by_scene":[{"scene":it.get("id"),"keys":sorted((it.get("assets") or {}).keys())} for it in items],"missing_polarizations":[pol for pol in ("HH","HV") if not any(str(x.get("polarization","")).upper()==pol for x in stats)],"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
 def lband_dualpol_diagnostic(stats,biome="",phys="",prior_agb_mg_ha=None):
