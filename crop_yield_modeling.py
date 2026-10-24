@@ -63,9 +63,12 @@ def _check_source_provenance(frame: pd.DataFrame) -> None:
                 "weather_source", "weather_source_url"):
         if frame[col].isna().any() or frame[col].astype(str).str.strip().eq("").any():
             raise ValueError("missing provenance: " + col)
-    if not frame[["sar_crop_validated", "sar_vigor_validated",
-                  "sar_stress_validated"]].apply(
-                      lambda col: col.map(lambda v: v is True or v == 1)).all().all():
+    truth = {"true", "1", "yes", "sim"}
+    valid_sar = frame[["sar_crop_validated", "sar_vigor_validated",
+                       "sar_stress_validated"]].apply(
+        lambda col: col.map(lambda v: (str(v).strip().casefold() in truth)
+                            if isinstance(v, str) else bool(v)))
+    if not valid_sar.all().all():
         raise ValueError("independent in-domain SAR crop, vigor and stress validation is required")
     if frame["yield_source_url"].astype(str).str.contains(
             "mapbiomas", case=False, regex=False).any():
@@ -73,26 +76,47 @@ def _check_source_provenance(frame: pd.DataFrame) -> None:
 
 
 def _feature_columns(frame: pd.DataFrame) -> list[str]:
-    sar = [c for c in frame.columns if c.startswith("sar_") and
-           c not in {"sar_crop_validated", "sar_vigor_validated",
-                     "sar_stress_validated", "sar_source_url"}]
+    meta = {"sar_crop_validated", "sar_vigor_validated", "sar_stress_validated",
+            "sar_source_url", "weather_source", "weather_source_url"}
+    sar = [c for c in frame.columns if c.startswith(
+               ("sar_crop_", "sar_vigor_", "sar_phenology_", "sar_stress_"))
+           and c not in meta]
     climate = [c for c in frame.columns if c.startswith(("climate_", "weather_"))
-               and c not in {"weather_source", "weather_source_url"}]
+               and c not in meta]
+    numeric = []
+    for col in sar + climate:
+        converted = pd.to_numeric(frame[col], errors="coerce")
+        if converted.notna().any():
+            frame[col] = converted
+            numeric.append(col)
     groups = {
-        "SAR crop identity": any(c.startswith("sar_crop_") for c in sar),
-        "SAR vigor/phenology": any(c.startswith(("sar_vigor_", "sar_phenology_")) for c in sar),
-        "SAR nonspecific stress anomaly": any(c.startswith("sar_stress_") for c in sar),
-        "dynamic climate": bool(climate),
+        "SAR crop identity": any(c.startswith("sar_crop_") for c in numeric),
+        "SAR vigor/phenology": any(c.startswith(("sar_vigor_", "sar_phenology_")) for c in numeric),
+        "SAR nonspecific stress anomaly": any(c.startswith("sar_stress_") for c in numeric),
+        "dynamic climate": any(c.startswith(("climate_", "weather_")) for c in numeric),
     }
     missing = [name for name, present in groups.items() if not present]
     if missing:
         raise ValueError("required predictor groups missing: " + ", ".join(missing))
-    cols = sar + climate
-    for col in cols:
-        frame[col] = pd.to_numeric(frame[col], errors="coerce")
-    if not frame[cols].notna().any(axis=0).all():
-        raise ValueError("a required predictor is entirely missing")
-    return cols
+    return numeric
+
+
+def _block_metrics(frame: pd.DataFrame, nominal_coverage: float) -> dict:
+    result = {}
+    for block, group in frame.groupby("spatial_block"):
+        independent = _independent_rows(group)
+        n = len(independent)
+        covered = int(independent["_covered"].sum())
+        ci = _wilson(covered, n)
+        result[str(block)] = {
+            "n_independent": n, "n_covered": covered, "coverage": covered/n if n else None,
+            "coverage_wilson95": ci, "interval_acceptable": (
+                n >= _MIN_TEST_MUNICIPALITIES and ci[0] <= nominal_coverage <= ci[1]),
+            "rmse_t_ha": float(np.sqrt(independent["_sq_error"].mean())) if n else None,
+            "mae_t_ha": float(independent["_abs_error"].mean()) if n else None,
+            "bias_t_ha": float(independent["_bias"].mean()) if n else None,
+        }
+    return result
 
 
 def train_crop_yield_model(
@@ -223,7 +247,7 @@ def train_crop_yield_model(
                        "rmse_t_ha": rmse, "mae_t_ha": mae, "bias_t_ha": bias,\n                       "sample_count": n_independent,
                        "median_baseline_mae_t_ha": baseline_mae,
                        "improvement_over_median": improvement,
-                       "internal_spatial_cv_mae_t_ha": cv_mae},
+                       "internal_spatial_cv_mae_t_ha": cv_mae,\n                       "per_spatial_block": per_block,\n                       "eligible_spatial_blocks": sorted(eligible_blocks)},
         "training": {"n_rows": len(train), "n_municipalities": train["municipality_code"].nunique(),
                      "first_year": int(train["season_year"].min()),
                      "last_year": int(train["season_year"].max()),
