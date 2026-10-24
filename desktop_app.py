@@ -1355,7 +1355,10 @@ class App(tk.Tk):
         classes=land.get("classes",[])
         non_native=[item for item in classes if item.get("native_status") is not True and float(item.get("area_ha") or 0)>0]
         native=[item for item in classes if item.get("native_status") is True and float(item.get("area_ha") or 0)>0]
-        if native and not non_native and land.get("status") not in ("error","erro","indisponivel"):
+        classified_ha=sum(float(item.get("area_ha") or 0) for item in classes)
+        aoi_ha=float(self.project.get("area_ha") or 0)
+        complete_coverage=aoi_ha>0 and abs(classified_ha-aoi_ha)<=max(0.05,0.001*aoi_ha)
+        if native and not non_native and complete_coverage and land.get("status") not in ("error","erro","indisponivel"):
             self._set(self.crop_res,"Não detectada a ocorrência de lavouras. Apenas vegetação nativa")
             return
         for item in classes:
