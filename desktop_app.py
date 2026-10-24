@@ -1400,19 +1400,39 @@ class App(tk.Tk):
                      "INDISPONÍVEL — opções: Bom, Médio ou Ruim")
         forecast=land.get("yield_forecast") if isinstance(land.get("yield_forecast"),dict) else {}
         interval=forecast.get("prediction_interval_t_ha") if isinstance(forecast.get("prediction_interval_t_ha"),dict) else {}
-        forecast_text="BLOQUEADA — modelo/validação científica insuficientes"
+        unit_conversion_audit=None
+        productivity_text="BLOQUEADA — modelo/validação científica insuficientes"
+        production_text="INDISPONÍVEL — área da cultura no polígono não quantificada"
         if forecast.get("status")=="previsao_validada":
             try:
                 value=float(forecast["yield_t_ha"]); low=float(interval["lower"]); high=float(interval["upper"])
                 if value>=0 and 0<=low<=value<=high:
-                    forecast_text=(format_ptbr(value,2)+" t/ha ("+format_ptbr(low,2)+"–"+
-                                  format_ptbr(high,2)+" t/ha)")
+                    from agricultural_yield_units import probable_productivity, probable_production
+                    crop_name=forecast.get("crop", "")
+                    product=probable_productivity(value,crop_name)
+                    unit_conversion_audit=product["conversion"]
+                    low_unit=probable_productivity(low,crop_name)
+                    high_unit=probable_productivity(high,crop_name)
+                    basis=" (sacas de 60 kg)" if product["unit"]=="sacas/ha" else ""
+                    productivity_text=(format_ptbr(product["value"],2)+" "+product["unit"]+basis+
+                        " ("+format_ptbr(low_unit["value"],2)+"–"+format_ptbr(high_unit["value"],2)+" "+product["unit"]+")")
+                    crop_area=forecast.get("crop_area_ha")
+                    if crop_area is not None and float(crop_area)>0:
+                        total=probable_production(value,crop_area,crop_name)
+                        lower_total=probable_production(low,crop_area,crop_name)["value_t"]
+                        upper_total=probable_production(high,crop_area,crop_name)["value_t"]
+                        production_text=(format_ptbr(total["value_t"],2)+" t no polígono ("+
+                            format_ptbr(lower_total,2)+"–"+format_ptbr(upper_total,2)+" t), área da cultura: "+
+                            format_ptbr(crop_area,2)+" ha")
+                        if total["sacks"] is not None:
+                            production_text+="; equivalente a "+format_ptbr(total["sacks"],2)+" sacas de 60 kg"
             except (KeyError,TypeError,ValueError):
-                forecast_text="BLOQUEADA — intervalo preditivo ausente ou inválido"
+                productivity_text="BLOQUEADA — intervalo preditivo ausente ou inválido"
         executive.extend(["","PAINEL EXECUTIVO — PREVISÃO DE SAFRAS",
                           "Idade provável da lavoura: "+age_text,
                           "Estado fitossanitário aparente: "+health_text,
-                          "Previsão de safra: "+forecast_text,
+                          "Produtividade provável: "+productivity_text,
+                          "Produção provável: "+production_text,
                           "Estado aparente é um sinal remoto inespecífico; não é diagnóstico de doença ou praga.",
                           "Carbono nativo: calculado separadamente na aba de formações nativas."])
         audit=["AUDITORIA TÉCNICA — USO DO SOLO, CULTURAS E FONTES",
@@ -1425,7 +1445,8 @@ class App(tk.Tk):
         audit.extend(["", "Proveniência dos indicadores executivos:",
                       json.dumps({"probable_crop_age":age_assessment,
                                   "apparent_phytosanitary_state":health,
-                                  "yield_forecast":forecast},ensure_ascii=False,indent=2,default=str)])
+                                  "yield_forecast":forecast,
+                                  "yield_unit_conversion":unit_conversion_audit},ensure_ascii=False,indent=2,default=str)])
         for item in classes:
             audit.append(json.dumps(item,ensure_ascii=False,sort_keys=True,default=str))
         validation=land.get("validation")
