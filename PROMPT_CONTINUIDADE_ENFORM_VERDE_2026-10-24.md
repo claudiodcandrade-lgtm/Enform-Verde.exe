@@ -154,3 +154,9 @@ ATENÇÃO: renderizador independente ainda NÃO integrado à GUI Windows nem val
 - Em commit 0c1469c07a9943940891d3f40823c71e0aea78fc, a rota ALOS/PALSAR passou a selecionar apenas HH/HV da MESMA cena, não agregando estatísticas de aquisições diferentes; tenta as cenas até obter par válido, preservando diagnóstico de falhas.
 - Build #40115292877 estava em andamento na última consulta e antecede o commit de integridade SAR. Requer novo build no commit atual e teste real de HH/HV antes de liberação.
 - Não alegar todas funcionalidades operacionais: falta validação de modelos agrícolas e integrações INMET/Climatempo, além dos gates Windows SAR.
+
+## Última verificação de 24/10/2026
+- CI dashboard #40115571098 concluído com sucesso, após a inclusão do teste de regressão ALOS por cena e correção do script de segurança.
+- Build Windows #40115571132 ainda em andamento na última verificação, sem artefato final; não há prova de EXE operacional.
+- Manter testes de aceitação de dados reais e distinguir processamento SAR, regressão válida, fallback bibliográfico e ausência de observáveis. Não reduzir critérios para gerar ZIP.
+- Aguardam comprovação: validação HH/HV ao vivo, smoke test EXE, INMET/BDMEP dinâmico, fenologia/vigor/produtividade com validação independente.
