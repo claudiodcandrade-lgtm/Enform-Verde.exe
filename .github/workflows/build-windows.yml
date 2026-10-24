@@ -611,7 +611,7 @@ jobs:
           al=s.planetary_alos_palsar(g,Path(tempfile.mkdtemp(prefix="cerrado_sar_")))
           assert al.get("stats"), "No public ALOS/PALSAR pixels returned for Cerrado test AOI"
           pols={str(x.get("polarization","")).upper() for x in al["stats"]}
-          assert "HV" in pols, "HV polarization missing from public ALOS/PALSAR test"
+          assert "HV" in pols, "HV polarization missing from public ALOS/PALSAR test; diagnostics="+repr({"stats":al.get("stats"),"errors":al.get("errors"),"assets":al.get("asset_keys_by_scene"),"missing":al.get("missing_polarizations")})
           r=s.yu_saatchi_tropical_shrubland_agb(al["stats"],"Cerrado","Savana Arborizada")
           assert r is not None, "Real Cerrado HV is outside quantitative low-biomass model domain; choose another AOI rather than forcing AGB"
           assert 0 < r["agb_mg_ha"] <= 100 and r["data_origin"].startswith("SAR_L_PALSAR")
