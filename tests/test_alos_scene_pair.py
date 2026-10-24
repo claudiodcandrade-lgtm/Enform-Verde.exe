@@ -38,6 +38,13 @@ class ALOSScenePairTests(unittest.TestCase):
         self.assertEqual({x["polarization"] for x in result["stats"]},{"HH","HV"})
         self.assertEqual(result["missing_polarizations"],[])
 
+    def test_gtdx_rh98_cannot_enter_h100_inventory_model(self):
+        result=sar_pipeline.tapajos_h100_structure_agb(
+            None,{"height_mean_m":25.0,"height_definition_compatible_with_H100":False,
+                  "sensor":"TanDEM-X InSAR + GEDI"},"Amazônia","Floresta Ombrófila Densa")
+        self.assertEqual(result["status"],"SAR_HEIGHT_STRUCTURE_BLOCKED")
+        self.assertIsNone(result["agb_mg_ha"])
+
     def test_no_cross_scene_pair_when_only_single_polarizations_exist(self):
         scenes=[{"id":"scene1","assets":{"HH":{"href":"https://example.test/HH1"}}},
                 {"id":"scene2","assets":{"HV":{"href":"https://example.test/HV2"}}}]
