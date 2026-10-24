@@ -341,6 +341,25 @@ O usuário reforçou que a atualidade das aquisições SAR é fundamental para a
 3. Ler pixels reais dos COGs MPC assinados e medir a latência da coleção RTC para uso operacional, comparando com a aquisição mais recente do CDSE.
 4. Só disponibilizar análise fenológica atualizada após a aquisição recente e pixels válidos. Acesso a COG histórico ou inventário de metadados não satisfaz atualidade nem habilita previsão.
 
-**Estado após esta orientação:** requisito incorporado no prompt e gate de atualidade atualizado no código local; teste de range COG realizado; ainda faltam teste de atualidade com aquisição recente de 2026, leitura/decodificação de pixels geoespaciais, integração ao painel, máscara independente, correlação SAR–PAM e previsão validada. Não declarar esses itens concluídos.
+**Estado após esta orientação:** requisito incorporado no prompt e gate de atualidade atualizado no código local; consulta a aquisições recentes de 2026 concluída para Brasília; ainda faltam latência de publicação, leitura/decodificação de pixels geoespaciais, integração ao painel, máscara independente, correlação SAR–PAM e previsão validada. Não declarar esses itens concluídos.
 
 O gate atualizado foi verificado localmente em 3 testes de atualidade; os 2 testes PAM também passaram. O workflow Windows agora regenera e publica a série PAM, e inclui esses testes na suíte do PR.
+
+## ADENDO — aquisição SAR recente encontrada para Brasília (24/10/2026)
+
+Para responder ao requisito de atualidade, foi feita uma consulta real ao STAC do Microsoft Planetary Computer Sentinel‑1 RTC, com bbox `[-47.95, -15.85, -47.90, -15.80]` e janela 24/09/2026–24/10/2026. O catálogo retornou 3 aquisições na mesma órbita aproximada:
+
+- `S1D_IW_GRDH_1SDV_20261023T084435_20261023T084500_005140_009BDC_rtc` — `2026-10-23T08:44:48.422103Z`;
+- `S1D_IW_GRDH_1SDV_20261011T084435_20261011T084500_004965_0095DD_rtc` — `2026-10-11T08:44:48.369349Z`;
+- `S1D_IW_GRDH_1SDV_20260929T084435_20260929T084500_004790_008FB0_rtc` — `2026-09-29T08:44:48.209219Z`.
+
+A última aquisição listada é de 23/10, aproximadamente um dia antes da consulta; as três datas mostram intervalos de 12 dias nesta AOI/período. O resultado comprova que o catálogo RTC pode oferecer observações recentes sobre Brasília em 2026, sem login individual. **Não comprova latência sistemática de publicação** (o campo de publicação ainda precisa ser verificado), leitura/decodificação de VV/VH, pixels válidos, cobertura da lavoura, identificação de cultura ou vigor. Não generalizar a atualidade para outras AOIs, órbitas ou datas.
+
+### Próxima verificação operacional de atualidade
+
+1. Em consultas programadas por AOI, registrar separadamente acquisition datetime, published/created datetime quando presentes, diferença aquisição→disponibilização, IDs e footprints.
+2. Assinar os assets da aquisição de 23/10/2026 e abrir uma janela COG por GDAL/Rasterio sobre a área de teste; guardar valores VV/VH, CRS, nodata, unidade/escala e pixels válidos. Nunca salvar o token SAS.
+3. Comparar a série observada de cada AOI com revisita e órbita realmente presentes; usar os intervalos observados como evidência, mas calibrar o limite de idade por cultura/região/fase antes de habilitar previsão.
+4. Manter abstenção quando o catálogo não tiver aquisição suficientemente recente segundo critério validado, mesmo que haja dados históricos acessíveis.
+
+**Atualização de estado:** existe evidência concreta de cenas SAR atuais no catálogo para Brasília (última aquisição 23/10/2026, 1 dia antes da busca) e de cadência observada de 12 dias nessa série curta. A adequação para monitoramento de safra continua pendente até medir latência, ler pixels válidos e validar máscara/fenologia; previsão e correlação SAR–PAM seguem bloqueadas.
