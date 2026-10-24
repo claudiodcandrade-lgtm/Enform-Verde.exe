@@ -142,3 +142,9 @@ ATENÇÃO: renderizador independente ainda NÃO integrado à GUI Windows nem val
 - Sem artefato Windows final dessa execução; PyInstaller não foi alcançado.
 - Teste OUTSIDE_AMAZON_NATIONAL_FALLBACK_OK confirmou fallback bibliográfico Cerrado 16,55 Mg/ha (7,95–25,15), não estimativa SAR validada.
 - Fenologia, vigor, safra, INMET horário e Climatempo continuam incompletos. Não declarar versão plenamente operacional.
+
+## Correção da busca ALOS HV — 24/10/2026
+- Teste dashboard #40114716898 aprovado, inclusive NASA POWER JSON mock corrigido.
+- Encontrada possível falha no planetary_alos_palsar: encerrava o laço após duas estatísticas quaisquer, inclusive duas HH, sem exigir HV. Corrigido no commit a058b465eff0a5f170c13c1d0346a0c80a66ee7a: encerra somente quando há HH e HV.
+- Adicionados campos asset_keys_by_scene e missing_polarizations e mensagem diagnóstica no gate Windows (commits 13ddeeb4 e 7369333) para identificar banda ausente, falha de leitura ou metadados inconsistentes.
+- Esta correção precisa de novo teste ao vivo; não afirmar que HV foi obtido ou que o EXE passou.
