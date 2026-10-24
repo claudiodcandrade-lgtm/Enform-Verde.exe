@@ -8,6 +8,14 @@ class WeatherExecutiveTests(unittest.TestCase):
         nearest=nearest_automatic_stations(-3.035,-54.9475,stations)
         self.assertEqual(nearest[0][1]["CD_ESTACAO"],"A001")
         self.assertEqual(len(nearest),1)
+    def test_missing_station_values(self):
+        from unittest.mock import patch
+        from inmet_weather_client import fetch_inmet_nearby
+        stations=[{"CD_ESTACAO":"A001","VL_LATITUDE":-3.0,"VL_LONGITUDE":-55.0}]
+        with patch("inmet_weather_client._get_json",side_effect=[stations,[{"TEM_INS":None,"CHUVA":None}]]):
+            result=fetch_inmet_nearby(-3.035,-54.9475)
+        self.assertEqual(result["status"],"indisponivel")
+
     def test_no_fabricated_inmet_data(self):
         lines=weather_executive_lines({"status":"indisponivel","reason":"sem estação"},
                                       {"mean_temperature_c":30.83,"rain_mm":1473.84,"gdd_c_day":1887.94,"temperature_days":89},
