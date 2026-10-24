@@ -22,7 +22,7 @@ def _safe(value):
     return escape(str(value if value is not None else "Não informado"))
 
 def _crop_age_display(field):
-    value = field.get("probable_crop_age_days")
+    value = field.get("probable_crop_age_months")
     if (field.get("crop_age_validation_status") != "validated" or
             field.get("sar_freshness_status") != "cenas_recentes_identificadas" or value is None):
         return "Indisponível — sem idade fenológica validada"
@@ -32,7 +32,7 @@ def _crop_age_display(field):
             return "Indisponível — idade inválida"
     except (TypeError, ValueError):
         return "Indisponível — idade inválida"
-    return _pt(value) + " dias"
+    return _pt(value) + " meses"
 
 def _health_display(field):
     allowed = {"bom": "Bom", "médio": "Médio", "medio": "Médio", "ruim": "Ruim"}
