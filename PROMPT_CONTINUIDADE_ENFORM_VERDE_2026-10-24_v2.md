@@ -400,3 +400,43 @@ Este resultado **corrige e substitui** os trechos anteriores deste prompt que di
 5. Integrar a API de previsão ao fluxo da aplicação e produzir novo build Windows; a versão candidata anterior não contém essas mudanças.
 
 **Conclusão responsável:** a PAM foi materializada e auditada; há leitura real de VV/VH RTC recente e o gate de atualidade foi inserido no código de previsão. A correlação SAR–produtividade e a previsão operacional continuam não validadas e devem permanecer bloqueadas até fechar as cinco pendências acima. Prioridade para monitoramento fenológico continua sendo idade de aquisição e atualidade por AOI/fase, com abstensão explícita quando a evidência temporal não satisfizer critérios calibrados.
+
+## ADENDO URGENTE — rotas alternativas para evidência independente SAR × PAM e previsão (24/10/2026)
+
+O usuário solicitou criar todas as rotas possíveis para solucionar a falta de máscara independente, extração por área agrícola, atualidade calibrada e backtest. Foi criado `docs/ROTAS_EVIDENCIA_SAR_PAM_CULTURAS_E_PREVISAO.md`, com fontes, papéis permitidos, alternativas e fluxo separado para (1) associação regional com PAM e (2) previsão de rendimento em campo.
+
+### Rotas implementadas neste adendo
+
+- `agricultural_evidence_routes.py`: catálogo priorizado de YieldSAT, CropHarvest, MapBiomas Agricultura, IBGE PAM/N9 e polígonos de talhão; `plan_evidence_routes()` declara limitações e blockers por tarefa e nunca habilita liberação científica automaticamente. A junção `build_pam_sar_panel()` pareia PAM real à tabela SAR por cultura×N9×ano e exige uma aprovação explícita de máscara independente, hash de modelo e proveniência. Essa flag é contrato/auditoria de entrada, não certificado automático de validade.
+- `sentinel1_mpc.py`: busca Sentinel‑1 RTC via STAC público paginado, deduplica cenas, obtém SAS curto em runtime, restringe hosts e lê janela COG por coordenada ou estatísticas zonais VV/VH em polígono verificado usando Rasterio com verificação TLS habilitada e CA do sistema. Não guarda token. A leitura não classifica cultura; identidade e independência do polígono vêm da fonte de referência separada.
+- `tests/test_agricultural_evidence_routes.py`: contratos de priorização de fontes, bloqueio de pseudo-rótulos MapBiomas, hash/proveniência na junção PAM×SAR e segurança da URL do asset.
+- Os gates já existentes seguem obrigatórios: `crop_map_training.py` admite mapas apenas como pseudorrótulo para treino; `independent_sar_validation.py` recebe predições SAR feitas em unidades de campo independentes; previsão exige evidência SAR de cultura/vigor/sinal inespecífico de estresse, clima, atualidade e intervalo calibrado.
+
+### Alternativas de referência identificadas
+
+1. **YieldSAT** (fonte principal para validação externa brasileira de soja/milho/trigo): 293 campos de soja, 118 de milho e 140 de trigo no Brasil segundo a página oficial, safra entre 2017–2024; combina polígonos de campo revisados e rendimento monitorado por colhedora com série Sentinel‑2. A página disponibiliza o fluxo de acesso ao dataset. Cruzar por campo/safra com Sentinel‑1 RTC adquirido pelo sistema. Não considerar a camada Sentinel‑2 como validação SAR, e conferir licença/geografia e distribuição dos holdouts.
+2. **CropHarvest**: dataset global aberto com labels binários e multiclasses e subconjunto acompanhado de Sentinel‑1/Sentinel‑2/clima; usar para pré-treino e transferência depois de auditar países, fonte original, classe e duplicatas. Não substitui referência independente específica do Brasil.
+3. **MapBiomas Agricultura**: produtos e mapas recortáveis para treinamento fraco, prior/estratificação e amostragem. Proibido usá-los como verdade independente quando o modelo os usou em treino, ajuste ou seleção.
+4. **IBGE PAM/SIDRA em N9**: alvo observado agregado para associação regional em 2015–2024; nunca identifica píxeis/talhões. Exige máscaras SAR independentes, harmonização de código territorial e safra e clima alinhado.
+5. **Rótulos de campo complementares para arroz, feijão, sorgo, café, cana e citros**: buscar ensaios e parcelas georreferenciados, cooperativas/colhedoras com licença, publicações Embrapa/universidades e dados de pesquisa. CropHarvest/MapBiomas podem complementar treino, não substituir o teste independente específico da cultura.
+6. **Geometrias de talhão (ex.: GloCAB e bases públicas/research)**: suportam unidade amostral/buffer, mas sem classe de cultura e safra auditadas não contam como rótulo. PAM municipal ou microrregional não deve ser rasterizada para inventar verdade de pixel.
+7. **Aquisição SAR alternativa**: MPC RTC público e paginado (implementado); CDSE STAC/OData para GRD e ASF HyP3/Earthdata como rotas de contingência. Manter órbita, RTC/GRD, versão, unidade e cadeia de processamento segregadas até harmonização.
+8. **Atualidade fenológica**: combinar revisita observada por AOI/órbita (MPC/CDSE/ASF) com calendário oficial e pontos de fenologia/rendimento independentes. Calibrar limite de idade com erro do classificador/vigor e do yield por corte temporal em holdout separado; a distribuição de gap orbital sozinha não determina limite biológico. Sem estudo, limite ausente e inferência bloqueada.
+
+### Verificação desta rodada e estado de evidência
+
+Na validação inicial, os testes de rotas, atualidade SAR, previsão/incerteza, treino de pseudorrótulos e contratos de treinamento passaram. **A verificação final desta rodada passou em 31 testes direcionados**. As rotas de código e seus contratos estão preparados; o pacote YieldSAT ainda não foi baixado, a submissão de formulário não foi feita, e não há campos independentes SAR processados, painel real SAR×PAM, limite de atualidade calibrado nem backtest concluído. Portanto a pendência foi avançada com caminhos executáveis e alternativas para cobrir as culturas; a previsão e a correlação continuam não validadas e bloqueadas até consumir os dados reais/licenciados e aprovar o holdout externo.
+
+Fontes primárias registradas no documento de rotas: YieldSAT https://yieldsat.github.io/ ; CropHarvest https://github.com/nasaharvest/cropharvest e https://openreview.net/forum?id=JtjzUXPEaCu ; MapBiomas https://brasil.mapbiomas.org/downloads/ ; IBGE SIDRA https://apisidra.ibge.gov.br/ ; Microsoft Planetary Computer https://planetarycomputer.microsoft.com/docs/.
+
+## ADENDO URGENTE — campos obrigatórios no painel executivo de previsão de safras (24/10/2026)
+
+O usuário solicitou que, em painel executivo simples e separado da trilha de auditoria, sejam apresentados literalmente os campos **“Idade provável da lavoura”**, **“Estado fitossanitário aparente”** e **“Previsão de safra”**. Implementação desta rodada:
+
+- No desktop, a aba `Painel executivo` mostra os três campos e a aba `Auditoria técnica` mantém fontes e evidências em separado. Quando não há evidência aprovada, exibe “INDISPONÍVEL” ou “BLOQUEADA”.
+- Idade provável só é visível quando a estimativa fenológica é validada e o gate informa `cenas_recentes_identificadas`.
+- Estado fitossanitário aparente aceita apenas **Bom / Médio / Ruim** e exige validação e SAR atual. É um indicador remoto inespecífico; não rotular praga, doença ou deficiência.
+- Previsão exibe t/ha com intervalo coerente somente sob status `previsao_validada`; estimativa pontual sem intervalo/calibração não é mostrada como previsão.
+- O dashboard HTML `dual_executive_dashboard.py` aplica os mesmos gates e separa a aba agrícola do carbono nativo. Contrato dos campos e proveniência está descrito em `docs/ROTAS_EVIDENCIA_SAR_PAM_CULTURAS_E_PREVISAO.md`.
+
+Os testes do painel verificam os rótulos, a abstenção sem validação, a não divulgação de previsão pontual não calibrada, a separação do painel de carbono e a rejeição de valores de incerteza inválidos. Suíte direcionada executada nesta rodada: **31 testes passaram**; `git diff --check` e compilação sintática dos módulos alterados também passaram. A UI não cria modelos nem valida dados; continua mostrando indisponibilidade enquanto o pipeline não fornecer evidência real elegível. O novo workflow Windows deve ser confirmado após esta alteração; os builds anteriores não validam o commit atual.
