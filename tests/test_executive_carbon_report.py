@@ -11,6 +11,14 @@ class ExecutiveCarbonReportTests(unittest.TestCase):
         u=uncertainty_for_pool({"tc":8.7,"range_tc_ha":[7.4,10]})
         self.assertAlmostEqual(u["absolute_tc_ha"],1.3)
         self.assertAlmostEqual(u["percent"],14.9425287356)
+    def test_litter_dry_mass_without_documented_carbon_fraction(self):
+        u=uncertainty_for_pool({"tc":2.33,"range_dry_mg_ha":[3.08,6.81]})
+        self.assertIsNone(u["absolute_tc_ha"])
+        self.assertIn("não documentada",u["kind"])
+    def test_litter_dry_mass_with_documented_fraction(self):
+        u=uncertainty_for_pool({"tc":2.33,"range_dry_mg_ha":[3.08,6.81],"carbon_fraction":0.47})
+        self.assertAlmostEqual(u["absolute_tc_ha"],(6.81-3.08)*0.47/2)
+
     def test_soil_spatial_variability_not_prediction_error(self):
         u=uncertainty_for_pool({"tc":46.06,"spatial_sd_tc_ha":2.0747289})
         self.assertIn("NÃO é erro",u["kind"])
