@@ -9,7 +9,7 @@ class FakeResponse:
     def __init__(self,data):self.data=data
     def __enter__(self):return self
     def __exit__(self,*args):pass
-    def read(self,n):return self.data
+    def read(self,n=-1):return self.data if n<0 else self.data[:n]
 def opener(request,timeout):return FakeResponse(b"<cidade><previsao><dia>2026-10-25</dia><tempo>pn</tempo></previsao></cidade>")
 
 class WeatherTests(unittest.TestCase):
