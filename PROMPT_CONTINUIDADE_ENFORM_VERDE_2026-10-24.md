@@ -148,3 +148,9 @@ ATENÇÃO: renderizador independente ainda NÃO integrado à GUI Windows nem val
 - Encontrada possível falha no planetary_alos_palsar: encerrava o laço após duas estatísticas quaisquer, inclusive duas HH, sem exigir HV. Corrigido no commit a058b465eff0a5f170c13c1d0346a0c80a66ee7a: encerra somente quando há HH e HV.
 - Adicionados campos asset_keys_by_scene e missing_polarizations e mensagem diagnóstica no gate Windows (commits 13ddeeb4 e 7369333) para identificar banda ausente, falha de leitura ou metadados inconsistentes.
 - Esta correção precisa de novo teste ao vivo; não afirmar que HV foi obtido ou que o EXE passou.
+
+## Integridade SAR e estado de release
+- Dashboard CI #40115292879 aprovado.
+- Em commit 0c1469c07a9943940891d3f40823c71e0aea78fc, a rota ALOS/PALSAR passou a selecionar apenas HH/HV da MESMA cena, não agregando estatísticas de aquisições diferentes; tenta as cenas até obter par válido, preservando diagnóstico de falhas.
+- Build #40115292877 estava em andamento na última consulta e antecede o commit de integridade SAR. Requer novo build no commit atual e teste real de HH/HV antes de liberação.
+- Não alegar todas funcionalidades operacionais: falta validação de modelos agrícolas e integrações INMET/Climatempo, além dos gates Windows SAR.
