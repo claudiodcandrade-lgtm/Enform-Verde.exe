@@ -24,6 +24,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_desktop.txt
           pip install pillow
+      - name: Materialize official PAM microregion series
+        run: python tools/build_sidra_pam_microregion_series.py
+      - name: Upload PAM series and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: pam-microregion-yield-2015-2024
+          path: |
+            data/pam_microregion_yield_2015_2024.csv.gz
+            data/pam_microregion_yield_2015_2024.metadata.json
+          retention-days: 30
       - name: Inspect public IFN necromass and point schemas
         continue-on-error: true
         shell: pwsh
