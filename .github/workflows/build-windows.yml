@@ -550,10 +550,12 @@ jobs:
           s.cci_history=lambda *args,**kwargs:{"items":0,"paths":[]}
           with tempfile.TemporaryDirectory() as td:
               out=s.automatic_pipeline(g,"Amazônia","Floresta Ombrófila Densa das Terras Baixas",cache=td)
-          lit=out["literature_reference"]
-          assert out["status"]=="SAR_PROCESSADO_SEM_MODELO_AGB" and lit["available"] and lit["sar_processed"]
-          assert abs(lit["agb_mg_ha"]-273.515)<1e-6 and len(lit["sar_pixel_audit"])==2
-          print("AUTOMATIC_SAR_TO_MICROREGIONAL_FALLBACK_FLOW_OK")
+          # Real SAR pixels without a validated quantitative AGB model must NOT become a literature AGB estimate.
+          assert out["status"]=="SAR_PROCESSADO_SEM_MODELO_AGB",out
+          assert out.get("agb_mg_ha") is None,out
+          assert out.get("literature_reference") is None,out
+          assert out.get("sar_attempted_first") is True,out
+          print("AUTOMATIC_SAR_NO_UNVALIDATED_AGB_FALLBACK_OK")
           '@ | Set-Content fallback_flow_test.py -Encoding UTF8
           python fallback_flow_test.py
           python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
