@@ -1332,7 +1332,7 @@ class App(tk.Tk):
         """Separate concise executive results from traceable technical audit."""
         f=self.tabs[5]
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
-        ttk.Label(f,text="Classificação e clima observados, com previsão de safra bloqueada até validação científica.",
+        ttk.Label(f,text="Painel executivo agrícola — atualidade SAR, estimativas aparentes e previsão validada.",
                   wraplength=1000).pack(anchor="w",pady=(4,8))
         ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
         views=ttk.Notebook(f);views.pack(fill="both",expand=True)
@@ -1348,10 +1348,11 @@ class App(tk.Tk):
         audit_scroll=ttk.Scrollbar(audit_box,orient="vertical",command=self.crop_audit.yview)
         self.crop_audit.pack(side="left",fill="both",expand=True);audit_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.crop_res);self._bind_text_scroll(self.crop_audit)
-        self._set(self.crop_res,"Execute a análise para consultar as classes agrícolas.\n"
-                  "Cultura e fase fenológica: NÃO DETERMINADAS sem classificador treinado e validado.\n"
-                  "Estado fitossanitário: NÃO DETERMINADO sem indicadores SAR validados.\n"
-                  "Previsão de safra e intervalo preditivo: BLOQUEADOS sem modelo integrado e calibração independente.")
+        self._set(self.crop_res,"PAINEL EXECUTIVO — PREVISÃO DE SAFRAS\n\n"
+                  "Idade provável da lavoura: INDISPONÍVEL — requer evidência fenológica SAR validada.\n"
+                  "Estado fitossanitário aparente: INDISPONÍVEL — opções: Bom, Médio ou Ruim; requer modelo e evidência validados. Não é diagnóstico de doença ou praga.\n"
+                  "Previsão de safra: BLOQUEADA — requer máscara independente, SAR recente, clima e validação espaço-temporal.\n\n"
+                  "Execute a análise para consultar cobertura, cultura e disponibilidade dos dados.")
         self._set(self.crop_audit,"A trilha de auditoria da análise será apresentada aqui.")
 
     def _present_cultivated_monitoring(self,land):
@@ -1382,10 +1383,37 @@ class App(tk.Tk):
                                  str(item.get("source","não informada")))
         else:
             executive.append("• Não determinado")
-        executive.extend(["","Cultura e fase fenológica: NÃO DETERMINADAS sem classificador validado.",
-                          "Padrões SAR indicativos de estresse: NÃO DETERMINADOS sem modelo validado.",
-                          "Previsão de safra: BLOQUEADA.",
-                          "Produtividade, produção e intervalo preditivo: NÃO DISPONÍVEIS.",
+        age_assessment=land.get("probable_crop_age") if isinstance(land.get("probable_crop_age"),dict) else {}
+        age_value=age_assessment.get("days") if (age_assessment.get("status")=="validated" and
+                   age_assessment.get("freshness_status")=="cenas_recentes_identificadas") else None
+        try:
+            age_value=float(age_value)
+            age_text=(format_ptbr(age_value,1)+" dias" if age_value>=0 else
+                      "INDISPONÍVEL — sem estimativa fenológica SAR validada")
+        except (TypeError,ValueError):
+            age_text="INDISPONÍVEL — sem estimativa fenológica SAR validada"
+        health=land.get("apparent_phytosanitary_state") if isinstance(land.get("apparent_phytosanitary_state"),dict) else {}
+        health_value=str(health.get("category","")).strip().casefold()
+        health_options={"bom":"Bom","médio":"Médio","medio":"Médio","ruim":"Ruim"}
+        health_text=(health_options[health_value] if (health.get("status")=="validated" and
+                     health.get("freshness_status")=="cenas_recentes_identificadas" and health_value in health_options) else
+                     "INDISPONÍVEL — opções: Bom, Médio ou Ruim")
+        forecast=land.get("yield_forecast") if isinstance(land.get("yield_forecast"),dict) else {}
+        interval=forecast.get("prediction_interval_t_ha") if isinstance(forecast.get("prediction_interval_t_ha"),dict) else {}
+        forecast_text="BLOQUEADA — modelo/validação científica insuficientes"
+        if forecast.get("status")=="previsao_validada":
+            try:
+                value=float(forecast["yield_t_ha"]); low=float(interval["lower"]); high=float(interval["upper"])
+                if value>=0 and 0<=low<=value<=high:
+                    forecast_text=(format_ptbr(value,2)+" t/ha ("+format_ptbr(low,2)+"–"+
+                                  format_ptbr(high,2)+" t/ha)")
+            except (KeyError,TypeError,ValueError):
+                forecast_text="BLOQUEADA — intervalo preditivo ausente ou inválido"
+        executive.extend(["","PAINEL EXECUTIVO — PREVISÃO DE SAFRAS",
+                          "Idade provável da lavoura: "+age_text,
+                          "Estado fitossanitário aparente: "+health_text,
+                          "Previsão de safra: "+forecast_text,
+                          "Estado aparente é um sinal remoto inespecífico; não é diagnóstico de doença ou praga.",
                           "Carbono nativo: calculado separadamente na aba de formações nativas."])
         audit=["AUDITORIA TÉCNICA — USO DO SOLO, CULTURAS E FONTES",
                "Método: "+str(land.get("method","não informado")),
@@ -1394,6 +1422,10 @@ class App(tk.Tk):
                "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
                "Avisos:"]+[str(x) for x in land.get("warnings",[]) or ["nenhum"]]
         audit.extend(["","Classes, fontes e metadados:"])
+        audit.extend(["", "Proveniência dos indicadores executivos:",
+                      json.dumps({"probable_crop_age":age_assessment,
+                                  "apparent_phytosanitary_state":health,
+                                  "yield_forecast":forecast},ensure_ascii=False,indent=2,default=str)])
         for item in classes:
             audit.append(json.dumps(item,ensure_ascii=False,sort_keys=True,default=str))
         validation=land.get("validation")
