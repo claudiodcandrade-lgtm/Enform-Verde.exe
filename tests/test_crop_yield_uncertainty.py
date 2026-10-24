@@ -22,7 +22,13 @@ class YieldUncertaintyTests(unittest.TestCase):
                 }
             },
             prediction_interval_t_ha={"lower":4.0,"upper":6.0,
-                                      "nominal_coverage":0.90,"method":"conformal"}
+                                      "nominal_coverage":0.90,"method":"conformal"},
+            freshness_provenance={"status":"cenas_recentes_identificadas",
+                "latest_acquisition_utc":"2026-10-23T08:44:48+00:00", "age_days":1,
+                "scenes_in_series_window":3, "crop":"soja", "region":"PR",
+                "phenological_phase":"florescimento",
+                "freshness_criteria":{"defined":True,"max_age_days":5,
+                    "minimum_scenes":3,"series_window_days":20,"source":"validated local protocol"}}
         )
 
     def test_calibrated_interval_is_reported(self):
@@ -66,6 +72,24 @@ class YieldUncertaintyTests(unittest.TestCase):
         args=dict(self.base)
         args["validation"]=dict(self.base["validation"])
         args["validation"]["prediction_interval_validation"]=dict(self.base["validation"]["prediction_interval_validation"],n_independent=20,n_covered=19)
+        result=evaluate_yield_forecast(**args)
+        self.assertEqual(result.status,"previsao_nao_habilitada")
+
+    def test_missing_sar_freshness_is_blocked(self):
+        args=dict(self.base); args.pop("freshness_provenance")
+        result=evaluate_yield_forecast(**args)
+        self.assertEqual(result.status,"previsao_nao_habilitada")
+        self.assertTrue(any("Atualidade SAR" in x for x in result.limitations))
+
+    def test_stale_sar_is_blocked(self):
+        args=dict(self.base)
+        args["freshness_provenance"]=dict(self.base["freshness_provenance"],age_days=12)
+        result=evaluate_yield_forecast(**args)
+        self.assertEqual(result.status,"previsao_nao_habilitada")
+
+    def test_wrong_region_sar_freshness_is_blocked(self):
+        args=dict(self.base)
+        args["freshness_provenance"]=dict(self.base["freshness_provenance"],region="SC")
         result=evaluate_yield_forecast(**args)
         self.assertEqual(result.status,"previsao_nao_habilitada")
 
