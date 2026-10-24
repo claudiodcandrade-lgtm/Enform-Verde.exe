@@ -31,8 +31,12 @@ class DashboardTests(unittest.TestCase):
         self.assertIn("Idade provável da lavoura",html)
         self.assertIn("70,00 dias",html)
         self.assertIn("Estado fitossanitário aparente",html)
+        self.assertIn("Produtividade provável",html)
+        self.assertIn("66,67 sacas/ha",html)
         self.assertIn("Previsão de safra",html)
-        self.assertIn("4,00 t/ha (3,50–4,50 t/ha)",html)
+        self.assertIn("Produção provável",html)
+        self.assertIn("12,00 t no polígono",html)
+        self.assertIn("200,00 sacas de 60 kg",html)
         self.assertIn("PARCIAL", html)
 
     def test_uncertainty_absence_visible(self):
