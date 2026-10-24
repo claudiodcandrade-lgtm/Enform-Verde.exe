@@ -92,3 +92,30 @@ def model_route_status(route):
     return {"operational":bool(entry["ready"]),"reference":entry["reference"],
             "reason":"modelo documentado, pesos e validacao local pendentes" if not entry["ready"] else "validado"}
 
+
+def classify_integrated_batch(records, *, output_path=None):
+    """Execute conservative integrated-system decisions over supplied observations.
+
+    No synthetic probabilities or inferred management evidence are generated.
+    """
+    import json
+    from pathlib import Path
+    if not isinstance(records,list):
+        raise ValueError("records must be a list")
+    results=[]
+    for index,record in enumerate(records):
+        if not isinstance(record,dict):
+            raise ValueError("invalid observation")
+        decision=identify_integrated_system(record.get("components"))
+        results.append({"observation_id":record.get("observation_id",index),
+                        "decision":decision,"class_name":decision["class_name"],
+                        "status":decision["status"]})
+    report={"status":"INTEGRATED_BATCH_EVALUATED","results":results,
+            "accepted":sum(r["class_name"] is not None for r in results),
+            "abstained":sum(r["class_name"] is None for r in results),
+            "caveat":"Requires externally validated component observations; not an image inference model."}
+    if output_path is not None:
+        target=Path(output_path)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+    return report
