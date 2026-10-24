@@ -57,6 +57,17 @@ Uma rota de dados só passa a “concluída” após download legal e auditável
 
 **Estado atual:** catálogo/planejador de rotas, adaptador MPC, assinatura temporária, leitura segura de pixels em ponto e polígono, junção auditável PAM×SAR e testes contratuais foram adicionados. As rotas YieldSAT, CropHarvest e MapBiomas estão especificadas com limites de uso. Ainda não há pacote de labels YieldSAT adquirido, máscara SAR validada, extração por lavoura, painel SAR×PAM real, limites temporais calibrados ou resultado de backtest. Portanto a pendência foi convertida em rotas e contratos de execução, mas a validação científica não deve ser anunciada antes de executar as etapas com os dados licenciados/reais.
 
+## Campos de previsão no painel executivo
+
+Na mesma área executiva, separada da auditoria, incluir as três leituras solicitadas e, no grupo **Previsão de safra**, os dois valores derivados:
+
+- **Idade provável da lavoura:** exibir idade/dias apenas com fenologia SAR validada e status de atualidade `cenas_recentes_identificadas`.
+- **Estado fitossanitário aparente:** apenas **Bom**, **Médio** ou **Ruim**, com modelo/avaliação e SAR atual validados; caso contrário “Indisponível”. Não é diagnóstico fitossanitário.
+- **Produtividade provável:** `sacas/ha` com conversão explícita para saca de 60 kg quando esse for o padrão usual documentado para a cultura (soja, milho, café em grão, arroz em casca, feijão, sorgo e trigo); cana, citros e demais culturas sem padrão adequado permanecem em `t/ha`. Fonte/conversão fica na auditoria.
+- **Produção provável:** produtividade provável × área efetivamente ocupada pela cultura dentro do polígono analisado. Exibir total em toneladas e, quando aplicável, equivalente em sacas de 60 kg. Propagar o intervalo preditivo para o total, condicionado à área fixa; se a área da cultura não estiver quantificada, exibir “Indisponível”, sem assumir que todo o polígono é lavoura.
+
+Produtividade e produção só aparecem com `forecast_status="previsao_validada"` e limites de intervalo coerentes. Sem validação, exibir “Bloqueada”. O contrato de entrada usa `yield_t_ha`, `prediction_interval_t_ha` e `crop_area_ha`; a camada visual não estima nenhum desses valores.
+
 ## Painel executivo solicitado
 
 Exibir, em leitura rápida e fora da trilha de auditoria, por unidade agrícola:
