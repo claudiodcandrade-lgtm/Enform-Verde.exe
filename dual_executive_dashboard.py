@@ -7,6 +7,7 @@ from html import escape
 from pathlib import Path
 from math import isfinite
 from carbon_dashboard_html import render_dashboard
+from agricultural_yield_units import probable_productivity, probable_production
 
 def _pt(value):
     v = float(value)
@@ -62,7 +63,28 @@ def _yield_display(field):
     if values is None:
         return "Bloqueada — intervalo preditivo ausente ou inválido"
     value, lower, upper = values
-    return _pt(value) + " t/ha (" + _pt(lower) + "–" + _pt(upper) + " t/ha)"
+    crop=field.get("crop", "")
+    unit=probable_productivity(value,crop)
+    low=probable_productivity(lower,crop)["value"]
+    high=probable_productivity(upper,crop)["value"]
+    label=unit["unit"]
+    basis=" (sacas de 60 kg)" if label=="sacas/ha" else ""
+    return _pt(unit["value"])+" "+label+basis+" ("+_pt(low)+"–"+_pt(high)+" "+label+")"
+
+def _production_display(field, values):
+    if values is None:
+        return "Indisponível — previsão não validada"
+    area=field.get("crop_area_ha",field.get("area_ha"))
+    if area is None or float(area)<=0:
+        return "Indisponível — área da cultura no polígono não quantificada"
+    value,lower,upper=values
+    total=probable_production(value,area,field.get("crop",""))
+    low=probable_production(lower,area,field.get("crop",""))["value_t"]
+    high=probable_production(upper,area,field.get("crop",""))["value_t"]
+    text=_pt(total["value_t"])+" t no polígono ("+_pt(low)+"–"+_pt(high)+" t)"
+    if total["sacks"] is not None:
+        text+="; equivalente a "+_pt(total["sacks"])+" sacas de 60 kg"
+    return text
 
 def render_cultivated_dashboard(report):
     """A crop panel; no carbon quantities are accepted or calculated here."""
@@ -92,18 +114,29 @@ def render_cultivated_dashboard(report):
                     "</td><td>" + _safe(_crop_age_display(field)) +
                     "</td><td>" + _safe(_health_display(field)) +
                     "</td><td>" + _safe(_yield_display(field)) +
-                    "</td><td>" + _cell(production, "t") +
+                    "</td><td>" + _safe(_production_display(field,valid_yield)) +
                     "</td><td>" + uncertainty +
                     "</td><td>" + _cell(production_uncertainty, "t") +
                     "</td><td>" + status + "</td></tr>")
-    details = "".join("<details><summary>" + _safe(f.get("crop", "Talhão")) +
-                      " — fontes e validação</summary><pre>" +
-                      _safe(f.get("provenance", "Não documentada")) + "</pre></details>"
-                      for f in fields)
+    detail_rows=[]
+    for f in fields:
+        provenance=f.get("provenance", "Não documentada")
+        conversion=None
+        if f.get("forecast_status")=="previsao_validada":
+            values=_verified_yield_interval(f)
+            if values:
+                conversion=probable_productivity(values[0],f.get("crop",""))["conversion"]
+        detail_rows.append("<details><summary>" + _safe(f.get("crop", "Talhão")) +
+                           " — fontes e validação</summary><pre>" +
+                           _safe(str(provenance)+"\nPadrão de unidade de produtividade: "+
+                                 (str(conversion) if conversion else "t/ha; sem conversão em sacas")) +
+                           "</pre></details>")
+    details="".join(detail_rows)
     return ("""<h2>Monitoramento de áreas cultivadas</h2>
 <p>Idade e estado fitossanitário aparente dependem de evidência SAR atual e validação apropriada. Estado aparente não é diagnóstico de doença ou praga.</p>
-<table><thead><tr><th>Cultura</th><th>Área</th><th>Idade provável da lavoura</th><th>Estado fitossanitário aparente</th>
-<th>Previsão de safra</th><th>Produção prevista</th><th>Incerteza de produtividade</th>
+<h3>Previsão de safra</h3>
+<table><thead><tr><th>Cultura</th><th>Área da cultura no polígono</th><th>Idade provável da lavoura</th><th>Estado fitossanitário aparente</th>
+<th>Produtividade provável</th><th>Produção provável</th><th>Incerteza de produtividade</th>
 <th>Incerteza de produção*</th><th>Status</th></tr></thead><tbody>""" +
             "".join(rows) + """</tbody></table>
 <p>*Propagação apenas da incerteza de produtividade, considerando a área fixa;
