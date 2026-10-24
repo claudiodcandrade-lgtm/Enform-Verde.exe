@@ -20,6 +20,50 @@ def _cell(value, unit=""):
 def _safe(value):
     return escape(str(value if value is not None else "Não informado"))
 
+def _crop_age_display(field):
+    value = field.get("probable_crop_age_days")
+    if (field.get("crop_age_validation_status") != "validated" or
+            field.get("sar_freshness_status") != "cenas_recentes_identificadas" or value is None):
+        return "Indisponível — sem idade fenológica validada"
+    try:
+        value = float(value)
+        if not isfinite(value) or value < 0:
+            return "Indisponível — idade inválida"
+    except (TypeError, ValueError):
+        return "Indisponível — idade inválida"
+    return _pt(value) + " dias"
+
+def _health_display(field):
+    allowed = {"bom": "Bom", "médio": "Médio", "medio": "Médio", "ruim": "Ruim"}
+    status = str(field.get("apparent_phytosanitary_state", "")).strip().casefold()
+    if (field.get("phytosanitary_validation_status") != "validated" or
+            field.get("sar_freshness_status") != "cenas_recentes_identificadas" or status not in allowed):
+        return "Indisponível"
+    return allowed[status]
+
+def _verified_yield_interval(field):
+    if field.get("forecast_status") != "previsao_validada":
+        return None
+    value = field.get("yield_t_ha")
+    interval = field.get("prediction_interval_t_ha")
+    try:
+        value = float(value)
+        lower, upper = float(interval["lower"]), float(interval["upper"])
+        if not all(isfinite(x) for x in (value, lower, upper)) or lower < 0 or upper < lower or not lower <= value <= upper:
+            raise ValueError
+    except (TypeError, KeyError, ValueError):
+        return None
+    return value, lower, upper
+
+def _yield_display(field):
+    if field.get("forecast_status") != "previsao_validada":
+        return "Bloqueada — modelo/validação insuficientes"
+    values = _verified_yield_interval(field)
+    if values is None:
+        return "Bloqueada — intervalo preditivo ausente ou inválido"
+    value, lower, upper = values
+    return _pt(value) + " t/ha (" + _pt(lower) + "–" + _pt(upper) + " t/ha)"
+
 def render_cultivated_dashboard(report):
     """A crop panel; no carbon quantities are accepted or calculated here."""
     fields = report.get("fields", [])
@@ -28,8 +72,12 @@ def render_cultivated_dashboard(report):
         area = field.get("area_ha")
         if area is not None and float(area) < 0:
             raise ValueError("Área cultivada negativa")
-        y = field.get("yield_t_ha")
-        error = field.get("yield_uncertainty_t_ha")
+        valid_yield = _verified_yield_interval(field)
+        y = valid_yield[0] if valid_yield is not None else None
+        raw_error = field.get("yield_uncertainty_t_ha")
+        if raw_error is not None and (not isfinite(float(raw_error)) or float(raw_error) < 0):
+            raise ValueError("Incerteza de produtividade inválida")
+        error = raw_error if valid_yield is not None else None
         if error is not None and (not isfinite(float(error)) or float(error) < 0):
             raise ValueError("Incerteza de produtividade inválida")
         uncertainty = ("Não quantificada" if error is None else
@@ -41,9 +89,9 @@ def render_cultivated_dashboard(report):
         status = _safe(field.get("status", "Sem validação"))
         rows.append("<tr><td>" + _safe(field.get("crop", "Cultura não determinada")) +
                     "</td><td>" + _cell(area, "ha") +
-                    "</td><td>" + _safe(field.get("phenology", "Não determinada")) +
-                    "</td><td>" + _safe(field.get("stress_indicator", "Não determinado")) +
-                    "</td><td>" + _cell(y, "t/ha") +
+                    "</td><td>" + _safe(_crop_age_display(field)) +
+                    "</td><td>" + _safe(_health_display(field)) +
+                    "</td><td>" + _safe(_yield_display(field)) +
                     "</td><td>" + _cell(production, "t") +
                     "</td><td>" + uncertainty +
                     "</td><td>" + _cell(production_uncertainty, "t") +
@@ -53,9 +101,9 @@ def render_cultivated_dashboard(report):
                       _safe(f.get("provenance", "Não documentada")) + "</pre></details>"
                       for f in fields)
     return ("""<h2>Monitoramento de áreas cultivadas</h2>
-<p>Indicadores de estresse não equivalem a diagnóstico de pragas ou doenças.</p>
-<table><thead><tr><th>Cultura</th><th>Área</th><th>Fase</th><th>Estresse</th>
-<th>Produtividade prevista</th><th>Produção prevista</th><th>Incerteza de produtividade</th>
+<p>Idade e estado fitossanitário aparente dependem de evidência SAR atual e validação apropriada. Estado aparente não é diagnóstico de doença ou praga.</p>
+<table><thead><tr><th>Cultura</th><th>Área</th><th>Idade provável da lavoura</th><th>Estado fitossanitário aparente</th>
+<th>Previsão de safra</th><th>Produção prevista</th><th>Incerteza de produtividade</th>
 <th>Incerteza de produção*</th><th>Status</th></tr></thead><tbody>""" +
             "".join(rows) + """</tbody></table>
 <p>*Propagação apenas da incerteza de produtividade, considerando a área fixa;
