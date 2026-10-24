@@ -128,7 +128,7 @@ class LandUseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, \
              patch('land_use_sar.classify_config',return_value=(sar,validation)), \
              patch('land_use_sar.raster_class_polygons',return_value=mb):
-            result=run_land_use(aoi,d,mapbiomas_path='TEST_ONLY')
+            result=run_land_use(aoi,d,config_path='SAR_TEST',mapbiomas_path='TEST_ONLY')
         rows=result['classes']
         sar_row=next(row for row in rows if row['source']=='SAR_VALIDADO')
         map_row=next(row for row in rows if row['source']=='MAPBIOMAS')
