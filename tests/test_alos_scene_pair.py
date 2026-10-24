@@ -38,4 +38,15 @@ class ALOSScenePairTests(unittest.TestCase):
         self.assertEqual({x["polarization"] for x in result["stats"]},{"HH","HV"})
         self.assertEqual(result["missing_polarizations"],[])
 
+    def test_no_cross_scene_pair_when_only_single_polarizations_exist(self):
+        scenes=[{"id":"scene1","assets":{"HH":{"href":"https://example.test/HH1"}}},
+                {"id":"scene2","assets":{"HV":{"href":"https://example.test/HV2"}}}]
+        def post(*args,**kwargs):return _Resp({"features":scenes})
+        def get(*args,**kwargs):return _Resp({"href":kwargs["params"]["href"]})
+        with patch.object(sar_pipeline.requests,"post",side_effect=post),patch.object(sar_pipeline.requests,"get",side_effect=get),patch("rasterio.Env",return_value=_Env()),patch("rasterio.open",return_value=_Dataset()),patch("rasterio.mask.mask",return_value=(np.ma.array([[[100.,120.]]]),None)),patch("rasterio.warp.transform_geom",return_value={"type":"Polygon","coordinates":[]}):
+            result=sar_pipeline.planetary_alos_palsar(_GDF(),"unused")
+        self.assertEqual(len(result["stats"]),1)
+        self.assertEqual(len(result["missing_polarizations"]),1)
+        self.assertEqual(len({x["scene"] for x in result["stats"]}),1)
+
 if __name__=="__main__":unittest.main()
