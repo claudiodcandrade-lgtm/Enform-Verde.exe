@@ -1208,7 +1208,7 @@ def planetary_alos_palsar(gdf,cache,limit=12):
                         stats.append({"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean_dn":float(v.mean()),"mean_db":float(db.mean()),"sd_db":float(db.std(ddof=1)) if len(db)>1 else 0.0,"calibration":"JAXA gamma0 dB = 10*log10(DN^2)-83","pixel_state":"PROCESSADO"})
                         paths.append(a["href"])
             except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
-        if len(stats)>=2:break
+        if {"HH","HV"}.issubset({str(x.get("polarization","")).upper() for x in stats}):break
     return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,"paths":paths,"stats":stats,"errors":errors,"asset_keys_by_scene":[{"scene":it.get("id"),"keys":sorted((it.get("assets") or {}).keys())} for it in items],"missing_polarizations":[pol for pol in ("HH","HV") if not any(str(x.get("polarization","")).upper()==pol for x in stats)],"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
 def lband_dualpol_diagnostic(stats,biome="",phys="",prior_agb_mg_ha=None):
