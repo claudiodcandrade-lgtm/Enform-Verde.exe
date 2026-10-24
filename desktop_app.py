@@ -797,7 +797,7 @@ class App(tk.Tk):
 
         self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True)
         self.tabs=[]
-        for n in ["Propriedade (CAR)","Mapas e limites","Carregar produtos SAR / AGB","Carbono Total","Base Científica e Modelos"]:
+        for n in ["Propriedade (CAR)","Mapas e limites","Carregar produtos SAR / AGB","Carbono — formações nativas","Base Científica e Modelos","Monitoramento — áreas cultivadas"]:
             f=ttk.Frame(self.nb,padding=14); self.nb.add(f,text=n); self.tabs.append(f)
 
         nav_items=[
@@ -805,7 +805,7 @@ class App(tk.Tk):
           ("◈   Fitofisionomia (IBGE)",1),("◆   Carregar produtos\n     SAR / AGB",2),
           ("◉   Biomassa Aérea (AGB)",3),("♨   Carbono no Solo",3),
           ("●   Carbono Total",3),("▤   Resultados e Relatório",3),
-          ("⚙   Configurações",2),("▥   Base Científica e\n     Modelos",4),("ⓘ   Sobre",4)]
+          ("🌱   Monitoramento de\n     áreas cultivadas",5),("⚙   Configurações",2),("▥   Base Científica e\n     Modelos",4),("ⓘ   Sobre",4)]
         self.nav_buttons=[]
         for label,idx in nav_items:
             btn=tk.Button(nav,text=label,anchor="w",justify="left",relief="flat",bd=0,
@@ -822,7 +822,7 @@ class App(tk.Tk):
                     btn.configure(bg="#F6F8F8",fg="#233B49",font=("Segoe UI",10))
         self.nb.bind("<<NotebookTabChanged>>",mark_tab)
 
-        self._project(); self._spatial(); self._remote(); self._results(); self._sources()
+        self._project(); self._spatial(); self._remote(); self._results(); self._sources(); self._cultivated_results()
         mark_tab()
         footer=ttk.Frame(root,padding=(14,4)); footer.pack(fill="x",side="bottom")
         ttk.Label(footer,text="v"+APP_VERSION).pack(side="left")
@@ -1328,6 +1328,44 @@ class App(tk.Tk):
         self.res.pack(side="left",fill="both",expand=True); result_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.res)
         self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
+    def _cultivated_results(self):
+        """Dedicated cultivated-land executive panel; no native-carbon totals here."""
+        f=self.tabs[5]
+        ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
+        ttk.Label(f,text="Classificação, fenologia, fitossanidade e previsão de safra; dados e incertezas independentes do carbono nativo.",
+                  wraplength=1000).pack(anchor="w",pady=(4,10))
+        box=ttk.Frame(f);box.pack(fill="both",expand=True)
+        self.crop_res=tk.Text(box,height=24,wrap="word",yscrollcommand=lambda *a:scroll.set(*a))
+        scroll=ttk.Scrollbar(box,orient="vertical",command=self.crop_res.yview)
+        self.crop_res.pack(side="left",fill="both",expand=True);scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.crop_res)
+        self._set(self.crop_res,"Execute a análise para consultar as classes agrícolas.\\n"
+                  "Cultura e fase fenológica: NÃO DETERMINADAS sem classificador treinado e validado.\\n"
+                  "Estado fitossanitário: NÃO DETERMINADO sem dados e validação específicos.\\n"
+                  "Previsão de safra e incerteza: NÃO DISPONÍVEIS sem modelo e erro validado.")
+
+    def _present_cultivated_monitoring(self,land):
+        """Show real classified-area evidence, never infer crop stage or yield."""
+        lines=["ENFORM VERDE — MONITORAMENTO DE ÁREAS CULTIVADAS",
+               "Dados de uso e cobertura: "+str(land.get("status","não disponível")),
+               "Acurácia da área/classificação: "+str(land.get("area_uncertainty") or "NÃO QUANTIFICADA"),
+               "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
+               ""]
+        for item in land.get("classes",[]):
+            if item.get("native_status") is True:continue
+            lines.extend([str(item.get("class_name","Uso não determinado"))+": "+
+                          format_ptbr(item.get("area_ha",0),2)+" ha",
+                          "  Fonte: "+str(item.get("source","não informada")),
+                          "  Classificação/validação: "+str(item.get("taxonomy","não documentada"))])
+        lines.extend(["","CULTURA ESPECÍFICA E ESTÁGIO FENOLÓGICO: NÃO DETERMINADOS sem modelo validado.",
+                      "ESTADO FITOSSANITÁRIO: NÃO DETERMINADO. Anomalias não são diagnósticos de doenças.",
+                      "PREVISÃO DE PRODUTIVIDADE (t/ha): NÃO DISPONÍVEL.",
+                      "PREVISÃO DE PRODUÇÃO (t): NÃO DISPONÍVEL.",
+                      "INCERTEZA DE PREVISÃO (t/ha, %, t): NÃO QUANTIFICADA.",
+                      "Modelos meteorológicos e agrícolas: NÃO EXECUTADOS nesta análise.",
+                      "Os estoques de carbono são calculados exclusivamente na aba de formações nativas."])
+        self._set(self.crop_res,"\\n".join(lines))
+
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
         ttk.Button(f,text="RESUMIR INVENTÁRIO (DAP + ÁREA BASAL)",command=self.summarize_inventory_ui).pack(anchor="w",pady=(6,2))
@@ -1453,7 +1491,7 @@ class App(tk.Tk):
         self.active_source=None
         self.active_input_id=None
         self.biome.set(""); self.phys.set("")
-        for widget_name in ("remote_text","res"):
+        for widget_name in ("remote_text","res","crop_res"):
             w=getattr(self,widget_name,None)
             if w is not None:self._set(w,"")
         if hasattr(self,"spatial_text"):self._set(self.spatial_text,"Nova entrada recebida. Resultados anteriores foram descartados.")
@@ -1671,6 +1709,7 @@ class App(tk.Tk):
             self.project["land_use"]=land
             native=precomputed_native if precomputed_native is not None else native_carbon_analysis(self.gdf,land,self.biome.get(),sar_paths=self.sar_paths)
             self._present_native_carbon(native,land)
+            self._present_cultivated_monitoring(land)
             return
         except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
 
