@@ -119,6 +119,24 @@ class LandUseTests(unittest.TestCase):
             outside=gpd.GeoDataFrame(geometry=[box(-40,-5,-39,-4)],crs=4326)
             with self.assertRaisesRegex(ValueError,'fora do domínio'):classify_config(outside,config,Path(d)/'out')
 
+    def test_validated_sar_crop_precedes_mapbiomas_crop_layer(self):
+        from unittest.mock import patch
+        aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
+        sar=self.layer([('Soja','SAR_VALIDADO',box(0,0,60,100))])
+        mb=self.layer([('Áreas cultivadas','MAPBIOMAS',box(0,0,100,100))])
+        validation={'class_metadata':{'Soja':{'parent':'uso agropecuário'}}}
+        with tempfile.TemporaryDirectory() as d, \
+             patch('land_use_sar.classify_config',return_value=(sar,validation)), \
+             patch('land_use_sar.raster_class_polygons',return_value=mb):
+            result=run_land_use(aoi,d,mapbiomas_path='TEST_ONLY')
+        rows=result['classes']
+        sar_row=next(row for row in rows if row['source']=='SAR_VALIDADO')
+        map_row=next(row for row in rows if row['source']=='MAPBIOMAS')
+        self.assertEqual(sar_row['class_name'],'Soja')
+        self.assertAlmostEqual(sar_row['area_ha'],0.6,places=5)
+        self.assertAlmostEqual(map_row['area_ha'],0.4,places=5)
+        self.assertEqual(result['priority'],'SAR com confiança demonstrada; nas lacunas, IBGE para fitofisionomia e MapBiomas para uso/cobertura atual')
+
 if __name__=='__main__':unittest.main()
 
 class NativeNamingTests(unittest.TestCase):
