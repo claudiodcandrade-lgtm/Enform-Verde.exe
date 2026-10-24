@@ -14,7 +14,7 @@ jobs:
           python-version: '3.11'
       - name: Syntax check
         shell: pwsh
-        run: python -m py_compile carbon_dashboard_html.py dual_executive_dashboard.py carbon_report_clarity.py crop_health_yield_quality.py agricultural_diagnostic_quality.py
+        run: python -m py_compile desktop_app.py carbon_dashboard_html.py dual_executive_dashboard.py carbon_report_clarity.py crop_health_yield_quality.py agricultural_diagnostic_quality.py
       - name: Unit and regression tests
         shell: pwsh
         run: python -m unittest discover -s tests -p test_dual_dashboard.py -v
