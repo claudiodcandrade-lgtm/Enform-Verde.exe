@@ -225,11 +225,39 @@ def train_crop_yield_model(
     median_baseline = float(np.median(y_train))
     baseline_mae = float(np.mean(np.abs(independent["yield_t_ha"]-median_baseline)))
     improvement = (baseline_mae-mae)/baseline_mae if baseline_mae else 0.0
+    climate_features = [f for f in features if f.startswith(("climate_", "weather_"))]
+    climate_candidates = {
+        "random_forest": make_pipeline(
+            SimpleImputer(strategy="median", add_indicator=True),
+            RandomForestRegressor(n_estimators=200, min_samples_leaf=5,
+                                  max_features=0.8, random_state=42, n_jobs=-1)),
+        "hist_gradient_boosting": make_pipeline(
+            SimpleImputer(strategy="median", add_indicator=True),
+            HistGradientBoostingRegressor(max_iter=150, max_leaf_nodes=15,
+                                          l2_regularization=2.0, random_state=42)),
+    }
+    climate_cv = {}
+    for name, estimator in climate_candidates.items():
+        scores = cross_val_score(estimator, train[climate_features], y_train,
+                                 groups=groups, cv=cv, scoring="neg_mean_absolute_error",
+                                 n_jobs=1)
+        climate_cv[name] = float(-scores.mean())
+    climate_model = climate_candidates[min(climate_cv, key=climate_cv.get)].fit(
+        train[climate_features], y_train)
+    climate_pred = np.maximum(0.0, climate_model.predict(test[climate_features]))
+    climate_mae = float(np.mean(np.abs(test["yield_t_ha"].to_numpy()-climate_pred)))
+    sar_skill = (climate_mae-mae)/climate_mae if climate_mae else 0.0
     interval_ok = coverage_ci[0] <= nominal_coverage <= coverage_ci[1]
+    per_block = _block_metrics(test_cov_frame, nominal_coverage)
+    eligible_blocks = [b for b, m in per_block.items() if m["interval_acceptable"]]
+    if len(eligible_blocks) < _MIN_SPATIAL_BLOCKS:
+        raise ValueError("fewer than five held-out spatial blocks meet per-block coverage and sample criteria")
     if not interval_ok:
         raise ValueError("prediction interval failed independent spatial-temporal coverage criterion")
     if improvement < min_improvement_over_median:
         raise ValueError("selected model did not beat the training-median baseline sufficiently")
+    if sar_skill < min_improvement_over_median:
+        raise ValueError("SAR+climate model did not beat climate-only baseline on independent test")
     if n_independent < _MIN_TEST_MUNICIPALITIES:
         raise ValueError("test set lost independent municipalities after deduplication")
 
@@ -298,17 +326,32 @@ def forecast_crop_yield(artifact_path: str | Path, features: dict, *,
     missing = [c for c in cols if c not in features]
     if missing:
         raise ValueError("forecast feature vector missing: "+", ".join(missing))
-    x = pd.DataFrame([{c: features[c] for c in cols}], columns=cols)
+    x = pd.DataFrame([{c: pd.to_numeric(pd.Series([features[c]]), errors="coerce").iloc[0]
+                        for c in cols}], columns=cols)
+    if x.isna().any().any():
+        raise ValueError("non-numeric or missing SAR/climate forecast feature")
+    for col in cols:
+        support = manifest["feature_support"][col]
+        spread = max(float(support["iqr"]), 1e-9)
+        if float(x.iloc[0][col]) < support["q01"]-3*spread or float(x.iloc[0][col]) > support["q99"]+3*spread:
+            raise ValueError("forecast outside training feature support: "+col)
+    block_val = val.get("per_spatial_block", {}).get(str(spatial_block))
+    if not block_val or not block_val.get("interval_acceptable"):
+        raise ValueError("spatial block lacks independent calibration/coverage evidence")
     prediction = max(0.0, float(model.predict(x)[0]))
     radius = float(manifest["conformal_radius_t_ha"])
     interval = {"lower": max(0.0, prediction-radius), "upper": prediction+radius,
                 "nominal_coverage": manifest["nominal_coverage"],
                 "method": "split conformal absolute residual"}
-    validation = dict(val, prediction_interval_validation={
-        "independent_test": True, "spatial_temporal_holdout": True,
-        "method": "later-season held-out spatial blocks",
-        "nominal_coverage": manifest["nominal_coverage"],
-        "n_independent": val["n_independent"], "n_covered": val["n_covered"]})
+    validation = {
+        **block_val, "independent_test": True, "in_domain": True,
+        "spatial_temporal_holdout": True, "sample_count": block_val["n_independent"],
+        "prediction_interval_validation": {
+            "independent_test": True, "spatial_temporal_holdout": True,
+            "method": "later-season held-out spatial block",
+            "nominal_coverage": manifest["nominal_coverage"],
+            "n_independent": block_val["n_independent"],
+            "n_covered": block_val["n_covered"]}}
     result = evaluate_yield_forecast(
         predicted_t_ha=prediction, model_id=manifest["model_id"], crop=crop,
         region=region, season=season, weather_provenance=weather_provenance,
