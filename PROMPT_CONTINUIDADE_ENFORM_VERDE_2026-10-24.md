@@ -134,3 +134,11 @@ ATENÇÃO: renderizador independente ainda NÃO integrado à GUI Windows nem val
 - Não confundir consulta climática operacional com fenologia/vigor/produtividade validados; estes continuam pendentes de séries orbitais e modelos independentes.
 - Build Windows #40113351964 continuava em andamento na última consulta; builds posteriores da branch incluem as mudanças de meteorologia. Não disponibilizar como versão operacional final sem CI e smoke test.
 - Próximas prioridades: INMET dados horários reais via API/CSV oficial verificado e QC; BDMEP CSV; Climatempo mediante token comercial; calibração/validação fenologia/vigor/safras; monitoramento contínuo por AOI e histórico em cache.
+
+## Diagnóstico CI — 24/10/2026
+- Dashboard #40113767272 falhou em test_power_daily_parse_and_summary por FakeResponse.read exigir argumento, mas json.load chama read sem argumento. Corrigido no commit 7353d33cdfa067ad719c74443ea1c2f3245d196a; revalidar.
+- Build Windows #40113767313 falhou no teste live_cerrado_sar_agb.py: polarização HV ausente nas estatísticas ALOS/PALSAR retornadas para AOI Cerrado. Não suprimir verificação ou alegar AGB SAR; investigar bandas, metadados, fonte e cobertura HV.
+- Logs mostram ainda erros auxiliares em _safe_target (string mal escapada) e fallback_flow_test.py (lit None); investigar.
+- Sem artefato Windows final dessa execução; PyInstaller não foi alcançado.
+- Teste OUTSIDE_AMAZON_NATIONAL_FALLBACK_OK confirmou fallback bibliográfico Cerrado 16,55 Mg/ha (7,95–25,15), não estimativa SAR validada.
+- Fenologia, vigor, safra, INMET horário e Climatempo continuam incompletos. Não declarar versão plenamente operacional.
