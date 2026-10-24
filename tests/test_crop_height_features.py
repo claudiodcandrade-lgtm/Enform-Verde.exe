@@ -5,10 +5,14 @@ from crop_height_features import check_crop_height_observation, height_interval_
 class CropHeightTests(unittest.TestCase):
     def fixture(self):
         obs={"height_m":1.5,"height_uncertainty_m":0.3,"observation_date":"2025-05-15","phenological_stage":"vegetative"}
-        contract={"height_source":"SAR_height_product","retrieval_model":"synthetic_test","validation_reference":"synthetic_test",
-                  "sensor":"test","processing":"test","date":"2025-05-15",
-                  "uncertainty_method":"prediction_interval_half_width","rmse_m":0.4,
-                  "domain":"synthetic","independent_validation":True}
+        contract={"height_source":"SAR_height_product","retrieval_model":"synthetic_test",
+                  "height_source_url":"https://example.org/height","model_sha256":"a"*64,
+                  "validation_reference":"synthetic_test","sensor":"test","processing":"test",
+                  "date":"2025-05-15","uncertainty_method":"prediction_interval_half_width",
+                  "rmse_m":0.4,"bias_m":0.0,"domain":"synthetic","crop":"milho",
+                  "region":"test-region","phase":"vegetative","n_independent":80,
+                  "n_spatial_blocks":5,"coverage_95":0.95,
+                  "independent_validation":True,"in_domain_validation":True}
         return obs,contract
     def test_bounded_features(self):
         o,c=self.fixture()

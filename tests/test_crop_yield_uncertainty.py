@@ -18,7 +18,10 @@ class YieldUncertaintyTests(unittest.TestCase):
                 "prediction_interval_validation": {
                     "independent_test": True, "spatial_temporal_holdout": True,
                     "method": "out-of-fold coverage", "nominal_coverage": 0.90,
-                    "n_independent": 100, "n_covered": 92
+                    "n_independent": 100, "n_covered": 92,
+                    "n_spatial_blocks": 10,
+                    "uncertainty_method": "spatial_block_bootstrap",
+                    "coverage_cluster_bootstrap95": [0.84, 0.96]
                 }
             },
             prediction_interval_t_ha={"lower":4.0,"upper":6.0,
@@ -48,9 +51,17 @@ class YieldUncertaintyTests(unittest.TestCase):
         args=dict(self.base)
         args["validation"]=dict(self.base["validation"])
         args["validation"]["prediction_interval_validation"]=dict(self.base["validation"]["prediction_interval_validation"],n_covered=55)
+        args["validation"]["prediction_interval_validation"]["coverage_cluster_bootstrap95"]=[0.45,0.66]
         result=evaluate_yield_forecast(**args)
         self.assertEqual(result.status,"previsao_nao_habilitada")
         self.assertTrue(any("Cobertura empírica" in x for x in result.limitations))
+
+    def test_pointwise_wilson_only_is_no_longer_sufficient(self):
+        args=dict(self.base)
+        args["validation"]=dict(self.base["validation"])
+        args["validation"]["prediction_interval_validation"].pop("coverage_cluster_bootstrap95")
+        result=evaluate_yield_forecast(**args)
+        self.assertEqual(result.status,"previsao_nao_habilitada")
 
     def test_non_sar_crop_evidence_is_blocked(self):
         args=dict(self.base)

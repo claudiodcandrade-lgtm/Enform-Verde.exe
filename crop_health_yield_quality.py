@@ -150,15 +150,18 @@ def evaluate_yield_forecast(*, predicted_t_ha, model_id, crop, region, season,
             n = int(iv["n_independent"])
             covered = int(iv["n_covered"])
             val_nominal = float(iv["nominal_coverage"])
+            coverage_ci = [float(x) for x in iv["coverage_cluster_bootstrap95"]]
+            cluster_count = int(iv["n_spatial_blocks"])
             if (n < 50 or covered < 0 or covered > n or not isfinite(val_nominal)
                     or not iv.get("independent_test") or not iv.get("spatial_temporal_holdout")
-                    or not iv.get("method")):
+                    or iv.get("uncertainty_method") != "spatial_block_bootstrap"
+                    or cluster_count < 5 or len(coverage_ci) != 2
+                    or not 0 <= coverage_ci[0] <= coverage_ci[1] <= 1):
                 raise ValueError()
-            coverage_interval = _wilson_interval(covered, n)
             if interval is None or abs(val_nominal - float(interval["nominal_coverage"])) > 1e-9:
                 errors.append("Nível nominal da validação não corresponde ao intervalo publicado")
-            elif not coverage_interval[0] <= val_nominal <= coverage_interval[1]:
-                errors.append("Cobertura empírica do intervalo incompatível com o nível nominal no IC95% Wilson")
+            elif not coverage_ci[0] <= val_nominal <= coverage_ci[1]:
+                errors.append("Cobertura empírica do intervalo incompatível com o nível nominal no IC95% por blocos espaciais")
         except (KeyError, TypeError, ValueError, OverflowError):
             errors.append("Calibração exige ≥50 previsões independentes com holdout espacial e temporal e cobertura documentada")
     try:
@@ -188,7 +191,7 @@ def evaluate_yield_forecast(*, predicted_t_ha, model_id, crop, region, season,
         "lower_t_ha": float(interval["lower"]), "upper_t_ha": float(interval["upper"]),
         "nominal_coverage": float(interval["nominal_coverage"]), "method": interval["method"],
         "validated_coverage": (int(iv["n_covered"]) / int(iv["n_independent"])) if isinstance(iv, dict) and iv.get("n_independent") else None,
-        "coverage_wilson95": _wilson_interval(int(iv["n_covered"]), int(iv["n_independent"])) if isinstance(iv, dict) and iv.get("n_independent") else None
+            "coverage_cluster_bootstrap95": iv.get("coverage_cluster_bootstrap95") if isinstance(iv, dict) else None
     }
     half_width = max(value - interval_out["lower_t_ha"], interval_out["upper_t_ha"] - value) if interval_out and value is not None else None
     return CropAssessment(

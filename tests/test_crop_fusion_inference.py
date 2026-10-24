@@ -6,9 +6,13 @@ class CropFusionTests(unittest.TestCase):
         obs={"height_m":1.4,"height_uncertainty_m":0.2,"observation_date":"2026-02-15",
              "phenological_stage":"vegetative","municipality_code":"5103403","state":"MT","season":"2025/2026"}
         height={"height_source":"SAR_height_product","retrieval_model":"synthetic",
-                "validation_reference":"synthetic","sensor":"test","processing":"test",
+                "height_source_url":"https://example.invalid/height","model_sha256":"a"*64,
+                "validation_reference":"synthetic","sensor":"Sentinel-1 test","processing":"test",
                 "date":"2026-02-15","uncertainty_method":"prediction_interval_half_width",
-                "rmse_m":0.4,"domain":"synthetic","independent_validation":True}
+                "rmse_m":0.4,"bias_m":0.0,"domain":"synthetic","crop":"Soja",
+                "region":"MT","phase":"vegetative","n_independent":80,
+                "n_spatial_blocks":5,"coverage_95":0.95,
+                "independent_validation":True,"in_domain_validation":True}
         record={"crop":"Soja","source_url":"https://example.invalid/zarc","source_institution":"MAPA",
                 "state":"MT","municipality_code":"5103403","season":"2025/2026",
                 "valid_year":2026,"planting_windows":[{"start":"2025-11-01","end":"2025-12-15"}],

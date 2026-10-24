@@ -15,7 +15,7 @@
   "retrieved_at_utc": "2026-10-24T20:16:16.985478+00:00",
   "license": "IBGE public statistics; verify current IBGE terms before redistribution in commercial products",
   "output": "pam_microregion_yield_2015_2024.csv.gz",
-  "sha256": "3d73b520e88c7cd6cc527257d435341ef7eb1715fed378ac9be46f122e87f30f",
+  "sha256": "fe35d64f3c170cb04420bce9fa2065d2074d39cc59b3c1a07537df9d29d2db7e",
   "row_count": 133920,
   "products": {
     "arroz_grao": {
@@ -304,5 +304,6 @@
     "Production and harvested area remain separate; yield reconciliation must use same product, year and territory.",
     "N9 is the pre-2017 microregion geography; do not join to later municipal boundaries without a documented crosswalk."
   ],
-  "reconciliation_note": "For numeric production and area, compare published kg/ha yield with (production tonnes × 1000) / harvested area hectares; keep official yield and discrepancy separately."
+  "reconciliation_note": "For numeric production and area, compare published kg/ha yield with (production tonnes × 1000) / harvested area hectares; keep official yield and discrepancy separately.",
+  "recovery_note": "Arquivo recuperado do artefato de CI; gzip descompactado e recomprimido de forma determinística. O checksum foi recalculado sobre os bytes locais; linhas e esquema foram preservados."
 }
