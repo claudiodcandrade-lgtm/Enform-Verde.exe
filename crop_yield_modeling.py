@@ -18,7 +18,6 @@ from joblib import dump, load
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
-from sklearn.dummy import DummyRegressor
 from sklearn.model_selection import GroupKFold, cross_val_score
 
 from crop_health_yield_quality import evaluate_yield_forecast
@@ -210,7 +209,7 @@ def train_crop_yield_model(
     if n_independent < _MIN_TEST_MUNICIPALITIES:
         raise ValueError("test set lost independent municipalities after deduplication")
 
-    manifest = {
+    feature_support = {}\n    for col in features:\n        values = train[col].dropna().astype(float)\n        q01, q25, q75, q99 = values.quantile([.01, .25, .75, .99])\n        feature_support[col] = {"q01": float(q01), "q99": float(q99),\n                                "iqr": float(q75-q25)}\n    manifest = {
         "schema_version": 1, "crop": crop, "model_id": f"ev-yield-{crop.casefold()}-{test_year}",
         "algorithm": selected_name, "feature_columns": features,
         "nominal_coverage": nominal_coverage, "conformal_radius_t_ha": radius,
@@ -232,7 +231,7 @@ def train_crop_yield_model(
                      "yield_licenses": sorted(data["yield_license"].astype(str).unique()),
                      "sar_sources": sorted(data["sar_source_url"].astype(str).unique()),
                      "weather_sources": sorted(data["weather_source"].astype(str).unique()),
-                     "weather_source_urls": sorted(data["weather_source_url"].astype(str).unique()),\n                     "panel_sha256": hashlib.sha256(pd.util.hash_pandas_object(data, index=True).values.tobytes()).hexdigest()},\n        "feature_support": {c: {"q01": float(data.loc[train.index, c].quantile(.01)),\n                                "q99": float(data.loc[train.index, c].quantile(.99)),\n                                "iqr": float(data.loc[train.index, c].quantile(.75)-data.loc[train.index, c].quantile(.25))}\n                           for c in features},
+                     "weather_source_urls": sorted(data["weather_source_url"].astype(str).unique()),\n                     "panel_sha256": hashlib.sha256(pd.util.hash_pandas_object(data, index=True).values.tobytes()).hexdigest()},\n        "feature_support": feature_support,
         "limitations": ["Admin-level labels predict municipal/regional yield, not field yield.",
                         "Transferability applies only to tested held-out blocks and observed feature support.",
                         "SAR stress features indicate nonspecific anomalies; they do not diagnose disease or pests.",
