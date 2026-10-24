@@ -363,3 +363,7 @@ A última aquisição listada é de 23/10, aproximadamente um dia antes da consu
 4. Manter abstenção quando o catálogo não tiver aquisição suficientemente recente segundo critério validado, mesmo que haja dados históricos acessíveis.
 
 **Atualização de estado:** existe evidência concreta de cenas SAR atuais no catálogo para Brasília (última aquisição 23/10/2026, 1 dia antes da busca) e de cadência observada de 12 dias nessa série curta. A adequação para monitoramento de safra continua pendente até medir latência, ler pixels válidos e validar máscara/fenologia; previsão e correlação SAR–PAM seguem bloqueadas.
+
+### Resultado adicional — janela recente e latência de publicação
+
+Foi assinado o asset VV da aquisição de 23/10/2026 e feito pedido `Range: bytes=0-1023`; a resposta foi HTTP 206, `Content-Range: bytes 0-1023/1863517334`, confirmando leitura parcial do COG recente da Sentinel‑1D. O cabeçalho TIFF começou com bytes válidos, mas a abertura por Rasterio/GDAL não concluiu a leitura geoespacial nesta tentativa. Portanto **nenhum valor VV/VH por pixel foi extraído ainda**. Os itens STAC consultados não expuseram `published` ou `created`; a latência entre aquisição e publicação continua não quantificada. Repetir a leitura Rasterio/GDAL com tratamento explícito do SAS e validar CRS/janela/nodata antes de declarar extração de pixel.
