@@ -103,3 +103,10 @@ ATENÇÃO: renderizador independente ainda NÃO integrado à GUI Windows nem val
 - 693a2fbdf488eac69314ea982cffe8fed6680d29: .github/workflows/dashboard-dual-tests.yml, execução de py_compile e unittest em windows-latest, por push/PR/manual.
 - A criação do workflow não prova execução nem sucesso. Confirmar status e logs do GitHub Actions; resolver falhas antes de integrar no executável.
 - Acesso ao README.md e commit-base no GitHub confirmado. Ainda não foi recuperada a árvore completa, nem localizado/alterado o ponto de entrada da interface Windows. Não há novo executável. Preservar 3.24.40-CANDIDATE.
+
+## Integração efetiva da interface Tkinter (24/10/2026)
+- Código principal encontrado: desktop_app.py (Tkinter). Commit a4f8f09818b67869d3ad2c2c444e70e2b4781459 adiciona aba "Monitoramento — áreas cultivadas", método _cultivated_results e _present_cultivated_monitoring, ligado ao retorno da análise principal. A aba de carbono nativo permanece; reset também limpa painel agrícola.
+- Monitoramento agrícola mostra classes não nativas, hectares, fontes, incerteza da classificação quando publicada e bloqueia explicitamente fenologia/fitossanidade/previsão sem validação. Não há ainda predição agrícola operacional, ingestão meteorológica nem pesos.
+- Commit 771579c90e54a93eeed8c8fed3f4648e276c01db inclui desktop_app.py na verificação de sintaxe Windows do workflow de testes.
+- Pull request de integração ABERTO COMO RASCUNHO: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/pull/50 ; NÃO mesclar antes de CI verde, revisão de 84 arquivos/278 commits, auditoria de regressão e build operacional. Mergeable foi reportado false no instante de abertura (pode ser estado transitório ou conflito, investigar).
+- Ainda não há novo executável, validação dos testes nem prova de funcionamento de todas as rotas. Próxima etapa: verificar workflows/erros, integrar modelo agrícola e dados meteorológicos efetivos, validar safras, testar GUI e gerar ZIP Windows.
