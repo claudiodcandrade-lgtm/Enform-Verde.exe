@@ -444,12 +444,23 @@ jobs:
           @'
           import desktop_app as a
           g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          p=a.sentinel2_preview(g,out_h=420,extent_factor=1.36)
-          assert p["image"].height==420 and p["image"].width>=420
-          assert p["polygons"] and len(p["polygons"][0])>=6
-          assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
-          assert 0 <= float(p["cloud_cover"]) <= 100
-          print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
+          import requests
+          try:
+              p=a.sentinel2_preview(g,out_h=420,extent_factor=1.36)
+          except (requests.exceptions.Timeout,requests.exceptions.ConnectionError) as exc:
+              # Public imagery outage is not a software regression. Never
+              # report a successful live preview if the catalog timed out.
+              print("LIVE_SENTINEL2_UNAVAILABLE_EXTERNAL",type(exc).__name__,str(exc))
+          except requests.exceptions.HTTPError as exc:
+              code=getattr(getattr(exc,"response",None),"status_code",None)
+              if code not in (429,500,502,503,504):raise
+              print("LIVE_SENTINEL2_UNAVAILABLE_EXTERNAL",code,str(exc))
+          else:
+              assert p["image"].height==420 and p["image"].width>=420
+              assert p["polygons"] and len(p["polygons"][0])>=6
+              assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
+              assert 0 <= float(p["cloud_cover"]) <= 100
+              print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
           offline_zoom,_=a.offline_brazil_preview(g,extent_factor=2.04,out_size=(900,420))
           assert offline_zoom.size==(900,420), "offline geographic zoom preview failed"
           print("OFFLINE_ZOOM_EXTENT_OK",offline_zoom.size)
