@@ -909,7 +909,7 @@ jobs:
         run: |
           @'
           ENFORM VERDE - WINDOWS
-          VERSÃO CANDIDATA 3.24.41. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado; a busca automática de BIOMASS deve ser verificada por AOI e não implica cobertura universal. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
+          VERSÃO 3.25.1. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado; a busca automática de BIOMASS deve ser verificada por AOI e não implica cobertura universal. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
           NOVO: carbono apenas em formações nativas, calculado separadamente por fitofisionomia e área de interseção; outros usos são apenas indicados. Classificação de uso do solo com confiança independente obrigatória; SAR elegível > IBGE > MapBiomas. Nenhum modelo nacional treinado vem embutido. Configurar atributos SAR e referências independentes para habilitar prioridade algorítmica; sem eles, manter fallback cartográfico. Ver docs/CLASSIFICACAO_SAR_USO_SOLO.md.
           Para abrir: dê duplo clique em "Enform Verde.exe".
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
@@ -919,7 +919,7 @@ jobs:
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.24.41-CANDIDATE
+          name: Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO
           path: dist/Enform Verde/
           if-no-files-found: error
           retention-days: 30

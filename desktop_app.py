@@ -21,7 +21,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.25.0-AREAS-CULTIVADAS"
+APP_VERSION="3.25.1-CLIMA-DINAMICO"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1334,7 +1334,7 @@ class App(tk.Tk):
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
         ttk.Label(f,text="Detecção de áreas cultivadas primeiro; identificação da cultura somente quando a evidência e a validação permitirem.",
                   wraplength=1000).pack(anchor="w",pady=(4,8))
-        ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
+        ttk.Button(f,text="CONSULTAR / ATUALIZAR CLIMA DINÂMICO — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
         views=ttk.Notebook(f);views.pack(fill="both",expand=True)
         exec_frame=ttk.Frame(views);audit_frame=ttk.Frame(views)
         views.add(exec_frame,text="Painel executivo")
@@ -1365,11 +1365,19 @@ class App(tk.Tk):
         classified_ha=sum(float(item.get("area_ha") or 0) for item in classes)
         aoi_ha=float(self.project.get("area_ha") or 0)
         complete_coverage=aoi_ha>0 and abs(classified_ha-aoi_ha)<=max(0.05,0.001*aoi_ha)
-        if native and not non_native and complete_coverage and land.get("status") not in ("error","erro","indisponivel"):
-            self._crop_monitoring_base_report="Não detectada a ocorrência de lavouras. Apenas vegetação nativa"
-            self._crop_monitoring_audit_base="Cobertura classificada integralmente como vegetação nativa.\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
+        if not has_cultivated_area(classes) and complete_coverage and land.get("status") not in ("error","erro","indisponivel"):
+            self._crop_monitoring_base_report="sem cultivos detectados"
+            self._crop_monitoring_audit_base="Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
             self._set(self.crop_res,self._crop_monitoring_base_report)
             self._set(self.crop_audit,self._crop_monitoring_audit_base)
+            generation=self._weather_query_generation
+            analysis_id=self.project.get("analysis_run_id")
+            def start_weather_if_current():
+                if (generation==self._weather_query_generation
+                    and analysis_id==self.project.get("analysis_run_id")
+                    and self.gdf is not None):
+                    self.query_crop_weather()
+            self.after(100,start_weather_if_current)
             return
         executive=["PAINEL EXECUTIVO — MONITORAMENTO AGRÍCOLA",
                    "Estado da classificação: "+str(land.get("status","não disponível")),
@@ -1459,15 +1467,14 @@ class App(tk.Tk):
         self._crop_monitoring_audit_base="\n".join(audit)
         self._set(self.crop_res,self._crop_monitoring_base_report)
         self._set(self.crop_audit,self._crop_monitoring_audit_base)
-        if has_cultivated_area(classes):
-            generation=self._weather_query_generation
-            analysis_id=self.project.get("analysis_run_id")
-            def start_weather_if_current():
-                if (generation==self._weather_query_generation
-                    and analysis_id==self.project.get("analysis_run_id")
-                    and self.gdf is not None):
-                    self.query_crop_weather()
-            self.after(100,start_weather_if_current)
+        generation=self._weather_query_generation
+        analysis_id=self.project.get("analysis_run_id")
+        def start_weather_if_current():
+            if (generation==self._weather_query_generation
+                and analysis_id==self.project.get("analysis_run_id")
+                and self.gdf is not None):
+                self.query_crop_weather()
+        self.after(100,start_weather_if_current)
 
     def query_crop_weather(self):
         """Retrieve actual weather asynchronously; executive summary and audit remain separate."""
@@ -1494,7 +1501,7 @@ class App(tk.Tk):
             from inmet_weather_client import weather_executive_lines
             power_summary=None
             forecast_summary=None
-            details=["CLIMA DINÂMICO — ÁREA CULTIVADA",
+            details=["CLIMA DINÂMICO — PROPRIEDADE / MONITORAMENTO AGRÍCOLA",
                      f"Centroide WGS84: {lat:.5f}, {lon:.5f}"]
             try:
                 from agricultural_weather import fetch_daily_weather,summarize_weather

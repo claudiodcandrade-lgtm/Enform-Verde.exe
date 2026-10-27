@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Mapping, Optional
 import unicodedata
 
-CROPS = frozenset({"soja", "milho", "sorgo", "café", "cana-de-açúcar", "arroz", "feijão", "citros"})
+CROPS = frozenset({"soja", "milho", "sorgo", "café", "cana-de-açúcar", "arroz", "feijão", "citros", "algodão"})
 NATIVE = frozenset({"vegetação nativa"})
 NON_NATIVE = frozenset({"pastagem", "áreas cultivadas", "área urbana", "corpo d'água"})
 MIN_CONFIDENCE = 0.90
@@ -18,12 +18,14 @@ def has_cultivated_area(class_records) -> bool:
     crop_keys = {unicodedata.normalize("NFKD", x).encode("ascii", "ignore").decode().casefold()
                  for x in CROPS}
     crop_keys.update({"areas cultivadas", "agricultura", "lavoura temporaria", "lavoura perene",
-                      "cana", "citrus"})
+                      "cana", "citrus", "algodao", "cotton"})
     for item in class_records or ():
         if not isinstance(item, Mapping):
             continue
         name = str(item.get("class_name", ""))
         key = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().casefold()
+        if key.startswith("lavoura de "):
+            key = key[len("lavoura de "):].strip()
         try:
             area = float(item.get("area_ha", 0) or 0)
         except (TypeError, ValueError):
