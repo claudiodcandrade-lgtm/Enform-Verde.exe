@@ -67,6 +67,23 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertEqual(result['classes'][0]['native_status'],None)
             self.assertTrue(any('Cobertura atual não verificada' in w for w in result['warnings']))
 
+    def test_https_download_rejects_truncated_geotiff(self):
+        import io
+        from land_use_sar import _download_official_mapbiomas
+        class TruncatedResponse:
+            headers={'Content-Type':'image/tiff','Content-Length':'9000'}
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+            def read(self,n):return self.data.read(n)
+            def __init__(self):self.data=io.BytesIO(b'II'+b'0'*2000)
+        with tempfile.TemporaryDirectory() as d:
+            dest=Path(d)/'mapbiomas.tif'
+            with patch('urllib.request.urlopen',return_value=TruncatedResponse()):
+                with self.assertRaisesRegex(ValueError,'truncado'):
+                    _download_official_mapbiomas('https://example.test/data.tif',dest)
+            self.assertFalse(dest.exists())
+            self.assertFalse(dest.with_suffix('.tif.part').exists())
+
     def test_https_fallback_recovers_native_cover_after_vsicurl_failure(self):
         with tempfile.TemporaryDirectory() as d:
             local=Path(d)
