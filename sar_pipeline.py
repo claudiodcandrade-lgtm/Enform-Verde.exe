@@ -1193,7 +1193,22 @@ def planetary_alos_palsar(gdf,cache,limit=12):
     Processes real HH/HV pixels inside the AOI. No AGB is fabricated without calibration."""
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__; bbox=list(map(float,gdf.to_crs(4326).total_bounds))
     body={"collections":["alos-palsar-mosaic"],"bbox":bbox,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]}
-    api="https://planetarycomputer.microsoft.com/api/stac/v1/search"; rr=requests.post(api,json=body,timeout=(10,60)); rr.raise_for_status(); items=rr.json().get("features",[])
+    api="https://planetarycomputer.microsoft.com/api/stac/v1/search"
+    try:
+        rr=requests.post(api,json=body,timeout=(10,60))
+        rr.raise_for_status()
+        items=rr.json().get("features",[])
+    except requests.exceptions.RequestException as exc:
+        # A catalog 401/403 is not evidence of missing SAR or zero biomass.
+        # Return an auditable data-access failure so alternative calibrated
+        # providers may run, while mandatory real-pixel CI gates still fail.
+        code=getattr(getattr(exc,"response",None),"status_code",None)
+        return {"available":False,"items":0,"scene_ids":[],"paths":[],
+                "stats":[],"errors":[f"ALOS/PALSAR STAC indisponível (HTTP {code}): {exc}"],
+                "asset_keys_by_scene":[],"missing_polarizations":["HH","HV"],
+                "provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer",
+                "band":"L","pixel_state":"NAO_PROCESSADO",
+                "access_status":"AUTH_REQUIRED" if code in (401,403) else "REMOTE_UNAVAILABLE"}
     import rasterio
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
