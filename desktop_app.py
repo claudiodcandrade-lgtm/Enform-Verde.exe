@@ -1334,7 +1334,7 @@ class App(tk.Tk):
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
         ttk.Label(f,text="Detecção de áreas cultivadas primeiro; identificação da cultura somente quando a evidência e a validação permitirem.",
                   wraplength=1000).pack(anchor="w",pady=(4,8))
-        ttk.Button(f,text="CONSULTAR / ATUALIZAR CLIMA DINÂMICO — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
+        ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — CLIMA DINÂMICO NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
         views=ttk.Notebook(f);views.pack(fill="both",expand=True)
         exec_frame=ttk.Frame(views);audit_frame=ttk.Frame(views)
         views.add(exec_frame,text="Painel executivo")
