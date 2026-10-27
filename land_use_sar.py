@@ -435,6 +435,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     from native_carbon import native_class
     raw_layers=list(layers)
     mb=None
+    mapbiomas_failure=None
     try:
         mb=raster_class_polygons(aoi,mapbiomas_path or RASTER_URL.format(year=YEAR))
         raw_layers.append(mb.copy())
@@ -458,7 +459,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             # without their original class code: preserve the former safe rollup.
             mb.loc[mb.class_name.isin(crop_names),'class_name']='Áreas cultivadas'
     except Exception as exc:
-        warnings.append('MapBiomas indisponível: '+str(exc))
+        mapbiomas_failure=str(exc)
+        warnings.append('MapBiomas indisponível: '+mapbiomas_failure)
+        warnings.append('Cobertura atual não verificada por falha das fontes; IBGE indica fitofisionomia potencial, não confirma cobertura presente.')
     reference=None
     if ibge is not None and not ibge.empty:
         if ibge_field not in ibge.columns:raise ValueError('Campo IBGE ausente.')
@@ -491,10 +494,14 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             source_distributions.append(source_audit)
     polygons, summary = partition_land_use(aoi,layers)
     summary['original_source_distributions']=source_distributions
+    summary['mapbiomas_failure']=mapbiomas_failure
+    summary['cover_verification']='COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL' if mapbiomas_failure else 'FONTES_PROCESSADAS'
+    summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r.get('native_status') is None) if all('native_status' in r for r in summary['classes']) else None
     summary['priority']='SAR com confiança demonstrada; nas lacunas, IBGE para fitofisionomia e MapBiomas para uso/cobertura atual'
     metadata=(validation or {}).get('class_metadata',{})
     polygons['native_status']=[native_class(r.class_name,r.source,metadata) for r in polygons.itertuples()]
     for row in summary['classes']:row['native_status']=native_class(row['class_name'],row['source'],metadata)
+    summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r['native_status'] is None)
     outdir=Path(output_dir);outdir.mkdir(parents=True,exist_ok=True)
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
