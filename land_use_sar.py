@@ -448,6 +448,8 @@ def _download_official_mapbiomas(url, destination):
                     out.write(chunk)
         if temporary.stat().st_size<=1024:
             raise ValueError('Arquivo MapBiomas incompleto')
+        if reported and copied != int(reported):
+            raise ValueError(f'Download MapBiomas truncado: {copied} de {reported} bytes')
         with rasterio.open(temporary) as check:
             if not (check.crs and check.count>=1 and check.width>0 and check.height>0):
                 raise ValueError('GeoTIFF MapBiomas sem metadados válidos')
