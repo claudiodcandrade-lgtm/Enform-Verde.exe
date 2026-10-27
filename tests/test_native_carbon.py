@@ -90,6 +90,26 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertAlmostEqual(carbon['known_total_tc'],100.0,places=4)  # reprojection/area floating-point tolerance
             self.assertEqual(called,['Floresta Ombrófila Densa'])
 
+    def test_auto_discover_cached_mapbiomas_raster(self):
+        with tempfile.TemporaryDirectory() as d:
+            home=Path(d)
+            cached=home/'.enform_verde'/'mapbiomas'
+            cached.mkdir(parents=True)
+            from mapbiomas_zonal import YEAR
+            path=cached/f'brazil_coverage-col11_{YEAR}.tif'
+            arr=np.full((40,40),3,dtype='uint8')
+            with rasterio.open(path,'w',driver='GTiff',height=40,width=40,
+                               count=1,dtype='uint8',crs='EPSG:6933',
+                               transform=from_origin(0,400,10,10)) as dst:
+                dst.write(arr,1)
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,400,400)],crs=6933)
+            with patch('pathlib.Path.home',return_value=home):
+                with patch.dict('os.environ',{'ENFORM_MAPBIOMAS_LOCAL_TIF':''}):
+                    report=run_land_use(aoi,home/'result')
+            self.assertEqual(report['mapbiomas_source'],str(path))
+            self.assertIsNone(report['mapbiomas_failure'])
+            self.assertAlmostEqual(report['unknown_cover_ha'],0,places=4)
+
     def test_windows_local_mapbiomas_route_preserves_native_carbon(self):
         with tempfile.TemporaryDirectory() as d:
             raster=Path(d)/'official_mapbiomas_local.tif'
