@@ -415,6 +415,49 @@ def native_height_contract(cfg):
     return hi,ui
 
 
+def _download_official_mapbiomas(url, destination):
+    """HTTPS fallback for GDAL builds without working /vsicurl/ support.
+
+    An atomic, bounded download avoids leaving corrupt rasters in the cache.
+    Never pretend that a partial file confirms native cover.
+    """
+    import os
+    import shutil
+    import urllib.request
+    import rasterio
+    destination=Path(destination)
+    destination.parent.mkdir(parents=True,exist_ok=True)
+    temporary=destination.with_suffix(destination.suffix+'.part')
+    try:
+        request=urllib.request.Request(url,headers={'User-Agent':'EnformVerde/3.25 MapBiomas official GeoTIFF'})
+        with urllib.request.urlopen(request,timeout=60) as response:
+            content_type=response.headers.get('Content-Type','').lower()
+            reported=response.headers.get('Content-Length')
+            if 'text/html' in content_type or 'application/json' in content_type:
+                raise ValueError('Resposta não é GeoTIFF: '+content_type)
+            if reported and int(reported)>5_000_000_000:
+                raise ValueError('GeoTIFF supera limite de download de 5 GB')
+            with open(temporary,'wb') as out:
+                copied=0
+                while True:
+                    chunk=response.read(1024*1024)
+                    if not chunk:break
+                    copied+=len(chunk)
+                    if copied>5_000_000_000:
+                        raise ValueError('Download excedeu limite de 5 GB')
+                    out.write(chunk)
+        if temporary.stat().st_size<=1024:
+            raise ValueError('Arquivo MapBiomas incompleto')
+        with rasterio.open(temporary) as check:
+            if not (check.crs and check.count>=1 and check.width>0 and check.height>0):
+                raise ValueError('GeoTIFF MapBiomas sem metadados válidos')
+        os.replace(temporary,destination)
+        return destination
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
 def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=None, ibge_field='legenda_1'):
     import geopandas as gpd
     from mapbiomas_zonal import RASTER_URL, YEAR
@@ -489,6 +532,23 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             mapbiomas_failure=f'{type(exc).__name__}: {exc}'
             mapbiomas_access_attempts.append({'attempt':attempt+1,'error':mapbiomas_failure})
             if attempt<2:time.sleep(1+attempt)
+    # Native HTTPS download is a last-resort alternative to missing GDAL curl
+    # drivers. Only activate for a genuine remote-opening failure, never a
+    # different validation error or an explicit user-provided raster.
+    if (mb is None and not mapbiomas_path and source_path.startswith('https://')
+            and mapbiomas_failure and any(term in mapbiomas_failure.lower()
+                for term in ('does not exist in the file system','not recognized as a supported dataset',
+                             'unsupported protocol','vsicurl'))):
+        try:
+            destination=Path.home()/'.enform_verde'/'mapbiomas'/f'brazil_coverage-col11_{YEAR}.tif'
+            downloaded=_download_official_mapbiomas(source_path,destination)
+            mb=raster_class_polygons(aoi,str(downloaded))
+            source_path=str(downloaded)
+            mapbiomas_failure=None
+            warnings.append('MapBiomas C11: GeoTIFF oficial obtido por HTTPS e validado em cache local.')
+        except Exception as exc:
+            mapbiomas_failure+='; fallback HTTPS: '+type(exc).__name__+': '+str(exc)
+            mapbiomas_access_attempts.append({'route':'https_download','error':str(exc)})
     try:
         if mb is None:
             raise RuntimeError('MapBiomas C11 inacessível após tentativas: '+str(mapbiomas_failure))
