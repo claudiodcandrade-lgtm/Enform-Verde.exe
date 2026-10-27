@@ -109,3 +109,7 @@ Data: 27/10/2026. PR #50 HEAD `937d6883b56758850b01412d62ffe68e50e3f002`.
 
 ## REGISTRO DE STATUS — 27/10/2026 — ACOMPANHAMENTO
 Consulta GitHub: build Windows nº 682 (run 40565856210) em progresso, etapa Build executable; nº 683 (run 40566753644) em progresso, etapa mapas IBGE offline; testes dashboard nº 264/265 concluídos com sucesso para SHA 5b4516cc5c832d7781adf171db5db39a2d8b7176. Nenhum novo ZIP de build 682/683 verificado e nenhuma comprovação de execução MapBiomas real no EXE. Pendência científica de cinco biomas e todos os compartimentos segue aberta. NÃO declarar versão final até concluir gates.
+
+
+## REGISTRO DE STATUS — 27/10/2026 — BUILD 682 APROVADO
+Build Windows #682 run 40565856210 CONCLUÍDO SUCCESS para SHA 231556f3c07160bc0bfe3e6b87cdf79d3bfa2d7f. Artefato Windows ID 12763402265, nome Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO, digest sha256:58d8b4c863a07c64a550ff8cea0dbb60b04ea49bc59d118f3129be8a1abee978, tamanho 522565787 bytes, expira 2026-11-26. Link: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40565856210/artifacts/12763402265 . Testes dashboard #262/#263 SUCCESS. Build #683 e #684 estavam em andamento; #266/#267 dashboard SUCCESS. **CI aprovado não prova leitura real MapBiomas na máquina do usuário nem recuperação do estoque de todos os compartimentos para os cinco biomas.** Download do build #682 é candidato para teste, não liberação científica definitiva. Manter prioridade em prova end-to-end e relatório de auditoria.
