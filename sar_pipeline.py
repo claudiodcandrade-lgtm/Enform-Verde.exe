@@ -1266,7 +1266,22 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
     body={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]}
     api="https://planetarycomputer.microsoft.com/api/stac/v1/search"
-    rr=requests.post(api,json=body,timeout=(10,60)); rr.raise_for_status(); items=rr.json().get("features",[])
+    # The public STAC API intermittently returns 502/503/504 on live gates.
+    # Retry transient server failures without changing the search or inventing pixels.
+    import time
+    for attempt in range(3):
+        try:
+            rr=requests.post(api,json=body,timeout=(10,60))
+            rr.raise_for_status()
+            items=rr.json().get("features",[])
+            break
+        except requests.exceptions.RequestException as exc:
+            code=getattr(getattr(exc,'response',None),'status_code',None)
+            transient=code in (429,500,502,503,504) or isinstance(
+                exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError))
+            if not transient or attempt==2:
+                raise
+            time.sleep(2*(attempt+1))
     if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":["sem cenas Sentinel-1 GRD no AOI"]}
     Path(cache).mkdir(parents=True,exist_ok=True); stats=[]; paths=[]; errors=[]; scene_ids=[]
     import rasterio
