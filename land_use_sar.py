@@ -442,6 +442,15 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     import time
     import rasterio
     source_path=mapbiomas_path or RASTER_URL.format(year=YEAR)
+    # Keep the validated remote pathway, and permit an authenticated local
+    # GeoTIFF for Windows installations where GDAL /vsicurl/ is unavailable.
+    import os
+    local_candidate=os.environ.get('ENFORM_MAPBIOMAS_LOCAL_TIF','').strip()
+    if not mapbiomas_path and local_candidate:
+        if Path(local_candidate).is_file():
+            source_path=local_candidate
+        else:
+            warnings.append('MapBiomas local configurado, mas arquivo inexistente: '+local_candidate)
     for attempt in range(3):
         try:
             with rasterio.Env(GDAL_HTTP_MAX_RETRY='2',
@@ -528,7 +537,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
     summary.update({'warnings':warnings,'validation':validation,'vector_path':str(vector_path),
-                    'mapbiomas_source':str(mapbiomas_path or RASTER_URL.format(year=YEAR)),
+                    'mapbiomas_source':str(source_path),
                     'status':'SAR_ELEGIVEL' if any(r['source'].startswith('SAR_VALIDADO') for r in summary['classes']) else 'FALLBACK_CARTOGRAFICO'})
     (outdir/'uso_solo_auditoria.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
     return summary
