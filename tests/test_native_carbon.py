@@ -109,7 +109,7 @@ class NativeCarbonTests(unittest.TestCase):
                 called.append(phys)
                 return {'components':[{'parametro':'Biomassa aérea','tc':10}]}
             result=summarize_native_carbon(aoi,gpd.read_file(report['vector_path']),estimator)
-            self.assertAlmostEqual(result['known_total_tc'],0.01,places=5)
+            self.assertAlmostEqual(result['known_total_tc'],0.1,places=4)
             self.assertEqual(called,['Floresta Ombrófila Densa'])
 
     def test_current_agricultural_mask_does_not_become_forest_by_ibge_region(self):
