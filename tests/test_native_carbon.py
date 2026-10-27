@@ -90,6 +90,28 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertAlmostEqual(carbon['known_total_tc'],100.0,places=4)  # reprojection/area floating-point tolerance
             self.assertEqual(called,['Floresta Ombrófila Densa'])
 
+    def test_windows_local_mapbiomas_route_preserves_native_carbon(self):
+        with tempfile.TemporaryDirectory() as d:
+            raster=Path(d)/'official_mapbiomas_local.tif'
+            with rasterio.open(raster,'w',driver='GTiff',height=1,width=2,count=1,dtype='uint8',crs=6933,transform=from_origin(0,10,10,10),nodata=0) as dst:
+                dst.write(np.array([[3,15]],dtype='uint8'),1)
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,20,10)],crs=6933)
+            ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
+            with patch.dict('os.environ',{'ENFORM_MAPBIOMAS_LOCAL_TIF':str(raster)}):
+                report=run_land_use(aoi,Path(d)/'output',ibge=ibge)
+            self.assertEqual(report['mapbiomas_source'],str(raster))
+            self.assertIsNone(report['mapbiomas_failure'])
+            self.assertAlmostEqual(report['unknown_cover_ha'],0,places=4)
+            nat=next(row for row in report['classes'] if row['native_status'] is True)
+            self.assertAlmostEqual(nat['area_pct'],50,places=4)
+            called=[]
+            def estimator(frame,phys):
+                called.append(phys)
+                return {'components':[{'parametro':'Biomassa aérea','tc':10}]}
+            result=summarize_native_carbon(aoi,gpd.read_file(report['vector_path']),estimator)
+            self.assertAlmostEqual(result['known_total_tc'],0.01,places=5)
+            self.assertEqual(called,['Floresta Ombrófila Densa'])
+
     def test_current_agricultural_mask_does_not_become_forest_by_ibge_region(self):
         with tempfile.TemporaryDirectory() as d:
             raster=Path(d)/'map.tif'
