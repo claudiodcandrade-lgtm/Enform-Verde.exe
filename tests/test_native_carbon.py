@@ -11,6 +11,41 @@ from native_carbon import summarize_native_carbon, COMPARTMENTS, native_class, e
 from land_use_sar import run_land_use
 
 class NativeCarbonTests(unittest.TestCase):
+    def test_full_native_carbon_pipeline_all_pools_and_anthropic_exclusion(self):
+        # Complete synthetic integration gate: land-cover pixels, native
+        # intersection, per-pool aggregation, units and exclusion of pasture.
+        with tempfile.TemporaryDirectory() as d:
+            tif=Path(d)/'mapbiomas_local.tif'
+            with rasterio.open(tif,'w',driver='GTiff',width=20,height=10,
+                               count=1,dtype='uint8',crs='EPSG:6933',
+                               transform=from_origin(0,100,10,10),nodata=0) as dst:
+                values=np.full((10,20),15,dtype='uint8')
+                values[:,:10]=3
+                dst.write(values,1)
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,200,100)],crs=6933)
+            ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
+            land=run_land_use(aoi,Path(d)/'out',mapbiomas_path=str(tif),ibge=ibge)
+            self.assertIsNone(land['mapbiomas_failure'])
+            self.assertAlmostEqual(land['unknown_cover_ha'],0,places=5)
+            calls=[]
+            pool_values=[60.0,12.0,3.0,1.0,4.0,70.0]
+            def estimator(frame,phys):
+                calls.append(phys)
+                return {'components':[{'parametro':name,'tc':value,
+                                        'fonte':'REF_SINTETICA_TESTE'}
+                                       for name,value in zip(COMPARTMENTS,pool_values)]}
+            result=summarize_native_carbon(aoi,gpd.read_file(land['vector_path']),estimator)
+            self.assertEqual(len(calls),1)
+            self.assertAlmostEqual(result['native_area_ha'],0.1,places=4)
+            self.assertAlmostEqual(result['excluded_other_uses_ha'],0.1,places=4)
+            self.assertAlmostEqual(result['known_total_tc'],15,places=4)
+            self.assertAlmostEqual(result['known_total_tco2'],55,places=4)
+            self.assertTrue(result['complete'])
+            self.assertIsNone(result['total_uncertainty'])
+            self.assertEqual(len(result['components']),len(COMPARTMENTS))
+            self.assertTrue(all(c['known_total_tc'] is not None
+                                for c in result['components']))
+
     def test_two_native_classes_are_weighted_and_other_uses_not_estimated(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
         classes=gpd.GeoDataFrame([
