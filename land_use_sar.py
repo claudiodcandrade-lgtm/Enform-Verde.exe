@@ -446,8 +446,8 @@ def _download_official_mapbiomas(url, destination):
                     if copied>5_000_000_000:
                         raise ValueError('Download excedeu limite de 5 GB')
                     out.write(chunk)
-        if temporary.stat().st_size<=1024:
-            raise ValueError('Arquivo MapBiomas incompleto')
+        if temporary.stat().st_size==0:
+            raise ValueError('Arquivo MapBiomas vazio')
         if reported and copied != int(reported):
             raise ValueError(f'Download MapBiomas truncado: {copied} de {reported} bytes')
         with rasterio.open(temporary) as check:
@@ -509,7 +509,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         for directory in search_dirs:
             for name in known_names:
                 candidate=directory/name
-                if candidate.is_file() and candidate.stat().st_size>1024:
+                if candidate.is_file() and candidate.stat().st_size>0:
                     try:
                         with rasterio.open(candidate) as check:
                             if check.count>=1 and check.crs and check.width>0 and check.height>0:
