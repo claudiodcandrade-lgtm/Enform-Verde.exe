@@ -67,6 +67,20 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertEqual(result['classes'][0]['native_status'],None)
             self.assertTrue(any('Cobertura atual não verificada' in w for w in result['warnings']))
 
+    def test_previously_working_mapbiomas_route_remains_first_priority(self):
+        with tempfile.TemporaryDirectory() as d:
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
+            mapped=gpd.GeoDataFrame([dict(class_code=3,class_name='Formação Florestal',
+                                           source='MAPBIOMAS',taxonomy='MapBiomas',
+                                           geometry=box(0,0,100,100))],crs=6933)
+            with patch('land_use_sar.raster_class_polygons',return_value=mapped) as read:
+                with patch('land_use_sar._download_official_mapbiomas') as download:
+                    report=run_land_use(aoi,Path(d)/'out')
+            self.assertIsNone(report['mapbiomas_failure'])
+            self.assertEqual(read.call_count,1)
+            download.assert_not_called()
+            self.assertAlmostEqual(report['unknown_cover_ha'],0.0,places=4)
+
     def test_mapbiomas_retry_restores_native_carbon(self):
         with tempfile.TemporaryDirectory() as d:
             aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
