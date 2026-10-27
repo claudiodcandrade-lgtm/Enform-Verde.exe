@@ -21,7 +21,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.24.41-CANDIDATE"
+APP_VERSION="3.25.0-AREAS-CULTIVADAS"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1332,7 +1332,7 @@ class App(tk.Tk):
         """Separate concise executive results from traceable technical audit."""
         f=self.tabs[5]
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
-        ttk.Label(f,text="Painel executivo agrícola — atualidade SAR, estimativas aparentes e previsão validada.",
+        ttk.Label(f,text="Detecção de áreas cultivadas primeiro; identificação da cultura somente quando a evidência e a validação permitirem.",
                   wraplength=1000).pack(anchor="w",pady=(4,8))
         ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
         views=ttk.Notebook(f);views.pack(fill="both",expand=True)
@@ -1380,9 +1380,12 @@ class App(tk.Tk):
             for item in non_native:
                 executive.append("• "+str(item.get("class_name","Uso não determinado"))+" — "+
                                  format_ptbr(item.get("area_ha",0),2)+" ha; fonte: "+
-                                 str(item.get("source","não informada")))
+                                 str(item.get("source","não informada"))+
+                                 ("; referência: "+str(item.get("taxonomy")) if item.get("taxonomy") else ""))
         else:
             executive.append("• Não determinado")
+        if any(str(item.get("class_name","")).startswith("Lavoura de ") and item.get("source")=="MAPBIOMAS" for item in non_native):
+            executive.append("Identificação nominal proveniente da classe cartográfica anual MapBiomas (2025); não representa observação SAR atual nem validação independente desta propriedade.")
         age_assessment=land.get("probable_crop_age") if isinstance(land.get("probable_crop_age"),dict) else {}
         age_value=age_assessment.get("months") if (age_assessment.get("status")=="validated" and
                    age_assessment.get("freshness_status")=="cenas_recentes_identificadas") else None

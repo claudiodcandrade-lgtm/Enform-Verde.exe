@@ -15,6 +15,20 @@ MIN_VALIDATION = 50
 MIN_PRECISION_LOWER = 0.90
 MIN_DISTANCE_M = 1000.0
 
+def _executive_crop_label(name):
+    """Map a validated crop class to the plain-language label shown in reports."""
+    import unicodedata
+    key=''.join(c for c in unicodedata.normalize('NFD',str(name or '').casefold())
+                if unicodedata.category(c)!='Mn').strip()
+    aliases={'soja':'Lavoura de soja','milho':'Lavoura de milho','sorgo':'Lavoura de sorgo',
+             'cafe':'Lavoura de café','cana':'Lavoura de cana-de-açúcar',
+             'cana-de-acucar':'Lavoura de cana-de-açúcar','cana de acucar':'Lavoura de cana-de-açúcar',
+             'arroz':'Lavoura de arroz','feijao':'Lavoura de feijão','citros':'Lavoura de citros',
+             'citrus':'Lavoura de citros','algodao':'Lavoura de algodão','cotton':'Lavoura de algodão',
+             'rice':'Lavoura de arroz','maize':'Lavoura de milho','soybean':'Lavoura de soja',
+             'sorghum':'Lavoura de sorgo','coffee':'Lavoura de café','beans':'Lavoura de feijão'}
+    return aliases.get(key)
+
 
 def wilson_lower(correct, total):
     if not total:
@@ -136,10 +150,11 @@ def raster_class_polygons(aoi, raster_path, legend=None):
             for geometry, code in shapes(arr[0].data.astype('int32'), mask=valid, transform=transform):
                 code = int(code)
                 name = legend[code] if legend is not None else LEGEND.get(code, (f'Classe MapBiomas {code}', ''))[0]
-                rows.append({'class_name': name, 'source': 'SAR_VALIDADO' if legend is not None else 'MAPBIOMAS',
+                rows.append({'class_code': code, 'class_name': name,
+                             'source': 'SAR_VALIDADO' if legend is not None else 'MAPBIOMAS',
                              'taxonomy': 'legenda do modelo SAR' if legend is not None else 'MapBiomas',
                              'geometry': shape(geometry)})
-            return gpd.GeoDataFrame(rows, columns=['class_name','source','taxonomy','geometry'], crs=src.crs)
+            return gpd.GeoDataFrame(rows, columns=['class_code','class_name','source','taxonomy','geometry'], crs=src.crs)
 
 
 def _sha(path):
@@ -326,6 +341,14 @@ def classify_config(aoi, config_path, output_dir):
                    'raster':str(output_path),'eligible_pixels':int((output>0).sum())})
     (outdir/'validacao_sar.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
     polygons = raster_class_polygons(aoi,output_path,{v:k for k,v in codes.items()})
+    # Detailed crop names are exposed only for classes that passed the
+    # independent class-level gate above. Parent classes remain generic.
+    for pos,row in polygons.iterrows():
+        if row.get('source')=='SAR_VALIDADO' and row.get('class_name') in cfg['classes']:
+            meta=cfg['classes'][row['class_name']]
+            if meta.get('parent')=='área cultivada':
+                label=_executive_crop_label(row['class_name'])
+                if label: polygons.at[pos,'class_name']=label
     return polygons, report
 
 
@@ -417,10 +440,23 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         raw_layers.append(mb.copy())
         from mapbiomas_zonal import LEGEND
         crop_names={LEGEND[c][0] for c in (18,19,20,39,40,41,46,47,48,62)}
-        # MapBiomas has a separate pasture class. Preserve it when that class is
-        # explicitly present; only aggregate crop classes that cannot be
-        # identified more specifically with independent validated evidence.
-        mb.loc[mb.class_name.isin(crop_names),'class_name']='Áreas cultivadas'
+        # Keep explicit crop-type pixels from the official annual map visible in
+        # the executive result, but identify them as MapBiomas map classes—not
+        # as independently validated, current-season SAR classifications.
+        # Broad/ambiguous crop classes stay at the safe parent label.
+        specific={20:'Lavoura de cana-de-açúcar',39:'Lavoura de soja',40:'Lavoura de arroz',
+                  46:'Lavoura de café',47:'Lavoura de citros',62:'Lavoura de algodão'}
+        if 'class_code' in mb.columns:
+            mb['class_code']=mb['class_code'].map(lambda x: int(x) if str(x).strip().lstrip('-').isdigit() else -1)
+            for code,label in specific.items():
+                mb.loc[mb.class_code.eq(code),'class_name']=label
+                mb.loc[mb.class_code.eq(code),'taxonomy']=f"MapBiomas C11, classe {code}; classe cartográfica anual"
+            broad=mb.class_code.isin([18,19,41,48])
+            mb.loc[broad,'class_name']='Áreas cultivadas'
+        else:
+            # Compatibility path for externally supplied/mock class polygons
+            # without their original class code: preserve the former safe rollup.
+            mb.loc[mb.class_name.isin(crop_names),'class_name']='Áreas cultivadas'
     except Exception as exc:
         warnings.append('MapBiomas indisponível: '+str(exc))
     reference=None
