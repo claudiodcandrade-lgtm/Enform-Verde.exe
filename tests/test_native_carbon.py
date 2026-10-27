@@ -84,6 +84,20 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertFalse(dest.exists())
             self.assertFalse(dest.with_suffix('.tif.part').exists())
 
+    def test_https_fallback_recovers_after_remote_timeout_message(self):
+        with tempfile.TemporaryDirectory() as d:
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
+            mapped=gpd.GeoDataFrame([dict(class_code=3,class_name='Formação Florestal',
+                                            source='MAPBIOMAS',taxonomy='MapBiomas',
+                                            geometry=box(0,0,100,100))],crs=6933)
+            failures=[rasterio.errors.RasterioIOError('HTTP timeout')] * 3
+            with patch('land_use_sar.raster_class_polygons',side_effect=failures+[mapped]):
+                with patch('land_use_sar._download_official_mapbiomas',return_value=Path(d)/'official.tif') as download:
+                    report=run_land_use(aoi,Path(d)/'output')
+            download.assert_called_once()
+            self.assertIsNone(report['mapbiomas_failure'])
+            self.assertAlmostEqual(report['unknown_cover_ha'],0,places=4)
+
     def test_https_fallback_recovers_native_cover_after_vsicurl_failure(self):
         with tempfile.TemporaryDirectory() as d:
             local=Path(d)
