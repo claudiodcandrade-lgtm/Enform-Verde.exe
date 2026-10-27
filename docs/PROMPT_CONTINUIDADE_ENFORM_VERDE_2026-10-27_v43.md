@@ -190,3 +190,7 @@ Windows builds #700 (run 40575563697), #701 (40575618449) e #702 (40575953470) a
 
 ## ATUALIZAÇÃO DE STATUS — 27/10/2026 — CI WINDOWS 703/704
 Consulta oficial de Actions: build 703, run 40576223148, commit 1af5b11266ff36ebb2cc158c51566d0230ee8387, em progresso na etapa Install dependencies; build 704, run 40576266614, commit b88778e035fbc5e48ab40ee830460e50c06e34f8, em progresso na etapa Install dependencies. Suites Dashboard #306 e #307 concluídas SUCCESS para SHA b88778e035fbc5e48ab40ee830460e50c06e34f8. Nenhum destes builds ainda foi constatado como concluído nesta consulta. Recuperação real de MapBiomas via HTTPS/cache, estoque com incerteza por compartimento e aceitação nacional continuam não demonstrados. Não atribuir status de release definitivo.
+
+
+## STATUS — 27/10/2026 — BUILDS 703–705
+Dashboard #308 e #309 PASS em 76f2cc1944b64b7aac8af6c7a43a09207c3c75d2. Windows #703 run 40576223148 e #704 run 40576266614 em progresso preparando quadrantes IBGE. Windows #705 run 40576503553 em progresso inspecionando esquemas IFN de necromassa. Nenhuma falha nova visível nas etapas consultadas. **Não há confirmação de ZIP concluído no SHA atual nem evidência de recuperação automática real de MapBiomas/AGB e outros compartimentos com incerteza nacional.** A correção científica permanece aberta. O próximo gate útil é teste end-to-end com dados reais e relatório de stdout, não apenas status de CI. Não declarar homologação definitiva.
