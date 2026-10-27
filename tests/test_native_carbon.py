@@ -55,6 +55,18 @@ class NativeCarbonTests(unittest.TestCase):
         self.assertFalse(native_class('Cacau','SAR_VALIDADO',{'Cacau':{'parent':'vegetação natural'}}))
         self.assertFalse(native_class('Cacau','SAR_VALIDADO',{'Cacau':{'parent':'uso agropecuário'}}))
 
+    def test_mapbiomas_failure_is_not_no_native_vegetation(self):
+        with tempfile.TemporaryDirectory() as d:
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
+            ibge=aoi.copy()
+            ibge['legenda_1']='Floresta Ombrófila Densa'
+            with patch('land_use_sar.raster_class_polygons', side_effect=UnicodeDecodeError('utf-8',b'\\xe3',0,1,'invalid start byte')):
+                result=run_land_use(aoi,Path(d)/'out',ibge=ibge)
+            self.assertEqual(result['cover_verification'],'COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL')
+            self.assertAlmostEqual(result['unknown_cover_ha'],1.0)
+            self.assertEqual(result['classes'][0]['native_status'],None)
+            self.assertTrue(any('Cobertura atual não verificada' in w for w in result['warnings']))
+
     def test_current_agricultural_mask_does_not_become_forest_by_ibge_region(self):
         with tempfile.TemporaryDirectory() as d:
             raster=Path(d)/'map.tif'
