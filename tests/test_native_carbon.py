@@ -67,6 +67,40 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertEqual(result['classes'][0]['native_status'],None)
             self.assertTrue(any('Cobertura atual não verificada' in w for w in result['warnings']))
 
+    def test_https_fallback_recovers_native_cover_after_vsicurl_failure(self):
+        with tempfile.TemporaryDirectory() as d:
+            local=Path(d)
+            raster=local/'source.tif'
+            with rasterio.open(raster,'w',driver='GTiff',height=20,width=20,count=1,
+                               dtype='uint8',crs='EPSG:6933',
+                               transform=from_origin(0,200,10,10)) as dst:
+                dst.write(np.full((20,20),3,dtype='uint8'),1)
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,200,200)],crs=6933)
+            real_open=__import__('land_use_sar').raster_class_polygons
+            attempts=[]
+            def mocked_open(frame,path,legend=None):
+                attempts.append(str(path))
+                if str(path).startswith('https://'):
+                    raise rasterio.errors.RasterioIOError(
+                        '/vsicurl/ official map does not exist in the file system')
+                return real_open(frame,str(path),legend)
+            import io
+            class Response:
+                headers={'Content-Type':'image/tiff'}
+                def __init__(self,contents):self.stream=io.BytesIO(contents)
+                def __enter__(self):return self
+                def __exit__(self,*args):self.stream.close()
+                def read(self,n):return self.stream.read(n)
+            with patch('pathlib.Path.home',return_value=local):
+                with patch('land_use_sar.raster_class_polygons',side_effect=mocked_open):
+                    with patch('urllib.request.urlopen',return_value=Response(raster.read_bytes())):
+                        report=run_land_use(aoi,local/'output')
+            self.assertIsNone(report['mapbiomas_failure'])
+            self.assertTrue(report['mapbiomas_source'].endswith('.tif'))
+            self.assertTrue(Path(report['mapbiomas_source']).exists())
+            self.assertAlmostEqual(report['unknown_cover_ha'],0,places=4)
+            self.assertGreaterEqual(len(attempts),4)
+
     def test_previously_working_mapbiomas_route_remains_first_priority(self):
         with tempfile.TemporaryDirectory() as d:
             aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
