@@ -538,9 +538,11 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     # drivers. Only activate for a genuine remote-opening failure, never a
     # different validation error or an explicit user-provided raster.
     if (mb is None and not mapbiomas_path and source_path.startswith('https://')
-            and mapbiomas_failure and any(term in mapbiomas_failure.lower()
-                for term in ('does not exist in the file system','not recognized as a supported dataset',
-                             'unsupported protocol','vsicurl'))):
+            and mapbiomas_failure):
+        # The remote GDAL stack may report HTTP 403/timeout/TLS failures in
+        # different languages and classes. Try independent native HTTPS rather
+        # than matching a narrow English substring. This fallback cannot
+        # overwrite an explicit local raster or a successful GDAL result.
         try:
             destination=Path.home()/'.enform_verde'/'mapbiomas'/f'brazil_coverage-col11_{YEAR}.tif'
             downloaded=_download_official_mapbiomas(source_path,destination)
