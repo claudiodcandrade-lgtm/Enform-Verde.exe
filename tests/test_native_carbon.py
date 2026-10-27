@@ -126,9 +126,12 @@ class NativeCarbonTests(unittest.TestCase):
                                             source='MAPBIOMAS',taxonomy='MapBiomas',
                                             geometry=box(0,0,100,100))],crs=6933)
             failures=[rasterio.errors.RasterioIOError('HTTP timeout')] * 3
-            with patch('land_use_sar.raster_class_polygons',side_effect=failures+[mapped]):
-                with patch('land_use_sar._download_official_mapbiomas',return_value=Path(d)/'official.tif') as download:
-                    report=run_land_use(aoi,Path(d)/'output')
+            # Isolate Path.home so a MapBiomas cache from another CI test
+            # cannot bypass the remote-failure branch under test.
+            with patch('pathlib.Path.home',return_value=Path(d)):
+                with patch('land_use_sar.raster_class_polygons',side_effect=failures+[mapped]):
+                    with patch('land_use_sar._download_official_mapbiomas',return_value=Path(d)/'official.tif') as download:
+                        report=run_land_use(aoi,Path(d)/'output')
             download.assert_called_once()
             self.assertIsNone(report['mapbiomas_failure'])
             self.assertAlmostEqual(report['unknown_cover_ha'],0,places=4)
