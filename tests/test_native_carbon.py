@@ -87,7 +87,7 @@ class NativeCarbonTests(unittest.TestCase):
                 return {'components':[{'parametro':'Biomassa aérea','tc':100}]}
             carbon=summarize_native_carbon(aoi,gpd.read_file(result['vector_path']),estimator)
             self.assertAlmostEqual(carbon['native_area_ha'],1.0)
-            self.assertAlmostEqual(carbon['known_total_tc'],100.0)
+            self.assertAlmostEqual(carbon['known_total_tc'],100.0,places=4)  # reprojection/area floating-point tolerance
             self.assertEqual(called,['Floresta Ombrófila Densa'])
 
     def test_current_agricultural_mask_does_not_become_forest_by_ibge_region(self):
