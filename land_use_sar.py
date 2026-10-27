@@ -451,6 +451,30 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             source_path=local_candidate
         else:
             warnings.append('MapBiomas local configurado, mas arquivo inexistente: '+local_candidate)
+    # Automatically recover a previously downloaded official MapBiomas GeoTIFF.
+    # Never infer native vegetation from the IBGE potential-vegetation map alone.
+    if not mapbiomas_path and source_path.startswith('https://'):
+        user_root=Path.home()/'.enform_verde'
+        known_names=[
+            f'brazil_coverage-col11_{YEAR}.tif',
+            f'mapbiomas_brazil_collection11_coverage_{YEAR}.tif',
+        ]
+        search_dirs=[user_root/'mapbiomas',user_root/'cache'/'mapbiomas',
+                     user_root/'uso_solo',user_root/'dados'/'mapbiomas']
+        for directory in search_dirs:
+            for name in known_names:
+                candidate=directory/name
+                if candidate.is_file() and candidate.stat().st_size>1024:
+                    try:
+                        with rasterio.open(candidate) as check:
+                            if check.count>=1 and check.crs and check.width>0 and check.height>0:
+                                source_path=str(candidate)
+                                warnings.append('MapBiomas oficial: raster local previamente armazenado selecionado automaticamente: '+str(candidate))
+                                break
+                    except Exception as exc:
+                        warnings.append('Cache MapBiomas inválido ignorado: '+str(candidate)+' ('+str(exc)+')')
+            if source_path!=RASTER_URL.format(year=YEAR):
+                break
     for attempt in range(3):
         try:
             with rasterio.Env(GDAL_HTTP_MAX_RETRY='2',
