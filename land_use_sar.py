@@ -436,8 +436,29 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     raw_layers=list(layers)
     mb=None
     mapbiomas_failure=None
+    mapbiomas_access_attempts=[]
+    # Avoid treating transient GDAL HTTP failures as missing vegetation.
+    # Retry the official current-year source with conservative HTTP options.
+    import time
+    import rasterio
+    source_path=mapbiomas_path or RASTER_URL.format(year=YEAR)
+    for attempt in range(3):
+        try:
+            with rasterio.Env(GDAL_HTTP_MAX_RETRY='2',
+                              GDAL_HTTP_RETRY_DELAY='1',
+                              GDAL_HTTP_TIMEOUT='45',
+                              GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',
+                              CPL_VSIL_CURL_ALLOWED_EXTENSIONS='.tif'):
+                mb=raster_class_polygons(aoi,source_path)
+            mapbiomas_failure=None
+            break
+        except Exception as exc:
+            mapbiomas_failure=f'{type(exc).__name__}: {exc}'
+            mapbiomas_access_attempts.append({'attempt':attempt+1,'error':mapbiomas_failure})
+            if attempt<2:time.sleep(1+attempt)
     try:
-        mb=raster_class_polygons(aoi,mapbiomas_path or RASTER_URL.format(year=YEAR))
+        if mb is None:
+            raise RuntimeError('MapBiomas C11 inacessível após tentativas: '+str(mapbiomas_failure))
         raw_layers.append(mb.copy())
         from mapbiomas_zonal import LEGEND
         crop_names={LEGEND[c][0] for c in (18,19,20,39,40,41,46,47,48,62)}
@@ -495,6 +516,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     polygons, summary = partition_land_use(aoi,layers)
     summary['original_source_distributions']=source_distributions
     summary['mapbiomas_failure']=mapbiomas_failure
+    summary['mapbiomas_access_attempts']=mapbiomas_access_attempts
     summary['cover_verification']='COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL' if mapbiomas_failure else 'FONTES_PROCESSADAS'
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r.get('native_status') is None) if all('native_status' in r for r in summary['classes']) else None
     summary['priority']='SAR com confiança demonstrada; nas lacunas, IBGE para fitofisionomia e MapBiomas para uso/cobertura atual'
