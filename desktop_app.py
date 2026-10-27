@@ -692,7 +692,21 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
     g=gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
     body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
-    rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",json=body,timeout=(10,60)); rr.raise_for_status()
+    # Retry transient STAC gateway outages, keeping identical AOI/search terms.
+    import time
+    for attempt in range(3):
+        try:
+            rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",
+                             json=body,timeout=(10,60))
+            rr.raise_for_status()
+            break
+        except requests.exceptions.RequestException as exc:
+            code=getattr(getattr(exc,'response',None),'status_code',None)
+            retryable=(code in (429,500,502,503,504) or isinstance(
+                exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError)))
+            if not retryable or attempt==2:
+                raise
+            time.sleep(2*(attempt+1))
     items=rr.json().get("features",[]); cand=[]
     for it in items:
         visual=(it.get("assets") or {}).get("visual")
