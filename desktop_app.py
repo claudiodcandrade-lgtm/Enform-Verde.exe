@@ -694,17 +694,17 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
     # Retry transient STAC gateway outages, keeping identical AOI/search terms.
     import time
-    for attempt in range(3):
+    for attempt in range(2):
         try:
             rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",
-                             json=body,timeout=(10,60))
+                             json=body,timeout=(5,8))
             rr.raise_for_status()
             break
         except requests.exceptions.RequestException as exc:
             code=getattr(getattr(exc,'response',None),'status_code',None)
             retryable=(code in (429,500,502,503,504) or isinstance(
                 exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError)))
-            if not retryable or attempt==2:
+            if not retryable or attempt==1:
                 raise
             time.sleep(2*(attempt+1))
     items=rr.json().get("features",[]); cand=[]
