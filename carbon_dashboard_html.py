@@ -21,15 +21,15 @@ def render_dashboard(report):
     for item in comps:
         label = escape(str(item.get("name", "Compartimento")))
         stock = item.get("tc_ha")
-        status = "Não estimado" if stock is None else pt(stock) + " tC/ha"
+        status = "Não estimado" if stock is None else pt(stock) + " tC/ha | " + pt(float(stock)*44/12) + " tCO₂e/ha"
         uncertainty = item.get("uncertainty_tc_ha")
         if uncertainty is None or stock is None:
-            uncert = "Não quantificada"
+            uncert = "N/D tC/ha | N/D tCO₂e/ha | N/D %"
         else:
             if float(uncertainty) < 0:
                 raise ValueError("Incerteza negativa")
             pct = "indisponível" if float(stock) <= 0 else "±" + pt(100 * float(uncertainty) / float(stock)) + "%"
-            uncert = "±" + pt(uncertainty) + " tC/ha (" + pct + ")"
+            uncert = "±" + pt(uncertainty) + " tC/ha | ±" + pt(float(uncertainty)*44/12) + " tCO₂e/ha | " + pct
         kind = escape(str(item.get("uncertainty_kind", "não informada")))
         rows.append("<tr><th scope='row'>" + label + "</th><td>" + status + "</td><td>" +
                     uncert + "<small>" + kind + "</small></td></tr>")
@@ -67,10 +67,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere} .note{color:#566c60}
 <h2>""" + title + """</h2><div class="cards"><div class="card">Área nativa<strong>""" + pt(area) + """ ha</strong></div>
 <div class="card">Estoque parcial conhecido<strong>""" + total_text + """</strong><small>""" + total_kind + """</small></div>\n<div class="card">Equivalente CO₂<strong>""" + (pt(co2) + " tCO₂e" if co2 is not None else "Não calculado") + """</strong></div>\n<div class="card">Densidade de carbono<strong>""" + (pt(density) + " tC/ha" if density is not None else "Não calculada") + """</strong></div></div>
 <section><h2>Compartimentos e incertezas</h2><table><thead><tr><th>Compartimento</th>
-<th>Estoque</th><th>Incerteza (tC/ha e %)</th></tr></thead><tbody>""" + "".join(rows) + """</tbody></table>
+<th>Densidade (tC/ha e tCO₂e/ha)</th><th>Incerteza (tC/ha | tCO₂e/ha | %)</th></tr></thead><tbody>""" + "".join(rows) + """</tbody></table>
 <p class="note">Incerteza do produto, dispersão espacial e IC95% não são intercambiáveis.
 Ausências não foram imputadas. Estoque parcial não equivale a estoque completo.</p></section>
-<section><h2>Limites de precisão e incertezas</h2>""" + notes_html + """</section>\n<section><h2>Rastreabilidade técnica</h2><p>Expanda cada compartimento para consultar a rota,
+<section><h2>Limites de precisão e incertezas</h2>""" + notes_html + """</section>\n<section id="auditoria-carbono"><h2>Auditoria técnica — carbono (separada do painel executivo)</h2><p>Expanda cada compartimento para consultar a rota,
 os modelos, as fontes e as limitações.</p>""" + "".join(audit) + "</section></html>"
 
 def save_dashboard(report, path):
