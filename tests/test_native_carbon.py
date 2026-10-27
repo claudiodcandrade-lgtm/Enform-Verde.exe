@@ -67,6 +67,29 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertEqual(result['classes'][0]['native_status'],None)
             self.assertTrue(any('Cobertura atual não verificada' in w for w in result['warnings']))
 
+    def test_mapbiomas_retry_restores_native_carbon(self):
+        with tempfile.TemporaryDirectory() as d:
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
+            ibge=aoi.copy()
+            ibge['legenda_1']='Floresta Ombrófila Densa'
+            mapped=gpd.GeoDataFrame([dict(class_code=3,class_name='Formação Florestal',
+                                            source='MAPBIOMAS',taxonomy='MapBiomas',
+                                            geometry=box(0,0,100,100))],crs=6933)
+            transient=UnicodeDecodeError('utf-8',b'\\xe3',0,1,'invalid start byte')
+            with patch('land_use_sar.raster_class_polygons',side_effect=[transient,mapped]):
+                result=run_land_use(aoi,Path(d)/'out',ibge=ibge)
+            self.assertEqual(len(result['mapbiomas_access_attempts']),1)
+            self.assertIsNone(result['mapbiomas_failure'])
+            self.assertAlmostEqual(result['unknown_cover_ha'],0.0)
+            called=[]
+            def estimator(frame,phys):
+                called.append(phys)
+                return {'components':[{'parametro':'Biomassa aérea','tc':100}]}
+            carbon=summarize_native_carbon(aoi,gpd.read_file(result['vector_path']),estimator)
+            self.assertAlmostEqual(carbon['native_area_ha'],1.0)
+            self.assertAlmostEqual(carbon['known_total_tc'],100.0)
+            self.assertEqual(called,['Floresta Ombrófila Densa'])
+
     def test_current_agricultural_mask_does_not_become_forest_by_ibge_region(self):
         with tempfile.TemporaryDirectory() as d:
             raster=Path(d)/'map.tif'
