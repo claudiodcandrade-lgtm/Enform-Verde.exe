@@ -10,6 +10,26 @@ from shapely.geometry import box
 from native_carbon import summarize_native_carbon, COMPARTMENTS, native_class, estimate_native_components
 from land_use_sar import run_land_use
 
+class SarAccessFailureTests(unittest.TestCase):
+    def test_palsar_401_never_reports_pixels_or_biomass(self):
+        import requests
+        from sar_pipeline import planetary_alos_palsar
+        response=requests.Response()
+        response.status_code=401
+        response.url='https://planetarycomputer.microsoft.com/api/stac/v1/search'
+        error=requests.exceptions.HTTPError('401 Unauthorized',response=response)
+        aoi=gpd.GeoDataFrame(geometry=[box(-55,-4,-54.9,-3.9)],crs=4326)
+        with patch('sar_pipeline.requests.post',side_effect=error) as request:
+            result=planetary_alos_palsar(aoi,'unused')
+        request.assert_called_once()
+        self.assertFalse(result['available'])
+        self.assertEqual(result['access_status'],'AUTH_REQUIRED')
+        self.assertEqual(result['pixel_state'],'NAO_PROCESSADO')
+        self.assertEqual(result['stats'],[])
+        self.assertEqual(result['paths'],[])
+        self.assertIn('401',result['errors'][0])
+
+
 class NativeCarbonTests(unittest.TestCase):
     def test_full_native_carbon_pipeline_all_pools_and_anthropic_exclusion(self):
         # Complete synthetic integration gate: land-cover pixels, native
