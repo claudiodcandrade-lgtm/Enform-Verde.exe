@@ -40,11 +40,13 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
 
 def executive_carbon_lines(native, fmt):
     area=native.get("native_area_ha") or 0
+    unknown=native.get("unknown_cover_area_ha") or 0
     known=native.get("known_total_tc")
     complete=bool(native.get("complete"))
     lines=["PAINEL EXECUTIVO — ESTOQUES DE CARBONO",
            "Área total: "+fmt(native.get("area_aoi_ha"))+" ha | Área nativa: "+fmt(area)+" ha",
-           "Cobertura nativa: "+(fmt(100*area/native["area_aoi_ha"])+"%" if native.get("area_aoi_ha") else "N/D"),
+           "Cobertura nativa: "+(fmt(100*area/native["area_aoi_ha"])+"%" if native.get("area_aoi_ha") and not unknown else "N/D — cobertura não integralmente verificada"),
+           "Cobertura não confirmada: "+fmt(unknown)+" ha"+(" — fonte de cobertura atual indisponível; não equivale a zero de vegetação nativa" if unknown else ""),
            "Estoque "+("total" if complete else "parcial conhecido")+": "+
            (fmt(known)+" tC | "+fmt(known*44/12)+" tCO₂e" if known is not None else "não estimado"),
            "Densidade nativa: "+(fmt(known/area)+" tC/ha | "+fmt(known/area*44/12)+" tCO₂e/ha" if known is not None and area else "N/D"),
@@ -57,11 +59,13 @@ def executive_carbon_lines(native, fmt):
             v=row.get("tc")
             u=uncertainty_for_pool(row)
             if not isinstance(v,(int,float)):
-                lines.append("  "+row["parametro"]+": não estimado; erro não quantificado")
+                lines.append("  "+row["parametro"]+": não estimado; incerteza: N/D tC/ha | N/D tCO₂e/ha | N/D %")
                 continue
             abs_u=u["absolute_tc_ha"]
-            error=(fmt(abs_u)+" tC/ha ("+fmt(u["percent"])+"%)" if abs_u is not None else "não quantificado")
-            lines.append("  "+row["parametro"]+": "+fmt(v)+" tC/ha | erro/variabilidade: "+error)
+            error=(fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | "+fmt(u["percent"])+"%" if abs_u is not None and u["percent"] is not None else
+                   (fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | N/D" if abs_u is not None else
+                    "N/D tC/ha | N/D tCO₂e/ha | N/D % — incerteza não quantificada"))
+            lines.append("  "+row["parametro"]+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | incerteza: "+error)
             lines.append("    Natureza: "+u["kind"])
     lines.extend(["ATENÇÃO: as medidas acima têm naturezas estatísticas distintas; não somar como erros independentes.",
                   "Não há IC95% defensável do total sem covariâncias, validação de transferência e erro de área.",
