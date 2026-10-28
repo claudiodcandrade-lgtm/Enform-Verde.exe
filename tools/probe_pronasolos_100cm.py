@@ -12,6 +12,8 @@ import math
 from pathlib import Path
 import sys
 
+# Script execution from tools/ must resolve the repository's own modules.
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import requests
 from pronasolos_identify import LAYER_IDS, SERVICE, build_identify_params, extract_paired_horizons
 from soil_profile_stats import summarize_paired_soil_profiles
