@@ -14,7 +14,7 @@ jobs:
           python-version: '3.11'
       - name: Syntax check
         shell: pwsh
-        run: python -m py_compile desktop_app.py carbon_dashboard_html.py dual_executive_dashboard.py carbon_report_clarity.py crop_health_yield_quality.py agricultural_diagnostic_quality.py agricultural_external_models.py land_use_sar.py pronasolos_identify.py soil_profile_stats.py tools/probe_pronasolos_100cm.py agricultural_weather_sources.py agricultural_weather.py cptec_forecast_client.py
+        run: python -m py_compile desktop_app.py carbon_dashboard_html.py dual_executive_dashboard.py carbon_report_clarity.py crop_health_yield_quality.py agricultural_diagnostic_quality.py agricultural_external_models.py land_use_sar.py sar_model_discovery.py pronasolos_identify.py soil_profile_stats.py tools/probe_pronasolos_100cm.py agricultural_weather_sources.py agricultural_weather.py cptec_forecast_client.py
       - name: Unit and regression tests
         shell: pwsh
         run: |
@@ -25,4 +25,5 @@ jobs:
           python -m unittest discover -s tests -p 'test_pronasolos_identify.py' -v
           python -m unittest discover -s tests -p 'test_root_allometry_uncertainty.py' -v
           python -m unittest discover -s tests -p 'test_agricultural_external_models.py' -v
+          python -m unittest discover -s tests -p 'test_sar_model_discovery.py' -v
           python -m unittest discover -s tests -p 'test_measurable_agricultural_accuracy.py' -v
