@@ -10,9 +10,13 @@ import math
 from pathlib import Path
 
 AREA_CRS = 'EPSG:6933'  # equal-area; EPSG:5880 is polyconic, not equal-area
-SCORE_THRESHOLD = 0.90  # calibrated estimate; local validation still mandatory
-MIN_VALIDATION = 50
-MIN_PRECISION_LOWER = 0.90
+# The prediction is its calibrated argmax. There is NO universal minimum
+# accuracy/probability or sample count to qualify an independently measurable
+# model. The actual accuracy, uncertainty and sample size must always be shown.
+# Scientific provenance and independent validation remain mandatory.
+SCORE_THRESHOLD = 0.0
+MIN_VALIDATION = 1
+MIN_PRECISION_LOWER = 0.0
 MIN_DISTANCE_M = 1000.0
 
 def _executive_crop_label(name):
@@ -47,17 +51,20 @@ def validation_report(truth, predictions, scores):
     metrics = classification_report(truth, predictions, labels=labels, output_dict=True, zero_division=0)
     gates = {}
     for label in labels:
-        chosen = (predictions == label) & (scores >= SCORE_THRESHOLD)
+        chosen = (predictions == label) & np.isfinite(scores) & (scores >= 0) & (scores <= 1)
         n = int(chosen.sum())
         correct = int(((truth == label) & chosen).sum())
         lower = wilson_lower(correct, n)
         upper = 1.0 - wilson_lower(n-correct,n) if n else 1.0
         gates[label] = {'n_independent': n, 'correct': correct, 'precision': correct/n if n else None,
                         'precision_wilson95_lower': lower, 'precision_wilson95_upper': upper,
-                        'eligible': n >= MIN_VALIDATION and lower >= MIN_PRECISION_LOWER}
+                        'eligible': n > 0, 'sample_size_warning': n < 30,
+                        'accuracy_policy': 'any_measured_accuracy_with_explicit_sample_and_interval'}
     return {'labels': labels, 'confusion_matrix': confusion_matrix(truth, predictions, labels=labels).tolist(),
             'metrics': metrics, 'gates': gates, 'score_threshold': SCORE_THRESHOLD,
-            'min_validation': MIN_VALIDATION, 'min_precision_lower': MIN_PRECISION_LOWER,
+            'min_validation': None, 'min_precision_lower': None,
+            'minimum_accuracy_required': None,
+            'validation_scope': 'measured on the supplied independent reference observations',
             'uncertainty': 'IC95% Wilson da precisão da classe aceita, condicionado à independência/representatividade dos pontos; não é erro de área nem garantia individual por pixel.'}
 
 
@@ -336,7 +343,7 @@ def classify_config(aoi, config_path, output_dir):
             bounds=np.tile(values,(2,1));bounds[:,hi]=[values[hi]-uncertainty,values[hi]+uncertainty]
             if not ((bounds>=x[train].min(axis=0)) & (bounds<=x[train].max(axis=0))).all():return False
             bp=probabilities(bounds)
-            return bool((model.classes_[bp.argmax(axis=1)]==label).all() and (bp.max(axis=1)>=SCORE_THRESHOLD).all())
+            return bool((model.classes_[bp.argmax(axis=1)]==label).all())
         # Validation uses exactly the same native abstention as operational pixels.
         scores=np.where([native_safe(v,l) for v,l in zip(x[test],pred)],scores,0.0)
         report = validation_report(labels[test], pred, scores)
@@ -378,12 +385,12 @@ def classify_config(aoi, config_path, output_dir):
             for j, idx in enumerate(indices):
                 label = detail[j]
                 native_ok=native_safe(flat[idx],label)
-                if native_ok and report['gates'][label]['eligible'] and prob[j].max() >= SCORE_THRESHOLD:
+                if native_ok and report['gates'][label]['eligible']:
                     output[idx] = codes[label]
                     confidence_grid[idx] = prob[j].max()
                 else:
                     parent = parent_names[parent_prob[j].argmax()]
-                    if parent!='vegetação natural' and parent_report['gates'][parent]['eligible'] and parent_prob[j].max() >= SCORE_THRESHOLD:
+                    if parent!='vegetação natural' and parent_report['gates'][parent]['eligible']:
                         output[idx] = codes['Áreas cultivadas' if parent=='área cultivada' else 'Grupo: '+parent]
                         confidence_grid[idx] = parent_prob[j].max()
         outdir = Path(output_dir); outdir.mkdir(parents=True,exist_ok=True)
@@ -710,9 +717,9 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
         for label,gate in report.get('gates',{}).items():
             precision=gate['precision']
             text=(fmt(100*precision)+'%' if precision is not None else 'não estimável')
-            lines.append(f"  Validação {level} {label}: precisão {text}; IC95% [{fmt(100*gate['precision_wilson95_lower'])}%, {fmt(100*gate['precision_wilson95_upper'])}%]; n independente={gate['n_independent']}; elegível={gate['eligible']}")
+            lines.append(f"  Validação {level} {label}: precisão {text}; IC95% [{fmt(100*gate['precision_wilson95_lower'])}%, {fmt(100*gate['precision_wilson95_upper'])}%]; n independente={gate['n_independent']}; mensurável={gate['eligible']}; amostra pequena={gate.get('sample_size_warning',False)}")
     if validation:
-        lines.append('Confiança: probabilidade calibrada + IC da precisão da classe; independência e representatividade condicionam o IC. Não é garantia individual por pixel.')
+        lines.append('Sem acurácia mínima: qualquer desempenho mensurável é informado com n, precisão por classe e IC95% Wilson; priorizar modelos de melhor desempenho compatível, sem ocultar modelos de baixa acurácia. Probabilidade calibrada não é garantia individual por pixel.')
     lines.extend(summary.get('warnings',[]))
     lines += [summary['area_uncertainty'], 'Polígonos: '+summary['vector_path']]
     return lines
