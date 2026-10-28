@@ -1101,3 +1101,18 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Pendências:** mapas 90 m representam valores modelados e o DP espacial das amostras **não** constitui IC95% do estoque da AOI. Para IC de estoque defensável é necessário mapear o erro preditivo do produto, autocorrelação espacial, viés local e covariância entre horizontes com observações independentes. Obter perfis e erros medidos por fitofisionomia, inclusive 0–100 cm, e validar nos cinco biomas. Persistem bloqueios anteriores de BIOMASS P e altura em alta biomassa, necromassa/serrapilheira e raízes fora de domínio, classificador agrícola nacional, vigor e safras calibradas, integração total, desempenho e homologação Windows.
 
 **Estado:** NÃO HOMOLOGADO. Preservar painel, prioridades de fontes e funções aprovadas; continuar até comprovação de todos os critérios.
+
+
+---
+
+## EVOLUÇÃO CIENTÍFICA — 28/10/2026, 19h03 (UTC−3) — COVARIÂNCIA VALIDÁVEL PARA CARBONO NATIVO
+
+**Commits desta evolução:** `3e7c7436bfc33f7eda27304490a6ff03b27feed8` (núcleo de covariância), `2d8febaf8a020df9fcafbaed50f025ad09573dd8` (integração condicional em `native_carbon.py`), `8f4cf95900edaca45736b9f7e716a6a4022bda9a` (regressões de covariância inválida) e `c9a73912cec85224bcc33485fa8e5993e776f8a9` (testes de integração da soma nativa por compartimento).
+
+**Mudança operacional no código:** `aggregate_stock` agora recusa matriz de covariância que não seja simétrica e semidefinida positiva, inclusive quando a variância de uma soma particular seja positiva; rejeita covariância com variável sem variância. `summarize_native_carbon` aceita argumento **opcional** `covariance_tc2_ha2` para computar IC normal aproximado com todas as classes/compartimentos, explicitando ordem da matriz; recusa cálculo se qualquer estrato nativo ou compartimento estiver sem valor, ou se a matriz for inválida. Sem matriz declarada, retorno **permanece sem IC total**. Intervalos normais truncados em zero são rotulados **não calibrados** e não atendem aos critérios de homologação sem validação independente. As regras de carbono apenas em nativas e exclusão de outros usos não foram afrouxadas.
+
+**Provas de código:** novos casos de teste `tests/test_native_total_uncertainty.py` e expansão de `tests/test_enform_uncertainty_core.py`. Todos são casos matemáticos **sintéticos**, sem calibração de fontes brasileiras. **Verificação em CI do novo SHA permanece exigida**, e não se pode inferir desempenho em campo.
+
+**Para transformar em IC95% científico do estoque:** adquirir dados de treinamento/validação por fitofisionomia dos cinco biomas; estimar variâncias, covariâncias entre solos/vegetação/estratos, autocorrelação de pixels, erro de classificação, viés espacial e de transferência; validação por blocos espaciais e cobertura empírica dos intervalos. Conectar matriz de covariância efetivamente estimada e auditada ao chamador Windows; atual `desktop_app.native_carbon_analysis` ainda não fornece matriz e portanto não exibe IC95% do total. Não inventar covariâncias nem usar quadratura ingênua.
+
+**Estado:** código em progresso, SEM HOMOLOGAÇÃO. Mantêm-se bloqueios científicos de Tapajós/BIOMASS FH/AGB, classificação de agricultura e cultivos, vigor/safras com validação independente, carbono completo inclusive raízes/necromassa/serrapilheira/solo 0–100, testes de aceitação real nos cinco biomas e ZIP Windows no mesmo SHA. Não publicar versão definitiva com esses bloqueios.
