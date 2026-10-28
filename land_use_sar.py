@@ -61,6 +61,43 @@ def validation_report(truth, predictions, scores):
             'uncertainty': 'IC95% Wilson da precisão da classe aceita, condicionado à independência/representatividade dos pontos; não é erro de área nem garantia individual por pixel.'}
 
 
+def _robust_polygon_overlay(left, right, operation):
+    """Precision-safe polygon overlay; never silently drop missing area."""
+    import shapely
+    from shapely.errors import GEOSException
+    from shapely.geometry import GeometryCollection
+    if operation not in ('intersection', 'difference'):
+        raise ValueError('Unsupported overlay operation')
+    def polygonal(g):
+        if g.is_empty:
+            return GeometryCollection()
+        if g.geom_type in ('Polygon', 'MultiPolygon'):
+            return g
+        from shapely.ops import unary_union
+        polygons = [p for p in getattr(g, 'geoms', ()) if p.geom_type in ('Polygon', 'MultiPolygon') and not p.is_empty]
+        return unary_union(polygons) if polygons else GeometryCollection()
+    left, right = polygonal(shapely.make_valid(left)), polygonal(shapely.make_valid(right))
+    if left.is_empty or (operation == 'intersection' and right.is_empty):
+        return GeometryCollection()
+    if operation == 'difference' and right.is_empty:
+        return left
+    fn = getattr(shapely, operation)
+    try:
+        return polygonal(shapely.make_valid(fn(left, right)))
+    except GEOSException as first:
+        # Fixed-precision overlay is the documented GEOS robustness fallback.
+        # Grid is 1 mm in EPSG:6933 (metres), far below 30-m map resolution.
+        try:
+            a = shapely.set_precision(left, 0.001, mode='valid_output')
+            b = shapely.set_precision(right, 0.001, mode='valid_output')
+            return polygonal(shapely.make_valid(fn(a, b, grid_size=0.001)))
+        except GEOSException as second:
+            raise ValueError(
+                f'Falha geométrica GEOS em {operation}; nenhuma área foi '
+                f'aceita sem verificação. Original: {first}; precisão: {second}'
+            ) from second
+
+
 def partition_land_use(aoi, layers):
     """Ordered layers: accepted SAR, IBGE, MapBiomas. Disjoint exact intersections.
 
@@ -97,19 +134,19 @@ def partition_land_use(aoi, layers):
                     continue
                 other = projected.iloc[int(j)]
                 if row.class_name != other.class_name:
-                    overlap = row.geometry.intersection(other.geometry)
+                    overlap = _robust_polygon_overlay(row.geometry, other.geometry, 'intersection')
                     if not overlap.is_empty and overlap.area > 0:
                         conflicts.append(overlap)
         conflict = unary_union(conflicts)
         for row in projected.itertuples():
-            clipped = remaining.intersection(row.geometry)
+            clipped = _robust_polygon_overlay(remaining, row.geometry, 'intersection')
             if not conflict.is_empty:
-                clipped = clipped.difference(conflict)
+                clipped = _robust_polygon_overlay(clipped, conflict, 'difference')
             if clipped.is_empty or clipped.area <= 0:
                 continue
             pieces.append({'class_name': row.class_name, 'source': row.source,
                            'taxonomy': row.taxonomy, 'geometry': clipped})
-            remaining = remaining.difference(clipped)
+            remaining = _robust_polygon_overlay(remaining, clipped, 'difference')
     if remaining.area > 1e-6:
         pieces.append({'class_name': 'Não classificado', 'source': 'SEM_COBERTURA',
                        'taxonomy': 'sem classificação', 'geometry': remaining})
