@@ -894,7 +894,24 @@ class App(tk.Tk):
         ttk.Label(ibgebox,text="Bioma IBGE:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
         ttk.Label(ibgebox,textvariable=self.ibge_biome_display,wraplength=840).grid(row=0,column=1,sticky="w",padx=(8,0))
         ttk.Label(ibgebox,text="Fitofisionomia IBGE (legenda_1):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
-        ttk.Label(ibgebox,textvariable=self.ibge_phys_display,wraplength=840,foreground="#155D43").grid(row=1,column=1,sticky="w",padx=(8,0),pady=(4,0))
+        # Multiline read-only text: complete class names stay visible at any window width.
+        phys_frame=ttk.Frame(ibgebox)
+        phys_frame.grid(row=1,column=1,sticky="ew",padx=(8,0),pady=(4,0))
+        self.ibge_phys_text=tk.Text(phys_frame,height=4,width=45,wrap="word",font=("Segoe UI",9),
+                                   foreground="#155D43",background="#F4F6F5",relief="flat",
+                                   borderwidth=0,highlightthickness=0,state="disabled")
+        phys_scroll=ttk.Scrollbar(phys_frame,orient="vertical",command=self.ibge_phys_text.yview)
+        self.ibge_phys_text.configure(yscrollcommand=phys_scroll.set)
+        self.ibge_phys_text.pack(side="left",fill="both",expand=True)
+        phys_scroll.pack(side="right",fill="y")
+        phys_frame.columnconfigure(0,weight=1)
+        def refresh_ibge_phys(*_):
+            self.ibge_phys_text.configure(state="normal")
+            self.ibge_phys_text.delete("1.0","end")
+            self.ibge_phys_text.insert("1.0",self.ibge_phys_display.get())
+            self.ibge_phys_text.configure(state="disabled")
+        self.ibge_phys_display.trace_add("write",refresh_ibge_phys)
+        refresh_ibge_phys()
         ttk.Label(ibgebox,text="Área do polígono:",font=("Segoe UI",9,"bold")).grid(row=2,column=0,sticky="nw",pady=(4,0))
         ttk.Label(ibgebox,textvariable=self.aoi_area_display,foreground="#155D43").grid(row=2,column=1,sticky="w",padx=(8,0),pady=(4,0))
         ibgebox.columnconfigure(1,weight=1)
