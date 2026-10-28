@@ -30,6 +30,24 @@ class SarAccessFailureTests(unittest.TestCase):
         self.assertIn('401',result['errors'][0])
 
 
+class StrictNecromassPhysiognomyTests(unittest.TestCase):
+    def test_unstratified_ifn_biome_uf_necromass_is_not_transferred(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-55.0,-4.0,-54.99,-3.99)],crs=4326)
+        def sar_estimator(frame,biome,physiognomy):
+            return {'agb_mg_ha': 100., 'data_origin': 'SAR_QUANTITATIVO',
+                    'source': 'Teste sintético'}
+        with patch('carbon_compartments.tapajos_necromass_components',return_value={}), patch(
+            'carbon_compartments.ifn_necromass_component',
+            side_effect=AssertionError('IFN biome×UF is not fitophysiognomy-matched')
+        ):
+            result=estimate_native_components(
+                aoi,'Floresta Estacional Semidecidual','Mata Atlântica',
+                sar_estimator,lambda frame: {}
+            )
+        necro=[x for x in result['components'] if x['parametro']=='Necromassa aérea']
+        self.assertEqual(necro, [])
+
+
 class RootBiomassSourcePriorityTests(unittest.TestCase):
     def test_microrregional_root_component_suppresses_generic_allometry(self):
         aoi=gpd.GeoDataFrame(geometry=[box(-55.0,-4.0,-54.99,-3.99)],crs=4326)
