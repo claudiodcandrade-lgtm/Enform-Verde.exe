@@ -1083,3 +1083,21 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Pendências de aceite ainda abertas:** AGB e altura SAR com validação independente em alta biomassa; carbono por compartimento (incluindo raízes, necromassa, serrapilheira e solo 0–100 cm) com incerteza calibrada por fitofisionomia nos cinco biomas; integração real do módulo de covariância na GUI e relatórios; identificação agrícola SAR com modelo treinado e validação espaço-temporal; vigor e previsão de safra defensável fora da amostra; desempenho integrado, regressões end-to-end e pacote final testado no SHA de homologação.
 
 **Decisão:** **NÃO HOMOLOGADO; NÃO NOTIFICAR COMO LIBERAÇÃO.** Esta anotação cria novo commit documental e altera o HEAD; o ZIP comprovado pertence ao SHA `b3d80d43...`, não ao novo SHA resultante. Manter acompanhamento e exigir testes/build e checksum do SHA efetivamente homologado.
+
+
+---
+
+## EVOLUÇÃO CIENTÍFICA — 28/10/2026, 19h03 (UTC−3) — SOLOS PAREADOS E RAÍZES
+
+**Objetivo:** corrigir um erro metodológico do módulo PronaSolos sem confundir variabilidade espacial de produtos de mapa com incerteza preditiva.
+
+**Commits de código desta evolução:**
+- `74288fd569f74e40b40f6c9cd966b47b020e7e5f`: `soil_profile_stats.py` — agrega horizontes apenas quando todos foram consultados **no mesmo ponto espacial**; proíbe preenchimento de ausência com zero e somas de perfis cumulativos; reporta desvio-padrão espacial real de totais pareados (preserva covariância espacial/horizontes dentro dos pontos), N por profundidade e ausência explícita de IC de predição.
+- `23c430b8493c62445e8924c5875c1f516d5e1ee1`: `desktop_app.py` — conserta a composição de 0–30, 0–60, 0–100 e 0–200 cm a partir de valores coincidentes; o código anterior somava médias de horizontes calculadas sobre pontos diferentes e ignorava correlação entre camadas. Corrige texto da tela de Fontes: raízes da floresta de terras altas são obtidas com Cairns et al. (1997), não pela razão fixa 0,26 anunciada na interface. Equação condicionada ao domínio; erro residual/transferência ainda não quantificado.
+- `2e759f9827e5b527da3262c0a15f4e16cd5b4454`: seis novos testes `tests/test_soil_profile_stats.py` abrangendo horizontes desencontrados, profundidades ausentes, covariância negativa entre horizontes, pares coerentes, zeros legítimos e entradas inválidas. Execução CI do novo SHA ainda pendente de comprovação.
+
+**Evidência disponível:** alterações de código e testes commitados na branch da PR #50; nenhuma consulta PronaSolos real ou repetibilidade de mosaico raster validada nesta evolução. A correção metodológica é implementada, mas os testes de CI e smoke test do Windows revisado precisam ser conferidos no SHA correspondente. O último EXE anteriormente comprovado pertence a SHA anterior e não demonstra a correção atual.
+
+**Pendências:** mapas 90 m representam valores modelados e o DP espacial das amostras **não** constitui IC95% do estoque da AOI. Para IC de estoque defensável é necessário mapear o erro preditivo do produto, autocorrelação espacial, viés local e covariância entre horizontes com observações independentes. Obter perfis e erros medidos por fitofisionomia, inclusive 0–100 cm, e validar nos cinco biomas. Persistem bloqueios anteriores de BIOMASS P e altura em alta biomassa, necromassa/serrapilheira e raízes fora de domínio, classificador agrícola nacional, vigor e safras calibradas, integração total, desempenho e homologação Windows.
+
+**Estado:** NÃO HOMOLOGADO. Preservar painel, prioridades de fontes e funções aprovadas; continuar até comprovação de todos os critérios.
