@@ -225,3 +225,18 @@ class LargeMapBiomasRegression(unittest.TestCase):
             self.assertFalse(result.empty)
             self.assertEqual(set(result.class_code),{3})
             self.assertAlmostEqual(result.geometry.area.sum(),width*height,places=3)
+
+
+class LargePartitionRegression(unittest.TestCase):
+    def test_many_same_class_fragments_dissolve_before_partition(self):
+        # Synthetic stress case: 2,500 adjacent fragments of one class.
+        # The partition must conserve area without per-fragment subtraction.
+        aoi=gpd.GeoDataFrame(geometry=[box(0,0,500,500)],crs='EPSG:6933')
+        fragments=[dict(class_name='Formação Florestal',source='MAPBIOMAS',
+                        taxonomy='MapBiomas',geometry=box(x,y,x+10,y+10))
+                   for x in range(0,500,10) for y in range(0,500,10)]
+        layer=gpd.GeoDataFrame(fragments,crs='EPSG:6933')
+        _,report=partition_land_use(aoi,[layer])
+        self.assertEqual(len(report['classes']),1)
+        self.assertAlmostEqual(report['classes'][0]['area_ha'],25.0,places=6)
+        self.assertAlmostEqual(report['classes'][0]['area_pct'],100.0,places=6)
