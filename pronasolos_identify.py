@@ -1,13 +1,13 @@
 """Auditable multi-layer ArcGIS identify request for Embrapa/PronaSolos soil C.
 
-The official service returns raster values for six 90-m soil horizons as
-independently identified layer IDs 2..7. A batched response is parsed without
+The official service returns raster values for five 90-m soil horizons
+covering 0–100 cm, independently identified as layer IDs 2..6. A batched response is parsed without
 substituting zero for missing layers or mixing values from another location.
 https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer
 """
 from math import isfinite
 
-LAYER_IDS=(2,3,4,5,6,7)
+LAYER_IDS=(2,3,4,5,6)
 SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
 
 def build_identify_params(x,y,extent,layer_ids=LAYER_IDS):
