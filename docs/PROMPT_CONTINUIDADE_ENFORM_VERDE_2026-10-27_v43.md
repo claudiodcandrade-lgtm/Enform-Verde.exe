@@ -1053,3 +1053,14 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 - **Pendências remanescentes:** modelos por fitofisionomia nos cinco biomas, AGB/altura SAR de alta biomassa com validação independente, raízes, necromassa, serrapilheira e solo 0–100 cm com incerteza total defensável, IFN por fitofisionomia com transferência auditável, identificação agrícola treinada, classes de vigor e previsões de safra calibradas e testadas fora da amostra, testes de regressão do núcleo novo, benchmarks de desempenho, interface final e checksum de distribuição no SHA final.
 
 **Decisão:** **NÃO HOMOLOGADO; NÃO NOTIFICAR COMO LIBERAÇÃO.** A conclusão bem-sucedida do build é uma mudança material documentada, mas não satisfaz os gates científicos. Este registro altera o HEAD por ser um commit de documentação; o artefato Windows acima permanece associado ao SHA `9d0a46e...`, e **não** ao novo HEAD criado por esta anotação. Exigir ZIP compilado e testado no mesmo SHA de homologação futuro.
+
+
+---
+
+## CORREÇÃO DE COBERTURA DE TESTES — 28/10/2026, 15h37 UTC−3
+
+**Mudança material:** commit `cd0ed1c1c311d8e5c25b8a6b234dd4fa4c93661b`: cópia dos testes de regressão de carbono/solo/covariância para `tests/test_enform_uncertainty_core.py`, dentro do diretório descoberto pelos workflows (`python -m unittest discover -s tests -v`). O arquivo original na raiz foi preservado. Esta alteração corrige o caminho de descoberta, mas **não demonstra que a execução do novo CI passou**; verificar logs e testes por nome no SHA novo.
+
+**Evidência prévia:** build Windows SHA `9d0a46e8d3a2e114cb67d794d5c7bf067fd4029d` concluiu 255 testes, smoke test e upload de artefato; documentação anterior registra ID e digest. O executável daquele SHA não inclui a presente alteração. Não considerar esse artefato homologado.
+
+**Pendências bloqueantes:** integração do módulo de incerteza à GUI e aos relatórios, solos 0–100 cm com perfis reais e covariância, raízes, necromassa e serrapilheira por fitofisionomia, AGB e altura SAR de alta biomassa validadas, classificadores agrícolas reais treinados e avaliados independentemente, classes de vigor e previsão de safras fora da amostra, cobertura dos cinco biomas, benchmark de desempenho, novo build Windows, testes e checksum do mesmo SHA. Manter PR #50 draft e proibir liberação definitiva até evidência de todos os critérios.
