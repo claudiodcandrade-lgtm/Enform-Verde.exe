@@ -874,7 +874,7 @@ class App(tk.Tk):
 
         ttk.Label(f,text="Perímetro, diagnóstico e solo",style="H.TLabel").pack(anchor="w")
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
-        ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
+        ttk.Button(row,text="Baixar raster COS 0–30 cm (auxiliar)",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
         ttk.Button(row,text="VISUALIZAR SATÉLITE + POLÍGONO",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
         ttk.Button(row,text="−",width=3,command=self.map_zoom_out).pack(side="left",padx=(12,2))
