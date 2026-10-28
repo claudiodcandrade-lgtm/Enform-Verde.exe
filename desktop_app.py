@@ -1592,6 +1592,18 @@ class App(tk.Tk):
              "Serrapilheira: Tapajós usa referência de massa seca do estoque no piso florestal, independente da AGB/SAR e restrita à fitofisionomia/localidade compatíveis. Fora desse domínio, só estoque gravimétrico ou calibração massa–profundidade local; queda anual e profundidade isolada não são estoque.")
         doc=app_resource("docs/CLASSIFICACAO_SAR_USO_SOLO.md")
         if doc.exists():txt+="\n\n"+doc.read_text(encoding="utf-8")
+        # International theses and institutions are valid methodological sources.
+        # Bibliography is not a trained SAR classifier and cannot bypass the
+        # independent Brazilian per-class validation contract.
+        try:
+            from agricultural_external_models import CANDIDATES
+            txt+="\n\nMODELOS AGRÍCOLAS INTERNACIONAIS E TESES — FONTES CANDIDATAS, NÃO HOMOLOGADAS"
+            for candidate in CANDIDATES:
+                txt+=("\n• "+candidate["id"]+" | "+candidate["institution"]+" | "
+                      +", ".join(candidate["crops"])+" | "+candidate["url"])
+            txt+="\nOs métodos internacionais podem ser utilizados com compatibilidade de sensores, domínio e validação brasileira espacial/temporal independente; sem estes requisitos, não declarar cultura específica."
+        except Exception as exc:
+            txt+="\nCatálogo externo de modelos indisponível: "+str(exc)
         self._set(self.src,txt)
 
     def harvest_official_inventory_ui(self):
