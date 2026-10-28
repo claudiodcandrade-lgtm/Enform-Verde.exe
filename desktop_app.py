@@ -27,7 +27,7 @@ ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#3441
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
 SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
- "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100/200 cm + diagnóstico de incerteza",
+ "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100 cm + diagnóstico de incerteza",
  "deadwood":"SFB/IFN — médias de inventário por estrato; raízes finas mortas no Tapajós: NASA LBA-ECO / ORNL DAAC 1116",
  "litter":"Nunes (2015) + Nascimento et al. (2024) — Pantanal/Nhecolândia com IC95% amostral; também Tapajós e Santo Ambrósio geocercados",
 }
@@ -569,7 +569,7 @@ def zonal_soil(gdf,raster_path):
 
 def pronasolos_soc_profiles(gdf,max_points=36):
     """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha).
-    Cumulative 0–30 cm, 0–60 cm, 0–100 cm and 0–200 cm profiles are computed
+    Cumulative 0–30 cm, 0–60 cm and 0–100 cm profiles are computed
     from collocated horizons only, using the official MapServer.
     Spatial SD is descriptive, not an AOI predictive confidence interval."""
     import requests
@@ -589,15 +589,15 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         if k not in seen: seen.add(k); uniq.append(p)
     pts=uniq[:max_points]
     service="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
-    layer_ids=[2,3,4,5,6,7]
-    names=["0–5","5–15","15–30","30–60","60–100","100–200"]
+    layer_ids=[2,3,4,5,6]
+    names=["0–5","5–15","15–30","30–60","60–100"]
     vals={k:[] for k in layer_ids}; errors={k:[] for k in layer_ids}
     observations=[]  # one geolocated vector of horizon values per query point
     sess=requests.Session()
     extent=f"{minx},{miny},{maxx},{maxy}"
     from pronasolos_identify import SERVICE, build_identify_params, extract_paired_horizons
     service=SERVICE
-    # One ArcGIS identify HTTP call per point retrieves all six horizon layers.
+    # One ArcGIS identify HTTP call per point retrieves the five horizons of 0–100 cm.
     # On a partial point response, all returned depths are retained together;
     # missing layers are never filled from a different point or assigned zero.
     for p in pts:
@@ -626,7 +626,9 @@ def pronasolos_soc_profiles(gdf,max_points=36):
             detail.append(f"{names[i]} cm: n={len(vals[k])}; "+(("; ".join(errors[k][:2])) if errors[k] else "sem retorno"))
         raise RuntimeError("PronaSolos oficial consultado, mas 0–30 cm não pôde ser composto. "+" | ".join(detail))
     out["_diagnostic"]={"samples_requested":len(pts),"valid_by_layer":{names[i]:len(vals[k]) for i,k in enumerate(layer_ids)},
-                        "service":service}
+                        "service":service,"target_depth_cm":100,
+                        "target_0_100_available":"0–100 cm" in out,
+                        "target_status":"COMPLETO_POR_PONTO" if "0–100 cm" in out else "INCOMPLETO_NAO_EXTRAPOLAR"}
     return out
 
 
