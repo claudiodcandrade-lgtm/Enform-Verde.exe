@@ -1247,3 +1247,30 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Evidências de CI do SHA anterior à presente anotação:** `Dashboard dual - tests` run **40780649452** em `a7ca7e93ec83444874d759e151685282f212f17a` **concluído com sucesso**. Build Windows run **40780649445** ainda **em andamento** quando consultado, portanto **não** comprova ZIP, checksum, smoke test ou homologação. O novo commit exclusivamente documental não estará coberto por um artefato gerado em SHA anterior.
 
 **Critérios científicos ainda pendentes:** obter pesos/coeficientes executáveis para modelos agrícolas internacionais com acesso legítimo, efetuar inferência sobre cenas SAR reais brasileiras e informar qualidade/transferibilidade dos resultados; preservar fonte/qualidade por fitofisionomia e incertezas defensáveis para carbono de raízes, necromassa, serrapilheira e solos 0–100 cm nos cinco biomas; validar AGB/altura SAR inclusive Tapajós; testar classes de vigor e previsão de safras fora de amostra antes de publicar projeções quantitativas; manter painel executivo e controles de regressão. **NÃO HOMOLOGADO. NÃO PUBLICAR VERSÃO DEFINITIVA SEM DEMONSTRAÇÃO.**
+
+
+---
+
+## PRIORIDADE DO USUÁRIO — CONSULTAR CARBONO DO SOLO SOMENTE 0–100 CM (28/10/2026, UTC−3)
+
+**Esta especificação substitui qualquer orientação anterior neste histórico de consultar ou exibir solo até 200 cm.** A consulta ao PronaSolos/Embrapa Solos foi restringida **exclusivamente** ao estoque de carbono orgânico do solo de 0 a 100 cm, com os horizontes auditáveis 0–5, 5–15, 15–30, 30–60 e 60–100 cm (respectivamente IDs 2, 3, 4, 5, 6); **não consultar camada ID 7 (100–200 cm)** e não compor subtotal 0–200 cm. Manter 0–30 e 0–60 como visões informativas aninhadas e 0–100 como alvo de estoque por fitofisionomia; não somar totais cumulativos.
+
+**Serviço oficial conferido:** https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer , metadados de resolução 90 m e IDs 2–7. Contrato ArcGIS REST `identify`: `layers=all:2,3,4,5,6`, uma consulta por ponto da AOI, retorno por ID de camada. Não simular retorno ou inventar IC95% a partir do desvio-padrão espacial de pixels.
+
+**Commits desta evolução:**
+- `213544c654f548d4abcbc28eae1277c1f6e34cd7`: cria `pronasolos_identify.py`, valida parâmetros, `NoData`, IDs e resultados por ponto, implementando consulta **agrupada** (antes uma chamada por camada). A consulta em lote preserva co-localização mas sua execução com resposta real ainda precisa de teste.
+- `ec32781985c303a9c4ffa07b8823b9624ed895f3`: conecta `desktop_app.pronasolos_soc_profiles` ao parser conjunto.
+- `a0a8556a0739f0aea4ad044d09f4d6131c77aa12`: cria testes do contrato do serviço, parâmetros, `NoData`, rejeição de duplicatas e ausência de horizontes.
+- `f0050dff2de739cd979e15272575dc60df2e8d05`: amplia o CI rápido Windows para compilar o parser e executar testes.
+- `951a9941e858414932927048b8b2d40f0838019f`: limita os IDs do parser a 2–6.
+- `8f1cb3f87ba900c25b5a1276429f4b8e9b741692`: `soil_profile_stats.py` devolve só 0–30, 0–60 e 0–100 cm, sempre por horizontes coincidentes por ponto.
+- `aa5bf4a69fcc2ac47050e9e1597ae055ec9b2cbf`: `desktop_app.py` limita as camadas consultadas a 2–6, não menciona 0–200 como saída e indica `target_0_100_available` e `target_status=INCOMPLETO_NAO_EXTRAPOLAR` se 0–100 não puder ser composto.
+- `3ac6a2c995afd936ef7f2bf7012e7f6a7a1c8d3d` e `13a3b5019e2826bd3cf6c1b659586d498e1a0e21`: regressões para rejeitar camada 7 e não computar 0–200.
+- `968ad33170b9a73b014ab5d6f4aced44e416491c`: altera o teste de contrato da GUI do workflow Windows para exigir 0–100 cm e os cinco IDs, evitando falso bloqueio causado pela regra antiga 0–200.
+- `545e4c2e0155b71c2c33616fb701ba844d869a6d` e `aebb665d045064ff7c1af0053f39e5f7fabc2fee`: nova especificação `docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md` e correção do limite de 36 pontos totais por AOI.
+
+**Melhoria prevista:** uma requisição por ponto por cinco horizontes contra cinco requisições por ponto antes (ou seis incluindo profundidade 100–200). O ganho de latência ainda precisa de benchmark real; a alteração não cria incerteza preditiva local nem prova de cobertura 95%.
+
+**Evidência CI existente:** no SHA `968ad33170b9a73b014ab5d6f4aced44e416491c`, workflow `Dashboard dual - tests` run **40781687537** concluiu `success`; `Build Enform Verde Windows` run **40781687474** estava `in_progress` na consulta. No SHA `545e4c2e0155b71c2c33616fb701ba844d869a6d`, runs **40781767703** (testes) e **40781767753** (Windows) estavam em andamento na consulta. O SHA desta anotação e as alterações posteriores exigem verificação CI própria antes de qualquer declaração de versão homologada.
+
+**Pendências bloqueantes:** comprovar resultado real de `identify` para os cinco horizontes no MapServer oficial; validar completude/correlação espacial e incerteza de estoque 0–100 para cada fitofisionomia com fontes institucionais; preservar o rigor e a incerteza dos demais compartimentos de carbono nos cinco biomas; AGB/altura SAR reais, Tapajós alta biomassa, classificadores agrícolas treinados com acurácia publicada (sem corte mínimo arbitrário), vigor e previsão de safra verificáveis, regressão GUI e desempenho, e build ZIP sem bloqueios no mesmo SHA com checksum. **NÃO HOMOLOGADO; não publicar download definitivo.**
