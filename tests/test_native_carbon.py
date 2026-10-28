@@ -48,6 +48,47 @@ class StrictNecromassPhysiognomyTests(unittest.TestCase):
         self.assertEqual(necro, [])
 
 
+class DisjointNecromassAggregationTests(unittest.TestCase):
+    def test_standing_and_fallen_direct_stocks_are_both_counted(self):
+        frame=gpd.GeoDataFrame(geometry=[box(-55.0,-4.0,-54.99,-3.99)],crs=4326)
+        direct={
+            'Necromassa aérea — madeira morta caída': {
+                'mean_tc_ha':32.0,'range_tc_ha':[28.3,35.7],
+                'source':'Inventário direto microrregional','origin':'INVENTARIO_DIRETO'
+            },
+            'Necromassa aérea — madeira morta em pé': {
+                'mean_tc_ha':8.7,'range_tc_ha':[7.4,10.0],
+                'source':'Inventário direto microrregional','origin':'INVENTARIO_DIRETO'
+            },
+        }
+        with patch('carbon_compartments.tapajos_necromass_components',return_value=direct):
+            result=estimate_native_components(
+                frame,'Floresta Ombrófila Densa','Amazônia',
+                lambda *args: {},lambda *args: {},
+            )
+        necro=[c for c in result['components'] if c['parametro']=='Necromassa aérea']
+        self.assertEqual(len(necro),1)
+        self.assertAlmostEqual(necro[0]['tc'],40.7)
+        self.assertAlmostEqual(necro[0]['range_tc_ha'][0],35.7)
+        self.assertAlmostEqual(necro[0]['range_tc_ha'][1],45.7)
+        self.assertIn('NÃO é IC95%',necro[0]['obs'])
+
+    def test_ambiguous_total_and_subpool_are_not_summed(self):
+        frame=gpd.GeoDataFrame(geometry=[box(-55.0,-4.0,-54.99,-3.99)],crs=4326)
+        overlapping={
+            'Necromassa aérea':{'mean_tc_ha':40.7,'source':'Inventário local'},
+            'Necromassa aérea — madeira morta em pé':{
+                'mean_tc_ha':8.7,'source':'Inventário local'
+            },
+        }
+        with patch('carbon_compartments.tapajos_necromass_components',return_value=overlapping):
+            result=estimate_native_components(
+                frame,'Floresta Ombrófila Densa','Amazônia',
+                lambda *args: {},lambda *args: {},
+            )
+        self.assertFalse(any(c['parametro']=='Necromassa aérea' for c in result['components']))
+
+
 class RootBiomassSourcePriorityTests(unittest.TestCase):
     def test_microrregional_root_component_suppresses_generic_allometry(self):
         aoi=gpd.GeoDataFrame(geometry=[box(-55.0,-4.0,-54.99,-3.99)],crs=4326)
