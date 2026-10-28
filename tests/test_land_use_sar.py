@@ -180,6 +180,18 @@ class NativeNamingTests(unittest.TestCase):
             self.assertEqual(result['original_source_distributions'][0]['classes'][0]['class_name'],'Soja')
 
 
+class EmptyMapBiomasCoverageRegression(unittest.TestCase):
+    def test_empty_mapbiomas_never_counts_as_verified_cover(self):
+        from unittest.mock import patch
+        empty=gpd.GeoDataFrame(columns=['class_code','class_name','source','taxonomy','geometry'],
+                               geometry='geometry',crs='EPSG:6933')
+        aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs='EPSG:6933')
+        with tempfile.TemporaryDirectory() as directory, patch('land_use_sar.raster_class_polygons',return_value=empty):
+            result=run_land_use(aoi,directory,mapbiomas_path='test-raster.tif')
+        self.assertIsNotNone(result['mapbiomas_failure'])
+        self.assertEqual(result['cover_verification'],'COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL')
+
+
 class MapBiomasOutsideRasterRegression(unittest.TestCase):
     def test_aoi_outside_raster_returns_empty_geodataframe(self):
         with tempfile.TemporaryDirectory() as directory:
