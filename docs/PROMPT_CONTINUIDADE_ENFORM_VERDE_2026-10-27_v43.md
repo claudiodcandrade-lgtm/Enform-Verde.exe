@@ -818,3 +818,26 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 - **Regra de execução:** só declarar ESA BIOMASS P-band utilizado se houver produto efetivamente acessado, recortado, processado e com qualidade validada; quando indisponível, fallback CCI identificado e demais rotas cientificamente válidas, sem resultados fabricados. Os produtos ESA MAAP podem ter autorização específica e latência; não presumir disponibilidade irrestrita de todas as cenas.
 - **Performance e aceite:** consulta STAC por bbox/interseção e intervalo, paginação, seleção de menor volume útil, streaming/range quando suportado, cache e benchmark por AOI. Testar disponibilidade real e erro; comparar saída do modelo contra inventários independentes e publicar RMSE, MAE, viés e R² quando estimáveis.
 - **Status:** pesquisa documental oficial confirmada; **não constitui implementação nem prova de processamento P-band no executável**.
+
+
+---
+
+## CHECKPOINT DE CONTINUIDADE — 28/10/2026 — LIBERAÇÃO DEFINITIVA AINDA BLOQUEADA
+
+**Revisão atual:** PR #50 permanece draft no SHA `e4880b2b3b10f2c158f9d770c015d24386951207`; execuções Windows `40708617996` e painel `40708617915` estavam na fila no momento da verificação. Não inferir sucesso de CI pendente.
+
+**Fontes oficiais verificadas:** ESA MAAP publica tipos `FP_AGB_L2B`, `FP_FH__L2B`, `FP_FH__L2A` e acesso STAC; especificações oficiais BioPAL/BPS documentam formatos e algoritmos, inclusive ATBD AGB L2B versão 3.1.4 de 02/04/2026. ESA CCI Biomass v7 fornece AGB anual 100 m e incerteza por pixel (desvio-padrão), não IC95% por AOI. Fontes:
+- https://portal.maap.eo.esa.int/biomass/biomass-data-offer/
+- https://catalog.maap.eo.esa.int/doc/stac.html
+- https://www.biomass-disc.info/docs/about/applicable-documents.html
+- https://climate.esa.int/en/projects/biomass/data/
+
+**Próxima execução exigida, por prioridade:**
+1. Tornar bloqueantes os testes de regressão e de integração no Windows, inspecionar logs e resolver falhas; vincular artefato ZIP ao SHA testado.
+2. Integrar consulta STAC real, filtro AOI/tempo/qualidade e leitura por janela; evidenciar cenas, datas, polarização, versões e incertezas, com fallback rotulado quando não houver P-band utilizável.
+3. Selecionar equações BGB microrregionais/regionais/pantropicais por fitofisionomia com domínio e preditores completos; verificar unidades, raízes finas/grossas, profundidade, erro de transferência e ausência de dupla contagem.
+4. Resolver necromassa, serrapilheira e solo 0–100 cm com dados compatíveis, estimadores e intervalos defensáveis; demonstrar funcionamento nos cinco biomas.
+5. Integrar identificação agrícola SAR multitemporal, cultura e vigor fenológico com validação independente; previsão de safra somente após correlação observada com séries PAM/IBGE e meteorologia reais.
+6. Medir desempenho real, cache frio/quente, transferência e memória em AOIs de teste, preservando interface e comportamento aprovado.
+
+**Regra de honestidade:** commits documentais e builds verdes não equivalem à conclusão científica. Não rotular uma versão como definitiva enquanto faltar evidência experimental das funções requeridas.
