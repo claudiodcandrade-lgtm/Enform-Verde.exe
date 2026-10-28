@@ -51,7 +51,9 @@ def validation_report(truth, predictions, scores):
     metrics = classification_report(truth, predictions, labels=labels, output_dict=True, zero_division=0)
     gates = {}
     for label in labels:
-        chosen = (predictions == label) & np.isfinite(scores) & (scores >= 0) & (scores <= 1)
+        # Zero is the internal abstention sentinel for invalid SAR height or
+        # out-of-domain predictors, not a minimum published-accuracy rule.
+        chosen = (predictions == label) & np.isfinite(scores) & (scores > 0) & (scores <= 1)
         n = int(chosen.sum())
         correct = int(((truth == label) & chosen).sum())
         lower = wilson_lower(correct, n)
