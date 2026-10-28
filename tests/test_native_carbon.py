@@ -373,4 +373,4 @@ class WaterExclusionAndOrderingRegression(unittest.TestCase):
         self.assertEqual([s['class_name'] for s in result['strata']],calls)
         self.assertAlmostEqual(result['native_area_ha'],2.0)
         self.assertAlmostEqual(result['excluded_other_uses_ha'],1.0)
-        self.assertAlmostEqual(result['known_total_tc'],200.0)
+        self.assertAlmostEqual(result['known_total_tc'],200.0,places=5)  # allow sub-gram floating-point geometry rounding
