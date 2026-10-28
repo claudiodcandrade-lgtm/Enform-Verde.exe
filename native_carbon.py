@@ -17,6 +17,13 @@ def normalize(value):
 def native_class(name, source, class_metadata=None):
     """IBGE phytoregion alone is potential vegetation, not current native cover."""
     text=normalize(name)
+    # Corpos hídricos não são formações vegetais nativas, ainda que um overlay
+    # IBGE+MapBiomas lhes atribua indevidamente esse status.
+    aquatic_terms=('corpo d agua','corpo dagua','rio, lago','rio e lago',
+                   'lago e oceano','rio lago oceano','massa d agua',
+                   'reservatorio','hidrograf','agua continental','aquicultura')
+    if any(term in text for term in aquatic_terms):
+        return False
     # Requisito eliminatório: silvicultura jamais integra carbono nativo,
     # mesmo com fonte IBGE+MAPBIOMAS ou rótulo SAR supostamente validado.
     planted_terms=('silvicultura','floresta plantada','florestas plantadas',
@@ -66,7 +73,14 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None)
         raise ValueError('Classes sobrepostas: não é possível somar carbono sem dupla contagem.')
     class_polygons=clipped
     native_area=0.0; excluded_area=0.0; unknown_area=0.0; strata=[]
-    for record in class_polygons.itertuples():
+    # Ordenação explícita: a primeira estimativa deve ser Floresta Ombrófila
+    # Densa; nunca usar ordem alfabética ou ordem de camadas como prioridade.
+    def _stratum_priority(row):
+        label=normalize(row.class_name)
+        if 'floresta ombrofila densa' in label:return (0,label)
+        if 'floresta ombrofila aberta' in label:return (1,label)
+        return (2,label)
+    for record in sorted(class_polygons.itertuples(), key=_stratum_priority):
         geom=record.geometry
         frame=gpd.GeoDataFrame(geometry=[geom],crs=class_polygons.crs)
         area=float(frame.to_crs(AREA_CRS).geometry.area.iloc[0])/10000
