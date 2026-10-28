@@ -70,6 +70,8 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None)
         geom=record.geometry
         frame=gpd.GeoDataFrame(geometry=[geom],crs=class_polygons.crs)
         area=float(frame.to_crs(AREA_CRS).geometry.area.iloc[0])/10000
+        if area <= max(1e-9, area_aoi * 1e-12):
+            continue
         flag=native_class(record.class_name,record.source,class_metadata)
         if flag is False:excluded_area+=area;continue
         if flag is None:unknown_area+=area;continue
