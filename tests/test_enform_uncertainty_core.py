@@ -16,5 +16,15 @@ class UncertaintyCoreTests(unittest.TestCase):
     def test_negative_variance_rejected(self):
         with self.assertRaises(ValueError):
             aggregate_stock([1],[10],[[-1]])
+    def test_indefinite_matrix_rejected_even_with_positive_total_variance(self):
+        with self.assertRaisesRegex(ValueError,"positive semidefinite"):
+            aggregate_stock([1,1],[10,20],[[1,2],[2,1]])
+    def test_zero_variance_cannot_have_nonzero_covariance(self):
+        with self.assertRaisesRegex(ValueError,"zero-variance"):
+            aggregate_stock([1,1],[10,20],[[0,1],[1,4]])
+    def test_normal_interval_never_claims_calibration(self):
+        r=aggregate_stock([1],[10],[[4]])
+        self.assertIs(r["coverage_validated"],False)
+        self.assertEqual(r["interval_method"],"normal_approximation_clipped_at_zero")
 if __name__ == "__main__":
     unittest.main()
