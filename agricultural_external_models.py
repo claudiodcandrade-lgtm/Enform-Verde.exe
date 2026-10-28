@@ -36,14 +36,14 @@ CANDIDATES = (
      "weights_reusable":False,"note":"South Asia reference; locally validate Brazilian rice"},
     {"id":"DLR_ORYNBAIKYZY_PHD_2023","institution":"DLR / Martin-Luther-Universität Halle-Wittenberg",
      "kind":"doctoral_thesis","origin":"international",
-     "crops":("áreas cultivadas","milho","soja","cereais"),
+     "crops":("áreas cultivadas",),
      "sensors":("Sentinel-1","Sentinel-2"),
      "url":"https://elib.dlr.de/198848/",
      "method":"Combined SAR/optical crop-type classification, PhD 2023",
      "weights_reusable":False,"note":"Thesis is a method reference; no executable coefficients/weights verified"},
     {"id":"TUDELFT_NIKAEIN_PHD_2025","institution":"Delft University of Technology",
      "kind":"doctoral_thesis","origin":"international",
-     "crops":("áreas cultivadas","milho","soja"),
+     "crops":("áreas cultivadas",),
      "sensors":("Sentinel-1",),
      "url":"https://repository.tudelft.nl/record/uuid:d5c77c32-2f3e-455b-9187-06c76f9abc22",
      "method":"InSAR time-series and physics-guided crop growth modeling",
@@ -87,7 +87,7 @@ CANDIDATES = (
      "weights_reusable":False,"note":"Arabica domain differs from Conilon and cannot be transferred without validation"},
     {"id":"UNICAMP_COFFEE_MSC_2025","institution":"Universidade Estadual de Campinas",
      "kind":"masters_dissertation","origin":"brazil",
-     "crops":("café",),"sensors":("Sentinel-1","Sentinel-2"),
+     "crops":("café",),"sensors":("sensor Sentinel a confirmar",),
      "url":"https://repositorio.unicamp.br/acervo/detalhe/1552081",
      "method":"Neural network coffee monoculture mapping with Sentinel sensor fusion",
      "weights_reusable":False,"note":"Check full thesis for SAR input and accessible model implementation"},
@@ -116,7 +116,7 @@ def assess_external_model_transfer(*, candidate_id, crop, sensors, evidence):
     An internationally validated published accuracy is insufficient to bypass
     existing class-level Wilson/score thresholds or enable a yield forecast.
     """
-    result = {"eligible":False,"errors":[],"model":candidate_id,
+    result = {"eligible":False,"preflight_passed":False,"errors":[],"model":candidate_id,
               "operational_label":"áreas cultivadas" if crop in SUPPORTED_CROPS else None}
     c = next((m for m in CANDIDATES if m["id"]==candidate_id),None)
     errors = result["errors"]
@@ -151,6 +151,12 @@ def assess_external_model_transfer(*, candidate_id, crop, sensors, evidence):
             errors.append("fewer than 50 independent validation units")
     except (ValueError,TypeError,KeyError):
         errors.append("invalid independent sample size")
-    result["eligible"]=not errors
-    result["operational_label"]=crop if not errors else "áreas cultivadas"
+    # This function screens user-supplied *claims*. It does not execute model
+    # inference, validate a raster independently, or verify the supplied hashes
+    # against files. Accordingly it must never grant operational eligibility.
+    result["preflight_passed"]=not errors
+    result["eligible"]=False
+    if not errors:
+        errors.append("preflight only: run actual model inference and independent Brazilian pixel-level validation")
+    result["operational_label"]="áreas cultivadas"
     return result
