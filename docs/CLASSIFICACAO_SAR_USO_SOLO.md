@@ -22,10 +22,11 @@ Não se calcula carbono em área sem classe confirmada. Valores ausentes não s�
 
 - Conjuntos separados `train`, `calibration`, `validation` e unidades de referência sem repetição.
 - Distância mínima de 1 km entre treino/calibração/validação e entre pontos de validação. É uma triagem contra vazamento espacial, não prova de independência: o responsável precisa documentar o desenho amostral e autocorrelação residual.
-- Calibração logística sobre log-probabilidades RF, sem usar validação para ajustar pesos ou limiares.
-- Probabilidade estimada ≥0,90 para aceitar uma previsão.
-- Pelo menos **50 referências independentes aceitas por classe** e limite inferior do IC95% Wilson da precisão ≥0,90.
-- Os limiares acima são política operacional Enform, não valores copiados dos artigos. O IC pressupõe unidades independentes e representativas. Repetir a seleção de modelos no mesmo conjunto de validação invalida seu caráter independente.
+- Calibração logística sobre log-probabilidades RF, sem usar validação para ajustar pesos ou limiares. A probabilidade da classe predita deve ser exibida como probabilidade estimada, não convertida em acurácia comprovada.
+- **Não existe limiar mínimo universal de acurácia, precisão, recall, probabilidade ou tamanho amostral para excluir um modelo:** qualquer acurácia quantitativa efetivamente mensurada e publicada por instituição/periódico reconhecido pode ser considerada. Priorizar modelos de maior desempenho demonstrado **quando métricas, cultura, período e domínio são comparáveis**.
+- Aceitar modelos com desempenho inferior a 90%, 50% ou qualquer percentual arbitrário, divulgando o valor publicado com fonte, domínio, amostra, matriz de confusão e incerteza (IC95% Wilson quando contagens independentes estiverem disponíveis). Desempenho de classe não deve ser confundido com acurácia global.
+- Publicação de desempenho em outro país **não** comprova esse mesmo percentual para uma AOI brasileira. Na ausência de validação local, identificar como 'desempenho publicado no domínio de origem; transferibilidade não aferida'. Quando existir modelo executável e SAR real, podem ser exibidos sinais provisórios com essa ressalva; jamais chamar de validação local.
+- Referências sem pesos/coeficientes executáveis permanecem bibliografia e fonte de método, nunca classificação de pixels. Não inventar intervalos quando o artigo não apresenta contagens/erros suficientes. O IC pressupõe unidades independentes e representativas. Repetir seleção de modelos no mesmo conjunto de validação invalida independência.
 - Matriz de confusão, precisão, recall, F1, Brier multiclasse e tabela de confiabilidade/ECE são armazenados. Wilson é da precisão da classe aceita, não IC de probabilidade de cada pixel nem IC da área.
 - Rejeitar extrapolação do intervalo dos atributos do treino e AOI fora do domínio geográfico documentado. O intervalo marginal não prova ausência de mudança de domínio; época, sensor, processamento e amostragem devem ser auditados.
 - Se o cultivo específico não passa, testar o grupo pai com sua própria validação e probabilidades agregadas. Não basta trocar o nome de uma previsão incerta.
