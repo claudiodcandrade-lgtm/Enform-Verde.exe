@@ -177,35 +177,49 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                 if any(token in normalize(pair[0]) for token in ('caida','fallen','downed'))]
         standing=[pair for pair in necro_parts
                   if any(token in normalize(pair[0]) for token in ('em pe','standing'))]
-        if (len(necro_parts)==2 and len(fallen)==1 and len(standing)==1
-                and fallen[0][0]!=standing[0][0]
-                and all(c.get('mean_tc_ha') is not None for _,c in necro_parts)
-                and len({str(c.get('source')) for _,c in necro_parts})==1):
-            sums=[float(c['mean_tc_ha']) for _,c in necro_parts]
-            if all(math.isfinite(x) and x>=0 for x in sums):
-                common=fallen[0][1]
-                aggregate=dict(common)
-                aggregate['mean_tc_ha']=sum(sums)
-                ranges=[c.get('range_tc_ha') for _,c in necro_parts]
-                if all(isinstance(v,(tuple,list)) and len(v)==2 for v in ranges):
-                    aggregate['range_tc_ha']=[
-                        sum(float(v[0]) for v in ranges),
-                        sum(float(v[1]) for v in ranges),
-                    ]
-                    aggregate['uncertainty_kind']=(
-                        'Envelope conservador dos intervalos marginais; '
-                        'NÃO é IC95% conjunto nem inclui covariância/transferência'
-                    )
-                aggregate['method']=(
-                    'Soma de estoques DIRETOS de madeira morta caída e em pé, '
-                    'sem sobreposição. '+str(common.get('method') or '')
-                )
-                for name,_ in necro_parts:
-                    del regional[name]
-                regional['Necromassa aérea']=aggregate
+        valid_structure=(len(necro_parts)==2 and len(fallen)==1
+            and len(standing)==1 and fallen[0][0]!=standing[0][0]
+            and len({str(c.get('source')) for _,c in necro_parts})==1)
+        values=[]
+        if valid_structure:
+            try:
+                values=[float(c['mean_tc_ha']) for _,c in necro_parts]
+            except (TypeError, ValueError, KeyError):
+                values=[]
+        if valid_structure and len(values)==2 and all(
+                math.isfinite(x) and x>=0 for x in values):
+            common=fallen[0][1]
+            aggregate=dict(common)
+            aggregate['mean_tc_ha']=sum(values)
+            # Never preserve just the fallen-stock interval for the total.
+            aggregate.pop('range_tc_ha',None)
+            aggregate['uncertainty_kind']='Incerteza conjunta não quantificada'
+            ranges=[c.get('range_tc_ha') for _,c in necro_parts]
+            if all(isinstance(v,(tuple,list)) and len(v)==2 for v in ranges):
+                try:
+                    bounds=[[float(x) for x in v] for v in ranges]
+                    if all(math.isfinite(lo) and math.isfinite(hi)
+                           and 0<=lo<=hi for lo,hi in bounds):
+                        aggregate['range_tc_ha']=[
+                            sum(lo for lo,_ in bounds),
+                            sum(hi for _,hi in bounds),
+                        ]
+                        aggregate['uncertainty_kind']=(
+                            'Envelope conservador dos intervalos marginais; '
+                            'NÃO é IC95% conjunto nem inclui covariância/transferência'
+                        )
+                except (TypeError, ValueError):
+                    pass
+            aggregate['method']=(
+                'Soma de estoques DIRETOS de madeira morta caída e em pé, '
+                'sem sobreposição. '+str(common.get('method') or '')
+            )
+            for name,_ in necro_parts:
+                del regional[name]
+            regional['Necromassa aérea']=aggregate
         else:
-            # Ambiguous overlapping measurements cannot be added or silently
-            # overwritten; flag the whole pool instead of inventing a total.
+            # Reject ambiguous combinations and invalid values rather than
+            # silently allowing the reporting dictionary to overwrite a pool.
             for name,_ in necro_parts:
                 del regional[name]
     for raw_name,c in regional.items():
