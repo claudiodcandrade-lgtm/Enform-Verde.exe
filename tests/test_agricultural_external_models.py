@@ -1,7 +1,7 @@
 import unittest
 from agricultural_external_models import (
     CANDIDATES, SUPPORTED_CROPS, SOURCE_TYPES,
-    candidates_for_crop, assess_external_model_transfer,
+    candidates_for_crop, assess_external_model_transfer, prioritize_comparable_models,
 )
 
 class InternationalModelReferenceTests(unittest.TestCase):
@@ -107,6 +107,35 @@ class InternationalModelReferenceTests(unittest.TestCase):
         self.assertTrue(result["preflight_passed"],result["errors"])
         self.assertEqual(result["measured_accuracy"],0.0)
         self.assertFalse(result["eligible"])
+
+    def test_prioritize_higher_accuracy_only_when_comparable(self):
+        base={"crop":"cana-de-açúcar","metric":"overall accuracy",
+              "domain":"same test AOI and season","validation_scope":"independent",
+              "published_source":"https://example.edu/research"}
+        examples=[
+            dict(base,model_id="lower-accuracy",accuracy=.6538,ci95_lower=.55,ci95_upper=.75),
+            dict(base,model_id="higher-accuracy",accuracy=.7333,ci95_lower=.64,ci95_upper=.82),
+            dict(base,model_id="zero-accuracy",accuracy=0.),
+            dict(base,model_id="not-comparable",accuracy=.95,metric="precision of sugarcane growth stage"),
+        ]
+        buckets=prioritize_comparable_models(examples)
+        self.assertEqual(len(buckets),2)
+        overall=next(g for g in buckets if g["metric"]=="overall accuracy")
+        self.assertEqual([row["model_id"] for row in overall["ranked"]],
+                         ["higher-accuracy","lower-accuracy","zero-accuracy"])
+        self.assertTrue(all(row["ranking_only"] for row in overall["ranked"]))
+
+    def test_invalid_or_untraceable_model_accuracy_cannot_be_ranked(self):
+        base={"model_id":"study","crop":"cana-de-açúcar","metric":"overall accuracy",
+              "domain":"study","validation_scope":"published_original_domain_only",
+              "published_source":"https://university.edu/thesis"}
+        for score in (float("nan"),1.5,-.01):
+            with self.subTest(score=score),self.assertRaises(ValueError):
+                prioritize_comparable_models([dict(base,accuracy=score)])
+        with self.assertRaises(ValueError):
+            prioritize_comparable_models([dict(base,accuracy=.6,published_source="")])
+        with self.assertRaises(ValueError):
+            prioritize_comparable_models([dict(base,accuracy=.6,ci95_lower=.7,ci95_upper=.8)])
 
     def test_foreign_source_not_banned_by_nationality(self):
         reference=next(m for m in CANDIDATES if m["id"]=="IRRI_RIICE_2014")
