@@ -1377,3 +1377,22 @@ O workflow rápido `Dashboard dual - tests` **run 40785072527**, no commit de c�
 **Windows do mesmo código:** build run **40785072456** ainda estava **in_progress**, job **123156089782**, na etapa `Probe official PronaSolos 0-100 cm real raster horizons` na consulta; nenhum ZIP com o novo manifesto e smoke test do SHA estava comprovado. A atualização posterior do prompt é somente documentação, não converte build anterior em validação científica.
 
 **Política de liberação:** versão definitiva continua **BLOQUEADA**. Exigir as demais evidências SAR, cinco biomas, estoques de todos os compartimentos e solo 0–100 cm com incertezas adequadas, cultivos e vigor/safra quando defensáveis, além do ZIP Windows gerado e testado no **mesmo SHA completo e homologado**. Não confundir sucesso do workflow rápido com conclusão.
+
+
+---
+
+## ATUALIZAÇÃO SOLICITADA — 28/10/2026 (UTC−3) — SERRAPILHEIRA EM ESTRATOS DE SANTO AMBRÓSIO
+
+**Problema encontrado ao avançar na conclusão:** o estimador `santo_ambrosio_litter_stock_component` validava a área total da Fazenda Santo Ambrósio (20.000–60.000 ha no envelope de referência) diretamente sobre a geometria entregue ao estimador. Entretanto, o `summarize_native_carbon` exige calcular **cada interseção nativa por fitofisionomia separadamente**, e a subárea florestal pode ter apenas uma fração da área da propriedade. Isso poderia fazer com que o estoque gravimétrico de serrapilheira da fazenda, com 17 amostras, fosse rejeitado erroneamente durante a execução integrada.
+
+**Correção implementada, sem regressão metodológica:**
+- Commit `c7e34ffb67e56fa3cf27063b128e6eb7dab264c5` — `carbon_compartments.py`: introduz `property_aoi` opcional somente para verificar o perímetro e a área da propriedade de origem. A amostra de serrapilheira é aplicada **exclusivamente ao estrato Floresta Ombrófila Densa** fornecido, e somente quando a interseção geográfica está contida no perímetro da fazenda validado; estratos externos e savânicos continuam excluídos. Preserva os valores do estudo local (média seca de 14,3876 Mg/ha, n=17, IC95% amostral originalmente reportado) e **explicita que o IC amostral não cobre o erro de transferência à interseção**.
+- Commit `47027631267642e2041f311f1f419599a16a475c` — `native_carbon.py`: recebe `property_aoi` e o encaminha ao provedor de serrapilheira somente quando apropriado, preservando os outros provedores e evitando estimativas fora da fitofisionomia.
+- Commit `0bbfe724080a8fa9a25382a52d86be8e67bc16fd` — `desktop_app.py`: na análise real, passa a AOI completa da fazenda ao estimador de cada interseção nativa.
+- Commit `a9cdc752385ec1f883f04b626ae78828fcebb2c8` — `tests/test_carbon_compartments.py`: regressão com propriedade completa e pequena subárea de floresta, mais controles de polígono externo, savana e incerteza de transferência.
+
+**Evidência e estado CI:** as alterações estão no GitHub da branch `feature/agricultural-identification-native-carbon` e o último SHA de código antes desta atualização documental é `a9cdc752385ec1f883f04b626ae78828fcebb2c8`; o workflow `Dashboard dual - tests` run **40786556116** estava na fila no momento da consulta. **Ainda não há prova de aprovação dos testes e do EXE Windows desse SHA**, nem comprovação de que a estimativa local de 17 amostras quantifica a incerteza espacial do estrato florestal específico. Não declarar a correção homologada por mera alteração no código.
+
+**Requisitos inalterados:** cinco biomas, interseção espacial AOI × fitofisionomia IBGE/MapBiomas, exclusão de cultivos e silvicultura do estoque nativo, AGB prioritariamente por SAR real com erro demonstrável, raízes por alometria compatível e incerteza, necromassa e serrapilheira por inventário/gravimetria (sem alometria), solo PronaSolos exclusivamente 0–100 cm com fonte e incerteza diferenciada de variação espacial, agricultura com identificadores SAR executáveis e qualquer acurácia mensurada publicada por fonte reconhecida, vigor e previsões apenas quando cientificamente calibrados, painel executivo preservado e Windows ZIP gerado/testado no **mesmo SHA homologado**.
+
+**Estado geral: PR #50 DRAFT, NÃO HOMOLOGADA.** Se restar qualquer bloqueio científico ou de teste, não divulgar versão como final. Prosseguir acompanhando até evidência verificável de conclusão.
