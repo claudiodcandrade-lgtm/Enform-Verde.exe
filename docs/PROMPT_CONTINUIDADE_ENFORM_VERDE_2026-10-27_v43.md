@@ -855,3 +855,21 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 - Links verificáveis: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40708866766 ; https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40708866905 ; https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40708617996 .
 
 **Bloqueios mantidos:** ainda não existe evidência consolidada de validação científica de todos os cinco biomas, raízes e solo 0–100 cm com incerteza, SAR quantitativo e sua validação espacial independente, culturas/vigor e previsão de safra, benchmarks de desempenho, nem EXE Windows testado e ZIP do mesmo SHA. **Não liberar nem notificar como versão definitiva.** A aprovação de testes de contrato e de um painel isolado não comprova esses requisitos.
+
+
+---
+
+## CHECKPOINT DE COMPILAÇÃO WINDOWS — 28/10/2026, 12h54 (UTC−3) — AVANÇO MATERIAL, SEM HOMOLOGAÇÃO CIENTÍFICA
+
+**HEAD verificado antes desta atualização:** `f895bc59b17decb9b681e052e2ebbd7e49770022`; PR #50 ainda aberta e draft.
+
+**GitHub Actions da mesma revisão `f895bc59`:**
+- Painel `40710305931`: **completed / success**.
+- Build Windows `40710305957`: **completed / success**.
+- ZIP existente e não expirado: artefato `12827007175`, nome `Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO`, **522.574.672 bytes**, criado em 28/10/2026 15:09:08 UTC. Página verificável: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40710305957/artifacts/12827007175 .
+- Demais artefatos: diagnóstico de altura Tapajós 2010 `12826831149` (357 bytes), série PAM microrregional 2015–2024 `12825697544` (898.085 bytes). Existência dos arquivos **não atesta** validação de seus conteúdos.
+- **Etapas CI aprovadas observadas:** testes de origem, estratificação nativa, Pantanal, fallback Cerrado, testes de contrato GUI e de equações, prévia Sentinel-2 Tapajós, processamento SAR público Tapajós, classificação fitogeográfica IBGE, busca SICAR, processamento quantitativo ALOS-PALSAR Cerrado, consulta ao catálogo BIOMASS P-band em local AfriSAR, consulta de cobertura FH no Tapajós, build EXE, verificação de runtime Python empacotado e autoteste do EXE a partir de pasta limpa.
+
+**Interpretação científica obrigatória:** CI verde comprova apenas os testes que foram executados. Consulta de catálogo ESA BIOMASS não comprova estimação local P-band validada; teste de contrato não demonstra calibração/validação espacial de AGB; download da PAM não comprova correlação independente SAR-produtividade; testes de fallback por bioma não demonstram ausência de viés nem estoques completos de raízes, necromassa, serrapilheira e solo 0–100 cm. Não há aqui benchmark auditado frio/quente nem prova de classificação robusta de cultura e das três classes de vigor em múltiplas AOIs reais.
+
+**Status de liberação:** **artefato Windows experimental compilado com sucesso; NÃO versão definitiva homologada**. Não notificar o usuário como liberação definitiva, não mesclar a PR draft antes do aceite. Para concluir, obter evidência quantitativa independente de todas as funções científicas obrigatórias, teste integrado em cinco biomas, métricas de performance, histórico de erros resolvidos, e só então emitir release e link do artefato exato aprovado. Preservar rigor científico e aparência do painel.
