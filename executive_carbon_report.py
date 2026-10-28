@@ -34,7 +34,7 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
     spatial=row.get("spatial_sd_tc_ha")
     if isinstance(spatial,(int,float)) and spatial>=0:
         return {"absolute_tc_ha":spatial,"percent":100*spatial/value,
-                "kind":"desvio-padrão espacial; NÃO é erro de predição nem IC95%"}
+                "kind":("desvio-padrão espacial zero na amostra/mapa; NÃO significa incerteza de predição zero" if spatial==0 else "desvio-padrão espacial; NÃO é erro de predição nem IC95%")}
     return {"absolute_tc_ha":None,"percent":None,
             "kind":"erro residual/transferência não quantificado"}
 
