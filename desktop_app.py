@@ -1220,7 +1220,7 @@ class App(tk.Tk):
         ttk.Button(landrow,text="CONFIGURAR CLASSIFICAÇÃO SAR DE USO",command=self.pick_land_use_config).pack(side="left")
         ttk.Button(landrow,text="IDENTIFICAR USO DO SOLO",command=self.classify_land_use_ui).pack(side="left",padx=8)
         self.land_use_config=None; self._land_use_running=False
-        self.land_use_state=tk.StringVar(value="Confiança independente obrigatória. Fallback: IBGE → MapBiomas.")
+        self.land_use_state=tk.StringVar(value="Identificadores SAR instalados: busca automática; alternativa MapBiomas para cobertura atual e IBGE para fitofisionomia.")
         ttk.Label(landrow,textvariable=self.land_use_state,wraplength=500).pack(side="left",padx=8)
         self.sar_paths=[]; self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
         self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
@@ -1271,7 +1271,13 @@ class App(tk.Tk):
             text="\n".join(land_use_report_lines(result,lambda v:format_ptbr(v,2)))
             self.project["last_result"]=text
             self._set(self.res,text);self.nb.select(self.tabs[3])
-            self.land_use_state.set(result["status"]+" — áreas e auditoria disponíveis.")
+            self.land_use_state.set(
+                result["status"]+" — "+(
+                    "Identificador SAR executado: "+Path(result["sar_model_config"]).name
+                    if result.get("sar_model_config") else
+                    "sem identificador SAR validado; fonte cartográfica explicitada"
+                )+"; áreas e auditoria disponíveis."
+            )
         threading.Thread(target=worker,name="EnformLandUse",daemon=True).start()
         self.after(150,poll)
 
