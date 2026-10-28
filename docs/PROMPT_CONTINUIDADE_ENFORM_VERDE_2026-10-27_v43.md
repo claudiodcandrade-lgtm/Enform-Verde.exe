@@ -409,3 +409,12 @@ Build Windows #731 (run 40591711777) falhou no gate `Live public SAR pixel proce
 5. Só declarar **VERSÃO DEFINITIVA** após evidências científicas e técnicas completas e artefato ZIP do mesmo SHA homologado.
 
 **STATUS:** MUDANÇA MATERIAL — CORREÇÕES DE ÁGUA, ORDEM DE FLORESTA DENSA E SOLO 0–100 CM COMMITADAS; TESTE DE SOLO ATUALIZADO. WINDOWS DO NOVO SHA E REPROCESSAMENTO REAL AINDA **NÃO COMPROVADOS**. **VERSÃO DEFINITIVA NÃO LIBERADA.**
+
+
+## Atualização de interface — fitofisionomias IBGE sem truncamento (28/10/2026)
+
+- Evidência: captura de tela do usuário da aba **Mapas e limites** com classe cortada como "Floresta Ombr..." no campo **Fitofisionomia IBGE (legenda_1)**. Não é problema do dado cartográfico: o campo Tkinter tinha `ttk.Label(... wraplength=840)` com largura fixa incompatível com o espaço disponível.
+- Correção commit **a25c8141d6e43579701fa1a1f31bf19185737832** em `desktop_app.py`: campo substituído por `tk.Text` somente leitura, quebra automática de palavras, altura de quatro linhas e scrollbar vertical; atualização vinculada a `self.ibge_phys_display.trace_add("write", ...)`. Não reduzir a informação, não truncar classes, códigos ou percentuais.
+- Critério de aceite: abrir AOI com três ou mais classes (incluindo Floresta Ombrófila Densa, Floresta Ombrófila Aberta e Corpo d'água continental), reduzir largura da janela, rolar campo e comprovar leitura integral de todas as classes e números. Testar redimensionamento, Windows DPI 125%/150% e atualização de perímetro.
+- Interface: o botão ainda exibe "Buscar COS 0–30 cm — Embrapa", enquanto a contabilização nativa foi alterada para solo 0–100 cm. Harmonizar o rótulo e confirmar se o provedor disponibiliza efetivamente 0–100 cm; não prometer profundidade que o serviço de consulta não entrega.
+- **Não declarar EXE concluído sem workflow Windows aprovado no SHA que contenha este commit e seus testes.**
