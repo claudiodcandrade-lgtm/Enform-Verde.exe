@@ -1981,6 +1981,19 @@ class App(tk.Tk):
                 if depth!="0–30 cm" and isinstance(profile,dict) and profile.get("tc_ha") is not None:
                     lines.append("  Solo "+depth+": "+format_ptbr(profile["tc_ha"],2)+" tC/ha nesta formação; perfil informativo, não somado novamente ao total.")
         lines += ["",("TOTAL" if native["complete"] else "SOMA PARCIAL CONHECIDA")+" NAS INTERSEÇÕES NATIVAS: "+(format_ptbr(known,2)+" tC" if known is not None else "NÃO ESTIMADO"),"ESTOQUE EQUIVALENTE NAS INTERSEÇÕES NATIVAS: "+(format_ptbr(known*44/12,2)+" tCO₂e" if known is not None else "NÃO ESTIMADO"),"Densidades na área nativa: "+(format_ptbr(known/area,2)+" tC/ha; "+format_ptbr((known/area)*44/12,2)+" tCO₂e/ha" if known is not None and area else "NÃO ESTIMADO"),native["uncertainty_note"],""]
+        joint=native.get("total_uncertainty")
+        if joint:
+            # This is only reached with externally supplied complete covariance.
+            # Never present a clipped normal interval as empirically calibrated.
+            lo,hi=joint["ci95_tC"]
+            lo_co2,hi_co2=joint["ci95_tCO2e"]
+            lines.extend([
+                "IC95% NORMAL APROXIMADO DO TOTAL (NÃO VALIDADO INDEPENDENTEMENTE): "
+                    +format_ptbr(lo,2)+"–"+format_ptbr(hi,2)+" tC; "
+                    +format_ptbr(lo_co2,2)+"–"+format_ptbr(hi_co2,2)+" tCO₂e.",
+                "Erro-padrão condicionado à matriz de covariância fornecida: "
+                    +format_ptbr(joint["se_tC"],2)+" tC. Não inclui erros sem modelagem documentada."
+            ])
         lines+=land_use_report_lines(land,lambda v:format_ptbr(v,2))
         text="\n".join(lines)
         self.project["last_result"]=text
