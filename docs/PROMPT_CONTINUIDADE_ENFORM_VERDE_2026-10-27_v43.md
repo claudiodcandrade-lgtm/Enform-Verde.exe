@@ -911,3 +911,16 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Situação no momento:** antes do commit, HEAD `58b84aef55ef31682bb1ebfb407e1973374a92b4` da PR #50 draft: dashboard `40722774304` completed/success e Windows `40722774295` in_progress. Necessário validar o SHA novo em CI e medir latência/transferência reais antes de afirmar ganho de desempenho.
 
 **Bloqueios de release mantidos:** comprovação integrada e independente de AGB SAR/altura, BGB por modelos adequados, necromassa, serrapilheira, solo 0–100 cm e suas incertezas nos cinco biomas; detecção e classificação de lavouras/vigor com validação; modelos de rendimento com séries SAR/PAM reais; benchmarks reais e ZIP Windows do SHA homologado. Não liberar como definitivo apenas por testes verdes.
+
+
+---
+
+## CORREÇÃO REAL — 28/10/2026 — NÃO CONFUNDIR INVENTÁRIO PARCIAL COM COBERTURA NACIONAL
+
+**Problema:** a função `discover_sinaflor_metadata_fast` limitava a descoberta por termo a 10 páginas sem registrar que a API CKAN possuía mais resultados, podendo induzir a falsa conclusão de que toda a coleção pública tinha sido consultada.
+
+**Alterações incorporadas:** commit `648f2d8fb617699dfa6c81981f941c4559e54da6` obriga a rotina a interromper com erro explícito e acionável quando atinge `max_pages_per_term` ainda com página cheia e total CKAN não exaurido. Não retorna silenciosamente a amostra parcial como resultado completo. Permite ampliar `max_pages_per_term` ou refinar a consulta. Commit `1c684bc050c184a36cf7a7882f428180242364e3` acrescenta regressão simulando 300 registros com limite de duas páginas e ajusta o teste anterior de `count` omitido para terminar por página vazia. **Não constitui acesso efetivo a todos os dados do Brasil.**
+
+**Risco residual e desempenho:** quando grandes resultados exigirem mais páginas, a integridade requer novas chamadas ou filtro regional, portanto medir latência e implementar filtros geográficos/UF sempre que a API suportar. `harvest_sinaflor` ainda baixa recursos suportados após descoberta; a obtenção seletiva por relevância de AOI e integração completa ao módulo de carbono continuam pendentes.
+
+**CI antes das alterações:** PR #50 draft; SHA `d4c4312cbef4479748f68bb249118fdc35c00fa6`, painel `40723310274` completed/success e Windows `40723310468` in_progress. Os commits novos exigem novamente testes próprios. Sem evidência integral dos cinco biomas, BGB, necromassa, serrapilheira, solo 0–100 cm com incerteza, SAR/validação e culturas/vigor/safras, **não homologar a versão definitiva**.
