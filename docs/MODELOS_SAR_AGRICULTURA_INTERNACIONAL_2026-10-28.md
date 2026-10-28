@@ -41,3 +41,20 @@ Na ausência de modelo nacional comprovadamente treinado, **admitir algoritmos, 
 `agricultural_external_models.py`: catálogo declarativo das rotas, consulta por cultura e pré-verificação de transferência com sensores, hash de artefato e avaliação brasileira independente. O catálogo **não contém pesos de classificação nem executa SAR por si só**. `tests/test_agricultural_external_models.py`: regressões para prevenção de falsa homologação.
 
 **Não homologado** até cenas reais, treinamento/inferência com pesos verdadeiros, validação independente por classe e integração Windows no mesmo SHA.
+
+
+## Pesquisa complementar — citros, feijão e sorgo
+
+A pesquisa em português, inglês e chinês revelou publicações adicionais relevantes para as culturas antes sem candidato específico:
+
+| Fonte | Tipo | Cultura e sensor | Aplicabilidade |
+|---|---|---|---|
+| Tang et al. (2024), *Identification of Gannan Citrus Planting Area Based on Sentinel-2 and Temporal Sentinel-1 SAR Features*, doi:10.6041/j.issn.1000-1298.2024.03.019 — [registro](https://opaj.napstic.cn/periodicalArticle/0120240501379462) | Artigo chinês | **Citros**, SAR Sentinel-1 + Sentinel-2, RF; acurácia global informada 90,084% | Acurácia global **não equivale** à precisão por classe citros; não provar transferência para pomar brasileiro |
+| *Suitability evaluation and precise identification of citrus planting areas...* — [catálogo de dissertação chinesa](https://cnki.istiz.org.cn/kcms/detail/detail.aspx?dbcode=CMFD&dbname=CMFD2026&filename=1025687767.nh) | **Dissertação de mestrado**, 2026 | **Citros**, séries SAR Sentinel-1, red-edge Sentinel-2, RF | Evidência promissora de janelas mensais VV/VH; parâmetros, acesso e licença precisam de verificação |
+| *Citrus Crop Classification in Cap Bon, Tunisia* — [PIAHS 2024](https://piahs.copernicus.org/articles/385/443/2024/index.html) | Artigo | **Citros**, Sentinel-1 e Sentinel-2; 22 classificadores | Escolha do classificador depende do domínio e calibração; não são pesos treinados brasileiros |
+| Tsuchiya & Sonobe (2025), *Crop Classification Using Time-Series Sentinel-1 SAR Data* — [Remote Sensing](https://www.mdpi.com/2072-4292/17/12/2095) | Artigo japonês | **Feijão** (beans), **milho**, seis culturas, Sentinel-1 apenas; LSTM/GRU/TCN com atenção | Verificar espécie do feijão (não presumir Phaseolus vulgaris) e disponibilidade de código/pesos |
+| La Rosa (2018), *Crop recognition from multitemporal SAR image sequences using deep learning techniques* — [PUC-Rio/BDTD](https://bdtd.ibict.br/vufind/Record/PUC_RIO-1_a7e2fb231ae52f44a9f0d45fb5c25fc3) | **Dissertação** | Séries Sentinel-1 SAR com AE/CNN/FCN em áreas tropical e temperada | Utilizável como arquitetura replicável; não comprovado peso reusável |
+| Manzi (2024), *Characterization of Sorghum and Green Gram... Kenya* — [Kenyatta University](https://ir-library.ku.ac.ke/items/8a55af2b-58f7-45dd-b701-8e638e7d76ed) | **Tese de doutorado** | **Sorgo**, área de cultivo e caracterização espectral | **Modalidade SAR não demonstrada**; usar para entendimento agronômico, não como classificador SAR |
+| Ferraz (2023), *Sensoriamento remoto e inteligência artificial no manejo das culturas de milho e sorgo* — [UFLA](https://repositorio.ufla.br/handle/1/58272) | **Dissertação de mestrado** | **Sorgo/milho**, índices de vegetação e modelos MLP | **SAR não demonstrado**; serve como referência auxiliar para previsão e baseline, não um modelo SAR operacional |
+
+Os modelos e fontes estão registrados em `agricultural_external_models.py` com `weights_reusable=False`, salvo framework WorldCereal; todos exigem validação independente brasileira. Nenhum dos artigos justifica publicar cultura específica no executável apenas por resultados estrangeiros.
