@@ -73,6 +73,37 @@ class DisjointNecromassAggregationTests(unittest.TestCase):
         self.assertAlmostEqual(necro[0]['range_tc_ha'][1],45.7)
         self.assertIn('NÃO é IC95%',necro[0]['obs'])
 
+    def test_total_does_not_inherit_partial_fallen_interval(self):
+        frame=gpd.GeoDataFrame(geometry=[box(-55,-4,-54.99,-3.99)],crs=4326)
+        stocks={
+            'Necromassa aérea — madeira morta caída':{
+                'mean_tc_ha':32.0,'range_tc_ha':[28.3,35.7],
+                'uncertainty_kind':'IC95% publicado','source':'Inventário microrregional'},
+            'Necromassa aérea — madeira morta em pé':{
+                'mean_tc_ha':8.7,'source':'Inventário microrregional'},
+        }
+        with patch('carbon_compartments.tapajos_necromass_components',return_value=stocks):
+            result=estimate_native_components(frame,'Floresta Ombrófila Densa',
+                'Amazônia',lambda *args:{},lambda *args:{})
+        stock=next(x for x in result['components'] if x['parametro']=='Necromassa aérea')
+        self.assertAlmostEqual(stock['tc'],40.7)
+        self.assertIsNone(stock['range_tc_ha'])
+        self.assertEqual(stock['obs'],'Incerteza conjunta não quantificada')
+
+    def test_invalid_direct_stock_cannot_silently_replace_second_stock(self):
+        frame=gpd.GeoDataFrame(geometry=[box(-55,-4,-54.99,-3.99)],crs=4326)
+        stocks={
+            'Necromassa aérea — madeira morta caída':{
+                'mean_tc_ha':float('nan'),'source':'Inventário microrregional'},
+            'Necromassa aérea — madeira morta em pé':{
+                'mean_tc_ha':8.7,'source':'Inventário microrregional'},
+        }
+        with patch('carbon_compartments.tapajos_necromass_components',return_value=stocks):
+            result=estimate_native_components(frame,'Floresta Ombrófila Densa',
+                'Amazônia',lambda *args:{},lambda *args:{})
+        self.assertFalse(any(x['parametro']=='Necromassa aérea'
+            for x in result['components']))
+
     def test_ambiguous_total_and_subpool_are_not_summed(self):
         frame=gpd.GeoDataFrame(geometry=[box(-55.0,-4.0,-54.99,-3.99)],crs=4326)
         overlapping={
