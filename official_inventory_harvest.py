@@ -309,7 +309,7 @@ def discover_sinaflor_metadata_fast(
                     key = str(item.get("id") or item.get("name") or "")
                     if key:
                         found[key] = item
-            if len(items) < rows or start + len(items) >= int(result.get("count") or 0):
+            if len(items) < rows or (result.get("count") is not None and start + len(items) >= int(result["count"])):
                 break
     return sorted(found.values(), key=lambda p: (str(p.get("title", "")).casefold(), str(p.get("name", ""))))
 
