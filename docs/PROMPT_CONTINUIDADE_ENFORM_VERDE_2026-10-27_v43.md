@@ -1183,3 +1183,23 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Plano operacional obrigatório (não realizado por este catálogo):** obter/treinar cabeças WorldCereal ou adaptar modelo internacional com código/pesos licitamente acessíveis; rodar em cenas SAR reais datadas; auditar pré-processamento, atributos, probabilidade e versões; treinar/calibrar em observações compatíveis e validar em AOIs brasileiras independentes com holdout espacial e temporal; produzir métricas de classe e matriz de confusão, e só então habilitar rótulos específicos. Para arroz, priorizar IRRI; cana, IPB e estudo tailandês com ablação SAR; café, INIA Peru/USP e UNICAMP se SAR efetivo confirmado. Se dados reais não confirmam cultura, usar categoria genérica apenas quando cultivo está evidenciado; jamais declarar cobertura ou produtividade sem base.
 
 **Condição da versão definitiva:** permanecem bloqueios de carbono/altura SAR de alta biomassa, validação dos compartimentos nos cinco biomas, solos 0–100 cm com incerteza total, modelos de culturas/estresse e previsão de safra operacionalmente calibrados, desempenho e regressão integral, e EXE Windows testado no mesmo SHA homologado com ZIP, checksum e origem. **PR #50 NÃO HOMOLOGADA, sem release definitivo.**
+
+
+---
+
+## EVOLUÇÃO DO CATÁLOGO DE TESES E MODELOS POR CULTURA — 28/10/2026 (UTC−3)
+
+**Avanço de pesquisa:** foram localizadas referências específicas de **citros, feijão e sorgo**, além das fontes anteriores de arroz, milho, soja, café, cana e mapeamento genérico de cultivos. Todas registradas em `docs/MODELOS_SAR_AGRICULTURA_INTERNACIONAL_2026-10-28.md` com repositório institucional e limitações.
+
+**Commits verificados nesta evolução:**
+- `2519b35edd5db80115301f1873ae21a419ada3d6`: catálogo `agricultural_external_models.py` ampliado com sete registros: artigo e dissertação chineses sobre **citros** SAR Sentinel-1/2; artigo tunisiano de citros SAR+óptico; artigo japonês de séries SAR Sentinel-1 para **beans e milho**; dissertação PUC-Rio de classificação por SAR temporal; tese da Kenyatta University para **sorgo** e dissertação UFLA para **sorgo/milho**.
+- `afa115544fdc211ee5dd566da9dfc3c7b09b41fb`: testes atualizados para assegurar que fontes específicas sem pesos nem validação brasileira não são declaradas modelos operacionais.
+- `252fbc5a345c105ce4da50752cc46dadc28c1d4d`: documentação de pesquisa com vínculos para estudos da China, Japão, Tunísia, PUC-Rio, Quênia e UFLA.
+
+**Alertas técnicos:**
+1. O artigo chinês de citros reporta acurácia global de 90,084% com fusão Sentinel-1/2: **não** é precisão por classe com IC95%, tampouco comprova desempenho exclusivamente SAR ou no Brasil.
+2. O artigo japonês usa a categoria inglesa *beans*, cuja espécie não deve ser equiparada sem evidência ao feijão-comum brasileiro.
+3. As teses de sorgo Kenyatta e UFLA são úteis à parametrização de cultivo e modelos agrícolas, mas **não comprovam uso de SAR**; sem radar executável não ativam identificação por SAR.
+4. Pré-triagem de modelo externo não substitui execução do algoritmo, calibração e validação de cenas SAR/pixels em regiões brasileiras, nem substitui intervalos preditivos calibrados de safra.
+
+**Pendências para conclusão** permanecem todas as de homologação científica nacional e EXE Windows. A inclusão de fontes não é a validação científica delas. Preservar critérios de classificação, fontes de carbono, painel e histórico. **NÃO HOMOLOGADO.**
