@@ -240,3 +240,32 @@ class LargePartitionRegression(unittest.TestCase):
         self.assertEqual(len(report['classes']),1)
         self.assertAlmostEqual(report['classes'][0]['area_ha'],25.0,places=6)
         self.assertAlmostEqual(report['classes'][0]['area_pct'],100.0,places=6)
+
+
+class GeosOverlayRecoveryRegression(unittest.TestCase):
+    def test_precision_fallback_preserves_polygon_area(self):
+        from unittest.mock import patch
+        from shapely.errors import GEOSException
+        import shapely
+        from land_use_sar import _robust_polygon_overlay
+        left=box(0,0,100,100)
+        right=box(50,0,100,100)
+        original=shapely.difference
+        calls=[0]
+        def fail_once(a,b,**kwargs):
+            calls[0]+=1
+            if calls[0]==1:
+                raise GEOSException('Unable to determine overlay result geometry dimension')
+            return original(a,b,**kwargs)
+        with patch('shapely.difference',side_effect=fail_once):
+            result=_robust_polygon_overlay(left,right,'difference')
+        self.assertEqual(calls[0],2)
+        self.assertAlmostEqual(result.area,5000.0,places=3)
+
+    def test_irrecoverable_overlay_fails_closed(self):
+        from unittest.mock import patch
+        from shapely.errors import GEOSException
+        from land_use_sar import _robust_polygon_overlay
+        with patch('shapely.difference',side_effect=GEOSException('unrecoverable')):
+            with self.assertRaisesRegex(ValueError,'nenhuma área foi aceita'):
+                _robust_polygon_overlay(box(0,0,100,100),box(50,0,100,100),'difference')
