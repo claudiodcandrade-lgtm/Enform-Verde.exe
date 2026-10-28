@@ -972,3 +972,18 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Regressões adicionadas:** commit `498fa356d087cd8fff1f22c30a81ed1951b7b8dc` inclui `DisjointNecromassAggregationTests` em `tests/test_native_carbon.py`: valida soma de 40,7 tC/ha, envelope de 35,7–45,7 tC/ha e recusa de total + subpool. Os testes foram adicionados ao repositório, mas **ainda requerem execução CI**.
 
 **Regra permanente:** somente dados diretos de necromassa de mesma fitofisionomia, instituições reconhecidas, prioritariamente microrregionais; nunca alometria de biomassa viva para madeira morta. Não emitir IC95% conjunto de pools usando soma ingênua dos ICs marginais. **Não declarar versão definitiva** enquanto persistirem as demais lacunas SAR, carbono, fitofisionomias, agricultura, previsão de safra e validação independente.
+
+
+---
+
+## CORREÇÃO IMPLEMENTADA — 28/10/2026 — CONTROLE DE ERROS DA SOMA DE NECROMASSA
+
+**Código:** `native_carbon.estimate_native_components`, commit `c05de68d8ca54abcba8762643318da8204630e19`. Reforçada a consolidação de estoques diretos disjuntos de necromassa aérea (madeira caída + em pé):
+- Quando apenas um subcompartimento possui intervalo, a soma pontual pode ser apresentada **sem intervalo conjunto**; não herdar silenciosamente o IC publicado da parcela caída como se fosse do total.
+- Quando ambos possuem intervalos marginais completos, finitos e coerentes (0 ≤ limite inferior ≤ superior), a soma dos limites é rotulada exclusivamente como envelope conservador, **não IC95% conjunto**, sem inferir covariância.
+- Valores de estoque ausentes, não numéricos, negativos ou não finitos; fontes incompatíveis; e estrutura total+subpool ambígua **bloqueiam** a consolidação do pool, evitando a sobrescrita silenciosa anterior.
+- Falta de incerteza conjunta é rotulada explicitamente `Incerteza conjunta não quantificada`. Para homologação científica com intervalo preditivo da AOI ainda é necessário conhecer desenho amostral, covariâncias, transferência fitofisionômica e incerteza espacial.
+
+**Testes novos:** commit `ceaf0e0dd29116eafb1c6c0c09af07cead7917b3` em `tests/test_native_carbon.py`, incluindo `test_total_does_not_inherit_partial_fallen_interval` e `test_invalid_direct_stock_cannot_silently_replace_second_stock`. São testes controlados; a aprovação no CI do mesmo HEAD é obrigatória.
+
+**Estado da entrega:** reparo localizado de contabilidade e comunicação de incerteza; não integra automaticamente todas as bases do IFN por fitofisionomia nem resolve os demais compartimentos e modelos agrícolas. PR #50 ainda requer todos os critérios de liberação, benchmarks reais e testes Windows. Não publicar artefato como definitivo antes da homologação total.
