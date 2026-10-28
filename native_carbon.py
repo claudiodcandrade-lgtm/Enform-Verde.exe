@@ -166,6 +166,48 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                          'origem':'MODELAGEM_ALOMETRIA','fonte':'Cairns et al. (1997), doi:10.1007/s004420050201',
                          'metodo':'BGB=exp(-1,0587+0,8836 ln AGB); floresta tropical de terras altas, referência generalizada',
                          'obs':'Erro residual/transferência alométrica não quantificado; sem IC total.'})
+    # Direct necromass studies may report fallen and standing CWD separately.
+    # They are disjoint pools, but must be added before collapsing them into the
+    # single published 'Necromassa aérea' reporting column. Never combine a
+    # subpool with an already-totalled necromass estimate.
+    necro_parts=[(name,component) for name,component in regional.items()
+                 if normalize(name).startswith('necromassa aerea')]
+    if len(necro_parts)>1:
+        fallen=[pair for pair in necro_parts
+                if any(token in normalize(pair[0]) for token in ('caida','fallen','downed'))]
+        standing=[pair for pair in necro_parts
+                  if any(token in normalize(pair[0]) for token in ('em pe','standing'))]
+        if (len(necro_parts)==2 and len(fallen)==1 and len(standing)==1
+                and fallen[0][0]!=standing[0][0]
+                and all(c.get('mean_tc_ha') is not None for _,c in necro_parts)
+                and len({str(c.get('source')) for _,c in necro_parts})==1):
+            sums=[float(c['mean_tc_ha']) for _,c in necro_parts]
+            if all(math.isfinite(x) and x>=0 for x in sums):
+                common=fallen[0][1]
+                aggregate=dict(common)
+                aggregate['mean_tc_ha']=sum(sums)
+                ranges=[c.get('range_tc_ha') for _,c in necro_parts]
+                if all(isinstance(v,(tuple,list)) and len(v)==2 for v in ranges):
+                    aggregate['range_tc_ha']=[
+                        sum(float(v[0]) for v in ranges),
+                        sum(float(v[1]) for v in ranges),
+                    ]
+                    aggregate['uncertainty_kind']=(
+                        'Envelope conservador dos intervalos marginais; '
+                        'NÃO é IC95% conjunto nem inclui covariância/transferência'
+                    )
+                aggregate['method']=(
+                    'Soma de estoques DIRETOS de madeira morta caída e em pé, '
+                    'sem sobreposição. '+str(common.get('method') or '')
+                )
+                for name,_ in necro_parts:
+                    del regional[name]
+                regional['Necromassa aérea']=aggregate
+        else:
+            # Ambiguous overlapping measurements cannot be added or silently
+            # overwritten; flag the whole pool instead of inventing a total.
+            for name,_ in necro_parts:
+                del regional[name]
     for raw_name,c in regional.items():
         key=next((k for k in COMPARTMENTS if normalize(raw_name).startswith(normalize(k))),None)
         if key is None:continue
