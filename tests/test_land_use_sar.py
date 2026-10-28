@@ -94,7 +94,10 @@ class LandUseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             config,aoi,_=self.fixture(d);polygons,r=classify_config(aoi,config,Path(d)/'out')
             self.assertGreater(r['eligible_pixels'],0);self.assertEqual(r['n_validation'],120)
-            self.assertIn('validation_multiclass_brier',r);self.assertTrue(r['gates']['Pastagem']['eligible']);self.assertFalse(r['gates']['Floresta']['eligible'])
+            self.assertIn('validation_multiclass_brier',r);self.assertTrue(r['gates']['Pastagem']['eligible']);self.assertTrue(r['gates']['Floresta']['eligible'])
+            # Independent measurable accuracy is distinct from native structural
+            # eligibility: forest still requires real SAR-height evidence.
+            self.assertNotIn('Floresta',set(polygons.class_name))
             self.assertFalse(polygons.empty);self.assertTrue((Path(d)/'out'/'validacao_sar.json').exists())
 
     def test_pseudolabels_and_repeated_units_rejected(self):
