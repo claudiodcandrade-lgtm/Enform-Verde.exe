@@ -32,3 +32,12 @@ Até 36 consultas HTTP totais por AOI para até cinco horizontes, contra até 18
 - `.github/workflows/build-windows.yml`: contrato GUI exige 0–100 cm e as cinco camadas na origem do código.
 
 **Pendência de homologação:** verificar os testes Windows e a execução com retorno **real da API oficial**, demonstrar a completude 0–100 cm e incerteza defensável com fontes institucionais, e produzir o executável Windows testado no mesmo SHA homologado. **Sem liberação definitiva apenas por compilação.**
+
+
+## Controle adicional de valor bruto e prova do serviço — 28/10/2026
+
+Os valores `Stretched Pixel Value`, `Renderer Value` e `Display Value` de respostas ArcGIS não são medições de estoque de carbono: podem representar intensidades de renderização. **Nunca** converter diretamente esses atributos em Mg C/ha. Aceitar somente `value`, `Pixel Value`, `raw_value` ou sinônimos de valor bruto, finitos e não negativos. O teste `test_visualization_stretch_is_not_soil_stock` estabelece esta invariável. Commits: `4ba3299e697951f249af7ea7d59e70ca7b67b318` e `8a1d3b3b012cfaaf01f3c97142a6ed5424adb510`.
+
+Para provar acesso real à API, `tools/probe_pronasolos_100cm.py` implementa consultas ao servidor SGB nas coordenadas geográficas de cinco pontos de referência (Amazônia/Tapajós, Cerrado/Brasília, Caatinga/Petrolina, Mata Atlântica/Itapetininga e Pantanal/Nhecolândia). O workflow Windows grava `pronasolos_probe_100cm.json` e publica artefato `pronasolos-100cm-audit` com os códigos de estado, valores brutos retornados de todas as cinco camadas, hash SHA-256 da resposta e motivo dos erros. Commits `6b014040d0ad145d0e6cc34260751b2e51cfdbed`, `fa2b6ff2030be4e020e6066f78c8e5facd4a35c8`, `76a82f9678db13bea5cd8fc18067548e08beb0b1` e `ac03501446a9be9aedc1cea239c410684c9e75f2`.
+
+Esse teste de acesso é **não bloqueante por indisponibilidade de rede**, mas uma falha não pode ser interpretada como comprovação de cinco biomas. Mesmo êxito em cinco pontos **não constitui** validação de estoques da AOI, de incerteza preditiva, de fitofisionomia específica ou de precisão de 95%. O release científico exige evidência adicional.
