@@ -144,16 +144,10 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
     rows=[];regional=dict(selected.get('regional_components') or {})
     regional.update(sar.get('regional_components') or {})
     regional.update(tapajos_necromass_components(biome,physiognomy,aoi))
-    if not any(normalize(k).startswith('necromassa aerea') for k in regional):
-        from pathlib import Path
-        import sys
-        root=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parent))
-        table=root/'data'/'ifn_necromass_biome_uf_v1.csv'
-        if not table.exists():table=Path(sys.executable).parent/'data'/'ifn_necromass_biome_uf_v1.csv'
-        try:
-            ref=ifn_necromass_component(biome,infer_uf_from_aoi(aoi),table)
-            if ref:regional['Necromassa aérea']=ref
-        except Exception:pass
+    # Do not silently transfer biome×UF necromass to an IBGE physiognomy.
+    # The public IFN biome×UF aggregate lacks a verified physiognomy field;
+    # its predictive interval cannot quantify ecological transfer bias.
+    # Retain only class-compatible microrregional/validated source components.
     if not any('serapilheira' in normalize(k) for k in regional):
         for provider in (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,pantanal_nhecolandia_litter_carbon_component):
             component=provider(biome,physiognomy,aoi)
