@@ -1,6 +1,6 @@
 """Regression tests: carbon summary must not equate missing land-cover evidence with absence of native cover."""
 import unittest
-from executive_carbon_report import executive_carbon_lines
+from executive_carbon_report import executive_carbon_lines, uncertainty_for_pool
 
 
 def pt(value):
@@ -8,6 +8,11 @@ def pt(value):
 
 
 class CarbonPresentationRegression(unittest.TestCase):
+    def test_zero_spatial_sd_does_not_imply_zero_prediction_error(self):
+        result=uncertainty_for_pool({"tc":84.4,"spatial_sd_tc_ha":0.0})
+        self.assertEqual(result["absolute_tc_ha"],0.0)
+        self.assertIn("NÃO significa incerteza de predição zero",result["kind"])
+
     def test_unknown_cover_never_claims_zero_natural_cover(self):
         report={"area_aoi_ha":1290.69, "native_area_ha":0, "unknown_cover_area_ha":1290.69,
                 "strata":[], "known_total_tc":None}
