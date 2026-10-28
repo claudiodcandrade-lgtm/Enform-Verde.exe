@@ -8,12 +8,14 @@ CROPS = ("soja", "milho", "sorgo", "café", "cana-de-açúcar", "arroz", "feijã
 
 def assess_diagnostic(*, acquisition_utc, processing_ok, source_verified,
                       model_validation, probabilities, native_mask_confirmed,
-                      now=None, max_age_days=12, min_precision=0.85,
-                      min_recall=0.80, min_probability=0.90, min_margin=0.15):
-    """Abstain unless temporal, processing, source and per-class validation pass.
+                      now=None, max_age_days=12, min_precision=None,
+                      min_recall=None, min_probability=None, min_margin=None):
+    """Require a measured, traceable performance metric; no accuracy cutoff.
 
-    model_validation maps label to independently measured precision/recall and
-    applicability domain. Values must come from real held-out validation.
+    Published foreign-domain results may support a *provisional* crop signal
+    from an actually executed model, distinctly labeled as unverified locally.
+    No published percentage is represented as the accuracy of this AOI.
+    Legacy min_* arguments are ignored: they are not scientific release gates.
     """
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
@@ -52,19 +54,56 @@ def assess_diagnostic(*, acquisition_utc, processing_ok, source_verified,
         return result
     label, probability = scores[0]
     margin = probability - (scores[1][1] if len(scores) > 1 else 0)
-    validation = model_validation.get(label, {})
-    if not validation.get("independent_test") or not validation.get("in_domain"):
-        result["reasons"].append("Validação independente/domínio não comprovados")
-    if validation.get("precision", -1) < min_precision or validation.get("recall", -1) < min_recall:
-        result["reasons"].append("Acurácia da classe abaixo do limiar")
-    if probability < min_probability or margin < min_margin:
-        result["reasons"].append("Confiança/margem insuficiente")
+    from math import isfinite
+    validation = (model_validation or {}).get(label, {})
+    local = validation.get("independent_test") is True and validation.get("in_domain") is True
+    # A recognized publication is valid research evidence even with weak
+    # accuracy. Published-only labels are explicitly provisional, never a
+    # locally validated model or proof of native carbon eligibility.
+    published = (validation.get("published_validation") is True
+                 and bool(validation.get("institution"))
+                 and bool(validation.get("publication_url"))
+                 and bool(validation.get("metric")))
+    metric_value=validation.get("precision") if local else validation.get("published_accuracy")
+    if metric_value is None:
+        result["reasons"].append("Desempenho quantitativo não informado")
+    else:
+        try:
+            measure=float(metric_value)
+            if not isfinite(measure) or not 0<=measure<=1:
+                raise ValueError()
+        except (TypeError,ValueError):
+            result["reasons"].append("Acurácia publicada inválida")
+            measure=None
+    if not local and not published:
+        result["reasons"].append("Validação independente ou publicação científica rastreável ausente")
+    if local and validation.get("recall") is not None:
+        try:
+            recall=float(validation["recall"])
+            if not isfinite(recall) or not 0<=recall<=1:
+                raise ValueError()
+        except (TypeError,ValueError):
+            result["reasons"].append("Recall inválido")
+    if validation.get("n_independent") is not None:
+        try:
+            if int(validation["n_independent"])<=0:
+                raise ValueError()
+        except (TypeError,ValueError):
+            result["reasons"].append("Amostra independente inválida")
+    result["validation_scope"]="local_independent" if local else ("published_original_domain_only" if published else "unverified")
+    result["measured_accuracy"]=measure if metric_value is not None else None
+    result["accuracy_metric"]=validation.get("metric") or ("precision" if local else None)
+    result["validation_source"]=validation.get("publication_url") or validation.get("source")
+    result["sample_count"]=validation.get("n_independent")
+    result["uncertainty_note"]=("Desempenho publicado no domínio de origem; não é acurácia validada nesta AOI."
+                                if not local else "Validação local declarada; incerteza depende do desenho e da amostragem.")
     if label == "vegetação nativa" and not native_mask_confirmed:
         result["reasons"].append("Máscara nativa sem confirmação independente")
     if result["reasons"]:
         return result
-    result["status"] = "classificação_com_evidências"
+    result["status"] = ("classificação_com_evidências" if local
+                        else "classificação_provisória_com_acurácia_publicada")
     result["label"] = label
     result["confidence"] = probability
-    result["native_carbon_eligible"] = label == "vegetação nativa" and native_mask_confirmed
+    result["native_carbon_eligible"] = bool(local and label == "vegetação nativa" and native_mask_confirmed)
     return result
