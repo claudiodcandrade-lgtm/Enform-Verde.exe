@@ -806,3 +806,15 @@ Priorizar **correções de código e evidências científicas reais**, evitando 
 **Eficiência:** pesquisar metadados de Embrapa, UFV, ESALQ, UFLA, INPA, SFB/IFN e instituições afins por APIs públicas quando disponíveis, priorizando proximidade AOI/fitofisionomia; baixar apenas tabelas, parâmetros e arquivos necessários; cache de equações e metadados com proveniência. Não carregar uma biblioteca nacional bruta no instalador.
 
 **Aceite:** testes para seleção microrregional versus regional/pantropical, rejeição de equações incompatíveis, unidades e propagação de erro, casos de abstenção, ausência de dupla contagem e regressão de todos os cinco biomas. Preservar integralmente o layout aprovado e os resultados existentes que sejam cientificamente válidos. **Este registro é requisito de implementação; não atesta que todos os modelos já estejam integrados ou validados.**
+
+
+---
+
+## VERIFICAÇÃO DE FONTE OFICIAL — ESA BIOMASS/CCI — 28/10/2026
+
+Pesquisa na documentação oficial confirma **duas rotas distintas que não podem ser confundidas**:
+- **ESA BIOMASS P-band, ESA MAAP:** catálogo de produtos PDGS Level 2A `FP_FH__L2A` (forest height) e Level 2B `FP_AGB_L2B`, `FP_FH__L2B` e `FP_FD__L2B`. A ESA MAAP oferece exemplo oficial de pesquisa STAC, streaming e download sob demanda: https://catalog.maap.eo.esa.int/doc/examples/ESAMAAP_biomassdataaccess.html ; especificação de oferta: https://portal.maap.eo.esa.int/biomass/biomass-data-offer/ . **Priorizar descoberta espacial/temporal STAC e leitura parcial dos produtos realmente disponíveis na AOI, verificando permissão, formato, QA, escala, data, CRS e incerteza.**
+- **ESA CCI Biomass v7:** produto global **multissensor** de AGB anual a 100 m, com desvio-padrão por pixel, distinto do produto ESA BIOMASS P-band e de calibração SAR local. Fonte: https://climate.esa.int/en/projects/biomass/ . Nunca rotular pixel SD como IC95% da média da AOI, nem chamar o produto CCI de equação local de SAR calibrada em parcelas.
+- **Regra de execução:** só declarar ESA BIOMASS P-band utilizado se houver produto efetivamente acessado, recortado, processado e com qualidade validada; quando indisponível, fallback CCI identificado e demais rotas cientificamente válidas, sem resultados fabricados. Os produtos ESA MAAP podem ter autorização específica e latência; não presumir disponibilidade irrestrita de todas as cenas.
+- **Performance e aceite:** consulta STAC por bbox/interseção e intervalo, paginação, seleção de menor volume útil, streaming/range quando suportado, cache e benchmark por AOI. Testar disponibilidade real e erro; comparar saída do modelo contra inventários independentes e publicar RMSE, MAE, viés e R² quando estimáveis.
+- **Status:** pesquisa documental oficial confirmada; **não constitui implementação nem prova de processamento P-band no executável**.
