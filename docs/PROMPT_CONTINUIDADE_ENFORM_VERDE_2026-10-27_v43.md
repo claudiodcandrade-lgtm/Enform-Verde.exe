@@ -711,3 +711,41 @@ Priorizar **correções de código e evidências científicas reais**, evitando 
 - Commit `e49c71bc81806fae3b972b24b35346a6a8f97b55`: em `executive_carbon_report.py`, esclarece que desvio-padrão espacial igual a zero não implica incerteza de predição zero, **sem modificar estoque ou layout**.
 - Commit `9d405f69c5b69d864c5bbd4a5aa29aafe8b67b54`: adiciona teste em `tests/test_carbon_presentation_regression.py` para esse aviso.
 - **Não afirmar** que demais falhas foram corrigidas ou que os testes/EXE desta revisão passaram: ainda exigem execução CI e teste real Sinop. Manter pendências prévias de segurança do arquivo, ESA BIOMASS FH, Marary, cinco biomas e evidência científica. Não liberar ZIP definitivo antes de CI bloqueante e validação; evitar recompilar só por atualização documental.
+
+
+---
+
+## DIRETRIZ IMEDIATA — 28/10/2026: MODELOS INTERNACIONAIS, VIGOR EM TRÊS CLASSES, CLIMA E PREVISÃO DE SAFRA
+
+**Pedido vinculante:** implementar a arquitetura integrada na aba existente `Monitoramento – Áreas Cultivadas`, preservando integralmente a aba de carbono nativo e a forma de apresentação aprovada (títulos, disposição, formatação brasileira, fontes, estoques, compartimentos e avisos). **Não declarar nova versão concluída antes de build Windows e testes reais aprovados.**
+
+### 1. Identificadores agrícolas por transferência de modelos internacionais
+- Inventariar modelos, algoritmos, pesos pré-treinados, código, licenças e domínios de validade de instituições científicas reconhecidas de qualquer país; priorizar trópicos e, na falta de modelos tropicais confiáveis, considerar outras regiões.
+- **A aparência visual semelhante não garante assinatura SAR transferível**: incidência, órbita, VV/VH, banda, umidade, textura, manejo, cultivar, sazonalidade e fenologia alteram a resposta. Usar somente modelos realmente executáveis e compatíveis com as bandas, resolução e atributos disponíveis. Não atribuir ao SAR características de cor.
+- Priorizar séries Sentinel-1 atuais, com histórico fenológico, metadados de aquisição verificáveis e tratamento de lacunas. Detecção de área cultivada precede classificação específica (soja, milho, sorgo, café, cana, arroz, feijão, citros). Se a cultura não for confiável, exibir `áreas cultivadas`; se ausência for demonstrada, `sem cultivos detectados`. Não confundir pastagem, silvicultura e vegetação nativa.
+- Validar transferência com dados independentes espacial e temporalmente, matrizes de confusão, precisão, revocação, F1, calibração, desempenho por classe e região; registrar versão/licença/fonte/modelo. Sem evidência, permanecer em `modelo não validado` ou fallback cartográfico explicitamente datado.
+
+### 2. Nova categoria dentro da aba existente: MONITORAMENTO DE VIGOR
+- Incluir categoria **`Monitoramento de vigor`**, sem reformular a interface. Classes literais exigidas: **`lavoura pouco vigorosa`**, **`lavoura com vigor adequado`**, **`lavoura muito vigorosa`**. Somente atribuir classe com modelo e limiares calibrados para cultura e estádio fenológico; caso contrário, `vigor não classificável com confiança`.
+- Variáveis SAR: retroespalhamento e sua evolução temporal, razões VV/VH, coerência quando disponível, textura, heterogeneidade horizontal, padrões de falhas, estrutura e proxies de dossel; altura/porte e sua uniformidade **somente** se houver estimativa estrutural compatível e validada. Coloração e reflectância são propriedades **ópticas**, não medidas por SAR; adicionar sensores ópticos apenas como complemento identificado e com nuvens/qualidade auditadas.
+- Comparar cada lavoura a referências da mesma cultura, fase e ambiente; evitar classificar estágio inicial como pouco vigoroso apenas por baixa biomassa. Diferenciar vigor de fitossanidade confirmada e de produtividade final. Exibir fonte, data, estádio, indicador, incerteza e limitações.
+
+### 3. Climatologia dinâmica integrada ao vigor
+- Integrar NASA POWER, CPTEC/INMET quando confiáveis e disponíveis; usar precipitação, temperatura, radiação, evapotranspiração e déficit hídrico, com cobertura temporal, resolução, latência, falhas e proveniência explícitas.
+- Avaliar modelos agronômicos publicados e reproduzíveis, como FAO AquaCrop e APSIM **somente nas culturas e versões para as quais existam parâmetros executáveis e licenças adequadas**. Ajustar a fenologia local, solos e calendário; evitar afirmar estresse fisiológico específico a partir de SAR isolado.
+- Produzir vigor provável e sua incerteza mediante modelo SAR+clima validado; sem modelo validado, fornecer indicadores observados separadamente, sem estimativa causal inventada.
+
+### 4. Produtividade/produção provável por séries microrregionais
+- Agregar séries reais PAM/IBGE por município e microrregião com cultura, ano, unidade, área colhida, produção e rendimento; alinhar a safra e a janela temporal de aquisição SAR e clima. Não vazar informação futura no treinamento.
+- Treinar/calibrar ou transferir modelos matemáticos publicados, avaliando baseline histórico/climático, SAR+clima e SAR+clima+vigor; usar validação bloqueada por ano e por região, RMSE, MAE, viés, R², cobertura de intervalos preditivos e comparação com baseline.
+- Produção provável = produtividade prevista × **área da cultura na safra correspondente validada**. Não usar área histórica MapBiomas como área atual sem evidência. Sem cultura/área/modelo validados, declarar previsão indisponível e motivo exato.
+
+### Entregáveis e critérios de aceite
+1. Registro auditável de modelos internacionais com instituição, publicação, DOI, pesos/código/licença, sensores, culturas, regiões e limitações; seleção justificada e teste executável.
+2. Pipeline real para SAR recente e classificação de culturas em AOI Sinop, incluindo prova de que não é apenas MapBiomas C11/2025.
+3. Categoria `Monitoramento de vigor` operacional com três classes, classificação condicional, fase fenológica, indicadores e proveniência; testes de casos positivos e abstenção por falta de evidência.
+4. Integração meteorológica e previsão de produtividade/produção com séries reais e validação temporal/espacial independente; bloqueio explícito de previsões não demonstradas.
+5. Testes de regressão do carbono nativo, inclusive Sinop, Tapajós, Pantanal e Santo Ambrósio, preservando apresentação, solo 0–100 cm, tC/tCO₂e e avisos de incerteza.
+6. CI Windows bloqueante, smoke test do EXE, relatório de validação científica, artefato ZIP verificável do mesmo SHA, digest e link de download. **Não confundir atualização de prompt, testes sintéticos ou compilação com homologação científica.**
+
+**STATUS:** esta seção é especificação/ordem de implementação; não é evidência de que os modelos foram integrados, validados ou compilados.
