@@ -841,3 +841,17 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 6. Medir desempenho real, cache frio/quente, transferência e memória em AOIs de teste, preservando interface e comportamento aprovado.
 
 **Regra de honestidade:** commits documentais e builds verdes não equivalem à conclusão científica. Não rotular uma versão como definitiva enquanto faltar evidência experimental das funções requeridas.
+
+
+---
+
+## MONITORAMENTO DE CI — 28/10/2026, 11h52 (UTC−3) — MUDANÇA MATERIAL SEM HOMOLOGAÇÃO
+
+**Comparação:** o checkpoint anterior registrava HEAD `e4880b2b3b10f2c158f9d770c015d24386951207` e os runs `40708617996` (Windows) e `40708617915` (painel) na fila. O HEAD agora é `41e8c454d7f7fea389469b0868a7a201ae29593d` (commit apenas documental); PR #50 continua **aberta e draft**.
+
+**Evidência verificada no GitHub Actions:**
+- HEAD `41e8c454`: painel `40708866766` **completed/success**; build Windows `40708866905` **in_progress**. No momento da consulta, os testes de origem, estratificação nativa, Pantanal, GUI, pré-visualização Sentinel-2 e processamento SAR público/Tapajós haviam passado; a classificação IBGE Tapajós ainda executava e as etapas finais, inclusive geração do EXE e autoverificação do pacote, ainda não tinham iniciado. O run continha apenas artefatos auxiliares PAM e diagnóstico H100, **sem ZIP de EXE**.
+- Revisão anterior `e4880b2b`: painel `40708617915` **completed/success**; build `40708617996` ainda **in_progress**, na etapa `Build executable`, sem ZIP final disponível. Testes anteriores dessa revisão passaram, mas isso não homologa a revisão corrente.
+- Links verificáveis: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40708866766 ; https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40708866905 ; https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40708617996 .
+
+**Bloqueios mantidos:** ainda não existe evidência consolidada de validação científica de todos os cinco biomas, raízes e solo 0–100 cm com incerteza, SAR quantitativo e sua validação espacial independente, culturas/vigor e previsão de safra, benchmarks de desempenho, nem EXE Windows testado e ZIP do mesmo SHA. **Não liberar nem notificar como versão definitiva.** A aprovação de testes de contrato e de um painel isolado não comprova esses requisitos.
