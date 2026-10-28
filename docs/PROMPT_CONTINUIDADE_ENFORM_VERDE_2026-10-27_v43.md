@@ -959,3 +959,16 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Necromassa:** a fonte IFN deve provir de medição direta de necromassa, jamais de equações alométricas de árvores vivas; inventários estaduais sem fitofisionomia explícita continuam excluídos da estimativa, como na correção `024a25f906767131cd256d2453851fa414c9262c`. A própria base atualmente consumida por `ifn_necromass_component` está agregada apenas por bioma×UF: portanto **não é elegível** para o fallback por fitofisionomia até a ingestão de dados oficiais estratificados e auditáveis. Essa orientação **ainda não implementa automaticamente** o novo conector/estratificação estadual nem habilita seu uso no relatório.
 
 **Critérios de aceite:** testes que comprovem precedência de primária e totalizada local sobre IFN, veto de fitofisionomia ausente/incompatível, rotulagem completa de fallback estadual e publicação explícita da incerteza ou de sua impossibilidade; testes de integração por fitofisionomia, cinco biomas e painel aprovado, com fonte auditável.
+
+
+---
+
+## CORREÇÃO DE CÓDIGO — NECROMASSA AÉREA DIRETA EM PÉ + CAÍDA (28/10/2026)
+
+**Falha encontrada:** `carbon_compartments.tapajos_necromass_components` disponibiliza componentes distintos de madeira morta caída (32,0 tC/ha) e em pé (8,7 tC/ha), publicados para floresta ombrófila densa em área microrregional. `native_carbon.estimate_native_components` normalizava ambos para `Necromassa aérea` e `summarize_native_carbon` reduzia as linhas a um dicionário por nome, de modo que um dos estoques podia sobrescrever o outro. Isso subestimava o compartimento somável sem nenhuma indicação ao usuário.
+
+**Correção incorporada:** commit `9af35da02876fa7a80ebd6851aa0ed1002126647` consolida os dois estoques diretos **apenas** quando os nomes explicitam subcompartimentos disjuntos (madeira caída versus em pé), ambos possuem valores finitos e não negativos e têm a mesma referência. Valores do exemplo publicado: 32,0 + 8,7 = **40,7 tC/ha**. Os extremos marginais de cada subpool são somados apenas como **envelope**, explicitamente **NÃO** como IC95% conjunto — correlações e transferência espacial não conhecidas. Mistura ambígua entre estoque total e subpool **não é agregada** nem sobrescrita; nenhuma estimativa deste pool é exibida até resolver a ambiguidade.
+
+**Regressões adicionadas:** commit `498fa356d087cd8fff1f22c30a81ed1951b7b8dc` inclui `DisjointNecromassAggregationTests` em `tests/test_native_carbon.py`: valida soma de 40,7 tC/ha, envelope de 35,7–45,7 tC/ha e recusa de total + subpool. Os testes foram adicionados ao repositório, mas **ainda requerem execução CI**.
+
+**Regra permanente:** somente dados diretos de necromassa de mesma fitofisionomia, instituições reconhecidas, prioritariamente microrregionais; nunca alometria de biomassa viva para madeira morta. Não emitir IC95% conjunto de pools usando soma ingênua dos ICs marginais. **Não declarar versão definitiva** enquanto persistirem as demais lacunas SAR, carbono, fitofisionomias, agricultura, previsão de safra e validação independente.
