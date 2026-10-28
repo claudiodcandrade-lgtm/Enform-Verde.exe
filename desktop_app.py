@@ -590,6 +590,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     layer_ids=[2,3,4,5,6,7]
     names=["0–5","5–15","15–30","30–60","60–100","100–200"]
     vals={k:[] for k in layer_ids}; errors={k:[] for k in layer_ids}
+    observations=[]  # one geolocated vector of horizon values per query point
     sess=requests.Session()
     extent=f"{minx},{miny},{maxx},{maxy}"
     def numeric_value(item):
@@ -609,6 +610,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
             except Exception: pass
         return None
     for p in pts:
+        sample={}
         # Query each layer independently: one missing/deep layer can never invalidate 0-30.
         for lid in layer_ids:
             params={"f":"json","geometry":f"{p.x},{p.y}","geometryType":"esriGeometryPoint","sr":"3857",
@@ -621,24 +623,14 @@ def pronasolos_soc_profiles(gdf,max_points=36):
                 for item in js.get("results",[]):
                     if int(item.get("layerId",-1))!=lid: continue
                     v=numeric_value(item)
-                    if v is not None: vals[lid].append(v); found=True; break
+                    if v is not None: vals[lid].append(v); sample[lid]=v; found=True; break
                 if not found: errors[lid].append("sem valor numérico")
             except Exception as e: errors[lid].append(str(e)[:160])
-    targets={"0–30 cm":3,"0–60 cm":4,"0–100 cm":5,"0–200 cm":6}; out={}
-    for label,count in targets.items():
-        need=layer_ids[:count]
-        if any(not vals[k] for k in need): continue
-        # Use depth means independently; this avoids pairing samples incorrectly when one depth has a local NoData.
-        means=[float(np.mean(vals[k])) for k in need]
-        stock=float(sum(means))
-        # Conservative descriptive spatial propagation; NOT prediction uncertainty/CI95.
-        sds=[float(np.std(vals[k],ddof=1)) if len(vals[k])>1 else 0.0 for k in need]
-        spatial_sd=float(math.sqrt(sum(x*x for x in sds)))
-        out[label]={"tc_ha":stock,"spatial_sd_tc_ha":spatial_sd,
-          "n_samples":min(len(vals[k]) for k in need),"layers":names[:count],
-          "layer_means_tc_ha":dict(zip(names[:count],means)),
-          "source":"PronaSolos/Embrapa Solos — estoque de carbono orgânico 90 m",
-          "uncertainty_kind":"DP espacial propagado das amostras do mapa; não é IC95% nem erro de predição"}
+        observations.append(sample)
+    # Only co-located horizons enter the same 0–100 cm profile.
+    # Incomplete depth at one location remains missing, never a numeric zero.
+    from soil_profile_stats import summarize_paired_soil_profiles
+    out=summarize_paired_soil_profiles(observations)
     if "0–30 cm" not in out:
         detail=[]
         for i,k in enumerate(layer_ids[:3]):
@@ -1591,7 +1583,7 @@ class App(tk.Tk):
         self.src.pack(side="left",fill="both",expand=True); source_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.src)
         txt=("REGRAS DO MOTOR\n• MEDIDO: derivado diretamente do inventário/raster fornecido.\n• MODELADO: proxy/equação publicada, identificado com fonte e domínio.\n• NÃO ESTIMADO: quando não existe suporte defensável.\n\n"
-             f"BGB: relação raiz/parte aérea {format_ptbr(ROOT_RATIO,2)}, faixa {format_ptbr(ROOT_LOW,2)}–{format_ptbr(ROOT_HIGH,2)}; {SOURCES['protocol']}.\n"
+             "Raízes vivas: floresta de terras altas usa equação Cairns et al. (1997), BGB=exp(-1,0587+0,8836 ln AGB), quando aplicável; erro residual e transferência não quantificados. Não usar razão fixa global nem aplicar essa equação a savanas/campos/várzeas.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
              f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
              "Necromassa acima e abaixo do solo: não aplicar alometria. Madeira caída pode mostrar a média direta SFB/IFN por bioma×UF quando disponível, mas a tabela ainda não tem coordenadas nem classe IBGE; fica fora do total da AOI até validação por fitofisionomia. Necromassa subterrânea exige massa seca de raízes mortas por área e profundidade, com parcelas independentes; ORNL DAAC 1116 é evidência limitada a raízes finas (<2 mm), não ao estoque subterrâneo total.\n"
