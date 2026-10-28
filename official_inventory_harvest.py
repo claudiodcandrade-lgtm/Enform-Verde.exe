@@ -315,23 +315,24 @@ def discover_sinaflor_metadata_fast(
 
 
 def discover_sinaflor_datasets(session: requests.Session | None = None) -> list[dict[str, Any]]:
-    """Return distinct official CKAN datasets matching PMFS/POA/inventory terms."""
+    """Discover all reachable relevant CKAN pages before selecting full resources.
+
+    Search summaries are retrieved without downloading files. Fetch package
+    details only when the search response does not include resources; this
+    avoids unnecessary API calls for complete CKAN search results.
+    """
     session = session or _new_session()
     session.headers.setdefault("User-Agent", "Enform-Verde-Inventario/1.0")
-    found: dict[str, dict[str, Any]] = {}
-    for term in SEARCH_TERMS:
-        result = _ckan_action(session, "package_search", q=term, rows=100)
-        for item in result.get("results", []):
-            title = str(item.get("title") or item.get("name") or "")
-            notes = str(item.get("notes") or "")
-            if RELEVANT.search(title + " " + notes):
-                found[str(item.get("id") or item.get("name"))] = item
-        time.sleep(0.05)
+    summaries = discover_sinaflor_metadata_fast(session)
     detailed = []
-    for package_id, summary in found.items():
-        package = _ckan_action(session, "package_show", id=package_id)
-        detailed.append(package)
-    return sorted(detailed, key=lambda p: (str(p.get("title", "")).casefold(), p.get("name", "")))
+    for item in summaries:
+        if isinstance(item.get("resources"), list):
+            detailed.append(item)
+        else:
+            key = item.get("id") or item.get("name")
+            if key:
+                detailed.append(_ckan_action(session, "package_show", id=key))
+    return sorted(detailed, key=lambda p: (str(p.get("title", "")).casefold(), str(p.get("name", ""))))
 
 
 def classify_tabular_resource(path: str | Path) -> dict[str, Any]:
