@@ -787,3 +787,22 @@ Priorizar **correções de código e evidências científicas reais**, evitando 
 - Acrescentado teste de regressão `test_fast_discovery_without_count_still_reaches_second_page` em `tests/test_official_inventory_harvest.py`, simulando resposta sem `count` e verificando a segunda página.
 - Commits: `45361aea096ebd69114140510be35f151dd790bf` (código) e `b4a0b245174eb879ac673f6a5e04d3866c91936c` (teste).
 - **Status honesto:** código e teste adicionados; execução do CI e integração operacional completa ainda exigem comprovação. A correção não autoriza declarar todos os inventários nacionais indexados nem os modelos SAR/vigor/safra/carbono homologados.
+
+
+---
+
+## NOVA DIRETRIZ VINCULANTE — BIOMASSA VIVA ABAIXO DO SOLO (BGB)
+
+**Determinação:** estimar biomassa viva subterrânea por modelos alométricos compatíveis com a fitofisionomia e condições ecológicas da AOI; priorizar dados e modelos microrregionais de inventários florestais verificáveis. Instituições prioritárias: **todas as unidades da Embrapa, UFV, ESALQ/USP, UFLA, INPA, SFB/IFN**, além de universidades, institutos e redes científicas afins. Prioridade de origem institucional não substitui avaliação de qualidade, domínio e independência dos dados.
+
+**Hierarquia operacional obrigatória:**
+1. Dados primários microrregionais de biomassa de raízes (escavação/amostragem destrutiva, coring, monólitos ou outros métodos documentados), estratificados por fitofisionomia, profundidade, diâmetro e manejo; preferir modelos locais calibrados com amostras suficientes, incerteza e validação independente.
+2. Equações locais ou regionais publicadas e executáveis, compatíveis com bioma, fitofisionomia, classe de tamanho, AGB, densidade da madeira, clima, solo e demais preditores efetivamente disponíveis.
+3. Equações nacionais/regionais por fitofisionomia de instituições reconhecidas, com domínio de transferência e erro de extrapolação demonstrados.
+4. **Modelos pantropicais publicados** somente quando aplicáveis à fitofisionomia, compartimento de raízes, preditores, faixa de biomassa e condições ecológicas da AOI. Não aplicar um fator raiz:parte aérea universal como se fosse medição local.
+
+**Restrições científicas:** distinguir raízes vivas de raízes mortas e carbono orgânico do solo; distinguir raízes finas/grossas e profundidade de amostragem conforme o estudo. Nunca somar compartimentos sobrepostos nem assumir que modelo de raízes grossas cobre raízes finas. Propagar incerteza da AGB de entrada, parâmetros alométricos, resíduos, amostragem, classificação fitofisionômica e transferência regional, com covariâncias quando disponíveis; apresentar o tipo correto de intervalo (não rotular desvio-padrão ou envelope como IC95%). Registrar instituição, estudo/DOI, equação completa, unidades, domínio, N, qualidade, local, data, versão, fitofisionomia e motivo da escolha. Quando nenhum modelo for cientificamente defensável, marcar BGB não estimada com justificativa; **não inventar números**.
+
+**Eficiência:** pesquisar metadados de Embrapa, UFV, ESALQ, UFLA, INPA, SFB/IFN e instituições afins por APIs públicas quando disponíveis, priorizando proximidade AOI/fitofisionomia; baixar apenas tabelas, parâmetros e arquivos necessários; cache de equações e metadados com proveniência. Não carregar uma biblioteca nacional bruta no instalador.
+
+**Aceite:** testes para seleção microrregional versus regional/pantropical, rejeição de equações incompatíveis, unidades e propagação de erro, casos de abstenção, ausência de dupla contagem e regressão de todos os cinco biomas. Preservar integralmente o layout aprovado e os resultados existentes que sejam cientificamente válidos. **Este registro é requisito de implementação; não atesta que todos os modelos já estejam integrados ou validados.**
