@@ -344,3 +344,34 @@ Build Windows #731 (run 40591711777) falhou no gate `Live public SAR pixel proce
 6. **Liberação**: somente após evidência do Windows compilado e autoexecutado em pasta limpa, Marary real validado, compartimentos e incertezas auditados, modelos cientificamente validados, apresentar ZIP, SHA, digest, documentação. Caso contrário disponibilizar apenas **build experimental** explicitamente rotulada, quando houver artefato.
 
 **STATUS NA ATUALIZAÇÃO:** correções GEOS e testes **COMMITADOS**, mas testes do novo commit, Marary real e solo selecionável **NÃO COMPROVADOS**; SAR Cerrado HV **NÃO VALIDADO** (429); Windows novo **EM EXECUÇÃO**. **VERSÃO DEFINITIVA NÃO LIBERADA.**
+
+
+---
+
+## AUDITORIA DE LIBERAÇÃO — 2026-10-28 01:46 UTC (2026-10-27 22:46 UTC−3) — MUDANÇA MATERIAL: ZIP WINDOWS PUBLICADO
+
+**Registro aditivo; manter o histórico integral acima.** PR #50, branch `feature/agricultural-identification-native-carbon`.
+
+### Compilação e artefatos confirmados
+- **SHA compilado:** `6e3640b2d166207305235dc09a27b54b220e4ad0`.
+- **Windows run 40616128588:** `completed/success`; job `build-windows` `completed/success`. URL: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40616128588
+- **Dashboard run 40616128605:** `completed/success`.
+- **ZIP Windows experimental publicado**, nome `Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO`, **artifact ID 12786130423**, **522.572.322 bytes**, **digest reportado pelo GitHub Actions** `sha256:2b550973e8fff114135ac0bcc288115b2f3c0985ed6ea90a61238e2d7e97beb1` (**não recalculado localmente**), `expired=false`. URL: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40616128588/artifacts/12786130423
+- O workflow passou `Source self-test`, `Native-only stratification and confidence regression tests`, `Pantanal fallback tests`, `GUI contract test`, `python -m unittest discover -s tests -v` (**241 testes OK**), `Build executable`, `Compiled EXE self-test from clean copied folder`, `upload-artifact`. Conjunto anterior de **152 testes OK**. Testes GEOS incluídos no commit.
+- **SAR Cerrado real HV recuperado nesta execução**: `LIVE_CERRADO_SAR_AGB_OK 16.75345239253869 11.243715814333031 [('HH', -9.566937505382494), ('HV', -15.316372308713804)]`. Isto comprova execução do teste quantitativo específico em AOI Cerrado; **não equivale a validação independente nacional**.
+
+### Falhas não bloqueantes ainda verificadas no log Windows
+- `archive_guard_test.py`: **AssertionError** em `assert _safe_target(root,'scene/subset.tif').parent==root/'scene'`. A etapa não bloqueou o resultado geral; **corrigir e tornar bloqueante** antes de homologação.
+- Verificação de altura SAR/ESA BIOMASS Tapajós: `RuntimeError: Acceptance blocked: no ESA BIOMASS FP_FH__L2B covers either inventory-supported Tapajos AOI`; assets L1C consultados responderam **HTTP 401**. **Altura SAR/AGB de alta biomassa NÃO APROVADAS**; o `success` geral não elimina a falha científica.
+- **Marary real não foi executado/validado nesta auditoria** com KML e MapBiomas oficial C11/2025; correção GEOS aprovada em testes de código/Windows, **não comprovada em AOI real**.
+- **Solo Tapajós:** seletor de profundidade 0–30/0–60/0–100/0–200 cm e totais sem dupla contagem ainda **não comprovados**; compartimentos e IC95% total permanecem incompletos.
+- **Cinco biomas, fitofisionomias, validação espacial independente e auditoria científica completa** ainda não comprovados. A classificação como versão definitiva permanece **PROIBIDA**.
+
+### Continuidade prioritária
+1. Corrigir `archive_guard_test.py` e confirmar rejeição de path traversal com gate CI bloqueante.
+2. Validar o KML Marary com MapBiomas C11/2025 real, fechamento de área, classes e desempenho; investigar qualquer GEOSException remanescente.
+3. Implementar seleção de profundidade do solo, recálculo e propagação de incertezas sem dupla contagem; validar relatórios reais Tapajós.
+4. Solucionar aquisição/autorização e validação SAR BIOMASS alta biomassa; auditar incertezas e compartimentos nos cinco biomas.
+5. Somente após cumprir todos os gates, gerar novo EXE/ZIP do **mesmo SHA aprovado** e divulgar digest. O ZIP ID 12786130423 é **BUILD EXPERIMENTAL**, apesar do CI verde.
+
+**STATUS:** MUDANÇA MATERIAL — **ZIP WINDOWS PUBLICADO, COMPILAÇÃO E TESTES AUTOMATIZADOS PASSARAM**, mas **FALHAS NÃO BLOQUEANTES E GATES CIENTÍFICOS PENDENTES; NÃO HOMOLOGADO.**
