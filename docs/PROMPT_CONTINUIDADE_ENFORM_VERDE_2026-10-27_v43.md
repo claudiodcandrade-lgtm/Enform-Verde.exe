@@ -1116,3 +1116,16 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Para transformar em IC95% científico do estoque:** adquirir dados de treinamento/validação por fitofisionomia dos cinco biomas; estimar variâncias, covariâncias entre solos/vegetação/estratos, autocorrelação de pixels, erro de classificação, viés espacial e de transferência; validação por blocos espaciais e cobertura empírica dos intervalos. Conectar matriz de covariância efetivamente estimada e auditada ao chamador Windows; atual `desktop_app.native_carbon_analysis` ainda não fornece matriz e portanto não exibe IC95% do total. Não inventar covariâncias nem usar quadratura ingênua.
 
 **Estado:** código em progresso, SEM HOMOLOGAÇÃO. Mantêm-se bloqueios científicos de Tapajós/BIOMASS FH/AGB, classificação de agricultura e cultivos, vigor/safras com validação independente, carbono completo inclusive raízes/necromassa/serrapilheira/solo 0–100, testes de aceitação real nos cinco biomas e ZIP Windows no mesmo SHA. Não publicar versão definitiva com esses bloqueios.
+
+
+---
+
+## EVOLUÇÃO CI + INTERFACE — 28/10/2026, 19h03 (UTC−3)
+
+**SHA de código com CI rápido concluído:** `0c627ac49414c63decea8f67a755170282ed520e` (workflow ampliado). Alteração do commit: `.github/workflows/dashboard-dual-tests.yml` agora executa testes `test_enform_uncertainty_core.py` e `test_soil_profile_stats.py` em Windows mesmo no job curto. Evidência de integração: `Dashboard dual - tests` run **40777511000**, job **123130510106**, **success**; log confirmou 6 testes de dashboard, 9 de meteorologia, 7 de núcleo de incerteza e 6 de perfis de solo, todos aprovados (total **28**), inclusive rejeição de matriz não PSD, pares coespaciais e ausência de extrapolação artificial. https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40777511000
+
+**Novo commit de interface:** `13dd432819e231e543d7b0f0c287ed90c0f63663`: `desktop_app.py` passa a exibir o IC95% normal aproximado conjunto **apenas** quando `native.total_uncertainty` existe, rotulando claramente que não houve calibração independente. Sem matriz de covariância completa na origem científica, a GUI continua corretamente sem IC conjunto; este commit não preenche essa lacuna empírica.
+
+**Build Windows anterior ao último commit:** run **40777511001**, SHA `0c627...`, ainda `in_progress` na consulta; não comprova o último código, nem autoriza liberar ZIP. Um executável do último SHA deve rodar testes, passar acceptance e ser disponibilizado com digest SHA-256.
+
+**Limitações e próximas ações:** conferir os testes de `tests/test_native_total_uncertainty.py` no workflow completo; checar fontes PronaSolos reais e dados de inventário/plots compatíveis, estimativa empírica de erro de mapa e covariância, SAR/altura de alta biomassa, classificação agrícola treinada, vigor e safras calibradas fora de amostra. Manter módulos existentes e painel executivo. Todos os gates de cinco biomas e versão definitiva permanecem ativos. **NÃO HOMOLOGADO.**
