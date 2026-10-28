@@ -12,7 +12,7 @@ Conforme metadados do MapServer, a resolução espacial do raster é **90 m** e 
 ## Consulta e composição
 
 - Geometria da AOI transformada para EPSG:3857 exclusivamente para consulta ao MapServer; a área do estoque final permanece determinada por projeção equivalente no módulo de carbono.
-- Amostragem sistemática de até 36 pontos dentro da geometria mais um ponto representativo, com desduplicação e limite no número efetivamente consultado.
+- Amostragem sistemática dentro da geometria, incluindo um ponto representativo, com desduplicação e limite de **até 36 pontos totais por AOI** (padrão atual; menor se a área não contiver pontos suficientes).
 - **Uma requisição `identify` por ponto, para `layers=all:2,3,4,5,6`.** Resposta deve conter ID de camada para associar os valores por profundidade; NoData, falhas de serviço e valores inválidos não viram zero.
 - 0–30 cm = 0–5 + 5–15 + 15–30; 0–60 cm acrescenta 30–60; 0–100 cm acrescenta 60–100. Cada total é composto **exclusivamente de camadas recebidas no mesmo ponto espacial**, não de médias de horizontes provenientes de amostras diferentes.
 - Amostragem do raster e desvio-padrão espacial do estoque total no subconjunto de pontos válidos são **estatísticas descritivas**. Nunca atribuir IC95% preditivo apenas com variabilidade entre pixels: faltam erro do mapa, covariâncias, viés espacial e erro de transferência. Guardar proveniência, N e ausência da estimativa de incerteza.
