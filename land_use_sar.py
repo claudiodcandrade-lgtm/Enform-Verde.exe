@@ -544,18 +544,42 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     from mapbiomas_zonal import RASTER_URL, YEAR
     layers, warnings = [], []
     validation = None
-    if config_path:
+    active_sar_config = None
+    candidates = [str(config_path)] if config_path else []
+    if not config_path:
+        # Previously the desktop only attempted SAR when the operator chose a
+        # JSON contract manually. Installed model identifiers now take priority
+        # automatically, but only after running the same class-level holdout.
+        from sar_model_discovery import discover_installed_sar_configs
+        candidates, discovery = discover_installed_sar_configs(aoi)
+        warnings.extend(discovery)
+    for candidate in candidates:
         try:
-            predicted, validation = classify_config(aoi,config_path,output_dir)
-            # Native detailed labels never override the maps directly.
-            metadata=validation.get('class_metadata',{})
-            keep=predicted.class_name.map(lambda n: metadata.get(n,{}).get('parent')!='vegetação natural' or native_formation(n) is not None)
+            predicted, candidate_validation = classify_config(aoi,candidate,output_dir)
+            # A literature citation, invalid SAR structure or a class without
+            # measurable reference accuracy cannot override the coverage map.
+            metadata=candidate_validation.get('class_metadata',{})
+            keep=predicted.class_name.map(
+                lambda n: metadata.get(n,{}).get('parent')!='vegetação natural'
+                or native_formation(n) is not None)
             predicted=predicted[keep & ~predicted.class_name.eq('Grupo: vegetação natural')]
+            if predicted.empty:
+                warnings.append('Identificador SAR sem classes elegíveis nesta AOI: '+str(candidate))
+                continue
+            validation=candidate_validation
+            active_sar_config=str(candidate)
             layers.append(predicted)
+            warnings.append('Identificador SAR REAL executado e validado com referências independentes: '
+                            +str(candidate)+'; consultar validacao_sar.json para métricas e limites.')
+            break
         except Exception as exc:
-            warnings.append('SAR sem prioridade: '+str(exc))
-    else:
-        warnings.append('Sem modelo treinado/validado para esta AOI e atributos compatíveis. Fontes e teses internacionais são aceitas para pesquisa/implementação, mas precisam de modelo executável e validação brasileira independente; fallback cartográfico mantido.')
+            warnings.append('Identificador SAR recusado ['+str(candidate)+']: '
+                            +type(exc).__name__+': '+str(exc)[:250])
+    if not layers:
+        warnings.append('Nenhum identificador SAR operacional nesta AOI. '
+                        'Mantida a alternativa cartográfica MapBiomas para uso atual; '
+                        'IBGE apenas para denominação fitofisionômica, sem apresentar '
+                        'resultado cartográfico como classificação SAR.')
     from native_carbon import native_class
     raw_layers=list(layers)
     mb=None
@@ -705,6 +729,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     polygons.to_file(vector_path,driver='GeoJSON')
     summary.update({'warnings':warnings,'validation':validation,'vector_path':str(vector_path),
                     'mapbiomas_source':str(source_path),
+                    'sar_model_config':active_sar_config,
+                    'sar_selection':'EXPLICIT_OPERATOR' if active_sar_config and config_path else
+                                    ('INSTALLED_AUTO_DISCOVERED' if active_sar_config else 'NO_EXECUTABLE_SAR_CLASSIFIER'),
                     'status':'SAR_ELEGIVEL' if any(r['source'].startswith('SAR_VALIDADO') for r in summary['classes']) else 'FALLBACK_CARTOGRAFICO'})
     (outdir/'uso_solo_auditoria.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
     return summary
@@ -714,6 +741,8 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
     lines=['USO E COBERTURA — CLASSIFICAÇÃO SAR E INTERSEÇÃO ESPACIAL', summary['priority'], summary['method']]
     for row in summary['classes']:
         lines.append(f"  {row['class_name']}: {fmt(row['area_ha'])} ha ({fmt(row['area_pct'])}%) — {row['source']} / {row['taxonomy']}")
+    lines.append('Identificador SAR utilizado: '+str(summary.get('sar_model_config') or 'NENHUM; classes cartográficas claramente identificadas.'))
+    lines.append('Seleção SAR: '+str(summary.get('sar_selection') or 'não especificada'))
     validation=summary.get('validation') or {}
     for level,report in [('classe',validation),('grupo',validation.get('parent_validation',{}))]:
         for label,gate in report.get('gates',{}).items():
