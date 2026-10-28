@@ -13,7 +13,7 @@ from official_inventory_harvest import (
 
 
 class OfficialInventoryHarvestTests(unittest.TestCase):
-    def test_actual_sinaflor_discovery_uses_pagination_without_redundant_package_show(self):
+    def test_actual_sinaflor_discovery_paginates_without_redundant_package_show(self):
         from unittest.mock import patch
         from official_inventory_harvest import discover_sinaflor_datasets
         class Session:
@@ -21,23 +21,23 @@ class OfficialInventoryHarvestTests(unittest.TestCase):
         calls = []
         def fake_ckan(session, action, **kwargs):
             calls.append((action, kwargs))
-            if action == "package_show":
-                raise AssertionError("No package_show is needed for complete search summaries")
+            if action != "package_search":
+                raise AssertionError("Complete summaries must not trigger package_show")
             if kwargs["start"] == 0:
-                return {"results": [{"id": "a", "title": "Inventário florestal", "resources": []}], "count": 2}
-            if kwargs["start"] == 1:
-                return {"results": [{"id": "b", "title": "Plano de manejo florestal", "resources": []}], "count": 2}
-            return {"results": [], "count": 2}
-        with patch("official_inventory_harvest._ckan_action", side_effect=fake_ckan), patch(
-            "official_inventory_harvest.discover_sinaflor_metadata_fast",
-            side_effect=lambda session: [
-                {"id": "a", "title": "Inventário florestal", "resources": []},
-                {"id": "b", "title": "Plano de manejo florestal", "resources": []},
-            ],
+                return {"results": [
+                    {"id": str(i), "title": "Inventário florestal", "resources": []}
+                    for i in range(100)
+                ], "count": 101}
+            return {"results": [
+                {"id": "100", "title": "Plano de manejo florestal", "resources": []}
+            ], "count": 101}
+        with patch("official_inventory_harvest.SEARCH_TERMS", ("inventario",)), patch(
+            "official_inventory_harvest._ckan_action", side_effect=fake_ckan
         ):
             results = discover_sinaflor_datasets(Session())
-        self.assertEqual(len(results), 2)
-        self.assertEqual(calls, [])
+        self.assertEqual(len(results), 101)
+        self.assertEqual([args["start"] for _, args in calls], [0, 100])
+        self.assertTrue(all(action == "package_search" for action, _ in calls))
 
     def test_actual_sinaflor_discovery_fetches_missing_resource_details(self):
         from unittest.mock import patch
