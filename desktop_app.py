@@ -568,8 +568,10 @@ def zonal_soil(gdf,raster_path):
     return float(np.mean(vals)),float(np.std(vals)),len(vals)
 
 def pronasolos_soc_profiles(gdf,max_points=36):
-    """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha), cumulative profiles.
-    Uses only the verified official MapServer. Each depth is queried independently."""
+    """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha).
+    Cumulative 0–30 cm, 0–60 cm, 0–100 cm and 0–200 cm profiles are computed
+    from collocated horizons only, using the official MapServer.
+    Spatial SD is descriptive, not an AOI predictive confidence interval."""
     import requests
     from shapely.geometry import Point
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
