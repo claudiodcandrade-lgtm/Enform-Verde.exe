@@ -309,8 +309,16 @@ def discover_sinaflor_metadata_fast(
                     key = str(item.get("id") or item.get("name") or "")
                     if key:
                         found[key] = item
-            if len(items) < rows or (result.get("count") is not None and start + len(items) >= int(result["count"])):
+            reported_count = result.get("count")
+            if len(items) < rows or (reported_count is not None and start + len(items) >= int(reported_count)):
                 break
+            if page + 1 == max_pages_per_term:
+                # Partial discovery must never be mistaken for full national coverage.
+                raise RuntimeError(
+                    f"Consulta CKAN incompleta para {term!r}: limite de "
+                    f"{max_pages_per_term} páginas de {rows} registros atingido; "
+                    "amplie max_pages_per_term ou refine a consulta."
+                )
     return sorted(found.values(), key=lambda p: (str(p.get("title", "")).casefold(), str(p.get("name", ""))))
 
 
