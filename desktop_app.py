@@ -595,39 +595,26 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     observations=[]  # one geolocated vector of horizon values per query point
     sess=requests.Session()
     extent=f"{minx},{miny},{maxx},{maxy}"
-    def numeric_value(item):
-        at=item.get("attributes") or {}
-        candidates=[item.get("value")]
-        # ArcGIS raster identify varies by server/version/language.
-        for key,val in at.items():
-            kl=str(key).lower()
-            if ("pixel" in kl and "value" in kl) or "stretched" in kl or kl in ("value","valor","pixel_value"):
-                candidates.append(val)
-        for raw in candidates:
-            if raw is None: continue
-            try:
-                txt=str(raw).strip().replace(" ","").replace(",",".")
-                v=float(txt)
-                if np.isfinite(v) and 0 <= v < 2000: return v
-            except Exception: pass
-        return None
+    from pronasolos_identify import SERVICE, build_identify_params, extract_paired_horizons
+    service=SERVICE
+    # One ArcGIS identify HTTP call per point retrieves all six horizon layers.
+    # On a partial point response, all returned depths are retained together;
+    # missing layers are never filled from a different point or assigned zero.
     for p in pts:
-        sample={}
-        # Query each layer independently: one missing/deep layer can never invalidate 0-30.
+        try:
+            params=build_identify_params(p.x,p.y,(minx,miny,maxx,maxy),layer_ids)
+            response=sess.get(service,params=params,timeout=(5,20))
+            response.raise_for_status()
+            sample=extract_paired_horizons(response.json(),layer_ids)
+        except Exception as exc:
+            sample={}
+            for lid in layer_ids:
+                errors[lid].append(type(exc).__name__+": "+str(exc)[:145])
         for lid in layer_ids:
-            params={"f":"json","geometry":f"{p.x},{p.y}","geometryType":"esriGeometryPoint","sr":"3857",
-                    "layers":f"all:{lid}","tolerance":"5","mapExtent":extent,
-                    "imageDisplay":"1600,1600,96","returnGeometry":"false"}
-            try:
-                r=sess.get(service,params=params,timeout=(5,20)); r.raise_for_status(); js=r.json()
-                if js.get("error"): raise RuntimeError(str(js["error"]))
-                found=False
-                for item in js.get("results",[]):
-                    if int(item.get("layerId",-1))!=lid: continue
-                    v=numeric_value(item)
-                    if v is not None: vals[lid].append(v); sample[lid]=v; found=True; break
-                if not found: errors[lid].append("sem valor numérico")
-            except Exception as e: errors[lid].append(str(e)[:160])
+            if lid in sample:
+                vals[lid].append(sample[lid])
+            else:
+                errors[lid].append("sem valor numérico na resposta conjunta")
         observations.append(sample)
     # Only co-located horizons enter the same 0–100 cm profile.
     # Incomplete depth at one location remains missing, never a numeric zero.
