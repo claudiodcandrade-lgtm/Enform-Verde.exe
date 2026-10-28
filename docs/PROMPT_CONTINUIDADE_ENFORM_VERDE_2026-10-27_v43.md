@@ -1021,3 +1021,18 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Fontes técnicas para implementação:** ESA CCI Biomass v7 https://climate.esa.int/en/projects/biomass/ ; BIOMASS DISC https://www.biomass-disc.info/ ; ESA BIOMASS dados https://www.esa.int/Applications/Observing_the_Earth/FutureEO/Biomass/ESA_s_Biomass_goes_live_with_data_now_open_to_all .
 
 **Estado:** pendências ainda abertas. Nenhum modelo treinado, calibração independente, execução nacional, pacote Windows ou checksum foi comprovado por este registro. NÃO HOMOLOGADO.
+
+
+---
+
+## IMPLEMENTAÇÃO PARCIAL CONTROLADA — 28/10/2026 — NÃO HOMOLOGADA
+
+**Commits de implementação anteriores a esta anotação:** `0516ae9edc86e68a37459803332efa65e647062f` (núcleo de propagação) e `4ad81906ba30e1b03f8e94719b9b49b6faf5006b` (testes). Arquivos novos: `enform_uncertainty_core.py`, `test_enform_uncertainty_core.py`.
+
+**O que está implementado no código-fonte:** função pura de agregação de estoques tC e tCO2e com matriz de covariância entre estratos/compartimentos, erro-padrão e IC normal aproximado 95%; função para calcular estoque de carbono de um horizonte de solo a partir de espessura, densidade, fração de carbono e fragmentos grosseiros. Testes de unidade, conversão e covariância adicionados, mas **a execução em CI, a integração na GUI, a compilação e a validação científica ainda NÃO foram verificadas**. Os valores de teste são sintéticos, não estimativas de campo. O IC normal não é adequado automaticamente a assimetria forte, calibração incerta ou distribuição não gaussiana; migrar para bootstrap/Monte Carlo calibrado quando houver distribuições e covariâncias fundamentadas. Matriz de covariância fornecida externamente deve ser estimada de dados válidos; não inventá-la. Verificar semidefinição positiva completa em integração posterior.
+
+**Ações obrigatórias para modo operacional:** conectar núcleo ao pipeline por fitofisionomia, importar perfis reais de solo 0–100 cm e seus erros/covariâncias; ingestão de produtos BIOMASS L2 FP_AGB_L2B (AGB e desvio padrão), FP_FH__L2B (altura e flags) quando realmente disponíveis para a AOI; fallback ESA CCI v7 rotulado como fusão SAR/LiDAR (não BIOMASS P); validar espacialmente parcelas–pixel; incluir alometria de raízes com coeficientes verificáveis; inventários de necromassa e serrapilheira compatíveis; classificação agrícola SAR treinada e calibrada e previsão de safras somente após validação fora da amostra. Preservar painel executivo, classes e fontes, horário UTC/UTC−3, convenção numérica brasileira e todas as rotas aprovadas.
+
+**Fontes confirmadas:** ESA CCI Biomass v7 https://climate.esa.int/en/projects/biomass/ (mapas globais anuais 100 m, 2015–2024 e incerteza por pixel); ESA BIOMASS MAAP https://portal.maap.eo.esa.int/biomass/biomass-data-offer/ (tipos de produtos L2A/L2B); ESA https://www.esa.int/Applications/Observing_the_Earth/FutureEO/Biomass/ESA_s_Biomass_goes_live_with_data_now_open_to_all (dados públicos desde 2026). Existência de produto em catálogo não prova disponibilidade/qualidade em cada AOI.
+
+**Pendências de liberação:** integração real, dados de inventário e solo, modelos agrícolas calibrados, benchmark independente nos cinco biomas, cobertura dos IC, desempenho, regressão GUI, execução dos testes, build e smoke test Windows no mesmo SHA e checksum do artefato. **NÃO HOMOLOGAR, NÃO ANUNCIAR ZIP DEFINITIVO.**
