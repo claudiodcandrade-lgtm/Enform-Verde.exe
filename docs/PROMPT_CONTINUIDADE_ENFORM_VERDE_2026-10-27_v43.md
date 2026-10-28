@@ -1289,3 +1289,28 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Comparação com HEAD anterior:** o SHA `dd8a503185a0ca37df4278286387b2d5798dd8e4` (último prompt) tinha `Dashboard dual - tests` run **40781860113** com conclusão `success`; `Build Enform Verde Windows` run **40781860072** estava `in_progress` (sem ZIP/EXE validado ou artifact Windows) na consulta. Runs Windows **40781821037**, **40781767753** e **40781687474** também ainda estavam `in_progress`; seus artifacts `pam-microregion-yield-2015-2024` são dados de safra, **não** o executável Windows. O workflow rápido aprovado não substitui os testes de empacotamento nem demonstra validação científica.
 
 **Próxima verificação obrigatória:** esperar os workflows no novo SHA e confirmar que o passo GUI do build Windows passa, depois verificar compilação, execução do EXE a partir de cópia limpa, publicação de artifact ZIP, checksum e correspondência exata do SHA do código com o SHA do ZIP. Mesmo que tudo isso passe, continuar **NÃO HOMOLOGADO** até demonstrar em dados reais e com validação independente: SAR/altura/AGB nos cinco biomas, estoques e incertezas dos compartimentos (raízes, necromassa, serrapilheira, solo 0–100 cm), identificação agrícola, vigor, previsão de safras quando defensável, painel executivo e regressões. Sem notificações de progresso ou por build isolado.
+
+
+---
+
+## PROVA EMPÍRICA DE ACESSO AO PRONASOLOS — 28/10/2026, 19h49 (UTC−3)
+
+**Mudança material: serviço real comprovado para os cinco biomas, exclusivamente consulta pontual de solo 0–100 cm.** A URL oficial https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer informa raster de 90 m, camadas IDs 2,3,4,5,6 correspondentes a 0–5, 5–15, 15–30, 30–60 e 60–100 cm. `tools/probe_pronasolos_100cm.py` executou consultas HTTP reais via GitHub Actions para exatamente essas cinco camadas em cinco locais de referência. **Todas as cinco respostas retornaram cinco valores numéricos**, sem invocar a camada 100–200 cm. Registro do script em `6b014040d0ad145d0e6cc34260751b2e51cfdbed`, fix de imports `fa2b6ff2030be4e020e6066f78c8e5facd4a35c8`, integração CI `76a82f9678db13bea5cd8fc18067548e08beb0b1`.
+
+**Evidência auditável:** GitHub Actions run **40782688214**, job **123148060485**; etapa **'Probe official PronaSolos 0-100 cm real raster horizons'** com `conclusion=success`; `Upload PronaSolos real 0-100 cm probe evidence` também `success`. Artefato **`pronasolos-100cm-audit` ID `12857072931`**, digest SHA-256 do ZIP `b2a1dc83fb1c2cf21628ebca18cdee395bd166b9e30ad35f30d4fb8a1778fe15`; arquivo interno `pronasolos_probe_100cm.json` com timestamp `2026-10-28T22:49:41.705506+00:00`, campo de fonte/ID da camada, hash bruto de cada resposta e valores por horizonte. `PASS_SOME_COMPLETE` no relatório da primeira geração significa ao menos um ponto completo; inspeção direta do JSON comprovou **cinco de cinco** pontos com `PASS_0_100_COMPLETE`.
+
+**Valores reais retornados pelo *produto de mapa* em UM PONTO por referência (não médias de bioma, não AOIs, não resultados de inventários):**
+
+| Bioma / ponto | Latitude | Longitude | tC/ha mapa 0–100 cm | SHA-256 resposta HTTP bruta |
+|---|---:|---:|---:|---|
+| Amazônia — Tapajós | -3,03 | -54,95 | 81,10 | `284c1b6f1c3b1538a170f44dfa62b4f48a23d6048ce25a27ea0f675acaec204e` |
+| Cerrado — Brasília | -15,85 | -47,93 | 97,80 | `2b0c8de6cfdd9513664f9cd3f1e6d94017942bd2dc69c02d51dd1a84c8469451` |
+| Caatinga — Petrolina | -9,32 | -40,53 | 30,80 | `1a64fee747419fcb2d1ec795d381e81b9987c9edd66de13748ae36943b24257c` |
+| Mata Atlântica — Itapetininga | -23,60 | -48,05 | 107,90 | `c7284b851595084dd6724f30cd1c0cdf180e0fab71e5b9e3c83084fc07a573e5` |
+| Pantanal — Nhecolândia | -18,70 | -56,70 | 25,30 | `144e0a07663ec9283c8953b1d33ed74191638277283d19a075bdd24f710ba5bf` |
+
+**Revisão científica adicional:** commits `4ba3299e697951f249af7ea7d59e70ca7b67b318`, `8a1d3b3b012cfaaf01f3c97142a6ed5424adb510` rejeitam intensidade do renderer ArcGIS (`Stretched Pixel Value`) como se fosse Mg C/ha; só valor bruto da banda serve. Commit `72d1d27ea3dfe4957afbab5cb7c6e428c72b2e82` corrige status do probe para **PASS_ALL_FIVE_COMPLETE** quando houver cinco de cinco, distinguindo casos parciais em futuras execuções. `dc5198eb68d741fa81f299500e8d1d39a3f274f8` atualiza especificação de solo. `ac03501446a9be9aedc1cea239c410684c9e75f2` acrescenta verificação de sintaxe do probe ao workflow rápido.
+
+**Limitações técnicas ainda reais e bloqueantes:** cinco valores de pixel do mapa não demonstram estoque médio nem distribuição espacial de qualquer AOI, muito menos acurácia, intervalo preditivo de 95%, covariância entre camadas ou erro de transferência. O serviço 90 m publica camadas pontuais de estoque, não se identificaram ainda camadas API de limites preditivos no mesmo MapServer. O Relatório Anual Embrapa Solos 2021 documenta mapas de incerteza com limites inferior/superior de 95% (https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1151724/1/Embrapa-Solos-Relatorio-Anual-2021.pdf), mas esses limites **não foram ingeridos nem conciliados por pixel no software**. Não rotular DP espacial do mapa como IC95%. Outros compartimentos, SAR quantitativo, identificação agrícola, vigor/safras, regressões/benchmark e EXE Windows no mesmo SHA permanecem sujeitos à homologação.
+
+**Estado geral:** progresso verificável na operacionalidade da rota solo 0–100 cm nos cinco biomas, **MAS PR #50 E VERSÃO DEFINITIVA NÃO HOMOLOGADAS**; a verificação do executável deve ser feita no SHA exato depois dos commits recentes. Preservar história e não enviar notificação de release por artefato de diagnósticos.
