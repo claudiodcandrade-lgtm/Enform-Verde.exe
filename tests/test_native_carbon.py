@@ -360,7 +360,7 @@ class WaterExclusionAndOrderingRegression(unittest.TestCase):
     def test_dense_forest_is_first_and_water_excluded(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,300,100)],crs='EPSG:6933')
         classes=gpd.GeoDataFrame([
-            {'class_name':'Corpo d\\'água continental','source':'IBGE+MAPBIOMAS','geometry':box(0,0,100,100)},
+            {"class_name":"Corpo d'água continental",'source':'IBGE+MAPBIOMAS','geometry':box(0,0,100,100)},
             {'class_name':'Floresta Ombrófila Aberta','source':'IBGE+MAPBIOMAS','geometry':box(100,0,200,100)},
             {'class_name':'Floresta Ombrófila Densa','source':'IBGE+MAPBIOMAS','geometry':box(200,0,300,100)},
         ],crs='EPSG:6933')
