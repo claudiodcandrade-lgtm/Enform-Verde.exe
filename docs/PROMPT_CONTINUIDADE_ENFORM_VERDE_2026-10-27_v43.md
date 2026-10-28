@@ -749,3 +749,17 @@ Priorizar **correções de código e evidências científicas reais**, evitando 
 6. CI Windows bloqueante, smoke test do EXE, relatório de validação científica, artefato ZIP verificável do mesmo SHA, digest e link de download. **Não confundir atualização de prompt, testes sintéticos ou compilação com homologação científica.**
 
 **STATUS:** esta seção é especificação/ordem de implementação; não é evidência de que os modelos foram integrados, validados ou compilados.
+
+
+---
+
+## DIRETRIZ DE PERFORMANCE — 28/10/2026 — APIs SOB DEMANDA E LIBERAÇÃO RESPONSÁVEL
+
+**Prioridade transversal:** menor tempo de resposta sem reduzir rigor científico nem alterar o layout existente. Adotar `metadata-first → filtro geográfico/temático → seleção científica → leitura por janela/arquivo → QA → cálculo → cache`. **Nunca** baixar todos os inventários ou planos de manejo do Brasil para o instalador Windows.
+
+- **Inventários/PMFS/licenciamento:** priorizar APIs oficiais públicas (CKAN/SINAFLOR, Embrapa REDAPE/Dataverse, IFN/SFB quando houver serviço oficial compatível). PNLA é descoberta federada de processos, não API garantida de microdados; anexos restritos exigem acesso autorizado. Consultar metadados paginados, deduplicar IDs e DOI, limitar por UF/bioma/fitofisionomia/AOI e ano; obter só tabelas/parcelas úteis e disponíveis. Não assumir que metadado é inventário ou dado validado.
+- **Implementado neste ciclo:** `official_inventory_harvest.discover_sinaflor_metadata_fast` com `package_search` paginado, sessão reutilizada e deduplicação, sem download nem `package_show` na descoberta; teste de paginação e ausência de download em `tests/test_official_inventory_harvest.py`. **Ainda não integrado ao fluxo completo do desktop nem validado no CI.**
+- **Performance:** timeout e retries com backoff e jitter; limitação de taxa por servidor; cache persistente por URL+versão+ETag/Last-Modified e validade configurável; índice SQLite local compacto; cache LRU de cenas/tabelas e rasters recortados por AOI; transferências concorrentes com limite por host, não paralelismo irrestrito; downloads retomáveis e verificação de checksum; COG por HTTP Range e janelas raster; priorização de dados recentes e cancelamento de buscas irrelevantes. Degradação offline explícita, sem trocar ausência de dados por valores inventados.
+- **Geoespacial:** interseção espacial antes de leitura integral; simplificação apenas para consultas preliminares, nunca para área final; CRS e topologia auditados; reprojeção e rasterização por bloco; evitar ler rasters nacionais em memória; resultados por estrato com áreas exatas.
+- **Observabilidade:** medir tempo por fase (descoberta, download, recorte, classificação, carbono, renderização), bytes transferidos, cache hit rate, tempo frio/quente e consumo máximo de memória; publicar benchmark real em AOIs Sinop, Tapajós, Santo Ambrósio e Pantanal, comparando antes/depois sem perda de exatidão.
+- **Aceite:** testes offline simulados e online reais, regressão de carbono e agricultura, performance com cache frio/quente, CI Windows bloqueante, EXE e ZIP íntegros do SHA aprovado. **Não declarar versão definitiva enquanto faltarem modelos agrícolas/vigor/safra e validações de carbono.** Manter rigor científico, proveniência e a forma de apresentação atual.
