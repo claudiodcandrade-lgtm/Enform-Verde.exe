@@ -83,21 +83,28 @@ def partition_land_use(aoi, layers):
         projected = layer.to_crs(AREA_CRS).copy()
         projected['geometry'] = projected.geometry.make_valid()
         projected = projected[projected.geometry.notna() & ~projected.geometry.is_empty]
-        # Conflicting labels within one source are gaps, not first-row wins.
+        # Dissolve tile fragments by label before geometry operations. The prior
+        # per-pixel loop was quadratic for large AOIs (e.g. Marary), despite
+        # raster reads already being tiled. Preserve contradictory overlaps as
+        # gaps that may be filled by the next source.
+        projected = projected.dissolve(
+            by=['class_name', 'source', 'taxonomy'], as_index=False)
+        from shapely.ops import unary_union
         conflicts = []
         for pos, row in enumerate(projected.itertuples()):
             for j in projected.sindex.query(row.geometry, predicate='intersects'):
-                if j <= pos:
+                if int(j) <= pos:
                     continue
                 other = projected.iloc[int(j)]
                 if row.class_name != other.class_name:
                     overlap = row.geometry.intersection(other.geometry)
-                    if overlap.area > 0:
+                    if not overlap.is_empty and overlap.area > 0:
                         conflicts.append(overlap)
-        from shapely.ops import unary_union
         conflict = unary_union(conflicts)
         for row in projected.itertuples():
-            clipped = remaining.intersection(row.geometry).difference(conflict)
+            clipped = remaining.intersection(row.geometry)
+            if not conflict.is_empty:
+                clipped = clipped.difference(conflict)
             if clipped.is_empty or clipped.area <= 0:
                 continue
             pieces.append({'class_name': row.class_name, 'source': row.source,
