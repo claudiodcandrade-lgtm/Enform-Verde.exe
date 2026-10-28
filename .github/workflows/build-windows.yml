@@ -876,6 +876,8 @@ jobs:
           Copy-Item -Force 'data\ifn_necromass_biome_uf_v1.csv' 'dist\Enform Verde\data\ifn_necromass_biome_uf_v1.csv'
           New-Item -ItemType Directory -Force -Path 'dist\Enform Verde\docs' | Out-Null
           Copy-Item -Force 'docs\CLASSIFICACAO_SAR_USO_SOLO.md' 'dist\Enform Verde\docs\CLASSIFICACAO_SAR_USO_SOLO.md'
+          Copy-Item -Force 'docs\MODELOS_SAR_AGRICULTURA_INTERNACIONAL_2026-10-28.md' 'dist\Enform Verde\docs\MODELOS_SAR_AGRICULTURA_INTERNACIONAL_2026-10-28.md'
+          Copy-Item -Force 'docs\ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md' 'dist\Enform Verde\docs\ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md'
           Copy-Item -Force 'TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md' 'dist\Enform Verde\TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
           Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
@@ -940,7 +942,7 @@ jobs:
           @'
           ENFORM VERDE - WINDOWS
           VERSÃO 3.25.1. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado; a busca automática de BIOMASS deve ser verificada por AOI e não implica cobertura universal. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
-          NOVO: carbono apenas em formações nativas, calculado separadamente por fitofisionomia e área de interseção; outros usos são apenas indicados. Classificação de uso do solo com confiança independente obrigatória; SAR elegível > IBGE > MapBiomas. Nenhum modelo de culturas com validação brasileira abrangente vem embutido. Modelos internacionais e teses podem fundamentar classificadores, mas exigem pesos/código executáveis, compatibilidade e validação espacial/temporal independente no Brasil. Configurar atributos SAR e referências independentes para habilitar prioridade algorítmica; sem eles, manter fallback cartográfico. Ver docs/CLASSIFICACAO_SAR_USO_SOLO.md.
+          NOVO: carbono apenas em formações nativas, calculado separadamente por fitofisionomia e área de interseção; outros usos são apenas indicados. Identificadores SAR instalados são procurados automaticamente em %USERPROFILE%\.enform_verde\modelos_sar\ativo.json (e demais JSON) ou conforme ENFORM_LAND_USE_SAR_CONFIG / ENFORM_SAR_MODELS_DIR; configuração manual permanece opcional. PRIORIDADE: identificador SAR executado e avaliado independentemente > MapBiomas para uso/cobertura atual; IBGE apenas para nomear fitofisionomias naturais compatíveis. Sem um modelo SAR executável com dados e referências reais, o resultado MapBiomas NÃO é classificação SAR. Nenhum modelo treinado para todo o Brasil vem embutido. Modelos internacionais, teses e dissertações são fontes admissíveis com qualquer acurácia mensurada/publicada, divulgando métrica, domínio e incerteza; a acurácia estrangeira não é validação nesta AOI. O código de modelos publicado sem pesos/dados/inferência executáveis permanece bibliografia. Ver docs/CLASSIFICACAO_SAR_USO_SOLO.md e docs/MODELOS_SAR_AGRICULTURA_INTERNACIONAL_2026-10-28.md.
           Para abrir: dê duplo clique em "Enform Verde.exe".
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
