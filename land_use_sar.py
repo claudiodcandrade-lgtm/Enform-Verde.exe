@@ -580,8 +580,8 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             mapbiomas_failure+='; fallback HTTPS: '+type(exc).__name__+': '+str(exc)
             mapbiomas_access_attempts.append({'route':'https_download','error':str(exc)})
     try:
-        if mb is None:
-            raise RuntimeError('MapBiomas C11 inacessível após tentativas: '+str(mapbiomas_failure))
+        if mb is None or mb.empty:
+            raise RuntimeError('MapBiomas C11 sem pixels válidos na AOI; cobertura atual não verificada. '+str(mapbiomas_failure or 'Raster fora da AOI, sem dados ou sem classes válidas.'))
         raw_layers.append(mb.copy())
         from mapbiomas_zonal import LEGEND
         crop_names={LEGEND[c][0] for c in (18,19,20,39,40,41,46,47,48,62)}
