@@ -126,7 +126,6 @@ def raster_class_polygons(aoi, raster_path, legend=None):
     import geopandas as gpd
     import numpy as np
     import rasterio
-    from rasterio.mask import mask
     from rasterio.features import shapes, geometry_window
     from shapely.geometry import shape, mapping
     from carbon_compartments import aoi_to_wgs84
@@ -148,7 +147,11 @@ def raster_class_polygons(aoi, raster_path, legend=None):
             from shapely.geometry import box
             from shapely.prepared import prep
             import math
-            bounds_window = geometry_window(src, [mapping(inside)])
+            from rasterio.errors import WindowError
+            try:
+                bounds_window = geometry_window(src, [mapping(inside)])
+            except WindowError:
+                return gpd.GeoDataFrame(columns=['class_code','class_name','source','taxonomy','geometry'], geometry='geometry', crs=src.crs)
             x0 = max(0, int(bounds_window.col_off))
             y0 = max(0, int(bounds_window.row_off))
             x1 = min(src.width, int(math.ceil(bounds_window.col_off + bounds_window.width)))
@@ -177,7 +180,7 @@ def raster_class_polygons(aoi, raster_path, legend=None):
                                      'source': 'SAR_VALIDADO' if legend is not None else 'MAPBIOMAS',
                                      'taxonomy': 'legenda do modelo SAR' if legend is not None else 'MapBiomas',
                                      'geometry': shape(geometry)})
-            return gpd.GeoDataFrame(rows, columns=['class_code','class_name','source','taxonomy','geometry'], crs=src.crs)
+            return gpd.GeoDataFrame(rows, columns=['class_code','class_name','source','taxonomy','geometry'], geometry='geometry', crs=src.crs)
 
 
 def _sha(path):
