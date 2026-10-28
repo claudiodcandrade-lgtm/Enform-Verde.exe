@@ -84,13 +84,16 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
         "evidence_type":"standing_litter_dry_mass"
     }
 
-def santo_ambrosio_litter_stock_component(biome, physiognomy, aoi):
-    """Local gravimetric litter-stock summary for the Santo Ambrósio forest AOI.
+def santo_ambrosio_litter_stock_component(biome, physiognomy, aoi, *, property_aoi=None):
+    """Local gravimetric litter-stock summary restricted to the farm's forest.
 
-    The reported 17 quadrats support the sampling interval for the farm-level
-    mean only. They do not quantify class-specific or transfer uncertainty.
-    Apply only to an AOI matching the known farm footprint and a compatible
-    dense ombrophilous forest class.
+    When per-physiognomy processing passes a small *native stratum*, the farm
+    boundary must be supplied separately as property_aoi. The whole property
+    is checked against the geofenced study region and area; the target stratum
+    must be spatially inside that farm. Neither savannas nor nearby properties
+    can inherit the 17-quadrat forest inventory. This avoids wrongly requiring
+    each separate forest stratum to cover the full 20k–60k ha parent farm.
+    The source CI is the sample-mean CI, NOT a stratum transfer uncertainty.
     """
     import math
     if str(biome or "").strip().casefold() not in ("amazônia", "amazonia") or aoi is None:
@@ -99,7 +102,8 @@ def santo_ambrosio_litter_stock_component(biome, physiognomy, aoi):
     if "floresta ombrófila densa" not in p and "floresta ombrofila densa" not in p:
         return None
     try:
-        frame=aoi_to_wgs84(aoi)
+        frame=aoi_to_wgs84(property_aoi if property_aoi is not None else aoi)
+        target=aoi_to_wgs84(aoi)
         west,south,east,north=map(float,frame.total_bounds)
         centroid=frame.geometry.union_all().centroid
         # CAR footprint envelope recorded for Fazenda Santo Ambrósio, Chaves/PA.
@@ -107,8 +111,18 @@ def santo_ambrosio_litter_stock_component(biome, physiognomy, aoi):
             return None
         if not (-49.658 <= centroid.x <= -49.353 and -0.133 <= centroid.y <= 0.058):
             return None
-        area_ha=float(frame.to_crs("EPSG:6933").geometry.union_all().area/10000.0)
+        parent_geom=frame.to_crs("EPSG:6933").geometry.union_all()
+        target_geom=target.to_crs("EPSG:6933").geometry.union_all()
+        area_ha=float(parent_geom.area/10000.0)
         if not 20000 <= area_ha <= 60000:
+            return None
+        if target_geom.is_empty or target_geom.area<=0:
+            return None
+        # A true subset must have no meaningful area outside the verified
+        # property. A 1 sq.m tolerance handles minor projection rounding;
+        # this does not authorize spatial transfer to neighbouring farms.
+        outside_area=target_geom.difference(parent_geom).area
+        if outside_area>max(1.0,target_geom.area*1e-8):
             return None
     except Exception:
         return None
@@ -130,6 +144,9 @@ def santo_ambrosio_litter_stock_component(biome, physiognomy, aoi):
         "degrees_of_freedom":n-1,
         "evidence_type":"standing_litter_dry_mass",
         "include_in_total":True,
+        "study_parent_property_geofence_verified":True,
+        "target_intersection_inside_parent":True,
+        "uncertainty_warning":"IC95% amostral do estoque gravimétrico, não calibrado para a interseção florestal específica; erro de transferência não quantificado",
     }
 
 def tapajos_necromass_components(biome, physiognomy, aoi):
