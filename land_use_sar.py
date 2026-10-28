@@ -546,7 +546,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         except Exception as exc:
             warnings.append('SAR sem prioridade: '+str(exc))
     else:
-        warnings.append('Sem modelo treinado/validado e atributos compatíveis; nenhum peso nacional vem embutido.')
+        warnings.append('Sem modelo treinado/validado para esta AOI e atributos compatíveis. Fontes e teses internacionais são aceitas para pesquisa/implementação, mas precisam de modelo executável e validação brasileira independente; fallback cartográfico mantido.')
     from native_carbon import native_class
     raw_layers=list(layers)
     mb=None
