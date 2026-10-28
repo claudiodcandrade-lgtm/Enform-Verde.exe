@@ -51,6 +51,18 @@ class PronasolosIdentifyBatchTests(unittest.TestCase):
         self.assertIsNone(numeric_soil_stock({"value":float("nan")}))
         self.assertIsNone(numeric_soil_stock({"value":-1}))
 
+    def test_visualization_stretch_is_not_soil_stock(self):
+        # Mapserver raster renderers can return 0..255 stretched intensity.
+        # This is not Mg C/ha; never interpret it as observed stock.
+        self.assertIsNone(numeric_soil_stock(
+            {"attributes":{"Stretched Pixel Value":"153"}}))
+        self.assertIsNone(numeric_soil_stock(
+            {"attributes":{"Display Value":"187","Renderer Value":"82"}}))
+        self.assertEqual(numeric_soil_stock(
+            {"attributes":{"Stretched Pixel Value":"153","Pixel Value":"22,5"}}),22.5)
+        self.assertEqual(numeric_soil_stock(
+            {"value":12.25,"attributes":{"Stretched Pixel Value":"153"}}),12.25)
+
     def test_reject_conflicting_duplicate_values(self):
         with self.assertRaisesRegex(ValueError,"Conflicting"):
             extract_paired_horizons({"results":[{"layerId":2,"value":1},
