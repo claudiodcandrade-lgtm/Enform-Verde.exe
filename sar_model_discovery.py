@@ -37,8 +37,14 @@ def discover_installed_sar_configs(aoi, *, registry_dir=None, environ=None, max_
     if override:
         candidates.append(Path(override).expanduser())
     if root.is_dir():
-        candidates.extend([root / "ativo.json"])
-        candidates.extend(sorted(root.glob("*.json"), key=lambda p: p.name.casefold()))
+        candidates.append(root / "ativo.json")
+        discovered=sorted(root.glob("*.json"), key=lambda p: p.name.casefold())
+        # This is a desktop analysis, not a filesystem indexer. A model store
+        # with thousands of manifests must not freeze the user interface.
+        if len(discovered)>50:
+            diagnostics.append("Catálogo SAR com mais de 50 JSON; "
+                               "apenas as primeiras configurações são examinadas.")
+        candidates.extend(discovered[:50])
     else:
         diagnostics.append("Identificadores SAR não instalados no diretório " + str(root) + ".")
     seen = set()
@@ -82,9 +88,11 @@ def discover_installed_sar_configs(aoi, *, registry_dir=None, environ=None, max_
                 diagnostics.append("Limite explícito de " + str(max_candidates) +
                                    " modelos instalados; descoberta incompleta.")
                 break
-        except (OSError, TypeError, ValueError, KeyError, UnicodeError) as exc:
+        except Exception as exc:
+            # Invalid user-installed geometry or damaged JSON must never crash
+            # the complete AOI analysis; record the exact failure and abstain.
             diagnostics.append("Configuração SAR recusada [" + path.name + "]: " +
-                               str(exc)[:200])
+                               type(exc).__name__ + ": " + str(exc)[:200])
     if not accepted:
         diagnostics.append(
             "Nenhum identificador SAR executável compatível instalado; "
