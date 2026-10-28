@@ -8,9 +8,8 @@ from math import isfinite
 from statistics import mean, stdev
 
 LAYERS = ((2, "0–5"), (3, "5–15"), (4, "15–30"),
-          (5, "30–60"), (6, "60–100"), (7, "100–200"))
-TARGETS = {"0–30 cm": 3, "0–60 cm": 4,
-           "0–100 cm": 5, "0–200 cm": 6}
+          (5, "30–60"), (6, "60–100"))
+TARGETS = {"0–30 cm": 3, "0–60 cm": 4, "0–100 cm": 5}
 
 def summarize_paired_soil_profiles(observations):
     """Return cumulative stocks only for jointly complete sets of horizons.
