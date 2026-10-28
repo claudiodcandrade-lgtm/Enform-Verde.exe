@@ -24,6 +24,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_desktop.txt
           pip install pillow
+      - name: Probe official PronaSolos 0-100 cm real raster horizons
+        shell: pwsh
+        timeout-minutes: 3
+        continue-on-error: true
+        run: python tools/probe_pronasolos_100cm.py pronasolos_probe_100cm.json
+      - name: Upload PronaSolos real 0-100 cm probe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pronasolos-100cm-audit
+          path: pronasolos_probe_100cm.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Materialize official PAM microregion series
         run: python tools/build_sidra_pam_microregion_series.py
       - name: Upload PAM series and provenance
