@@ -71,8 +71,15 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
     clipped=clipped[~clipped.geometry.is_empty]
     if abs(clipped.geometry.area.sum()-clipped.geometry.union_all().area)>max(1e-4,aoi_geom.area*1e-8):
         raise ValueError('Classes sobrepostas: não é possível somar carbono sem dupla contagem.')
+    # An unclassified hole inside the AOI is not proof of native cover or
+    # proof of non-native land. Previously a fully estimated *small* native
+    # polygon could give complete=True while the rest of the AOI had no class.
+    # Measure that gap explicitly so full-coverage acceptance fails closed.
+    mapped_geom=clipped.geometry.union_all()
+    gap_m2=float(aoi_geom.difference(mapped_geom).area)
+    unmapped_area=(gap_m2/10000.0 if gap_m2>max(1.0,aoi_geom.area*1e-8) else 0.0)
     class_polygons=clipped
-    native_area=0.0; excluded_area=0.0; unknown_area=0.0; strata=[]
+    native_area=0.0; excluded_area=0.0; unknown_area=unmapped_area; strata=[]
     # Ordenação explícita: a primeira estimativa deve ser Floresta Ombrófila
     # Densa; nunca usar ordem alfabética ou ordem de camadas como prioridade.
     def _stratum_priority(row):
@@ -145,6 +152,8 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
                           'erro de classificação e viés de transferência ainda requerem avaliação.')
     return {'strata':strata,'components':totals,'area_aoi_ha':area_aoi,'native_area_ha':native_area,
             'excluded_other_uses_ha':excluded_area,'unknown_cover_area_ha':unknown_area,
+            'unmapped_aoi_area_ha':unmapped_area,
+            'cover_completeness':'COMPLETE' if unknown_area<1e-6 else 'PARTIAL_OR_UNKNOWN',
             'known_total_tc':known_total,'known_total_tco2':known_total*44/12 if known_total is not None else None,
             'complete':complete,'total_uncertainty':total_uncertainty,
             'uncertainty_note':uncertainty_note,
