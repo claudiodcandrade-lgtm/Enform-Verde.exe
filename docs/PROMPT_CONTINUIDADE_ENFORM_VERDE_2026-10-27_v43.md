@@ -1227,3 +1227,23 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 - `fe2f059d2c4eb5c173f477b3aa44f4a20736347c`: preserva **abstenção com score zero usado como sentinela** de altura SAR sem suporte ou extrapolação de atributos (não é novo limiar de acurácia). `c27e7b427250bd501314756168a2d2403c48d49c`: correspondente teste de regressão preservado.
 
 **Estado de homologação:** os commits são evidência de edição de código e testes, mas a validação CI/Windows do HEAD posterior a esta anotação, a execução brasileira de modelos, a comparação independente e os demais requisitos de cinco biomas/carbono/solo 0–100 cm/AGB-altura SAR/painel/safras continuam sujeitos à prova. NÃO LIBERAR ZIP DEFINITIVO sem homologação científica e execução de smoke test do MESMO SHA. A documentação anterior sobre exigência de 90% fica supersedida por esta seção, mas permanece preservada como histórico.
+
+
+---
+
+## ATUALIZAÇÃO URGENTE DO CRITÉRIO DE ACURÁCIA AGRÍCOLA — 28/10/2026 (UTC−3)
+
+**Regra prevalente, expressamente confirmada pelo usuário:** não exigir **qualquer acurácia mínima** para a adoção científica de um modelo de reconhecimento de culturas, classes de vigor e/ou análise SAR. É suficiente que a acurácia tenha sido **efetivamente mensurada e publicada por instituição, tese/dissertação ou publicação científica reconhecida**. Priorizar o modelo de maior acurácia **entre métricas tecnicamente comparáveis**; se indisponível, aceitar modelos de menor acurácia mensurável, sempre exibindo o valor, a fonte, o método e as limitações. Não tratar acurácia global como precisão de uma cultura ou de pixel. Não inventar IC95% se não forem publicados os erros/contagens que permitam calculá-lo.
+
+**Acurácia de referência ≠ acurácia da AOI.** Resultado de modelo publicado no país de origem deve aparecer como 'acurácia publicada no domínio do estudo, não validada nesta AOI' até haver evidência independente local. Modelo efetivamente executável, cenas SAR reais, preditores compatíveis e proveniência continuam obrigatórios para gerar pixels identificados. Artigo sem coeficientes/artefatos executáveis **não** gera mapas por si só. Desempenho mensurável pode ser baixo e não torna o mapa confiável para decisões de alta consequência; exibir incerteza, possibilidade de erro e indicação 'provisório' quando aplicável. A abstinência por ausência de cobertura, inconsistência de sensor, altura nativa inválida, valores NoData ou ausência de demonstração do processamento permanece.
+
+**Estudo IPB University de cana (2023):** acurácia global média publicada **65,38%** e melhor mês **73,33%**, em contexto de 13 imagens Sentinel-1 e 9.690 amostras de pixels de treinamento. Fonte primária institucional https://repository.ipb.ac.id/handle/123456789/123546?show=full ; publicação https://journal.ipb.ac.id/jika/article/view/48719 . Não excluí-lo por ficar abaixo de 90%; não atribuir 65,38% como precisão de cana ou de uma AOI brasileira.
+
+**Commits implementados desde o último registro:**
+- `9e6fac0cbc2280dc823ec167614e8fc2a4d804f0`: função `prioritize_comparable_models` permite ordenar estudos de maior acurácia somente no mesmo grupo de cultura, métrica, domínio e escopo de validação, sem excluir resultados de baixa acurácia, sem proclamar inferência operacional.
+- `58096bde93d8367dbdfeac258bce413a6fbf431d`: testes de ordenação comparável, inclusive 0% mensurado, e rejeição de fontes não identificadas.
+- `a7ca7e93ec83444874d759e151685282f212f17a`: workflow Windows rápido passa a compilar `agricultural_external_models.py`, `land_use_sar.py` e executar `tests/test_measurable_agricultural_accuracy.py`, além dos demais testes.
+
+**Evidências de CI do SHA anterior à presente anotação:** `Dashboard dual - tests` run **40780649452** em `a7ca7e93ec83444874d759e151685282f212f17a` **concluído com sucesso**. Build Windows run **40780649445** ainda **em andamento** quando consultado, portanto **não** comprova ZIP, checksum, smoke test ou homologação. O novo commit exclusivamente documental não estará coberto por um artefato gerado em SHA anterior.
+
+**Critérios científicos ainda pendentes:** obter pesos/coeficientes executáveis para modelos agrícolas internacionais com acesso legítimo, efetuar inferência sobre cenas SAR reais brasileiras e informar qualidade/transferibilidade dos resultados; preservar fonte/qualidade por fitofisionomia e incertezas defensáveis para carbono de raízes, necromassa, serrapilheira e solos 0–100 cm nos cinco biomas; validar AGB/altura SAR inclusive Tapajós; testar classes de vigor e previsão de safras fora de amostra antes de publicar projeções quantitativas; manter painel executivo e controles de regressão. **NÃO HOMOLOGADO. NÃO PUBLICAR VERSÃO DEFINITIVA SEM DEMONSTRAÇÃO.**
