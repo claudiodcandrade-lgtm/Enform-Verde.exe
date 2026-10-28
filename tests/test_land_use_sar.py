@@ -14,10 +14,32 @@ class LandUseTests(unittest.TestCase):
     def layer(self,rows):
         return gpd.GeoDataFrame([dict(class_name=n,source=s,taxonomy=s,geometry=g) for n,s,g in rows],crs=6933)
 
-    def test_high_scores_need_independent_validation(self):
-        self.assertFalse(validation_report(['Soja']*49,['Soja']*49,[.999]*49)['gates']['Soja']['eligible'])
-        self.assertTrue(validation_report(['Soja']*50,['Soja']*50,[.95]*50)['gates']['Soja']['eligible'])
-        self.assertFalse(validation_report(['Soja']*25+['Outro']*25,['Soja']*50,[.999]*50)['gates']['Soja']['eligible'])
+    def test_any_measurable_accuracy_is_allowed_and_uncertainty_published(self):
+        # Sample size, precision and its Wilson interval are always reported;
+        # none of these values is compared to a universal minimum accuracy.
+        small=validation_report(['Soja']*3,['Soja']*3,[.52]*3)['gates']['Soja']
+        self.assertTrue(small['eligible'])
+        self.assertTrue(small['sample_size_warning'])
+        self.assertEqual(small['n_independent'],3)
+        self.assertLess(small['precision_wilson95_lower'],small['precision'])
+        low=validation_report(['Soja']*25+['Outro']*25,['Soja']*50,[.54]*50)['gates']['Soja']
+        self.assertTrue(low['eligible'])
+        self.assertAlmostEqual(low['precision'],.5)
+        self.assertLess(low['precision_wilson95_lower'],.5)
+        report=validation_report(['Soja']*50,['Soja']*50,[.51]*50)
+        self.assertTrue(report['gates']['Soja']['eligible'])
+        self.assertIsNone(report['minimum_accuracy_required'])
+        never_predicted=validation_report(['Soja']*3,['Outro']*3,[.7]*3)['gates']['Soja']
+        self.assertFalse(never_predicted['eligible'])
+        self.assertIsNone(never_predicted['precision'])
+
+    def test_zero_accuracy_is_measurable_and_explicit_not_falsely_high(self):
+        report=validation_report(['Outro']*5,['Soja']*5,[.55]*5)
+        gate=report['gates']['Soja']
+        self.assertTrue(gate['eligible'])
+        self.assertEqual(gate['precision'],0.0)
+        self.assertGreater(gate['precision_wilson95_upper'],0)
+        self.assertEqual(gate['n_independent'],5)
 
     def test_priority_and_no_double_count(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
