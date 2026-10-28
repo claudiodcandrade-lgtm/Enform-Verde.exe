@@ -885,3 +885,16 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 - **Validação pendente:** executar o novo teste no CI, depois validar inventários reais, modelos por fitofisionomia, incerteza residual e transferência geográfica; evitar rótulos de IC95% sem base estatística e estimar erro com independência amostral. **Não liberar o build anterior como definitivo.**
 
 **Situação CI anterior a estes commits:** SHA `cc40c609c9d8127d6f02c0746dcb68fe4cb55170`, PR #50 draft; painel `40720842296` completed/success e build Windows `40720842251` in_progress. Esses runs não validam os commits de correção novos. Continuam os bloqueios de carbono nos cinco biomas, BGB/necromassa/serrapilheira/solo 0–100 cm, calibração SAR independente, identificação e vigor de culturas, previsão de safra e benchmark real.
+
+
+---
+
+## EVOLUÇÃO DE CÓDIGO — 28/10/2026 — API SINAFLOR INTEGRADA AO FLUXO REAL
+
+**Alteração funcional:** a implementação principal `official_inventory_harvest.discover_sinaflor_datasets`, usada por `harvest_sinaflor`, deixou de pesquisar só os 100 primeiros registros por termo e passa a consumir `discover_sinaflor_metadata_fast` (paginação, deduplicação). Quando a resposta de `package_search` contém `resources` como lista, evita `package_show` redundante; se a chave falta, busca detalhes individualmente. Isso reduz chamadas de rede para respostas completas. **Limitação:** `max_pages_per_term` permanece finito (padrão 10), de modo que não se deve alegar descoberta exaustiva do país.
+
+**Código:** commit `cc3d1235f71fbda290504ab8d2306303706842d6` em `official_inventory_harvest.py`.
+
+**Regressões adicionadas:** commit `6d270c7274690b2a61506891afaf2ac3caf5c410` em `tests/test_official_inventory_harvest.py`, com verificações simuladas de metadados completos sem `package_show` e fallback quando o campo `resources` não está presente. A execução CI após esse SHA é necessária; testes simulados não substituem consulta real de API e verificação de conjuntos de dados.
+
+**Aceite de desempenho pendente:** medir número real de consultas, bytes, tempo de descoberta e download em vários cenários, além de monitorar limites de taxa, timeout e servidores indisponíveis. **Não classificar como release final** sem as provas de SAR, carbono por compartimento e incertezas, agricultura/vigor/safras e teste integrado Windows.
