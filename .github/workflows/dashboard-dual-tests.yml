@@ -33,6 +33,8 @@ jobs:
             'test_root_allometry_uncertainty.py',
             'test_agricultural_external_models.py',
             'test_sar_model_discovery.py',
+            'test_native_cover_and_farm_strata.py',
+            'test_carbon_compartments.py',
             'test_measurable_agricultural_accuracy.py'
           )
           foreach ($pattern in $patterns) {
