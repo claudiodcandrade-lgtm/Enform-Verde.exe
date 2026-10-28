@@ -140,20 +140,43 @@ def raster_class_polygons(aoi, raster_path, legend=None):
             if not src.crs:
                 raise ValueError('Raster de classes sem CRS.')
             inside = gpd.GeoSeries([geom], crs=4326).to_crs(src.crs).iloc[0]
-            if geometry_window(src,[mapping(inside)]).width * geometry_window(src,[mapping(inside)]).height > 4_000_000:
-                raise ValueError('Janela de classes excede 4 milhões de células; subdivida a AOI.')
-            arr, transform = mask(src, [mapping(inside)], crop=True, all_touched=True, filled=False)
-            if arr[0].size > 4_000_000:
-                raise ValueError('Janela de classes excede 4 milhões de células; subdivida a AOI.')
-            valid = ~np.ma.getmaskarray(arr[0]) & np.isfinite(arr[0].data) & (arr[0].data > 0)
+            # Read bounded tiles; never reject a valid AOI for exceeding 4M pixels.
+            # Polygonize each tile independently, then let the downstream AOI
+            # intersection clip footprints and reconcile class areas.
+            from rasterio.windows import Window, transform as window_transform
+            from rasterio.features import geometry_mask
+            from shapely.geometry import box
+            from shapely.prepared import prep
+            import math
+            bounds_window = geometry_window(src, [mapping(inside)])
+            x0 = max(0, int(bounds_window.col_off))
+            y0 = max(0, int(bounds_window.row_off))
+            x1 = min(src.width, int(math.ceil(bounds_window.col_off + bounds_window.width)))
+            y1 = min(src.height, int(math.ceil(bounds_window.row_off + bounds_window.height)))
             rows = []
-            for geometry, code in shapes(arr[0].data.astype('int32'), mask=valid, transform=transform):
-                code = int(code)
-                name = legend[code] if legend is not None else LEGEND.get(code, (f'Classe MapBiomas {code}', ''))[0]
-                rows.append({'class_code': code, 'class_name': name,
-                             'source': 'SAR_VALIDADO' if legend is not None else 'MAPBIOMAS',
-                             'taxonomy': 'legenda do modelo SAR' if legend is not None else 'MapBiomas',
-                             'geometry': shape(geometry)})
+            prepared = prep(inside)
+            tile_size = 512
+            for y in range(y0, y1, tile_size):
+                for x in range(x0, x1, tile_size):
+                    window = Window(x, y, min(tile_size, x1-x), min(tile_size, y1-y))
+                    tile_bounds = rasterio.windows.bounds(window, src.transform)
+                    if not prepared.intersects(box(*tile_bounds)):
+                        continue
+                    data = src.read(1, window=window, masked=True)
+                    transform = window_transform(window, src.transform)
+                    inside_mask = geometry_mask([mapping(inside)], out_shape=data.shape,
+                                                transform=transform, invert=True,
+                                                all_touched=True)
+                    valid = inside_mask & ~np.ma.getmaskarray(data) & np.isfinite(data.data) & (data.data > 0)
+                    if not valid.any():
+                        continue
+                    for geometry, code in shapes(data.data.astype('int32'), mask=valid, transform=transform):
+                        code = int(code)
+                        name = legend[code] if legend is not None else LEGEND.get(code, (f'Classe MapBiomas {code}', ''))[0]
+                        rows.append({'class_code': code, 'class_name': name,
+                                     'source': 'SAR_VALIDADO' if legend is not None else 'MAPBIOMAS',
+                                     'taxonomy': 'legenda do modelo SAR' if legend is not None else 'MapBiomas',
+                                     'geometry': shape(geometry)})
             return gpd.GeoDataFrame(rows, columns=['class_code','class_name','source','taxonomy','geometry'], crs=src.crs)
 
 
