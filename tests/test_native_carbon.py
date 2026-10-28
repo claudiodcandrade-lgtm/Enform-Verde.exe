@@ -30,6 +30,33 @@ class SarAccessFailureTests(unittest.TestCase):
         self.assertIn('401',result['errors'][0])
 
 
+class RootBiomassSourcePriorityTests(unittest.TestCase):
+    def test_microrregional_root_component_suppresses_generic_allometry(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-55.0,-4.0,-54.99,-3.99)],crs=4326)
+        def sar_estimator(frame,biome,physiognomy):
+            return {
+                'agb_mg_ha': 100.0,
+                'data_origin': 'SAR_QUANTITATIVO',
+                'source': 'Teste controlado de regressão',
+                'regional_components': {
+                    'Biomassa subterrânea — inventário microrregional': {
+                        'mean_tc_ha': 19.5,
+                        'origin': 'INVENTARIO_MICRORREGIONAL',
+                        'source': 'Parcela validada - exemplo sintético',
+                    },
+                },
+            }
+        result=estimate_native_components(
+            aoi,'Floresta Ombrófila Densa','Amazônia',
+            sar_estimator,lambda frame: {},
+        )
+        roots=[row for row in result['components']
+               if row['parametro']=='Biomassa subterrânea']
+        self.assertEqual(len(roots),1)
+        self.assertEqual(roots[0]['tc'],19.5)
+        self.assertEqual(roots[0]['origem'],'INVENTARIO_MICRORREGIONAL')
+
+
 class NativeCarbonTests(unittest.TestCase):
     def test_full_native_carbon_pipeline_all_pools_and_anthropic_exclusion(self):
         # Complete synthetic integration gate: land-cover pixels, native
