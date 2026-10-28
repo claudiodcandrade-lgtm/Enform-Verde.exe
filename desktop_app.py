@@ -521,7 +521,8 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         if sar_paths:return process_real_sar(frame,sar_paths,b,p)
         return automatic_pipeline(frame,b,p,**options)
     def estimator(frame,phys):
-        return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles)
+        return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
+                                          property_aoi=aoi)
     return summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
 
 def diagnose_ibge(project):
