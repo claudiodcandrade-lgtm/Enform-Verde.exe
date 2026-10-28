@@ -1064,3 +1064,22 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Evidência prévia:** build Windows SHA `9d0a46e8d3a2e114cb67d794d5c7bf067fd4029d` concluiu 255 testes, smoke test e upload de artefato; documentação anterior registra ID e digest. O executável daquele SHA não inclui a presente alteração. Não considerar esse artefato homologado.
 
 **Pendências bloqueantes:** integração do módulo de incerteza à GUI e aos relatórios, solos 0–100 cm com perfis reais e covariância, raízes, necromassa e serrapilheira por fitofisionomia, AGB e altura SAR de alta biomassa validadas, classificadores agrícolas reais treinados e avaliados independentemente, classes de vigor e previsão de safras fora da amostra, cobertura dos cinco biomas, benchmark de desempenho, novo build Windows, testes e checksum do mesmo SHA. Manter PR #50 draft e proibir liberação definitiva até evidência de todos os critérios.
+
+
+---
+
+## AUDITORIA AUTOMÁTICA — 28/10/2026 16h36 (UTC−3): TESTES DO NÚCLEO DE INCERTEZA EFETIVAMENTE EXECUTADOS
+
+**HEAD antes desta anotação:** `b3d80d43fee4a19805bf9e9d64a915eca1803081`; PR #50 aberta, em draft. **Mudança material comprovada em relação à anotação anterior:** os workflows do novo HEAD concluíram e os quatro testes antes ausentes da descoberta foram executados.
+
+**Evidências verificadas no GitHub Actions:**
+- `Dashboard dual - tests`: run **40746957206**, job **123023181911**, `completed/success`; sintaxe e testes de regressão concluídos. https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40746957206
+- `Build Enform Verde Windows`: run **40746957612**, job **123023187221**, `completed/success`; instalação, fontes, contratos, checagens SAR, PyInstaller, smoke test do EXE e upload concluídos. https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40746957612
+- O log Windows registra **259 testes aprovados** na descoberta `tests/`, incluindo `UncertaintyCoreTests.test_correlated_strata`, `test_missing_covariance_rejected`, `test_negative_variance_rejected` e `test_soil_units`, todos `ok`. Assim, a lacuna de descoberta dos quatro testes foi **corrigida e verificada em CI**. Trata-se de testes de software com entradas sintéticas, **não** validação científica de dados reais.
+- Artefato Windows gerado pelo run do **mesmo SHA auditado**: ID **12843330906**, `Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO`, **522.574.187 bytes**, `expired=false`, criado em **2026-10-28 18:48:36 UTC**; digest informado pelo GitHub Actions: **sha256:ebcb9d2b1b37071511ad937c46c511872e33a3bd35109af1d751d9a145e93d55** (ZIP de Actions, não checksum local independente do executável). Acesso autenticado: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40746957612/artifacts/12843330906 . **Não** é release definitivo.
+- Artefatos auxiliares: `pam-microregion-yield-2015-2024` ID **12841832988** e `tapajos-2010-height-diagnostic-822` ID **12841614738**. Não comprovam, isoladamente, previsão SAR–clima–produtividade nem validação H100.
+- O README do mesmo build **continua advertindo expressamente**: “Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS” e “Nenhum modelo nacional treinado vem embutido”. Portanto, o sucesso da compilação não supera os bloqueios científicos.
+
+**Pendências de aceite ainda abertas:** AGB e altura SAR com validação independente em alta biomassa; carbono por compartimento (incluindo raízes, necromassa, serrapilheira e solo 0–100 cm) com incerteza calibrada por fitofisionomia nos cinco biomas; integração real do módulo de covariância na GUI e relatórios; identificação agrícola SAR com modelo treinado e validação espaço-temporal; vigor e previsão de safra defensável fora da amostra; desempenho integrado, regressões end-to-end e pacote final testado no SHA de homologação.
+
+**Decisão:** **NÃO HOMOLOGADO; NÃO NOTIFICAR COMO LIBERAÇÃO.** Esta anotação cria novo commit documental e altera o HEAD; o ZIP comprovado pertence ao SHA `b3d80d43...`, não ao novo SHA resultante. Manter acompanhamento e exigir testes/build e checksum do SHA efetivamente homologado.
