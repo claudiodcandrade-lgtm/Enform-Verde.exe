@@ -7,20 +7,32 @@ from pronasolos_identify import (
 from soil_profile_stats import summarize_paired_soil_profiles
 
 class PronasolosIdentifyBatchTests(unittest.TestCase):
-    def test_one_request_covers_all_six_horizons(self):
+    def test_one_request_covers_only_0_to_100_cm(self):
         params=build_identify_params(-4800000,-1200000,(-4900000,-1300000,-4700000,-1100000))
-        self.assertEqual(params["layers"],"all:2,3,4,5,6,7")
+        self.assertEqual(params["layers"],"all:2,3,4,5,6")
         self.assertEqual(params["geometry"],"-4800000.0,-1200000.0")
         self.assertEqual(params["sr"],"3857")
         self.assertIn("/MapServer/identify",SERVICE)
 
-    def test_all_horizons_are_paired_within_one_response(self):
+    def test_five_horizons_are_paired_within_one_response(self):
         payload={"results":[{"layerId":lid,"value":str(10*lid)} for lid in LAYER_IDS]}
         paired=extract_paired_horizons(payload)
         self.assertEqual(paired,{lid:10*lid for lid in LAYER_IDS})
         soil=summarize_paired_soil_profiles([paired])
         self.assertEqual(soil["0–100 cm"]["tc_ha"],sum(10*i for i in LAYER_IDS[:5]))
         self.assertEqual(soil["0–100 cm"]["n_samples"],1)
+        self.assertNotIn("0–200 cm",soil)
+        self.assertNotIn(7,paired)
+
+    def test_excludes_100_200_cm_even_when_server_returns_layer_7(self):
+        payload={"results":[{"layerId":2,"value":1},{"layerId":3,"value":2},
+                            {"layerId":4,"value":3},{"layerId":5,"value":4},
+                            {"layerId":6,"value":5},{"layerId":7,"value":1000}]}
+        sample=extract_paired_horizons(payload)
+        self.assertEqual(set(sample),set(LAYER_IDS))
+        self.assertEqual(summarize_paired_soil_profiles([sample])["0–100 cm"]["tc_ha"],15)
+        with self.assertRaises(ValueError):
+            build_identify_params(0,0,(0,0,1,1),[7])
 
     def test_partial_response_cannot_fake_deeper_profile(self):
         payload={"results":[{"layerId":2,"value":10},{"layerId":3,"value":20},
