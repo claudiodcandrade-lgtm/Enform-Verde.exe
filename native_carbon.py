@@ -59,7 +59,7 @@ def native_class(name, source, class_metadata=None):
     return None
 
 
-def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None):
+def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None, covariance_tc2_ha2=None):
     import geopandas as gpd
     from land_use_sar import AREA_CRS
     from carbon_compartments import aoi_to_wgs84
@@ -122,11 +122,32 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None)
     has_number=any(r['known_total_tc'] is not None for r in totals)
     known_total=sum(r['known_total_tc'] or 0 for r in totals) if has_number else None
     complete=bool(strata) and all(s['complete'] for s in strata) and unknown_area<1e-6
+    total_uncertainty=None
+    uncertainty_note=('Incertezas individuais preservadas por fonte/classe; covariâncias e erro '
+                      'de classificação/área não quantificados. Não se fornece IC95% do total.')
+    if covariance_tc2_ha2 is not None:
+        # Covariance order: strata order, then COMPARTMENTS. Both inter-pool and
+        # inter-stratum dependencies must be estimated from independent evidence.
+        if not complete:
+            raise ValueError('IC conjunto exige cobertura nativa e todos os compartimentos completos.')
+        from enform_uncertainty_core import aggregate_stock
+        atoms=[(st['area_ha'],c['tc']) for st in strata for c in st['components']]
+        total_uncertainty=aggregate_stock(
+            [a for a,_ in atoms],[float(v) for _,v in atoms],covariance_tc2_ha2)
+        if not math.isclose(total_uncertainty['stock_tC'],known_total,rel_tol=1e-10,abs_tol=1e-8):
+            raise ValueError('Inconsistência do total de carbono e da matriz de covariância.')
+        total_uncertainty['order']=[
+            {'fitofisionomia':st['physiognomy'],'compartimento':c['parametro']}
+            for st in strata for c in st['components']]
+        total_uncertainty['source']='matriz de covariância externa; calibração e fonte exigidas'
+        uncertainty_note=('IC95% NORMAL APROXIMADO, não calibrado independentemente, com '
+                          'covariância declarada entre compartimentos e estratos; '
+                          'erro de classificação e viés de transferência ainda requerem avaliação.')
     return {'strata':strata,'components':totals,'area_aoi_ha':area_aoi,'native_area_ha':native_area,
             'excluded_other_uses_ha':excluded_area,'unknown_cover_area_ha':unknown_area,
             'known_total_tc':known_total,'known_total_tco2':known_total*44/12 if known_total is not None else None,
-            'complete':complete,'total_uncertainty':None,
-            'uncertainty_note':'Incertezas individuais preservadas por fonte/classe; covariâncias e erro de classificação/área não quantificados. Não se fornece IC95% do total.',
+            'complete':complete,'total_uncertainty':total_uncertainty,
+            'uncertainty_note':uncertainty_note,
             'method':'C conhecido = soma por fitofisionomia nativa e compartimento de (tC/ha × hectares da interseção). Outras classes: ocorrência apenas.'}
 
 
