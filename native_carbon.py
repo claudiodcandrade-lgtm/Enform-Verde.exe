@@ -183,10 +183,32 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
         # savanna, mangrove, floodplain, or planted formations.
         upland_forest=any(w in p for w in ('floresta','ombrofila','estacional')) and not any(w in p for w in ('aluvial','alag','mangue','varzea'))
         if float(agb)>0 and upland_forest and not any(normalize(name).startswith(normalize('Biomassa subterrânea')) for name in regional):
-            rows.append({'parametro':'Biomassa subterrânea','tc':math.exp(-1.0587+.8836*math.log(float(agb)))*.47,
-                         'origem':'MODELAGEM_ALOMETRIA','fonte':'Cairns et al. (1997), doi:10.1007/s004420050201',
-                         'metodo':'BGB=exp(-1,0587+0,8836 ln AGB); floresta tropical de terras altas, referência generalizada',
-                         'obs':'Erro residual/transferência alométrica não quantificado; sem IC total.'})
+            from root_allometry_uncertainty import cairns_root_prediction
+            root_calibration=selected.get('root_uncertainty_calibration')
+            root_note='Erro residual/transferência alométrica não quantificado; sem IC total.'
+            root_estimate=cairns_root_prediction(float(agb))
+            if root_calibration is not None:
+                # Only externally validated, physiognomy-exact AGB mean-error
+                # and allometry parameters can enable a conditional interval.
+                if (not isinstance(root_calibration,dict)
+                    or normalize(root_calibration.get('applicable_physiognomy'))!=p
+                    or root_calibration.get('agb_uncertainty_kind')!='AOI_mean_standard_error'):
+                    root_note='Calibração de raízes recusada: domínio exato e erro-padrão da média AOI não comprovados.'
+                else:
+                    try:
+                        root_estimate=cairns_root_prediction(float(agb),calibration=root_calibration)
+                        root_note='Intervalo preditivo Monte Carlo CONDICIONAL (95%); sem validação de cobertura para esta AOI; não equivale a IC95% do total.'
+                    except (ValueError, OverflowError) as exc:
+                        root_note='Calibração de raízes recusada: '+str(exc)+'. Sem IC95% do total.'
+            roots={'parametro':'Biomassa subterrânea','tc':root_estimate['mean_model_tc_ha'],
+                   'origem':'MODELAGEM_ALOMETRIA','fonte':'Cairns et al. (1997), doi:10.1007/s004420050201',
+                   'metodo':'BGB=exp(-1,0587+0,8836 ln AGB); floresta tropical de terras altas, referência generalizada',
+                   'obs':root_note,
+                   'root_uncertainty_status':root_estimate['uncertainty_status']}
+            if root_estimate.get('conditional_prediction_interval_tc_ha') is not None:
+                roots['root_prediction_interval_tc_ha']=root_estimate['conditional_prediction_interval_tc_ha']
+                roots['root_uncertainty_source']=root_estimate['source']
+            rows.append(roots)
     # Direct necromass studies may report fallen and standing CWD separately.
     # They are disjoint pools, but must be added before collapsing them into the
     # single published 'Necromassa aérea' reporting column. Never combine a
