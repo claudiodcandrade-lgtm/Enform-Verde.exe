@@ -36,6 +36,13 @@ class PairedSoilProfileRegression(unittest.TestCase):
         self.assertEqual(out["0–30 cm"]["n_samples"], 1)
         self.assertEqual(out["0–30 cm"]["tc_ha"],0)
 
+    def test_old_deep_horizon_is_ignored_without_double_count(self):
+        deep={2:10,3:20,4:30,5:40,6:50,7:900}
+        summary=summarize([deep])
+        self.assertEqual(summary["0–100 cm"]["tc_ha"],150)
+        self.assertNotIn("0–200 cm",summary)
+        self.assertEqual(set(summary),{"0–30 cm","0–60 cm","0–100 cm"})
+
     def test_bad_inputs_fail_closed(self):
         for bad in ([{2:-1}], [{2:float("nan")}], [{2:float("inf")}], [{2:None}], [{2:True}], "not a sequence", [None]):
             with self.subTest(bad=bad):
