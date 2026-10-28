@@ -451,3 +451,30 @@ Build Windows #731 (run 40591711777) falhou no gate `Live public SAR pixel proce
 5. Liberar **versão definitiva** somente após todas as evidências técnicas e científicas, com ZIP Windows, SHA, digest e documentação; não oferecer ZIP antigo como se contivesse correções recentes.
 
 **STATUS EM 28/10 01h09 UTC−3:** **MUDANÇA MATERIAL — WINDOWS #760/#763/#764/#765/#766 FALHARAM; ERRO NUMÉRICO DE TOLERÂNCIA DIAGNOSTICADO E CORRIGIDO NO TESTE, AINDA SEM EXECUÇÃO CI DO NOVO SHA COMPROVADA; SEM ZIP NOVO; HOMOLOGAÇÃO CIENTÍFICA PENDENTE.**
+
+
+---
+
+## AUDITORIA AUTOMÁTICA — 28/10/2026 02h28 (UTC−3; 05h28 UTC) — WINDOWS #767/#768 VERDES, ZIP EXPERIMENTAL, BLOQUEIOS PERSISTENTES
+
+**Mudança MATERIAL desde o registro de 01h09:** a correção da tolerância numérica do teste (commit `bec5a24fed7931edd93538def4ddfb7cf543021a`) permitiu que as compilações Windows **#767** e **#768** concluíssem com `completed/success`; os dashboards correspondentes também passaram. A PR #50 segue aberta; SHA da branch auditado antes desta atualização documental: **`54d20f3c5bb7a9e6b5b0aef12913450c973ea8eb`**. Não confundir aprovação do CI com homologação científica.
+
+### Execuções e artefatos confirmados
+- Windows **#767**, run **40630817176**, SHA `bec5a24fed7931edd93538def4ddfb7cf543021a`: `completed/success`; dashboard run **40630817111** `completed/success`. Artefato Windows **12791826977**, nome `Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO`, **522.572.832 bytes**, digest GitHub Actions **`sha256:e55648530ecfaf15b375210c62b5f49c6b05d909c97a10df0df890fc486a12d5`** (não recalculado localmente).
+- Windows **#768**, run **40630848168**, SHA `54d20f3c5bb7a9e6b5b0aef12913450c973ea8eb`: `completed/success`; dashboard run **40630848148** `completed/success`. Artefato Windows **12791478983**, nome `Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO`, **522.571.441 bytes**, digest GitHub Actions **`sha256:93c02309d1280f3b256068b7a56741f380378a5d667fcb979cd444561de73aa1`** (não recalculado localmente); `expired=false` na consulta. URL de inspeção: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40630848168/artifacts/12791478983
+- **#768:** etapa de regressões nativas **154 testes OK**; suíte geral **243 testes OK**; etapas `Build executable`, `Compiled EXE self-test from clean copied folder` e `upload-artifact` passaram. Classificação IBGE real da AOI Tapajós confirmou `Floresta Ombrófila Densa`; Cerrado ALOS-PALSAR quantitativo real retornou AGB **16,75345 Mg/ha** e incerteza reportada **11,24372 Mg/ha** (não equivale a validação espacial nacional).
+
+### Falhas e restrições demonstradas pelo log Windows #768 (job 122626592296)
+- O script `archive_guard_test.py` **continua falhando com `AssertionError`** (linhas do log em torno de 1551–1555), apesar de o workflow permanecer verde. A segurança da extração de arquivos ainda não está homologada; corrigir o teste/implementação e **tornar a etapa bloqueante**. Não interpretar a passagem de outros contratos como prova de que este gate passou.
+- A prova de cobertura **ESA BIOMASS FP_FH__L2B** nas AOIs inventariadas do Tapajós continua lançando **`RuntimeError: Acceptance blocked: no ESA BIOMASS FP_FH__L2B covers either inventory-supported Tapajos AOI`** (log em torno de 1866–1869), sem derrubar o workflow. Portanto, **altura SAR e AGB SAR de alta biomassa não homologadas**. Não converter o sucesso do workflow em sucesso científico.
+- Testes MapBiomas no log incluem regressões e contratos sintéticos, mas **não demonstram reprocessamento integral do KML real de Marary com raster oficial MapBiomas C11/2025**, fechamento de área e totais sem água. Também não há evidência nesta auditoria de relatório real comprovando solo **0–100 cm** em todos os estratos, erro por profundidade e exportação sem duplicação.
+- **Cinco biomas**, necromassa/serapilheira, biomassa subterrânea, validação espacial independente, covariâncias e incerteza total não foram demonstrados de modo suficiente para homologação. O GUI contract passou, mas não comprova inspeção visual em Windows com DPI 125%/150% nem leitura de todas as classes sem truncamento.
+
+### Ações prioritárias
+1. Reparar e tornar **bloqueante** `archive_guard_test.py`, repetir Windows CI e inspecionar logs; manter prova de rejeição de path traversal.
+2. Resolver disponibilidade/autorização da missão BIOMASS para altura e AGB SAR de alta biomassa; validar pares parcela–pixel e métricas independentes, sem inventar AGB quantitativa.
+3. Reprocessar Marary **real** com KML original, IBGE e MapBiomas oficial C11/2025; verificar água excluída, Densa primeiro, área e estoques corretos.
+4. Reprocessar Tapajós e cinco biomas, verificar solo **0–100 cm**, necromassa, serapilheira, compartimentos, fontes, incertezas e exportações; não confundir desvio-padrão espacial com IC95%.
+5. Confirmar leitura integral das fitofisionomias em Windows redimensionado e DPI 125%/150%, e preparar artefato Windows **do SHA final homologado** com digest, instruções e link.
+
+**STATUS 28/10/2026 02h28 UTC−3:** **MUDANÇA MATERIAL — WINDOWS #767/#768 E DASHBOARD PASSARAM; ZIP WINDOWS EXISTE MAS É EXPERIMENTAL. SEGURANÇA DE ARQUIVO E SAR BIOMASS ALTA BIOMASSA AINDA FALHAM EM ETAPAS NÃO BLOQUEANTES; HOMOLOGAÇÃO CIENTÍFICA E VERSÃO DEFINITIVA NÃO LIBERADAS.**
