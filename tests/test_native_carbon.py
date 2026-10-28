@@ -349,3 +349,28 @@ class NativeCarbonTests(unittest.TestCase):
         self.assertEqual(next(c['tc'] for c in r['components'] if c['parametro']=='Solo 0–30 cm'),5)
 
 if __name__=='__main__':unittest.main()
+
+
+class WaterExclusionAndOrderingRegression(unittest.TestCase):
+    def test_water_never_counts_as_native_even_with_ibge_overlay(self):
+        for source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE','MAPBIOMAS'):
+            for label in ("Corpo d'água continental",'Rio, Lago e Oceano'):
+                self.assertIs(native_class(label,source),False)
+
+    def test_dense_forest_is_first_and_water_excluded(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(0,0,300,100)],crs='EPSG:6933')
+        classes=gpd.GeoDataFrame([
+            {'class_name':'Corpo d\\'água continental','source':'IBGE+MAPBIOMAS','geometry':box(0,0,100,100)},
+            {'class_name':'Floresta Ombrófila Aberta','source':'IBGE+MAPBIOMAS','geometry':box(100,0,200,100)},
+            {'class_name':'Floresta Ombrófila Densa','source':'IBGE+MAPBIOMAS','geometry':box(200,0,300,100)},
+        ],crs='EPSG:6933')
+        calls=[]
+        def estimator(frame,phys):
+            calls.append(phys)
+            return {'components':[{'parametro':'Biomassa aérea','tc':100.0,'fonte':'teste'}]}
+        result=summarize_native_carbon(aoi,classes,estimator)
+        self.assertEqual(calls,['Floresta Ombrófila Densa','Floresta Ombrófila Aberta'])
+        self.assertEqual([s['class_name'] for s in result['strata']],calls)
+        self.assertAlmostEqual(result['native_area_ha'],2.0)
+        self.assertAlmostEqual(result['excluded_other_uses_ha'],1.0)
+        self.assertAlmostEqual(result['known_total_tc'],200.0)
