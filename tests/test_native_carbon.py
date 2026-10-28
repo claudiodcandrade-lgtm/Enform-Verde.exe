@@ -341,12 +341,12 @@ class NativeCarbonTests(unittest.TestCase):
         frame=gpd.GeoDataFrame(geometry=[box(-50,-10,-49.999,-9.999)],crs=4326)
         called=[]
         def sar(g,b,p):called.append(('sar',g.geometry.iloc[0].area));return {'agb_mg_ha':10,'data_origin':'SAR','source':'TEST'}
-        def soil(g):called.append(('soil',g.geometry.iloc[0].area));return {'0–30 cm':{'tc_ha':5}}
+        def soil(g):called.append(('soil',g.geometry.iloc[0].area));return {'0–100 cm':{'tc_ha':5}}
         with patch('carbon_compartments.infer_uf_from_aoi',return_value='PA'),patch('carbon_compartments.ifn_necromass_component',return_value=None):
             r=estimate_native_components(frame,'Formação Campestre','Cerrado',sar,soil)
         self.assertEqual([x[0] for x in called],['sar','soil'])
         self.assertFalse(any(c['parametro']=='Biomassa subterrânea' for c in r['components']))
-        self.assertEqual(next(c['tc'] for c in r['components'] if c['parametro']=='Solo 0–30 cm'),5)
+        self.assertEqual(next(c['tc'] for c in r['components'] if c['parametro']=='Solo 0–100 cm'),5)
 
 if __name__=='__main__':unittest.main()
 
