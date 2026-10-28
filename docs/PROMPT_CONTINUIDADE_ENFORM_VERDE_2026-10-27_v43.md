@@ -612,3 +612,27 @@ Build Windows #731 (run 40591711777) falhou no gate `Live public SAR pixel proce
 Corrigir e tornar bloqueante a segurança; obter e validar dados SAR FH adequados ou documentar indisponibilidade sem alegar estimativa quantitativa; reprocessar Marary, Tapajós e AOIs representativas dos cinco biomas com estoques, incertezas e auditoria real; validar interface visualmente; então gerar e verificar ZIP do **mesmo SHA de código homologado**, com hash e documentação. **O ZIP #773 é experimental.**
 
 **STATUS 28/10/2026 07h24 UTC−3:** **MUDANÇA MATERIAL OPERACIONAL — WINDOWS #773 E DASHBOARD #445 APROVADOS E NOVO ZIP EXPERIMENTAL DISPONÍVEL; SEM CORREÇÃO DE CÓDIGO OU AVANÇO CIENTÍFICO COMPROVADO; SEGURANÇA E BIOMASS FH CONTINUAM FALHANDO EM ETAPAS NÃO BLOQUEANTES. VERSÃO DEFINITIVA NÃO LIBERADA.**
+
+
+---
+
+## AUDITORIA AUTOMÁTICA — 28/10/2026 08h30 (UTC−3; 11h30 UTC) — WINDOWS #774 E DASHBOARD #447 APROVADOS; ZIP EXPERIMENTAL NOVO, SEM CORREÇÃO DE CÓDIGO
+
+**Mudança MATERIAL operacional desde 07h24:** o head da PR #50 permaneceu no SHA **`1bc71a49619d635f8d79e8fffb6e2c4646201b84`**, que altera **somente este documento** (verificação do commit). A PR permanece aberta, draft e não mesclada. Para esse SHA, o GitHub Actions concluiu com `completed/success` o **Windows #774** (run **40671972610**, job **122760741315**) e o **dashboard #447** (run **40671972620**, job **122760741290**). Houve **novo ZIP experimental**, mas **nenhuma correção de código nem homologação científica nova comprovada**.
+
+### Evidências consultadas diretamente no GitHub
+- Windows #774: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40671972610 — log do job consultado; **154 testes nativos OK** (linha ~1133), **243 testes gerais OK** (linha ~2500), compilação PyInstaller, verificação do runtime, autoteste do EXE em pasta limpa e upload concluídos. O autoteste Tapajós imprime `SAR_PROCESSADO`, área de **1.291,3187519527487 ha**, `SAR_DERIVED_CCI`, 5 cenas; **não** comprova AGB por modelo quantitativo P-band nem H100 de alta biomassa.
+- Dashboard #447: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40671972620 — sintaxe e suítes com **6 e 9 testes OK**.
+- Novo artefato Windows **experimental**, `Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO`, ID **12808888411**, **522.571.740 bytes**, criado em **28/10/2026 10:36:34 UTC**, `expired=false`, expira em **27/11/2026 10:36:02 UTC**. **SHA-256 informado pela API GitHub Actions, não recalculado localmente:** `sha256:46d19aaec0b23fe1d1b037c8feae60bdf199ed4d1530ad409ea5c19fc7ccd7b6`. Página: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40671972610/artifacts/12808888411 (pode exigir autenticação). **Não distribuir como versão definitiva.**
+- Artefatos auxiliares: diagnóstico Tapajós 2010 **12808164089**, série PAM **12808128901**; não são executáveis.
+
+### Bloqueios reconfirmados nos logs Windows #774
+1. **Segurança de arquivos ainda falha:** `archive_guard_test.py` retorna `AssertionError` em `_safe_target(root,'scene/subset.tif').parent==root/'scene'` (linhas ~1553–1557). A etapa `Professional scientific contracts` segue marcada sucesso; tornar o teste bloqueante, validar caminhos legítimos e impedir traversal.
+2. **ESA BIOMASS FH no Tapajós ainda não validado:** `biomass_fh_probe.py` lança `RuntimeError: Acceptance blocked: no ESA BIOMASS FP_FH__L2B covers either inventory-supported Tapajos AOI` (linhas ~1868–1871). O processo encerra com **exit code 1** (linha ~1884), mas o workflow prossegue e termina verde. Não há validação quantitativa de altura/AGB SAR em floresta de alta biomassa.
+3. **MapBiomas e cinco biomas:** testes de contrato e regressão passaram, mas esta execução **não demonstrou** reprocessamento completo e auditado do polígono real de Marary com raster oficial MapBiomas C11/2025, IBGE, água excluída e fechamento espacial; tampouco os estoques AGB/raízes/necromassa/serrapilheira/solo **0–100 cm**, fontes, tC/tCO2e, incertezas e validação espacial independente nos **cinco biomas**.
+4. **GUI:** sem evidência visual de legibilidade integral das classes fitofisionômicas IBGE em DPI 125%/150% e janela estreita.
+
+### Ação exigida e critério de liberação
+Priorizar correções **de código** e testes realmente bloqueantes em vez de novas recompilações induzidas por commits documentais. Resolver segurança, acesso e validação científica SAR ou registrar indisponibilidade sem inventar estimativas; produzir relatórios e evidências reais de Marary e AOIs dos cinco biomas, incluindo solo 0–100 cm e incertezas; verificar interface visualmente. Liberar apenas ZIP do **mesmo SHA de código homologado**, com digest recalculado e documentação.
+
+**STATUS 28/10/2026 08h30 UTC−3:** **NOVO BUILD #774 E DASHBOARD #447 APROVADOS, ZIP EXPERIMENTAL PUBLICADO; SEM ALTERAÇÃO DE CÓDIGO OU AVANÇO CIENTÍFICO. SEGURANÇA E BIOMASS FH SEGUEM FALHANDO EM ETAPAS NÃO BLOQUEANTES; VERSÃO DEFINITIVA NÃO LIBERADA.**
