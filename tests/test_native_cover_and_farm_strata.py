@@ -21,7 +21,7 @@ class NativeAoiCoverageGapTests(unittest.TestCase):
         self.assertAlmostEqual(result["native_area_ha"],.4)
         self.assertAlmostEqual(result["unmapped_aoi_area_ha"],.6)
         self.assertAlmostEqual(result["unknown_cover_area_ha"],.6)
-        self.assertAlmostEqual(result["known_total_tc"],2.4) # 6 pools x 10 tC/ha x 0.4 ha
+        self.assertAlmostEqual(result["known_total_tc"],24.0) # 6 pools x 10 tC/ha x 0.4 ha
         self.assertEqual(result["cover_completeness"],"PARTIAL_OR_UNKNOWN")
         self.assertFalse(result["complete"])
         self.assertIsNone(result["total_uncertainty"])
