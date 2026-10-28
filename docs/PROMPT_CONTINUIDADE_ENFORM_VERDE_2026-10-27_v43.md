@@ -777,3 +777,13 @@ Priorizar **correções de código e evidências científicas reais**, evitando 
 - **Build HEAD — run 40706220012**, SHA `3c8e33db98a4636186d05d2f8a3196666ea71584`: `in_progress`, sem ZIP Windows na consulta; apenas `pam-microregion-yield-2015-2024`, ID `12824835240`. Dashboard HEAD, run `40706223913`: `completed/success`. Evidências: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40706220012 e https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40706223913 .
 - **Pendências que impedem homologação:** não demonstrada validação real do MapBiomas e da identificação agrícola SAR atual, modelos internacionais de cultura, três classes de vigor, integração vigor–clima e previsão de safras; não comprovada cobertura funcional quantitativa dos cinco biomas e de todos os compartimentos, solo 0–100 cm com incerteza preditiva, raízes, necromassa, serapilheira, auditoria de área e fontes; sem benchmarks de APIs/caches, regressão científica abrangente, documentação e hash verificável do ZIP do HEAD.
 - **Regra de liberação:** conclusão verde de CI/compilação ou presença de ZIP **não substituem** validação científica, nem autorizam denominação `versão definitiva`. Próxima verificação: observar run do HEAD, artefato e testes reais; registrar apenas mudanças materiais.
+
+
+---
+
+## REGISTRO DE CORREÇÃO REAL — 28/10/2026 — PAGINAÇÃO SEM TOTAL CKAN
+
+- Corrigido `official_inventory_harvest.discover_sinaflor_metadata_fast`: a busca de páginas adicionais **não deve ser interrompida quando a resposta CKAN omite `count`**; antes, `int(result.get("count") or 0)` provocava término antecipado na primeira página. Agora o limite total só é aplicado quando `count` está presente; a busca termina por página incompleta ou `max_pages_per_term`.
+- Acrescentado teste de regressão `test_fast_discovery_without_count_still_reaches_second_page` em `tests/test_official_inventory_harvest.py`, simulando resposta sem `count` e verificando a segunda página.
+- Commits: `45361aea096ebd69114140510be35f151dd790bf` (código) e `b4a0b245174eb879ac673f6a5e04d3866c91936c` (teste).
+- **Status honesto:** código e teste adicionados; execução do CI e integração operacional completa ainda exigem comprovação. A correção não autoriza declarar todos os inventários nacionais indexados nem os modelos SAR/vigor/safra/carbono homologados.
