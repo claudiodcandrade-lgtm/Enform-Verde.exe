@@ -13,6 +13,47 @@ from official_inventory_harvest import (
 
 
 class OfficialInventoryHarvestTests(unittest.TestCase):
+    def test_actual_sinaflor_discovery_uses_pagination_without_redundant_package_show(self):
+        from unittest.mock import patch
+        from official_inventory_harvest import discover_sinaflor_datasets
+        class Session:
+            headers = {}
+        calls = []
+        def fake_ckan(session, action, **kwargs):
+            calls.append((action, kwargs))
+            if action == "package_show":
+                raise AssertionError("No package_show is needed for complete search summaries")
+            if kwargs["start"] == 0:
+                return {"results": [{"id": "a", "title": "Inventário florestal", "resources": []}], "count": 2}
+            if kwargs["start"] == 1:
+                return {"results": [{"id": "b", "title": "Plano de manejo florestal", "resources": []}], "count": 2}
+            return {"results": [], "count": 2}
+        with patch("official_inventory_harvest._ckan_action", side_effect=fake_ckan), patch(
+            "official_inventory_harvest.discover_sinaflor_metadata_fast",
+            side_effect=lambda session: [
+                {"id": "a", "title": "Inventário florestal", "resources": []},
+                {"id": "b", "title": "Plano de manejo florestal", "resources": []},
+            ],
+        ):
+            results = discover_sinaflor_datasets(Session())
+        self.assertEqual(len(results), 2)
+        self.assertEqual(calls, [])
+
+    def test_actual_sinaflor_discovery_fetches_missing_resource_details(self):
+        from unittest.mock import patch
+        from official_inventory_harvest import discover_sinaflor_datasets
+        class Session:
+            headers = {}
+        with patch("official_inventory_harvest.discover_sinaflor_metadata_fast",
+                   return_value=[{"id": "a", "title": "Inventário florestal"}]), patch(
+                       "official_inventory_harvest._ckan_action",
+                       return_value={"id": "a", "title": "Inventário florestal", "resources": []}
+                   ) as get:
+            results = discover_sinaflor_datasets(Session())
+        get.assert_called_once_with(get.call_args.args[0], "package_show", id="a")
+        self.assertEqual(len(results), 1)
+
+
     def test_fast_discovery_without_count_still_reaches_second_page(self):
         from unittest.mock import patch
         class Session:
