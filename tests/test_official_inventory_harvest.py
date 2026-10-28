@@ -63,11 +63,24 @@ class OfficialInventoryHarvestTests(unittest.TestCase):
             calls.append(kwargs["start"])
             if kwargs["start"] == 0:
                 return {"results": [{"id": "one", "title": "Inventário florestal"}]}
-            return {"results": [{"id": "two", "title": "Plano de manejo florestal"}]}
+            if kwargs["start"] == 1:
+                return {"results": [{"id": "two", "title": "Plano de manejo florestal"}]}
+            return {"results": []}
         with patch("official_inventory_harvest._ckan_action", side_effect=fake_ckan):
-            results = discover_sinaflor_metadata_fast(Session(), rows=1, max_pages_per_term=2)
+            results = discover_sinaflor_metadata_fast(Session(), rows=1, max_pages_per_term=3)
         self.assertEqual(len(results), 2)
         self.assertIn(1, calls)
+
+    def test_incomplete_ckan_search_is_not_silently_treated_as_full_inventory(self):
+        from unittest.mock import patch
+        class Session:
+            headers = {}
+        def fake_ckan(session, action, **kwargs):
+            return {"results": [{"id": str(kwargs["start"]), "title": "Inventário florestal"}],
+                    "count": 300}
+        with patch("official_inventory_harvest._ckan_action", side_effect=fake_ckan):
+            with self.assertRaisesRegex(RuntimeError, "Consulta CKAN incompleta"):
+                discover_sinaflor_metadata_fast(Session(), rows=1, max_pages_per_term=2)
 
     def test_fast_discovery_paginates_and_deduplicates_without_download(self):
         from unittest.mock import patch
