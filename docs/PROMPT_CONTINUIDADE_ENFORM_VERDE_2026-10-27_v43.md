@@ -418,3 +418,36 @@ Build Windows #731 (run 40591711777) falhou no gate `Live public SAR pixel proce
 - Critério de aceite: abrir AOI com três ou mais classes (incluindo Floresta Ombrófila Densa, Floresta Ombrófila Aberta e Corpo d'água continental), reduzir largura da janela, rolar campo e comprovar leitura integral de todas as classes e números. Testar redimensionamento, Windows DPI 125%/150% e atualização de perímetro.
 - Interface: o botão ainda exibe "Buscar COS 0–30 cm — Embrapa", enquanto a contabilização nativa foi alterada para solo 0–100 cm. Harmonizar o rótulo e confirmar se o provedor disponibiliza efetivamente 0–100 cm; não prometer profundidade que o serviço de consulta não entrega.
 - **Não declarar EXE concluído sem workflow Windows aprovado no SHA que contenha este commit e seus testes.**
+
+
+---
+
+## AUDITORIA AUTOMÁTICA — 28/10/2026 01h09 (UTC−3; 04h09 UTC) — FALHA WINDOWS DIAGNOSTICADA E TESTE CORRIGIDO
+
+**Mudança material desde o registro anterior:** os workflows Windows que estavam em andamento foram concluídos com **FAILURE**, inclusive o mais recente do SHA `9f39888e80139759ad9ded8157a587f3fa9614cd`. O dashboard desse SHA passou, mas isso não valida o executável Windows.
+
+### Execuções consultadas (evidência GitHub Actions)
+- **Windows #760**, run **40623119574**, SHA `feab7f5c159fbd1d35c8b3b92c9e9c0906f608b0`: `completed/failure`; dashboard run 40623119610 `completed/success`.
+- **Windows #763**, run **40623429034**, SHA `5a55c3040ab3852733afff365ae64369219db831`: `completed/failure`; dashboard 40623429024 `success`.
+- **Windows #764**, run **40623968426**, SHA `a25c8141d6e43579701fa1a1f31bf19185737832`: `completed/failure`; dashboard 40623968434 `success`.
+- **Windows #765**, run **40623984194**, SHA `66b43a2f9fcabf134b216747febbad70120e60b3`: `completed/failure`; dashboard 40623984298 `success`.
+- **Windows #766**, run **40624125322**, SHA `9f39888e80139759ad9ded8157a587f3fa9614cd`: `completed/failure`; dashboard 40624125315 `success`. Job Windows **122604879119** consultado com log completo. Link: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40624125322 .
+
+### Causa comprovada da falha Windows #766
+- A etapa **Native-only stratification and confidence regression tests** executou **154 testes**, com **153 aprovados e 1 falha**; as etapas posteriores, inclusive `Build executable`, foram **skipped**. Portanto, **não existe ZIP Windows da revisão #766**.
+- O teste `tests.test_native_carbon.WaterExclusionAndOrderingRegression.test_dense_forest_is_first_and_water_excluded` comparou o estoque calculado `199.99999977072028` tC com `200.0` tC usando `assertAlmostEqual` com precisão padrão de 7 casas. Diferença absoluta **2,2927972054×10⁻⁷ tC**, atribuível a arredondamento numérico de área/geométrico, não prova desvio material do cálculo.
+- **Correção publicada neste ciclo:** commit `bec5a24fed7931edd93538def4ddfb7cf543021a` ajusta **somente a tolerância do teste** para `places=5`, mantendo as asserções de exclusão da água, ordem Densa/Aberta e fechamento das áreas. **Não altera cálculo científico.** Não alegar aprovação da nova revisão até observar novo workflow.
+- A consulta do run #765 revelou a mesma falha numérica; #763 e #764 falharam na mesma etapa, sem exame detalhado de seus logs. A causa precisa desses dois runs anteriores não foi independentemente confirmada nesta auditoria.
+- Artefatos de #766: apenas `pam-microregion-yield-2015-2024` (ID 12788522441) e `tapajos-2010-height-diagnostic-766` (ID 12788134954). **Nenhum é EXE/ZIP Windows**. Não divulgar como programa concluído.
+
+### Alterações adicionais já presentes na branch
+- `5a55c304`: correção de aspas em teste de água; `a25c8141`: campo IBGE de fitofisionomia com quebra de linha e rolagem vertical; `66b43a2f`: documentação da correção visual; `9f39888`: botão do raster de solo renomeado para **“Baixar raster COS 0–30 cm (auxiliar)”**. O carbono contabilizado permanece **0–100 cm**. Interface visual não foi verificada em Windows nesta auditoria.
+
+### Próximas verificações obrigatórias
+1. Conferir Windows CI e dashboard para **`bec5a24f...` e posterior commit documental**: 154 testes nativos, demais suítes, segurança de extração de arquivos (`archive_guard_test.py` com gate bloqueante), compilação, EXE self-test em pasta limpa e ZIP do mesmo SHA. Se falhar, analisar o novo log e corrigir.
+2. Reprocessar **Marary real** com KML original + MapBiomas oficial C11/2025 + IBGE, fechar áreas e remover água; demonstrar ordem Floresta Ombrófila Densa primeiro; testar visualização integral dos nomes no Windows com DPI 125%/150%.
+3. Validar solo **0–100 cm** em relatório, totais e exportação, sem duplicação de perfis; verificar origem e incertezas; manter profundidades informativas.
+4. Auditar cinco biomas, necromassa, serrapilheira, biomassa subterrânea, altura/AGB SAR alta biomassa, validação independente e incertezas. O sucesso do CI **não substitui homologação científica**.
+5. Liberar **versão definitiva** somente após todas as evidências técnicas e científicas, com ZIP Windows, SHA, digest e documentação; não oferecer ZIP antigo como se contivesse correções recentes.
+
+**STATUS EM 28/10 01h09 UTC−3:** **MUDANÇA MATERIAL — WINDOWS #760/#763/#764/#765/#766 FALHARAM; ERRO NUMÉRICO DE TOLERÂNCIA DIAGNOSTICADO E CORRIGIDO NO TESTE, AINDA SEM EXECUÇÃO CI DO NOVO SHA COMPROVADA; SEM ZIP NOVO; HOMOLOGAÇÃO CIENTÍFICA PENDENTE.**
