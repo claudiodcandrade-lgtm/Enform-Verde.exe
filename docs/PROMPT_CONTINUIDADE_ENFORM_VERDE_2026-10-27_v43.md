@@ -873,3 +873,15 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Interpretação científica obrigatória:** CI verde comprova apenas os testes que foram executados. Consulta de catálogo ESA BIOMASS não comprova estimação local P-band validada; teste de contrato não demonstra calibração/validação espacial de AGB; download da PAM não comprova correlação independente SAR-produtividade; testes de fallback por bioma não demonstram ausência de viés nem estoques completos de raízes, necromassa, serrapilheira e solo 0–100 cm. Não há aqui benchmark auditado frio/quente nem prova de classificação robusta de cultura e das três classes de vigor em múltiplas AOIs reais.
 
 **Status de liberação:** **artefato Windows experimental compilado com sucesso; NÃO versão definitiva homologada**. Não notificar o usuário como liberação definitiva, não mesclar a PR draft antes do aceite. Para concluir, obter evidência quantitativa independente de todas as funções científicas obrigatórias, teste integrado em cinco biomas, métricas de performance, histórico de erros resolvidos, e só então emitir release e link do artefato exato aprovado. Preservar rigor científico e aparência do painel.
+
+
+---
+
+## CORREÇÃO DE CÓDIGO — 28/10/2026 — PRIORIDADE DE RAÍZES MICRORREGIONAIS
+
+**Alterações efetivamente incorporadas:**
+- Commit `83fc75ac6b216379271f5d4caee54940f034fc0c`: em `native_carbon.estimate_native_components`, a checagem anterior `'Biomassa subterrânea' not in regional` exigia igualdade exata. Uma fonte como `Biomassa subterrânea — inventário microrregional` podia não ser reconhecida, permitindo calcular em paralelo a alometria generalizada Cairns (1997) e o estoque microrregional. Substituída por comparação normalizada de prefixo que reconhece descrições qualificadas de BGB e impede o fallback duplicado.
+- Commit `f24b0fbd72a591f7f7154c027df3cf8988664b88`: acrescentado teste `RootBiomassSourcePriorityTests.test_microrregional_root_component_suppresses_generic_allometry` em `tests/test_native_carbon.py`, com SAR sintético controlado, BGB microrregional sintética e verificação de uma única linha BGB preservando fonte e valor. **Este teste não constitui evidência de dados reais de raízes.**
+- **Validação pendente:** executar o novo teste no CI, depois validar inventários reais, modelos por fitofisionomia, incerteza residual e transferência geográfica; evitar rótulos de IC95% sem base estatística e estimar erro com independência amostral. **Não liberar o build anterior como definitivo.**
+
+**Situação CI anterior a estes commits:** SHA `cc40c609c9d8127d6f02c0746dcb68fe4cb55170`, PR #50 draft; painel `40720842296` completed/success e build Windows `40720842251` in_progress. Esses runs não validam os commits de correção novos. Continuam os bloqueios de carbono nos cinco biomas, BGB/necromassa/serrapilheira/solo 0–100 cm, calibração SAR independente, identificação e vigor de culturas, previsão de safra e benchmark real.
