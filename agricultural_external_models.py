@@ -66,7 +66,11 @@ CANDIDATES = (
      "crops":("cana-de-açúcar",),"sensors":("Sentinel-1",),
      "url":"https://repository.ipb.ac.id/handle/123456789/123546?show=full",
      "method":"Multitemporal Sentinel-1 RF sugarcane growth stage",
-     "weights_reusable":False,"note":"Reported classification accuracy not sufficient for operational 90% precision gate"},
+     "weights_reusable":False,"published_overall_accuracy_mean":0.6538,
+     "published_best_month_overall_accuracy":0.7333,
+     "published_accuracy_source":"https://journal.ipb.ac.id/jika/article/view/48719",
+     "published_accuracy_scope":"overall across six classes / study region Yogyakarta, not sugarcane class precision",
+     "note":"Published 65.38% mean overall accuracy and 73.33% best month; both usable as research evidence without an arbitrary minimum. No local transfer validation or reusable weights demonstrated"},
     {"id":"THAI_SUGARCANE_S1S2_2026","institution":"Hydro-Informatics Institute / Srinakharinwirot University",
      "kind":"peer_reviewed_study","origin":"international",
      "crops":("cana-de-açúcar",),"sensors":("Sentinel-1","Sentinel-2"),
@@ -155,8 +159,10 @@ def candidates_for_crop(crop, *, include_general=True):
 def assess_external_model_transfer(*, candidate_id, crop, sensors, evidence):
     """Demand in-domain external artifact and Brazilian spatial/temporal holdout.
 
-    An internationally validated published accuracy is insufficient to bypass
-    existing class-level Wilson/score thresholds or enable a yield forecast.
+    Any independently measured and published accuracy can qualify as research
+    evidence, without a minimum percentage. Published validation is distinct
+    from Brazilian domain validation and from executable model weights. This
+    is only provenance preflight; it never executes or authorizes a pixel label.
     """
     result = {"eligible":False,"preflight_passed":False,"errors":[],"model":candidate_id,
               "operational_label":"áreas cultivadas" if crop in SUPPORTED_CROPS else None}
@@ -171,34 +177,55 @@ def assess_external_model_transfer(*, candidate_id, crop, sensors, evidence):
         errors.append("required source sensor modalities are unavailable")
     e = evidence if isinstance(evidence,dict) else {}
     for key in ("artifact_sha256","model_version","predictor_manifest",
-                "training_institution","target_physiognomy","target_season",
-                "independent_brazil_test","temporal_holdout","spatial_holdout",
-                "precision_wilson_lower95","class_precision","n_independent"):
-        if not e.get(key) and e.get(key) is not True:
+                "training_institution","target_physiognomy","target_season"):
+        if e.get(key) in (None,""):
             errors.append("missing model transfer evidence: "+key)
-    if e.get("independent_brazil_test") is not True or e.get("temporal_holdout") is not True or e.get("spatial_holdout") is not True:
-        errors.append("local independent spatial+temporal validation mandatory")
     digest=str(e.get("artifact_sha256") or "")
-    if len(digest)!=64 or any(c not in "0123456789abcdef" for c in digest.lower()):
+    if len(digest)!=64 or any(ch not in "0123456789abcdef" for ch in digest.lower()):
         errors.append("invalid model artifact digest")
-    for key in ("precision_wilson_lower95","class_precision"):
+    # Any published, measured accuracy from a recognized source may be used.
+    # Do not compare metrics from different definitions or crops as equivalent.
+    accuracy_key = next((key for key in ("class_precision","overall_accuracy",
+                                        "published_accuracy") if e.get(key) is not None),None)
+    if accuracy_key is None:
+        errors.append("published quantitative accuracy is required for model research preflight")
+    else:
         try:
-            v=float(e[key])
-            if not math.isfinite(v) or v < .9 or v>1:
-                errors.append(key+" below 90% or invalid")
-        except (ValueError,TypeError,KeyError):
-            errors.append("invalid "+key)
-    try:
-        if int(e["n_independent"])<50:
-            errors.append("fewer than 50 independent validation units")
-    except (ValueError,TypeError,KeyError):
-        errors.append("invalid independent sample size")
+            value=float(e[accuracy_key])
+            if not math.isfinite(value) or value<0 or value>1:
+                raise ValueError()
+        except (TypeError,ValueError):
+            errors.append("invalid reported accuracy: must be a fraction from 0 to 1")
+    if not e.get("accuracy_metric") and accuracy_key!="class_precision":
+        errors.append("accuracy metric definition required (e.g. overall accuracy)")
+    if not (e.get("validation_source") or e.get("published_accuracy_source")):
+        errors.append("source of measured accuracy required")
+    if e.get("n_independent") is not None:
+        try:
+            if int(e["n_independent"])<=0:
+                raise ValueError()
+        except (TypeError,ValueError):
+            errors.append("invalid independent validation sample size")
+    if e.get("precision_wilson_lower95") is not None:
+        try:
+            bound=float(e["precision_wilson_lower95"])
+            if not math.isfinite(bound) or not 0<=bound<=1:
+                raise ValueError()
+        except (TypeError,ValueError):
+            errors.append("invalid Wilson lower interval bound")
+    local=(e.get("independent_brazil_test") is True
+           and e.get("temporal_holdout") is True
+           and e.get("spatial_holdout") is True)
+    result["validation_scope"]="independent_brazil_holdout" if local else "published_original_domain_only"
+    result["accuracy_threshold"]=None
+    result["measured_accuracy"]=float(e[accuracy_key]) if accuracy_key and not any("invalid reported accuracy" in x for x in errors) else None
+    result["published_accuracy_source"]=e.get("validation_source") or e.get("published_accuracy_source")
     # This function screens user-supplied *claims*. It does not execute model
     # inference, validate a raster independently, or verify the supplied hashes
     # against files. Accordingly it must never grant operational eligibility.
     result["preflight_passed"]=not errors
     result["eligible"]=False
     if not errors:
-        errors.append("preflight only: run actual model inference and independent Brazilian pixel-level validation")
+        errors.append("preflight only: executable inference, applicable-domain checks and local uncertainty remain unverified")
     result["operational_label"]="áreas cultivadas"
     return result
