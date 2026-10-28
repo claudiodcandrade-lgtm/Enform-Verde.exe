@@ -180,6 +180,20 @@ class NativeNamingTests(unittest.TestCase):
             self.assertEqual(result['original_source_distributions'][0]['classes'][0]['class_name'],'Soja')
 
 
+class MapBiomasOutsideRasterRegression(unittest.TestCase):
+    def test_aoi_outside_raster_returns_empty_geodataframe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            raster=Path(directory)/'small.tif'
+            with rasterio.open(raster,'w',driver='GTiff',height=10,width=10,
+                               count=1,dtype='uint8',crs='EPSG:6933',
+                               transform=from_origin(0,10,1,1),nodata=0) as dst:
+                dst.write(np.full((10,10),3,dtype='uint8'),1)
+            aoi=gpd.GeoDataFrame(geometry=[box(100,100,110,110)],crs='EPSG:6933')
+            result=raster_class_polygons(aoi,str(raster))
+            self.assertTrue(result.empty)
+            self.assertEqual(result.crs,rasterio.crs.CRS.from_epsg(6933))
+
+
 class LargeMapBiomasRegression(unittest.TestCase):
     def test_large_raster_window_is_tiled_without_four_million_cell_rejection(self):
         from land_use_sar import raster_class_polygons
