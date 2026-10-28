@@ -35,6 +35,30 @@ class InternationalModelReferenceTests(unittest.TestCase):
             crop="arroz",sensors=("Sentinel-2",),evidence={})
         self.assertFalse(result["eligible"])
         self.assertIn("required source sensor modalities are unavailable",result["errors"])
+    def test_even_complete_self_reported_evidence_is_only_preflight(self):
+        # No local classifier was executed. Even plausible signed-looking
+        # metadata must NOT be interpreted as a validated SAR crop map.
+        evidence={
+            "artifact_sha256":"a"*64,
+            "model_version":"v1",
+            "predictor_manifest":"S1_VH_timeseries",
+            "training_institution":"IRRI",
+            "target_physiognomy":"tropical lowland rice",
+            "target_season":"2026",
+            "independent_brazil_test":True,
+            "temporal_holdout":True,
+            "spatial_holdout":True,
+            "precision_wilson_lower95":0.95,
+            "class_precision":0.97,
+            "n_independent":100
+        }
+        result=assess_external_model_transfer(candidate_id="NATURE_RICE_S1_2019",
+            crop="arroz",sensors=("Sentinel-1",),evidence=evidence)
+        self.assertTrue(result["preflight_passed"])
+        self.assertFalse(result["eligible"])
+        self.assertEqual(result["operational_label"],"áreas cultivadas")
+        self.assertTrue(any("preflight only" in item for item in result["errors"]))
+
     def test_foreign_source_not_banned_by_nationality(self):
         reference=next(m for m in CANDIDATES if m["id"]=="IRRI_RIICE_2014")
         self.assertEqual(reference["origin"],"international")
