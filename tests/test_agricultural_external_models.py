@@ -26,10 +26,18 @@ class InternationalModelReferenceTests(unittest.TestCase):
                     evidence={})
                 self.assertFalse(result["eligible"])
                 self.assertEqual(result["operational_label"],"áreas cultivadas")
-    def test_no_direct_sorghum_bean_citrus_model_is_invented(self):
+    def test_specific_crop_references_are_research_not_deployed_weights(self):
         for crop in ("sorgo","feijão","citros"):
-            self.assertFalse(any(crop in m["crops"] for m in CANDIDATES))
-            self.assertTrue(candidates_for_crop(crop)) # generic cropland route only
+            sources=[m for m in CANDIDATES if crop in m["crops"]]
+            self.assertTrue(sources)
+            self.assertTrue(all(not m["weights_reusable"] for m in sources))
+        sorghum=[m for m in CANDIDATES if "sorgo" in m["crops"]]
+        self.assertTrue(all("unverified" in ",".join(m["sensors"]) for m in sorghum))
+        for crop in ("sorgo","feijão","citros"):
+            self.assertFalse(any(
+                assess_external_model_transfer(candidate_id=m["id"],crop=crop,
+                    sensors=m["sensors"],evidence={})["eligible"]
+                for m in CANDIDATES if crop in m["crops"]))
     def test_reject_sensors_absent(self):
         result=assess_external_model_transfer(candidate_id="IRRI_RIICE_2014",
             crop="arroz",sensors=("Sentinel-2",),evidence={})
