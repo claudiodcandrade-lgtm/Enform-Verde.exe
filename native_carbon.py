@@ -167,7 +167,7 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
         # Never apply a generalized upland-forest root equation to grassland,
         # savanna, mangrove, floodplain, or planted formations.
         upland_forest=any(w in p for w in ('floresta','ombrofila','estacional')) and not any(w in p for w in ('aluvial','alag','mangue','varzea'))
-        if float(agb)>0 and upland_forest and 'Biomassa subterrânea' not in regional:
+        if float(agb)>0 and upland_forest and not any(normalize(name).startswith(normalize('Biomassa subterrânea')) for name in regional):
             rows.append({'parametro':'Biomassa subterrânea','tc':math.exp(-1.0587+.8836*math.log(float(agb)))*.47,
                          'origem':'MODELAGEM_ALOMETRIA','fonte':'Cairns et al. (1997), doi:10.1007/s004420050201',
                          'metodo':'BGB=exp(-1,0587+0,8836 ln AGB); floresta tropical de terras altas, referência generalizada',
