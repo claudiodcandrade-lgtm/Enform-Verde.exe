@@ -373,7 +373,8 @@ jobs:
           assert sc.rank_external_evidence("Amazônia","floresta tropical","Pará"), "scientific evidence ranking missing"
           assert "estoque_carbono_90m/MapServer/identify" in src, "verified PronaSolos endpoint missing"
           assert "solos_90m/MapServer/identify" not in src and "atributos_solo_90m/MapServer/identify" not in src, "unverified soil endpoints must not be used"
-          assert "layer_means_tc_ha" in src and "valid_by_layer" in src, "soil depth diagnostics missing"
+          soil_stats_src=open("soil_profile_stats.py",encoding="utf-8").read()
+          assert "layer_means_tc_ha" in soil_stats_src and "valid_by_layer" in src and "summarize_paired_soil_profiles(observations)" in src, "soil depth diagnostics or paired-profile integration missing"
           assert "descoberta ≠ download ≠ processamento ≠ uso" in src, "SAR discovery state labels missing"
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
