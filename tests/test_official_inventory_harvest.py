@@ -8,10 +8,27 @@ from official_inventory_harvest import (
     evaluate_private_licensing_inventory,
     evaluate_totalized_inventory,
     SOURCE_HIERARCHY,
+    discover_sinaflor_metadata_fast,
 )
 
 
 class OfficialInventoryHarvestTests(unittest.TestCase):
+    def test_fast_discovery_paginates_and_deduplicates_without_download(self):
+        from unittest.mock import patch
+        class Session:
+            headers = {}
+        calls = []
+        def fake_ckan(session, action, **kwargs):
+            calls.append((action, kwargs))
+            if kwargs["start"] == 0:
+                return {"results": [{"id": "one", "title": "Inventário florestal"}], "count": 2}
+            return {"results": [{"id": "two", "title": "Plano de manejo florestal"}], "count": 2}
+        with patch("official_inventory_harvest._ckan_action", side_effect=fake_ckan):
+            results = discover_sinaflor_metadata_fast(Session(), rows=1, max_pages_per_term=3)
+        self.assertEqual(len(results), 2)
+        self.assertTrue(all(action == "package_search" for action, _ in calls))
+        self.assertTrue(all("start" in args for _, args in calls))
+
     def test_open_georeferenced_plot_csv_is_highest_data_quality_tier(self):
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "parcelas.csv"
