@@ -60,13 +60,22 @@ def main():
     output=Path(sys.argv[1]) if len(sys.argv)>1 else Path("pronasolos_probe_100cm.json")
     with requests.Session() as session:
         sites=[query_site(session,*site) for site in SITES]
+    count_complete=sum(site["status"]=="PASS_0_100_COMPLETE" for site in sites)
+    if count_complete==len(SITES):
+        probe_status="PASS_ALL_FIVE_COMPLETE"
+    elif count_complete:
+        probe_status="PASS_PARTIAL_SITES_ONLY"
+    else:
+        probe_status="NO_COMPLETE_SITE"
     report={
         "timestamp_utc":datetime.now(timezone.utc).isoformat(),
         "service":SERVICE,
         "service_metadata":"https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer",
         "target_depth_cm":100,
         "layers_requested":list(LAYER_IDS),
-        "status":"PASS_SOME_COMPLETE" if any(x["status"]=="PASS_0_100_COMPLETE" for x in sites) else "NO_COMPLETE_SITE",
+        "n_sites_complete":count_complete,
+        "n_sites_requested":len(SITES),
+        "status":probe_status,
         "limitations":"Point retrieval proof only; not a sampled AOI estimate, independent validation, field truth, 95% CI or proof of five-biome accuracy",
         "sites":sites
     }
@@ -75,7 +84,7 @@ def main():
     print("PRONASOLOS_0_100_REAL_SERVICE_PROBE",report["status"],output)
     for site in sites:
         print(site["name"],site["status"],site.get("received_layer_ids"),site.get("error",""))
-    return 0 if report["status"]=="PASS_SOME_COMPLETE" else 2
+    return 0 if report["status"]=="PASS_ALL_FIVE_COMPLETE" else 2
 
 if __name__=="__main__":
     sys.exit(main())
