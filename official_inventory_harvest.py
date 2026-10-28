@@ -281,6 +281,39 @@ def harvest_redape(
     return manifest
 
 
+def discover_sinaflor_metadata_fast(
+    session: requests.Session | None = None, *, rows: int = 100,
+    max_pages_per_term: int = 10,
+) -> list[dict[str, Any]]:
+    """Metadata-first CKAN discovery, without downloading full inventories.
+
+    Pagination prevents silently truncating national search results at 100.
+    A single HTTP session reuses connections. Package detail is not fetched
+    unless the downstream caller actually needs a resource. This API is
+    discovery only: no result is approved for calibration.
+    """
+    session = session or _new_session()
+    session.headers.setdefault("User-Agent", "Enform-Verde-Inventario/1.0")
+    rows = max(1, min(int(rows), 1000))
+    max_pages_per_term = max(1, int(max_pages_per_term))
+    found: dict[str, dict[str, Any]] = {}
+    for term in SEARCH_TERMS:
+        for page in range(max_pages_per_term):
+            start = page * rows
+            result = _ckan_action(session, "package_search", q=term, rows=rows, start=start)
+            items = result.get("results") or []
+            for item in items:
+                title = str(item.get("title") or item.get("name") or "")
+                notes = str(item.get("notes") or "")
+                if RELEVANT.search(title + " " + notes):
+                    key = str(item.get("id") or item.get("name") or "")
+                    if key:
+                        found[key] = item
+            if len(items) < rows or start + len(items) >= int(result.get("count") or 0):
+                break
+    return sorted(found.values(), key=lambda p: (str(p.get("title", "")).casefold(), str(p.get("name", ""))))
+
+
 def discover_sinaflor_datasets(session: requests.Session | None = None) -> list[dict[str, Any]]:
     """Return distinct official CKAN datasets matching PMFS/POA/inventory terms."""
     session = session or _new_session()
