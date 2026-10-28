@@ -13,6 +13,21 @@ from official_inventory_harvest import (
 
 
 class OfficialInventoryHarvestTests(unittest.TestCase):
+    def test_fast_discovery_without_count_still_reaches_second_page(self):
+        from unittest.mock import patch
+        class Session:
+            headers = {}
+        calls = []
+        def fake_ckan(session, action, **kwargs):
+            calls.append(kwargs["start"])
+            if kwargs["start"] == 0:
+                return {"results": [{"id": "one", "title": "Inventário florestal"}]}
+            return {"results": [{"id": "two", "title": "Plano de manejo florestal"}]}
+        with patch("official_inventory_harvest._ckan_action", side_effect=fake_ckan):
+            results = discover_sinaflor_metadata_fast(Session(), rows=1, max_pages_per_term=2)
+        self.assertEqual(len(results), 2)
+        self.assertIn(1, calls)
+
     def test_fast_discovery_paginates_and_deduplicates_without_download(self):
         from unittest.mock import patch
         class Session:
