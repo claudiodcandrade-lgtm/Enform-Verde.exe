@@ -397,7 +397,7 @@ Build Windows #731 (run 40591711777) falhou no gate `Live public SAR pixel proce
 ### CI Windows e dashboard verificados nesta consulta
 - SHA `b6b10beb...`: Windows run **40622796576**, `in_progress` (job `build-windows`, etapa `Build on-demand IBGE quadrants from previous cache when needed`); dashboard run **40622796237** `completed/success`.
 - SHA `085dfdb...`: Windows run **40622888950**, `in_progress` (mesma etapa de quadrantes IBGE); dashboard run **40622888967** `completed/success`. Artefato PAM intermediário ID 12787204623, **não é ZIP Windows**.
-- SHA `feab7f5c...`: **nenhum workflow associado retornado pela consulta naquele momento**. Portanto, **nenhum ZIP Windows validado do SHA mais recente**. Não reutilizar ZIP anterior como se incorporasse as correções de água, ordem e solo 0–100 cm.
+- SHA `feab7f5c...`: na primeira consulta nenhum run aparecia; **nova consulta confirmou Windows run 40623119574 `in_progress` e dashboard run 40623119610 `in_progress`**, sem conclusão ou ZIP confirmado. Portanto, **nenhum ZIP Windows validado do SHA mais recente**. Não reutilizar ZIP anterior como se incorporasse as correções de água, ordem e solo 0–100 cm.
 - Tentativa de consultar logs do job Windows em execução retornou 404 BlobNotFound; sem logs de conclusão, **não inferir falha ou sucesso**.
 - Último ZIP confirmado no histórico anterior (run 40616128588, SHA 6e3640b2) é **experimental e anterior a todas estas correções**.
 
