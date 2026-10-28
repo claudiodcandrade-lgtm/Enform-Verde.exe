@@ -58,7 +58,9 @@ class InternationalModelReferenceTests(unittest.TestCase):
             "spatial_holdout":True,
             "precision_wilson_lower95":0.95,
             "class_precision":0.97,
-            "n_independent":100
+            "n_independent":100,
+            "validation_source":"https://journal.ipb.ac.id/jika/article/view/48719",
+            "accuracy_metric":"class precision"
         }
         result=assess_external_model_transfer(candidate_id="NATURE_RICE_S1_2019",
             crop="arroz",sensors=("Sentinel-1",),evidence=evidence)
@@ -66,6 +68,45 @@ class InternationalModelReferenceTests(unittest.TestCase):
         self.assertFalse(result["eligible"])
         self.assertEqual(result["operational_label"],"áreas cultivadas")
         self.assertTrue(any("preflight only" in item for item in result["errors"]))
+
+    def test_measurable_accuracy_below_90_passes_research_preflight(self):
+        evidence={
+            "artifact_sha256":"b"*64,
+            "model_version":"study-prototype",
+            "predictor_manifest":"Sentinel-1 temporal radar",
+            "training_institution":"IPB University",
+            "target_physiognomy":"sugarcane",
+            "target_season":"2023",
+            "published_accuracy":0.6538,
+            "accuracy_metric":"mean overall accuracy",
+            "published_accuracy_source":"https://journal.ipb.ac.id/jika/article/view/48719",
+            # No validation in Brazil: still valid published research evidence
+        }
+        result=assess_external_model_transfer(candidate_id="IPB_SUGARCANE_THESIS_2023",
+             crop="cana-de-açúcar",sensors=("Sentinel-1",),evidence=evidence)
+        self.assertTrue(result["preflight_passed"],result["errors"])
+        self.assertFalse(result["eligible"])  # not a model run or validated raster
+        self.assertEqual(result["validation_scope"],"published_original_domain_only")
+        self.assertAlmostEqual(result["measured_accuracy"],0.6538)
+
+    def test_zero_measured_accuracy_is_reportable_not_an_exclusion(self):
+        evidence={
+            "artifact_sha256":"c"*64,
+            "model_version":"study-prototype",
+            "predictor_manifest":"Sentinel-1 temporal radar",
+            "training_institution":"IPB University",
+            "target_physiognomy":"sugarcane",
+            "target_season":"2023",
+            "overall_accuracy":0.0,
+            "accuracy_metric":"overall accuracy",
+            "validation_source":"https://journal.ipb.ac.id/jika/article/view/48719",
+            "n_independent":1,
+        }
+        result=assess_external_model_transfer(candidate_id="IPB_SUGARCANE_THESIS_2023",
+            crop="cana-de-açúcar",sensors=("Sentinel-1",),evidence=evidence)
+        self.assertTrue(result["preflight_passed"],result["errors"])
+        self.assertEqual(result["measured_accuracy"],0.0)
+        self.assertFalse(result["eligible"])
 
     def test_foreign_source_not_banned_by_nationality(self):
         reference=next(m for m in CANDIDATES if m["id"]=="IRRI_RIICE_2014")
