@@ -375,3 +375,37 @@ Build Windows #731 (run 40591711777) falhou no gate `Live public SAR pixel proce
 5. Somente após cumprir todos os gates, gerar novo EXE/ZIP do **mesmo SHA aprovado** e divulgar digest. O ZIP ID 12786130423 é **BUILD EXPERIMENTAL**, apesar do CI verde.
 
 **STATUS:** MUDANÇA MATERIAL — **ZIP WINDOWS PUBLICADO, COMPILAÇÃO E TESTES AUTOMATIZADOS PASSARAM**, mas **FALHAS NÃO BLOQUEANTES E GATES CIENTÍFICOS PENDENTES; NÃO HOMOLOGADO.**
+
+
+---
+
+## AUDITORIA DE LIBERAÇÃO — 2026-10-27 23:48 UTC−3 (2026-10-28 02:48 UTC) — CORREÇÕES MATERIAIS MARARY E SOLO 0–100 CM
+
+**Registro aditivo; preservar integralmente o histórico anterior.** PR #50 permanece **open/draft**, branch `feature/agricultural-identification-native-carbon`. Último SHA de código consultado: `feab7f5c159fbd1d35c8b3b92c9e9c0906f608b0`. Este registro não é homologação.
+
+### Auditoria do relatório real fornecido pelo usuário (Marary)
+- Relatório de 138.713,65 ha apontou 138.452,38 ha como nativos, mas incluiu indevidamente **156,83 ha de "Corpo d'água continental"**, atribuindo **14.326,46 tC de biomassa aérea e 8.672,54 tC de solo 0–30 cm** à água. Isso viola a regra de carbono apenas em formações nativas; o total parcial original de 28.163.648,99 tC não deve ser homologado.
+- A estimativa de **Floresta Ombrófila Densa** (80.383,65 ha, 133,91 tC/ha de AGB no relatório antigo) aparecia após Floresta Ombrófila Aberta; o usuário exige **Densa como primeira formação estimada e exibida**.
+- O relatório continua **parcial**: necromassa aérea/subterrânea e serapilheira não estimadas; incerteza da AGB CCI não é IC95%, e desvio-padrão espacial do solo não é erro preditivo. A correção da água implica recalcular área nativa e todos os totais; não publicar estimativa definitiva baseada só em subtração manual.
+
+### Alterações reais publicadas no GitHub
+1. `ed6e579a7aac91d5645b8d9bf88b8df328a457cd` — `native_carbon.py`: rejeita classes aquáticas mesmo quando erroneamente rotuladas IBGE+MAPBIOMAS; ordena Floresta Ombrófila Densa antes de Aberta.
+2. `b6b10beb579b2ff5ebe6b5cfa3429d39d6d66f1b` — `tests/test_native_carbon.py`: adiciona regressões sintéticas de exclusão de água, ordem e fechamento de área/carbono.
+3. `085dfdb912c645dc4a0f879f02f197dafa28ed5a` — `native_carbon.py`: altera o compartimento somado de `Solo 0–30 cm` para **`Solo 0–100 cm`**, usando o perfil cumulativo de PronaSolos e impedindo soma duplicada de profundidades sobrepostas. Perfis 0–30/0–60/0–200 cm permanecem informativos no relatório; seletor de profundidade configurável **ainda não implementado**.
+4. `feab7f5c159fbd1d35c8b3b92c9e9c0906f608b0` — `tests/test_native_carbon.py`: atualiza fixture de solo e asserção de 0–30 para 0–100 cm, eliminando uma incompatibilidade de teste introduzida pela alteração do compartimento. **Não afirmar aprovação dos novos testes sem workflow concluído.**
+
+### CI Windows e dashboard verificados nesta consulta
+- SHA `b6b10beb...`: Windows run **40622796576**, `in_progress` (job `build-windows`, etapa `Build on-demand IBGE quadrants from previous cache when needed`); dashboard run **40622796237** `completed/success`.
+- SHA `085dfdb...`: Windows run **40622888950**, `in_progress` (mesma etapa de quadrantes IBGE); dashboard run **40622888967** `completed/success`. Artefato PAM intermediário ID 12787204623, **não é ZIP Windows**.
+- SHA `feab7f5c...`: **nenhum workflow associado retornado pela consulta naquele momento**. Portanto, **nenhum ZIP Windows validado do SHA mais recente**. Não reutilizar ZIP anterior como se incorporasse as correções de água, ordem e solo 0–100 cm.
+- Tentativa de consultar logs do job Windows em execução retornou 404 BlobNotFound; sem logs de conclusão, **não inferir falha ou sucesso**.
+- Último ZIP confirmado no histórico anterior (run 40616128588, SHA 6e3640b2) é **experimental e anterior a todas estas correções**.
+
+### Pendências e critérios de conclusão
+1. Aguardar Windows CI do **SHA mais recente** (ou refazer build no SHA final), verificar testes, erros não bloqueantes, EXE self-test, ZIP, digest e documentação; tornar `archive_guard_test.py` bloqueante após correção.
+2. **Reprocessar Marary real** com KML original + raster oficial MapBiomas C11/2025 + IBGE; confirmar exclusão de água, Densa primeiro, fechamento das áreas, sem sobreposições e resultados auditáveis. Confirmar carbono do solo **0–100 cm** no painel, no relatório e na exportação, sem duplicar perfis.
+3. Reprocessar Tapajós e outras AOIs reais; validar os perfis cumulativos do solo e erro/transferibilidade por profundidade. A seleção configurável de profundidade permanece desejável, mas **0–100 cm é o mínimo exigido**.
+4. Validar MapBiomas real, carbono em todos os cinco biomas, compartimentos, fontes e incertezas, altura/AGB SAR alta biomassa, métricas de validação espacial independente e segurança de arquivos. Não inventar necromassa, serapilheira ou IC95%.
+5. Só declarar **VERSÃO DEFINITIVA** após evidências científicas e técnicas completas e artefato ZIP do mesmo SHA homologado.
+
+**STATUS:** MUDANÇA MATERIAL — CORREÇÕES DE ÁGUA, ORDEM DE FLORESTA DENSA E SOLO 0–100 CM COMMITADAS; TESTE DE SOLO ATUALIZADO. WINDOWS DO NOVO SHA E REPROCESSAMENTO REAL AINDA **NÃO COMPROVADOS**. **VERSÃO DEFINITIVA NÃO LIBERADA.**
