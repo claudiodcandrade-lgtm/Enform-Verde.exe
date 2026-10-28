@@ -101,6 +101,27 @@ class CarbonCompartmentTests(unittest.TestCase):
         self.assertIsNone(santo_ambrosio_litter_stock_component("Cerrado","Floresta Ombrófila Densa",aoi))
 
     @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_santo_ambrosio_uses_parent_property_with_small_native_intersection(self):
+        parent=gpd.GeoDataFrame(geometry=[box(-49.60,-0.12,-49.41,0.045)],crs="EPSG:4326")
+        forest=gpd.GeoDataFrame(geometry=[box(-49.56,-0.09,-49.50,-0.04)],crs="EPSG:4326")
+        args=("Amazônia","Floresta Ombrófila Densa das Terras Baixas",forest)
+        # Without parent metadata the small stratum is not presumed to be
+        # a farm-wide 17-quadrat inventory; with actual verified parent it is.
+        self.assertIsNone(santo_ambrosio_litter_stock_component(*args))
+        result=santo_ambrosio_litter_stock_component(*args,property_aoi=parent)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["n_independent_units"],17)
+        self.assertAlmostEqual(result["mean_dry_mg_ha"],14.3876)
+        self.assertTrue(result["target_intersection_inside_parent"])
+        self.assertIn("erro de transferência",result["uncertainty_warning"])
+
+        outside=gpd.GeoDataFrame(geometry=[box(-49.62,-0.08,-49.58,-0.05)],crs="EPSG:4326")
+        self.assertIsNone(santo_ambrosio_litter_stock_component(
+            "Amazônia","Floresta Ombrófila Densa",outside,property_aoi=parent))
+        self.assertIsNone(santo_ambrosio_litter_stock_component(
+            "Amazônia","Savana Arborizada",forest,property_aoi=parent))
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
     def test_tapajos_direct_deadwood_stocks_are_reported_separately_and_geofenced(self):
         aoi=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.93,-3.02)])
         rows=tapajos_necromass_components("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi)
