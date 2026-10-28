@@ -32,8 +32,13 @@ def numeric_soil_stock(result):
     if isinstance(at,dict):
         for key,value in at.items():
             k=str(key).casefold()
-            if ("pixel" in k and "value" in k) or "stretched" in k or k in (
-                  "value","valor","pixel_value"):
+            # ArcGIS "stretched pixel value" may be a renderer colour/intensity
+            # (e.g. 0–255), NOT the stock in Mg C/ha. Never use it as stock.
+            # Only accept attributes referring to an unscaled raw pixel value.
+            if "stretched" in k or "render" in k or "display" in k:
+                continue
+            if ("pixel" in k and "value" in k) or k in (
+                  "value","valor","pixel_value","raw_value","raw pixel value"):
                 candidates.append(value)
     for raw in candidates:
         if raw is None or isinstance(raw,bool):
