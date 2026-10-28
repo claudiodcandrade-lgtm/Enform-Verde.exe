@@ -229,3 +229,54 @@ def assess_external_model_transfer(*, candidate_id, crop, sensors, evidence):
         errors.append("preflight only: executable inference, applicable-domain checks and local uncertainty remain unverified")
     result["operational_label"]="áreas cultivadas"
     return result
+
+
+def prioritize_comparable_models(observations):
+    """Order measured models within explicitly comparable crop/domain/metric groups.
+
+    Do not compare overall accuracy with per-class precision, foreign with
+    locally validated performance, or different crop/season definitions.
+    A model with 0% measured accuracy remains visible. Ranking does not imply
+    that any executable weights exist or that a Brazilian pixel is validated.
+    """
+    if not isinstance(observations,(list,tuple)):
+        raise ValueError("observations must be a list of published measurements")
+    groups={}
+    for item in observations:
+        if not isinstance(item,dict):
+            raise ValueError("invalid model performance record")
+        required=("model_id","crop","metric","domain","validation_scope",
+                  "published_source","accuracy")
+        if any(item.get(field) is None or item.get(field)=="" for field in required):
+            raise ValueError("measured accuracy needs model, metric, source and domain")
+        key=tuple(str(item[field]) for field in ("crop","metric","domain","validation_scope"))
+        try:
+            score=float(item["accuracy"])
+        except (TypeError,ValueError) as exc:
+            raise ValueError("accuracy must be a fraction") from exc
+        if not math.isfinite(score) or not 0<=score<=1:
+            raise ValueError("accuracy must be a fraction from 0 to 1")
+        lower=item.get("ci95_lower")
+        upper=item.get("ci95_upper")
+        if (lower is None)!=(upper is None):
+            raise ValueError("both CI bounds are required when any is supplied")
+        if lower is not None:
+            try:
+                lower,upper=float(lower),float(upper)
+            except (TypeError,ValueError) as exc:
+                raise ValueError("invalid confidence interval bounds") from exc
+            if not all(math.isfinite(x) for x in (lower,upper)) or not 0<=lower<=score<=upper<=1:
+                raise ValueError("invalid confidence interval for measured accuracy")
+        record=dict(item)
+        record["accuracy"]=score
+        record["ci95_lower"],record["ci95_upper"]=lower,upper
+        record["ranking_only"]=True
+        groups.setdefault(key,[]).append(record)
+    result=[]
+    for key in sorted(groups):
+        models=sorted(groups[key],key=lambda m:(-m["accuracy"],
+            -(m["ci95_lower"] if m["ci95_lower"] is not None else -1),str(m["model_id"])))
+        result.append({"crop":key[0],"metric":key[1],"domain":key[2],
+                       "validation_scope":key[3],"ranked":models,
+                       "model_selection_note":"higher observed accuracy first within comparable evidence; no mandatory minimum"})
+    return result
