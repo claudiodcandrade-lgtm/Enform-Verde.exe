@@ -898,3 +898,16 @@ Pesquisa na documentação oficial confirma **duas rotas distintas que não pode
 **Regressões adicionadas:** commit `6d270c7274690b2a61506891afaf2ac3caf5c410` em `tests/test_official_inventory_harvest.py`, com verificações simuladas de metadados completos sem `package_show` e fallback quando o campo `resources` não está presente. A execução CI após esse SHA é necessária; testes simulados não substituem consulta real de API e verificação de conjuntos de dados.
 
 **Aceite de desempenho pendente:** medir número real de consultas, bytes, tempo de descoberta e download em vários cenários, além de monitorar limites de taxa, timeout e servidores indisponíveis. **Não classificar como release final** sem as provas de SAR, carbono por compartimento e incertezas, agricultura/vigor/safras e teste integrado Windows.
+
+
+---
+
+## REGRESSÃO REFORÇADA — 28/10/2026 — TESTE EFETIVO DE PAGINAÇÃO SINAFLOR
+
+**Problema comprovado no teste anterior:** o teste chamado `test_actual_sinaflor_discovery_uses_pagination_without_redundant_package_show` substituía por mock a própria função `discover_sinaflor_metadata_fast` responsável pela paginação; assim não exercitava efetivamente a passagem entre páginas pela rota principal.
+
+**Correção incorporada:** commit `1b811e2eceaa63d5dda25daae2b68f05a4376481` modifica `tests/test_official_inventory_harvest.py` para executar o caminho real `discover_sinaflor_datasets → discover_sinaflor_metadata_fast → _ckan_action` e simular duas páginas oficiais, com 101 registros distintos e `count=101`. O teste exige duas requisições `package_search`, deslocamentos 0 e 100, todos os 101 resultados preservados e nenhuma requisição `package_show` redundante. Isto é uma simulação de API, não uma pesquisa nacional real, e não altera cálculos científicos.
+
+**Situação no momento:** antes do commit, HEAD `58b84aef55ef31682bb1ebfb407e1973374a92b4` da PR #50 draft: dashboard `40722774304` completed/success e Windows `40722774295` in_progress. Necessário validar o SHA novo em CI e medir latência/transferência reais antes de afirmar ganho de desempenho.
+
+**Bloqueios de release mantidos:** comprovação integrada e independente de AGB SAR/altura, BGB por modelos adequados, necromassa, serrapilheira, solo 0–100 cm e suas incertezas nos cinco biomas; detecção e classificação de lavouras/vigor com validação; modelos de rendimento com séries SAR/PAM reais; benchmarks reais e ZIP Windows do SHA homologado. Não liberar como definitivo apenas por testes verdes.
