@@ -151,8 +151,13 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
             'method':'C conhecido = soma por fitofisionomia nativa e compartimento de (tC/ha × hectares da interseção). Outras classes: ocorrência apenas.'}
 
 
-def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_estimator):
-    """Reuse existing domain-aware providers separately for every native stratum."""
+def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_estimator, *, property_aoi=None):
+    """Use domain-aware evidence on each native stratum; verify farm at parent AOI.
+
+    A small FOD polygon from Santo Ambrósio can reuse only the compatible
+    study's 17-quadrat litter reference when the WHOLE property is verified
+    and the forest polygon is wholly contained within that property.
+    """
     from carbon_compartments import (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,
         pantanal_nhecolandia_litter_carbon_component,tapajos_necromass_components,ifn_necromass_component,infer_uf_from_aoi)
     try:sar=sar_estimator(aoi,biome,physiognomy) or {}
@@ -171,7 +176,9 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
     # Retain only class-compatible microrregional/validated source components.
     if not any('serapilheira' in normalize(k) for k in regional):
         for provider in (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,pantanal_nhecolandia_litter_carbon_component):
-            component=provider(biome,physiognomy,aoi)
+            component=(provider(biome,physiognomy,aoi,property_aoi=property_aoi)
+                       if provider is santo_ambrosio_litter_stock_component else
+                       provider(biome,physiognomy,aoi))
             if component:regional['Serapilheira']=component;break
     if agb is not None:
         rows.append({'parametro':'Biomassa aérea','tc':float(agb)*.47,'origem':origin,'fonte':selected.get('source','Produto/modelo SAR'),
