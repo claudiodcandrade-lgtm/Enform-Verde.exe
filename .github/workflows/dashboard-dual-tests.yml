@@ -22,3 +22,4 @@ jobs:
           python -m unittest discover -s tests -p 'test_agricultural_weather.py' -v
           python -m unittest discover -s tests -p 'test_enform_uncertainty_core.py' -v
           python -m unittest discover -s tests -p 'test_soil_profile_stats.py' -v
+          python -m unittest discover -s tests -p 'test_root_allometry_uncertainty.py' -v
