@@ -178,3 +178,24 @@ class NativeNamingTests(unittest.TestCase):
             self.assertEqual(result['classes'][0]['class_name'],'Áreas cultivadas')
             self.assertIs(result['classes'][0]['native_status'],False)
             self.assertEqual(result['original_source_distributions'][0]['classes'][0]['class_name'],'Soja')
+
+
+class LargeMapBiomasRegression(unittest.TestCase):
+    def test_large_raster_window_is_tiled_without_four_million_cell_rejection(self):
+        from land_use_sar import raster_class_polygons
+        with tempfile.TemporaryDirectory() as directory:
+            raster=Path(directory)/'large_classes.tif'
+            width=2100
+            height=2100  # 4,410,000 pixels, formerly rejected
+            with rasterio.open(raster,'w',driver='GTiff',height=height,width=width,
+                               count=1,dtype='uint8',crs='EPSG:6933',
+                               transform=from_origin(0,height,1,1),nodata=0,
+                               tiled=True,blockxsize=256,blockysize=256) as dst:
+                block=np.full((256,256),3,dtype='uint8')
+                for _,window in dst.block_windows(1):
+                    dst.write(block[:int(window.height),:int(window.width)],1,window=window)
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,width,height)],crs='EPSG:6933')
+            result=raster_class_polygons(aoi,str(raster))
+            self.assertFalse(result.empty)
+            self.assertEqual(set(result.class_code),{3})
+            self.assertAlmostEqual(result.geometry.area.sum(),width*height,places=3)
