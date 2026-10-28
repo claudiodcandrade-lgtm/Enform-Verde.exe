@@ -1962,6 +1962,9 @@ class App(tk.Tk):
                "Formações nativas confirmadas: "+format_ptbr(area,2)+" ha",
                "Outros usos (somente ocorrência, sem carbono): "+format_ptbr(native["excluded_other_uses_ha"],2)+" ha",
                "Cobertura não confirmada (sem carbono): "+format_ptbr(native["unknown_cover_area_ha"],2)+" ha",
+               "Área sem qualquer classe de cobertura mapeada: "+format_ptbr(native.get("unmapped_aoi_area_ha",0),2)+" ha",
+               "Completude cartográfica: "+native.get("cover_completeness","NÃO VERIFICADA")+
+                   " — área sem classe impede concluir que o estoque total da AOI foi estimado.",
                native["method"],""]
         from executive_carbon_report import executive_carbon_lines
         lines = executive_carbon_lines(native,format_ptbr) + lines
