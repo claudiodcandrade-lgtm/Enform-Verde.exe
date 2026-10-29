@@ -419,15 +419,21 @@ def _field(cols,candidates):
 
 def _shares(project,theme,fields):
     import geopandas as gpd
-    p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
+    p=project.to_crs("EPSG:6933"); t=theme.to_crs("EPSG:6933")  # equal-area for Brazil
     try:
         import shapely
         p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
         t["geometry"]=t.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
     except Exception: pass
     inter=gpd.overlay(t,p[["geometry"]],how="intersection",keep_geom_type=False)
+    # Reject overlapping IBGE polygons rather than double count native hectares.
+    # The test is performed after clipping every feature to the AOI.
     inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
     if inter.empty:return []
+    union_area=float(inter.geometry.union_all().area)
+    summed_area=float(inter.geometry.area.sum())
+    if summed_area-union_area > max(1.0,union_area*1e-8):
+        raise ValueError("Sobreposição entre polígonos IBGE: área ambígua; classificação bloqueada.")
     inter["_ha"]=inter.geometry.area/10000
     total=float(inter["_ha"].sum())
     if total<=0:return []
@@ -446,7 +452,7 @@ def _shares(project,theme,fields):
 def _shares_with_code(project,theme,name_field,code_field):
     """Area-weighted IBGE region names retaining their official phytoregion code."""
     import geopandas as gpd
-    p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
+    p=project.to_crs("EPSG:6933"); t=theme.to_crs("EPSG:6933")  # equal-area for Brazil
     try:
         import shapely
         p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
@@ -454,15 +460,30 @@ def _shares_with_code(project,theme,name_field,code_field):
     except Exception: pass
     columns=["geometry",name_field]+([code_field] if code_field else [])
     inter=gpd.overlay(t[columns],p[["geometry"]],how="intersection",keep_geom_type=False)
+    # Reject overlapping IBGE polygons rather than double count native hectares.
+    # The test is performed after clipping every feature to the AOI.
     inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
     if inter.empty:return []
+    union_area=float(inter.geometry.union_all().area)
+    summed_area=float(inter.geometry.area.sum())
+    if summed_area-union_area > max(1.0,union_area*1e-8):
+        raise ValueError("Sobreposição entre polígonos IBGE: área ambígua; classificação bloqueada.")
     inter["_ha"]=inter.geometry.area/10000; total=float(inter["_ha"].sum())
     if total<=0:return []
     keys=[name_field]+([code_field] if code_field else [])
     out=inter.groupby(keys,dropna=False)["_ha"].sum().sort_values(ascending=False)
-    return [{"name":str(key[0] if isinstance(key,tuple) else key),
+    aoi_area=float(p.geometry.union_all().area/10000.0)
+    if aoi_area<=0:raise ValueError("AOI sem área mensurável para região fitoecológica.")
+    records=[{"name":str(key[0] if isinstance(key,tuple) else key),
              "code":(str(key[1]) if code_field and isinstance(key,tuple) and key[1] is not None else None),
-             "area_ha":float(area),"percent":float(area/total*100)} for key,area in out.items() if area>0]
+             "area_ha":float(area),"percent":float(area/aoi_area*100)}
+             for key,area in out.items() if area>0]
+    # Percentages describe the whole AOI, including any unmapped remainder.
+    missing=max(0.0,aoi_area-union_area/10000.0)
+    if missing>max(0.01,aoi_area*1e-8):
+        records.append({"name":"Sem cobertura IBGE","code":None,"area_ha":missing,
+                        "percent":missing/aoi_area*100})
+    return records
 
 def primary_ibge_physiognomy(diagnosis):
     """Return the dominant current IBGE phytogeographic region (legend_1).
