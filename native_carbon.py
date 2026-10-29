@@ -116,7 +116,7 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
         complete=all(c['total_tc'] is not None for c in components)
         strata.append({'class_name':record.class_name,'physiognomy':physiognomy,'physiognomy_resolution':detail,'source':record.source,
                        'area_ha':area,'area_pct':100*area/area_aoi,'components':components,
-                       'known_total_tc':known,'complete':complete,'sar_audit':estimated.get('sar_audit'),'sar_details':estimated.get('sar_details'),'soil_profiles':estimated.get('soil_profiles')})
+                       'known_total_tc':known,'complete':complete,'sar_audit':estimated.get('sar_audit'),'sar_details':estimated.get('sar_details'),'soil_profiles':estimated.get('soil_profiles'),'secondary_evidence_audit':estimated.get('secondary_evidence_audit')})
     totals=[]
     for name in COMPARTMENTS:
         entries=[c for st in strata for c in st['components'] if c['parametro']==name and c['total_tc'] is not None]
