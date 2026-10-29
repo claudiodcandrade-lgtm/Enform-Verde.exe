@@ -31,17 +31,14 @@ MODEL_REGISTRY=[
 ]
 def _wkt(gdf):return gdf.to_crs(4326).geometry.union_all().wkt
 def _scene_datetime(item):
-    """Best-effort ISO acquisition datetime for newest-first selection."""
-    p=item.get("properties",{}) or {}
-    for k in ("startTime","stopTime","sceneDate","acquisitionDate","datetime","start_datetime","end_datetime"):
-        v=p.get(k)
-        if v:return str(v)
-    raw=item.get("raw") or {}
-    rp=raw.get("properties",{}) if isinstance(raw,dict) else {}
-    return str(rp.get("datetime") or rp.get("start_datetime") or "")
+    """UTC acquisition, not product publication/ingestion or download timestamp."""
+    from sar_acquisition_time import acquisition_utc
+    dt=acquisition_utc(item)
+    return dt.isoformat() if dt is not None else ""
 
 def _newest_first(items):
-    return sorted(items,key=_scene_datetime,reverse=True)
+    from sar_acquisition_time import order_by_acquisition
+    return order_by_acquisition(items)
 
 def discover_asf(gdf,limit=25):
     """Discover candidate scenes. NISAR is explicitly restricted to L2 GCOV when possible."""
@@ -532,7 +529,12 @@ def _biomass_item_product_types(item):
 
 def _biomass_catalog_summary(item):
     props=item.get("properties") or {}
+    from sar_acquisition_time import annotate_acquisition
+    a=annotate_acquisition(item)
     return {"id":item.get("id"),"datetime":props.get("datetime") or props.get("start_datetime"),
+            "acquisition_utc":a["acquisition_utc"],
+            "acquisition_brasilia":a["acquisition_brasilia"],
+            "acquisition_status":a["acquisition_status"],
             "collection":item.get("_collection"),"stage":item.get("_stage"),
             "product_types":_biomass_item_product_types(item),"bbox":item.get("bbox"),
             "assets":[{"key":k,"title":v.get("title"),"type":v.get("type"),
@@ -548,12 +550,19 @@ def maap_access_token(offline_token):
     return t
 def maap_search(gdf,collection,limit=50,product_type=None):
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
-    body={"collections":[collection],"intersects":geom,"limit":limit}
-    r=requests.post(MAAP_STAC+"search",json=body,timeout=(10,60));r.raise_for_status()
+    body={"collections":[collection],"intersects":geom,"limit":limit,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    r=requests.post(MAAP_STAC+"search",json=body,timeout=(10,60))
+    if r.status_code in (400,422):
+        # Some STAC deployments do not accept sortby. Still sort locally by
+        # genuine acquisition metadata rather than trusting item order.
+        body.pop("sortby")
+        r=requests.post(MAAP_STAC+"search",json=body,timeout=(10,60))
+    r.raise_for_status()
     fs=r.json().get("features",[])
     if product_type:
         fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{}))+" "+str(x.get("assets",{})))]
-    return sorted(fs,key=lambda x:str((x.get("properties") or {}).get("datetime") or (x.get("properties") or {}).get("start_datetime") or ""),reverse=True)
+    return _newest_first(fs)
 def biomass_l2b_search(gdf,limit=100):
     """Discover both official AGB and forest-height L2B products; retain their distinct roles."""
     out=[]
@@ -568,7 +577,9 @@ def biomass_l2b_search(gdf,limit=100):
     for item in out:
         unique[(item.get("_collection"),item.get("id"),item.get("_product_type"))]=item
     out=list(unique.values())
-    out.sort(key=lambda it:str((it.get("properties") or {}).get("datetime") or (it.get("properties") or {}).get("start_datetime") or ""),reverse=True)
+    out=_newest_first(out)
+    # Scientific product role and operational quality precede recency.
+    # Within each equivalent class: most recent *acquisition* first.
     out.sort(key=lambda it:(0 if it.get("_stage")=="OPERATIONAL" else 1,
                             0 if it.get("_product_type")=="FP_AGB_L2B" else 1))
     return out
@@ -1160,7 +1171,7 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
     r=requests.post(CDSE_STAC,json=body,timeout=(10,60)); r.raise_for_status()
     items=r.json().get("features",[])
-    items=sorted(items,key=lambda x:str((x.get("properties") or {}).get("datetime") or ""),reverse=True)
+    items=_newest_first(items)
     Path(cache).mkdir(parents=True,exist_ok=True)
     paths=[]; scene_ids=[]; errors=[]
     for it in items[:4]:
@@ -1213,6 +1224,7 @@ def planetary_alos_palsar(gdf,cache,limit=12):
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
     stats=[]; errors=[]; scene_ids=[]; paths=[]
+    items=_newest_first(items)
     for it in items:
         scene_ids.append(it.get("id")); assets=it.get("assets") or {}
         scene_stats=[]; scene_paths=[]
@@ -1298,6 +1310,7 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
                 raise
             time.sleep(2*(attempt+1))
     if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":["sem cenas Sentinel-1 GRD no AOI"]}
+    items=_newest_first(items)
     Path(cache).mkdir(parents=True,exist_ok=True); stats=[]; paths=[]; errors=[]; scene_ids=[]
     import rasterio
     from rasterio.mask import mask
@@ -1548,8 +1561,8 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 if "NISAR" in t:return 1
                 if it.get("full_pol_candidate"):return 2
                 return 3
-            # Within each spectral/product priority, newest acquisition is attempted first.
-            cands=sorted(cands,key=_scene_datetime,reverse=True)
+            # Scientific sensor/product priority first, newest real acquisition within it.
+            cands=_newest_first(cands)
             cands=sorted(cands,key=_rank)
             audit["recency_policy"]="spectral priority first; NISAR GCOV/full-pol first; newest acquisition first within each product class; rejected scenes are logged and next newest is tried"
             audit["lband_candidate_readiness"]={
