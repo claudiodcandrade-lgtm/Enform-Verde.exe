@@ -40,6 +40,29 @@ DATASETS = {
     # SFB's CKAN record has no license; inspect its metadata but do not download.
     "necromass": ("/dataset/necromassa-por-uf-ifn", "blocked_no_license"),
 }
+# Official SFB/IFN 2026 panel: these are actual CKAN resource downloads
+# from a dataset explicitly licensed Creative Commons Attribution.
+# Plot-level identifiers do NOT imply publicly available geocoordinates.
+PANEL_DATASET_PAGE = BASE + "/pt_BR/dataset/painel-de-biomassa-e-carbono"
+PANEL_RESOURCES = {
+    "panel_biomass": (
+        "06203c8a-c13e-498c-8804-f32e991c17ba",
+        "dadosabertos_dadosbiomassa_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+    ),
+    "panel_dead_trees": (
+        "979419d0-96b2-411f-baec-3759c61f09ce",
+        "dadosabertos_dadosarvoresmortas_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+    ),
+    "panel_necromass": (
+        "f5902766-14e3-46b8-bdc4-99bc09693161",
+        "dadosabertos_dadosnecromassa_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+    ),
+    "panel_equations": (
+        "a209cbbe-1dd6-4217-8662-658ed1e7e1e6",
+        "dadosabertos_equacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+    ),
+}
+
 DOWNLOAD_RE = re.compile(r'href=["\']([^"\']+/download/[^"\']+)["\']', re.I)
 EXTENSIONS = (".xlsx", ".csv")
 
@@ -206,6 +229,52 @@ def inspect_csv(body):
         "encoding": encoding, "delimiter": delimiter,
     }
 
+def harvest_sfb_2026_panel(session, report):
+    """Download explicitly licensed SFB panel CSVs with provenance and schema audits.
+
+    Dataset-level access is verified before download. Records are only potential
+    calibration/validation inputs and are never approved as plot-pixel pairs
+    without independent locations and true field measurements.
+    """
+    try:
+        response = session.get(PANEL_DATASET_PAGE, timeout=45)
+        response.raise_for_status()
+        license_text = find_license(response.text)
+        if not re.search(r"Creative Commons.{0,100}(?:Atribui[cç][aã]o|Attribution)",
+                         response.text, re.I):
+            raise RuntimeError("official SFB panel dataset CC BY license not confirmed")
+    except Exception as exc:
+        report["failures"].append(f"sfb_2026_panel: license/source verification failed: {type(exc).__name__}: {exc}")
+        return
+    for label, (resource_id, filename) in PANEL_RESOURCES.items():
+        url = (BASE + "/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/"
+               + "resource/" + resource_id + "/download/" + filename)
+        entry = {"dataset_page": PANEL_DATASET_PAGE, "license": license_text,
+                 "license_policy": "cc_by", "status": "not_downloaded",
+                 "resources_found": 1, "resources": []}
+        report["datasets"][label] = entry
+        try:
+            received = session.get(url, timeout=120)
+            received.raise_for_status()
+            body = received.content
+            if not body or len(body) > 100_000_000:
+                raise RuntimeError(f"invalid resource size {len(body)} bytes")
+            if body[:50].lower().startswith(b"<!doctype html") or body[:5].lower() == b"<html":
+                raise RuntimeError("unexpected HTML content instead of source CSV")
+            output = OUT / label / filename
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_bytes(body)
+            entry["resources"].append({
+                "filename": filename, "source_url": url, "bytes": len(body),
+                "sha256": hashlib.sha256(body).hexdigest(),
+                **inspect_csv(body),
+            })
+            entry["status"] = "harvested_not_validated"
+        except Exception as exc:
+            entry["status"] = "access_or_schema_error"
+            report["failures"].append(f"{label}: {type(exc).__name__}: {exc}")
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     session = requests.Session()
@@ -276,6 +345,8 @@ def main():
             report["datasets"][key] = {"dataset_page": page_url, "license": "unknown",
                                        "resources_found": 0, "resources": []}
             report["failures"].append(f"{key}: {type(exc).__name__}: {exc}")
+    # National panel samples supplement, never replace, fitophysiognomy-specific IFN validation.
+    harvest_sfb_2026_panel(session, report)
     report["unique_ua_by_dataset_and_biome"] = {}
     for key, dataset in report["datasets"].items():
         counts = {}
