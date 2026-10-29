@@ -14,6 +14,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          # PR merge refs are synthetic and NOT the branch HEAD used for release.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -944,13 +948,15 @@ jobs:
           $exe = Join-Path $folder 'Enform Verde.exe'
           if (!(Test-Path $exe)) { throw 'Cannot checksum missing compiled executable' }
           $sourceSha = (git rev-parse HEAD).Trim()
-          if ($sourceSha -ne $env:GITHUB_SHA -and $env:GITHUB_EVENT_NAME -ne 'pull_request') {
-            throw "Build source and workflow SHA disagree: $sourceSha / $env:GITHUB_SHA"
+          $expectedSha = '${{ github.event.pull_request.head.sha || github.sha }}'
+          if ($sourceSha -ne $expectedSha) {
+            throw "Windows package SHA is not the requested branch HEAD: checked out $sourceSha; expected $expectedSha; event SHA $env:GITHUB_SHA"
           }
           $checksum = (Get-FileHash -Algorithm SHA256 -Path $exe).Hash.ToLowerInvariant()
           $manifest = @(
             'Enform Verde Multisource — Windows build audit',
             "Git commit of checked-out source: $sourceSha",
+            "Expected source SHA from branch/PR: $expectedSha",
             "Workflow run ID: $env:GITHUB_RUN_ID",
             'Clean-folder EXE UI smoke and Tapajos AOI acceptance: passed before manifest generation',
             "SHA256 Enform Verde.exe: $checksum",
