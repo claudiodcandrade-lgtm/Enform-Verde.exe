@@ -1527,3 +1527,32 @@ Código efetivamente alterado após a política acima:
 **Evolução material comprovada, sem homologação científica:** após o ajuste das fixtures SAR no commit `ac44b9412fae4103f1d2d715f9fc9a8386416bbb`, o workflow **Dashboard dual - tests** run **40801251287** encerrou **completed/success**. Conferência direta do log do job 123209624297: os seis testes `test_sar_acquisition_time.py` passaram; os seis testes `test_sar_recency_routes.py` passaram (incluindo MAAP `sortby`, ordenação por aquisição real, prioridade AGB/FH e IOC/operacional); os quatro testes `test_pronasolos_service_fallback.py` passaram (incluindo fallback alternativo 0–100 cm, perfis incompletos e vedação de mistura de horizontes). Passaram também os três testes IBGE de área equivalente e os dois testes das cinco rotas de bioma. **São testes de regressão e mocks, não prova de consulta e processamento nacional de pixels reais, nem de acurácia por fitofisionomia.** Evidência: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/40801251287 .
 
 **Estado comparado:** HEAD posterior `246e2703cf7c02e63b47af6189445e55091eaa79` corresponde apenas à atualização de documentação do prompt após `ac44b941...`; PR #50 permanece **open/draft**. O workflow de homologação científica do HEAD (runs 40801325082 e 40801319514) permanece **failure**. Os builds Windows e o CI no SHA mais recente ainda estavam `in_progress` na leitura; o sucesso de CI no SHA `ac44b941...` não substitui a necessidade de validar o ZIP e a homologação científica no **mesmo SHA**. **Sem liberação, sem notificação ao usuário.**
+
+---
+
+## CHECKPOINT DE CONTINUIDADE — 28/10/2026, 22h38 (UTC−3)
+
+**Estado observado no GitHub:** PR #50 permanece aberta, em WIP, e não homologada. A branch `feature/agricultural-identification-native-carbon` está no HEAD `e33e66d24ab45a5570ac1c98eefe227f7193e78f`. Este checkpoint complementa o histórico acima; não altera conclusões anteriores nem declara liberação.
+
+### Alterações incorporadas desde o checkpoint anterior
+
+- A prioridade SAR passou a ordenar aquisições pela **data/hora efetiva de aquisição** dentro das classes de produto compatíveis; data de publicação do catálogo não substitui aquisição. Testes de regressão cobrem ordenação, metadados com fuso, prioridade entre produtos operacionais/IOC e rotas de catálogo. As correções de fixtures e dependências dos testes foram incluídas nos commits `ac44b9412fae4103f1d2d715f9fc9a8386416bbb`, `82da1d57b9ac09f7dcd41ac8356ff25b800075bd` e `b738812a2a1dad1d39c0af5353b07f13c7b0b801`.
+- O acesso oficial PronaSolos para estoque de carbono foi ampliado com fallback entre serviços verificados por metadados, preservando o perfil completo de 0–100 cm. É proibido combinar horizontes de endpoints diferentes. Os commits relevantes são `52d08a074389cb3fe795d2f0b320fa7d29ffe160`, `8ce12a7c24e5be6535a82d286653930cb10d8f11`, `e1a3420600841932b498d8f3a79a7fed937782d8`, `0860b18d18120c58d9864d23ade89b07809b4f6d` e `9a7bf198774ef41801870c11981e0a0e543112e3`.
+- A integração do endpoint MapServer alternativo e as regressões associadas foram corrigidas; os testes de contrato verificam perfis incompletos e impedem extrapolação ou mistura de horizontes. A aprovação de testes e a leitura pontual de cinco perfis **não** equivalem a erro espacial preditivo para AOI nem comprovam cobertura nacional.
+- Os testes automatizados do workflow **Dashboard dual - tests**, run **40801415194**, no SHA atual, concluíram **success**. O workflow **Homologação científica - bloqueio independente**, run **40801415165**, concluiu **failure**, como deve ocorrer sem evidência completa e independente.
+- O build Windows run **40801415089**, no mesmo SHA `e33e66d24ab45a5570ac1c98eefe227f7193e78f`, estava **in_progress** às 22h38 UTC−3; jobs de testes de integração, processamento de AOIs reais e empacotamento ainda não haviam concluído. Não registrar sucesso nem divulgar seu artefato antes da conclusão e da conferência do SHA e dos hashes.
+
+### Evidência e limites que permanecem
+
+O SHA atual contém alterações de documentação sobre recuperação dos testes de recência SAR e de estoque PronaSolos 0–100 cm. O run **40801415165** mantém o gate científico reprovado. Builds e testes não suprem evidência independente de desempenho científico. Os acessos pontuais ao serviço de solo tampouco demonstram intervalo preditivo espacial por AOI.
+
+Permanecem bloqueadores: validação SAR independente de AGB/altura em alta biomassa e nos cinco biomas; pareamento de parcelas com pixels e métricas independentes; incerteza de transferência e covariâncias por compartimento; necromassa/serrapilheira compatíveis por fitofisionomia; erro espacial de COS 0–100 cm; pesos e validação independente para classes agrícolas, vigor e produtividade; e evidência Windows de build/EXE testado no SHA idêntico. Vigor e previsão de safra devem continuar indisponíveis ou explicitamente bloqueados onde faltarem modelos e validação compatíveis.
+
+### Próximas ações obrigatórias
+
+1. Aguardar conclusão do run Windows **40801415089** e examinar seus jobs e logs no SHA `e33e66d24ab45a5570ac1c98eefe227f7193e78f`; registrar resultado, SHA do EXE, SHA-256 do EXE/ZIP e limitações. Se falhar, corrigir a causa e repetir os workflows no novo HEAD.
+2. Manter o gate científico independente fechado até obter e auditar evidências quantitativas reais para todas as seções exigidas. Não criar `validation/release_evidence.json` sintético, não relaxar critérios, não converter sucesso de CI em homologação científica.
+3. Prosseguir com a coleta/integração de dados reais, compatibilidade por fitofisionomia e validação independente, registrando dados, proveniência, domínios, resíduos, métricas e incertezas reproduzíveis.
+4. Atualizar este prompt após cada evolução material, preservando o histórico. Só declarar liberação e fornecer link de versão definitiva após aprovação científica e build Windows final no mesmo SHA.
+
+**Status:** desenvolvimento em andamento; PR #50 e ZIP permanecem experimentais; sem homologação científica ou liberação definitiva.
