@@ -538,12 +538,15 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     import geopandas as gpd
     classes=gpd.read_file(land["vector_path"])
     options=dict(sar_options or {})
+    # Optional externally licensed, class-specific inventory observations.
+    # Never forward a data manifest as a SAR model parameter.
+    inventory_evidence=options.pop("inventory_evidence",None)
     def sar_estimator(frame,b,p):
         if sar_paths:return process_real_sar(frame,sar_paths,b,p)
         return automatic_pipeline(frame,b,p,**options)
     def estimator(frame,phys):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
-                                          property_aoi=aoi)
+                                          property_aoi=aoi,inventory_evidence=inventory_evidence)
     return summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
 
 def diagnose_ibge(project):
