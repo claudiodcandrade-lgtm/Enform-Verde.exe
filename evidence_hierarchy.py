@@ -97,7 +97,7 @@ def select_stock_evidence(candidates, *, biome, physiognomy, pool,
             if (isinstance(interval, (list, tuple)) and len(interval) == 2
                     and _number(interval[0]) is not None
                     and _number(interval[1]) is not None
-                    and interval[0] <= center <= interval[1]):
+                    and float(interval[0]) <= center <= float(interval[1])):
                 lo, hi = map(float, interval)
                 kind = "source_published_ci95_not_target_AOI_ci95"
             elif spread is not None and spread > 0:
@@ -107,7 +107,7 @@ def select_stock_evidence(candidates, *, biome, physiognomy, pool,
                   and len(observed_range) == 2
                   and _number(observed_range[0]) is not None
                   and _number(observed_range[1]) is not None
-                  and observed_range[0] <= center <= observed_range[1]):
+                  and float(observed_range[0]) <= center <= float(observed_range[1])):
                 lo, hi = map(float, observed_range)
                 kind = "source_observed_range_descriptive_only"
             else:
@@ -123,7 +123,7 @@ def select_stock_evidence(candidates, *, biome, physiognomy, pool,
                     lo, hi = max(0.0, lo - transfer), hi + transfer
                     options.append((GEOGRAPHIC_TIERS.index(tier),
                                     EVIDENCE_LEVELS.index(row["evidence_level"]),
-                                    -(int(row.get("independent_units") or 0)),
+                                    -max(0, int(_number(row.get("independent_units")) or 0)),
                                     index, row, lo, hi, kind, transfer))
         if reason:
             rejected.append({"index": index, "reason": reason,
