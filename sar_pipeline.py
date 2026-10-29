@@ -1244,8 +1244,12 @@ def _planetary_sign_asset(unsigned_href, *, max_attempts=3, sleep=None):
                     except (ValueError, TypeError, OverflowError, IndexError):
                         pass
             # Cap retry delay; never bypass provider quotas or retry indefinitely.
+            # If the server asks for more than our bounded 15-second wait,
+            # stop instead of retrying before the service permits it.
+            if delay is not None and delay > 15.0:
+                raise
             backoff = min(8.0, 2.0 ** attempt) + random.uniform(0.0, 0.25)
-            sleep(max(backoff, min(15.0, max(0.0, delay))) if delay is not None else backoff)
+            sleep(max(backoff, max(0.0, delay)) if delay is not None else backoff)
     raise AssertionError("unreachable")
 
 
