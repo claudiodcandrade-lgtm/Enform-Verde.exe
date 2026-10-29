@@ -35,7 +35,9 @@ jobs:
             'test_sar_model_discovery.py',
             'test_native_cover_and_farm_strata.py',
             'test_carbon_compartments.py',
-            'test_measurable_agricultural_accuracy.py'
+            'test_measurable_agricultural_accuracy.py',
+            'test_scientific_release_gate.py',
+            'test_workflow_provenance.py'
           )
           foreach ($pattern in $patterns) {
             & python -m unittest discover -s tests -p $pattern -v
