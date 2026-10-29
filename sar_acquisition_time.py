@@ -8,14 +8,19 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 BRASILIA = ZoneInfo("America/Sao_Paulo")
-FIELDS = ("startTime","start_time","start_datetime","datetime","acquisitionDate",
-          "acquisition_datetime","sceneDate","scene_date","acquired","timeStart")
+FIELDS = ("acquisition_utc","startTime","start_time","start_datetime","datetime",
+          "sensingStart","acquisitionDate","acquisition_datetime","acquisition_time",
+          "sceneDate","scene_date","acquired","timeStart","stopTime","end_datetime")
 
 def acquisition_utc(scene):
     if not isinstance(scene,dict):
         return None
     p=scene.get("properties") or {}
-    for container in (scene,p):
+    raw=scene.get("raw") or {}
+    rp=raw.get("properties") or {} if isinstance(raw, dict) else {}
+    # Only time metadata attributable to the actual scene, never downloaded,
+    # created, updated or published timestamps.
+    for container in (scene,p,rp):
         for field in FIELDS:
             value=container.get(field)
             if value is None:continue
@@ -39,9 +44,28 @@ def annotate_acquisition(scene):
     item["acquisition_status"]="CONFIRMADA" if dt else "SEM_HORARIO_AQUISICAO_VERIFICAVEL"
     return item
 
+def acquisition_sort_key(scene):
+    """Sort real sensing times; unknown dates are always below known dates."""
+    dt=acquisition_utc(scene)
+    return (dt is not None, dt.timestamp() if dt is not None else float("-inf"))
+
+
+def order_by_acquisition(items, *, priority=None):
+    """Newest-first within scientifically ranked, compatible product classes.
+
+    priority(item) returns an integer (0 highest). This function NEVER tests
+    pixel accessibility or scientific compatibility: the caller must check both
+    and record rejection reasons before accepting a scene.
+    """
+    ordered=sorted(items, key=acquisition_sort_key, reverse=True)
+    if priority is not None:
+        ordered.sort(key=priority)
+    return ordered
+
+
 def newest_acquisitions(items):
     records=[annotate_acquisition(it) for it in items]
-    return sorted(records,key=lambda x:(x["acquisition_utc"] is not None,x["acquisition_utc"] or ""),reverse=True)
+    return order_by_acquisition(records)
 
 def summarize_catalog_acquisition(items):
     ordered=newest_acquisitions(items)
