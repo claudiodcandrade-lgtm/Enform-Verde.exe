@@ -35,7 +35,7 @@ DATASETS = {
     "dap10": ("/pt_BR/dataset/ifn-dap-10-por-uf_disp-set2025", True),
     "fallen_wood": ("/pt_BR/dataset/ifn-madeira-caida-por-uf_disp-set2025", True),
     "litter_corrected": ("/pt_BR/dataset/ifn-serapilheira-por-uf_disp-set2025", True),
-    "necromass": ("/dataset/ifn-necromassa-por-uf_disp-mai2024", False),
+    "necromass": ("/dataset/ifn-necromassa-por-uf_disp-mai2024", True),
 }
 DOWNLOAD_RE = re.compile(r'href=["\']([^"\']+/download/[^"\']+)["\']', re.I)
 EXTENSIONS = (".xlsx", ".csv")
@@ -184,14 +184,17 @@ def main():
             report["datasets"][key] = {"dataset_page": page_url, "license": "unknown",
                                        "resources_found": 0, "resources": []}
             report["failures"].append(f"{key}: {type(exc).__name__}: {exc}")
-    for biome in ("Amazônia", "Cerrado", "Caatinga", "Mata Atlântica", "Pantanal"):
-        report.setdefault("biome_source_presence", {})[biome] = {
-            "requires_row_level_biome_fields": True,
-            "harvested_files": sum(
-                len(ds.get("resources", [])) for ds in report["datasets"].values()
-                if isinstance(ds, dict)
-            ),
-        }
+    biome_counts = {}
+    for dataset in report["datasets"].values():
+        for resource in dataset.get("resources", []):
+            for label, count in resource.get("biome_row_counts", {}).items():
+                biome_counts[label] = biome_counts.get(label, 0) + count
+    report["biome_row_counts_from_downloaded_records"] = biome_counts
+    report["biome_source_presence"] = {
+        biome: {"observed_rows": sum(count for label, count in biome_counts.items()
+                                     if norm(label) == norm(biome))}
+        for biome in ("Amazônia", "Cerrado", "Caatinga", "Mata Atlântica", "Pantanal")
+    }
     report["validation_status"] = "harvested_not_validated"
     output = OUT / "ifn_field_harvest_manifest.json"
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
