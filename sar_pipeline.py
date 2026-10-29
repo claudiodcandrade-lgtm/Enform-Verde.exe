@@ -722,6 +722,37 @@ def download_maap_height(gdf,offline_token,cache,items=None):
             "reason":None if paths else "FP_FH__L2B catalogado, mas raster de altura não foi recuperado",
             "errors":errors[:5]}
 
+def _preserve_sar_canopy_height(result, height, audit=None):
+    """Preserve independently processed SAR-derived canopy height on any AGB route.
+
+    AGB source may be ESA P, L-band, CCI or a literature fallback; the
+    independent P-band FH / GEDI–TanDEM-X InSAR height must never be replaced
+    by inventory tree heights or radar backscatter. It remains missing when
+    the actual height product did not cover the AOI or had invalid pixels.
+    """
+    out=dict(result or {})
+    if audit is not None and out.get("audit") is None:
+        out["audit"]=audit
+    if not isinstance(height,dict):
+        out.setdefault("height_route_status","SEM_PRODUTO_DE_ALTURA_SAR_VALIDO")
+        return out
+    try:
+        value=float(height.get("height_mean_m"))
+    except (ValueError, TypeError):
+        value=float("nan")
+    if not math.isfinite(value) or value<=0:
+        out.setdefault("height_route_status","ALTURA_SAR_INVALIDA_OU_N_D")
+        return out
+    result_height=dict(height)
+    # Retain product identity, pixel count, uncertainty, definitions and URL;
+    # no automatic conversion of GEDI/TanDEM-X RH98 into BIOMASS H100.
+    out["sar_height"]=result_height
+    out.update({k:v for k,v in result_height.items() if k.startswith("height_")})
+    out["height_route_status"]="ALTURA_SAR_PROCESSADA"
+    out["height_data_origin"]="SAR_DERIVED_PRODUCT_WITH_PROVENANCE"
+    return out
+
+
 HEIGHT_PRIORITY_BIOMES=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga")
 def height_scope_contract(biome=None,physiognomy=None):
     """National request policy; per-AOI coverage and error remain product-gated."""
@@ -1585,15 +1616,13 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 pr["source"]="ESA BIOMASS FP_AGB_L2B — produto geofísico oficial P-band"
                 pr["sensor"]="ESA BIOMASS"; pr["band"]="P"; pr["product"]="FP_AGB_L2B"
                 pr["model_id"]="ESA_BIOMASS_FP_AGB_L2B"
-                if sar_height:
-                    pr["sar_height"]=sar_height
-                    pr.update({k:v for k,v in sar_height.items() if k.startswith("height_")})
+                pr=_preserve_sar_canopy_height(pr,sar_height,audit)
                 pr["uncertainty_kind"]=("média zonal de AGB_Std_Dev do produto ESA; incerteza do produto, não erro local de validação"
                     if pr.get("uncertainty_mg_ha") is not None else
                     "produto não forneceu camada AGB_Std_Dev legível; dispersão espacial reportada à parte, sem erro local validado")
                 if height_structure_estimate and height_structure_estimate.get("agb_mg_ha") is not None:
                     pr["height_structure_comparison"]=height_structure_estimate
-                return pr
+                return _preserve_sar_canopy_height(pr,sar_height,audit)
         except Exception as e:audit["warnings"].append("BIOMASS P download/process: "+str(e))
         if not offline_token:
             audit["warnings"].append("BIOMASS L2B localizado, mas o ativo científico não pôde ser lido anonimamente. Se o catálogo exigir autenticação técnica, informe ESA MAAP Long-Lasting Token.")
@@ -1603,7 +1632,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     if height_structure_estimate and height_structure_estimate.get("agb_mg_ha") is not None:
         height_structure_estimate["audit"]=audit
         height_structure_estimate["paths"]=(sar_height or {}).get("paths",[])
-        return height_structure_estimate
+        return _preserve_sar_canopy_height(height_structure_estimate,sar_height,audit)
 
     # 2 — Public L-band first: ALOS/PALSAR annual mosaic, no user credentials.
     try:
@@ -1621,7 +1650,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             if low_agb is not None:
                 low_agb["audit"]=audit; low_agb["paths"]=al.get("paths",[])
                 audit["quantitative_lband_model"]="YU_SAATCHI_2016_TROPICAL_SHRUBLAND_HV"
-                return low_agb
+                return _preserve_sar_canopy_height(low_agb,sar_height,audit)
             audit.setdefault("processed_without_agb",[]).append({"source":"ALOS/PALSAR L","provider":al.get("provider"),"paths":al.get("paths",[]),"stats":al.get("stats",[]),"diagnostic":ldiag})
             if ldiag and not ldiag.get("quantitative_agb_from_dualpol_permitted",False):
                 audit["warnings"].append("ALOS/PALSAR L-band dual-pol processado e radiometricamente plausível, porém classificado como SAR estratificador devido à saturação esperada em floresta tropical úmida de alta biomassa; AGB quantitativa exige full-pol/P-band ou calibração local independente.")
@@ -1671,14 +1700,14 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                     if target.suffix.lower() in (".h5",".hdf5") and "NISAR" in (str(cand.get("id",""))+" "+str(cand.get("properties",{}))).upper():
                         pr=analyze_nisar_gcov(gdf,target,biome,phys)
                         audit["asf_download"]={"scene":cand.get("id"),"processed":"NISAR_GCOV_HDF5","features":pr.get("features")}
-                        if pr.get("agb_mg_ha") is not None: pr["audit"]=audit; pr["paths"]=[str(target)]; return pr
+                        if pr.get("agb_mg_ha") is not None: pr["audit"]=audit; pr["paths"]=[str(target)]; return _preserve_sar_canopy_height(pr,sar_height,audit)
                         # Preserve the processed scene in the audit, but continue through all SAR sources before any literature fallback.
                         audit.setdefault("processed_without_agb",[]).append({"source":"NISAR_GCOV","scene":cand.get("id"),"paths":[str(target)],"features":pr.get("features")})
                         continue
                     pre=preprocess_lband(target,dl/("proc_"+target.stem))
                     if pre.get("rasters"):
                         pr=process_real_sar(gdf,pre["rasters"],biome,phys); pr["audit"]=audit; pr["data_origin"]="SAR_L"; pr["paths"]=pre["rasters"]
-                        if pr.get("agb_mg_ha") is not None: return pr
+                        if pr.get("agb_mg_ha") is not None: return _preserve_sar_canopy_height(pr,sar_height,audit)
                         audit.setdefault("processed_without_agb",[]).append({"source":"L_BAND","scene":cand.get("id"),"paths":pre["rasters"]})
                         continue
                 except Exception as e: audit["warnings"].append("Cena L "+str(cand.get("id"))+": "+str(e))
@@ -1736,7 +1765,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             pr["cci_tiles"]=cci.get("tiles",[])
             if pr.get("uncertainty_mg_ha") is not None:
                 pr["uncertainty_kind"]="média zonal da camada AGB_SD do ESA CCI; desvio-padrão do produto, não erro local de validação"
-            return pr
+            return _preserve_sar_canopy_height(pr,sar_height,audit)
     except Exception as e: audit["cci"]={"error":str(e)}
 
     # Inventory/literature AGB is permitted only when SAR unavailability is
@@ -1768,10 +1797,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         result["fitofisionomia_area_audit"]=class_audit
         result["fitofisionomia_raster_stats"]=class_stats
         result["fitofisionomia_source"]=ibge_metadata.get("source","camada IBGE carregada pelo operador; confirmar versão oficial")
-    if sar_height:
-        result["sar_height"]=sar_height
-        result.update({k:v for k,v in sar_height.items() if k.startswith("height_")})
-    return result
+    return _preserve_sar_canopy_height(result,sar_height,audit)
 
 def execute_registered_model(model_id,features):
     m=next((x for x in MODEL_REGISTRY if x["id"]==model_id),None)
