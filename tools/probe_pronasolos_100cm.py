@@ -18,6 +18,13 @@ import requests
 from pronasolos_identify import LAYER_IDS, SERVICE, build_identify_params, extract_paired_horizons
 from soil_profile_stats import summarize_paired_soil_profiles
 
+# Both endpoints belong to the SGB's official PronaSolos ArcGIS services.
+# Their metadata independently lists stock layers 2-6 (0-100 cm). The service
+# item IDs differ, so DO NOT blend the horizons of different endpoints.
+# Metadata: /pronasolos/estoque_carbono_90m/MapServer and /pronasolos/solos_90m/MapServer
+ALTERNATE_SERVICE = "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/solos_90m/MapServer/identify"
+SERVICE_CANDIDATES = (SERVICE, ALTERNATE_SERVICE)
+
 SITES = (
     ("Amazônia — Tapajós", -54.95, -3.03),
     ("Cerrado — Brasília", -47.93, -15.85),
@@ -32,28 +39,49 @@ def web_mercator(lon,lat):
     radius=6378137.0
     return radius*math.radians(lon),radius*math.log(math.tan(math.pi/4+math.radians(lat)/2))
 
-def query_site(session,name,lon,lat):
+def query_site(session,name,lon,lat,services=SERVICE_CANDIDATES):
     x,y=web_mercator(lon,lat)
     params=build_identify_params(x,y,(x-5000,y-5000,x+5000,y+5000))
-    result={"name":name,"lon":lon,"lat":lat,"status":"INCOMPLETE","layer_ids_requested":list(LAYER_IDS),
-            "method":"ArcGIS identify; one point, five native 90-m horizons",
-            "uncertainty_kind":"not estimated: pixel values are not field validation"}
-    try:
-        response=session.get(SERVICE,params=params,timeout=(5,12))
-        response.raise_for_status()
-        raw=response.content
-        result["http_status"]=response.status_code
-        result["response_sha256"]=hashlib.sha256(raw).hexdigest()
-        payload=response.json()
-        horizon=extract_paired_horizons(payload)
-        result["received_layer_ids"]=sorted(horizon)
-        result["observed_stock_tc_ha_by_layer"]={str(k):float(v) for k,v in horizon.items()}
-        products=summarize_paired_soil_profiles([horizon])
-        result["profiles_tc_ha"]={k:v["tc_ha"] for k,v in products.items()}
-        result["status"]="PASS_0_100_COMPLETE" if "0–100 cm" in products else "INCOMPLETE_NO_EXTRAPOLATION"
-    except Exception as exc:
+    result={"name":name,"lon":lon,"lat":lat,"status":"INCOMPLETE",
+            "layer_ids_requested":list(LAYER_IDS),
+            "method":"ArcGIS identify; one request retrieves five native 90-m horizons per official service",
+            "uncertainty_kind":"not estimated: map pixel values are not field validation",
+            "attempts":[]}
+    best=None
+    for service in services:
+        attempt={"service":service}
+        try:
+            response=session.get(service,params=params,timeout=(5,12))
+            response.raise_for_status()
+            raw=response.content
+            attempt["http_status"]=response.status_code
+            attempt["response_sha256"]=hashlib.sha256(raw).hexdigest()
+            payload=response.json()
+            horizon=extract_paired_horizons(payload)
+            attempt["received_layer_ids"]=sorted(horizon)
+            products=summarize_paired_soil_profiles([horizon])
+            attempt["status"]="PASS_0_100_COMPLETE" if "0–100 cm" in products else "INCOMPLETE_NO_EXTRAPOLATION"
+            candidate={"service_used":service, "http_status":response.status_code,
+                       "response_sha256":attempt["response_sha256"],
+                       "received_layer_ids":sorted(horizon),
+                       "observed_stock_tc_ha_by_layer":{str(k):float(v) for k,v in horizon.items()},
+                       "profiles_tc_ha":{k:v["tc_ha"] for k,v in products.items()},
+                       "status":attempt["status"]}
+            # Never combine layer values across two different service item IDs.
+            if best is None or len(horizon)>len(best["received_layer_ids"]):
+                best=candidate
+            if attempt["status"]=="PASS_0_100_COMPLETE":
+                result["attempts"].append(attempt)
+                break
+        except Exception as exc:
+            attempt["status"]="ERROR_RETRIEVAL_OR_VALIDATION"
+            attempt["error"]=type(exc).__name__+": "+str(exc)[:300]
+        result["attempts"].append(attempt)
+    if best is not None:
+        result.update(best)
+    else:
         result["status"]="ERROR_RETRIEVAL_OR_VALIDATION"
-        result["error"]=type(exc).__name__+": "+str(exc)[:300]
+        result["error"]="; ".join(a.get("error","missing raw horizons") for a in result["attempts"])[:500]
     return result
 
 def main():
