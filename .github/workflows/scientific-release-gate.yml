@@ -1,0 +1,38 @@
+name: Homologação científica - bloqueio independente
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scientific-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate fail-closed scientific evidence contract
+        run: python -m unittest tests.test_scientific_release_gate tests.test_workflow_provenance -v
+      - name: Audit real scientific data and exact Windows artifact SHA
+        # Deliberately NOT continue-on-error: missing independent evidence blocks release.
+        run: |
+          python tools/scientific_release_gate.py \
+            --source-sha "$(git rev-parse HEAD)" \
+            --evidence validation/release_evidence.json \
+            --report release_gate_report.json
+      - name: Retain blockers for scientific review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scientific-release-blockers-${{ github.run_id }}
+          path: release_gate_report.json
+          if-no-files-found: warn
+          retention-days: 90
