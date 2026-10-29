@@ -1201,6 +1201,54 @@ def _jaxa_mosaic_gamma0_db(dn,cf=-83.0):
     with np.errstate(divide="ignore",invalid="ignore"):
         return 10.0*np.log10(np.square(a))+float(cf)
 
+def _planetary_sign_asset(unsigned_href, *, max_attempts=3, sleep=None):
+    """Sign one Planetary Computer asset, respecting transient rate limits.
+
+    The returned URL is used only for raster access; never log signed SAS tokens.
+    401/403 are not retried, and exhausted 429s retain their HTTP error status.
+    """
+    import random
+    from datetime import datetime, timezone
+    from email.utils import parsedate_to_datetime
+    if not isinstance(unsigned_href, str) or not unsigned_href.startswith("https://"):
+        raise ValueError("unsigned Planetary Computer asset must use HTTPS")
+    sleep = sleep or time.sleep
+    endpoint = "https://planetarycomputer.microsoft.com/api/sas/v1/sign"
+    max_attempts = max(1, min(int(max_attempts), 5))
+    for attempt in range(max_attempts):
+        try:
+            response = requests.get(endpoint, params={"href": unsigned_href}, timeout=(10, 45))
+            response.raise_for_status()
+            signed = response.json()["href"]
+            if not isinstance(signed, str) or not signed.startswith("https://"):
+                raise ValueError("invalid signed Planetary Computer asset URL")
+            return signed
+        except requests.exceptions.RequestException as exc:
+            code = getattr(getattr(exc, "response", None), "status_code", None)
+            transient = code in (429, 500, 502, 503, 504) or isinstance(
+                exc, (requests.exceptions.Timeout, requests.exceptions.ConnectionError))
+            if not transient or attempt + 1 >= max_attempts:
+                raise
+            header = getattr(getattr(exc, "response", None), "headers", {}) or {}
+            retry = header.get("Retry-After")
+            delay = None
+            if retry is not None:
+                try:
+                    delay = float(retry)
+                except (ValueError, TypeError):
+                    try:
+                        date = parsedate_to_datetime(str(retry))
+                        if date.tzinfo is None:
+                            date = date.replace(tzinfo=timezone.utc)
+                        delay = (date - datetime.now(timezone.utc)).total_seconds()
+                    except (ValueError, TypeError, OverflowError, IndexError):
+                        pass
+            # Cap retry delay; never bypass provider quotas or retry indefinitely.
+            backoff = min(8.0, 2.0 ** attempt) + random.uniform(0.0, 0.25)
+            sleep(max(backoff, min(15.0, max(0.0, delay))) if delay is not None else backoff)
+    raise AssertionError("unreachable")
+
+
 def planetary_alos_palsar(gdf,cache,limit=12):
     """Credential-free L-band route: JAXA ALOS/PALSAR annual 25 m mosaic on Planetary Computer.
     Processes real HH/HV pixels inside the AOI. No AGB is fabricated without calibration."""
@@ -1234,7 +1282,7 @@ def planetary_alos_palsar(gdf,cache,limit=12):
             a=assets.get(pol) or assets.get(pol.lower())
             if not a or not a.get("href"):continue
             try:
-                sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":a["href"]},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
+                href=_planetary_sign_asset(a["href"])
                 with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
                     with rasterio.open(href) as src:
                         gj=transform_geom("EPSG:4326",src.crs,geom); ar,_=mask(src,[gj],crop=True,filled=False)
@@ -1333,7 +1381,7 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             a=assets.get(pol)
             if not a or not a.get("href"):continue
             try:
-                unsigned=a["href"]; sg=requests.get("https://planetarycomputer.microsoft.com/api/sas/v1/sign",params={"href":unsigned},timeout=(10,45)); sg.raise_for_status(); href=sg.json()["href"]
+                unsigned=a["href"]; href=_planetary_sign_asset(unsigned)
                 with rasterio.open(href) as src:
                     # Sentinel-1 GRD COGs may expose geolocation through GCPs instead of a dataset CRS.
                     # WarpedVRT resolves those GCPs to EPSG:4326 before AOI masking.
