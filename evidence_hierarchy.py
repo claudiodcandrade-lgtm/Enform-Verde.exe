@@ -115,23 +115,40 @@ def select_stock_evidence(candidates, *, biome, physiognomy, pool,
             if reason is None:
                 tier = row["geographic_tier"]
                 transfer = _number(row.get("transfer_uncertainty"))
-                if tier != "microrregional" and (transfer is None or transfer <= 0):
+                transfer_diagnostics = None
+                # Prefer an externally measured error over an unsupported
+                # "conservative" percentage. Invalid supplied validation
+                # does NOT silently fall back to the manual transfer value.
+                if "transfer_validation" in row:
+                    from experimental_transfer import measured_transfer_error
+                    transfer_diagnostics = measured_transfer_error(
+                        row["transfer_validation"], biome=biome,
+                        physiognomy=physiognomy, pool=pool, units=unit)
+                    if transfer_diagnostics["available"]:
+                        transfer = transfer_diagnostics["uncertainty_bound"]
+                    else:
+                        reason = "invalid_independent_transfer_validation"
+                if reason is None and tier != "microrregional" and (
+                        transfer is None or transfer <= 0):
                     reason = "missing_nonlocal_transfer_uncertainty"
-                else:
-                    # Widen source envelope conservatively without assuming independence.
+                if reason is None:
+                    # Union of source interval and independently measured
+                    # transfer envelope is a *descriptive* bound, not a
+                    # calibrated IC95% for the particular AOI.
                     transfer = transfer or 0.0
                     lo, hi = max(0.0, lo - transfer), hi + transfer
                     options.append((GEOGRAPHIC_TIERS.index(tier),
                                     EVIDENCE_LEVELS.index(row["evidence_level"]),
                                     -max(0, int(_number(row.get("independent_units")) or 0)),
-                                    index, row, lo, hi, kind, transfer))
+                                    index, row, lo, hi, kind, transfer,
+                                    transfer_diagnostics))
         if reason:
             rejected.append({"index": index, "reason": reason,
                              "source": row.get("source") if isinstance(row, dict) else None})
     if not options:
         return {"available": False, "reason": "sem evidência compatível com incerteza publicada e transferência defensável",
                 "rejections": rejected}
-    _, _, _, index, item, low, high, kind, transfer = sorted(
+    _, _, _, index, item, low, high, kind, transfer, transfer_evidence = sorted(
         options, key=lambda x: x[:4])[0]
     return {
         "available": True, "stock": float(item["estimate"]), "range": [low, high],
@@ -144,7 +161,8 @@ def select_stock_evidence(candidates, *, biome, physiognomy, pool,
         "source": item["source"], "source_url": item["source_url"],
         "institution": item["institution"], "pool": pool,
         "unit": unit, "biome": biome, "physiognomy": physiognomy,
-        "transfer_uncertainty": transfer, "selected_index": index,
+        "transfer_uncertainty": transfer, "transfer_validation": transfer_evidence,
+        "selected_index": index,
         "rejections": rejected,
         "note": "estimativa secundária compatível; intervalo não garante cobertura 95% na AOI",
     }
