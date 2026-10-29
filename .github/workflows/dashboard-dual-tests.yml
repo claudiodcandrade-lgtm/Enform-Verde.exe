@@ -37,7 +37,9 @@ jobs:
             'test_carbon_compartments.py',
             'test_measurable_agricultural_accuracy.py',
             'test_scientific_release_gate.py',
-            'test_workflow_provenance.py'
+            'test_workflow_provenance.py',
+            'test_five_biome_sar_routes.py',
+            'test_ibge_equal_area.py'
           )
           foreach ($pattern in $patterns) {
             & python -m unittest discover -s tests -p $pattern -v
