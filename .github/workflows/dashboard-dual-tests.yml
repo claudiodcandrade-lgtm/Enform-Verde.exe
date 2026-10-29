@@ -46,7 +46,8 @@ jobs:
             'test_planetary_sign_retry.py',
             'test_evidence_hierarchy.py',
             'test_ifn_2026_panel_harvest.py',
-            'test_experimental_transfer.py'
+            'test_experimental_transfer.py',
+            'test_sar_height_preservation.py'
           )
           foreach ($pattern in $patterns) {
             & python -m unittest discover -s tests -p $pattern -v
