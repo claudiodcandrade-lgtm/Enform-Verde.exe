@@ -160,7 +160,7 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
             'method':'C conhecido = soma por fitofisionomia nativa e compartimento de (tC/ha × hectares da interseção). Outras classes: ocorrência apenas.'}
 
 
-def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_estimator, *, property_aoi=None):
+def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_estimator, *, property_aoi=None, inventory_evidence=None):
     """Use domain-aware evidence on each native stratum; verify farm at parent AOI.
 
     A small FOD polygon from Santo Ambrósio can reuse only the compatible
@@ -299,5 +299,24 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                          'obs':'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha')})
     except Exception:pass
-    return {'components':rows,'soil_profiles':soil,'sar_audit':sar.get('audit'), 'error':sar.get('error'),
+    secondary_audit=None
+    if inventory_evidence is not None:
+        # Explicit, licensed class-specific records only. No implicit statewide
+        # means, fabricated pixels or unverified remote data are ever loaded.
+        from secondary_carbon_adapter import secondary_native_components
+        candidates=(inventory_evidence(aoi,biome,physiognomy)
+                    if callable(inventory_evidence) else inventory_evidence)
+        extra=secondary_native_components(candidates,biome=biome,physiognomy=physiognomy)
+        secondary_audit=extra['audit']
+        for candidate in extra['components']:
+            # Preserve every existing measured/SAR result. Only fill missing
+            # numeric stocks and do not add duplicate compartment totals.
+            name=candidate['parametro']
+            existing=next((row for row in rows if row.get('parametro')==name),None)
+            if existing is None:
+                rows.append(candidate)
+            elif existing.get('tc') is None:
+                rows[rows.index(existing)]=candidate
+    return {'components':rows,'secondary_evidence_audit':secondary_audit,
+            'soil_profiles':soil,'sar_audit':sar.get('audit'), 'error':sar.get('error'),
             'sar_details':{k:sar[k] for k in ('status','data_origin','source','sensor','paths','stats','height_mean_m','height_interpretation','sar_validation_metrics','agb_blocker','message','reason') if k in sar}}
