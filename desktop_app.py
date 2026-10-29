@@ -617,26 +617,35 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     observations=[]  # one geolocated vector of horizon values per query point
     sess=requests.Session()
     extent=f"{minx},{miny},{maxx},{maxy}"
-    from pronasolos_identify import SERVICE, build_identify_params, extract_paired_horizons
+    from pronasolos_identify import SERVICE, SERVICE_CANDIDATES, build_identify_params, extract_paired_horizons
     service=SERVICE
-    # One ArcGIS identify HTTP call per point retrieves the five horizons of 0–100 cm.
-    # On a partial point response, all returned depths are retained together;
-    # missing layers are never filled from a different point or assigned zero.
+    service_used_counts={key:0 for key in SERVICE_CANDIDATES}
+    # The alternative official stock service is queried only if the primary
+    # response is incomplete or unavailable. A profile ALWAYS comes from one
+    # response to one service at one coordinate; never merge horizons.
     for p in pts:
-        try:
-            params=build_identify_params(p.x,p.y,(minx,miny,maxx,maxy),layer_ids)
-            response=sess.get(service,params=params,timeout=(5,20))
-            response.raise_for_status()
-            sample=extract_paired_horizons(response.json(),layer_ids)
-        except Exception as exc:
-            sample={}
-            for lid in layer_ids:
-                errors[lid].append(type(exc).__name__+": "+str(exc)[:145])
+        params=build_identify_params(p.x,p.y,(minx,miny,maxx,maxy),layer_ids)
+        sample={}; best_service=None
+        for endpoint in SERVICE_CANDIDATES:
+            try:
+                response=sess.get(endpoint,params=params,timeout=(5,12))
+                response.raise_for_status()
+                candidate=extract_paired_horizons(response.json(),layer_ids)
+                if len(candidate)>len(sample):
+                    sample=candidate
+                    best_service=endpoint
+                if len(sample)==len(layer_ids):
+                    break
+            except Exception as exc:
+                for lid in layer_ids:
+                    errors[lid].append(endpoint+": "+type(exc).__name__+": "+str(exc)[:120])
+        if best_service:
+            service_used_counts[best_service]+=1
         for lid in layer_ids:
             if lid in sample:
                 vals[lid].append(sample[lid])
             else:
-                errors[lid].append("sem valor numérico na resposta conjunta")
+                errors[lid].append("sem valor numérico bruto na resposta do mesmo serviço/ponto")
         observations.append(sample)
     # Only co-located horizons enter the same 0–100 cm profile.
     # Incomplete depth at one location remains missing, never a numeric zero.
@@ -648,7 +657,10 @@ def pronasolos_soc_profiles(gdf,max_points=36):
             detail.append(f"{names[i]} cm: n={len(vals[k])}; "+(("; ".join(errors[k][:2])) if errors[k] else "sem retorno"))
         raise RuntimeError("PronaSolos oficial consultado, mas 0–30 cm não pôde ser composto. "+" | ".join(detail))
     out["_diagnostic"]={"samples_requested":len(pts),"valid_by_layer":{names[i]:len(vals[k]) for i,k in enumerate(layer_ids)},
-                        "service":service,"target_depth_cm":100,
+                        "service":service,"services_checked":list(SERVICE_CANDIDATES),
+                        "selected_points_by_service":service_used_counts,
+                        "no_cross_service_horizon_combination":True,
+                        "target_depth_cm":100,
                         "target_0_100_available":"0–100 cm" in out,
                         "target_status":"COMPLETO_POR_PONTO" if "0–100 cm" in out else "INCOMPLETO_NAO_EXTRAPOLAR"}
     return out
