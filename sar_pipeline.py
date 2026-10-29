@@ -1225,7 +1225,7 @@ def planetary_alos_palsar(gdf,cache,limit=12):
     import rasterio
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
-    stats=[]; errors=[]; scene_ids=[]; paths=[]
+    stats=[]; errors=[]; scene_ids=[]; paths=[]; selected_item=None
     items=_newest_first(items)
     for it in items:
         scene_ids.append(it.get("id")); assets=it.get("assets") or {}
@@ -1246,9 +1246,17 @@ def planetary_alos_palsar(gdf,cache,limit=12):
             except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
         # Never combine HH and HV from different acquisition scenes in one dual-pol model.
         if {"HH","HV"}.issubset({str(x.get("polarization","")).upper() for x in scene_stats}):
-            stats=scene_stats; paths=scene_paths; break
-        if len(scene_stats)>len(stats):stats=scene_stats; paths=scene_paths
-    return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,"paths":paths,"stats":stats,"errors":errors,"asset_keys_by_scene":[{"scene":it.get("id"),"keys":sorted((it.get("assets") or {}).keys())} for it in items],"missing_polarizations":[pol for pol in ("HH","HV") if not any(str(x.get("polarization","")).upper()==pol for x in stats)],"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
+            stats=scene_stats; paths=scene_paths; selected_item=it; break
+        if len(scene_stats)>len(stats):
+            stats=scene_stats; paths=scene_paths; selected_item=it
+    from sar_acquisition_time import annotate_acquisition
+    selected=annotate_acquisition(selected_item) if selected_item else {}
+    return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,
+            "selected_scene_id":selected_item.get("id") if selected_item else None,
+            "selected_acquisition_utc":selected.get("acquisition_utc"),
+            "selected_acquisition_brasilia":selected.get("acquisition_brasilia"),
+            "catalog_acquisition": [dict(id=x.get("id"), acquisition_utc=annotate_acquisition(x)["acquisition_utc"]) for x in items[:limit]],
+            "paths":paths,"stats":stats,"errors":errors,"asset_keys_by_scene":[{"scene":it.get("id"),"keys":sorted((it.get("assets") or {}).keys())} for it in items],"missing_polarizations":[pol for pol in ("HH","HV") if not any(str(x.get("polarization","")).upper()==pol for x in stats)],"provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer","band":"L","pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
 def lband_dualpol_diagnostic(stats,biome="",phys="",prior_agb_mg_ha=None):
     """Summarize dual-pol L-band evidence and saturation risk without inventing an AGB regression."""
@@ -1317,8 +1325,10 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
     import rasterio
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
-    for it in items[:3]:
+    selected_item=None
+    for it in items[:min(limit,8)]:
         scene_ids.append(it.get("id")); assets=it.get("assets") or {}
+        scene_stats=[]; scene_paths=[]
         for pol in ("vh","vv","hv","hh"):
             a=assets.get(pol)
             if not a or not a.get("href"):continue
@@ -1338,11 +1348,22 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
                     if not len(v):raise ValueError("sem pixels válidos no polígono")
                     # GRD DN values are real SAR image pixels. Keep native-domain stats and dB only when values are power-like positive.
                     z={"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean":float(v.mean()),"sd":float(v.std(ddof=1)) if len(v)>1 else 0.0,"min":float(v.min()),"max":float(v.max()),"pixel_state":"PROCESSADO"}
-                    stats.append(z); paths.append(unsigned)
-                if len(stats)>=2:break
+                    scene_stats.append(z); scene_paths.append(unsigned)
+                if {"VV","VH"}.issubset({v["polarization"] for v in scene_stats}):break
             except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
-        if stats:break
-    return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,"provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,"pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
+        if len(scene_stats)>len(stats):
+            stats=scene_stats; paths=scene_paths; selected_item=it
+        # Prefer the most recent scientifically useful VV/VH pair from ONE scene.
+        if {"VV","VH"}.issubset({v["polarization"] for v in scene_stats}):break
+    from sar_acquisition_time import annotate_acquisition
+    selected=annotate_acquisition(selected_item) if selected_item else {}
+    return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,
+            "selected_scene_id":selected_item.get("id") if selected_item else None,
+            "selected_acquisition_utc":selected.get("acquisition_utc"),
+            "selected_acquisition_brasilia":selected.get("acquisition_brasilia"),
+            "catalog_acquisition":[dict(id=x.get("id"), acquisition_utc=annotate_acquisition(x)["acquisition_utc"]) for x in items[:limit]],
+            "stats":stats,"provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,
+            "pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
 SUPPORTED_NATIONAL_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica","Pantanal")
 SFB_IFN_BIOMASS_REFERENCE={
