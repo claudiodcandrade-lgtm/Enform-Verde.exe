@@ -1,0 +1,34 @@
+name: Harvest public IFN field records
+on:
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+    paths:
+      - tools/harvest_ifn_field_data.py
+      - .github/workflows/harvest-ifn-field-data.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install field-data audit dependencies
+        run: python -m pip install requests openpyxl
+      - name: Download licensed IFN field records and audit spatial coverage
+        run: python tools/harvest_ifn_field_data.py
+      - name: Upload raw source records and provenance manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifn-field-records-${{ github.sha }}
+          path: ifn_field_harvest/
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 6
