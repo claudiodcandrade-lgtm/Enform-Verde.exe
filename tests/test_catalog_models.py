@@ -270,7 +270,18 @@ class CatalogModelExecutionTests(unittest.TestCase):
             m=sar.national_predictive_route_matrix(biome,phys)
             self.assertTrue(m["supported_biome"],biome)
             self.assertFalse(m["biome_mean_permitted"],biome)
-            self.assertIn(m["local_numeric_state"],("hierarchical_model_fallback_available","local_numeric_reference_available"))
+            self.assertIn(m["local_numeric_state"],(
+                "hierarchical_model_fallback_available",
+                "local_numeric_reference_available",
+                "runtime_product_check_required"))
+            # A supported biome means that the route is diagnosed, NOT that
+            # a numeric AGB estimate exists. Never invent a Pantanal fallback.
+            if m["local_numeric_state"]=="runtime_product_check_required":
+                self.assertIsNone(m["regional_numeric_fallback"],biome)
+                self.assertTrue(all(route["eligible"]=="runtime_check"
+                                    for route in m["direct_product_routes"]),biome)
+            else:
+                self.assertIsNotNone(m["regional_numeric_fallback"],biome)
             self.assertIn("state-level",m["ifn_sfb_reference"]["scope"])
         self.assertFalse(sar.national_predictive_route_matrix("Pampa","Estepe")["supported_biome"])
 
