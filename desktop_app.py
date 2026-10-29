@@ -541,13 +541,18 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     # Optional externally licensed, class-specific inventory observations.
     # Never forward a data manifest as a SAR model parameter.
     inventory_evidence=options.pop("inventory_evidence",None)
+    inventory_manifest=options.pop("inventory_evidence_manifest",None)
     def sar_estimator(frame,b,p):
         if sar_paths:return process_real_sar(frame,sar_paths,b,p)
         return automatic_pipeline(frame,b,p,**options)
     def estimator(frame,phys):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
-    return summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
+    result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
+    if inventory_manifest is not None:
+        # File hash proves input identity, not scientific validity.
+        result["external_inventory_manifest"]=inventory_manifest
+    return result
 
 def diagnose_ibge(project):
     """IBGE diagnosis with bbox-only reads; national 355 MB vegetation ZIP is never expanded/read wholesale."""
@@ -1259,6 +1264,14 @@ class App(tk.Tk):
         self.land_use_config=None; self._land_use_running=False
         self.land_use_state=tk.StringVar(value="Identificadores SAR instalados: busca automática; alternativa MapBiomas para cobertura atual e IBGE para fitofisionomia.")
         ttk.Label(landrow,textvariable=self.land_use_state,wraplength=500).pack(side="left",padx=8)
+        native_row=ttk.Frame(f);native_row.pack(fill="x",pady=(2,6))
+        self.inventory_evidence_data=None; self.inventory_evidence_manifest=None
+        ttk.Button(native_row,text="CARREGAR EVIDÊNCIAS DE INVENTÁRIO (JSON)",
+                   command=self.pick_inventory_evidence).pack(side="left")
+        self.inventory_evidence_state=tk.StringVar(
+            value="Opcional: referências licenciadas compatíveis com fitofisionomia; uso experimental, não homologado.")
+        ttk.Label(native_row,textvariable=self.inventory_evidence_state,
+                  wraplength=680).pack(side="left",padx=8)
         self.sar_paths=[]; self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
         self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
         remote_box=ttk.Frame(f); remote_box.pack(fill="both",expand=True,pady=8)
@@ -1267,6 +1280,32 @@ class App(tk.Tk):
         self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.remote_text)
         self._set(self.remote_text,"A análise é automática e SAR-FIRST. Rotas públicas são tentadas sem credenciais; Earthdata Login é opcional para liberar NISAR/ASF protegido.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
+
+    def pick_inventory_evidence(self):
+        filename=filedialog.askopenfilename(
+            title="Inventários para estimativas experimentais de carbono",
+            filetypes=[("Manifesto JSON","*.json")])
+        if not filename:
+            return
+        from native_evidence_manifest import load_native_inventory_manifest
+        try:
+            package=load_native_inventory_manifest(filename)
+        except (OSError,ValueError) as exc:
+            self.status.set("Manifesto de inventário recusado; não foi aplicado.")
+            return messagebox.showwarning("Evidências de inventário",str(exc))
+        # Preserve last accepted data if the new file fails validation; no
+        # changes to native cover masks or previously approved SAR products.
+        self.inventory_evidence_data=package["records"]
+        self.inventory_evidence_manifest={
+            "filename":package["filename"],
+            "sha256":package["sha256"],
+            "evidence_status":package["evidence_status"],
+            "n_records":len(package["records"]),
+        }
+        self.inventory_evidence_state.set(
+            str(len(package["records"]))+" registros — "+package["filename"]+
+            " — estimativas secundárias experimentais; validação independente pendente.")
+        self.status.set("Evidências externas carregadas com checksum; apenas classes compatíveis serão consideradas.")
 
     def pick_land_use_config(self):
         p=filedialog.askopenfilename(title="Contrato de atributos e referências SAR",filetypes=[("Configuração JSON","*.json")])
@@ -1897,6 +1936,10 @@ class App(tk.Tk):
         if self.sar_paths:return self._execute_main(event)
         # Snapshot every Tk variable on the GUI thread before starting the worker.
         land_config=self.land_use_config
+        inventory_evidence=(list(self.inventory_evidence_data)
+                            if self.inventory_evidence_data is not None else None)
+        inventory_manifest=(dict(self.inventory_evidence_manifest)
+                            if self.inventory_evidence_manifest is not None else None)
         land_ibge=self.ibge_physiognomy_gdf.copy() if self.ibge_physiognomy_gdf is not None else None
         land_field=self.ibge_class_field or "legenda_1"
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
@@ -1913,7 +1956,9 @@ class App(tk.Tk):
                     except Exception:pass
                 land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field)
                 options={"offline_token":token,"edl_user":edl_user,"edl_password":edl_password,"edl_token":edl_token,
-                         "cdse_token":cdse_token,"cdse_client_id":cdse_client_id,"cdse_client_secret":cdse_client_secret}
+                         "cdse_token":cdse_token,"cdse_client_id":cdse_client_id,"cdse_client_secret":cdse_client_secret,
+                         "inventory_evidence":inventory_evidence,
+                         "inventory_evidence_manifest":inventory_manifest}
                 native=native_carbon_analysis(gdf,land,biome,options)
                 self._analysis_queue.put((run_id,"ok",{"sar":{},"soil":{},"land_use":land,"native_carbon":native}))
             except Exception:self._analysis_queue.put((run_id,"error",traceback.format_exc()))
@@ -1966,7 +2011,14 @@ class App(tk.Tk):
             land=precomputed_land if precomputed_land is not None else run_land_use(self.gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],self.land_use_config,ibge=reference,ibge_field=reference_field)
             if land.get("error"):raise ValueError(land["error"])
             self.project["land_use"]=land
-            native=precomputed_native if precomputed_native is not None else native_carbon_analysis(self.gdf,land,self.biome.get(),sar_paths=self.sar_paths)
+            native=(precomputed_native if precomputed_native is not None
+                    else native_carbon_analysis(
+                        self.gdf,land,self.biome.get(),
+                        sar_options={
+                            "inventory_evidence":self.inventory_evidence_data,
+                            "inventory_evidence_manifest":self.inventory_evidence_manifest,
+                        },
+                        sar_paths=self.sar_paths))
             self._present_native_carbon(native,land)
             self._present_cultivated_monitoring(land)
             return
