@@ -818,7 +818,9 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
 
 CCI_V7_GEOTIFF_ROOT="https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
 CCI_V7_GEOTIFF_ALT_ROOT="https://dap.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
-CCI_V7_YEARS=(2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2012,2011,2010,2009,2008,2007,2006,2005)
+# Inspect newer years as they arrive; availability is confirmed only by complete
+# official raster+uncertainty downloads, never by guessing a future release.
+CCI_V7_YEARS=tuple(range(max(2024,time.gmtime().tm_year),2023,-1))+(2023,2022,2021,2020,2019,2018,2017,2016,2015,2012,2011,2010,2009,2008,2007,2006,2005)
 
 def _cci_v7_tile_ids(gdf):
     """Return 10-degree CCI GeoTIFF tile ids intersecting AOI.
@@ -1449,7 +1451,13 @@ def _earthaccess_requests_session(edl_user="",edl_password="",edl_token=""):
 
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret=""):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
-    audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI","selection":"MOST_RECENT_ELIGIBLE_WITHIN_PRIORITY","providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},"biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
+    from datetime import datetime, timezone
+    audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI",
+           "selection":"MOST_RECENT_ELIGIBLE_WITHIN_SCIENTIFIC_PRIORITY",
+           "catalog_checked_utc":datetime.now(timezone.utc).isoformat(timespec="seconds"),
+           "recency_rule":"fresh live provider search per AOI; true sensing datetime, not ingestion; newest within compatible product class; unknown dates last",
+           "providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},
+           "biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
     audit["national_route_matrix"]=national_predictive_route_matrix(biome,phys,aoi=gdf)
     audit["height_scope"]=height_scope_contract(biome,phys)
 
@@ -1647,6 +1655,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             pr["band"]="C+L"; pr["product"]="ESA CCI Biomass AGB"
             pr["model_id"]="ESA_CCI_BIOMASS_V7" if str(cci.get("version","")).startswith("7") else "ESA_CCI_BIOMASS_V5_01"
             pr["product_year"]=cci.get("year"); pr["resolution_m"]=cci.get("resolution_m")
+            # Annual reference year is NOT instantaneous acquisition; state lag.
+            pr["acquisition_status"]="PRODUTO_ANUAL_COMPOSTO_SEM_HORA_DE_CENA"
+            pr["year_reference_utc"]=cci.get("year")
+            pr["historical_lag_years"]=(datetime.now(timezone.utc).year-int(cci["year"])) if cci.get("year") is not None else None
+            audit["cci"]["most_recent_published_year_retrieved"]=cci.get("year")
             pr["cci_tiles"]=cci.get("tiles",[])
             if pr.get("uncertainty_mg_ha") is not None:
                 pr["uncertainty_kind"]="média zonal da camada AGB_SD do ESA CCI; desvio-padrão do produto, não erro local de validação"
