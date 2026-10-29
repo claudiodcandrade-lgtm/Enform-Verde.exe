@@ -1329,7 +1329,7 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
         if stats:break
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,"provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,"pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
 
-SUPPORTED_NATIONAL_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica")
+SUPPORTED_NATIONAL_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica","Pantanal")
 SFB_IFN_BIOMASS_REFERENCE={
     "source":"Serviço Florestal Brasileiro / SNIF / IFN — Painel de Biomassa e Carbono, versão 2025",
     "url":"https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
@@ -1341,7 +1341,7 @@ SFB_IFN_BIOMASS_REFERENCE={
 def _canonical_biome_name(biome):
     b=str(biome or "").strip().casefold()
     aliases={"amazonia":"Amazônia","amazônia":"Amazônia","cerrado":"Cerrado","caatinga":"Caatinga",
-             "mata atlantica":"Mata Atlântica","mata atlântica":"Mata Atlântica"}
+             "mata atlantica":"Mata Atlântica","mata atlântica":"Mata Atlântica","pantanal":"Pantanal"}
     return aliases.get(b,str(biome or "").strip())
 
 def national_predictive_route_matrix(biome,phys,aoi=None,features=None):
