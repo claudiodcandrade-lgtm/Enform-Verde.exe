@@ -15,16 +15,12 @@ import sys
 # Script execution from tools/ must resolve the repository's own modules.
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import requests
-from pronasolos_identify import LAYER_IDS, SERVICE, build_identify_params, extract_paired_horizons
+from pronasolos_identify import LAYER_IDS, SERVICE, SERVICE_CANDIDATES, build_identify_params, extract_paired_horizons
 from soil_profile_stats import summarize_paired_soil_profiles
 
-# Both endpoints belong to the SGB's official PronaSolos ArcGIS services.
-# Their metadata independently lists stock layers 2-6 (0-100 cm). The service
-# item IDs differ, so DO NOT blend the horizons of different endpoints.
-# Metadata: /pronasolos/estoque_carbono_90m/MapServer and /pronasolos/solos_90m/MapServer
-ALTERNATE_SERVICE = "https://geoportal.sgb.gov.br/server/rest/services/pronasolos/solos_90m/MapServer/identify"
-SERVICE_CANDIDATES = (SERVICE, ALTERNATE_SERVICE)
-
+# Both official SGB MapServers expose stock (Mg/ha) layers 2-6, as
+# verified against their public ArcGIS layer metadata on 28/10/2026.
+# The independent per-service horizon association prevents mixed profiles.
 SITES = (
     ("Amazônia — Tapajós", -54.95, -3.03),
     ("Cerrado — Brasília", -47.93, -15.85),
