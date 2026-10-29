@@ -9,6 +9,12 @@ from math import isfinite
 
 LAYER_IDS=(2,3,4,5,6)
 SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
+# Secondary officially published SGB/PronaSolos service: parent raster group
+# "Estoque de Carbono (Mg/ha)" and horizons 2-6 match the primary service.
+# Validate each response independently; NEVER sum horizons across services.
+ALTERNATE_SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/solos_90m/MapServer/identify"
+SERVICE_CANDIDATES=(SERVICE,ALTERNATE_SERVICE)
+
 
 def build_identify_params(x,y,extent,layer_ids=LAYER_IDS):
     """One ArcGIS query for all requested horizons at exactly one coordinate."""
