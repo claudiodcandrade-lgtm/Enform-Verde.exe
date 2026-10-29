@@ -103,6 +103,18 @@ def select_stock_evidence(candidates, *, biome, physiognomy, pool,
             elif spread is not None and spread > 0:
                 lo, hi = max(0.0, center - spread), center + spread
                 kind = "source_published_sd_descriptive_only"
+            elif (_number(row.get("observed_sample_sd")) is not None
+                  and _number(row.get("observed_sample_sd")) > 0
+                  and int(_number(row.get("independent_units")) or 0) >= 5
+                  and isinstance(row.get("source_dataset_sha256"), str)
+                  and len(row["source_dataset_sha256"]) == 64
+                  and all(c in "0123456789abcdefABCDEF" for c in row["source_dataset_sha256"])):
+                # An SD calculated from actual unique IFN conglomerates is an
+                # empirical ecological spread; never label it published SD or
+                # predictive 95% confidence interval for a new property.
+                spread = float(row["observed_sample_sd"])
+                lo, hi = max(0.0, center - spread), center + spread
+                kind = "independent_UA_sample_sd_descriptive_only"
             elif (isinstance(observed_range, (list, tuple))
                   and len(observed_range) == 2
                   and _number(observed_range[0]) is not None
