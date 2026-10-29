@@ -35,7 +35,10 @@ class SarRecencyRouteTests(unittest.TestCase):
         for x in data:x["_collection"]="BiomassLevel2b"
         with patch("sar_pipeline.maap_search") as api:
             def find(gdf, collection, limit=100, product_type=None):
-                return [x for x in data if x["_product_type"] == product_type]
+                # Test only this fixture's operational collection. IOC items
+                # come from a different STAC collection and must not be cloned.
+                return [x for x in data if x["_product_type"] == product_type
+                        and collection == "BiomassLevel2b"]
             api.side_effect=find
             out=biomass_l2b_search(object())
         self.assertEqual([x["id"] for x in out],["agb-new","agb-old","height-newest"])
@@ -57,8 +60,12 @@ class SarRecencyRouteTests(unittest.TestCase):
         fake.status_code=200
         fake.json.return_value={"features":[item("old","2025-01-01T00:00:00Z"),
                                              item("new","2026-10-28T00:00:00Z")]}
+        import geopandas as gpd
+        from shapely.geometry import box
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.98,-3.05,-54.96,-3.03)],
+                             crs="EPSG:4326")
         with patch("sar_pipeline.requests.post",return_value=fake) as call:
-            out=maap_search(Mock(), "BiomassLevel2b", limit=10)
+            out=maap_search(aoi, "BiomassLevel2b", limit=10)
         body=call.call_args.kwargs["json"]
         self.assertEqual(body["sortby"][0]["direction"],"desc")
         self.assertEqual([x["id"] for x in out],["new","old"])
