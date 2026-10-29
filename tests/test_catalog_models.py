@@ -162,6 +162,11 @@ class CatalogModelExecutionTests(unittest.TestCase):
         tapajos=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.930,-3.02)],crs="EPSG:4326")
         def fake_download(url,out,token=None):
             from pathlib import Path
+            # The published ESA CCI v7 series currently ends in 2024.
+            # Future-year candidates must fail so this test exercises fallback
+            # to the newest verified release instead of accepting any URL.
+            if "/2024/" not in url:
+                raise FileNotFoundError("ESA CCI annual tile not published for candidate year")
             Path(out).write_bytes(b"TIFF")
             return str(out)
         with tempfile.TemporaryDirectory() as td, patch.object(sar,"_download",side_effect=fake_download):
@@ -259,6 +264,7 @@ class CatalogModelExecutionTests(unittest.TestCase):
             "Cerrado":"Savana Arborizada",
             "Caatinga":"Savana Estépica",
             "Mata Atlântica":"Floresta Estacional Semidecidual",
+            "Pantanal":"Savana",
         }
         for biome,phys in samples.items():
             m=sar.national_predictive_route_matrix(biome,phys)
@@ -267,7 +273,6 @@ class CatalogModelExecutionTests(unittest.TestCase):
             self.assertIn(m["local_numeric_state"],("hierarchical_model_fallback_available","local_numeric_reference_available"))
             self.assertIn("state-level",m["ifn_sfb_reference"]["scope"])
         self.assertFalse(sar.national_predictive_route_matrix("Pampa","Estepe")["supported_biome"])
-        self.assertFalse(sar.national_predictive_route_matrix("Pantanal","Savana")["supported_biome"])
 
     def test_lband_dualpol_high_biomass_is_stratifier_not_agb_equation(self):
         stats=[
