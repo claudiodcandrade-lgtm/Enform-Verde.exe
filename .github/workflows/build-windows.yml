@@ -54,6 +54,7 @@ jobs:
           retention-days: 30
       - name: Inspect public IFN necromass and point schemas
         continue-on-error: true
+        timeout-minutes: 3
         shell: pwsh
         run: |
           @'
@@ -61,11 +62,20 @@ jobs:
           panel_url="https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/f5902766-14e3-46b8-bdc4-99bc09693161/download/dadosabertos_dadosnecromassa_painelbiomassacarbono_snif_fonte_ifn_sfb.csv"
           panel=pd.read_csv(panel_url,sep=";",encoding="utf-8-sig",dtype=str)
           print("IFN_PANEL_LIVE",len(panel),list(panel.columns),panel.head(2).to_dict("records"))
-          endpoint="https://smapas.florestal.gov.br/server/rest/services/DadosAbertos-IFN/dataset_ifn_tb_pontos_lote/FeatureServer/0/query"
-          r=requests.get(endpoint,params={"where":"1=1","outFields":"no_conglomerado,no_uf,no_municipio,no_bioma","returnGeometry":"true","outSR":"4326","f":"json","resultRecordCount":3},timeout=45)
+          # SFB's current public point service (2026-07); retain real plot coordinates
+          # and official fields used to join IFN observations to biome/state metadata.
+          endpoint="https://smapas.florestal.gov.br/server/rest/services/Hosted/Pontos_IFN_2026_07_shp/FeatureServer/0/query"
+          params={"where":"1=1","outFields":"no_conglom,nm_bioma,sigla_uf,lat,long,co_lote,no_lote",
+                  "returnGeometry":"true","outSR":"4326","f":"json","resultRecordCount":3}
+          r=requests.get(endpoint,params=params,timeout=45)
           r.raise_for_status(); js=r.json()
-          print("IFN_POINTS_LIVE",js.get("fields"),js.get("features",[])[:2])
-          assert panel.shape[0]>0 and len(js.get("features",[]))>0
+          if js.get("error"): raise RuntimeError(f"IFN point service error: {js['error']}")
+          features=js.get("features",[])
+          print("IFN_POINTS_LIVE",js.get("fields"),features[:2])
+          assert panel.shape[0]>0 and features, "official IFN observations and point geometry required"
+          attrs=features[0].get("attributes",{})
+          assert all(attrs.get(k) is not None for k in ("no_conglom","nm_bioma","sigla_uf")), "IFN point metadata is incomplete"
+          assert features[0].get("geometry"), "IFN point geometry is required for spatial matching"
           '@ | Set-Content inspect_ifn_live.py -Encoding UTF8
           python inspect_ifn_live.py
       - name: Restore official IBGE map from previously packaged build
