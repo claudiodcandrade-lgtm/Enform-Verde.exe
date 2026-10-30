@@ -16,6 +16,8 @@ class IFNAcquisitionTests(unittest.TestCase):
             item = result["resources"][0]
             self.assertEqual(item["status"], "downloaded_unvalidated")
             self.assertEqual(len(item["sha256"]), 64)
+            self.assertEqual(item["csv_data_rows"], 1)
+            self.assertEqual(item["csv_header"], ["parcela", "serapilheira"])
             self.assertFalse(result["scientific_validation"])
             self.assertTrue((Path(temp) / "ifn_pa.csv").exists())
 
@@ -27,6 +29,25 @@ class IFNAcquisitionTests(unittest.TestCase):
             result = fetch_sources(registry, temp, opener=fake_open)
             self.assertEqual(result["resources"][0]["status"], "download_failed")
             self.assertFalse((Path(temp) / "bad_csv.csv").exists())
+
+    def test_header_only_csv_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "empty_csv", "url": URL, "license": "CC BY", "role": "litter"}]}
+            def fake_open(request, timeout):
+                return io.BytesIO(b"parcela,serapilheira\\n")
+            result = fetch_sources(registry, temp, opener=fake_open)
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+
+    def test_redirect_outside_official_host_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "redirected", "url": URL, "license": "CC BY", "role": "litter"}]}
+            class RedirectedResponse(io.BytesIO):
+                def geturl(self):
+                    return "https://example.org/ifn.csv"
+            def fake_open(request, timeout):
+                return RedirectedResponse(b"parcela,serapilheira\\n1,2.4\\n")
+            result = fetch_sources(registry, temp, opener=fake_open)
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
 
     def test_invalid_resource_id_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
