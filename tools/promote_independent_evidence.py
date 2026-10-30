@@ -7,7 +7,9 @@ when its raw dataset and report SHA256 hashes verify AND modular checks pass.
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.modular_scientific_gate import assess
 
 def promote(source_sha, root, candidates):
