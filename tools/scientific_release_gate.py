@@ -59,7 +59,12 @@ def _verify_local_report(row, label, errors, root):
     if not target.is_file():
         errors.append(f"{label}: validation report file absent")
         return
-    if hashlib.sha256(target.read_bytes()).hexdigest().lower() != digest.lower():
+    try:
+        actual = hashlib.sha256(target.read_bytes()).hexdigest().lower()
+    except OSError as exc:
+        errors.append(f"{label}: validation report unreadable ({type(exc).__name__})")
+        return
+    if actual != digest.lower():
         errors.append(f"{label}: validation report hash mismatch")
 
 
