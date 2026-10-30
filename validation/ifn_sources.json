@@ -5,13 +5,29 @@
       "id": "ifn_serapilheira_para_retificada_2025",
       "url": "https://dados.florestal.gov.br/pt_BR/dataset/97ab0c26-c5c7-421c-8fb7-e4dab47d35ea/resource/d7cc4797-26d7-4efa-9f1f-fc12a46692fc/download/ifn_serapilheira_para_disp-set2025_retificado.csv",
       "license": "Creative Commons Attribution (dataset portal)",
-      "role": "real field litter data; corrected October 2025; inferential validation pending"
+      "role": "real field litter data; corrected October 2025; inferential validation pending",
+      "observed_measurement": "litter_layer_depth_not_dry_mass",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Profundidade"
+      ]
     },
     {
       "id": "ifn_madeira_caida_para_2025",
       "url": "https://dados.florestal.gov.br/pt_BR/dataset/be526045-c776-4f69-a4ce-53ffdb96e38d/resource/d797c70e-7ef2-431f-97e7-7a46f328ce83/download/ifn_madeira-caida_para_disp-set2025.xlsx",
       "license": "Creative Commons Attribution (dataset portal)",
-      "role": "real downed woody debris inventory data; conversion and uncertainty validation pending"
+      "role": "real downed woody debris inventory data; conversion and uncertainty validation pending",
+      "observed_measurement": "downed_wood_diameter_and_decay_not_stock",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Ausen_necro",
+        "diam",
+        "decomp_nivel"
+      ]
     }
   ]
 }

@@ -21,6 +21,30 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertFalse(result["scientific_validation"])
             self.assertTrue((Path(temp) / "ifn_pa.csv").exists())
 
+    def test_realistic_cp1252_observations_preserve_biome_names(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_cp1252", "url": URL,
+                       "license": "CC BY", "role": "litter",
+                       "expected_columns": ["bioma", "uf", "ua", "Profundidade"]}]}
+            data = 'bioma;uf;ua;Profundidade\\nAmazônia;Pará;PA_1;2,7\\n'.replace('\\n', '\n').encode("cp1252")
+            result = fetch_sources(registry, temp, opener=lambda request, timeout: io.BytesIO(data))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["csv_encoding"], "cp1252")
+            self.assertEqual(item["biome_rows"], {"Amazônia": 1})
+            self.assertEqual(item["state_rows"], {"Pará": 1})
+            self.assertEqual(item["unique_ua"], 1)
+            self.assertFalse(item["carbon_stock_ready"])
+
+    def test_expected_columns_required(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_bad_header", "url": URL,
+                       "license": "CC BY", "role": "litter",
+                       "expected_columns": ["Profundidade"]}]}
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(b"parcela,valor\\n1,2\\n".replace(b"\\n", b"\n")))
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+
     def test_html_error_response_not_saved_as_csv(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "bad_csv", "url": URL, "license": "CC BY", "role": "litter"}]}
