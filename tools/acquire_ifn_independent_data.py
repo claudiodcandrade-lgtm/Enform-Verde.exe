@@ -5,6 +5,7 @@ Uses only explicitly configured source URLs. Preserves raw bytes and records sha
 No plot-to-pixel calibration or confidence intervals are inferred by this tool.
 """
 import argparse
+import csv
 import datetime as dt
 import hashlib
 import json
@@ -37,6 +38,10 @@ def fetch_sources(registry, output, opener=None):
         target = output / (source["id"] + pathlib.Path(parsed.path).suffix.lower())
         try:
             with opener(urllib.request.Request(url, headers={"User-Agent": "EnformVerde-Scientific-Audit/1.0"}), timeout=90) as response:
+                final_url = response.geturl() if hasattr(response, "geturl") else url
+                final_parts = urllib.parse.urlsplit(final_url)
+                if final_parts.scheme != "https" or final_parts.hostname != "dados.florestal.gov.br":
+                    raise ValueError("download redirected outside the official HTTPS source host")
                 digest = hashlib.sha256()
                 size = 0
                 temp = target.with_suffix(target.suffix + ".partial")
@@ -64,6 +69,21 @@ def fetch_sources(registry, output, opener=None):
                             sample = raw.read(4096).lstrip().lower()
                         if sample.startswith((b"<!doctype html", b"<html")):
                             raise ValueError("CSV endpoint returned an HTML error page")
+                    if target.suffix == ".csv":
+                        with temp.open("r", encoding="utf-8-sig", errors="replace", newline="") as csv_file:
+                            sample = csv_file.read(8192)
+                            csv_file.seek(0)
+                            try:
+                                dialect = csv.Sniffer().sniff(sample, delimiters=",;\\t")
+                                reader = csv.reader(csv_file, dialect)
+                                header = next(reader, [])
+                                data_rows = sum(bool(row) for row in reader)
+                            except csv.Error as exc:
+                                raise ValueError("CSV parsing failed") from exc
+                        if len(header) < 2 or data_rows == 0:
+                            raise ValueError("CSV lacks a multi-column header or data rows")
+                        record["csv_header"] = header[:100]
+                        record["csv_data_rows"] = data_rows
                     temp.replace(target)
                 finally:
                     temp.unlink(missing_ok=True)
