@@ -42,6 +42,28 @@ def _check_independent_report(payload, row, label, errors):
             for k in ("train_partition", "test_partition", "validation_design", "unit")):
         errors.append(f"{label}: independent validation split/design/unit absent")
 
+def _check_raw_dataset(row, label, errors, root):
+    """A digest claimed in JSON is not proof that source observations exist."""
+    relative = row.get("dataset_file")
+    if not isinstance(relative, str) or not relative.strip():
+        errors.append(f"{label}: raw dataset_file required for observed capability")
+        return
+    target = (root / relative).resolve()
+    if not target.is_relative_to(root):
+        errors.append(f"{label}: raw dataset outside evidence root")
+        return
+    if not target.is_file():
+        errors.append(f"{label}: raw dataset absent")
+        return
+    try:
+        digest = hashlib.sha256(target.read_bytes()).hexdigest()
+    except OSError:
+        errors.append(f"{label}: raw dataset unreadable")
+        return
+    if digest.lower() != str(row.get("dataset_sha256", "")).lower():
+        errors.append(f"{label}: raw dataset SHA256 mismatch")
+
+
 def assess(manifest, source_sha, root):
     errors, rows_out, seen = [], [], set()
     if not isinstance(manifest, dict):
@@ -91,6 +113,7 @@ def assess(manifest, source_sha, root):
             for field in ("dataset_sha256", "validation_report_sha256"):
                 if not re.fullmatch(r"[0-9a-fA-F]{64}", str(row.get(field, ""))):
                     errors.append(f"{label}: invalid {field}")
+            _check_raw_dataset(row, label, errors, root)
             report = row.get("validation_report")
             if isinstance(report, str) and report.strip():
                 target = (root / report).resolve()
