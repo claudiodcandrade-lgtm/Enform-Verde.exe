@@ -28,11 +28,20 @@ jobs:
             --source-sha "$(git rev-parse HEAD)" \
             --evidence validation/release_evidence.json \
             --report release_gate_report.json
+      - name: Audit modular scientific capabilities independently
+        if: always()
+        run: |
+          python tools/modular_scientific_gate.py \
+            --source-sha "$(git rev-parse HEAD)" \
+            --manifest validation/modular_capabilities.json \
+            --report modular_gate_report.json
       - name: Retain blockers for scientific review
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: scientific-release-blockers-${{ github.run_id }}
-          path: release_gate_report.json
+          path: |
+            release_gate_report.json
+            modular_gate_report.json
           if-no-files-found: warn
           retention-days: 90
