@@ -2253,3 +2253,6 @@ O GitHub confirmou, para o SHA `2dc3f2bc8e901a22f9376762095a4ad7dc41a49d`, workf
 ### RETIFICAÇÃO DE DATA JAXA — 30/10/2026, mesma evolução material
 
 A documentação operacional de Digital Earth Africa para os dados globais JAXA demonstra explicitamente `data_observação = 2006-01-24 + timedelta(date_band, dias)` (sem subtrair 1): https://docs.digitalearthafrica.org/en/latest/sandbox/notebooks/Datasets/ALOS_PALSAR_Annual_Mosaic.html . A primeira implementação de `extract_jaxa_palsar_plot_pairs.py` subtraía um dia; **corrigido** no commit `1d488a5563fdb2fe6a9bcde03261358d97cfb731` e fixture de teste ajustada no commit `ae95466fc1770b19b3a2c9c2dff2a4ca6e9538c2`. Esta correção evita erro temporal sistemático em pares parcela–pixel; continua sem validar altura SAR ou produtividade. CI dos novos commits ainda não confirmado.
+
+
+**Instrução operacional consolidada no mesmo avanço:** commit `ac176c83cacf9add07362527689142239f133aba` acrescentou `docs/JAXA_PALSAR_PLOT_PAIRS.md` com obtenção registrada dos quatro rasters reais, SHA256, execução reprodutível do extrator, requisitos de licença, datas e limites de validação. O documento não constitui evidência de aquisição ou homologação. Workflows novos ainda aguardam execução/resultado na última consulta; não promover o ZIP por mera compilação.
