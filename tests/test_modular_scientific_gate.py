@@ -1,5 +1,6 @@
 """Tests for modular evidence registry. Registry validity is not scientific approval."""
 import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,6 +19,7 @@ class ModularGateTests(unittest.TestCase):
         self.assertTrue(result["passed"])
         self.assertEqual(result["validated_count"], 0)
         self.assertEqual(result["not_available_count"], 1)
+        self.assertFalse(result["scientifically_homologated"])
 
     def test_claimed_validation_without_real_data_fails(self):
         row = dict(BASE, status="validated", evidence_type="literature_mean")
@@ -28,14 +30,27 @@ class ModularGateTests(unittest.TestCase):
     def test_validated_report_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "report.json").write_bytes(b"real-validation-report")
+            report = {"dataset_sha256": "f" * 64, "independent_sample_count": 12,
+                      "rmse": 5.2, "mae": 4.1, "bias": -0.4, "interval_coverage": 0.9,
+                      "train_partition": "geographic_tile_A", "test_partition": "geographic_tile_B",
+                      "validation_design": "spatial holdout", "unit": "Mg/ha"}
+            report_bytes = json.dumps(report).encode("utf-8")
+            (root / "report.json").write_bytes(report_bytes)
             row = dict(BASE, status="validated", evidence_type="independent_real_data",
                        source_url="https://example.org/data", dataset_sha256="f" * 64,
                        validation_report="report.json",
-                       validation_report_sha256=hashlib.sha256(b"real-validation-report").hexdigest(),
+                       validation_report_sha256=hashlib.sha256(report_bytes).hexdigest(),
                        uncertainty_kind="predictive_interval", domain="microrregional FOD",
                        transfer_error_method="independent spatial holdout")
-            self.assertTrue(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
+            validated = assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)
+            self.assertTrue(validated["passed"])
+            self.assertTrue(validated["scientifically_homologated"])
+            report["dataset_sha256"] = "e" * 64
+            mismatched_bytes = json.dumps(report).encode("utf-8")
+            (root / "report.json").write_bytes(mismatched_bytes)
+            row["validation_report_sha256"] = hashlib.sha256(mismatched_bytes).hexdigest()
+            self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
+            row["validation_report_sha256"] = hashlib.sha256(report_bytes).hexdigest()
             (root / "report.json").write_bytes(b"tampered")
             self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
 
