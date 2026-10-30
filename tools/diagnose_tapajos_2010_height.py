@@ -77,6 +77,14 @@ def local_block(lon: float, lat: float, step_deg: float = 0.04) -> str:
     return f"{math.floor(lon / step_deg)}:{math.floor(lat / step_deg)}"
 
 
+def gamma0_db_from_dn(values: np.ndarray) -> float:
+    """JAXA v2.6 §5.1 ensemble power; reject invalid DN."""
+    arr = np.asarray(values, dtype=np.float64)
+    if not arr.size or not np.all(np.isfinite(arr)) or np.any(arr <= 0):
+        raise ValueError("gamma0 requires finite positive DN values")
+    return 10.0 * math.log10(float(np.mean(arr * arr))) - 83.0
+
+
 def metrics(y: np.ndarray, p: np.ndarray) -> dict:
     e = p - y
     ss_tot = float(np.sum((y - y.mean()) ** 2))
@@ -239,10 +247,11 @@ def main() -> int:
                     if not valid.any():
                         sample_log.append({"plot": int(float(row["plot"])), "status": "no_valid_land_pixel"})
                         continue
-                    hh_dn = float(np.median(hh[valid]))
-                    hv_dn = float(np.median(hv[valid]))
-                    hh_db = 10.0 * math.log10(hh_dn * hh_dn) - 83.0
-                    hv_db = 10.0 * math.log10(hv_dn * hv_dn) - 83.0
+                    # JAXA v2.6 §5.1: gamma0(dB) = 10log10(<DN²>)-83.
+                    # Arrays were cast to float before squaring; the
+                    # median-DN squared used previously was biased.
+                    hh_db = gamma0_db_from_dn(hh[valid])
+                    hv_db = gamma0_db_from_dn(hv[valid])
                     hh_values.append(hh_db)
                     hv_values.append(hv_db)
                     h100.append(float(row["h100_field_m"]))
