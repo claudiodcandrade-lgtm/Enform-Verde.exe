@@ -1,5 +1,6 @@
 """Contract tests: no Brazilian inference from an Africa-only SAR archive."""
 import json
+import math
 import tempfile
 import unittest
 from pathlib import Path
@@ -34,6 +35,12 @@ class TapajosSourceDomainTests(unittest.TestCase):
             self.assertEqual(urlsplit(result["global_alternative"]).scheme, "https")
             self.assertIn("JAXA", result["global_access"])
             self.assertFalse(result["scientific_validation"])
+
+    def test_diagnostic_uses_jaxa_ensemble_power(self):
+        dn = np.array([100, 100, 300], dtype=np.uint16)
+        expected = 10 * math.log10((100 ** 2 + 100 ** 2 + 300 ** 2) / 3) - 83
+        self.assertAlmostEqual(diagnostic.gamma0_db_from_dn(dn), expected)
+        self.assertNotAlmostEqual(diagnostic.gamma0_db_from_dn(dn), -43.0, places=3)
 
     def test_pixel_centers_outside_plot_are_not_training_pairs(self):
         lon, lat = -54.95, -3.03
