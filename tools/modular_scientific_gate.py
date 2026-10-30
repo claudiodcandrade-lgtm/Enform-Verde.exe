@@ -3,12 +3,36 @@
 import argparse
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
 BIOMES = {"Amazônia", "Cerrado", "Caatinga", "Mata Atlântica", "Pantanal"}
 POOLS = {"agb", "roots", "standing_deadwood", "downed_deadwood", "litter", "soil_0_100"}
 STATUSES = {"validated", "experimental", "not_available"}
+
+def _check_independent_report(payload, row, label, errors):
+    """Confirm independent metrics exist; a digest by itself is not validation."""
+    if not isinstance(payload, dict):
+        errors.append(f"{label}: validation report must be a JSON object")
+        return
+    if payload.get("dataset_sha256") != row.get("dataset_sha256"):
+        errors.append(f"{label}: report dataset hash does not match source")
+    n = payload.get("independent_sample_count")
+    if type(n) is not int or n <= 0:
+        errors.append(f"{label}: independent sample count missing")
+    for field in ("rmse", "mae", "bias", "interval_coverage"):
+        value = payload.get(field)
+        if type(value) not in (int, float) or not math.isfinite(value):
+            errors.append(f"{label}: invalid independent {field}")
+        elif field in ("rmse", "mae") and value < 0:
+            errors.append(f"{label}: {field} cannot be negative")
+        elif field == "interval_coverage" and not 0 <= value <= 1:
+            errors.append(f"{label}: interval_coverage must lie in [0,1]")
+    if payload.get("train_partition") == payload.get("test_partition") or not all(
+            isinstance(payload.get(k), str) and payload[k].strip()
+            for k in ("train_partition", "test_partition", "validation_design", "unit")):
+        errors.append(f"{label}: independent validation split/design/unit absent")
 
 def assess(manifest, source_sha, root):
     errors, rows_out, seen = [], [], set()
@@ -74,6 +98,13 @@ def assess(manifest, source_sha, root):
                     else:
                         if actual.lower() != str(row.get("validation_report_sha256", "")).lower():
                             errors.append(f"{label}: report hash mismatch")
+                        elif status == "validated":
+                            try:
+                                payload = json.loads(target.read_text(encoding="utf-8"))
+                            except (OSError, ValueError, UnicodeError):
+                                errors.append(f"{label}: independent report must be valid JSON")
+                            else:
+                                _check_independent_report(payload, row, label, errors)
             if pool == "soil_0_100" and row.get("depth_cm") != [0, 100]:
                 errors.append(f"{label}: soil requires 0-100 cm")
         rows_out.append({"biome": biome, "pool": pool, "fitofisionomia": physio, "status": status})
@@ -82,7 +113,8 @@ def assess(manifest, source_sha, root):
     return {"passed": passed, "errors": errors, "capabilities": rows_out,
             "validated_count": (sum(r["status"] == "validated" for r in rows_out) if passed else 0),
             "experimental_count": (sum(r["status"] == "experimental" for r in rows_out) if passed else 0),
-            "not_available_count": (sum(r["status"] == "not_available" for r in rows_out) if passed else 0)}
+            "not_available_count": (sum(r["status"] == "not_available" for r in rows_out) if passed else 0),
+            "scientifically_homologated": passed and any(r["status"] == "validated" for r in rows_out)}
 
 def main():
     parser = argparse.ArgumentParser()
