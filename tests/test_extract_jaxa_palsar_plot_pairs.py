@@ -27,7 +27,7 @@ class JAXAPlotPairTests(unittest.TestCase):
         transform = from_origin(-55.00033, -2.99967, 0.00022, 0.00022)
         values = {"hh": (100, "uint16"), "hv": (50, "uint16"),
                   "mask": (255, "uint8"),
-                  "date": ((date(2010, 9, 1) - date(2006, 1, 24)).days + 1, "uint16")}
+                  "date": ((date(2010, 9, 1) - date(2006, 1, 24)).days, "uint16")}
         for name, (value, dtype) in values.items():
             path = self.root / (name + ".tif")
             with rasterio.open(path, "w", driver="GTiff", width=3, height=3, count=1,
