@@ -2004,3 +2004,16 @@ Verificação direta no GitHub para o SHA exato `7e6bb623e455956c9d987db6d39599b
 **CI observado no SHA `2fd2c6490422071688eea70f4e69bb9b810e2f81`:** run científico `41082059168`, job `124153454733`: **23 testes de contrato OK**; auditoria nacional **failure**; promoção de evidências **failure** com `accepted_count: 0` e mensagem “No independently validated candidate with verified source bytes and report”; auditoria modular **failure**. Builds Windows run `41082059243` e dashboard `41082059173` estavam `in_progress` na consulta, portanto seus resultados não foram afirmados. CI do SHA anterior `7f4b06283c20c0036df92072171dc10732dcbbff` também apresentou reprovação científica.
 
 **Próximo trabalho com maior impacto:** (a) assegurar ingestão realmente bem-sucedida dos arquivos públicos IFN e revisar licença, metadados e qualidade; (b) montar conjuntos de parcelas reais microrregionais e divisão espacial independente com pareamento temporal/orbital SAR verdadeiro; (c) calcular métricas e incerteza/erro de transferência sem mínimo arbitrário de acurácia; (d) produzir candidaturas por capacidade validadas, **sem simular observações**; (e) validar compatibilidade de `legenda_1`, fonte, domínio e solo 0–100; (f) integrar estados com UI e bloqueios seguros; (g) verificar ZIP Windows pelo mesmo SHA homologado. Preservar painel executivo e altura SAR real; N/D se dados ou error bars indisponíveis.
+
+
+## ATUALIZAÇÃO DE CI CONFIRMADA — 30/10/2026 — NOVA ROTA DE PROMOÇÃO INDEPENDENTE
+
+Após a implementação material em `2fd2c6490422071688eea70f4e69bb9b810e2f81` e atualização do prompt `3ef3d70684fba0fbd047b6362be7b056c7229717`, foi consultado especificamente o CI desse último SHA:
+- Homologação científica, run `41082190526`, job `124153908076`: **23 testes automatizados OK** na etapa `Validate fail-closed scientific evidence contract`. Portanto, a nova rotina de promoção e os novos testes executaram sem regressão detectada nesse conjunto.
+- A auditoria nacional de evidências reais **falhou** pela ausência de `validation/release_evidence.json`.
+- A etapa `Promote independently verified real evidence into modular manifest` **falhou corretamente**, sem fabricar provas: nenhum candidato independente com bytes de origem e relatório verificáveis foi promovido.
+- A auditoria modular **falhou** pela ausência de `validation/modular_capabilities.json`.
+- Na consulta, dashboard run `41082190586` e build Windows run `41082190560` permaneciam **em execução**; não registrar sucesso antes de confirmação.
+- **Interpretação científica:** 23 testes de contrato aprovados demonstram controles do mecanismo de validação, não validação biológica dos estoques, SAR ou agricultura. O próximo bloqueador material é produzir `validation/evidence_candidates/*.json` com arquivos observacionais reais e relatórios independentes auditáveis, incluindo a incerteza de transferência, em vez de apenas criar manifestos vazios ou artificiais.
+
+**Manter** homologação modular autorizada, segregação de estado `validated`/`experimental`/`not_available`, microrregionalidade por fitofisionomia IBGE, solo 0–100, altura SAR real e critérios de liberação pelo SHA exato. Não notificar liberação nem fornecer download definitivo até cumprir requisitos demonstráveis.
