@@ -74,11 +74,12 @@ def assess(manifest, source_sha, root):
             if pool == "soil_0_100" and row.get("depth_cm") != [0, 100]:
                 errors.append(f"{label}: soil requires 0-100 cm")
         rows_out.append({"biome": biome, "pool": pool, "fitofisionomia": physio, "status": status})
-    # A valid registry may contain N/D entries; this does NOT mean those models are validated.
-    return {"passed": not errors, "errors": errors, "capabilities": rows_out,
-            "validated_count": sum(r["status"] == "validated" for r in rows_out),
-            "experimental_count": sum(r["status"] == "experimental" for r in rows_out),
-            "not_available_count": sum(r["status"] == "not_available" for r in rows_out)}
+    # A failed registry must never advertise approved capability counts.
+    passed = not errors
+    return {"passed": passed, "errors": errors, "capabilities": rows_out,
+            "validated_count": (sum(r["status"] == "validated" for r in rows_out) if passed else 0),
+            "experimental_count": (sum(r["status"] == "experimental" for r in rows_out) if passed else 0),
+            "not_available_count": (sum(r["status"] == "not_available" for r in rows_out) if passed else 0)}
 
 def main():
     parser = argparse.ArgumentParser()
