@@ -30,7 +30,10 @@ class ModularGateTests(unittest.TestCase):
     def test_validated_report_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            report = {"dataset_sha256": "f" * 64, "independent_sample_count": 12,
+            raw = b"independent plot observations for test fixture only"
+            (root / "plots.csv").write_bytes(raw)
+            raw_sha = hashlib.sha256(raw).hexdigest()
+            report = {"dataset_sha256": raw_sha, "independent_sample_count": 12,
                       "rmse": 5.2, "mae": 4.1, "bias": -0.4, "interval_coverage": 0.9,
                       "train_partition": "geographic_tile_A", "test_partition": "geographic_tile_B",
                       "validation_design": "spatial holdout", "unit": "Mg/ha",
@@ -38,7 +41,8 @@ class ModularGateTests(unittest.TestCase):
             report_bytes = json.dumps(report).encode("utf-8")
             (root / "report.json").write_bytes(report_bytes)
             row = dict(BASE, status="validated", evidence_type="independent_real_data",
-                       source_url="https://example.org/data", dataset_sha256="f" * 64,
+                       source_url="https://example.org/data", dataset_sha256=raw_sha,
+                       dataset_file="plots.csv",
                        validation_report="report.json",
                        validation_report_sha256=hashlib.sha256(report_bytes).hexdigest(),
                        uncertainty_kind="predictive_interval", domain="microrregional FOD",
@@ -46,6 +50,12 @@ class ModularGateTests(unittest.TestCase):
             validated = assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)
             self.assertTrue(validated["passed"])
             self.assertTrue(validated["scientifically_homologated"])
+            (root / "plots.csv").write_bytes(b"tampered observations")
+            self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
+            (root / "plots.csv").write_bytes(raw)
+            no_raw_pointer = dict(row)
+            no_raw_pointer.pop("dataset_file")
+            self.assertFalse(assess({"source_sha": SHA, "capabilities": [no_raw_pointer]}, SHA, root)["passed"])
             report["test_spatial_units"] = 1
             wrong_units = json.dumps(report).encode("utf-8")
             (root / "report.json").write_bytes(wrong_units)
