@@ -25,6 +25,28 @@ CSV = ROOT / "data" / "tapajos_ornl1552_structure_v1.csv"
 OUT = ROOT / "tapajos_2010_h100_diagnostic.json"
 BUCKET = "https://deafrica-input-datasets.s3.af-south-1.amazonaws.com"
 PREFIX = "alos_palsar_mosaic/2010/S05W055/"
+# Digital Earth Africa is a REGIONAL redistribution of a global JAXA product.
+# This conservative bounding envelope is only used to reject locations clearly
+# outside Africa. Being inside does NOT imply scene availability.
+DEAFRICA_OUTER_ENVELOPE = (-26.0, -36.0, 60.0, 39.0)
+JAXA_GLOBAL_SOURCE = "https://www.eorc.jaxa.jp/ALOS/en/dataset/fnf_e.htm"
+JAXA_REGISTRATION = "https://www.eorc.jaxa.jp/ALOS/en/palsar_fnf/registration.htm"
+
+
+def outside_deafrica_envelope(rows):
+    west, south, east, north = DEAFRICA_OUTER_ENVELOPE
+    return bool(rows) and all(
+        not (west <= float(row["lon"]) <= east and south <= float(row["lat"]) <= north)
+        for row in rows
+    )
+
+
+def plot_footprint_mask(lons, lats, lon, lat, half_width_m=25.0):
+    """Pixel centers strictly inside a 50 m field plot; no nearest-pixel fallback."""
+    dx = (np.asarray(lons) - lon) * 111320.0 * math.cos(math.radians(lat))
+    dy = (np.asarray(lats) - lat) * 111320.0
+    return (np.abs(dx) <= half_width_m) & (np.abs(dy) <= half_width_m)
+
 
 
 def list_objects(prefix: str) -> list[str]:
@@ -108,6 +130,23 @@ def main() -> int:
     if len(rows) != 30:
         raise ValueError(f"Expected 30 ORNL plots; found {len(rows)}")
 
+    if outside_deafrica_envelope(rows):
+        result = {
+            "status": "BLOCKED_SOURCE_GEOGRAPHY",
+            "deployable": False,
+            "reason": "Digital Earth Africa regional S3 distribution does not cover these Brazilian plots. An empty regional prefix is NOT evidence of global JAXA 2010 data absence.",
+            "regional_source": BUCKET,
+            "regional_prefix": PREFIX,
+            "global_alternative": JAXA_GLOBAL_SOURCE,
+            "global_access": "JAXA global PALSAR 2007-2010 mosaics require registered access; obtain and verify real local tiles and usage terms.",
+            "height_sar_m": None,
+            "height_product_available": False,
+            "scientific_validation": False,
+        }
+        OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+
     try:
         keys = list_objects(PREFIX)
     except Exception as exc:
@@ -144,6 +183,7 @@ def main() -> int:
     os.environ.setdefault("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ".tif,.tiff,.ovr,.xml")
     os.environ.setdefault("GDAL_HTTP_VERSION", "2")
     import rasterio
+    from rasterio.warp import transform as transform_crs
     from rasterio.windows import Window
 
     hh_values, hv_values, h100, classes, groups = [], [], [], [], []
@@ -170,7 +210,13 @@ def main() -> int:
                 print(f"OPENED={key} CRS={ds.crs} SIZE={ds.width}x{ds.height} BANDS={ds.count} DESC={descriptions}")
                 for row in rows:
                     lon, lat = float(row["lon"]), float(row["lat"])
-                    r, c = ds.index(lon, lat)
+                    if ds.crs is None:
+                        raise ValueError("SAR raster has no CRS; georeferenced sampling prohibited")
+                    xx, yy = transform_crs("EPSG:4326", ds.crs, [lon], [lat])
+                    r, c = ds.index(xx[0], yy[0])
+                    if not (0 <= r < ds.height and 0 <= c < ds.width):
+                        sample_log.append({"plot": int(float(row["plot"])), "status": "outside_raster"})
+                        continue
                     r0, c0 = max(0, r - 2), max(0, c - 2)
                     r1, c1 = min(ds.height, r + 3), min(ds.width, c + 3)
                     if r1 <= r0 or c1 <= c0:
@@ -178,26 +224,18 @@ def main() -> int:
                     win = Window(c0, r0, c1 - c0, r1 - r0)
                     hh = ds.read(hh_band, window=win).astype(float)
                     hv = ds.read(hv_band, window=win).astype(float)
-                    if ds.transform:
-                        rr, cc = np.mgrid[r0:r1, c0:c1]
-                        xs, ys = rasterio.transform.xy(ds.transform, rr, cc, offset="center")
-                        xs, ys = np.asarray(xs), np.asarray(ys)
-                        # 50x50m square plot footprint centered on surveyed plot.
-                        dx = (xs - lon) * 111320.0 * math.cos(math.radians(lat))
-                        dy = (ys - lat) * 111320.0
-                        inside = (np.abs(dx) <= 25.0) & (np.abs(dy) <= 25.0)
-                    else:
-                        inside = np.ones(hh.shape, dtype=bool)
+                    rr, cc = np.mgrid[r0:r1, c0:c1]
+                    xs, ys = rasterio.transform.xy(ds.transform, rr.ravel(), cc.ravel(), offset="center")
+                    lons, lats = transform_crs(ds.crs, "EPSG:4326", xs, ys)
+                    lons = np.asarray(lons).reshape(hh.shape)
+                    lats = np.asarray(lats).reshape(hh.shape)
+                    inside = plot_footprint_mask(lons, lats, lon, lat)
                     valid = inside & np.isfinite(hh) & np.isfinite(hv) & (hh > 0) & (hv > 0)
                     if mask_band:
                         m = ds.read(mask_band, window=win)
                         valid &= (m == 255)
-                    if not valid.any():
-                        # Keep closest valid sample only if the plot box misses
-                        # pixel centers due to raster grid/centroid rounding.
-                        valid = np.isfinite(hh) & np.isfinite(hv) & (hh > 0) & (hv > 0)
-                        if mask_band:
-                            valid &= ds.read(mask_band, window=win) == 255
+                    # Do not substitute a neighboring pixel outside the surveyed
+                    # footprint: it would manufacture a plot-pixel training pair.
                     if not valid.any():
                         sample_log.append({"plot": int(float(row["plot"])), "status": "no_valid_land_pixel"})
                         continue
