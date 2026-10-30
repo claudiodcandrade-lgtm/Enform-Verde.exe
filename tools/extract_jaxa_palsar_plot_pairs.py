@@ -33,6 +33,19 @@ def _grid_signature(ds):
     return (ds.width, ds.height, str(ds.crs), tuple(ds.transform))
 
 
+def gamma0_db_from_dn(dn_values):
+    """JAXA v2.6 §5.1: 10 log10(ensemble mean of DN squared) - 83 dB.
+
+    Cast to float64 *before* squaring to prevent uint16 overflow.
+    The averaging footprint is the valid plot pixels, not an AOI model.
+    """
+    import numpy as np
+    values = np.asarray(dn_values, dtype=np.float64)
+    if values.size == 0 or not np.all(np.isfinite(values)) or np.any(values <= 0):
+        raise ValueError("gamma0 requires finite positive DN values")
+    return 10.0 * math.log10(float(np.mean(values * values))) - 83.0
+
+
 def extract(rasters, expected_sha256, plots, plots_sha256, year):
     """Return traceable, unvalidated backscatter/field pairs for real local files.
 
@@ -122,12 +135,16 @@ def extract(rasters, expected_sha256, plots, plots_sha256, year):
                 result["observed_date_range"] = [min(obs_dates).isoformat(), max(obs_dates).isoformat()]
                 results.append(result)
                 continue
-            hh_dn = float(np.median(hh.data[valid]))
-            hv_dn = float(np.median(hv.data[valid]))
+            # JAXA v2.6.0 §5.1 specifies 10*log10(<DN²>)-83, where
+            # <DN²> is the ensemble POWER average. Median(DN)² and
+            # mean(DN)² are not interchangeable with mean(DN²).
+            hh_db = gamma0_db_from_dn(hh.data[valid])
+            hv_db = gamma0_db_from_dn(hv.data[valid])
             result.update(status="paired_unvalidated",
                           pixels_inside_plot=int(valid.sum()),
-                          hh_gamma0_db=10.0 * math.log10(hh_dn ** 2) - 83.0,
-                          hv_gamma0_db=10.0 * math.log10(hv_dn ** 2) - 83.0,
+                          gamma0_aggregation="mean_squared_dn_before_log",
+                          hh_gamma0_db=hh_db,
+                          hv_gamma0_db=hv_db,
                           observed_date_range=[min(obs_dates).isoformat(), max(obs_dates).isoformat()],
                           spatial_block=f"{math.floor(lon / 0.04)}:{math.floor(lat / 0.04)}")
             results.append(result)
