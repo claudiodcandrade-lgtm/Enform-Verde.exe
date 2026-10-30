@@ -46,6 +46,7 @@ class EvidencePromotionTests(unittest.TestCase):
             audit, manifest = promote(SHA, root, candidates)
             self.assertTrue(audit["promoted"])
             self.assertEqual(len(manifest["capabilities"]), 1)
+            self.assertEqual(manifest["capabilities"][0]["dataset_file"], "plot.csv")
             (root / "plot.csv").write_bytes(b"corrupted")
             audit, manifest = promote(SHA, root, candidates)
             self.assertFalse(audit["promoted"])
