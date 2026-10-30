@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from urllib.parse import urlsplit
 from unittest.mock import patch
 
 import numpy as np
@@ -29,7 +30,9 @@ class TapajosSourceDomainTests(unittest.TestCase):
             self.assertFalse(result["deployable"])
             self.assertFalse(result["height_product_available"])
             self.assertIsNone(result["height_sar_m"])
-            self.assertIn("JAXA", result["global_alternative"])
+            self.assertEqual(urlsplit(result["global_alternative"]).hostname, "www.eorc.jaxa.jp")
+            self.assertEqual(urlsplit(result["global_alternative"]).scheme, "https")
+            self.assertIn("JAXA", result["global_access"])
             self.assertFalse(result["scientific_validation"])
 
     def test_pixel_centers_outside_plot_are_not_training_pairs(self):
