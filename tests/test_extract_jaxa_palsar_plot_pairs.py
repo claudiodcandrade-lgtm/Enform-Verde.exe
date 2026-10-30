@@ -1,5 +1,6 @@
 """Regression tests for JAXA plot/pixel extraction; synthetic rasters test code only."""
 import csv
+import math
 from datetime import date
 import hashlib
 import importlib.util
@@ -7,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.extract_jaxa_palsar_plot_pairs import extract, sha256_file
+from tools.extract_jaxa_palsar_plot_pairs import extract, sha256_file, gamma0_db_from_dn
 
 HAVE_RASTERIO = importlib.util.find_spec("rasterio") is not None
 HAVE_NUMPY = importlib.util.find_spec("numpy") is not None
@@ -57,6 +58,33 @@ class JAXAPlotPairTests(unittest.TestCase):
         self.assertFalse(result["scientifically_validated"])
         self.assertFalse(result["source_identity_independently_verified"])
         self.assertFalse(result["aoi_ci95_validated"])
+
+    def test_jaxa_ensemble_power_not_median_dn(self):
+        import numpy as np
+        import rasterio
+        # Eight 100-DN pixels and one 300-DN pixel: median-DN²
+        # underestimates the JAXA ensemble power (mean DN²).
+        with rasterio.open(self.rasters["hh"], "r+") as ds:
+            pixels = np.full((3, 3), 100, dtype="uint16")
+            pixels[0, 0] = 300
+            ds.write(pixels, 1)
+        result = self.audit()
+        row = result["pairs"][0]
+        expected = 10 * math.log10((8 * 100 ** 2 + 300 ** 2) / 9) - 83
+        self.assertAlmostEqual(row["hh_gamma0_db"], expected, places=10)
+        self.assertNotAlmostEqual(row["hh_gamma0_db"], -43.0, places=3)
+        self.assertEqual(row["gamma0_aggregation"], "mean_squared_dn_before_log")
+
+    def test_uint16_square_must_not_overflow(self):
+        import numpy as np
+        self.assertAlmostEqual(gamma0_db_from_dn(np.array([60000, 60000], dtype="uint16")),
+                               20 * math.log10(60000) - 83, places=10)
+
+    def test_power_averaging_rejects_invalid_inputs(self):
+        import numpy as np
+        for values in ([], [0, 10], [float("nan"), 100]):
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                gamma0_db_from_dn(np.asarray(values))
 
     def test_wrong_acquisition_year_is_not_pair(self):
         result = self.audit(year=2009)
