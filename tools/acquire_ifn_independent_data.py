@@ -7,7 +7,7 @@ No plot-to-pixel calibration or confidence intervals are inferred by this tool.
 import argparse
 import csv
 import io
-from collections import Counter
+from collections import Counter, defaultdict
 import xml.etree.ElementTree as ET
 import datetime as dt
 import hashlib
@@ -41,6 +41,8 @@ def _profile_csv(path, expected_columns=()):
         if any(column not in header for column in expected_columns):
             raise ValueError("CSV missing expected observational columns")
         counts, biomes, states, units = 0, Counter(), Counter(), set()
+        ua_by_biome, typology_by_ua, strata_ua, equations_by_ua = (
+            defaultdict(set), defaultdict(set), defaultdict(set), defaultdict(set))
         for row in reader:
             if not any(value for value in row.values()):
                 continue
@@ -50,14 +52,31 @@ def _profile_csv(path, expected_columns=()):
             if "uf" in row:
                 states[row["uf"]] += 1
             if row.get("ua"):
-                units.add(row["ua"])
+                key = (row.get("bioma", ""), row.get("uf", ""), row["ua"])
+                units.add(key)
+                ua_by_biome[key[0]].add(key)
+                if row.get("tipologia_da_vegetacao"):
+                    typology = row["tipologia_da_vegetacao"]
+                    typology_by_ua[key].add(typology)
+                    strata_ua[(key[0], typology)].add(key)
+                if row.get("equacoes"):
+                    equations_by_ua[key].add(row["equacoes"])
     except csv.Error as exc:
         raise ValueError("CSV parsing failed") from exc
     if counts == 0:
         raise ValueError("CSV has no observation rows")
     return {"csv_encoding": encoding, "csv_header": header[:100],
             "csv_data_rows": counts, "biome_rows": dict(sorted(biomes.items())),
-            "state_rows": dict(sorted(states.items())), "unique_ua": len(units)}
+            "state_rows": dict(sorted(states.items())), "unique_ua": len(units),
+            "unique_ua_by_biome": {b: len(v) for b, v in sorted(ua_by_biome.items())},
+            "strata_ua_counts": [
+                {"biome": b, "typology": t, "unique_ua": len(v)}
+                for (b, t), v in sorted(strata_ua.items())],
+            "ua_with_multiple_inferred_typologies":
+                sum(len(v) > 1 for v in typology_by_ua.values()),
+            "max_equations_per_ua": max((len(v) for v in equations_by_ua.values()), default=0),
+            "equation_rows_not_independent_sampling_units": "equacoes" in header,
+            "strata_are_independently_validated": False}
 
 
 def _profile_xlsx(path, expected_columns=()):

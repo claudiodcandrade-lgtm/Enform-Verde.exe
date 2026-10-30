@@ -36,6 +36,25 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertEqual(item["unique_ua"], 1)
             self.assertFalse(item["carbon_stock_ready"])
 
+    def test_multiple_equations_do_not_inflate_primary_sampling_units(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_models", "url": URL,
+                       "license": "CC BY", "role": "biomass"}]}
+            raw = ("bioma;uf;ua;tipologia_da_vegetacao;equacoes;agb_media_kg_por_ha\n"
+                   "Cerrado;Goiás;GO_1;Savana;Eq.1;1000\n"
+                   "Cerrado;Goiás;GO_1;Savana;Eq.2;1200\n"
+                   "Cerrado;Goiás;GO_2;Savana;Eq.1;1400\n").encode("utf-8")
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            item = result["resources"][0]
+            self.assertEqual(item["csv_data_rows"], 3)
+            self.assertEqual(item["unique_ua"], 2)
+            self.assertEqual(item["unique_ua_by_biome"], {"Cerrado": 2})
+            self.assertEqual(item["strata_ua_counts"][0]["unique_ua"], 2)
+            self.assertEqual(item["max_equations_per_ua"], 2)
+            self.assertTrue(item["equation_rows_not_independent_sampling_units"])
+            self.assertFalse(item["strata_are_independently_validated"])
+
     def test_expected_columns_required(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_bad_header", "url": URL,
