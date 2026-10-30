@@ -1,0 +1,43 @@
+name: IFN independent data acquisition (non-homologating)
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+    paths:
+      - 'tools/acquire_ifn_independent_data.py'
+      - 'validation/ifn_sources.json'
+      - '.github/workflows/ifn-data-ingestion.yml'
+permissions:
+  contents: read
+jobs:
+  acquire-ifn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Acquire official source bytes and record SHA256
+        id: acquire
+        continue-on-error: true
+        run: |
+          python tools/acquire_ifn_independent_data.py --registry validation/ifn_sources.json --out ifn_raw --report ifn_download_audit.json
+      - name: Publish unvalidated acquisition audit and raw source files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifn-raw-source-audit-${{ github.sha }}
+          path: |
+            ifn_download_audit.json
+            ifn_raw/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Report download status without claiming scientific validation
+        if: always()
+        run: |
+          echo "Raw IFN acquisition outcome: ${{ steps.acquire.outcome }}"
+          echo "No bioma/pool capability is validated by this workflow."
