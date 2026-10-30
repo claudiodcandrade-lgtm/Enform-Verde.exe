@@ -75,9 +75,8 @@
       "id": "ifn_painel_equivalencia_tost_2026",
       "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/a7396a8a-1b44-464d-bb90-6f74a2780e9c/download/dadosabertos_testeequacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
       "license": "Creative Commons Attribution (official SFB dataset portal)",
-      "role": "Official Regression-based TOST equivalence results for IFN allometric equations; not AOI uncertainty",
+      "role": "Official Regression-based TOST equivalence results; portal MIME advertises XLSX but actual response failed ZIP magic check; retry as CSV without scientific validation",
       "observed_measurement": "statistical_equivalence_of_allometric_equations_not_field_stock",
-      "format_override": "xlsx",
       "expected_columns": [
         "bioma",
         "tipologia",
