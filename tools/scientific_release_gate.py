@@ -7,6 +7,7 @@ validation can never be interpreted as independent scientific homologation.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -37,7 +38,32 @@ def _provenance(row, label, errors):
         errors.append(f"{label}: outcome is not passed")
     return True
 
-def assess(evidence, expected_sha):
+def _verify_local_report(row, label, errors, root):
+    """Check that cited validation results actually exist and are integrity-pinned."""
+    if not isinstance(row, dict) or row.get("status") != "passed":
+        return
+    report = row.get("validation_report")
+    digest = row.get("validation_report_sha256")
+    if not isinstance(report, str) or not report.strip():
+        errors.append(f"{label}: validation report path missing")
+        return
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
+        errors.append(f"{label}: validation_report_sha256 required")
+        return
+    target = (root / report).resolve()
+    try:
+        target.relative_to(root.resolve())
+    except ValueError:
+        errors.append(f"{label}: validation report escapes evidence directory")
+        return
+    if not target.is_file():
+        errors.append(f"{label}: validation report file absent")
+        return
+    if hashlib.sha256(target.read_bytes()).hexdigest().lower() != digest.lower():
+        errors.append(f"{label}: validation report hash mismatch")
+
+
+def assess(evidence, expected_sha, evidence_root=None):
     errors = []
     if not isinstance(evidence, dict):
         return ["Root must be an evidence object"]
@@ -120,6 +146,15 @@ def assess(evidence, expected_sha):
                     errors.append("windows: real GitHub artifact URL missing")
                 if row.get("clean_windows_smoke") is not True:
                     errors.append("windows: extracted EXE clean-machine smoke absent")
+    if evidence_root is not None:
+        root = Path(evidence_root)
+        for section in SECTIONS:
+            item = evidence.get(section)
+            if isinstance(item, list):
+                for i, row in enumerate(item):
+                    _verify_local_report(row, f"{section}[{i}]", errors, root)
+            else:
+                _verify_local_report(item, section, errors, root)
     return errors
 
 def main(argv=None):
@@ -136,7 +171,7 @@ def main(argv=None):
         reason = f"Evidence manifest unavailable or invalid: {type(exc).__name__}: {exc}"
     else:
         reason = ""
-    errors = assess(evidence, args.source_sha)
+    errors = assess(evidence, args.source_sha, path.parent)
     if reason:
         errors.insert(0, reason)
     report = {"source_sha": args.source_sha, "homologated": not errors,
