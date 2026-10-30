@@ -62,6 +62,30 @@ class ScientificReleaseGateTests(unittest.TestCase):
             _verify_local_report(row, "test", errors, root)
             self.assertEqual(errors, [])
 
+    def test_release_requires_actual_raw_observations_and_matching_digest(self):
+        from tools.scientific_release_gate import _verify_local_dataset
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw = b"test-only independent observations"
+            digest = hashlib.sha256(raw).hexdigest()
+            row = {"status": "passed", "dataset_file": "plots.csv",
+                   "dataset_sha256": digest}
+            errors = []
+            _verify_local_dataset(row, "agb", errors, root)
+            self.assertTrue(any("absent" in e for e in errors))
+            (root / "plots.csv").write_bytes(b"tampered")
+            errors = []
+            _verify_local_dataset(row, "agb", errors, root)
+            self.assertTrue(any("hash mismatch" in e for e in errors))
+            (root / "plots.csv").write_bytes(raw)
+            errors = []
+            _verify_local_dataset(row, "agb", errors, root)
+            self.assertEqual(errors, [])
+            errors = []
+            _verify_local_dataset(dict(row, dataset_file="../outside.csv"),
+                                  "agb", errors, root)
+            self.assertTrue(any("escapes" in e for e in errors))
+
     def test_report_rejects_path_traversal(self):
         with tempfile.TemporaryDirectory() as tmp:
             from tools.scientific_release_gate import _verify_local_report
