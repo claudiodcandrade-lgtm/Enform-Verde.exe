@@ -131,7 +131,8 @@ def main():
         result = assess(manifest, args.source_sha, path.parent)
     Path(args.report).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if result["passed"] else 1
+    # Registry integrity alone (including N/D-only registry) never passes scientific CI.
+    return 0 if result.get("scientifically_homologated") is True else 1
 
 if __name__ == "__main__":
     raise SystemExit(main())
