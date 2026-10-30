@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Validate fail-closed scientific evidence contract
-        run: python -m unittest tests.test_scientific_release_gate tests.test_modular_scientific_gate tests.test_acquire_ifn_independent_data tests.test_workflow_provenance -v
+        run: python -m unittest tests.test_scientific_release_gate tests.test_modular_scientific_gate tests.test_acquire_ifn_independent_data tests.test_promote_independent_evidence tests.test_workflow_provenance -v
       - name: Audit real scientific data and exact Windows artifact SHA
         # Deliberately NOT continue-on-error: missing independent evidence blocks release.
         run: |
@@ -28,6 +28,15 @@ jobs:
             --source-sha "$(git rev-parse HEAD)" \
             --evidence validation/release_evidence.json \
             --report release_gate_report.json
+      - name: Promote independently verified real evidence into modular manifest
+        if: always()
+        run: |
+          python tools/promote_independent_evidence.py \
+            --source-sha "$(git rev-parse HEAD)" \
+            --root validation \
+            --candidates validation/evidence_candidates \
+            --manifest validation/modular_capabilities.json \
+            --audit modular_promotion_audit.json
       - name: Audit modular scientific capabilities independently
         if: always()
         run: |
@@ -43,5 +52,6 @@ jobs:
           path: |
             release_gate_report.json
             modular_gate_report.json
+            modular_promotion_audit.json
           if-no-files-found: warn
           retention-days: 90
