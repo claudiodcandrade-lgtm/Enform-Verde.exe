@@ -1911,3 +1911,10 @@ Commit **`28243a06254cb2d22dbeb2af343231e4b3fcbd13`**, arquivo `tests/test_catal
 - Próximo passo: acompanhar execução dos testes modulares e corrigir falhas, criar manifesto somente a partir de dados reais e manter separação entre aprovação operacional e validação científica por capacidade.
 
 - **Resultado posterior efetivamente confirmado do SHA de código `83b6d7f50c36e37f09cff1461c21bba83618a196`:** workflow científico `41070495022` terminou `failure`, mas o passo **Validate fail-closed scientific evidence contract** (agora incluindo `tests.test_modular_scientific_gate`) terminou **success**; a reprovação ocorreu no passo subsequente de auditoria de dados reais e SHA do Windows. Dashboard `41070494575` e build `41070494587` permaneciam em execução na consulta. Portanto, **testes do gate modular integrados e aprovados neste SHA, homologação científica ainda reprovada**.
+
+
+## CHECKPOINT MATERIAL — 30/10/2026 — CONTAGEM SEGURA DE CAPACIDADES
+- Consulta ao SHA `131340e3627a9a13e086eb97188d877cb8df5ae4`: dashboard run `41070578381` success, homologação run `41070578327` failure, Windows run `41070578338` in_progress no momento da consulta. Não extrapolar resultados para commits posteriores.
+- Commit `f6643c4f7a3110ccd28b2a3c681a9f379f156f97`: `tools/modular_scientific_gate.py` passa a retornar contagem **zero** de capacidades aprovadas se o manifesto modular tiver qualquer erro de integridade, evitando anunciar modelos como validados quando o registro falha.
+- Commit `88ab0cbef57d5f948461781a338285162f035377`: teste de regressão para alegação de validação sem dados reais e contagem zero.
+- Pendente: executar CI do novo SHA; dados reais e relatórios por fitofisionomia, integração UI, operacional Windows SHA exato. Não liberar executável nem notificar por CI parcial.
