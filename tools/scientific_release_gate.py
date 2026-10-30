@@ -92,6 +92,11 @@ def assess(evidence, expected_sha, evidence_root=None):
         for field in ("rmse_mg_ha", "bias_mg_ha", "mae_mg_ha", "r2", "independent_plot_count"):
             if not _is_number(row.get(field)):
                 errors.append(f"{label}: missing independent validation metric {field}")
+        if _is_number(row.get("r2")) and row["r2"] > 1:
+            errors.append(f"{label}: r2 cannot exceed 1")
+        for metric in ("rmse_mg_ha", "mae_mg_ha"):
+            if _is_number(row.get(metric)) and row[metric] < 0:
+                errors.append(f"{label}: {metric} must be nonnegative")
         if not isinstance(row.get("independent_plot_count"), int) or row.get("independent_plot_count", 0) <= 0:
             errors.append(f"{label}: independent sample count must be positive")
     if names != BIOMES:
@@ -134,8 +139,12 @@ def assess(evidence, expected_sha, evidence_root=None):
     for section in ("agriculture", "weather", "vigor", "yield", "executive_panel", "performance", "regression", "windows"):
         row = evidence.get(section)
         if _provenance(row, section, errors):
-            if section == "agriculture" and not _is_number(row.get("independent_accuracy")):
-                errors.append("agriculture: actual independent classification accuracy missing")
+            if section == "agriculture":
+                acc = row.get("independent_accuracy")
+                if not _is_number(acc):
+                    errors.append("agriculture: actual independent classification accuracy missing")
+                elif not 0 <= acc <= 1:
+                    errors.append("agriculture: independent_accuracy must be a fraction between 0 and 1")
             if section == "yield" and row.get("mode") not in ("independently_validated_forecast", "forecast_blocked_without_valid_model"):
                 errors.append("yield: forecast must be validated or visibly blocked")
             if section == "vigor" and row.get("mode") not in ("validated_classes", "vigor_blocked_without_valid_model"):
