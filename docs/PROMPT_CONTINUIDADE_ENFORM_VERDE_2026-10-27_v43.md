@@ -1918,3 +1918,17 @@ Commit **`28243a06254cb2d22dbeb2af343231e4b3fcbd13`**, arquivo `tests/test_catal
 - Commit `f6643c4f7a3110ccd28b2a3c681a9f379f156f97`: `tools/modular_scientific_gate.py` passa a retornar contagem **zero** de capacidades aprovadas se o manifesto modular tiver qualquer erro de integridade, evitando anunciar modelos como validados quando o registro falha.
 - Commit `88ab0cbef57d5f948461781a338285162f035377`: teste de regressão para alegação de validação sem dados reais e contagem zero.
 - Pendente: executar CI do novo SHA; dados reais e relatórios por fitofisionomia, integração UI, operacional Windows SHA exato. Não liberar executável nem notificar por CI parcial.
+
+
+## EVOLUÇÃO MATERIAL — 30/10/2026 — AUDITORIA MODULAR EM CI E TRATAMENTO DE ERRO
+
+**Verificação de origem:** SHA `971b3806f53604c21a96137053f62b00af98aa3c` teve build Windows **success** (run `41071179349`), dashboard **success** (run `41071178786`), gate nacional **failure** (run `41071178712`). Sucesso de build não equivale a homologação nem libera ZIP definitivo.
+
+**Alterações efetivamente aplicadas à branch:**
+- Commit `15db2c8bbdbb06f9f623945afbaac592bf4a4b09`: o workflow `.github/workflows/scientific-release-gate.yml` executa também auditoria de capacidades modulares após gate nacional, com `if: always()`, e armazena os relatórios `release_gate_report.json` e `modular_gate_report.json` como artefatos, sem `continue-on-error` que mascararia reprovação. Ausência de manifesto científico modular mantém status reprovado.
+- Commit `aa5bc84820fdd68be0f1180d67f2c7aa91efe7fe`: o verificador modular rejeita tipos inválidos nos identificadores de bioma/compartimento/fitofisionomia, sem exceção por objetos não hashable.
+- Commit `3499bcbce97347d02de32f31bf1e378d7448cc46`: regressão automatizada comprova que a entrada malformada provoca reprovação e contagem validada zero.
+
+**CI:** Na primeira consulta ao SHA `3499bcbce97347d02de32f31bf1e378d7448cc46` nenhuma execução havia sido retornada; portanto, estes novos commits **ainda não possuem CI confirmado**. Verificar após propagação do evento GitHub. Não repetir checkpoint por mera consulta.
+
+**Pendências ainda bloqueantes:** manifesto modular baseado em dados observacionais verdadeiros; reports independentes, métricas e erro de transferência; integração de estados científicos à interface e ao motor de estimativa; gate operacional independente; aferição SAR real de altura; classificação agrícola/vigor/safra; teste de EXE limpo e identidade do SHA; aprovação formal de liberação de escopo limitado. Não fabricar evidências para obter verde.
