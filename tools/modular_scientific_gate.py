@@ -28,8 +28,11 @@ def assess(manifest, source_sha, root):
             errors.append(f"{label}: expected object")
             continue
         biome, pool, physio = row.get("biome"), row.get("pool"), row.get("fitofisionomia")
+        if not isinstance(biome, str) or not isinstance(pool, str) or not isinstance(physio, str) or not physio.strip():
+            errors.append(f"{label}: invalid biome/pool/fitofisionomia types")
+            continue
         key = (biome, pool, physio)
-        if biome not in BIOMES or pool not in POOLS or not isinstance(physio, str) or not physio.strip():
+        if biome not in BIOMES or pool not in POOLS:
             errors.append(f"{label}: invalid biome/pool/fitofisionomia")
             continue
         if key in seen:
