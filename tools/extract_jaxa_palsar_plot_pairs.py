@@ -116,7 +116,7 @@ def extract(rasters, expected_sha256, plots, plots_sha256, year):
             if not valid.any():
                 results.append(result)
                 continue
-            obs_dates = [ALOS_LAUNCH + timedelta(days=int(n) - 1) for n in days.data[valid]]
+            obs_dates = [ALOS_LAUNCH + timedelta(days=int(n)) for n in days.data[valid]]
             if any(d.year != year for d in obs_dates):
                 result["status"] = "acquisition_year_mismatch"
                 result["observed_date_range"] = [min(obs_dates).isoformat(), max(obs_dates).isoformat()]
