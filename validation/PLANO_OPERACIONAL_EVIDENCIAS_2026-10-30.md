@@ -48,3 +48,11 @@ No SHA `cfd3c42e2f868c500a6f0f9ab19d1dbfdb413dd0`: dashboard e build Windows apr
 
 ### Definição de pronto por entrega
 Cada evidência aceita precisa apontar para dataset real acessível, licença, hash conferido, recorte geográfico, fitofisionomia, período, método, unidades, amostras treino/teste espacialmente separadas, métricas calculadas e relatório verificável. Registrar limitações e N/D quando faltar produto ou erro; **não transformar lacunas em resultados aprovados**.
+
+## Política de acurácia e incerteza — revisão de homologação 30/10/2026
+
+- **Nenhum limiar universal de acurácia é imposto pelo gate.** Acurácia de classificação deve ser observada em amostras independentes, reportada como fração 0–1 e acompanhada de matriz de confusão, prevalência por classe e incerteza da métrica. Acurácia global sozinha não prova a capacidade de distinguir culturas raras.
+- Para regressões de AGB/altura/estoques: registrar RMSE, MAE, viés, R² (inclusive valores negativos), tamanho amostral, desenho de validação e cobertura empírica de intervalos. RMSE/MAE não podem ser negativos; R² não pode superar 1. Não impor R² mínimo.
+- Para inferência por fitofisionomia: propagar erro de modelo, amostragem e transferência espacial/temporal. Só chamar um intervalo de **IC95%** quando sua construção, hipótese e cobertura forem demonstradas para o estimando; caso contrário usar intervalo preditivo, intervalo de transferência ou faixa exploratória, devidamente rotulados.
+- **Nível de uso distinto de homologação do software:** (1) estimativa operacional com incerteza validada; (2) estimativa exploratória com erro de transferência quantificado e advertência; (3) N/D quando não houver mensuração defensável. Certificação exige avaliação própria de adequação ao método, adicionalidade e MRV; não decorre de uma acurácia numérica isolada.
+- A permissão de baixa acurácia **não** autoriza simular dados observacionais, omitir erro, usar classe IBGE como cobertura atual, declarar altura SAR sem raster processado ou publicar safras sem validação independente.
