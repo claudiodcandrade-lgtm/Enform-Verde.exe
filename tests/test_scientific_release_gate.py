@@ -71,5 +71,16 @@ class ScientificReleaseGateTests(unittest.TestCase):
                                  "test", errors, Path(tmp))
             self.assertTrue(any("escapes" in e for e in errors))
 
+    def test_accuracy_has_no_arbitrary_minimum_but_must_be_valid(self):
+        from tools.scientific_release_gate import assess
+        base = {"status": "passed", "evidence_type": "independent_real_data",
+                "source_url": "https://example.org", "dataset_sha256": "f" * 64,
+                "observed_at": "2026-10-30", "aoi_id": "test",
+                "validation_report": "report.json"}
+        low = assess({"source_sha": SHA, "agriculture": dict(base, independent_accuracy=0.35)}, SHA)
+        self.assertFalse(any("agriculture: independent_accuracy" in e for e in low))
+        invalid = assess({"source_sha": SHA, "agriculture": dict(base, independent_accuracy=1.2)}, SHA)
+        self.assertTrue(any("independent_accuracy must be a fraction" in e for e in invalid))
+
 if __name__ == "__main__":
     unittest.main()
