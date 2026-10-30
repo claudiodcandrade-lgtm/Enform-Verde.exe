@@ -68,6 +68,30 @@ def _verify_local_report(row, label, errors, root):
         errors.append(f"{label}: validation report hash mismatch")
 
 
+def _verify_local_dataset(row, label, errors, root):
+    """Release requires the actual observation bytes, not a plausible digest."""
+    if not isinstance(row, dict) or row.get("status") != "passed":
+        return
+    relative = row.get("dataset_file")
+    if not isinstance(relative, str) or not relative.strip():
+        errors.append(f"{label}: raw dataset_file required for independent evidence")
+        return
+    target = (root / relative).resolve()
+    if not target.is_relative_to(root.resolve()):
+        errors.append(f"{label}: raw dataset escapes evidence directory")
+        return
+    if not target.is_file():
+        errors.append(f"{label}: raw dataset file absent")
+        return
+    try:
+        observed = hashlib.sha256(target.read_bytes()).hexdigest()
+    except OSError:
+        errors.append(f"{label}: raw dataset unreadable")
+        return
+    if observed.lower() != str(row.get("dataset_sha256", "")).lower():
+        errors.append(f"{label}: raw dataset hash mismatch")
+
+
 def assess(evidence, expected_sha, evidence_root=None):
     errors = []
     if not isinstance(evidence, dict):
@@ -166,8 +190,10 @@ def assess(evidence, expected_sha, evidence_root=None):
             item = evidence.get(section)
             if isinstance(item, list):
                 for i, row in enumerate(item):
+                    _verify_local_dataset(row, f"{section}[{i}]", errors, root)
                     _verify_local_report(row, f"{section}[{i}]", errors, root)
             else:
+                _verify_local_dataset(item, section, errors, root)
                 _verify_local_report(item, section, errors, root)
     return errors
 
