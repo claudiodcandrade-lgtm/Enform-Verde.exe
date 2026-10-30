@@ -56,3 +56,28 @@ Cada evidência aceita precisa apontar para dataset real acessível, licença, h
 - Para inferência por fitofisionomia: propagar erro de modelo, amostragem e transferência espacial/temporal. Só chamar um intervalo de **IC95%** quando sua construção, hipótese e cobertura forem demonstradas para o estimando; caso contrário usar intervalo preditivo, intervalo de transferência ou faixa exploratória, devidamente rotulados.
 - **Nível de uso distinto de homologação do software:** (1) estimativa operacional com incerteza validada; (2) estimativa exploratória com erro de transferência quantificado e advertência; (3) N/D quando não houver mensuração defensável. Certificação exige avaliação própria de adequação ao método, adicionalidade e MRV; não decorre de uma acurácia numérica isolada.
 - A permissão de baixa acurácia **não** autoriza simular dados observacionais, omitir erro, usar classe IBGE como cobertura atual, declarar altura SAR sem raster processado ou publicar safras sem validação independente.
+
+## Alternativa de homologação modular e progressiva — proposta técnica 30/10/2026
+
+**Problema:** o gate atual exige aprovação simultânea de cinco biomas × seis compartimentos e das funcionalidades SAR/agricultura/clima/vigor/safra, embora os dados observacionais não estejam integralmente disponíveis. A ausência de `validation/release_evidence.json` é sintoma da ausência de relatórios independentes, não a causa científica principal.
+
+**Alternativas consideradas:**
+1. **Homologação nacional integral:** preservar exigência de 30 pares aprovados; maior cobertura, mas cronograma condicionado a dados escassos e licenças.
+2. **Homologação modular por bioma × fitofisionomia × compartimento (preferida):** validar individualmente modelos/domínios e expor no produto uma matriz de cobertura científica. Estimativas não validadas não recebem selo de aprovação; funcionalidades podem operar com bloqueio/N/D quando faltam insumos.
+3. **Homologação apenas de contratos de software:** rápida, mas insuficiente para comprovar estimativas; rejeitada como homologação científica.
+4. **Modelos experimentais com validação externa transferida:** admissíveis como resultados exploratórios somente com quantificação de erro de transferência e domínio explícito; não contam como validação independente local sem teste de transferência.
+
+**Arquitetura recomendada (não implementada):** dois gates independentes, `software_release_gate` (execução correta, bloqueios seguros, painéis, proveniência, regressões e Windows) e `scientific_model_gate` (aprovação por combinação bioma/fitofisionomia/pool/sensor/domínio). O manifesto deve declarar `capability_status` para cada combinação e o produto deve impedir que uma capacidade N/D seja anunciada como validada. A liberação operacional com escopo limitado exige autorização explícita do responsável, rótulo visível de escopo e exclusão de alegações de certificação científica nacional. **Não modificar o gate atual para aprovar dados inexistentes**; primeiro especificar os critérios, implementar testes e aprovar formalmente a mudança de escopo.
+
+**Rotas de dados em paralelo:**
+- SFB/IFN: aproveitar observações por unidade amostral com desenho e dispersão conhecidos; se não houver coordenadas abertas, usar agregados por fitofisionomia para estimativas exploratórias, com incerteza de transferência demonstrável.
+- Solo 0–100: combinar horizontes medidos com densidade aparente e fragmentos, ou usar modelos digitais calibrados com perfis independentes até 100 cm. Não multiplicar 0–30 por fator arbitrário.
+- Raízes: equações alométricas por formação e propagação conjunta de incertezas de AGB e parâmetros; não exigir medição direta de raízes se o modelo for validado dentro do domínio.
+- Necromassa/serrapilheira: dados gravimétricos ou inventários publicados por formação com dispersão; caso contrário N/D ou faixa exploratória rotulada, nunca IC95% inventado.
+- SAR: processamento orbital real e pareamento com parcelas, com fallback a estimativa de AGB não SAR identificada quando o sensor estiver indisponível. Altura SAR permanece N/D se não houver produto orbital compatível.
+- Agricultura/safra: classificação binária de áreas cultivadas primeiro; espécie, vigor e safra são capacidades separadas, bloqueadas quando não validadas.
+- Clima: NASA POWER pode fornecer série de grade com origem e resolução; validação de previsão de safra não decorre automaticamente da disponibilidade climática.
+
+**Requisitos de auditoria:** evidência por capacidade, dados reais, licença, hash, data, AOI, legenda_1, métricas independentes e erro de transferência; relatório acessível e checksum; incerteza e tipo de intervalo; escopo geográfico/temporal; versão e SHA exato. Nenhuma acurácia mínima arbitrária, mas métricas e cobertura empírica verificáveis.
+
+**Decisão pendente:** autorização de homologação **operacional de escopo limitado** separada da homologação científica nacional integral. Até essa decisão, o gate nacional continua bloqueando a liberação definitiva.
