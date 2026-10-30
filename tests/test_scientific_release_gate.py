@@ -1,5 +1,8 @@
 """Regression checks: a green build must not auto-homologate scientific outputs."""
 import unittest
+import tempfile
+import hashlib
+from pathlib import Path
 from tools.scientific_release_gate import assess
 
 SHA = "a" * 40
@@ -40,6 +43,33 @@ class ScientificReleaseGateTests(unittest.TestCase):
         errors = assess({"source_sha": SHA, "carbon": [row]}, SHA)
         self.assertTrue(any("0-100 cm" in e for e in errors))
         self.assertTrue(any("transfer error" in e for e in errors))
+
+    def test_report_integrity_rejects_missing_and_tampered_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            row = {"status": "passed", "validation_report": "report.json",
+                   "validation_report_sha256": hashlib.sha256(b"verified").hexdigest()}
+            from tools.scientific_release_gate import _verify_local_report
+            errors = []
+            _verify_local_report(row, "test", errors, root)
+            self.assertTrue(any("absent" in e for e in errors))
+            (root / "report.json").write_bytes(b"tampered")
+            errors = []
+            _verify_local_report(row, "test", errors, root)
+            self.assertTrue(any("hash mismatch" in e for e in errors))
+            (root / "report.json").write_bytes(b"verified")
+            errors = []
+            _verify_local_report(row, "test", errors, root)
+            self.assertEqual(errors, [])
+
+    def test_report_rejects_path_traversal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            from tools.scientific_release_gate import _verify_local_report
+            errors = []
+            _verify_local_report({"status": "passed", "validation_report": "../outside.json",
+                                  "validation_report_sha256": "a" * 64},
+                                 "test", errors, Path(tmp))
+            self.assertTrue(any("escapes" in e for e in errors))
 
 if __name__ == "__main__":
     unittest.main()
