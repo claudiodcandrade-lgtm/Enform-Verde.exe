@@ -21,7 +21,9 @@ class ModularGateTests(unittest.TestCase):
 
     def test_claimed_validation_without_real_data_fails(self):
         row = dict(BASE, status="validated", evidence_type="literature_mean")
-        self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, ".")["passed"])
+        result = assess({"source_sha": SHA, "capabilities": [row]}, SHA, ".")
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["validated_count"], 0)
 
     def test_validated_report_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:
