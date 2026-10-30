@@ -1,4 +1,5 @@
 import io
+import zipfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -54,6 +55,29 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertEqual(item["max_equations_per_ua"], 2)
             self.assertTrue(item["equation_rows_not_independent_sampling_units"])
             self.assertFalse(item["strata_are_independently_validated"])
+
+    def test_official_mislabeled_csv_url_with_xlsx_bytes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml",
+                    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+                    '<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                    '<c r="B1" t="inlineStr"><is><t>equivalente</t></is></c></row>'
+                    '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                    '<c r="B2" t="inlineStr"><is><t>Sim</t></is></c></row></sheetData></worksheet>')
+            registry = {"sources": [{"id": "ifn_equivalence", "url": URL,
+                       "license": "CC BY", "role": "equivalence", "format_override": "xlsx",
+                       "expected_columns": ["bioma", "equivalente"]}]}
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(buffer.getvalue()))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["validated_file_extension"], ".xlsx")
+            self.assertEqual(item["source_url_extension"], ".csv")
+            self.assertEqual(item["xlsx_data_rows"], 1)
+            self.assertEqual(item["biome_rows"], {"Cerrado": 1})
 
     def test_expected_columns_required(self):
         with tempfile.TemporaryDirectory() as temp:

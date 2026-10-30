@@ -70,6 +70,21 @@
       "role": "IFN/SFB documented allometric equations and fitophysiognomy; inspect domains and transfer errors",
       "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/a209cbbe-1dd6-4217-8662-658ed1e7e1e6/download/dadosabertos_equacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
       "license": "Creative Commons Attribution (official SFB dataset portal)"
+    },
+    {
+      "id": "ifn_painel_equivalencia_tost_2026",
+      "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/a7396a8a-1b44-464d-bb90-6f74a2780e9c/download/dadosabertos_testeequacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+      "license": "Creative Commons Attribution (official SFB dataset portal)",
+      "role": "Official Regression-based TOST equivalence results for IFN allometric equations; not AOI uncertainty",
+      "observed_measurement": "statistical_equivalence_of_allometric_equations_not_field_stock",
+      "format_override": "xlsx",
+      "expected_columns": [
+        "bioma",
+        "tipologia",
+        "equacao_1",
+        "equacao_2",
+        "equivalente"
+      ]
     }
   ]
 }

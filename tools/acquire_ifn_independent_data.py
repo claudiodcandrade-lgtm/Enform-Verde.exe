@@ -157,7 +157,20 @@ def fetch_sources(registry, output, opener=None):
             record.update(status="blocked", reason="source host not allowlisted")
             results.append(record)
             continue
-        target = output / (source["id"] + pathlib.Path(parsed.path).suffix.lower())
+        actual_suffix = pathlib.Path(parsed.path).suffix.lower()
+        override = source.get("format_override")
+        if override not in (None, "xlsx", "csv"):
+            record.update(status="blocked", reason="unsupported source format override")
+            results.append(record)
+            continue
+        target_suffix = "." + override if override else actual_suffix
+        if target_suffix not in (".xlsx", ".csv"):
+            record.update(status="blocked", reason="unsupported source extension")
+            results.append(record)
+            continue
+        record["source_url_extension"] = actual_suffix
+        record["validated_file_extension"] = target_suffix
+        target = output / (source["id"] + target_suffix)
         try:
             with opener(urllib.request.Request(url, headers={"User-Agent": "EnformVerde-Scientific-Audit/1.0"}), timeout=90) as response:
                 final_url = response.geturl() if hasattr(response, "geturl") else url
