@@ -2017,3 +2017,17 @@ Após a implementação material em `2fd2c6490422071688eea70f4e69bb9b810e2f81` e
 - **Interpretação científica:** 23 testes de contrato aprovados demonstram controles do mecanismo de validação, não validação biológica dos estoques, SAR ou agricultura. O próximo bloqueador material é produzir `validation/evidence_candidates/*.json` com arquivos observacionais reais e relatórios independentes auditáveis, incluindo a incerteza de transferência, em vez de apenas criar manifestos vazios ou artificiais.
 
 **Manter** homologação modular autorizada, segregação de estado `validated`/`experimental`/`not_available`, microrregionalidade por fitofisionomia IBGE, solo 0–100, altura SAR real e critérios de liberação pelo SHA exato. Não notificar liberação nem fornecer download definitivo até cumprir requisitos demonstráveis.
+
+
+## EVOLUÇÃO MATERIAL — 30/10/2026 — VALIDAÇÃO ESPACIAL INDEPENDENTE REPRODUZÍVEL
+
+**Estado antes da alteração (SHA `8af92cdfcecf76375df5150580ac3d5656d447fa`):** CI científico `41082333487` reprovado; dashboard `41082333455` aprovado; Windows `41082333427` em execução na consulta. A ausência de registros observacionais reais e de manifestos científicos auditáveis continua bloqueando homologação.
+
+**Nova implementação:**
+- `ac566c0d36b8fa118b59509b9cc57aac33a49972`: criado `tools/independent_spatial_validation.py`, calculador reprodutível a partir de **CSV externo de parcelas realmente observadas, previsões externas e intervalos por observação**. Exige SHA256 dos bytes de entrada, campos `observed,predicted,lower,upper,partition,spatial_unit`, separação de unidades espaciais entre treinamento e teste, validação de dados finitos, ao menos duas observações independentes de teste. Recalcula RMSE, MAE, viés, R² (pode ser negativo) e cobertura empírica de intervalos, sem limiar arbitrário de acurácia; produz relatório JSON compatível com parte do contrato do gate modular, incluindo conjunto e limitações. A cobertura medida NÃO é IC95% da AOI.
+- `8c1cdb20c2501c5548db91a53d91166443734b79`: seis testes de cálculo, prevenção de vazamento espacial, adulteração de bytes, intervalos inválidos, ausência de teste e dados não finitos.
+- `5d679609c67a9eebf3207f151e031c68935682a3`: adicionados testes ao workflow de homologação científica. Nenhum resultado de CI foi retornado na primeira consulta a esse SHA; **não afirmar que os seis novos testes passaram até confirmação do GitHub**.
+
+**Limite de validade científica:** o programa confirma integridade e separação espacial declarada, mas não comprova sozinho que valores são de campo ou que previsões não utilizaram as medições do teste durante ajuste. Exigir metadados da origem independente, licenças, datas de coleta e aquisição SAR, fonte e classe `legenda_1`, definição de domínio, treinamento documentado e auditoria humana/metodológica. Os dados de teste do CI são sintéticos e não são evidência de validação real. Não gerar `validation/modular_capabilities.json` ou `release_evidence.json` com registros fictícios.
+
+**Próximo passo prioritário:** obter realmente os arquivos IFN e conjuntos parcela–pixel SAR/AGB correspondentes e independentes, aplicar o avaliador às previsões feitas sem vazamento espacial, documentar transferência e incerteza, e somente então promover capacidades uma a uma. Preservar estimativas exploratórias e N/D fundamentados, altura SAR orbital real, solo 0–100, classificação de cultivos e Windows SHA exato.
