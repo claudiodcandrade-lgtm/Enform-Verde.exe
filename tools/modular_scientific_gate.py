@@ -20,6 +20,8 @@ def assess(manifest, source_sha, root):
     if not isinstance(rows, list):
         return {"passed": False, "errors": errors + ["capabilities must be a list"], "capabilities": []}
     root = Path(root).resolve()
+    if not rows:
+        errors.append("No capabilities declared")
     for i, row in enumerate(rows):
         label = f"capabilities[{i}]"
         if not isinstance(row, dict):
