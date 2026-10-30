@@ -41,7 +41,8 @@ def promote(source_sha, root, candidates):
             errors.append(f"{candidate_path.name}: raw dataset SHA256 mismatch")
             continue
         record = dict(candidate)
-        record.pop("dataset_file", None)
+        # Retain the raw file pointer: downstream gate must independently
+        # rehash the observations, not trust the promoter or a JSON digest.
         audit = assess({"source_sha": source_sha, "capabilities": [record]}, source_sha, root)
         if not audit["passed"] or audit["validated_count"] != 1:
             errors.extend(f"{candidate_path.name}: {msg}" for msg in audit["errors"])
