@@ -24,7 +24,8 @@ class EvidencePromotionTests(unittest.TestCase):
                       "independent_sample_count": 12, "rmse": 2.0, "mae": 1.5,
                       "bias": 0.3, "interval_coverage": 0.9,
                       "train_partition": "A", "test_partition": "B",
-                      "validation_design": "spatial holdout", "unit": "Mg/ha"}
+                      "validation_design": "spatial holdout", "unit": "Mg/ha",
+                      "train_spatial_units": 3, "test_spatial_units": 4}
             data = json.dumps(report).encode()
             (root / "report.json").write_bytes(data)
             candidate = {

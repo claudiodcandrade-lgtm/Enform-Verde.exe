@@ -33,7 +33,8 @@ class ModularGateTests(unittest.TestCase):
             report = {"dataset_sha256": "f" * 64, "independent_sample_count": 12,
                       "rmse": 5.2, "mae": 4.1, "bias": -0.4, "interval_coverage": 0.9,
                       "train_partition": "geographic_tile_A", "test_partition": "geographic_tile_B",
-                      "validation_design": "spatial holdout", "unit": "Mg/ha"}
+                      "validation_design": "spatial holdout", "unit": "Mg/ha",
+                      "train_spatial_units": 4, "test_spatial_units": 3}
             report_bytes = json.dumps(report).encode("utf-8")
             (root / "report.json").write_bytes(report_bytes)
             row = dict(BASE, status="validated", evidence_type="independent_real_data",
@@ -45,6 +46,12 @@ class ModularGateTests(unittest.TestCase):
             validated = assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)
             self.assertTrue(validated["passed"])
             self.assertTrue(validated["scientifically_homologated"])
+            report["test_spatial_units"] = 1
+            wrong_units = json.dumps(report).encode("utf-8")
+            (root / "report.json").write_bytes(wrong_units)
+            row["validation_report_sha256"] = hashlib.sha256(wrong_units).hexdigest()
+            self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
+            report["test_spatial_units"] = 3
             report["dataset_sha256"] = "e" * 64
             mismatched_bytes = json.dumps(report).encode("utf-8")
             (root / "report.json").write_bytes(mismatched_bytes)

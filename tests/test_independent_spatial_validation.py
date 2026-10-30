@@ -27,6 +27,10 @@ class SpatialValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "disjoint"):
             self.validate(VALID.replace("test,B", "test,A"))
 
+    def test_disallow_pseudoreplication_in_one_test_spatial_unit(self):
+        with self.assertRaisesRegex(ValueError, "distinct test spatial units"):
+            self.validate(VALID.replace("test,C", "test,B"))
+
     def test_disallow_tampered_raw_data(self):
         with self.assertRaisesRegex(ValueError, "sha256 mismatch"):
             self.validate(VALID, sha="0" * 64)

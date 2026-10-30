@@ -52,6 +52,8 @@ def validate_csv(path, dataset_sha256, unit):
         raise ValueError("training and test spatial units must be nonempty and disjoint")
     if len(test) < 2:
         raise ValueError("at least two independent test observations required")
+    if len(partitions["test"]) < 2:
+        raise ValueError("at least two distinct test spatial units required; repeated plots in one unit are not independent")
     n = len(test)
     errors = [predicted - observed for observed, predicted, _, _ in test]
     rmse = math.sqrt(sum(error * error for error in errors) / n)
