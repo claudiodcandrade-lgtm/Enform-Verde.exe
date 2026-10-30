@@ -1932,3 +1932,16 @@ Commit **`28243a06254cb2d22dbeb2af343231e4b3fcbd13`**, arquivo `tests/test_catal
 **CI:** Na primeira consulta ao SHA `3499bcbce97347d02de32f31bf1e378d7448cc46` nenhuma execução havia sido retornada; portanto, estes novos commits **ainda não possuem CI confirmado**. Verificar após propagação do evento GitHub. Não repetir checkpoint por mera consulta.
 
 **Pendências ainda bloqueantes:** manifesto modular baseado em dados observacionais verdadeiros; reports independentes, métricas e erro de transferência; integração de estados científicos à interface e ao motor de estimativa; gate operacional independente; aferição SAR real de altura; classificação agrícola/vigor/safra; teste de EXE limpo e identidade do SHA; aprovação formal de liberação de escopo limitado. Não fabricar evidências para obter verde.
+
+
+## RESULTADO MATERIAL DE CI — 30/10/2026 — SHA 7e6bb623e455956c9d987db6d39599b5bc816d59
+
+Verificação direta no GitHub para o SHA exato `7e6bb623e455956c9d987db6d39599b5bc816d59`:
+- **Dashboard dual — tests:** run `41073327074` — **success**.
+- **Build Enform Verde Windows:** run `41073327142` — **success**; isto **não significa homologação científica**, nem prova isoladamente testes de máquina limpa e ZIP definitivo liberável.
+- **Homologação científica — bloqueio independente:** run `41073327073` — **failure**, job `124122829057`. A etapa de testes do gate concluiu **15 testes / OK**. O novo passo `Audit modular scientific capabilities independently` foi executado efetivamente e falhou de maneira controlada, como previsto; o passo de auditoria nacional também falhou.
+- **Causa verificada nos logs:** não existe `validation/modular_capabilities.json` e também não existe `validation/release_evidence.json`; permanecem ausentes evidências observacionais independentes para a validação nacional e capacidades específicas. As duas auditorias retiveram relatórios de bloqueio.
+
+**Distinção obrigatória:** 15 testes de contrato aprovados + compilação Windows aprovada demonstram funcionamento da infraestrutura testada, **não** validação científica de biomassa, solo, SAR, agricultura, vigor ou previsão de safra. Não criar manifesto com `validated` sem relatório independente real, dataset com hash, escopo e incerteza/transferência mensuráveis. A regra de homologação modular autorizada pelo usuário segue vigente; manter estados por fitofisionomia/compartimento e impedir propaganda de validação para experimental ou N/D.
+
+**Próximas intervenções materiais necessárias:** estruturar manifesto modular com registros somente fundamentados e rastreáveis, integrar estados ao motor/UI, validar capacidade por capacidade com dados primários IFN/SFB e fontes reconhecidas, implementar gate operacional separado, conferir sensores SAR reais inclusive altura, clima e classificação agrícola, testar regressões/Windows no mesmo SHA e registrar documentação e checksum. A homologação integral continua pendente.
