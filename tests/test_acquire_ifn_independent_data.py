@@ -19,6 +19,21 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertFalse(result["scientific_validation"])
             self.assertTrue((Path(temp) / "ifn_pa.csv").exists())
 
+    def test_html_error_response_not_saved_as_csv(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "bad_csv", "url": URL, "license": "CC BY", "role": "litter"}]}
+            def fake_open(request, timeout):
+                return io.BytesIO(b"<!doctype html><html>maintenance</html>")
+            result = fetch_sources(registry, temp, opener=fake_open)
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+            self.assertFalse((Path(temp) / "bad_csv.csv").exists())
+
+    def test_invalid_resource_id_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "../escape", "url": URL, "license": "CC BY", "role": "litter"}]}
+            result = fetch_sources(registry, temp)
+            self.assertEqual(result["resources"][0]["status"], "blocked")
+
     def test_unapproved_host_is_blocked(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "bad", "url": "https://example.org/data.csv",
