@@ -1899,3 +1899,13 @@ Commit **`28243a06254cb2d22dbeb2af343231e4b3fcbd13`**, arquivo `tests/test_catal
 **Ponto de segurança:** `passed` no gate modular significa **consistência do registro**, não validação de todos os modelos nem aprovação de lançamento. O número `validated_count` precisa ser exibido separadamente e só pode incluir evidência independente real. O gate nacional anterior permanece intacto até integrar formalmente workflows, política de liberação e validação operacional Windows. Ainda não há `validation/modular_capabilities.json` preenchido com evidências reais. Não gerar falsos registros para obter sucesso.
 
 **Próximos passos:** incluir execução do gate modular e testes no CI; implementar gate operacional separado, cobertura explícita por capacidade na UI e bloqueio de estimativas não validadas; obter e conferir datasets reais e hashes; produzir relatórios independentes por capacidade; garantir compatibilidade de licença, domínio e incerteza; testar EXE Windows no SHA exato e somente então liberar versão de escopo limitado. O plano detalhado consta em `validation/PLANO_OPERACIONAL_EVIDENCIAS_2026-10-30.md`.
+
+
+### CHECKPOINT MATERIAL — 30/10/2026, 11h (UTC−3) — testes modulares incorporados ao CI
+
+- HEAD inicial desta verificação: `2ef3602ba1f8dc88b57fcef9300184520fc6afa8`; comparação com branch mostrou nenhuma alteração adicional. PR #50 permanece aberto; não liberar.
+- CI do SHA inicial: gate científico `41070419400` **failure**; dashboard `41070418419` e build Windows `41070418341` estavam **in_progress** no momento da consulta; não afirmar resultados posteriores.
+- **Alteração real de integração:** commit `83b6d7f50c36e37f09cff1461c21bba83618a196` modificou `.github/workflows/scientific-release-gate.yml` para executar `tests.test_modular_scientific_gate` junto com testes do gate nacional e proveniência. A auditoria independente nacional continua bloqueante; não foi removida nem convertida em `continue-on-error`.
+- Consulta imediata de CI para o novo SHA retornou lista vazia de execuções associadas (possível atraso de disparo/indexação). **Não afirmar testes modulares aprovados até obter logs efetivos**.
+- Pendências: ausência de manifesto real `validation/modular_capabilities.json`, evidências independentes e validações por domínio; integração operacional do registro modular na UI, testes end-to-end, SHA/ZIP Windows limpo. A presença de código de gate modular não constitui homologação.
+- Próximo passo: acompanhar execução dos testes modulares e corrigir falhas, criar manifesto somente a partir de dados reais e manter separação entre aprovação operacional e validação científica por capacidade.
