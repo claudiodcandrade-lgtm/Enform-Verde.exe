@@ -74,7 +74,7 @@ def fetch_sources(registry, output, opener=None):
                             sample = csv_file.read(8192)
                             csv_file.seek(0)
                             try:
-                                dialect = csv.Sniffer().sniff(sample, delimiters=",;\\t")
+                                dialect = csv.Sniffer().sniff(sample, delimiters=",;")
                                 reader = csv.reader(csv_file, dialect)
                                 header = next(reader, [])
                                 data_rows = sum(bool(row) for row in reader)
