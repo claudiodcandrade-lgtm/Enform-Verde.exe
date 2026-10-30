@@ -9,6 +9,8 @@ import datetime as dt
 import hashlib
 import json
 import pathlib
+import re
+import zipfile
 import urllib.parse
 import urllib.request
 
@@ -21,6 +23,10 @@ def fetch_sources(registry, output, opener=None):
     results = []
     for source in registry["sources"]:
         record = {key: source[key] for key in ("id", "url", "license", "role")}
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", str(source["id"])):
+            record.update(status="blocked", reason="invalid resource id")
+            results.append(record)
+            continue
         record["retrieved_utc"] = dt.datetime.now(dt.timezone.utc).isoformat()
         url = source["url"]
         parsed = urllib.parse.urlsplit(url)
@@ -47,6 +53,17 @@ def fetch_sources(registry, output, opener=None):
                             stream.write(block)
                     if size == 0:
                         raise ValueError("empty response")
+                    if target.suffix == ".xlsx":
+                        if not zipfile.is_zipfile(temp):
+                            raise ValueError("xlsx response is not a ZIP workbook")
+                        with zipfile.ZipFile(temp) as archive:
+                            if "xl/workbook.xml" not in archive.namelist() or archive.testzip():
+                                raise ValueError("invalid XLSX archive structure")
+                    elif target.suffix == ".csv":
+                        with temp.open("rb") as raw:
+                            sample = raw.read(4096).lstrip().lower()
+                        if sample.startswith((b"<!doctype html", b"<html")):
+                            raise ValueError("CSV endpoint returned an HTML error page")
                     temp.replace(target)
                 finally:
                     temp.unlink(missing_ok=True)
