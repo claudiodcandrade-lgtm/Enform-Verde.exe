@@ -39,6 +39,12 @@ class ModularGateTests(unittest.TestCase):
             (root / "report.json").write_bytes(b"tampered")
             self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
 
+    def test_malformed_types_do_not_crash(self):
+        row = dict(BASE, biome=["Amazônia"], status="validated")
+        result = assess({"source_sha": SHA, "capabilities": [row]}, SHA, ".")
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["validated_count"], 0)
+
     def test_soil_depth_must_be_complete(self):
         row = dict(BASE, pool="soil_0_100", status="experimental", reason="transferred model",
                    source_url="https://example.org", dataset_sha256="f" * 64,
