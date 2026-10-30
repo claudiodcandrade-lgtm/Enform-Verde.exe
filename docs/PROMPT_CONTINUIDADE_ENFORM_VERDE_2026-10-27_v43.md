@@ -2067,3 +2067,16 @@ No SHA de código `f002c5823f009e5b2021cb80d212e50b8129ed16`, a execução IFN i
 No mesmo SHA, gate científico `41084743677` executou **32 testes de contrato com sucesso**, mas **reprovou** as auditorias nacional, promoção e modular por evidências independentes insuficientes; dashboard `41084744936` e Windows `41084743752` estavam em andamento na consulta. O sucesso do download real e dos testes de contrato NÃO desbloqueia os cinco biomas nem justifica anúncio de liberação.
 
 **Próximo gargalo objetivo:** obter dados de **massa seca de serapilheira**, densidade de madeira por decomposição e comprimento de transectos/coeficientes de linha-intercepto, metadados de fitofisionomia IBGE e validação microrregional; só então calcular tC/ha e erro de transferência. Em paralelo, buscar parcelas e fontes independentes para Caatinga, Mata Atlântica e Pantanal, demais compartimentos, solo 0–100 cm, SAR real, agricultura, vigor e previsão. Não repetir este checkpoint sem nova mudança material.
+
+
+## ALTERAÇÃO MATERIAL — 30/10/2026 12:55 (UTC−3) — AMPLIAÇÃO DE FONTES IFN/SFB NACIONAIS
+
+**Código/registro SHA `55c3291e24ee614fa7d7488768da85473147184f`:** ampliado `validation/ifn_sources.json` com quatro fontes oficiais do `Painel de Biomassa e Carbono` do SFB (conjunto CKAN `2d579a3b-29f7-41af-b35c-8fb8f51ef819`, versão 2025, recursos publicados/atualizados em março de 2026, licença indicada CC Attribution):
+- `ifn_painel_necromassa_t_ha_2026` — recurso `f5902766-14e3-46b8-bdc4-99bc09693161`, CSV ~133,4 KiB, dicionário oficial com `bioma,uf,ua,n_transectos,cod_classe_uso_da_terra,necromassa_t_por_ha`. **Biomassa em t/ha não equivale a carbono tC/ha**; falta classe IBGE e erro de transferência.
+- `ifn_painel_biomassa_2026` — recurso `06203c8a-c13e-498c-8804-f32e991c17ba`, CSV ~50,6 MiB, observações/estimativas de biomassa IFN a inspecionar, sem alegar validação SAR.
+- `ifn_painel_arvores_mortas_2026` — recurso `979419d0-96b2-411f-baec-3759c61f09ce`, CSV ~39,3 MiB, árvores mortas a inspecionar; estoque e unidades não presumidos.
+- `ifn_painel_equacoes_2026` — recurso `a209cbbe-1dd6-4217-8662-658ed1e7e1e6`, CSV ~58 KiB, catálogo de equações, incluindo `bioma,fito,equacao,compartimento`, a auditar quanto a domínio, erro e compatibilidade IBGE.
+
+Fontes foram confirmadas nas páginas oficiais do SFB e URLs de download obtidas dos links dos recursos. A ingestão automática está configurada, mas **não afirmar sucesso, conteúdo ou abrangência nacional antes de inspecionar bytes e hashes**. O relatório de aquisição continuará com `carbon_stock_ready=false`, até derivação/validação efetiva. A existência de equações publicadas não estabelece validação parcela–pixel SAR.
+
+**CI inicial para `55c3291e24ee614fa7d7488768da85473147184f`: Build Enform Verde Windows: queued/pendente (run 41084965406); Dashboard dual - tests: queued/pendente (run 41084965661); Homologação científica - bloqueio independente: queued/pendente (run 41084965341).** Manter bloqueios de cinco biomas, carbono por compartimento e solo 0–100, altura SAR real, agricultura, vigor, safras, regressão e EXE Windows. Preservar todo o histórico e atualizar somente quando houver evolução material verificável.
