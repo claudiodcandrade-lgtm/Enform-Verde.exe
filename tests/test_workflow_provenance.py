@@ -16,7 +16,8 @@ class WorkflowProvenanceTests(unittest.TestCase):
     def test_ifn_harvest_imports_shared_identity_as_module(self):
         src = (ROOT / ".github/workflows/harvest-ifn-field-data.yml").read_text(encoding="utf-8")
         self.assertIn("python -m tools.harvest_ifn_field_data", src)
-        self.assertIn("python -m tools.prepare_ifn_agb_candidates", src)
+        self.assertIn('sys.executable, "-m", "tools.prepare_ifn_agb_candidates"', src)
+        self.assertIn("tools/ifn_state_identity.py", src)
         self.assertNotIn("python tools/harvest_ifn_field_data.py", src)
 
     def test_release_gate_is_strict(self):

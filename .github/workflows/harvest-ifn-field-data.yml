@@ -5,6 +5,7 @@ on:
     paths:
       - tools/harvest_ifn_field_data.py
       - tools/prepare_ifn_agb_candidates.py
+      - tools/ifn_state_identity.py
       - .github/workflows/harvest-ifn-field-data.yml
   workflow_dispatch:
 permissions:
