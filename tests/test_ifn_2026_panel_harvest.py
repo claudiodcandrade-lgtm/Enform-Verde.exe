@@ -5,7 +5,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tools.harvest_ifn_field_data import PANEL_RESOURCES, harvest_sfb_2026_panel
+from tools.harvest_ifn_field_data import (PANEL_RESOURCES, harvest_sfb_2026_panel,
+                                         inspect_csv, inspect_workbook)
 
 
 class Reply:
@@ -70,6 +71,49 @@ class SFBPanelHarvestTests(unittest.TestCase):
             self.assertEqual(len(report["failures"]), len(PANEL_RESOURCES))
             self.assertTrue(all(item["status"] == "access_or_schema_error"
                                 for item in report["datasets"].values()))
+
+
+    def test_ua_identity_is_composite_of_state_and_plot_in_csv(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Amazônia;PA;UA001;-3.1;-54.9\n"
+                "Amazônia;AM;UA001;-3.2;-60.1\n"
+                "Amazônia;PA;UA001;-3.1;-54.9\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Amazônia"], 2)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Amazônia"], 2)
+        self.assertEqual(report["nonempty_data_rows"], 3)
+        self.assertTrue(report["ua_identity_state_disambiguated"])
+        self.assertIsNone(report["ua_identity_warning"])
+
+    def test_missing_uf_does_not_claim_state_disambiguation(self):
+        body = b"bioma;ua;lat_pc;lon_pc\nCerrado;UA001;-15;-47\n"
+        report = inspect_csv(body)
+        self.assertFalse(report["ua_identity_state_disambiguated"])
+        self.assertEqual(report["ua_rows_missing_state"], 1)
+        self.assertIn("UF missing", report["ua_identity_warning"])
+
+    def test_tab_delimiter_and_state_aware_ua_are_supported(self):
+        body = ("bioma\tuf\tua\n"
+                "Cerrado\tGO\tUA001\n"
+                "Cerrado\tTO\tUA001\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["delimiter"], "\t")
+        self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 2)
+
+    def test_xlsx_uses_same_state_aware_ua_identity(self):
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "plots.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["bioma", "uf", "ua", "lat_pc", "lon_pc"])
+            ws.append(["Pantanal", "MS", "UA009", -18.0, -57.0])
+            ws.append(["Pantanal", "MT", "UA009", -16.0, -56.0])
+            wb.save(path)
+            report = inspect_workbook(path)
+        self.assertEqual(report["unique_ua_by_biome"]["Pantanal"], 2)
+        self.assertTrue(report["sheets"][0]["ua_identity_state_disambiguated"])
+        self.assertTrue(report["ua_counts_aggregated_from_sheets_not_globally_deduplicated"])
 
 
 if __name__ == "__main__":
