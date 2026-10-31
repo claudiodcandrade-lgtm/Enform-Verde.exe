@@ -37,6 +37,9 @@ DATASETS = {
     "dap10": ("/pt_BR/dataset/ifn-dap-10-por-uf_disp-set2025", "cc_by"),
     "fallen_wood": ("/pt_BR/dataset/ifn-madeira-caida-por-uf_disp-set2025", "cc_by"),
     "litter_corrected": ("/pt_BR/dataset/ifn-serapilheira-por-uf_disp-set2025", "cc_by"),
+    # Licensed subparcel land-use observations supply a candidate join key and
+    # observed cover stratification, NOT carbon mass or a validated SAR mask.
+    "land_use_subplots": ("/pt_BR/dataset/ifn-uso-da-terra-por-uf_disp-set2025", "cc_by"),
     # SFB's CKAN record has no license; inspect its metadata but do not download.
     "necromass": ("/dataset/necromassa-por-uf-ifn", "blocked_no_license"),
 }
