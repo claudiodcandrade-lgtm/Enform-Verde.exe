@@ -29,6 +29,8 @@ class IFNAGBCandidateTests(unittest.TestCase):
         self.assertEqual(report["candidate_ua"], 1)
         self.assertAlmostEqual(candidates[0]["agb_mg_ha"], 25.95056)
         self.assertEqual(candidates[0]["source_equation"], "AGB_Chave")
+        self.assertEqual(candidates[0]["source_agb_variancia_por_ua_uninterpreted"], 0)
+        self.assertNotIn("source_variance_kg2_per_ha2", candidates[0])
         self.assertEqual(candidates[0]["sar_pair_eligible"], "false")
         self.assertEqual(candidates[0]["equation_choice_audited"], "false")
         self.assertIsNone(report["coordinate_accuracy_m"])

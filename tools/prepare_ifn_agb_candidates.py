@@ -33,7 +33,7 @@ REQUIRED = frozenset((
 COLUMNS = (
     "bioma", "uf", "ua", "classe_uso_da_terra", "tipologia_da_vegetacao",
     "lon_pc", "lat_pc", "area_ha", "agb_mg_ha",
-    "source_variance_kg2_per_ha2", "source_equation",
+    "source_agb_variancia_por_ua_uninterpreted", "source_equation",
     "equation_choice_audited", "ibge_fitophysiognomy_verified",
     "sar_pair_eligible", "scientifically_validated",
 )
@@ -125,8 +125,10 @@ def prepare(raw, expected_sha256):
             "tipologia_da_vegetacao": row["tipologia_da_vegetacao"].strip(),
             "lon_pc": lon, "lat_pc": lat, "area_ha": area,
             "agb_mg_ha": agb_kg / 1000.0,
-            # Source variance is NOT an AOI error, a 95% interval or transfer error.
-            "source_variance_kg2_per_ha2": variance,
+            # The published field does not independently document its units;
+            # retain the raw numeric value without asserting squared units,
+            # an AOI error, a 95% interval or transfer uncertainty.
+            "source_agb_variancia_por_ua_uninterpreted": variance,
             "source_equation": "AGB_Chave",
             "equation_choice_audited": "false",
             "ibge_fitophysiognomy_verified": "false",
