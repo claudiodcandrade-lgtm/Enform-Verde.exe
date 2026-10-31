@@ -15,6 +15,7 @@ import hashlib
 import io
 import json
 import math
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -48,8 +49,8 @@ def _number(raw):
 
 
 def _physical_ua(uf, ua):
-    """Canonical physical UA key; case aliases do not create new field plots."""
-    return uf, ua.strip().casefold()
+    """Canonical physical UA key; Unicode width and case aliases are not independent plots."""
+    return uf, unicodedata.normalize("NFKC", ua.strip()).casefold()
 
 
 def prepare(raw, expected_sha256):
@@ -85,6 +86,8 @@ def prepare(raw, expected_sha256):
     total_rows = 0
     chosen_rows = 0
     for row in reader:
+        if None in row:
+            raise ValueError("IFN panel unexpected extra CSV columns")
         if not any(row.values()):
             continue
         total_rows += 1
@@ -193,9 +196,9 @@ def prepare(raw, expected_sha256):
         "source_license": "CC BY per official IFN panel dataset; verify before redistribution",
         "source_observation_rows": total_rows,
         "agb_chave_rows": chosen_rows,
-        "biome_identity_crosscheck_scope": "all_source_equation_rows_with_valid_UF_and_casefolded_UA",
+        "biome_identity_crosscheck_scope": "all_source_equation_rows_with_valid_UF_and_NFKC_casefolded_UA",
         "coordinate_crosscheck_scope": (
-            "all_source_equation_rows_with_valid_UF_and_casefolded_UA_and_usable_coordinates; "
+            "all_source_equation_rows_with_valid_UF_and_NFKC_casefolded_UA_and_usable_coordinates; "
             "no independent positional accuracy inferred"
         ),
         "unique_ua_with_agb_chave": len({(uf, ua) for _, uf, ua in grouped}),
@@ -214,7 +217,7 @@ def prepare(raw, expected_sha256):
             "validated choice. Source coordinates appear quantized and positional "
             "accuracy is unknown: do not pair to SAR pixels, infer plot-scale "
             "accuracy, calculate AOI IC95%, or transfer stocks across IBGE classes. "
-            "Physical UA identities (canonical UF and casefolded UA) and conflicting "
+            "Physical UA identities (canonical UF and Unicode NFKC/casefolded UA) and conflicting "
             "valid centroid coordinates are checked across "
             "identifiable source equations; invalid/missing nonkey coordinates cannot "
             "establish location agreement, and nonkey rows with invalid UF or "
