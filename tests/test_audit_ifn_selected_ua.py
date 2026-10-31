@@ -42,7 +42,7 @@ class IFNSelectedUATests(unittest.TestCase):
         self.assertFalse(any(row["scientifically_validated"] for row in result["strata"]))
 
     def test_state_alias_and_case_variant_ua_cannot_pseudoreplicate(self):
-        conflict = ROWS + "Cerrado,Pará,ua1,Savana,eq3,300,true\\n"
+        conflict = ROWS + "Cerrado,Pará,ua1,Savana,eq3,300,true\n"
         with self.assertRaisesRegex(ValueError, "repeated sampling UA"):
             self.check(conflict)
 
