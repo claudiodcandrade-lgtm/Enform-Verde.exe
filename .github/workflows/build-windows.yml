@@ -562,10 +562,22 @@ jobs:
           '@ | Set-Content ibge_acceptance_test.py -Encoding UTF8
           python ibge_acceptance_test.py
 
-      - name: Live SICAR polygon lookup
+      - name: Offline SICAR exact-code integrity regression
+        shell: pwsh
+        run: python -m unittest discover -s tests -p 'test_sicar_wfs_integrity.py' -v
+
+      - name: Live SICAR polygon lookup (external availability probe)
+        id: live_sicar
+        continue-on-error: true
         shell: pwsh
         run: |
           python -c "import desktop_app as a; g1=a.resolve_car('MT-5108501-CBE0F5EDD27A4D7888E7392EA7D44793'); g2=a.resolve_car('MT-5103700-92A39DC62FDF4D88874F218D41BE1C7F'); assert len(g1)==1 and len(g2)==1; assert tuple(g1.total_bounds)!=tuple(g2.total_bounds); print('SICAR_SEQUENCE_OK',g1.crs,g2.crs)"
+      - name: Record live SICAR outage without masking offline integrity failures
+        if: steps.live_sicar.outcome == 'failure'
+        shell: pwsh
+        run: |
+          Write-Host "::warning::Official SICAR WFS unreachable or returned no verified polygon. Live service not validated on this run; offline exact-code integrity tests remain mandatory. Do not claim operational SICAR validation."
+
       - name: Professional scientific contracts
         shell: pwsh
         run: |
