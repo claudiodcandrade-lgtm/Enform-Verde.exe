@@ -44,7 +44,7 @@ class SpatialValidationTests(unittest.TestCase):
 
     def test_cluster_equal_weight_metrics_do_not_overweight_repeated_plots(self):
         # B contributes two rows, C one; B/b must remain one physical unit.
-        result = self.validate(VALID + "6,10,9,11,test,b\\n")
+        result = self.validate(VALID + "6,10,9,11,test,b\n")
         self.assertEqual(result["independent_sample_count"], 2)
         self.assertEqual(result["test_observation_count"], 3)
         self.assertAlmostEqual(result["rmse"], (6.0) ** 0.5)
