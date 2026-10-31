@@ -147,7 +147,10 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             continue
         if biome and ua:
             # UA codes are not globally unique; use the composite (UF, UA) key.
-            identity = (uf, ua)
+            # A physical IFN unit must retain one identity across equation
+            # rows even when its UA code uses case/Unicode-width aliases.
+            # This does NOT establish precise coordinates or SAR eligibility.
+            identity = (uf, unicodedata.normalize("NFKC", ua).casefold())
             if not uf:
                 missing_state_ua += 1
             unique_ua.setdefault(biome, set()).add(identity)
