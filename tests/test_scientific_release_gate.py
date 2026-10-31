@@ -2,6 +2,7 @@
 import unittest
 import tempfile
 import hashlib
+import json
 from pathlib import Path
 from tools.scientific_release_gate import assess
 
@@ -47,8 +48,10 @@ class ScientificReleaseGateTests(unittest.TestCase):
     def test_report_integrity_rejects_missing_and_tampered_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            row = {"status": "passed", "validation_report": "report.json",
-                   "validation_report_sha256": hashlib.sha256(b"verified").hexdigest()}
+            valid = json.dumps({"dataset_sha256": "a" * 64}).encode("utf-8")
+            row = {"status": "passed", "dataset_sha256": "a" * 64,
+                   "validation_report": "report.json",
+                   "validation_report_sha256": hashlib.sha256(valid).hexdigest()}
             from tools.scientific_release_gate import _verify_local_report
             errors = []
             _verify_local_report(row, "test", errors, root)
@@ -57,7 +60,7 @@ class ScientificReleaseGateTests(unittest.TestCase):
             errors = []
             _verify_local_report(row, "test", errors, root)
             self.assertTrue(any("hash mismatch" in e for e in errors))
-            (root / "report.json").write_bytes(b"verified")
+            (root / "report.json").write_bytes(valid)
             errors = []
             _verify_local_report(row, "test", errors, root)
             self.assertEqual(errors, [])
@@ -105,6 +108,52 @@ class ScientificReleaseGateTests(unittest.TestCase):
         self.assertFalse(any("agriculture: independent_accuracy" in e for e in low))
         invalid = assess({"source_sha": SHA, "agriculture": dict(base, independent_accuracy=1.2)}, SHA)
         self.assertTrue(any("independent_accuracy must be a fraction" in e for e in invalid))
+
+
+    def test_hashed_but_opaque_report_cannot_pass(self):
+        from tools.scientific_release_gate import _verify_local_report
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = b"not JSON"
+            (root / "report.json").write_bytes(data)
+            row = {"status": "passed", "dataset_sha256": "a" * 64,
+                   "validation_report": "report.json",
+                   "validation_report_sha256": hashlib.sha256(data).hexdigest()}
+            errors = []
+            _verify_local_report(row, "carbon[0]", errors, root)
+            self.assertTrue(any("valid JSON" in e for e in errors))
+
+    def test_report_must_bind_to_dataset_and_independent_spatial_split(self):
+        from tools.scientific_release_gate import _verify_local_report
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report = {"dataset_sha256": "b" * 64, "independent_sample_count": 12,
+                      "train_spatial_units": 4, "test_spatial_units": 3,
+                      "train_partition": "A", "test_partition": "B",
+                      "validation_design": "blocked holdout",
+                      "rmse": 4.2, "mae": 3.0, "bias": -0.1,
+                      "interval_coverage": 0.93}
+            def audit(payload):
+                data = json.dumps(payload).encode("utf-8")
+                (root / "report.json").write_bytes(data)
+                row = {"status": "passed", "dataset_sha256": "b" * 64,
+                       "validation_report": "report.json",
+                       "validation_report_sha256": hashlib.sha256(data).hexdigest()}
+                errors = []
+                _verify_local_report(row, "carbon[0]", errors, root)
+                return errors
+            self.assertEqual(audit(report), [])
+            self.assertTrue(any("dataset hash mismatch" in e
+                                for e in audit(dict(report, dataset_sha256="c" * 64))))
+            self.assertTrue(any("partitions" in e
+                                for e in audit(dict(report, test_partition="A"))))
+            self.assertTrue(any("measured interval coverage" in e
+                                for e in audit({k: v for k, v in report.items()
+                                               if k != "interval_coverage"})))
+            self.assertTrue(any("synthetic/catalog" in e
+                                for e in audit(dict(report, evidence_type="synthetic"))))
+            self.assertTrue(any("independent test spatial units" in e
+                                for e in audit(dict(report, test_spatial_units=1))))
 
 if __name__ == "__main__":
     unittest.main()
