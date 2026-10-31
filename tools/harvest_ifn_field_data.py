@@ -348,7 +348,7 @@ def harvest_sfb_2026_panel(session, report):
             # The official equation-equivalence resource is published with
             # a .csv filename but an XLSX MIME type. Inspect the actual bytes
             # instead of misparsing a ZIP workbook as text or discarding it.
-            is_xlsx = body.startswith(b"PK\\x03\\x04")
+            is_xlsx = body.startswith(b"PK\x03\x04")
             if is_xlsx:
                 parsed = inspect_workbook(io.BytesIO(body))
                 actual_format = "xlsx"
