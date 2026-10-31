@@ -97,6 +97,21 @@ def _verify_local_report(row, label, errors, root):
             errors.append(f"{label}: independent test spatial units invalid")
         elif type(n) is int and n != test:
             errors.append(f"{label}: independent sample count must equal distinct test spatial units")
+        # The executive biome row is a claim about the SAME held-out data.
+        # Hashing a report must not allow a different (inflated) plot count,
+        # accuracy or unit to be published in the release manifest.
+        if label.startswith("biomes["):
+            if type(row.get("independent_plot_count")) is not int or row["independent_plot_count"] != n:
+                errors.append(f"{label}: independent_plot_count disagrees with independently tested spatial units")
+            if payload.get("unit") != "Mg/ha":
+                errors.append(f"{label}: biome report must use Mg/ha to match published error units")
+            for claimed_field, measured_field in (
+                    ("rmse_mg_ha", "rmse"), ("mae_mg_ha", "mae"),
+                    ("bias_mg_ha", "bias"), ("r2", "r2")):
+                claimed, measured = row.get(claimed_field), payload.get(measured_field)
+                if (not _is_number(claimed) or not _is_number(measured)
+                        or not math.isclose(claimed, measured, rel_tol=1e-9, abs_tol=1e-9)):
+                    errors.append(f"{label}: {claimed_field} disagrees with hashed independent report")
         p_train, p_test = payload.get("train_partition"), payload.get("test_partition")
         if not (isinstance(p_train, str) and p_train.strip()
                 and isinstance(p_test, str) and p_test.strip()
