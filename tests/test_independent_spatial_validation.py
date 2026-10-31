@@ -26,7 +26,7 @@ class SpatialValidationTests(unittest.TestCase):
     def test_repeated_test_rows_count_spatial_units_not_pseudoreplicated_plots(self):
         # A third measured row is in the same physical test cluster B (alias b).
         # It must not increase the number of independent spatial units.
-        result = self.validate(VALID + "6,7,5,8,test,b\\n")
+        result = self.validate(VALID + "6,7,5,8,test,b\n")
         self.assertEqual(result["independent_sample_count"], 2)
         self.assertEqual(result["test_observation_count"], 3)
         self.assertEqual(result["test_spatial_units"], 2)
