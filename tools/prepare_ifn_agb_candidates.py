@@ -69,6 +69,10 @@ def prepare(raw, expected_sha256):
     # Otherwise a contradictory alternative-equation record can silently
     # permit one physical (UF, UA) to enter the candidate inventory.
     source_biomes_by_ua = defaultdict(set)
+    # Crosscheck the published location against *all* identifiable equations.
+    # An alternative-equation row with a different valid centroid makes the
+    # physical sampling-unit location ambiguous, even when AGB_Chave is unique.
+    source_coordinates_by_ua = defaultdict(set)
     counters = Counter()
     total_rows = 0
     chosen_rows = 0
@@ -88,6 +92,19 @@ def prepare(raw, expected_sha256):
             continue
         if biome and uf and ua:
             source_biomes_by_ua[(uf, ua)].add(biome)
+            raw_lat = str(row["lat_pc"] or "").strip()
+            raw_lon = str(row["lon_pc"] or "").strip()
+            if raw_lat and raw_lon:
+                try:
+                    lat_obs, lon_obs = _number(raw_lat), _number(raw_lon)
+                    if (-90 <= lat_obs <= 90 and -180 <= lon_obs <= 180
+                            and not (lat_obs == 0 and lon_obs == 0)):
+                        source_coordinates_by_ua[(uf, ua)].add(
+                            (round(lat_obs, 7), round(lon_obs, 7)))
+                except (ValueError, TypeError):
+                    # Unusable nonkey locations cannot prove agreement or
+                    # disagreement. Never interpret this as SAR eligibility.
+                    pass
         elif not key_equation:
             counters["nonkey_rows_with_incomplete_identity_not_crosschecked"] += 1
             continue
@@ -107,6 +124,9 @@ def prepare(raw, expected_sha256):
     for (biome, uf, ua), rows in sorted(grouped.items()):
         if len(source_biomes_by_ua[(uf, ua)]) > 1:
             counters["excluded_cross_biome_ua_identity_conflict"] += 1
+            continue
+        if len(source_coordinates_by_ua[(uf, ua)]) > 1:
+            counters["excluded_cross_equation_coordinate_conflict"] += 1
             continue
         if len(rows) != 1:
             counters["excluded_multiple_agb_chave_rows_per_ua"] += 1
@@ -165,6 +185,10 @@ def prepare(raw, expected_sha256):
         "source_observation_rows": total_rows,
         "agb_chave_rows": chosen_rows,
         "biome_identity_crosscheck_scope": "all_source_equation_rows_with_valid_UF_biome_UA",
+        "coordinate_crosscheck_scope": (
+            "all_source_equation_rows_with_valid_UF_biome_UA_and_usable_coordinates; "
+            "no independent positional accuracy inferred"
+        ),
         "unique_ua_with_agb_chave": len(grouped),
         "candidate_ua": len(candidates),
         "candidate_ua_by_biome": dict(sorted(by_biome.items())),
@@ -180,8 +204,10 @@ def prepare(raw, expected_sha256):
             "validated choice. Source coordinates appear quantized and positional "
             "accuracy is unknown: do not pair to SAR pixels, infer plot-scale "
             "accuracy, calculate AOI IC95%, or transfer stocks across IBGE classes. "
-            "Biome identity conflicts are checked across identifiable source equations; "
-            "nonkey rows with invalid UF or incomplete identity are not crosschecked. "
+            "Biome and conflicting valid centroid coordinates are checked across "
+            "identifiable source equations; invalid/missing nonkey coordinates cannot "
+            "establish location agreement, and nonkey rows with invalid UF or "
+            "incomplete identity are not crosschecked. "
             "One UA may contain multiple source land-cover classes; all repeated "
             "AGB_Chave UA records are excluded rather than pseudoreplicated."
         ),
