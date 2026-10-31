@@ -18,7 +18,7 @@ import math
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from tools.harvest_ifn_field_data import canonical_state
+from tools.ifn_state_identity import canonical_state
 
 TARGET_BIOMES = frozenset(("Amazônia", "Caatinga", "Cerrado", "Mata Atlântica", "Pantanal"))
 NATIVE_CLASSES = frozenset((
