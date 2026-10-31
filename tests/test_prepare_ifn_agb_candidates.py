@@ -104,6 +104,29 @@ class IFNAGBCandidateTests(unittest.TestCase):
         self.assertIn("no independent positional accuracy inferred",
                       report["coordinate_crosscheck_scope"])
 
+    def test_nonkey_land_cover_conflict_excludes_native_candidate(self):
+        # A native AGB_Chave cannot be used when another equation for the
+        # same physical UA identifies pasture, even at an identical centroid.
+        candidates, report = run(
+            record(uf="GO", ua="UA_501", land="Savana"),
+            record(uf="Goiás", ua="ua_501", eq="Eq.183", land="Pastagem"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["excluded_cross_equation_land_class_conflict"], 1)
+        self.assertFalse(report["scientific_validation"])
+
+    def test_nonkey_vegetation_typology_conflict_excludes_candidate(self):
+        # Even with identical native land class, incompatible source
+        # typologies cannot be assumed to represent one IBGE stratum.
+        candidates, report = run(
+            record(uf="GO", ua="UA_502", typology="Savana"),
+            record(uf="GO", ua="ＵＡ_５０２", eq="Eq.183",
+                   typology="Floresta Ombrófila Densa"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["excluded_cross_equation_typology_conflict"], 1)
+        self.assertEqual(report["ibge_spatial_crosswalk"], "not_performed")
+
     def test_nonkey_equation_same_centroid_does_not_exclude_candidate(self):
         candidates, report = run(
             record(uf="GO", ua="UA_202", lat="-15,84", lon="-48,42"),

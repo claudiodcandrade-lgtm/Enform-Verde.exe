@@ -82,6 +82,10 @@ def prepare(raw, expected_sha256):
     # An alternative-equation row with a different valid centroid makes the
     # physical sampling-unit location ambiguous, even when AGB_Chave is unique.
     source_coordinates_by_ua = defaultdict(set)
+    # A physical UA with contradictory source land-cover or vegetation
+    # typology across equation rows cannot support a single native stratum.
+    source_land_classes_by_ua = defaultdict(set)
+    source_typologies_by_ua = defaultdict(set)
     counters = Counter()
     total_rows = 0
     chosen_rows = 0
@@ -104,6 +108,12 @@ def prepare(raw, expected_sha256):
         if biome and uf and ua:
             identity = _physical_ua(uf, ua)
             source_biomes_by_ua[identity].add(biome)
+            land_class = str(row["classe_uso_da_terra"] or "").strip()
+            typology = str(row["tipologia_da_vegetacao"] or "").strip()
+            if land_class:
+                source_land_classes_by_ua[identity].add(land_class)
+            if typology:
+                source_typologies_by_ua[identity].add(typology)
             raw_lat = str(row["lat_pc"] or "").strip()
             raw_lon = str(row["lon_pc"] or "").strip()
             if raw_lat and raw_lon:
@@ -139,6 +149,12 @@ def prepare(raw, expected_sha256):
             continue
         if len(source_coordinates_by_ua[(uf, ua)]) > 1:
             counters["excluded_cross_equation_coordinate_conflict"] += 1
+            continue
+        if len(source_land_classes_by_ua[(uf, ua)]) > 1:
+            counters["excluded_cross_equation_land_class_conflict"] += 1
+            continue
+        if len(source_typologies_by_ua[(uf, ua)]) > 1:
+            counters["excluded_cross_equation_typology_conflict"] += 1
             continue
         if len(rows) != 1:
             counters["excluded_multiple_agb_chave_rows_per_ua"] += 1
@@ -201,6 +217,10 @@ def prepare(raw, expected_sha256):
             "all_source_equation_rows_with_valid_UF_and_NFKC_casefolded_UA_and_usable_coordinates; "
             "no independent positional accuracy inferred"
         ),
+        "land_class_typology_crosscheck_scope": (
+            "all_source_equation_rows_with_valid_UF_and_NFKC_casefolded_UA; "
+            "conflicting nonempty land-cover classes or vegetation typologies exclude the UA"
+        ),
         "unique_ua_with_agb_chave": len({(uf, ua) for _, uf, ua in grouped}),
         "agb_chave_biome_ua_groups": len(grouped),
         "candidate_ua": len(candidates),
@@ -218,8 +238,9 @@ def prepare(raw, expected_sha256):
             "accuracy is unknown: do not pair to SAR pixels, infer plot-scale "
             "accuracy, calculate AOI IC95%, or transfer stocks across IBGE classes. "
             "Physical UA identities (canonical UF and Unicode NFKC/casefolded UA) and conflicting "
-            "valid centroid coordinates are checked across "
-            "identifiable source equations; invalid/missing nonkey coordinates cannot "
+            "valid centroid coordinates and conflicting nonempty source land-cover "
+            "classes or vegetation typologies are checked across identifiable "
+            "source equations; invalid/missing nonkey coordinates cannot "
             "establish location agreement, and nonkey rows with invalid UF or "
             "incomplete identity are not crosschecked. "
             "One UA may contain multiple source land-cover classes; all repeated "
