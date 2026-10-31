@@ -157,5 +157,37 @@ class ScientificReleaseGateTests(unittest.TestCase):
             self.assertTrue(any("independent test spatial units" in e
                                 for e in audit(dict(report, test_spatial_units=1))))
 
+    def test_biome_claims_must_match_hashed_independent_metrics_and_units(self):
+        from tools.scientific_release_gate import _verify_local_report
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report = {"dataset_sha256": "d" * 64, "independent_sample_count": 2,
+                      "train_spatial_units": 3, "test_spatial_units": 2,
+                      "train_partition": "train", "test_partition": "test",
+                      "validation_design": "spatial holdout", "unit": "Mg/ha",
+                      "rmse": 4.0, "mae": 3.0, "bias": -1.0, "r2": 0.65}
+            row = {"status": "passed", "dataset_sha256": "d" * 64,
+                   "validation_report": "biome.json", "independent_plot_count": 2,
+                   "rmse_mg_ha": 4.0, "mae_mg_ha": 3.0,
+                   "bias_mg_ha": -1.0, "r2": 0.65}
+            def audit(claim, payload):
+                raw = json.dumps(payload).encode("utf-8")
+                (root / "biome.json").write_bytes(raw)
+                errors = []
+                _verify_local_report(dict(claim, validation_report_sha256=hashlib.sha256(raw).hexdigest()),
+                                     "biomes[0]", errors, root)
+                return errors
+            self.assertEqual(audit(row, report), [])
+            self.assertTrue(any("independent_plot_count disagrees" in e
+                                for e in audit(dict(row, independent_plot_count=12), report)))
+            self.assertTrue(any("rmse_mg_ha disagrees" in e
+                                for e in audit(dict(row, rmse_mg_ha=0.1), report)))
+            self.assertTrue(any("r2 disagrees" in e
+                                for e in audit(dict(row, r2=0.99), report)))
+            self.assertTrue(any("must use Mg/ha" in e
+                                for e in audit(row, dict(report, unit="tC/ha"))))
+            self.assertTrue(any("r2 disagrees" in e
+                                for e in audit(row, dict(report, r2=None))))
+
 if __name__ == "__main__":
     unittest.main()
