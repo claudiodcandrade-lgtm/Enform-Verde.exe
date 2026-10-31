@@ -13,6 +13,10 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
+from tools.harvest_ifn_field_data import canonical_state
+
+TARGET_BIOMES = frozenset(("Amazônia", "Caatinga", "Cerrado", "Mata Atlântica", "Pantanal"))
+
 REQUIRED = ("bioma", "uf", "ua", "fitofisionomia_ibge", "equacao_selecionada",
             "agb_mg_ha", "equation_choice_audited")
 
@@ -27,22 +31,30 @@ def summarize(path, expected_sha256):
         reader = csv.DictReader(stream)
         if not reader.fieldnames or any(k not in reader.fieldnames for k in REQUIRED):
             raise ValueError("missing obligatory selected-UA fields")
+        if len(set(reader.fieldnames)) != len(reader.fieldnames):
+            raise ValueError("duplicate CSV header fields; ambiguous observation columns")
         for line, row in enumerate(reader, 2):
-            bioma, uf, ua, fito, eq = (str(row[k]).strip() for k in REQUIRED[:5])
-            if not all((bioma, uf, ua, fito, eq)):
+            bioma, raw_uf, ua, fito, eq = (str(row[k] or "").strip() for k in REQUIRED[:5])
+            if not all((bioma, raw_uf, ua, fito, eq)):
                 raise ValueError(f"row {line}: missing sampling domain")
+            if bioma not in TARGET_BIOMES:
+                raise ValueError(f"row {line}: unrecognized IFN biome {bioma!r}")
+            try:
+                uf = canonical_state(raw_uf)
+            except ValueError as exc:
+                raise ValueError(f"row {line}: invalid UF identity: {raw_uf!r}") from exc
             if str(row["equation_choice_audited"]).strip().lower() != "true":
                 raise ValueError(f"row {line}: equation selection not audited")
             # A physical IFN unit is identified by (UF, UA), not by the
             # biome label assigned to it. A conflicting biome must never
             # turn one unit into two independent observations.
-            key = (uf, ua)
+            key = (uf, ua.casefold())
             if key in seen:
                 raise ValueError(f"row {line}: repeated sampling UA or conflicting biome; equations are not independent units")
             seen.add(key)
             try:
                 value = float(row["agb_mg_ha"])
-            except ValueError as exc:
+            except (ValueError, TypeError) as exc:
                 raise ValueError(f"row {line}: invalid AGB") from exc
             if not math.isfinite(value) or value < 0:
                 raise ValueError(f"row {line}: AGB must be finite and nonnegative")
