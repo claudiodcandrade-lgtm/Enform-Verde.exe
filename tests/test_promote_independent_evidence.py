@@ -21,7 +21,7 @@ class EvidencePromotionTests(unittest.TestCase):
             raw = b"genuine independent observations from named inventory"
             (root / "plot.csv").write_bytes(raw)
             report = {"dataset_sha256": hashlib.sha256(raw).hexdigest(),
-                      "independent_sample_count": 12, "rmse": 2.0, "mae": 1.5,
+                      "independent_sample_count": 4, "rmse": 2.0, "mae": 1.5,
                       "bias": 0.3, "interval_coverage": 0.9,
                       "train_partition": "A", "test_partition": "B",
                       "validation_design": "spatial holdout", "unit": "Mg/ha",
@@ -47,6 +47,18 @@ class EvidencePromotionTests(unittest.TestCase):
             self.assertTrue(audit["promoted"])
             self.assertEqual(len(manifest["capabilities"]), 1)
             self.assertEqual(manifest["capabilities"][0]["dataset_file"], "plot.csv")
+            # Promotion must reject a hashed report inflating n from 4
+            # independent spatial units to 12 repeated observations.
+            inflated = dict(report, independent_sample_count=12)
+            inflated_bytes = json.dumps(inflated).encode()
+            (root / "report.json").write_bytes(inflated_bytes)
+            inflated_candidate = dict(candidate, validation_report_sha256=hashlib.sha256(inflated_bytes).hexdigest())
+            (candidates / "candidate.json").write_text(json.dumps(inflated_candidate))
+            audit, manifest = promote(SHA, root, candidates)
+            self.assertFalse(audit["promoted"])
+            self.assertIsNone(manifest)
+            (root / "report.json").write_bytes(data)
+            (candidates / "candidate.json").write_text(json.dumps(candidate))
             (root / "plot.csv").write_bytes(b"corrupted")
             audit, manifest = promote(SHA, root, candidates)
             self.assertFalse(audit["promoted"])
