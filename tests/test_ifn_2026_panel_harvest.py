@@ -100,6 +100,38 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(report["ua_rows_missing_state"], 1)
         self.assertIn("UF missing", report["ua_identity_warning"])
 
+    def test_missing_uf_in_per_state_csv_uses_auditable_filename_hint(self):
+        body = ("bioma;ua;lat_pc;lon_pc\n"
+                "Amazônia;UA001;-3.1;-54.9\n"
+                "Amazônia;UA001;-3.1;-54.9\n").encode("utf-8")
+        result = inspect_csv(body, source_uf="PA")
+        self.assertTrue(result["ua_identity_state_disambiguated"])
+        self.assertEqual(result["ua_rows_state_inferred_from_filename"], 2)
+        self.assertEqual(result["source_uf_filename_hint"], "PA")
+        self.assertEqual(result["unique_ua_by_biome"]["Amazônia"], 1)
+        self.assertEqual(result["ua_rows_missing_state"], 0)
+
+    def test_conflicting_state_in_per_state_csv_is_rejected(self):
+        body = b"bioma;uf;ua\nCerrado;GO;UA001\n"
+        with self.assertRaisesRegex(ValueError, "conflicts"):
+            inspect_csv(body, source_uf="TO")
+        with self.assertRaisesRegex(ValueError, "invalid source UF"):
+            inspect_csv(body, source_uf="XX")
+
+    def test_per_state_xlsx_without_uf_uses_filename_hint(self):
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ifn_go.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["bioma", "ua", "lat_pc", "lon_pc"])
+            ws.append(["Cerrado", "UA007", -15.0, -47.0])
+            wb.save(path)
+            report = inspect_workbook(path, source_uf="GO")
+        self.assertTrue(report["sheets"][0]["ua_identity_state_disambiguated"])
+        self.assertEqual(report["sheets"][0]["ua_rows_state_inferred_from_filename"], 1)
+        self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 1)
+
     def test_tab_delimiter_and_state_aware_ua_are_supported(self):
         body = ("bioma\tuf\tua\n"
                 "Cerrado\tGO\tUA001\n"
