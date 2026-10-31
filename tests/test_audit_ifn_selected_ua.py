@@ -78,7 +78,7 @@ class IFNSelectedUATests(unittest.TestCase):
 
     def test_blank_csv_header_rejected(self):
         malformed = ROWS.replace("agb_mg_ha,equation_choice_audited", "agb_mg_ha,,equation_choice_audited")
-        with self.assertRaisesRegex(ValueError, "duplicate or blank CSV header"):
+        with self.assertRaisesRegex(ValueError, "blank CSV header"):
             self.check(malformed)
 
     def test_missing_uf_rejected(self):
