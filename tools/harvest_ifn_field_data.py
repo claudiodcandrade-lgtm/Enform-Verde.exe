@@ -65,6 +65,13 @@ PANEL_RESOURCES = {
         "a209cbbe-1dd6-4217-8662-658ed1e7e1e6",
         "dadosabertos_equacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
     ),
+    # Official resource page identifies a spreadsheet MIME despite .csv suffix.
+    # Preserve its original filename, detect payload format by magic bytes,
+    # and treat equivalence tests as methodological evidence, not SAR validation.
+    "panel_equation_tests": (
+        "a7396a8a-1b44-464d-bb90-6f74a2780e9c",
+        "dadosabertos_testeequacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+    ),
 }
 
 DOWNLOAD_RE = re.compile(r'href=["\']([^"\']+/download/[^"\']+)["\']', re.I)
@@ -338,10 +345,24 @@ def harvest_sfb_2026_panel(session, report):
             output = OUT / label / filename
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_bytes(body)
+            # The official equation-equivalence resource is published with
+            # a .csv filename but an XLSX MIME type. Inspect the actual bytes
+            # instead of misparsing a ZIP workbook as text or discarding it.
+            is_xlsx = body.startswith(b"PK\\x03\\x04")
+            if is_xlsx:
+                parsed = inspect_workbook(io.BytesIO(body))
+                actual_format = "xlsx"
+            else:
+                parsed = inspect_csv(body, allow_non_state_uf=(label == "panel_equations"))
+                actual_format = "csv"
             entry["resources"].append({
                 "filename": filename, "source_url": url, "bytes": len(body),
                 "sha256": hashlib.sha256(body).hexdigest(),
-                **inspect_csv(body, allow_non_state_uf=(label == "panel_equations")),
+                "payload_format_detected": actual_format,
+                "equation_equivalence_not_independent_sar_validation": (
+                    label == "panel_equation_tests"
+                ),
+                **parsed,
             })
             entry["status"] = "harvested_not_validated"
         except Exception as exc:
