@@ -66,6 +66,50 @@ def _verify_local_report(row, label, errors, root):
         return
     if actual != digest.lower():
         errors.append(f"{label}: validation report hash mismatch")
+        return
+    # A checksum pins bytes, not scientific content. Refuse opaque or
+    # internally inconsistent reports even when their digest is correct.
+    try:
+        payload = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        errors.append(f"{label}: validation report must be valid JSON")
+        return
+    if not isinstance(payload, dict):
+        errors.append(f"{label}: validation report must be a JSON object")
+        return
+    if payload.get("dataset_sha256") != row.get("dataset_sha256"):
+        errors.append(f"{label}: validation report dataset hash mismatch")
+    if payload.get("evidence_type") in ("synthetic", "fixture", "literature_mean", "catalog_discovery"):
+        errors.append(f"{label}: synthetic/catalog report cannot validate real observations")
+    # Spatially independent metrics are mandatory for scientific inference;
+    # a successful executable smoke test is not a scientific validation.
+    scientific = (label.startswith("biomes[") or label.startswith("carbon[")
+                  or label in ("sar", "agriculture", "vigor", "yield"))
+    if scientific:
+        n = payload.get("independent_sample_count")
+        train = payload.get("train_spatial_units")
+        test = payload.get("test_spatial_units")
+        if type(n) is not int or n <= 0:
+            errors.append(f"{label}: independent sample count absent")
+        if type(train) is not int or train < 1:
+            errors.append(f"{label}: independent training spatial units absent")
+        if type(test) is not int or test < 2 or (type(n) is int and n < test):
+            errors.append(f"{label}: independent test spatial units invalid")
+        p_train, p_test = payload.get("train_partition"), payload.get("test_partition")
+        if not (isinstance(p_train, str) and p_train.strip()
+                and isinstance(p_test, str) and p_test.strip()
+                and p_train != p_test):
+            errors.append(f"{label}: independent train/test partitions absent or identical")
+        if not isinstance(payload.get("validation_design"), str) or not payload["validation_design"].strip():
+            errors.append(f"{label}: independent validation design absent")
+        for metric in ("rmse", "mae", "bias"):
+            value = payload.get(metric)
+            if not _is_number(value) or (metric != "bias" and value < 0):
+                errors.append(f"{label}: invalid independent {metric}")
+        if label.startswith("carbon[") or label == "yield":
+            coverage = payload.get("interval_coverage")
+            if not _is_number(coverage) or not 0 <= coverage <= 1:
+                errors.append(f"{label}: measured interval coverage required; descriptive bounds are not validated IC95")
 
 
 def _verify_local_dataset(row, label, errors, root):
