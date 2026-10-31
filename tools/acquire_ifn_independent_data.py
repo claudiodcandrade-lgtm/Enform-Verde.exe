@@ -118,6 +118,7 @@ def _profile_xlsx(path, expected_columns=()):
         state_col = next((k for k, v in headers.items() if v == "uf"), None)
         ua_col = next((k for k, v in headers.items() if v == "ua"), None)
         biomes, states, units = Counter(), Counter(), set()
+        ua_by_biome = defaultdict(set)
         count = 0
         for row in rows[1:]:
             values = cells(row)
@@ -129,12 +130,20 @@ def _profile_xlsx(path, expected_columns=()):
             if state_col:
                 states[values.get(state_col, "")] += 1
             if ua_col and values.get(ua_col):
-                units.add(values[ua_col])
+                # UA identifiers are not necessarily nationally unique. Keep
+                # the same (biome, UF, UA) sampling-unit key as CSV imports;
+                # multiple model/equation rows never create new plots.
+                key = (values.get(biome_col, "") if biome_col else "",
+                       values.get(state_col, "") if state_col else "",
+                       values[ua_col])
+                units.add(key)
+                ua_by_biome[key[0]].add(key)
         if count == 0:
             raise ValueError("XLSX has no observation rows")
         return {"xlsx_header": columns[:100], "xlsx_data_rows": count,
                 "biome_rows": dict(sorted(biomes.items())),
-                "state_rows": dict(sorted(states.items())), "unique_ua": len(units)}
+                "state_rows": dict(sorted(states.items())), "unique_ua": len(units),
+                "unique_ua_by_biome": {b: len(v) for b, v in sorted(ua_by_biome.items())}}
 
 
 def fetch_sources(registry, output, opener=None):
