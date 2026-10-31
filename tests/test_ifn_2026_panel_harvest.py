@@ -171,6 +171,41 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Amazônia"], 1)
         self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"]["Amazônia"], 1)
 
+    def test_mixed_valid_invalid_centroids_quarantine_entire_ua(self):
+        # Previously a valid row hid a zero/invalid row for the same UA.
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Pantanal;MS;UA001;-18.5;-56.8\n"
+                "Pantanal;MS;UA001;0;0\n"
+                "Pantanal;MS;UA002;-18.6;-56.9\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Pantanal"], 2)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Pantanal"], 1)
+        self.assertEqual(report["ua_rows_invalid_coordinates"], 1)
+        self.assertEqual(report["ua_with_invalid_coordinate_rows_by_biome"]["Pantanal"], 1)
+
+    def test_missing_uf_cannot_claim_georeferenced_independent_ua(self):
+        body = ("bioma;ua;lat_pc;lon_pc\n"
+                "Cerrado;UA001;-15;-47\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertFalse(report["ua_identity_state_disambiguated"])
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"], {})
+        self.assertEqual(report["ua_with_valid_coordinates_but_missing_state_by_biome"]["Cerrado"], 1)
+
+    def test_mixed_valid_invalid_xlsx_centroids_quarantine_ua(self):
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ifn_ms.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["bioma", "uf", "ua", "lat_pc", "lon_pc"])
+            ws.append(["Pantanal", "MS", "UA001", -18.5, -56.8])
+            ws.append(["Pantanal", "MS", "UA001", 0, 0])
+            ws.append(["Pantanal", "MS", "UA002", -18.6, -56.9])
+            wb.save(path)
+            report = inspect_workbook(path)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Pantanal"], 1)
+        self.assertEqual(report["sheets"][0]["ua_with_invalid_coordinate_rows_by_biome"]["Pantanal"], 1)
+
     def test_repeated_subplots_same_centroid_remain_one_ua(self):
         body = ("bioma;uf;ua;lat_pc;lon_pc\n"
                 "Cerrado;GO;UA001;-15.0;-47.0\n"
