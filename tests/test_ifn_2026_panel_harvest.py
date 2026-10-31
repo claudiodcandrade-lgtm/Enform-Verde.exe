@@ -119,24 +119,24 @@ class SFBPanelHarvestTests(unittest.TestCase):
             inspect_csv(body, source_uf="XX")
 
     def test_full_state_names_and_accents_canonicalize_to_uf(self):
-        body = ("bioma;estado;ua\\n"
-                "Pantanal;Mato Grosso do Sul;UA009\\n"
-                "Pantanal;MS;UA009\\n"
-                "Mata Atlântica;Espírito Santo;UA010\\n").encode("utf-8")
+        body = ("bioma;estado;ua\n"
+                "Pantanal;Mato Grosso do Sul;UA009\n"
+                "Pantanal;MS;UA009\n"
+                "Mata Atlântica;Espírito Santo;UA010\n").encode("utf-8")
         result = inspect_csv(body)
         self.assertEqual(result["unique_ua_by_biome"]["Pantanal"], 1)
         self.assertEqual(result["unique_ua_by_biome"]["Mata Atlântica"], 1)
         self.assertTrue(result["ua_identity_state_disambiguated"])
 
     def test_full_state_name_matches_source_uf_and_unknown_state_rejected(self):
-        valid = "bioma;estado;ua\\nPantanal;Mato Grosso do Sul;UA009\\n".encode("utf-8")
+        valid = "bioma;estado;ua\nPantanal;Mato Grosso do Sul;UA009\n".encode("utf-8")
         result = inspect_csv(valid, source_uf="MS")
         self.assertEqual(result["unique_ua_by_biome"]["Pantanal"], 1)
-        invalid = b"bioma;estado;ua\\nPantanal;Estado Inexistente;UA009\\n"
+        invalid = b"bioma;estado;ua\nPantanal;Estado Inexistente;UA009\n"
         with self.assertRaisesRegex(ValueError, "unrecognized UF"):
             inspect_csv(invalid)
         with self.assertRaisesRegex(ValueError, "unrecognized UF"):
-            inspect_csv(b"bioma;uf;ua\\nPantanal;ZZ;UA009\\n")
+            inspect_csv(b"bioma;uf;ua\nPantanal;ZZ;UA009\n")
 
     def test_per_state_xlsx_without_uf_uses_filename_hint(self):
         from openpyxl import Workbook
