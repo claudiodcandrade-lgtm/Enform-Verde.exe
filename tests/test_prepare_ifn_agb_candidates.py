@@ -72,6 +72,42 @@ class IFNAGBCandidateTests(unittest.TestCase):
         )
         self.assertEqual(report["candidate_ua"], 0)
 
+    def test_nonkey_equation_biome_conflict_excludes_key_candidate(self):
+        # A conflicting biome on an alternative equation is still evidence
+        # of an ambiguous physical UA; counting only AGB_Chave misses it.
+        candidates, report = run(
+            record(biome="Cerrado", uf="GO", ua="UA_101"),
+            record(biome="Mata Atlântica", uf="GO", ua="UA_101",
+                   eq="Eq.183", land="Floresta Natural"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["agb_chave_rows"], 1)
+        self.assertTrue(report["biome_identity_crosschecked_against_all_equation_rows"])
+        self.assertEqual(
+            report["exclusions"]["excluded_cross_biome_ua_identity_conflict"], 1
+        )
+
+    def test_nonkey_same_biome_and_reused_ua_different_uf_remain_valid(self):
+        candidates, report = run(
+            record(biome="Cerrado", uf="GO", ua="UA_101"),
+            record(biome="Cerrado", uf="GO", ua="UA_101", eq="Eq.183"),
+            record(biome="Pantanal", uf="MS", ua="UA_101"),
+            record(biome="Pantanal", uf="MS", ua="UA_101", eq="Eq.184"),
+        )
+        self.assertEqual(len(candidates), 2)
+        self.assertEqual(report["candidate_ua"], 2)
+        self.assertNotIn("excluded_cross_biome_ua_identity_conflict",
+                         report["exclusions"])
+
+    def test_invalid_uf_on_nonkey_does_not_invent_crosscheck(self):
+        candidates, report = run(
+            record(uf="GO", ua="UA_102"),
+            record(uf="ZZ", ua="UA_102", eq="Eq.183"),
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(report["exclusions"]["nonkey_rows_with_invalid_uf_not_crosschecked"], 1)
+        self.assertEqual(candidates[0]["scientifically_validated"], "false")
+
     def test_reused_ua_across_distinct_states_remains_two_units(self):
         candidates, report = run(
             record(biome="Cerrado", uf="GO", ua="UA_100"),
