@@ -127,6 +127,9 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
     lon_i = idx("LON_PC", "LONGITUDE", "LON", "LONG")
     unique_ua = {}
     coordinate_values = {}
+    # A mixed valid/invalid centroid is not a fully verified UA location.
+    invalid_coordinate_ua = set()
+    missing_state_coordinate_ua = set()
     invalid_coordinate_rows = 0
     row_counts = {}
     row_count = 0
@@ -181,17 +184,23 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
                             or not math.isfinite(lat) or not math.isfinite(lon)
                             or (lat == 0 and lon == 0)):
                         invalid_coordinate_rows += 1
+                        invalid_coordinate_ua.add((biome, identity))
+                    elif not uf:
+                        # An unscoped UA ID may refer to different states.
+                        # Valid numeric coordinates do not resolve that identity.
+                        missing_state_coordinate_ua.add((biome, identity))
                     else:
                         coordinate_values.setdefault((biome, identity), set()).add((lat, lon))
                 except (TypeError, ValueError):
                     invalid_coordinate_rows += 1
+                    invalid_coordinate_ua.add((biome, identity))
     coordinate_ua = {}
     conflicting_coordinate_ua = {}
     for (biome, identity), points in coordinate_values.items():
-        if len(points) == 1:
-            coordinate_ua.setdefault(biome, set()).add(identity)
-        else:
+        if len(points) > 1:
             conflicting_coordinate_ua.setdefault(biome, set()).add(identity)
+        elif (biome, identity) not in invalid_coordinate_ua:
+            coordinate_ua.setdefault(biome, set()).add(identity)
     columns = [norm(h) for h in headers]
     return {
         "headers": [str(h) for h in headers],
@@ -212,9 +221,16 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
         "ua_with_conflicting_coordinates_by_biome": {
             k: len(v) for k, v in sorted(conflicting_coordinate_ua.items())},
         "ua_rows_invalid_coordinates": invalid_coordinate_rows,
+        "ua_with_invalid_coordinate_rows_by_biome": {
+            biome: sum(b == biome for b, _ in invalid_coordinate_ua)
+            for biome in sorted({b for b, _ in invalid_coordinate_ua})},
+        "ua_with_valid_coordinates_but_missing_state_by_biome": {
+            biome: sum(b == biome for b, _ in missing_state_coordinate_ua)
+            for biome in sorted({b for b, _ in missing_state_coordinate_ua})},
         "coordinate_validation_note": (
-            "WGS84 centroid candidates only: reject zero placeholders and conflicting "
-            "coordinates for one (biome, UF, UA); no IBGE crosswalk, plot-pixel "
+            "WGS84 centroid candidates only: reject zero placeholders, mixed valid/invalid "
+            "centroid rows, missing UF and conflicting coordinates for one (biome, UF, UA); "
+            "no IBGE crosswalk, plot-pixel "
             "pairing, SAR validation or positional accuracy inferred."),
         "observation_rows_by_biome": dict(sorted(row_counts.items())),
         "encoding": encoding,
