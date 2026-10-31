@@ -79,6 +79,44 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertEqual(item["xlsx_data_rows"], 1)
             self.assertEqual(item["biome_rows"], {"Cerrado": 1})
 
+    def test_xlsx_ua_identity_is_biome_state_and_unit_not_id_alone(self):
+        # IFN panels can reuse an UA identifier across UF/biomes, while
+        # multiple equation rows within one UA are not independent plots.
+        with tempfile.TemporaryDirectory() as temp:
+            buffer = io.BytesIO()
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            values = [
+                ("bioma", "uf", "ua"),
+                ("Cerrado", "GO", "UA_01"),
+                ("Cerrado", "GO", "UA_01"),  # second equation, same UA
+                ("Amazônia", "PA", "UA_01"),
+                ("Cerrado", "MG", "UA_01"),
+            ]
+            rows = []
+            for i, values_row in enumerate(values, 1):
+                cells = "".join(
+                    f'<c r="{col}{i}" t="inlineStr"><is><t>{value}</t></is></c>'
+                    for col, value in zip("ABC", values_row)
+                )
+                rows.append(f'<row r="{i}">{cells}</row>')
+            xml = f'<worksheet xmlns="{ns}"><sheetData>{"".join(rows)}</sheetData></worksheet>'
+            with zipfile.ZipFile(buffer, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_units", "url": URL,
+                       "license": "CC BY", "role": "biomass",
+                       "format_override": "xlsx",
+                       "expected_columns": ["bioma", "uf", "ua"]}]}
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(buffer.getvalue()))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["xlsx_data_rows"], 4)
+            self.assertEqual(item["unique_ua"], 3)
+            self.assertEqual(item["unique_ua_by_biome"],
+                             {"Amazônia": 1, "Cerrado": 2})
+            self.assertFalse(item["carbon_stock_ready"])
+
     def test_expected_columns_required(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_bad_header", "url": URL,
