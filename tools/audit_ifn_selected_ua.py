@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 import statistics
+import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
@@ -19,6 +20,11 @@ TARGET_BIOMES = frozenset(("Amazônia", "Caatinga", "Cerrado", "Mata Atlântica"
 
 REQUIRED = ("bioma", "uf", "ua", "fitofisionomia_ibge", "equacao_selecionada",
             "agb_mg_ha", "equation_choice_audited")
+
+def _physical_ua_identity(value):
+    """Normalize typographic aliases; not proof of geospatial independence."""
+    return unicodedata.normalize("NFKC", value.strip()).casefold()
+
 
 def summarize(path, expected_sha256):
     raw = Path(path).read_bytes()
@@ -31,9 +37,12 @@ def summarize(path, expected_sha256):
         reader = csv.DictReader(stream)
         if not reader.fieldnames or any(k not in reader.fieldnames for k in REQUIRED):
             raise ValueError("missing obligatory selected-UA fields")
-        if len(set(reader.fieldnames)) != len(reader.fieldnames):
-            raise ValueError("duplicate CSV header fields; ambiguous observation columns")
+        headers = [name.strip() for name in reader.fieldnames]
+        if any(not name for name in headers) or len(set(headers)) != len(headers):
+            raise ValueError("duplicate or blank CSV header fields; ambiguous observation columns")
         for line, row in enumerate(reader, 2):
+            if None in row:
+                raise ValueError(f"row {line}: unexpected extra CSV columns")
             bioma, raw_uf, ua, fito, eq = (str(row[k] or "").strip() for k in REQUIRED[:5])
             if not all((bioma, raw_uf, ua, fito, eq)):
                 raise ValueError(f"row {line}: missing sampling domain")
@@ -48,7 +57,7 @@ def summarize(path, expected_sha256):
             # A physical IFN unit is identified by (UF, UA), not by the
             # biome label assigned to it. A conflicting biome must never
             # turn one unit into two independent observations.
-            key = (uf, ua.casefold())
+            key = (uf, _physical_ua_identity(ua))
             if key in seen:
                 raise ValueError(f"row {line}: repeated sampling UA or conflicting biome; equations are not independent units")
             seen.add(key)
