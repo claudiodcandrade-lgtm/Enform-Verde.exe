@@ -38,8 +38,10 @@ def summarize(path, expected_sha256):
         if not reader.fieldnames or any(k not in reader.fieldnames for k in REQUIRED):
             raise ValueError("missing obligatory selected-UA fields")
         headers = [name.strip() for name in reader.fieldnames]
-        if any(not name for name in headers) or len(set(headers)) != len(headers):
-            raise ValueError("duplicate or blank CSV header fields; ambiguous observation columns")
+        if any(not name for name in headers):
+            raise ValueError("blank CSV header fields; ambiguous observation columns")
+        if len(set(headers)) != len(headers):
+            raise ValueError("duplicate CSV header fields; ambiguous observation columns")
         for line, row in enumerate(reader, 2):
             if None in row:
                 raise ValueError(f"row {line}: unexpected extra CSV columns")
