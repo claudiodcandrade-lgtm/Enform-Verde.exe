@@ -85,7 +85,16 @@ def prepare(raw, expected_sha256):
     by_biome = Counter()
     candidates = []
     quantized = 0
+    # The same (UF, UA) cannot be treated as two independent sampling units
+    # merely because conflicting source rows label it with different biomes.
+    # Exclude every occurrence until the primary field identity is audited.
+    biomes_by_ua = defaultdict(set)
+    for biome, uf, ua in grouped:
+        biomes_by_ua[(uf, ua)].add(biome)
     for (biome, uf, ua), rows in sorted(grouped.items()):
+        if len(biomes_by_ua[(uf, ua)]) > 1:
+            counters["excluded_cross_biome_ua_identity_conflict"] += 1
+            continue
         if len(rows) != 1:
             counters["excluded_multiple_agb_chave_rows_per_ua"] += 1
             continue
