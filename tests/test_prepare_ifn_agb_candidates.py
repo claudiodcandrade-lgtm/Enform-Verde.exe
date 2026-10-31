@@ -66,7 +66,8 @@ class IFNAGBCandidateTests(unittest.TestCase):
                    land="Floresta Natural", typology="Floresta Ombrófila Densa"),
         )
         self.assertEqual(candidates, [])
-        self.assertEqual(report["unique_ua_with_agb_chave"], 2)
+        self.assertEqual(report["unique_ua_with_agb_chave"], 1)
+        self.assertEqual(report["agb_chave_biome_ua_groups"], 2)
         self.assertEqual(
             report["exclusions"]["excluded_cross_biome_ua_identity_conflict"], 2
         )
@@ -83,7 +84,7 @@ class IFNAGBCandidateTests(unittest.TestCase):
         self.assertEqual(candidates, [])
         self.assertEqual(report["agb_chave_rows"], 1)
         self.assertEqual(report["biome_identity_crosscheck_scope"],
-                         "all_source_equation_rows_with_valid_UF_biome_UA")
+                         "all_source_equation_rows_with_valid_UF_and_casefolded_UA")
         self.assertEqual(
             report["exclusions"]["excluded_cross_biome_ua_identity_conflict"], 1
         )
@@ -145,6 +146,40 @@ class IFNAGBCandidateTests(unittest.TestCase):
         self.assertEqual(len(candidates), 2)
         self.assertNotIn("excluded_cross_biome_ua_identity_conflict",
                          report["exclusions"])
+
+    def test_case_aliases_on_agb_chave_are_one_physical_ua(self):
+        candidates, report = run(
+            record(uf="GO", ua="UA_300"),
+            record(uf="Goiás", ua="ua_300"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["unique_ua_with_agb_chave"], 1)
+        self.assertEqual(report["agb_chave_biome_ua_groups"], 1)
+        self.assertEqual(report["exclusions"]["excluded_multiple_agb_chave_rows_per_ua"], 1)
+
+    def test_nonkey_case_alias_coordinate_conflict_excludes_ua(self):
+        candidates, report = run(
+            record(uf="GO", ua="UA_301", lat="-15,84"),
+            record(uf="Goiás", ua="ua_301", eq="Eq.183", lat="-15,86"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["excluded_cross_equation_coordinate_conflict"], 1)
+
+    def test_case_alias_cross_biome_conflict_excludes_physical_ua(self):
+        candidates, report = run(
+            record(biome="Cerrado", uf="GO", ua="UA_302"),
+            record(biome="Mata Atlântica", uf="Goiás", ua="ua_302",
+                   land="Floresta Natural"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["unique_ua_with_agb_chave"], 1)
+        self.assertEqual(report["agb_chave_biome_ua_groups"], 2)
+        self.assertEqual(report["exclusions"]["excluded_cross_biome_ua_identity_conflict"], 2)
+
+    def test_duplicate_panel_header_is_rejected(self):
+        raw = (HEADER.replace("bioma;uf;ua;", "bioma;uf;uf;ua;") + record()).encode("utf-8")
+        with self.assertRaisesRegex(ValueError, "duplicate or blank CSV headers"):
+            prepare(raw, hashlib.sha256(raw).hexdigest())
 
     def test_hash_and_schema_fail_closed(self):
         raw = (HEADER + record()).encode("utf-8")

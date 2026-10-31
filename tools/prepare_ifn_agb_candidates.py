@@ -47,8 +47,13 @@ def _number(raw):
     return value
 
 
+def _physical_ua(uf, ua):
+    """Canonical physical UA key; case aliases do not create new field plots."""
+    return uf, ua.strip().casefold()
+
+
 def prepare(raw, expected_sha256):
-    """Return one conservative candidate per distinct (biome, UF, UA).
+    """Return one conservative candidate per distinct physical (UF, UA).
 
     All non-AGB_Chave alternatives are deliberately ignored; duplicated
     AGB_Chave rows (often mixed vegetation/subunits) exclude the whole UA,
@@ -64,6 +69,9 @@ def prepare(raw, expected_sha256):
     reader = csv.DictReader(io.StringIO(decoded), delimiter=";")
     if not reader.fieldnames or not REQUIRED.issubset(reader.fieldnames):
         raise ValueError("IFN panel missing required observational columns")
+    if len(reader.fieldnames) != len(set(reader.fieldnames)) or any(
+            not str(field or "").strip() for field in reader.fieldnames):
+        raise ValueError("IFN panel has duplicate or blank CSV headers; columns are ambiguous")
     grouped = defaultdict(list)
     # Audit the biome identity against ALL equation rows, not only AGB_Chave.
     # Otherwise a contradictory alternative-equation record can silently
@@ -91,7 +99,8 @@ def prepare(raw, expected_sha256):
             counters["nonkey_rows_with_invalid_uf_not_crosschecked"] += 1
             continue
         if biome and uf and ua:
-            source_biomes_by_ua[(uf, ua)].add(biome)
+            identity = _physical_ua(uf, ua)
+            source_biomes_by_ua[identity].add(biome)
             raw_lat = str(row["lat_pc"] or "").strip()
             raw_lon = str(row["lon_pc"] or "").strip()
             if raw_lat and raw_lon:
@@ -99,7 +108,7 @@ def prepare(raw, expected_sha256):
                     lat_obs, lon_obs = _number(raw_lat), _number(raw_lon)
                     if (-90 <= lat_obs <= 90 and -180 <= lon_obs <= 180
                             and not (lat_obs == 0 and lon_obs == 0)):
-                        source_coordinates_by_ua[(uf, ua)].add(
+                        source_coordinates_by_ua[identity].add(
                             (round(lat_obs, 7), round(lon_obs, 7)))
                 except (ValueError, TypeError):
                     # Unusable nonkey locations cannot prove agreement or
@@ -113,7 +122,7 @@ def prepare(raw, expected_sha256):
         chosen_rows += 1
         if not biome or not uf or not ua:
             raise ValueError("AGB_Chave row has incomplete sampling-unit identity")
-        grouped[(biome, uf, ua)].append(row)
+        grouped[(biome, uf, _physical_ua(uf, ua)[1])].append(row)
 
     by_biome = Counter()
     candidates = []
@@ -184,12 +193,13 @@ def prepare(raw, expected_sha256):
         "source_license": "CC BY per official IFN panel dataset; verify before redistribution",
         "source_observation_rows": total_rows,
         "agb_chave_rows": chosen_rows,
-        "biome_identity_crosscheck_scope": "all_source_equation_rows_with_valid_UF_biome_UA",
+        "biome_identity_crosscheck_scope": "all_source_equation_rows_with_valid_UF_and_casefolded_UA",
         "coordinate_crosscheck_scope": (
-            "all_source_equation_rows_with_valid_UF_biome_UA_and_usable_coordinates; "
+            "all_source_equation_rows_with_valid_UF_and_casefolded_UA_and_usable_coordinates; "
             "no independent positional accuracy inferred"
         ),
-        "unique_ua_with_agb_chave": len(grouped),
+        "unique_ua_with_agb_chave": len({(uf, ua) for _, uf, ua in grouped}),
+        "agb_chave_biome_ua_groups": len(grouped),
         "candidate_ua": len(candidates),
         "candidate_ua_by_biome": dict(sorted(by_biome.items())),
         "exclusions": dict(sorted(counters.items())),
@@ -204,7 +214,8 @@ def prepare(raw, expected_sha256):
             "validated choice. Source coordinates appear quantized and positional "
             "accuracy is unknown: do not pair to SAR pixels, infer plot-scale "
             "accuracy, calculate AOI IC95%, or transfer stocks across IBGE classes. "
-            "Biome and conflicting valid centroid coordinates are checked across "
+            "Physical UA identities (canonical UF and casefolded UA) and conflicting "
+            "valid centroid coordinates are checked across "
             "identifiable source equations; invalid/missing nonkey coordinates cannot "
             "establish location agreement, and nonkey rows with invalid UF or "
             "incomplete identity are not crosschecked. "
