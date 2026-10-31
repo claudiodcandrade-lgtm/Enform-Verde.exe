@@ -86,6 +86,23 @@ def infer_state(filename):
     return None
 
 
+def canonical_state(value):
+    """Normalize official IFN state codes or full state names to a two-letter UF.
+
+    Never treat a non-empty but unrecognized state as an independent UF:
+    doing so could silently inflate plot counts or conceal source conflicts.
+    """
+    key = norm(value)
+    if not key:
+        return ""
+    if key in STATE_NAMES:
+        return key
+    matches = [code for code, name in STATE_NAMES.items() if norm(name) == key]
+    if len(matches) == 1:
+        return matches[0]
+    raise ValueError(f"unrecognized UF/estado value: {value!r}")
+
+
 def find_license(page):
     clean = re.sub(r"<[^>]+>", " ", page)
     clean = re.sub(r"\s+", " ", clean)
@@ -121,7 +138,7 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             return values[i] if i is not None and i < len(values) else None
         biome = str(val(bio_i) or "").strip()
         ua = str(val(ua_i) or "").strip()
-        uf = str(val(uf_i) or "").strip().upper()
+        uf = canonical_state(val(uf_i))
         if source_uf and uf and uf != source_uf:
             raise ValueError(f"row UF {uf} conflicts with source filename UF {source_uf}")
         if not uf and source_uf:
