@@ -213,5 +213,49 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertTrue(report["ua_counts_aggregated_from_sheets_not_globally_deduplicated"])
 
 
+    def test_equations_panel_retains_other_category_without_fake_ua(self):
+        # Observed in official harvest 41174387124: UF='Outro' blocked
+        # the entire licensed equations CSV. This is not a valid Brazilian UF.
+        raw = ("bioma;uf;ua;equacoes\n"
+               "Amazônia;Outro;UA001;equacao_x\n"
+               "Amazônia;PA;UA001;equacao_y\n").encode("utf-8")
+        report = inspect_csv(raw, allow_non_state_uf=True)
+        self.assertEqual(report["nonempty_data_rows"], 2)
+        self.assertEqual(report["non_state_uf_rows_excluded_from_ua_counts"], 1)
+        self.assertEqual(report["observation_rows_by_biome"]["Amazônia"], 2)
+        self.assertEqual(report["unique_ua_by_biome"]["Amazônia"], 1)
+        self.assertTrue(report["ua_identity_state_disambiguated"])
+        self.assertIn("never counted", report["non_state_uf_policy"])
+
+    def test_other_uf_rejected_for_field_data_and_unrecognized_uf_still_rejected(self):
+        raw = b"bioma;uf;ua\nPantanal;Outro;UA001\n"
+        with self.assertRaisesRegex(ValueError, "unrecognized UF"):
+            inspect_csv(raw)
+        with self.assertRaisesRegex(ValueError, "unrecognized UF"):
+            inspect_csv(b"bioma;uf;ua\nPantanal;ZZ;UA001\n",
+                        allow_non_state_uf=True)
+
+    def test_live_panel_equations_other_category_does_not_abort_harvest(self):
+        class OfficialPanelSession(Session):
+            def get(self, url, timeout=None):
+                if "dadosabertos_equacoes_" in url:
+                    self.urls.append(url)
+                    return Reply(body=("bioma;uf;ua;equacoes\n"
+                                       "Cerrado;Outro;UA009;modelo_a\n"
+                                       "Cerrado;GO;UA009;modelo_b\n").encode("utf-8"))
+                return super().get(url, timeout=timeout)
+
+        with tempfile.TemporaryDirectory() as tmp, patch(
+                "tools.harvest_ifn_field_data.OUT", Path(tmp)):
+            report = {"datasets": {}, "failures": []}
+            harvest_sfb_2026_panel(OfficialPanelSession(), report)
+            self.assertEqual(report["failures"], [])
+            equations = report["datasets"]["panel_equations"]
+            self.assertEqual(equations["status"], "harvested_not_validated")
+            record = equations["resources"][0]
+            self.assertEqual(record["non_state_uf_rows_excluded_from_ua_counts"], 1)
+            self.assertEqual(record["unique_ua_by_biome"]["Cerrado"], 1)
+            self.assertTrue(Path(tmp, "panel_equations", record["filename"]).is_file())
+
 if __name__ == "__main__":
     unittest.main()

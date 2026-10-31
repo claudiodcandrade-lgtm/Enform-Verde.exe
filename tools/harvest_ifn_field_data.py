@@ -111,7 +111,8 @@ def find_license(page):
     return m.group(0).strip() if m else "not_explicitly_identified"
 
 
-def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=None):
+def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=None,
+                    allow_non_state_uf=False):
     # Per-UF source workbooks may omit the UF column. Use the verified filename
     # domain as a provenance-tagged hint, never as an unverified national default.
     if source_uf is not None and source_uf not in STATE_NAMES:
@@ -131,6 +132,7 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
     row_count = 0
     missing_state_ua = 0
     inferred_state_ua_rows = 0
+    non_state_uf_rows = 0
     for row in rows:
         values = list(row)
         if not any(v not in (None, "") for v in values):
@@ -140,7 +142,17 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             return values[i] if i is not None and i < len(values) else None
         biome = str(val(bio_i) or "").strip()
         ua = str(val(ua_i) or "").strip()
-        uf = canonical_state(val(uf_i))
+        raw_uf = val(uf_i)
+        # The national equations panel contains the literal category 'Outro'
+        # in its UF field. It is NOT a state or a geolocated sampling unit.
+        # Only this explicitly opted-in panel may retain such rows; never
+        # invent a UF or count those rows as independently located UAs.
+        non_state_uf = allow_non_state_uf and norm(raw_uf) == "OUTRO"
+        if non_state_uf:
+            uf = ""
+            non_state_uf_rows += 1
+        else:
+            uf = canonical_state(raw_uf)
         if source_uf and uf and uf != source_uf:
             raise ValueError(f"row UF {uf} conflicts with source filename UF {source_uf}")
         if not uf and source_uf:
@@ -149,6 +161,10 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
                 inferred_state_ua_rows += 1
         if biome:
             row_counts[biome] = row_counts.get(biome, 0) + 1
+        if non_state_uf:
+            # Keep the original observation row and provenance in the source
+            # CSV, but do not pseudoreplicate an unknown-UF UA as a plot.
+            continue
         if biome and ua:
             # UA codes are not globally unique; use the composite (UF, UA) key.
             identity = (uf, ua)
@@ -184,6 +200,10 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
         "ua_identity_state_disambiguated": missing_state_ua == 0,
         "ua_rows_missing_state": missing_state_ua,
         "ua_rows_state_inferred_from_filename": inferred_state_ua_rows,
+        "non_state_uf_rows_excluded_from_ua_counts": non_state_uf_rows,
+        "non_state_uf_policy": ("Only literal 'Outro' retained as non-geographic "
+                                "panel category; never counted as a sampling UA"
+                                if allow_non_state_uf else None),
         "source_uf_filename_hint": source_uf,
         "ua_identity_warning": (None if missing_state_ua == 0 else
             "UF missing for some sampling units: repeated UA codes may be distinct across states; counts may understate units"),
@@ -249,7 +269,7 @@ def inspect_workbook(path, source_uf=None):
             "observation_rows_by_biome": row_by_biome}
 
 
-def inspect_csv(body, source_uf=None):
+def inspect_csv(body, source_uf=None, allow_non_state_uf=False):
     """Parse SFB CSV with the same state-aware UA identity as XLSX."""
     try:
         text = body.decode("utf-8-sig")
@@ -264,7 +284,8 @@ def inspect_csv(body, source_uf=None):
         delimiter = ";"
     reader = csv.reader(io.StringIO(text), delimiter=delimiter)
     headers = next(reader, [])
-    return _summarize_rows(reader, headers, encoding=encoding, delimiter=delimiter, source_uf=source_uf)
+    return _summarize_rows(reader, headers, encoding=encoding, delimiter=delimiter,
+                           source_uf=source_uf, allow_non_state_uf=allow_non_state_uf)
 
 def harvest_sfb_2026_panel(session, report):
     """Download explicitly licensed SFB panel CSVs with provenance and schema audits.
@@ -304,7 +325,7 @@ def harvest_sfb_2026_panel(session, report):
             entry["resources"].append({
                 "filename": filename, "source_url": url, "bytes": len(body),
                 "sha256": hashlib.sha256(body).hexdigest(),
-                **inspect_csv(body),
+                **inspect_csv(body, allow_non_state_uf=(label == "panel_equations")),
             })
             entry["status"] = "harvested_not_validated"
         except Exception as exc:
