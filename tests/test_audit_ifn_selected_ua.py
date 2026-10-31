@@ -66,6 +66,21 @@ class IFNSelectedUATests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate CSV header"):
             self.check(duplicated)
 
+    def test_unicode_width_ua_alias_cannot_pseudoreplicate(self):
+        conflict = ROWS + "Cerrado,PA,ＵＡ１,Savana,eq3,300,true\n"
+        with self.assertRaisesRegex(ValueError, "repeated sampling UA"):
+            self.check(conflict)
+
+    def test_unexpected_extra_csv_columns_rejected(self):
+        malformed = ROWS.replace("eq1,200,true\n", "eq1,200,true,extra\n")
+        with self.assertRaisesRegex(ValueError, "unexpected extra CSV columns"):
+            self.check(malformed)
+
+    def test_blank_csv_header_rejected(self):
+        malformed = ROWS.replace("agb_mg_ha,equation_choice_audited", "agb_mg_ha,,equation_choice_audited")
+        with self.assertRaisesRegex(ValueError, "duplicate or blank CSV header"):
+            self.check(malformed)
+
     def test_missing_uf_rejected(self):
         with self.assertRaisesRegex(ValueError, "missing sampling domain"):
             self.check(ROWS.replace(",PA,UA2,", ",,UA2,"))
