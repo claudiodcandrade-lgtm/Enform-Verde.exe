@@ -93,7 +93,11 @@ def find_license(page):
     return m.group(0).strip() if m else "not_explicitly_identified"
 
 
-def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
+def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=None):
+    # Per-UF source workbooks may omit the UF column. Use the verified filename
+    # domain as a provenance-tagged hint, never as an unverified national default.
+    if source_uf is not None and source_uf not in STATE_NAMES:
+        raise ValueError("invalid source UF hint")
     normalized = {norm(name): i for i, name in enumerate(headers) if name}
     def idx(*names):
         return next((normalized[norm(name)] for name in names if norm(name) in normalized), None)
@@ -107,6 +111,7 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
     row_counts = {}
     row_count = 0
     missing_state_ua = 0
+    inferred_state_ua_rows = 0
     for row in rows:
         values = list(row)
         if not any(v not in (None, "") for v in values):
@@ -117,6 +122,12 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
         biome = str(val(bio_i) or "").strip()
         ua = str(val(ua_i) or "").strip()
         uf = str(val(uf_i) or "").strip().upper()
+        if source_uf and uf and uf != source_uf:
+            raise ValueError(f"row UF {uf} conflicts with source filename UF {source_uf}")
+        if not uf and source_uf:
+            uf = source_uf
+            if biome and ua:
+                inferred_state_ua_rows += 1
         if biome:
             row_counts[biome] = row_counts.get(biome, 0) + 1
         if biome and ua:
@@ -137,9 +148,11 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
         "headers": [str(h) for h in headers],
         "normalized_headers": sorted(h for h in columns if h),
         "nonempty_data_rows": row_count,
-        "ua_identity_state_disambiguated": uf_i is not None and missing_state_ua == 0,
+        "ua_identity_state_disambiguated": missing_state_ua == 0,
         "ua_rows_missing_state": missing_state_ua,
-        "ua_identity_warning": (None if uf_i is not None and missing_state_ua == 0 else
+        "ua_rows_state_inferred_from_filename": inferred_state_ua_rows,
+        "source_uf_filename_hint": source_uf,
+        "ua_identity_warning": (None if missing_state_ua == 0 else
             "UF missing for some sampling units: repeated UA codes may be distinct across states; counts may understate units"),
         "unique_ua_by_biome": {k: len(v) for k, v in sorted(unique_ua.items())},
         "unique_ua_with_coordinates_by_biome": {k: len(v) for k, v in sorted(coordinate_ua.items())},
@@ -149,7 +162,7 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
     }
 
 
-def inspect_workbook(path):
+def inspect_workbook(path, source_uf=None):
     wb = load_workbook(path, read_only=True, data_only=True)
     summaries = []
     for ws in wb.worksheets:
@@ -175,7 +188,7 @@ def inspect_workbook(path):
             summaries.append({"sheet": ws.title, "header_row_1based": None,
                               "headers": [], "preview": preview})
             continue
-        result = _summarize_rows(iterator, headers)
+        result = _summarize_rows(iterator, headers, source_uf=source_uf)
         summaries.append({"sheet": ws.title, "header_row_1based": header_index,
                           "preview": preview, **result})
     wb.close()
@@ -196,7 +209,7 @@ def inspect_workbook(path):
             "observation_rows_by_biome": row_by_biome}
 
 
-def inspect_csv(body):
+def inspect_csv(body, source_uf=None):
     """Parse SFB CSV with the same state-aware UA identity as XLSX."""
     try:
         text = body.decode("utf-8-sig")
@@ -211,7 +224,7 @@ def inspect_csv(body):
         delimiter = ";"
     reader = csv.reader(io.StringIO(text), delimiter=delimiter)
     headers = next(reader, [])
-    return _summarize_rows(reader, headers, encoding=encoding, delimiter=delimiter)
+    return _summarize_rows(reader, headers, encoding=encoding, delimiter=delimiter, source_uf=source_uf)
 
 def harvest_sfb_2026_panel(session, report):
     """Download explicitly licensed SFB panel CSVs with provenance and schema audits.
@@ -318,9 +331,9 @@ def main():
                     record = {"uf": uf, "filename": filename, "source_url": url,
                               "bytes": len(body), "sha256": digest}
                     if filename.lower().endswith(".xlsx"):
-                        record.update(inspect_workbook(target))
+                        record.update(inspect_workbook(target, source_uf=uf))
                     else:
-                        record.update(inspect_csv(body))
+                        record.update(inspect_csv(body, source_uf=uf))
                     result["resources"].append(record)
                 except Exception as exc:
                     report["failures"].append(f"{key}/{filename}: {type(exc).__name__}: {exc}")
