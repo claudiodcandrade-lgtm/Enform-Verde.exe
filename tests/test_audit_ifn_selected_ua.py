@@ -28,6 +28,19 @@ class IFNSelectedUATests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "repeated sampling UA"):
             self.check(repeated)
 
+    def test_same_physical_ua_across_biomes_rejected(self):
+        # Changing the biome does not create an independent sampling unit.
+        conflict = ROWS + "Cerrado,PA,UA1,Savana,eq3,300,true\n"
+        with self.assertRaisesRegex(ValueError, "conflicting biome"):
+            self.check(conflict)
+
+    def test_reused_ua_in_distinct_states_remains_distinct(self):
+        other_state = ROWS + "Amazônia,AM,UA1,Floresta Ombrófila Densa,eq1,300,true\n"
+        result = self.check(other_state)
+        counts = sorted(row["independent_ua_count"] for row in result["strata"])
+        self.assertEqual(counts, [1, 2])
+        self.assertFalse(any(row["scientifically_validated"] for row in result["strata"]))
+
     def test_unaudited_choice_rejected(self):
         with self.assertRaisesRegex(ValueError, "selection not audited"):
             self.check(ROWS.replace(",true", ",false"))
