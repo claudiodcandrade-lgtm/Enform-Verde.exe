@@ -27,9 +27,31 @@ class SpatialValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "disjoint"):
             self.validate(VALID.replace("test,B", "test,A"))
 
+    def test_disallow_case_alias_leakage(self):
+        with self.assertRaisesRegex(ValueError, "disjoint"):
+            self.validate(VALID.replace("test,B", "test,a"))
+
+    def test_disallow_unicode_width_alias_leakage(self):
+        with self.assertRaisesRegex(ValueError, "disjoint"):
+            self.validate(VALID.replace("test,B", "test,Ａ"))
+
+    def test_disallow_case_alias_pseudoreplication(self):
+        with self.assertRaisesRegex(ValueError, "distinct test spatial units"):
+            self.validate(VALID.replace("test,C", "test,b"))
+
     def test_disallow_pseudoreplication_in_one_test_spatial_unit(self):
         with self.assertRaisesRegex(ValueError, "distinct test spatial units"):
             self.validate(VALID.replace("test,C", "test,B"))
+
+    def test_duplicate_csv_header_is_rejected(self):
+        malformed = VALID.replace("partition,spatial_unit\\n", "partition,spatial_unit,spatial_unit\\n")
+        with self.assertRaisesRegex(ValueError, "duplicate or blank CSV headers"):
+            self.validate(malformed)
+
+    def test_unexpected_extra_csv_columns_are_rejected(self):
+        malformed = VALID.replace("test,B\\n", "test,B,unexpected\\n")
+        with self.assertRaisesRegex(ValueError, "unexpected extra CSV columns"):
+            self.validate(malformed)
 
     def test_disallow_tampered_raw_data(self):
         with self.assertRaisesRegex(ValueError, "sha256 mismatch"):

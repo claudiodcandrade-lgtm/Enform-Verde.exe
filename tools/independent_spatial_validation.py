@@ -9,9 +9,18 @@ import csv
 import hashlib
 import json
 import math
+import unicodedata
 from pathlib import Path
 
 REQUIRED = ("observed", "predicted", "lower", "upper", "partition", "spatial_unit")
+
+
+def _spatial_identity(value):
+    """Conservatively collapse Unicode/case aliases before split checks.
+
+    This is a data-integrity safeguard, not proof of geographic independence.
+    """
+    return unicodedata.normalize("NFKC", value.strip()).casefold()
 
 def validate_csv(path, dataset_sha256, unit):
     raw = Path(path).read_bytes()
@@ -24,7 +33,12 @@ def validate_csv(path, dataset_sha256, unit):
         rows = csv.DictReader(stream)
         if not rows.fieldnames or any(field not in rows.fieldnames for field in REQUIRED):
             raise ValueError("missing mandatory measured/predicted/interval/partition columns")
+        if len(rows.fieldnames) != len(set(rows.fieldnames)) or any(
+                not field or not field.strip() for field in rows.fieldnames):
+            raise ValueError("duplicate or blank CSV headers")
         records = list(rows)
+        if any(None in row for row in records):
+            raise ValueError("unexpected extra CSV columns")
     if not records:
         raise ValueError("no observations")
     partitions = {"train": set(), "test": set()}
@@ -33,10 +47,12 @@ def validate_csv(path, dataset_sha256, unit):
         p = str(row["partition"]).strip().lower()
         if p not in partitions:
             raise ValueError(f"row {number}: partition must be train or test")
-        group = str(row["spatial_unit"]).strip()
-        if not group:
+        raw_group = str(row["spatial_unit"] or "").strip()
+        if not raw_group:
             raise ValueError(f"row {number}: spatial_unit missing")
-        partitions[p].add(group)
+        # UA_001 / ua_001 and Unicode-width variants must not masquerade as
+        # independent train/test spatial units or independent test clusters.
+        partitions[p].add(_spatial_identity(raw_group))
         try:
             values = tuple(float(row[name]) for name in ("observed", "predicted", "lower", "upper"))
         except (TypeError, ValueError) as exc:
@@ -72,6 +88,7 @@ def validate_csv(path, dataset_sha256, unit):
         "train_partition": "train (independent spatial units)",
         "test_partition": "test (independent spatial units)",
         "validation_design": "externally supplied independent spatial holdout; spatial-unit disjointness checked",
+        "spatial_unit_identity_normalization": "Unicode NFKC, strip and casefold; does not establish geographic independence",
         "train_spatial_units": len(partitions["train"]),
         "test_spatial_units": len(partitions["test"]),
         "unit": unit,
