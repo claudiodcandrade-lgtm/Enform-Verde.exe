@@ -150,14 +150,16 @@ def prepare(raw, expected_sha256):
         if len(source_coordinates_by_ua[(uf, ua)]) > 1:
             counters["excluded_cross_equation_coordinate_conflict"] += 1
             continue
+        if len(rows) != 1:
+            # Preserve the preexisting primary exclusion reason for
+            # repeated AGB_Chave rows; cross-equation checks follow.
+            counters["excluded_multiple_agb_chave_rows_per_ua"] += 1
+            continue
         if len(source_land_classes_by_ua[(uf, ua)]) > 1:
             counters["excluded_cross_equation_land_class_conflict"] += 1
             continue
         if len(source_typologies_by_ua[(uf, ua)]) > 1:
             counters["excluded_cross_equation_typology_conflict"] += 1
-            continue
-        if len(rows) != 1:
-            counters["excluded_multiple_agb_chave_rows_per_ua"] += 1
             continue
         row = rows[0]
         if biome not in TARGET_BIOMES:
