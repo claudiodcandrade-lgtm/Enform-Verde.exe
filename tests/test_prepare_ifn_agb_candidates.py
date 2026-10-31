@@ -82,7 +82,8 @@ class IFNAGBCandidateTests(unittest.TestCase):
         )
         self.assertEqual(candidates, [])
         self.assertEqual(report["agb_chave_rows"], 1)
-        self.assertTrue(report["biome_identity_crosschecked_against_all_equation_rows"])
+        self.assertEqual(report["biome_identity_crosscheck_scope"],
+                         "all_source_equation_rows_with_valid_UF_biome_UA")
         self.assertEqual(
             report["exclusions"]["excluded_cross_biome_ua_identity_conflict"], 1
         )
