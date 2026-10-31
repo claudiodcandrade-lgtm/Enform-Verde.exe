@@ -41,6 +41,35 @@ class IFNSelectedUATests(unittest.TestCase):
         self.assertEqual(counts, [1, 2])
         self.assertFalse(any(row["scientifically_validated"] for row in result["strata"]))
 
+    def test_state_alias_and_case_variant_ua_cannot_pseudoreplicate(self):
+        conflict = ROWS + "Cerrado,Pará,ua1,Savana,eq3,300,true\\n"
+        with self.assertRaisesRegex(ValueError, "repeated sampling UA"):
+            self.check(conflict)
+
+    def test_state_alias_normalized_in_stratum(self):
+        alias = ROWS.replace(",PA,UA2,", ",Pará,UA2,")
+        result = self.check(alias)
+        self.assertEqual(len(result["strata"]), 1)
+        self.assertEqual(result["strata"][0]["state"], "PA")
+        self.assertEqual(result["strata"][0]["independent_ua_count"], 2)
+
+    def test_invalid_state_is_not_an_independent_sampling_domain(self):
+        with self.assertRaisesRegex(ValueError, "invalid UF identity"):
+            self.check(ROWS.replace(",PA,UA2,", ",ZZ,UA2,"))
+
+    def test_unknown_biome_rejected(self):
+        with self.assertRaisesRegex(ValueError, "unrecognized IFN biome"):
+            self.check(ROWS.replace("Amazônia,PA,UA2", "BiomaInventado,PA,UA2"))
+
+    def test_duplicate_csv_header_rejected(self):
+        duplicated = ROWS.replace("bioma,uf,ua,", "bioma,uf,uf,ua,")
+        with self.assertRaisesRegex(ValueError, "duplicate CSV header"):
+            self.check(duplicated)
+
+    def test_missing_uf_rejected(self):
+        with self.assertRaisesRegex(ValueError, "missing sampling domain"):
+            self.check(ROWS.replace(",PA,UA2,", ",,UA2,"))
+
     def test_unaudited_choice_rejected(self):
         with self.assertRaisesRegex(ValueError, "selection not audited"):
             self.check(ROWS.replace(",true", ",false"))
