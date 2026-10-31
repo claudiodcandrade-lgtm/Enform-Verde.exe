@@ -44,12 +44,12 @@ class SpatialValidationTests(unittest.TestCase):
             self.validate(VALID.replace("test,C", "test,B"))
 
     def test_duplicate_csv_header_is_rejected(self):
-        malformed = VALID.replace("partition,spatial_unit\\n", "partition,spatial_unit,spatial_unit\\n")
+        malformed = VALID.replace("partition,spatial_unit\n", "partition,spatial_unit,spatial_unit\n")
         with self.assertRaisesRegex(ValueError, "duplicate or blank CSV headers"):
             self.validate(malformed)
 
     def test_unexpected_extra_csv_columns_are_rejected(self):
-        malformed = VALID.replace("test,B\\n", "test,B,unexpected\\n")
+        malformed = VALID.replace("test,B\n", "test,B,unexpected\n")
         with self.assertRaisesRegex(ValueError, "unexpected extra CSV columns"):
             self.validate(malformed)
 
