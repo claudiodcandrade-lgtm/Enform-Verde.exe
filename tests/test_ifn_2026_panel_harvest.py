@@ -66,7 +66,7 @@ class SFBPanelHarvestTests(unittest.TestCase):
         stream = BytesIO()
         workbook.save(stream)
         xlsx_bytes = stream.getvalue()
-        self.assertTrue(xlsx_bytes.startswith(b"PK\\x03\\x04"))
+        self.assertTrue(xlsx_bytes.startswith(b"PK\x03\x04"))
 
         class MixedFormatSession(Session):
             def get(self, url, timeout=None):
