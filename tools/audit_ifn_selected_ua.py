@@ -33,9 +33,12 @@ def summarize(path, expected_sha256):
                 raise ValueError(f"row {line}: missing sampling domain")
             if str(row["equation_choice_audited"]).strip().lower() != "true":
                 raise ValueError(f"row {line}: equation selection not audited")
-            key = (bioma, uf, ua)
+            # A physical IFN unit is identified by (UF, UA), not by the
+            # biome label assigned to it. A conflicting biome must never
+            # turn one unit into two independent observations.
+            key = (uf, ua)
             if key in seen:
-                raise ValueError(f"row {line}: repeated sampling UA; equations are not independent units")
+                raise ValueError(f"row {line}: repeated sampling UA or conflicting biome; equations are not independent units")
             seen.add(key)
             try:
                 value = float(row["agb_mg_ha"])
