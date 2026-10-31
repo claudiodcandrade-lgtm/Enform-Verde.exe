@@ -96,12 +96,14 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
         return next((normalized[norm(name)] for name in names if norm(name) in normalized), None)
     ua_i = idx("UA", "UNIDADE_AMOSTRAL", "UNIDADE_DE_AMOSTRAGEM")
     bio_i = idx("BIOMA", "NM_BIOMA")
+    uf_i = idx("UF", "SG_UF", "ESTADO", "SIGLA_UF")
     lat_i = idx("LAT_PC", "LATITUDE", "LAT")
     lon_i = idx("LON_PC", "LONGITUDE", "LON", "LONG")
     unique_ua = {}
     coordinate_ua = {}
     row_counts = {}
     row_count = 0
+    missing_state_ua = 0
     for row in rows:
         values = list(row)
         if not any(v not in (None, "") for v in values):
@@ -111,15 +113,20 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
             return values[i] if i is not None and i < len(values) else None
         biome = str(val(bio_i) or "").strip()
         ua = str(val(ua_i) or "").strip()
+        uf = str(val(uf_i) or "").strip().upper()
         if biome:
             row_counts[biome] = row_counts.get(biome, 0) + 1
         if biome and ua:
-            unique_ua.setdefault(biome, set()).add(ua)
+            # UA codes are not globally unique; use the composite (UF, UA) key.
+            identity = (uf, ua)
+            if not uf:
+                missing_state_ua += 1
+            unique_ua.setdefault(biome, set()).add(identity)
             try:
                 lat = float(str(val(lat_i)).replace(",", "."))
                 lon = float(str(val(lon_i)).replace(",", "."))
                 if -90 <= lat <= 90 and -180 <= lon <= 180:
-                    coordinate_ua.setdefault(biome, set()).add(ua)
+                    coordinate_ua.setdefault(biome, set()).add(identity)
             except (TypeError, ValueError):
                 pass
     columns = [norm(h) for h in headers]
@@ -127,6 +134,10 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
         "headers": [str(h) for h in headers],
         "normalized_headers": sorted(h for h in columns if h),
         "nonempty_data_rows": row_count,
+        "ua_identity_state_disambiguated": uf_i is not None and missing_state_ua == 0,
+        "ua_rows_missing_state": missing_state_ua,
+        "ua_identity_warning": (None if uf_i is not None and missing_state_ua == 0 else
+            "UF missing for some sampling units: repeated UA codes may be distinct across states; counts may understate units"),
         "unique_ua_by_biome": {k: len(v) for k, v in sorted(unique_ua.items())},
         "unique_ua_with_coordinates_by_biome": {k: len(v) for k, v in sorted(coordinate_ua.items())},
         "observation_rows_by_biome": dict(sorted(row_counts.items())),
@@ -138,7 +149,6 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None):
 def inspect_workbook(path):
     wb = load_workbook(path, read_only=True, data_only=True)
     summaries = []
-    totals = {}
     for ws in wb.worksheets:
         iterator = iter(ws.iter_rows(values_only=True))
         headers = None
@@ -163,12 +173,10 @@ def inspect_workbook(path):
                               "headers": [], "preview": preview})
             continue
         result = _summarize_rows(iterator, headers)
-        for biome, count in result["unique_ua_by_biome"].items():
-            totals.setdefault(biome, set()).update((ws.title, str(i)) for i in range(count))
         summaries.append({"sheet": ws.title, "header_row_1based": header_index,
                           "preview": preview, **result})
     wb.close()
-    # Sheets within a workbook can overlap; report sums only as an upper-bound count.
+    # Sheet sums are not deduplicated across sheets and may undercount if UF is absent.
     ua_by_biome = {}
     coordinate_ua_by_biome = {}
     row_by_biome = {}
@@ -179,12 +187,14 @@ def inspect_workbook(path):
             coordinate_ua_by_biome[biome] = coordinate_ua_by_biome.get(biome, 0) + value
         for biome, value in sheet.get("observation_rows_by_biome", {}).items():
             row_by_biome[biome] = row_by_biome.get(biome, 0) + value
-    return {"sheets": summaries, "unique_ua_by_biome": ua_by_biome,
+    return {"sheets": summaries, "ua_counts_aggregated_from_sheets_not_globally_deduplicated": True,
+            "unique_ua_by_biome": ua_by_biome,
             "unique_ua_with_coordinates_by_biome": coordinate_ua_by_biome,
             "observation_rows_by_biome": row_by_biome}
 
 
 def inspect_csv(body):
+    """Parse SFB CSV with the same state-aware UA identity as XLSX."""
     try:
         text = body.decode("utf-8-sig")
         encoding = "utf-8-sig"
@@ -193,41 +203,12 @@ def inspect_csv(body):
         encoding = "cp1252"
     sample = text[:8192]
     try:
-        delimiter = csv.Sniffer().sniff(sample, delimiters=",;\\t|").delimiter
+        delimiter = csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
     except csv.Error:
         delimiter = ";"
-    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
-    headers = reader.fieldnames or []
-    normalized = {norm(name): name for name in headers if name}
-    ua_name = next((normalized[norm(x)] for x in ("UA", "Unidade amostral") if norm(x) in normalized), None)
-    bio_name = next((normalized[norm(x)] for x in ("bioma", "nm_bioma") if norm(x) in normalized), None)
-    lat_name = next((normalized[norm(x)] for x in ("lat_pc", "latitude") if norm(x) in normalized), None)
-    lon_name = next((normalized[norm(x)] for x in ("lon_pc", "longitude") if norm(x) in normalized), None)
-    ua_by_biome, coords_by_biome, rows_by_biome = {}, {}, {}
-    row_count = 0
-    for record in reader:
-        row_count += 1
-        biome = str(record.get(bio_name) or "").strip() if bio_name else ""
-        ua = str(record.get(ua_name) or "").strip() if ua_name else ""
-        if biome:
-            rows_by_biome[biome] = rows_by_biome.get(biome, 0) + 1
-        if biome and ua:
-            ua_by_biome.setdefault(biome, set()).add(ua)
-            try:
-                lat = float(str(record.get(lat_name)).replace(",", ".")) if lat_name else None
-                lon = float(str(record.get(lon_name)).replace(",", ".")) if lon_name else None
-                if lat is not None and lon is not None and -90 <= lat <= 90 and -180 <= lon <= 180:
-                    coords_by_biome.setdefault(biome, set()).add(ua)
-            except (TypeError, ValueError):
-                pass
-    return {
-        "headers": headers, "normalized_headers": sorted(norm(x) for x in headers if x),
-        "nonempty_data_rows": row_count,
-        "unique_ua_by_biome": {k: len(v) for k, v in sorted(ua_by_biome.items())},
-        "unique_ua_with_coordinates_by_biome": {k: len(v) for k, v in sorted(coords_by_biome.items())},
-        "observation_rows_by_biome": dict(sorted(rows_by_biome.items())),
-        "encoding": encoding, "delimiter": delimiter,
-    }
+    reader = csv.reader(io.StringIO(text), delimiter=delimiter)
+    headers = next(reader, [])
+    return _summarize_rows(reader, headers, encoding=encoding, delimiter=delimiter)
 
 def harvest_sfb_2026_panel(session, report):
     """Download explicitly licensed SFB panel CSVs with provenance and schema audits.
