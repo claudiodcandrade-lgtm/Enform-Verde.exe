@@ -2473,3 +2473,10 @@ A auditoria cruzada identificou a **mesma fórmula incorreta** no diagnóstico e
 - **Evidência:** revisão direta da chave `(bioma, UF, UA)` no preparador e detecção de risco de pseudorreplicação por conflito de rótulos. Esta é correção conservadora de integridade; **não** comprova que existam conflitos no arquivo real, nem constitui validação SAR/IBGE.
 - **CI:** novo SHA submetido por push, execução e resultados pendentes nesta etapa; testes de regressão específicos a acrescentar e verificar. Nenhum status de homologação científica inferido do push.
 - **Pendências:** confirmar em arquivo IFN real se há chaves `(UF, UA)` com biomas contraditórios, testar casos de conflito e de UAs reutilizadas entre UFs, executar CI; manter N/D para precisão posicional, fitofisionomia IBGE independente, pares parcela–pixel, erro de transferência, 5 biomas × compartimentos, solo 0–100 cm, agricultura, vigor, safras e EXE Windows.
+
+
+### CHECKPOINT MATERIAL — 2026-10-31 (UTC-3), testes do isolamento de UA
+- **SHA de código e testes:** `0a858dfcf51aa83a29931a749dee98f7443152bb` (código introduzido em `aeed3e19cea8573027fc974e38e190b9daeac723`). Dois testes novos em `tests/test_prepare_ifn_agb_candidates.py`: (1) mesma `(UF, UA)` com Cerrado e Mata Atlântica exclui ambas as candidatas e reporta duas exclusões; (2) mesmo código UA em GO e MS permanece como duas UAs distintas.
+- **CI:** push submetido; aguardando resultado dos workflows vinculados a este SHA. A suíte de testes ainda não pode ser declarada aprovada neste checkpoint.
+- **Evidências:** testes sintéticos de contrato de identidade, sem representar amostras observacionais reais nem calibrar SAR. Confirmar resultados do CI e comparar contagens da aquisição real antes de qualquer promoção científica.
+- **Pendências inalteradas:** geolocalização IFN independente, compatibilidade espacial IBGE, pares SAR reais, validação e incerteza por fitofisionomia/compartimento/bioma, solo 0–100 cm, agricultura, vigor, safras e ZIP Windows com SHA e checksum comprovados.
