@@ -65,34 +65,47 @@ def prepare(raw, expected_sha256):
     if not reader.fieldnames or not REQUIRED.issubset(reader.fieldnames):
         raise ValueError("IFN panel missing required observational columns")
     grouped = defaultdict(list)
+    # Audit the biome identity against ALL equation rows, not only AGB_Chave.
+    # Otherwise a contradictory alternative-equation record can silently
+    # permit one physical (UF, UA) to enter the candidate inventory.
+    source_biomes_by_ua = defaultdict(set)
+    counters = Counter()
     total_rows = 0
     chosen_rows = 0
     for row in reader:
         if not any(row.values()):
             continue
         total_rows += 1
-        if str(row["equacoes"]).strip() != "AGB_Chave":
-            continue
-        chosen_rows += 1
+        key_equation = str(row["equacoes"]).strip() == "AGB_Chave"
         biome = str(row["bioma"]).strip()
         ua = str(row["ua"]).strip()
-        uf = canonical_state(row["uf"])
+        try:
+            uf = canonical_state(row["uf"])
+        except ValueError:
+            if key_equation:
+                raise
+            counters["nonkey_rows_with_invalid_uf_not_crosschecked"] += 1
+            continue
+        if biome and uf and ua:
+            source_biomes_by_ua[(uf, ua)].add(biome)
+        elif not key_equation:
+            counters["nonkey_rows_with_incomplete_identity_not_crosschecked"] += 1
+            continue
+        if not key_equation:
+            continue
+        chosen_rows += 1
         if not biome or not uf or not ua:
             raise ValueError("AGB_Chave row has incomplete sampling-unit identity")
         grouped[(biome, uf, ua)].append(row)
 
-    counters = Counter()
     by_biome = Counter()
     candidates = []
     quantized = 0
     # The same (UF, UA) cannot be treated as two independent sampling units
     # merely because conflicting source rows label it with different biomes.
     # Exclude every occurrence until the primary field identity is audited.
-    biomes_by_ua = defaultdict(set)
-    for biome, uf, ua in grouped:
-        biomes_by_ua[(uf, ua)].add(biome)
     for (biome, uf, ua), rows in sorted(grouped.items()):
-        if len(biomes_by_ua[(uf, ua)]) > 1:
+        if len(source_biomes_by_ua[(uf, ua)]) > 1:
             counters["excluded_cross_biome_ua_identity_conflict"] += 1
             continue
         if len(rows) != 1:
@@ -151,6 +164,7 @@ def prepare(raw, expected_sha256):
         "source_license": "CC BY per official IFN panel dataset; verify before redistribution",
         "source_observation_rows": total_rows,
         "agb_chave_rows": chosen_rows,
+        "biome_identity_crosschecked_against_all_equation_rows": True,
         "unique_ua_with_agb_chave": len(grouped),
         "candidate_ua": len(candidates),
         "candidate_ua_by_biome": dict(sorted(by_biome.items())),
@@ -166,6 +180,7 @@ def prepare(raw, expected_sha256):
             "validated choice. Source coordinates appear quantized and positional "
             "accuracy is unknown: do not pair to SAR pixels, infer plot-scale "
             "accuracy, calculate AOI IC95%, or transfer stocks across IBGE classes. "
+            "Biome identity conflicts are checked across all source equations. "
             "One UA may contain multiple source land-cover classes; all repeated "
             "AGB_Chave UA records are excluded rather than pseudoreplicated."
         ),
