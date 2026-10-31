@@ -27,8 +27,11 @@ def _check_independent_report(payload, row, label, errors):
         errors.append(f"{label}: training spatial units missing")
     if type(test_units) is not int or test_units < 2:
         errors.append(f"{label}: at least two independent test spatial units required")
-    if type(n) is int and type(test_units) is int and n < test_units:
-        errors.append(f"{label}: sample count smaller than test spatial units")
+    # A report must count *independent units*, not repeated observations within
+    # those units. The producer's observation-weighted n may be larger, but
+    # independent_sample_count must match distinct held-out spatial units.
+    if type(n) is int and type(test_units) is int and n != test_units:
+        errors.append(f"{label}: independent sample count must equal distinct test spatial units")
     for field in ("rmse", "mae", "bias", "interval_coverage"):
         value = payload.get(field)
         if type(value) not in (int, float) or not math.isfinite(value):

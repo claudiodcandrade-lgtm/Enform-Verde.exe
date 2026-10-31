@@ -127,7 +127,7 @@ class ScientificReleaseGateTests(unittest.TestCase):
         from tools.scientific_release_gate import _verify_local_report
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            report = {"dataset_sha256": "b" * 64, "independent_sample_count": 12,
+            report = {"dataset_sha256": "b" * 64, "independent_sample_count": 3,
                       "train_spatial_units": 4, "test_spatial_units": 3,
                       "train_partition": "A", "test_partition": "B",
                       "validation_design": "blocked holdout",
@@ -143,6 +143,8 @@ class ScientificReleaseGateTests(unittest.TestCase):
                 _verify_local_report(row, "carbon[0]", errors, root)
                 return errors
             self.assertEqual(audit(report), [])
+            self.assertTrue(any("must equal distinct test spatial units" in e
+                                for e in audit(dict(report, independent_sample_count=12))))
             self.assertTrue(any("dataset hash mismatch" in e
                                 for e in audit(dict(report, dataset_sha256="c" * 64))))
             self.assertTrue(any("partitions" in e

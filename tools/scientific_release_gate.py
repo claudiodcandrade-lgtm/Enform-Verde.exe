@@ -93,8 +93,10 @@ def _verify_local_report(row, label, errors, root):
             errors.append(f"{label}: independent sample count absent")
         if type(train) is not int or train < 1:
             errors.append(f"{label}: independent training spatial units absent")
-        if type(test) is not int or test < 2 or (type(n) is int and n < test):
+        if type(test) is not int or test < 2:
             errors.append(f"{label}: independent test spatial units invalid")
+        elif type(n) is int and n != test:
+            errors.append(f"{label}: independent sample count must equal distinct test spatial units")
         p_train, p_test = payload.get("train_partition"), payload.get("test_partition")
         if not (isinstance(p_train, str) and p_train.strip()
                 and isinstance(p_test, str) and p_test.strip()

@@ -33,7 +33,7 @@ class ModularGateTests(unittest.TestCase):
             raw = b"independent plot observations for test fixture only"
             (root / "plots.csv").write_bytes(raw)
             raw_sha = hashlib.sha256(raw).hexdigest()
-            report = {"dataset_sha256": raw_sha, "independent_sample_count": 12,
+            report = {"dataset_sha256": raw_sha, "independent_sample_count": 3,
                       "rmse": 5.2, "mae": 4.1, "bias": -0.4, "interval_coverage": 0.9,
                       "train_partition": "geographic_tile_A", "test_partition": "geographic_tile_B",
                       "validation_design": "spatial holdout", "unit": "Mg/ha",
@@ -50,6 +50,16 @@ class ModularGateTests(unittest.TestCase):
             validated = assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)
             self.assertTrue(validated["passed"])
             self.assertTrue(validated["scientifically_homologated"])
+            # Inflating n from plot rows (12) while only 3 spatial units are
+            # held out must never be accepted as independent validation.
+            inflated = dict(report, independent_sample_count=12)
+            inflated_bytes = json.dumps(inflated).encode("utf-8")
+            (root / "report.json").write_bytes(inflated_bytes)
+            inflated_row = dict(row, validation_report_sha256=hashlib.sha256(inflated_bytes).hexdigest())
+            rejected = assess({"source_sha": SHA, "capabilities": [inflated_row]}, SHA, root)
+            self.assertFalse(rejected["passed"])
+            self.assertTrue(any("must equal distinct test spatial units" in e for e in rejected["errors"]))
+            (root / "report.json").write_bytes(report_bytes)
             (root / "plots.csv").write_bytes(b"tampered observations")
             self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
             (root / "plots.csv").write_bytes(raw)
