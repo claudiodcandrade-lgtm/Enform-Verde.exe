@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tools.harvest_ifn_field_data import (PANEL_RESOURCES, harvest_sfb_2026_panel,
-                                         inspect_csv, inspect_workbook)
+from tools.harvest_ifn_field_data import (DATASETS, PANEL_RESOURCES, harvest_sfb_2026_panel,
+                                         infer_state, inspect_csv, inspect_workbook)
 
 
 class Reply:
@@ -72,6 +72,14 @@ class SFBPanelHarvestTests(unittest.TestCase):
             self.assertTrue(all(item["status"] == "access_or_schema_error"
                                 for item in report["datasets"].values()))
 
+
+    def test_licensed_2025_ifn_land_use_is_harvest_candidate_not_carbon_validation(self):
+        route, license_policy = DATASETS["land_use_subplots"]
+        self.assertEqual(route, "/pt_BR/dataset/ifn-uso-da-terra-por-uf_disp-set2025")
+        self.assertEqual(license_policy, "cc_by")
+        self.assertEqual(infer_state("IFN_Uso-da-terra_Mato_Grosso_do_Sul_disp-set2025.xlsx"), "MS")
+        self.assertEqual(infer_state("IFN_Uso-da-terra_Mato_Grosso_disp-set2025.xlsx"), "MT")
+        self.assertEqual(infer_state("IFN_Uso-da-terra_Para_disp-set2025.xlsx"), "PA")
 
     def test_ua_identity_is_composite_of_state_and_plot_in_csv(self):
         body = ("bioma;uf;ua;lat_pc;lon_pc\n"
