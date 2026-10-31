@@ -164,7 +164,7 @@ def prepare(raw, expected_sha256):
         "source_license": "CC BY per official IFN panel dataset; verify before redistribution",
         "source_observation_rows": total_rows,
         "agb_chave_rows": chosen_rows,
-        "biome_identity_crosschecked_against_all_equation_rows": True,
+        "biome_identity_crosscheck_scope": "all_source_equation_rows_with_valid_UF_biome_UA",
         "unique_ua_with_agb_chave": len(grouped),
         "candidate_ua": len(candidates),
         "candidate_ua_by_biome": dict(sorted(by_biome.items())),
@@ -180,7 +180,8 @@ def prepare(raw, expected_sha256):
             "validated choice. Source coordinates appear quantized and positional "
             "accuracy is unknown: do not pair to SAR pixels, infer plot-scale "
             "accuracy, calculate AOI IC95%, or transfer stocks across IBGE classes. "
-            "Biome identity conflicts are checked across all source equations. "
+            "Biome identity conflicts are checked across identifiable source equations; "
+            "nonkey rows with invalid UF or incomplete identity are not crosschecked. "
             "One UA may contain multiple source land-cover classes; all repeated "
             "AGB_Chave UA records are excluded rather than pseudoreplicated."
         ),
