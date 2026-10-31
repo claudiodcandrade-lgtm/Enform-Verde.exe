@@ -46,6 +46,7 @@ jobs:
             'test_planetary_sign_retry.py',
             'test_evidence_hierarchy.py',
             'test_ifn_2026_panel_harvest.py',
+            'test_sicar_wfs_integrity.py',
             'test_experimental_transfer.py',
             'test_sar_height_preservation.py'
           )
