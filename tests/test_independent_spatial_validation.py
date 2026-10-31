@@ -35,6 +35,26 @@ class SpatialValidationTests(unittest.TestCase):
         self.assertAlmostEqual(result["rmse"], 1.0)
         self.assertIn("observation", result["metric_weighting"])
 
+    def test_cluster_equal_weight_metrics_match_when_one_row_per_unit(self):
+        result = self.validate(VALID)
+        self.assertAlmostEqual(result["cluster_equal_weight_rmse"], result["rmse"])
+        self.assertAlmostEqual(result["cluster_equal_weight_mae"], result["mae"])
+        self.assertAlmostEqual(result["cluster_equal_weight_bias"], result["bias"])
+        self.assertAlmostEqual(result["cluster_equal_weight_interval_coverage"], result["interval_coverage"])
+
+    def test_cluster_equal_weight_metrics_do_not_overweight_repeated_plots(self):
+        # B contributes two rows, C one; B/b must remain one physical unit.
+        result = self.validate(VALID + "6,10,9,11,test,b\\n")
+        self.assertEqual(result["independent_sample_count"], 2)
+        self.assertEqual(result["test_observation_count"], 3)
+        self.assertAlmostEqual(result["rmse"], (6.0) ** 0.5)
+        self.assertAlmostEqual(result["cluster_equal_weight_rmse"], (4.75) ** 0.5)
+        self.assertAlmostEqual(result["cluster_equal_weight_mae"], 1.75)
+        self.assertAlmostEqual(result["cluster_equal_weight_bias"], 0.75)
+        self.assertAlmostEqual(result["interval_coverage"], 2.0 / 3.0)
+        self.assertAlmostEqual(result["cluster_equal_weight_interval_coverage"], 0.75)
+        self.assertIn("no cluster-robust CI", result["cluster_metric_weighting"])
+
     def test_disallow_spatial_leakage(self):
         with self.assertRaisesRegex(ValueError, "disjoint"):
             self.validate(VALID.replace("test,B", "test,A"))
