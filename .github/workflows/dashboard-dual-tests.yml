@@ -14,7 +14,7 @@ jobs:
           python-version: '3.11'
       - name: Syntax check
         shell: pwsh
-        run: python -m py_compile experimental_transfer.py secondary_carbon_adapter.py evidence_hierarchy.py tools/harvest_ifn_field_data.py tools/prepare_ifn_agb_candidates.py desktop_app.py carbon_dashboard_html.py dual_executive_dashboard.py carbon_report_clarity.py crop_health_yield_quality.py sar_pipeline.py sar_acquisition_time.py agricultural_diagnostic_quality.py agricultural_external_models.py land_use_sar.py sar_model_discovery.py pronasolos_identify.py soil_profile_stats.py tools/probe_pronasolos_100cm.py agricultural_weather_sources.py agricultural_weather.py cptec_forecast_client.py
+        run: python -m py_compile experimental_transfer.py secondary_carbon_adapter.py evidence_hierarchy.py tools/harvest_ifn_field_data.py tools/prepare_ifn_agb_candidates.py tools/audit_ifn_selected_ua.py desktop_app.py carbon_dashboard_html.py dual_executive_dashboard.py carbon_report_clarity.py crop_health_yield_quality.py sar_pipeline.py sar_acquisition_time.py agricultural_diagnostic_quality.py agricultural_external_models.py land_use_sar.py sar_model_discovery.py pronasolos_identify.py soil_profile_stats.py tools/probe_pronasolos_100cm.py agricultural_weather_sources.py agricultural_weather.py cptec_forecast_client.py
       - name: Install geospatial regression dependencies
         shell: pwsh
         run: python -m pip install "geopandas>=1.0" "rasterio>=1.3" "scikit-learn>=1.4,<2" "requests>=2.31" "openpyxl>=3.1" "Pillow>=10"
@@ -47,6 +47,7 @@ jobs:
             'test_evidence_hierarchy.py',
             'test_ifn_2026_panel_harvest.py',
             'test_prepare_ifn_agb_candidates.py',
+            'test_audit_ifn_selected_ua.py',
             'test_sicar_wfs_integrity.py',
             'test_experimental_transfer.py',
             'test_sar_height_preservation.py'
