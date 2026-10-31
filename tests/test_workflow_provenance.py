@@ -13,6 +13,12 @@ class WorkflowProvenanceTests(unittest.TestCase):
         self.assertIn("Clean-folder EXE UI smoke", src)
         self.assertNotIn("$env:GITHUB_EVENT_NAME -ne 'pull_request'", src)
 
+    def test_ifn_harvest_imports_shared_identity_as_module(self):
+        src = (ROOT / ".github/workflows/harvest-ifn-field-data.yml").read_text(encoding="utf-8")
+        self.assertIn("python -m tools.harvest_ifn_field_data", src)
+        self.assertIn("python -m tools.prepare_ifn_agb_candidates", src)
+        self.assertNotIn("python tools/harvest_ifn_field_data.py", src)
+
     def test_release_gate_is_strict(self):
         src = (ROOT / ".github/workflows/scientific-release-gate.yml").read_text(encoding="utf-8")
         self.assertIn("tools/scientific_release_gate.py", src)
