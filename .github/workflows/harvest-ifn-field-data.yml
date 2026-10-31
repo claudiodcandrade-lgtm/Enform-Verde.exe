@@ -24,7 +24,31 @@ jobs:
         run: python -m pip install requests openpyxl
       - name: Download licensed IFN field records and audit spatial coverage
         run: python tools/harvest_ifn_field_data.py
+      - name: Prepare conservative AGB candidates from verified real IFN panel bytes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          root = Path("ifn_field_harvest")
+          manifest = json.loads((root / "ifn_field_harvest_manifest.json").read_text(encoding="utf-8"))
+          records = manifest["datasets"]["panel_biomass"]["resources"]
+          if len(records) != 1 or manifest["datasets"]["panel_biomass"]["status"] != "harvested_not_validated":
+              raise SystemExit("No single verifiable licensed IFN biomass source; candidates blocked")
+          source = records[0]
+          original = root / "panel_biomass" / source["filename"]
+          subprocess.check_call([
+              sys.executable, "-m", "tools.prepare_ifn_agb_candidates",
+              "--csv", str(original), "--sha256", source["sha256"],
+              "--out-csv", str(root / "agb_candidates" / "ifn_agb_chave_candidates_unvalidated.csv"),
+              "--report", str(root / "agb_candidates" / "ifn_agb_chave_audit.json"),
+          ])
+          PY
       - name: Upload raw source records and provenance manifest
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ifn-field-records-${{ github.sha }}
