@@ -11,6 +11,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import re
 import unicodedata
 from datetime import datetime, timezone
@@ -124,7 +125,8 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
     lat_i = idx("LAT_PC", "LATITUDE", "LAT")
     lon_i = idx("LON_PC", "LONGITUDE", "LON", "LONG")
     unique_ua = {}
-    coordinate_ua = {}
+    coordinate_values = {}
+    invalid_coordinate_rows = 0
     row_counts = {}
     row_count = 0
     missing_state_ua = 0
@@ -153,13 +155,27 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             if not uf:
                 missing_state_ua += 1
             unique_ua.setdefault(biome, set()).add(identity)
-            try:
-                lat = float(str(val(lat_i)).replace(",", "."))
-                lon = float(str(val(lon_i)).replace(",", "."))
-                if -90 <= lat <= 90 and -180 <= lon <= 180:
-                    coordinate_ua.setdefault(biome, set()).add(identity)
-            except (TypeError, ValueError):
-                pass
+            if lat_i is not None and lon_i is not None:
+                try:
+                    lat = float(str(val(lat_i)).replace(",", "."))
+                    lon = float(str(val(lon_i)).replace(",", "."))
+                    # (0, 0) is a common missing-coordinate placeholder, not
+                    # a valid IFN centroid. Repeated subplots must agree.
+                    if (not -90 <= lat <= 90 or not -180 <= lon <= 180
+                            or not math.isfinite(lat) or not math.isfinite(lon)
+                            or (lat == 0 and lon == 0)):
+                        invalid_coordinate_rows += 1
+                    else:
+                        coordinate_values.setdefault((biome, identity), set()).add((lat, lon))
+                except (TypeError, ValueError):
+                    invalid_coordinate_rows += 1
+    coordinate_ua = {}
+    conflicting_coordinate_ua = {}
+    for (biome, identity), points in coordinate_values.items():
+        if len(points) == 1:
+            coordinate_ua.setdefault(biome, set()).add(identity)
+        else:
+            conflicting_coordinate_ua.setdefault(biome, set()).add(identity)
     columns = [norm(h) for h in headers]
     return {
         "headers": [str(h) for h in headers],
@@ -173,6 +189,13 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             "UF missing for some sampling units: repeated UA codes may be distinct across states; counts may understate units"),
         "unique_ua_by_biome": {k: len(v) for k, v in sorted(unique_ua.items())},
         "unique_ua_with_coordinates_by_biome": {k: len(v) for k, v in sorted(coordinate_ua.items())},
+        "ua_with_conflicting_coordinates_by_biome": {
+            k: len(v) for k, v in sorted(conflicting_coordinate_ua.items())},
+        "ua_rows_invalid_coordinates": invalid_coordinate_rows,
+        "coordinate_validation_note": (
+            "WGS84 centroid candidates only: reject zero placeholders and conflicting "
+            "coordinates for one (biome, UF, UA); no IBGE crosswalk, plot-pixel "
+            "pairing, SAR validation or positional accuracy inferred."),
         "observation_rows_by_biome": dict(sorted(row_counts.items())),
         "encoding": encoding,
         "delimiter": delimiter,

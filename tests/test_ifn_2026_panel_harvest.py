@@ -152,6 +152,43 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(report["sheets"][0]["ua_rows_state_inferred_from_filename"], 1)
         self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 1)
 
+    def test_zero_coordinate_placeholder_is_not_georeferenced(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Pantanal;MS;UA001;0;0\n"
+                "Pantanal;MS;UA002;-18.5;-56.8\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Pantanal"], 2)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Pantanal"], 1)
+        self.assertEqual(report["ua_rows_invalid_coordinates"], 1)
+
+    def test_conflicting_centroids_do_not_count_as_georeferenced_ua(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Amazônia;PA;UA001;-3.1;-54.9\n"
+                "Amazônia;PA;UA001;-3.2;-54.9\n"
+                "Amazônia;PA;UA002;-3.3;-54.8\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Amazônia"], 2)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Amazônia"], 1)
+        self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"]["Amazônia"], 1)
+
+    def test_repeated_subplots_same_centroid_remain_one_ua(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA001;-15.0;-47.0\n"
+                "Cerrado;GO;UA001;-15.000;-47.000\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"], {})
+        self.assertEqual(report["ua_rows_invalid_coordinates"], 0)
+
+    def test_nonfinite_or_out_of_bounds_coordinates_are_rejected(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Caatinga;CE;UA001;nan;-39.0\n"
+                "Caatinga;CE;UA002;-9.0;200.0\n"
+                "Caatinga;CE;UA003;-9.1;-39.1\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Caatinga"], 1)
+        self.assertEqual(report["ua_rows_invalid_coordinates"], 2)
+
     def test_tab_delimiter_and_state_aware_ua_are_supported(self):
         body = ("bioma\tuf\tua\n"
                 "Cerrado\tGO\tUA001\n"
