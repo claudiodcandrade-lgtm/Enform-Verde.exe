@@ -53,6 +53,40 @@ class SFBPanelHarvestTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(blob).hexdigest(), row["sha256"])
                 self.assertEqual(row["bytes"], len(blob))
 
+    def test_equation_equivalence_resource_mislabeled_csv_is_parsed_as_xlsx(self):
+        # Official SFB resource a7396a8a-... advertises an XLSX MIME while
+        # the published filename ends in .csv. Do not silently drop its data.
+        from io import BytesIO
+        from openpyxl import Workbook
+
+        workbook = Workbook()
+        ws = workbook.active
+        ws.append(["bioma", "uf", "ua", "teste_equivalencia"])
+        ws.append(["Cerrado", "GO", "UA008", "not_independent_SAR_validation"])
+        stream = BytesIO()
+        workbook.save(stream)
+        xlsx_bytes = stream.getvalue()
+        self.assertTrue(xlsx_bytes.startswith(b"PK\\x03\\x04"))
+
+        class MixedFormatSession(Session):
+            def get(self, url, timeout=None):
+                if "dadosabertos_testeequacoes_" in url:
+                    self.urls.append(url)
+                    return Reply(body=xlsx_bytes)
+                return super().get(url, timeout=timeout)
+
+        with tempfile.TemporaryDirectory() as tmp, patch(
+                "tools.harvest_ifn_field_data.OUT", Path(tmp)):
+            report = {"datasets": {}, "failures": []}
+            harvest_sfb_2026_panel(MixedFormatSession(), report)
+            self.assertEqual(report["failures"], [])
+            record = report["datasets"]["panel_equation_tests"]["resources"][0]
+            self.assertEqual(record["payload_format_detected"], "xlsx")
+            self.assertTrue(record["filename"].endswith(".csv"))
+            self.assertEqual(record["unique_ua_by_biome"]["Cerrado"], 1)
+            self.assertTrue(record["equation_equivalence_not_independent_sar_validation"])
+            self.assertEqual(hashlib.sha256(xlsx_bytes).hexdigest(), record["sha256"])
+
     def test_missing_license_stops_download(self):
         with tempfile.TemporaryDirectory() as tmp, patch(
                 "tools.harvest_ifn_field_data.OUT", Path(tmp)):
