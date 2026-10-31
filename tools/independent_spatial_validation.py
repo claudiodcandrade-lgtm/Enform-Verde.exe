@@ -43,6 +43,7 @@ def validate_csv(path, dataset_sha256, unit):
         raise ValueError("no observations")
     partitions = {"train": set(), "test": set()}
     test = []
+    test_groups = {}  # Independent test units, not individual plot rows.
     for number, row in enumerate(records, 2):
         p = str(row["partition"]).strip().lower()
         if p not in partitions:
@@ -64,6 +65,7 @@ def validate_csv(path, dataset_sha256, unit):
             raise ValueError(f"row {number}: invalid prediction interval")
         if p == "test":
             test.append(values)
+            test_groups.setdefault(_spatial_identity(raw_group), []).append(values)
     if not partitions["train"] or not partitions["test"] or partitions["train"] & partitions["test"]:
         raise ValueError("training and test spatial units must be nonempty and disjoint")
     if len(test) < 2:
@@ -83,12 +85,35 @@ def validate_csv(path, dataset_sha256, unit):
     mean = sum(measured) / n
     total = sum((x - mean) ** 2 for x in measured)
     r2 = None if total == 0 else 1 - sum(e * e for e in errors) / total
+    # Descriptive diagnostics that weight each held-out spatial unit equally.
+    # Within each unit, observations share that unit's total weight. These
+    # quantities do NOT supply cluster-robust confidence intervals or prove
+    # that the held-out data were collected independently.
+    group_metrics = []
+    for group_rows in test_groups.values():
+        group_n = len(group_rows)
+        group_errors = [pred - obs for obs, pred, _, _ in group_rows]
+        group_metrics.append((
+            sum(error * error for error in group_errors) / group_n,
+            sum(abs(error) for error in group_errors) / group_n,
+            sum(group_errors) / group_n,
+            sum(low <= obs <= high for obs, _, low, high in group_rows) / group_n,
+        ))
+    cluster_rmse = math.sqrt(sum(item[0] for item in group_metrics) / independent_units)
+    cluster_mae = sum(item[1] for item in group_metrics) / independent_units
+    cluster_bias = sum(item[2] for item in group_metrics) / independent_units
+    cluster_coverage = sum(item[3] for item in group_metrics) / independent_units
     return {
         "dataset_sha256": digest,
         "independent_sample_count": independent_units,
         "test_observation_count": n,
         "rmse": rmse, "mae": mae, "bias": bias, "r2": r2,
         "interval_coverage": coverage, "interval_n_nominal": n,
+        "cluster_equal_weight_rmse": cluster_rmse,
+        "cluster_equal_weight_mae": cluster_mae,
+        "cluster_equal_weight_bias": cluster_bias,
+        "cluster_equal_weight_interval_coverage": cluster_coverage,
+        "cluster_metric_weighting": "each independent test spatial unit weighted equally; descriptive only, no cluster-robust CI",
         "interval_independent_spatial_unit_count": independent_units,
         "metric_weighting": "per-observation descriptive metrics; repeated rows within a spatial unit are not independent",
         "train_partition": "train (independent spatial units)",
@@ -102,8 +127,9 @@ def validate_csv(path, dataset_sha256, unit):
             "CSV values and independence are supplied by the producer; this program "
             "verifies partition disjointness but not whether predictions were fitted "
             "without access to held-out measurements or whether field data are real. "
-            "RMSE, MAE, bias, R2 and interval coverage are observation-weighted; "
-            "cluster correlation is not corrected and no confidence interval is inferred."
+            "RMSE, MAE, bias, R2 and interval coverage are observation-weighted. "
+            "Additional equal-spatial-unit metrics are descriptive; they do not "
+            "correct cluster correlation for inference, and no confidence interval is inferred."
         ),
         "interval_kind": "empirical coverage of supplied per-observation intervals; not AOI IC95%"
     }
