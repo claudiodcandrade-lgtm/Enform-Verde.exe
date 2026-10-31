@@ -23,6 +23,18 @@ class SpatialValidationTests(unittest.TestCase):
         self.assertAlmostEqual(result["bias"], 0)
         self.assertEqual(result["interval_coverage"], 1)
 
+    def test_repeated_test_rows_count_spatial_units_not_pseudoreplicated_plots(self):
+        # A third measured row is in the same physical test cluster B (alias b).
+        # It must not increase the number of independent spatial units.
+        result = self.validate(VALID + "6,7,5,8,test,b\\n")
+        self.assertEqual(result["independent_sample_count"], 2)
+        self.assertEqual(result["test_observation_count"], 3)
+        self.assertEqual(result["test_spatial_units"], 2)
+        self.assertEqual(result["interval_n_nominal"], 3)
+        self.assertEqual(result["interval_independent_spatial_unit_count"], 2)
+        self.assertAlmostEqual(result["rmse"], 1.0)
+        self.assertIn("observation", result["metric_weighting"])
+
     def test_disallow_spatial_leakage(self):
         with self.assertRaisesRegex(ValueError, "disjoint"):
             self.validate(VALID.replace("test,B", "test,A"))

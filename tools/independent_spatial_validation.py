@@ -71,6 +71,9 @@ def validate_csv(path, dataset_sha256, unit):
     if len(partitions["test"]) < 2:
         raise ValueError("at least two distinct test spatial units required; repeated plots in one unit are not independent")
     n = len(test)
+    # Multiple observed plots in one spatial holdout unit are correlated:
+    # count independent *units*, never raw rows, as the validation sample.
+    independent_units = len(partitions["test"])
     errors = [predicted - observed for observed, predicted, _, _ in test]
     rmse = math.sqrt(sum(error * error for error in errors) / n)
     mae = sum(abs(error) for error in errors) / n
@@ -82,9 +85,12 @@ def validate_csv(path, dataset_sha256, unit):
     r2 = None if total == 0 else 1 - sum(e * e for e in errors) / total
     return {
         "dataset_sha256": digest,
-        "independent_sample_count": n,
+        "independent_sample_count": independent_units,
+        "test_observation_count": n,
         "rmse": rmse, "mae": mae, "bias": bias, "r2": r2,
         "interval_coverage": coverage, "interval_n_nominal": n,
+        "interval_independent_spatial_unit_count": independent_units,
+        "metric_weighting": "per-observation descriptive metrics; repeated rows within a spatial unit are not independent",
         "train_partition": "train (independent spatial units)",
         "test_partition": "test (independent spatial units)",
         "validation_design": "externally supplied independent spatial holdout; spatial-unit disjointness checked",
@@ -95,7 +101,9 @@ def validate_csv(path, dataset_sha256, unit):
         "method_limitations": (
             "CSV values and independence are supplied by the producer; this program "
             "verifies partition disjointness but not whether predictions were fitted "
-            "without access to held-out measurements or whether field data are real."
+            "without access to held-out measurements or whether field data are real. "
+            "RMSE, MAE, bias, R2 and interval coverage are observation-weighted; "
+            "cluster correlation is not corrected and no confidence interval is inferred."
         ),
         "interval_kind": "empirical coverage of supplied per-observation intervals; not AOI IC95%"
     }
