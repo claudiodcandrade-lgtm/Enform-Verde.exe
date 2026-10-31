@@ -88,6 +88,32 @@ class IFNAGBCandidateTests(unittest.TestCase):
             report["exclusions"]["excluded_cross_biome_ua_identity_conflict"], 1
         )
 
+    def test_nonkey_equation_conflicting_valid_centroid_excludes_candidate(self):
+        # A unique AGB_Chave is not a trustworthy physical location if another
+        # equation row for the same state/UA reports a different centroid.
+        candidates, report = run(
+            record(uf="GO", ua="UA_201", lat="-15,84", lon="-48,42"),
+            record(uf="GO", ua="UA_201", eq="Eq.183",
+                   lat="-15,86", lon="-48,42"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(
+            report["exclusions"]["excluded_cross_equation_coordinate_conflict"], 1
+        )
+        self.assertIn("no independent positional accuracy inferred",
+                      report["coordinate_crosscheck_scope"])
+
+    def test_nonkey_equation_same_centroid_does_not_exclude_candidate(self):
+        candidates, report = run(
+            record(uf="GO", ua="UA_202", lat="-15,84", lon="-48,42"),
+            record(uf="GO", ua="UA_202", eq="Eq.183",
+                   lat="-15,84", lon="-48,42"),
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertNotIn("excluded_cross_equation_coordinate_conflict",
+                         report["exclusions"])
+        self.assertEqual(candidates[0]["sar_pair_eligible"], "false")
+
     def test_nonkey_same_biome_and_reused_ua_different_uf_remain_valid(self):
         candidates, report = run(
             record(biome="Cerrado", uf="GO", ua="UA_101"),
