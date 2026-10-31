@@ -59,6 +59,30 @@ class IFNAGBCandidateTests(unittest.TestCase):
         self.assertEqual(report["exclusions"]["excluded_invalid_numeric_fields"], 1)
         self.assertEqual(report["exclusions"]["excluded_invalid_biomass_or_area"], 1)
 
+    def test_cross_biome_conflict_does_not_pseudoreplicate_same_state_ua(self):
+        candidates, report = run(
+            record(biome="Cerrado", uf="GO", ua="UA_100"),
+            record(biome="Mata Atlântica", uf="GO", ua="UA_100",
+                   land="Floresta Natural", typology="Floresta Ombrófila Densa"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["unique_ua_with_agb_chave"], 2)
+        self.assertEqual(
+            report["exclusions"]["excluded_cross_biome_ua_identity_conflict"], 2
+        )
+        self.assertEqual(report["candidate_ua"], 0)
+
+    def test_reused_ua_across_distinct_states_remains_two_units(self):
+        candidates, report = run(
+            record(biome="Cerrado", uf="GO", ua="UA_100"),
+            record(biome="Pantanal", uf="MS", ua="UA_100",
+                   land="Savana", typology="Savana"),
+        )
+        self.assertEqual(report["candidate_ua"], 2)
+        self.assertEqual(len(candidates), 2)
+        self.assertNotIn("excluded_cross_biome_ua_identity_conflict",
+                         report["exclusions"])
+
     def test_hash_and_schema_fail_closed(self):
         raw = (HEADER + record()).encode("utf-8")
         with self.assertRaisesRegex(ValueError, "SHA256"):
