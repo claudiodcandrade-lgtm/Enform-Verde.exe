@@ -311,14 +311,18 @@ def resolve_car(car):
             if not r.ok:continue
             js=r.json(); feats=js.get("features") or []
             if not feats:continue
-            exact=[x for x in feats if str((x.get("properties") or {}).get("cod_imovel","")).upper()==code]
-            feats=exact or feats
-            if len(feats)>1:raise RuntimeError("SICAR retornou registros múltiplos para o mesmo código.")
-            props=feats[0].get("properties") or {}
-            if not feats[0].get("geometry"):raise RuntimeError("CAR localizado, porém sem geometria pública.")
-            tmp=Path(tempfile.gettempdir())/"enform_car_sicar.geojson"
-            tmp.write_text(json.dumps({"type":"FeatureCollection","features":feats}),encoding="utf-8")
-            gdf=gpd.read_file(tmp); gdf=gdf.set_crs(4326) if gdf.crs is None else gdf.to_crs(4326)
+            exact=[x for x in feats if str((x.get("properties") or {}).get("cod_imovel","")).strip().upper()==code]
+            if not exact:
+                # A WFS response may ignore the CQL filter. Never accept an
+                # unrelated property as the requested CAR polygon.
+                attempts.append(f"{version}:no_exact_cod_imovel")
+                continue
+            if len(exact)>1:raise RuntimeError("SICAR retornou registros múltiplos para o mesmo código.")
+            props=exact[0].get("properties") or {}
+            if not exact[0].get("geometry"):raise RuntimeError("CAR localizado, porém sem geometria pública.")
+            # In-memory construction avoids a shared temporary GeoJSON path:
+            # concurrent queries must never overwrite each other's geometry.
+            gdf=gpd.GeoDataFrame.from_features(exact,crs="EPSG:4326")
             gdf.attrs.update({"sicar_cod_imovel":props.get("cod_imovel",code),"sicar_status":props.get("status_imovel") or props.get("condicao"),
               "sicar_area_declarada_ha":props.get("area"),"sicar_municipio":props.get("municipio"),"sicar_lookup":url+" WFS "+version})
             return gdf
