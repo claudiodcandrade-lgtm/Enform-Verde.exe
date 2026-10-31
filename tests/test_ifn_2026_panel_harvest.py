@@ -127,6 +127,41 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertTrue(report["ua_identity_state_disambiguated"])
         self.assertIsNone(report["ua_identity_warning"])
 
+    def test_unicode_case_aliases_do_not_pseudoreplicate_ifn_units(self):
+        # The same physical PA unit appears with Unicode-width and case aliases.
+        # A distinct AM unit with the same identifier remains independent.
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Amazônia;PA;UA001;-3.1;-54.9\n"
+                "Amazônia;Pará;ｕａ００１;-3.1;-54.9\n"
+                "Amazônia;AM;ua001;-3.2;-60.1\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Amazônia"], 2)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Amazônia"], 2)
+        self.assertEqual(report["nonempty_data_rows"], 3)
+
+    def test_conflicting_coordinates_across_unicode_ua_aliases_are_quarantined(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA007;-15.0;-47.0\n"
+                "Cerrado;Goiás;ｕａ００７;-15.2;-47.0\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"].get("Cerrado", 0), 0)
+        self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"]["Cerrado"], 1)
+
+    def test_xlsx_ua_unicode_aliases_do_not_inflate_unit_count(self):
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "plots.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["bioma", "uf", "ua", "lat_pc", "lon_pc"])
+            ws.append(["Pantanal", "MS", "UA009", -18.0, -57.0])
+            ws.append(["Pantanal", "Mato Grosso do Sul", "ｕａ００９", -18.0, -57.0])
+            wb.save(path)
+            report = inspect_workbook(path)
+        self.assertEqual(report["unique_ua_by_biome"]["Pantanal"], 1)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Pantanal"], 1)
+
     def test_missing_uf_does_not_claim_state_disambiguation(self):
         body = b"bioma;ua;lat_pc;lon_pc\nCerrado;UA001;-15;-47\n"
         report = inspect_csv(body)
