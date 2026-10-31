@@ -1,0 +1,60 @@
+name: Harvest public IFN field records
+on:
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+    paths:
+      - tools/harvest_ifn_field_data.py
+      - tools/prepare_ifn_agb_candidates.py
+      - tools/ifn_state_identity.py
+      - .github/workflows/harvest-ifn-field-data.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install field-data audit dependencies
+        run: python -m pip install requests openpyxl
+      - name: Download licensed IFN field records and audit spatial coverage
+        run: python -m tools.harvest_ifn_field_data
+      - name: Prepare conservative AGB candidates from verified real IFN panel bytes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          root = Path("ifn_field_harvest")
+          manifest = json.loads((root / "ifn_field_harvest_manifest.json").read_text(encoding="utf-8"))
+          records = manifest["datasets"]["panel_biomass"]["resources"]
+          if len(records) != 1 or manifest["datasets"]["panel_biomass"]["status"] != "harvested_not_validated":
+              raise SystemExit("No single verifiable licensed IFN biomass source; candidates blocked")
+          source = records[0]
+          original = root / "panel_biomass" / source["filename"]
+          subprocess.check_call([
+              sys.executable, "-m", "tools.prepare_ifn_agb_candidates",
+              "--csv", str(original), "--sha256", source["sha256"],
+              "--out-csv", str(root / "agb_candidates" / "ifn_agb_chave_candidates_unvalidated.csv"),
+              "--report", str(root / "agb_candidates" / "ifn_agb_chave_audit.json"),
+          ])
+          PY
+      - name: Upload raw source records and provenance manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifn-field-records-${{ github.sha }}
+          path: ifn_field_harvest/
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 6

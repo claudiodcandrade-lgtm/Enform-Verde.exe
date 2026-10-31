@@ -1,0 +1,322 @@
+"""Carbon accounting restricted to confirmed native intersections.
+
+The estimator is called independently for each class geometry. A density from
+one class is never propagated to another class or multiplied by the whole AOI.
+"""
+from __future__ import annotations
+import math
+import unicodedata
+
+COMPARTMENTS=('Biomassa aérea','Biomassa subterrânea','Necromassa aérea','Necromassa subterrânea','Serapilheira','Solo 0–100 cm')
+
+
+def normalize(value):
+    return ''.join(c for c in unicodedata.normalize('NFD',str(value or '').casefold()) if unicodedata.category(c)!='Mn')
+
+
+def native_class(name, source, class_metadata=None):
+    """IBGE phytoregion alone is potential vegetation, not current native cover."""
+    text=normalize(name)
+    # Corpos hídricos não são formações vegetais nativas, ainda que um overlay
+    # IBGE+MapBiomas lhes atribua indevidamente esse status.
+    aquatic_terms=('corpo d agua','corpo dagua','rio, lago','rio e lago',
+                   'lago e oceano','rio lago oceano','massa d agua',
+                   'reservatorio','hidrograf','agua continental','aquicultura')
+    if any(term in text for term in aquatic_terms):
+        return False
+    # Requisito eliminatório: silvicultura jamais integra carbono nativo,
+    # mesmo com fonte IBGE+MAPBIOMAS ou rótulo SAR supostamente validado.
+    planted_terms=('silvicultura','floresta plantada','florestas plantadas',
+                   'floresta de producao','reflorestamento','eucalipt',
+                   'eucalyptus','pinus','pinheiro plantado','plantio florestal')
+    if any(term in text for term in planted_terms):
+        return False
+    uncertain_terms=('cobertura arborea','origem nao determinada',
+                     'floresta de origem incerta','natural ou plantada')
+    if any(term in text for term in uncertain_terms):
+        return None
+    meta=(class_metadata or {}).get(name,{})
+    if isinstance(meta,dict):
+        if meta.get('planted_forest') is True or meta.get('is_silviculture') is True:
+            return False
+        if meta.get('native_origin_confirmed') is False:
+            return None
+    if any(word in text for word in ('areas cultivadas','area cultivada','soja','milho','sorgo','cafe','citr','cacau','cocoa','banana','silvicultura','plantad','eucalipt','pinus','agroflorest','lavoura','agricultura','antropic','urbaniz','mineracao')):
+        return False
+    if 'pastagem' in text and 'nativ' not in text:return False
+    if source=='SEM_COBERTURA':return None
+    if source=='SAR_VALIDADO':
+        if text.startswith('grupo: '):return text=='grupo: vegetacao natural'
+        meta=(class_metadata or {}).get(name,{})
+        return meta.get('parent')=='vegetação natural' if meta else None
+    if source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE'):return True
+    if source=='IBGE':return None
+    if source=='MAPBIOMAS':
+        from mapbiomas_zonal import LEGEND
+        native_codes={3,4,5,6,7,11,12,49,50}
+        for code,(label,_) in LEGEND.items():
+            if name==label:return code in native_codes
+    return None
+
+
+def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None, covariance_tc2_ha2=None):
+    import geopandas as gpd
+    from land_use_sar import AREA_CRS
+    from carbon_compartments import aoi_to_wgs84
+    aoi_geom=aoi_to_wgs84(aoi).to_crs(AREA_CRS).geometry.union_all()
+    area_aoi=aoi_geom.area/10000
+    if area_aoi<=0:raise ValueError('AOI sem área válida.')
+    clipped=class_polygons.to_crs(AREA_CRS).copy()
+    clipped['geometry']=clipped.geometry.make_valid().intersection(aoi_geom)
+    clipped=clipped[~clipped.geometry.is_empty]
+    if abs(clipped.geometry.area.sum()-clipped.geometry.union_all().area)>max(1e-4,aoi_geom.area*1e-8):
+        raise ValueError('Classes sobrepostas: não é possível somar carbono sem dupla contagem.')
+    # An unclassified hole inside the AOI is not proof of native cover or
+    # proof of non-native land. Previously a fully estimated *small* native
+    # polygon could give complete=True while the rest of the AOI had no class.
+    # Measure that gap explicitly so full-coverage acceptance fails closed.
+    mapped_geom=clipped.geometry.union_all()
+    gap_m2=float(aoi_geom.difference(mapped_geom).area)
+    unmapped_area=(gap_m2/10000.0 if gap_m2>max(1.0,aoi_geom.area*1e-8) else 0.0)
+    class_polygons=clipped
+    native_area=0.0; excluded_area=0.0; unknown_area=unmapped_area; strata=[]
+    # Ordenação explícita: a primeira estimativa deve ser Floresta Ombrófila
+    # Densa; nunca usar ordem alfabética ou ordem de camadas como prioridade.
+    def _stratum_priority(row):
+        label=normalize(row.class_name)
+        if 'floresta ombrofila densa' in label:return (0,label)
+        if 'floresta ombrofila aberta' in label:return (1,label)
+        return (2,label)
+    for record in sorted(class_polygons.itertuples(), key=_stratum_priority):
+        geom=record.geometry
+        frame=gpd.GeoDataFrame(geometry=[geom],crs=class_polygons.crs)
+        area=float(frame.to_crs(AREA_CRS).geometry.area.iloc[0])/10000
+        if area <= max(1e-9, area_aoi * 1e-12):
+            continue
+        flag=native_class(record.class_name,record.source,class_metadata)
+        if flag is False:excluded_area+=area;continue
+        if flag is None:unknown_area+=area;continue
+        native_area+=area
+        meta=(class_metadata or {}).get(record.class_name,{})
+        physiognomy=record.class_name if record.source.startswith('SAR_VALIDADO') else (meta.get('physiognomy') or record.class_name)
+        detail=('região/fitofisionomia identificada na legenda IBGE' if record.source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE') else ('fitofisionomia declarada no modelo SAR' if meta.get('physiognomy') else 'classe de cobertura; subtipo fitofisionômico não determinado'))
+        try: estimated=estimator(frame,physiognomy)
+        except Exception as exc:estimated={'components':[], 'error':str(exc)}
+        supplied={item['parametro']:item for item in estimated.get('components',[])}
+        components=[]
+        for name in COMPARTMENTS:
+            row=dict(supplied.get(name) or {'parametro':name,'tc':None,'origem':'NAO_ESTIMADO','fonte':'Sem dado compatível','obs':estimated.get('error') or 'Sem fonte/modelo compatível para esta interseção.'})
+            value=row.get('tc')
+            if value is not None and (not math.isfinite(float(value)) or float(value)<0):raise ValueError('Densidade de carbono inválida.')
+            included=value is not None and row.get('include_in_total',True) is not False
+            row.update({'area_ha':area,'area_pct':100*area/area_aoi,'total_tc':float(value)*area if included else None,
+                        'include_in_total':included})
+            components.append(row)
+        known=sum(c['total_tc'] for c in components if c['total_tc'] is not None)
+        complete=all(c['total_tc'] is not None for c in components)
+        strata.append({'class_name':record.class_name,'physiognomy':physiognomy,'physiognomy_resolution':detail,'source':record.source,
+                       'area_ha':area,'area_pct':100*area/area_aoi,'components':components,
+                       'known_total_tc':known,'complete':complete,'sar_audit':estimated.get('sar_audit'),'sar_details':estimated.get('sar_details'),'soil_profiles':estimated.get('soil_profiles'),'secondary_evidence_audit':estimated.get('secondary_evidence_audit')})
+    totals=[]
+    for name in COMPARTMENTS:
+        entries=[c for st in strata for c in st['components'] if c['parametro']==name and c['total_tc'] is not None]
+        covered=sum(c['area_ha'] for c in entries)
+        known=sum(c['total_tc'] for c in entries)
+        totals.append({'parametro':name,'known_total_tc':known if entries else None,
+                       'quantified_area_ha':covered,'missing_native_area_ha':max(0,native_area-covered),
+                       'tc_on_quantified_area':known/covered if covered else None,
+                       'tc_on_all_native_area':known/native_area if native_area and abs(covered-native_area)<1e-6 else None})
+    has_number=any(r['known_total_tc'] is not None for r in totals)
+    known_total=sum(r['known_total_tc'] or 0 for r in totals) if has_number else None
+    complete=bool(strata) and all(s['complete'] for s in strata) and unknown_area<1e-6
+    total_uncertainty=None
+    uncertainty_note=('Incertezas individuais preservadas por fonte/classe; covariâncias e erro '
+                      'de classificação/área não quantificados. Não se fornece IC95% do total.')
+    if covariance_tc2_ha2 is not None:
+        # Covariance order: strata order, then COMPARTMENTS. Both inter-pool and
+        # inter-stratum dependencies must be estimated from independent evidence.
+        if not complete:
+            raise ValueError('IC conjunto exige cobertura nativa e todos os compartimentos completos.')
+        from enform_uncertainty_core import aggregate_stock
+        atoms=[(st['area_ha'],c['tc']) for st in strata for c in st['components']]
+        total_uncertainty=aggregate_stock(
+            [a for a,_ in atoms],[float(v) for _,v in atoms],covariance_tc2_ha2)
+        if not math.isclose(total_uncertainty['stock_tC'],known_total,rel_tol=1e-10,abs_tol=1e-8):
+            raise ValueError('Inconsistência do total de carbono e da matriz de covariância.')
+        total_uncertainty['order']=[
+            {'fitofisionomia':st['physiognomy'],'compartimento':c['parametro']}
+            for st in strata for c in st['components']]
+        total_uncertainty['source']='matriz de covariância externa; calibração e fonte exigidas'
+        uncertainty_note=('IC95% NORMAL APROXIMADO, não calibrado independentemente, com '
+                          'covariância declarada entre compartimentos e estratos; '
+                          'erro de classificação e viés de transferência ainda requerem avaliação.')
+    return {'strata':strata,'components':totals,'area_aoi_ha':area_aoi,'native_area_ha':native_area,
+            'excluded_other_uses_ha':excluded_area,'unknown_cover_area_ha':unknown_area,
+            'unmapped_aoi_area_ha':unmapped_area,
+            'cover_completeness':'COMPLETE' if unknown_area<1e-6 else 'PARTIAL_OR_UNKNOWN',
+            'known_total_tc':known_total,'known_total_tco2':known_total*44/12 if known_total is not None else None,
+            'complete':complete,'total_uncertainty':total_uncertainty,
+            'uncertainty_note':uncertainty_note,
+            'method':'C conhecido = soma por fitofisionomia nativa e compartimento de (tC/ha × hectares da interseção). Outras classes: ocorrência apenas.'}
+
+
+def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_estimator, *, property_aoi=None, inventory_evidence=None):
+    """Use domain-aware evidence on each native stratum; verify farm at parent AOI.
+
+    A small FOD polygon from Santo Ambrósio can reuse only the compatible
+    study's 17-quadrat litter reference when the WHOLE property is verified
+    and the forest polygon is wholly contained within that property.
+    """
+    from carbon_compartments import (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,
+        pantanal_nhecolandia_litter_carbon_component,tapajos_necromass_components,ifn_necromass_component,infer_uf_from_aoi)
+    try:sar=sar_estimator(aoi,biome,physiognomy) or {}
+    except Exception as exc:sar={'error':str(exc)}
+    selected=sar if sar.get('agb_mg_ha') is not None else (sar.get('literature_reference') or {})
+    agb=selected.get('agb_mg_ha')
+    origin=str(selected.get('data_origin') or '')
+    if agb is not None and not (origin.startswith('SAR') or origin in ('LITERATURA_MICRORREGIONAL','LITERATURA_SECUNDARIA','MODELAGEM_LITERATURA_HIERARQUICA')):
+        agb=None
+    rows=[];regional=dict(selected.get('regional_components') or {})
+    regional.update(sar.get('regional_components') or {})
+    regional.update(tapajos_necromass_components(biome,physiognomy,aoi))
+    # Do not silently transfer biome×UF necromass to an IBGE physiognomy.
+    # The public IFN biome×UF aggregate lacks a verified physiognomy field;
+    # its predictive interval cannot quantify ecological transfer bias.
+    # Retain only class-compatible microrregional/validated source components.
+    if not any('serapilheira' in normalize(k) for k in regional):
+        for provider in (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,pantanal_nhecolandia_litter_carbon_component):
+            component=(provider(biome,physiognomy,aoi,property_aoi=property_aoi)
+                       if provider is santo_ambrosio_litter_stock_component else
+                       provider(biome,physiognomy,aoi))
+            if component:regional['Serapilheira']=component;break
+    if agb is not None:
+        rows.append({'parametro':'Biomassa aérea','tc':float(agb)*.47,'origem':origin,'fonte':selected.get('source','Produto/modelo SAR'),
+                     'metodo':selected.get('method',selected.get('status','SAR')),'obs':'Somente pixels/referência desta interseção nativa.',
+                     'uncertainty_kind':selected.get('uncertainty_kind'),'agb_uncertainty_mg_ha':selected.get('uncertainty_mg_ha'),
+                     'agb_range_mg_ha':selected.get('agb_range_mg_ha')})
+        p=normalize(physiognomy)
+        # Never apply a generalized upland-forest root equation to grassland,
+        # savanna, mangrove, floodplain, or planted formations.
+        upland_forest=any(w in p for w in ('floresta','ombrofila','estacional')) and not any(w in p for w in ('aluvial','alag','mangue','varzea'))
+        if float(agb)>0 and upland_forest and not any(normalize(name).startswith(normalize('Biomassa subterrânea')) for name in regional):
+            from root_allometry_uncertainty import cairns_root_prediction
+            root_calibration=selected.get('root_uncertainty_calibration')
+            root_note='Erro residual/transferência alométrica não quantificado; sem IC total.'
+            root_estimate=cairns_root_prediction(float(agb))
+            if root_calibration is not None:
+                # Only externally validated, physiognomy-exact AGB mean-error
+                # and allometry parameters can enable a conditional interval.
+                if (not isinstance(root_calibration,dict)
+                    or normalize(root_calibration.get('applicable_physiognomy'))!=p
+                    or root_calibration.get('agb_uncertainty_kind')!='AOI_mean_standard_error'):
+                    root_note='Calibração de raízes recusada: domínio exato e erro-padrão da média AOI não comprovados.'
+                else:
+                    try:
+                        root_estimate=cairns_root_prediction(float(agb),calibration=root_calibration)
+                        root_note='Intervalo preditivo Monte Carlo CONDICIONAL (95%); sem validação de cobertura para esta AOI; não equivale a IC95% do total.'
+                    except (ValueError, OverflowError) as exc:
+                        root_note='Calibração de raízes recusada: '+str(exc)+'. Sem IC95% do total.'
+            roots={'parametro':'Biomassa subterrânea','tc':root_estimate['mean_model_tc_ha'],
+                   'origem':'MODELAGEM_ALOMETRIA','fonte':'Cairns et al. (1997), doi:10.1007/s004420050201',
+                   'metodo':'BGB=exp(-1,0587+0,8836 ln AGB); floresta tropical de terras altas, referência generalizada',
+                   'obs':root_note,
+                   'root_uncertainty_status':root_estimate['uncertainty_status']}
+            if root_estimate.get('conditional_prediction_interval_tc_ha') is not None:
+                roots['root_prediction_interval_tc_ha']=root_estimate['conditional_prediction_interval_tc_ha']
+                roots['root_uncertainty_source']=root_estimate['source']
+            rows.append(roots)
+    # Direct necromass studies may report fallen and standing CWD separately.
+    # They are disjoint pools, but must be added before collapsing them into the
+    # single published 'Necromassa aérea' reporting column. Never combine a
+    # subpool with an already-totalled necromass estimate.
+    necro_parts=[(name,component) for name,component in regional.items()
+                 if normalize(name).startswith('necromassa aerea')]
+    if len(necro_parts)>1:
+        fallen=[pair for pair in necro_parts
+                if any(token in normalize(pair[0]) for token in ('caida','fallen','downed'))]
+        standing=[pair for pair in necro_parts
+                  if any(token in normalize(pair[0]) for token in ('em pe','standing'))]
+        valid_structure=(len(necro_parts)==2 and len(fallen)==1
+            and len(standing)==1 and fallen[0][0]!=standing[0][0]
+            and len({str(c.get('source')) for _,c in necro_parts})==1)
+        values=[]
+        if valid_structure:
+            try:
+                values=[float(c['mean_tc_ha']) for _,c in necro_parts]
+            except (TypeError, ValueError, KeyError):
+                values=[]
+        if valid_structure and len(values)==2 and all(
+                math.isfinite(x) and x>=0 for x in values):
+            common=fallen[0][1]
+            aggregate=dict(common)
+            aggregate['mean_tc_ha']=sum(values)
+            # Never preserve just the fallen-stock interval for the total.
+            aggregate.pop('range_tc_ha',None)
+            aggregate['uncertainty_kind']='Incerteza conjunta não quantificada'
+            ranges=[c.get('range_tc_ha') for _,c in necro_parts]
+            if all(isinstance(v,(tuple,list)) and len(v)==2 for v in ranges):
+                try:
+                    bounds=[[float(x) for x in v] for v in ranges]
+                    if all(math.isfinite(lo) and math.isfinite(hi)
+                           and 0<=lo<=hi for lo,hi in bounds):
+                        aggregate['range_tc_ha']=[
+                            sum(lo for lo,_ in bounds),
+                            sum(hi for _,hi in bounds),
+                        ]
+                        aggregate['uncertainty_kind']=(
+                            'Envelope conservador dos intervalos marginais; '
+                            'NÃO é IC95% conjunto nem inclui covariância/transferência'
+                        )
+                except (TypeError, ValueError):
+                    pass
+            aggregate['method']=(
+                'Soma de estoques DIRETOS de madeira morta caída e em pé, '
+                'sem sobreposição. '+str(common.get('method') or '')
+            )
+            for name,_ in necro_parts:
+                del regional[name]
+            regional['Necromassa aérea']=aggregate
+        else:
+            # Reject ambiguous combinations and invalid values rather than
+            # silently allowing the reporting dictionary to overwrite a pool.
+            for name,_ in necro_parts:
+                del regional[name]
+    for raw_name,c in regional.items():
+        key=next((k for k in COMPARTMENTS if normalize(raw_name).startswith(normalize(k))),None)
+        if key is None:continue
+        value=c.get('mean_tc_ha')
+        if value is None and c.get('mean_dry_mg_ha') is not None:value=float(c['mean_dry_mg_ha'])*.47
+        rows.append({'parametro':key,'tc':value,'origem':c.get('origin','INVENTARIO_REFERENCIA'),
+                     'fonte':c.get('source'),'metodo':c.get('method'),'obs':c.get('uncertainty_kind'),
+                     'include_in_total':c.get('include_in_total',True),
+                     'range_tc_ha':c.get('range_tc_ha'),'range_dry_mg_ha':c.get('range_dry_mg_ha')})
+    soil={}
+    try:
+        soil=soil_estimator(aoi) or {};top=soil.get('0–100 cm')
+        if top and top.get('tc_ha') is not None:
+            rows.append({'parametro':'Solo 0–100 cm','tc':float(top['tc_ha']),'origem':'MAPEAMENTO','fonte':'Embrapa Solos/PronaSolos',
+                         'metodo':'Estoque cumulativo 0–100 cm; perfis sobrepostos não somados',
+                         'obs':'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
+                         'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha')})
+    except Exception:pass
+    secondary_audit=None
+    if inventory_evidence is not None:
+        # Explicit, licensed class-specific records only. No implicit statewide
+        # means, fabricated pixels or unverified remote data are ever loaded.
+        from secondary_carbon_adapter import secondary_native_components
+        candidates=(inventory_evidence(aoi,biome,physiognomy)
+                    if callable(inventory_evidence) else inventory_evidence)
+        extra=secondary_native_components(candidates,biome=biome,physiognomy=physiognomy)
+        secondary_audit=extra['audit']
+        for candidate in extra['components']:
+            # Preserve every existing measured/SAR result. Only fill missing
+            # numeric stocks and do not add duplicate compartment totals.
+            name=candidate['parametro']
+            existing=next((row for row in rows if row.get('parametro')==name),None)
+            if existing is None:
+                rows.append(candidate)
+            elif existing.get('tc') is None:
+                rows[rows.index(existing)]=candidate
+    return {'components':rows,'secondary_evidence_audit':secondary_audit,
+            'soil_profiles':soil,'sar_audit':sar.get('audit'), 'error':sar.get('error'),
+            'sar_details':{k:sar[k] for k in ('status','data_origin','source','sensor','paths','stats','height_mean_m','height_interpretation','sar_validation_metrics','agb_blocker','message','reason') if k in sar}}

@@ -1,0 +1,89 @@
+{
+  "description": "Official IFN raw source registry; citations and downloads do NOT establish scientific validation",
+  "sources": [
+    {
+      "id": "ifn_serapilheira_para_retificada_2025",
+      "url": "https://dados.florestal.gov.br/pt_BR/dataset/97ab0c26-c5c7-421c-8fb7-e4dab47d35ea/resource/d7cc4797-26d7-4efa-9f1f-fc12a46692fc/download/ifn_serapilheira_para_disp-set2025_retificado.csv",
+      "license": "Creative Commons Attribution (dataset portal)",
+      "role": "real field litter data; corrected October 2025; inferential validation pending",
+      "observed_measurement": "litter_layer_depth_not_dry_mass",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Profundidade"
+      ]
+    },
+    {
+      "id": "ifn_madeira_caida_para_2025",
+      "url": "https://dados.florestal.gov.br/pt_BR/dataset/be526045-c776-4f69-a4ce-53ffdb96e38d/resource/d797c70e-7ef2-431f-97e7-7a46f328ce83/download/ifn_madeira-caida_para_disp-set2025.xlsx",
+      "license": "Creative Commons Attribution (dataset portal)",
+      "role": "real downed woody debris inventory data; conversion and uncertainty validation pending",
+      "observed_measurement": "downed_wood_diameter_and_decay_not_stock",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Ausen_necro",
+        "diam",
+        "decomp_nivel"
+      ]
+    },
+    {
+      "id": "ifn_painel_necromassa_t_ha_2026",
+      "observed_measurement": "IFN-derived necromass biomass tonnes per hectare, not validated tC/ha",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "necromassa_t_por_ha"
+      ],
+      "role": "IFN/SFB panel necromass by sampling unit; fitofisionomia and transfer validation pending",
+      "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/f5902766-14e3-46b8-bdc4-99bc09693161/download/dadosabertos_dadosnecromassa_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+      "license": "Creative Commons Attribution (official SFB dataset portal)"
+    },
+    {
+      "id": "ifn_painel_biomassa_2026",
+      "observed_measurement": "IFN-derived tree biomass data; model-based values not independent SAR validation",
+      "expected_columns": [],
+      "role": "IFN/SFB panel biomass; per-tree/plot schema and physiognomic compatibility to inspect",
+      "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/06203c8a-c13e-498c-8804-f32e991c17ba/download/dadosabertos_dadosbiomassa_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+      "license": "Creative Commons Attribution (official SFB dataset portal)"
+    },
+    {
+      "id": "ifn_painel_arvores_mortas_2026",
+      "observed_measurement": "IFN-derived standing dead tree records; carbon stock and units unverified",
+      "expected_columns": [],
+      "role": "IFN/SFB panel standing dead trees; schema and biomass conversion to inspect",
+      "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/979419d0-96b2-411f-baec-3759c61f09ce/download/dadosabertos_dadosarvoresmortas_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+      "license": "Creative Commons Attribution (official SFB dataset portal)"
+    },
+    {
+      "id": "ifn_painel_equacoes_2026",
+      "observed_measurement": "published allometric equation registry; no measured stock",
+      "expected_columns": [
+        "bioma",
+        "fito",
+        "equacao",
+        "compartimento"
+      ],
+      "role": "IFN/SFB documented allometric equations and fitophysiognomy; inspect domains and transfer errors",
+      "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/a209cbbe-1dd6-4217-8662-658ed1e7e1e6/download/dadosabertos_equacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+      "license": "Creative Commons Attribution (official SFB dataset portal)"
+    },
+    {
+      "id": "ifn_painel_equivalencia_tost_2026",
+      "url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/a7396a8a-1b44-464d-bb90-6f74a2780e9c/download/dadosabertos_testeequacoes_painelbiomassacarbono_snif_fonte_ifn_sfb.csv",
+      "license": "Creative Commons Attribution (official SFB dataset portal)",
+      "role": "Official Regression-based TOST equivalence results; portal MIME advertises XLSX but actual response failed ZIP magic check; retry as CSV without scientific validation",
+      "observed_measurement": "statistical_equivalence_of_allometric_equations_not_field_stock",
+      "expected_columns": [
+        "bioma",
+        "tipologia",
+        "equacao_1",
+        "equacao_2",
+        "equivalente"
+      ]
+    }
+  ]
+}

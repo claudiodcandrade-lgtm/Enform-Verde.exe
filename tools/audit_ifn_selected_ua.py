@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Audit IFN unit-level estimates without pseudoreplicating allometric equations.
+
+A descriptive stratified summary of selected-UA measurements is NOT an AOI
+confidence interval, SAR validation or independent spatial transfer validation.
+"""
+import argparse
+import csv
+import hashlib
+import json
+import math
+import statistics
+import unicodedata
+from collections import defaultdict
+from pathlib import Path
+
+from tools.ifn_state_identity import canonical_state
+
+TARGET_BIOMES = frozenset(("Amazônia", "Caatinga", "Cerrado", "Mata Atlântica", "Pantanal"))
+
+REQUIRED = ("bioma", "uf", "ua", "fitofisionomia_ibge", "equacao_selecionada",
+            "agb_mg_ha", "equation_choice_audited")
+
+def _physical_ua_identity(value):
+    """Normalize typographic aliases; not proof of geospatial independence."""
+    return unicodedata.normalize("NFKC", value.strip()).casefold()
+
+
+def summarize(path, expected_sha256):
+    raw = Path(path).read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest.lower() != expected_sha256.lower():
+        raise ValueError("source SHA256 mismatch")
+    strata = defaultdict(list)
+    seen = set()
+    with Path(path).open(encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream)
+        if not reader.fieldnames or any(k not in reader.fieldnames for k in REQUIRED):
+            raise ValueError("missing obligatory selected-UA fields")
+        headers = [name.strip() for name in reader.fieldnames]
+        if any(not name for name in headers):
+            raise ValueError("blank CSV header fields; ambiguous observation columns")
+        if len(set(headers)) != len(headers):
+            raise ValueError("duplicate CSV header fields; ambiguous observation columns")
+        for line, row in enumerate(reader, 2):
+            if None in row:
+                raise ValueError(f"row {line}: unexpected extra CSV columns")
+            bioma, raw_uf, ua, fito, eq = (str(row[k] or "").strip() for k in REQUIRED[:5])
+            if not all((bioma, raw_uf, ua, fito, eq)):
+                raise ValueError(f"row {line}: missing sampling domain")
+            if bioma not in TARGET_BIOMES:
+                raise ValueError(f"row {line}: unrecognized IFN biome {bioma!r}")
+            try:
+                uf = canonical_state(raw_uf)
+            except ValueError as exc:
+                raise ValueError(f"row {line}: invalid UF identity: {raw_uf!r}") from exc
+            if str(row["equation_choice_audited"]).strip().lower() != "true":
+                raise ValueError(f"row {line}: equation selection not audited")
+            # A physical IFN unit is identified by (UF, UA), not by the
+            # biome label assigned to it. A conflicting biome must never
+            # turn one unit into two independent observations.
+            key = (uf, _physical_ua_identity(ua))
+            if key in seen:
+                raise ValueError(f"row {line}: repeated sampling UA or conflicting biome; equations are not independent units")
+            seen.add(key)
+            try:
+                value = float(row["agb_mg_ha"])
+            except (ValueError, TypeError) as exc:
+                raise ValueError(f"row {line}: invalid AGB") from exc
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"row {line}: AGB must be finite and nonnegative")
+            strata[(bioma, uf, fito)].append(value)
+    if not strata:
+        raise ValueError("no units")
+    results = []
+    for (bioma, uf, fito), values in sorted(strata.items()):
+        n = len(values)
+        avg = statistics.mean(values)
+        sample_sd = statistics.stdev(values) if n > 1 else None
+        results.append({"biome": bioma, "state": uf, "fitofisionomia_ibge": fito,
+                        "independent_ua_count": n, "mean_agb_mg_ha": avg,
+                        "sample_sd_agb_mg_ha": sample_sd,
+                        "descriptive_se_mg_ha": sample_sd / math.sqrt(n) if n > 1 else None,
+                        "aoi_ci95_validated": False,
+                        "scientifically_validated": False})
+    return {"source_sha256": digest, "sampling_unit": "IFN UA", "strata": results,
+            "warning": "Unweighted descriptive UA summary only. Not an AOI estimate or validated CI95; "
+                       "requires sampling-design weights, spatial crosswalk and independent transfer validation."}
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv", required=True)
+    parser.add_argument("--sha256", required=True)
+    parser.add_argument("--report", required=True)
+    args = parser.parse_args()
+    result = summarize(args.csv, args.sha256)
+    Path(args.report).write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({"strata": len(result["strata"]), "aoi_ci95_validated": False}))
+
+if __name__ == "__main__":
+    main()

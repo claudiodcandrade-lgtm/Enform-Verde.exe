@@ -1,0 +1,309 @@
+{
+  "source_agency": "IBGE",
+  "source_product": "Produção Agrícola Municipal (PAM)",
+  "sidra_table": "5457",
+  "territorial_level": "N9 — Microrregião Geográfica (classificação antiga)",
+  "variables": {
+    "112": "Rendimento médio da produção",
+    "214": "Quantidade produzida",
+    "216": "Área colhida"
+  },
+  "period": [
+    2015,
+    2024
+  ],
+  "retrieved_at_utc": "2026-10-24T20:16:16.985478+00:00",
+  "license": "IBGE public statistics; verify current IBGE terms before redistribution in commercial products",
+  "output": "pam_microregion_yield_2015_2024.csv.gz",
+  "sha256": "fe35d64f3c170cb04420bce9fa2065d2074d39cc59b3c1a07537df9d29d2db7e",
+  "row_count": 133920,
+  "products": {
+    "arroz_grao": {
+      "product_name": "Arroz (em casca)",
+      "product_code": "40102",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40102",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 3448,
+        "median_absolute_relative_difference": 4.969692889005769e-05,
+        "within_2_percent": 3448,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 2132,
+        "112": 2132,
+        "214": 2132
+      }
+    },
+    "cafe_total": {
+      "product_name": "Café (em grão)",
+      "product_code": "40139",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40139",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 2415,
+        "median_absolute_relative_difference": 0.0001449755753590161,
+        "within_2_percent": 2415,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 3165,
+        "112": 3165,
+        "214": 3165
+      }
+    },
+    "cana_acucar": {
+      "product_name": "Cana-de-açúcar",
+      "product_code": "40106",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40106",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 4682,
+        "median_absolute_relative_difference": 4.045366763922897e-06,
+        "within_2_percent": 4682,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 898,
+        "112": 898,
+        "214": 898
+      }
+    },
+    "feijao_grao": {
+      "product_name": "Feijão (em grão)",
+      "product_code": "40112",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40112",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 5249,
+        "median_absolute_relative_difference": 0.00024171548935880043,
+        "within_2_percent": 5248,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 331,
+        "112": 331,
+        "214": 331
+      }
+    },
+    "laranja": {
+      "product_name": "Laranja",
+      "product_code": "40151",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40151",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 4394,
+        "median_absolute_relative_difference": 1.0370340740761106e-05,
+        "within_2_percent": 4394,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 1186,
+        "112": 1186,
+        "214": 1186
+      }
+    },
+    "milho_grao": {
+      "product_name": "Milho (em grão)",
+      "product_code": "40122",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40122",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 5334,
+        "median_absolute_relative_difference": 6.961808834623674e-05,
+        "within_2_percent": 5331,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 246,
+        "112": 246,
+        "214": 246
+      }
+    },
+    "soja_grao": {
+      "product_name": "Soja (em grão)",
+      "product_code": "40124",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40124",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 2951,
+        "median_absolute_relative_difference": 7.181571243302515e-05,
+        "within_2_percent": 2951,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 2629,
+        "112": 2629,
+        "214": 2629
+      }
+    },
+    "sorgo_grao": {
+      "product_name": "Sorgo (em grão)",
+      "product_code": "40125",
+      "source_url": "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/40125",
+      "rows": 16740,
+      "microregions": 558,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "rows_by_variable": {
+        "216": 5580,
+        "112": 5580,
+        "214": 5580
+      },
+      "yield_reconciliation": {
+        "numeric_triplets": 1538,
+        "median_absolute_relative_difference": 4.927483862487235e-05,
+        "within_2_percent": 1538,
+        "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
+      },
+      "suppressed_or_missing_by_variable": {
+        "216": 4042,
+        "112": 4042,
+        "214": 4042
+      }
+    }
+  },
+  "quality_rules": [
+    "Suppressed and missing SIDRA markers are retained as nonnumeric, never zero.",
+    "Production and harvested area remain separate; yield reconciliation must use same product, year and territory.",
+    "N9 is the pre-2017 microregion geography; do not join to later municipal boundaries without a documented crosswalk."
+  ],
+  "reconciliation_note": "For numeric production and area, compare published kg/ha yield with (production tonnes × 1000) / harvested area hectares; keep official yield and discrepancy separately.",
+  "recovery_note": "Arquivo recuperado do artefato de CI; gzip descompactado e recomprimido de forma determinística. O checksum foi recalculado sobre os bytes locais; linhas e esquema foram preservados."
+}

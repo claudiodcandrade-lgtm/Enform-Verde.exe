@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Recompute independent spatial-holdout error metrics from observed-vs-predicted CSV.
+
+This is NOT a model and cannot create scientific observations. Input must contain
+real measured plot values and genuinely independently predicted held-out plots.
+"""
+import argparse
+import csv
+import hashlib
+import json
+import math
+import unicodedata
+from pathlib import Path
+
+REQUIRED = ("observed", "predicted", "lower", "upper", "partition", "spatial_unit")
+
+
+def _spatial_identity(value):
+    """Conservatively collapse Unicode/case aliases before split checks.
+
+    This is a data-integrity safeguard, not proof of geographic independence.
+    """
+    return unicodedata.normalize("NFKC", value.strip()).casefold()
+
+def validate_csv(path, dataset_sha256, unit):
+    raw = Path(path).read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest.lower() != dataset_sha256.lower():
+        raise ValueError("source dataset sha256 mismatch")
+    if not unit or not isinstance(unit, str):
+        raise ValueError("measurement unit required")
+    with Path(path).open(encoding="utf-8-sig", newline="") as stream:
+        rows = csv.DictReader(stream)
+        if not rows.fieldnames or any(field not in rows.fieldnames for field in REQUIRED):
+            raise ValueError("missing mandatory measured/predicted/interval/partition columns")
+        if len(rows.fieldnames) != len(set(rows.fieldnames)) or any(
+                not field or not field.strip() for field in rows.fieldnames):
+            raise ValueError("duplicate or blank CSV headers")
+        records = list(rows)
+        if any(None in row for row in records):
+            raise ValueError("unexpected extra CSV columns")
+    if not records:
+        raise ValueError("no observations")
+    partitions = {"train": set(), "test": set()}
+    test = []
+    test_groups = {}  # Independent test units, not individual plot rows.
+    for number, row in enumerate(records, 2):
+        p = str(row["partition"]).strip().lower()
+        if p not in partitions:
+            raise ValueError(f"row {number}: partition must be train or test")
+        raw_group = str(row["spatial_unit"] or "").strip()
+        if not raw_group:
+            raise ValueError(f"row {number}: spatial_unit missing")
+        # UA_001 / ua_001 and Unicode-width variants must not masquerade as
+        # independent train/test spatial units or independent test clusters.
+        partitions[p].add(_spatial_identity(raw_group))
+        try:
+            values = tuple(float(row[name]) for name in ("observed", "predicted", "lower", "upper"))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"row {number}: values not numeric") from exc
+        if not all(math.isfinite(x) for x in values):
+            raise ValueError(f"row {number}: nonfinite measurement")
+        observed, predicted, lower, upper = values
+        if lower > upper:
+            raise ValueError(f"row {number}: invalid prediction interval")
+        if p == "test":
+            test.append(values)
+            test_groups.setdefault(_spatial_identity(raw_group), []).append(values)
+    if not partitions["train"] or not partitions["test"] or partitions["train"] & partitions["test"]:
+        raise ValueError("training and test spatial units must be nonempty and disjoint")
+    if len(test) < 2:
+        raise ValueError("at least two independent test observations required")
+    if len(partitions["test"]) < 2:
+        raise ValueError("at least two distinct test spatial units required; repeated plots in one unit are not independent")
+    n = len(test)
+    # Multiple observed plots in one spatial holdout unit are correlated:
+    # count independent *units*, never raw rows, as the validation sample.
+    independent_units = len(partitions["test"])
+    errors = [predicted - observed for observed, predicted, _, _ in test]
+    rmse = math.sqrt(sum(error * error for error in errors) / n)
+    mae = sum(abs(error) for error in errors) / n
+    bias = sum(errors) / n
+    coverage = sum(lower <= observed <= upper for observed, _, lower, upper in test) / n
+    measured = [row[0] for row in test]
+    mean = sum(measured) / n
+    total = sum((x - mean) ** 2 for x in measured)
+    r2 = None if total == 0 else 1 - sum(e * e for e in errors) / total
+    # Descriptive diagnostics that weight each held-out spatial unit equally.
+    # Within each unit, observations share that unit's total weight. These
+    # quantities do NOT supply cluster-robust confidence intervals or prove
+    # that the held-out data were collected independently.
+    group_metrics = []
+    for group_rows in test_groups.values():
+        group_n = len(group_rows)
+        group_errors = [pred - obs for obs, pred, _, _ in group_rows]
+        group_metrics.append((
+            sum(error * error for error in group_errors) / group_n,
+            sum(abs(error) for error in group_errors) / group_n,
+            sum(group_errors) / group_n,
+            sum(low <= obs <= high for obs, _, low, high in group_rows) / group_n,
+        ))
+    cluster_rmse = math.sqrt(sum(item[0] for item in group_metrics) / independent_units)
+    cluster_mae = sum(item[1] for item in group_metrics) / independent_units
+    cluster_bias = sum(item[2] for item in group_metrics) / independent_units
+    cluster_coverage = sum(item[3] for item in group_metrics) / independent_units
+    return {
+        "dataset_sha256": digest,
+        "independent_sample_count": independent_units,
+        "test_observation_count": n,
+        "rmse": rmse, "mae": mae, "bias": bias, "r2": r2,
+        "interval_coverage": coverage, "interval_n_nominal": n,
+        "cluster_equal_weight_rmse": cluster_rmse,
+        "cluster_equal_weight_mae": cluster_mae,
+        "cluster_equal_weight_bias": cluster_bias,
+        "cluster_equal_weight_interval_coverage": cluster_coverage,
+        "cluster_metric_weighting": "each independent test spatial unit weighted equally; descriptive only, no cluster-robust CI",
+        "interval_independent_spatial_unit_count": independent_units,
+        "metric_weighting": "per-observation descriptive metrics; repeated rows within a spatial unit are not independent",
+        "train_partition": "train (independent spatial units)",
+        "test_partition": "test (independent spatial units)",
+        "validation_design": "externally supplied independent spatial holdout; spatial-unit disjointness checked",
+        "spatial_unit_identity_normalization": "Unicode NFKC, strip and casefold; does not establish geographic independence",
+        "train_spatial_units": len(partitions["train"]),
+        "test_spatial_units": len(partitions["test"]),
+        "unit": unit,
+        "method_limitations": (
+            "CSV values and independence are supplied by the producer; this program "
+            "verifies partition disjointness but not whether predictions were fitted "
+            "without access to held-out measurements or whether field data are real. "
+            "RMSE, MAE, bias, R2 and interval coverage are observation-weighted. "
+            "Additional equal-spatial-unit metrics are descriptive; they do not "
+            "correct cluster correlation for inference, and no confidence interval is inferred."
+        ),
+        "interval_kind": "empirical coverage of supplied per-observation intervals; not AOI IC95%"
+    }
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv", required=True)
+    parser.add_argument("--dataset-sha256", required=True)
+    parser.add_argument("--unit", required=True)
+    parser.add_argument("--report", required=True)
+    args = parser.parse_args()
+    result = validate_csv(args.csv, args.dataset_sha256, args.unit)
+    Path(args.report).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"independent_sample_count": result["independent_sample_count"],
+                      "rmse": result["rmse"], "interval_coverage": result["interval_coverage"],
+                      "report": args.report}, ensure_ascii=False))
+
+if __name__ == "__main__":
+    main()
