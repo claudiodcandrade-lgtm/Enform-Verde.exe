@@ -70,16 +70,16 @@ class SpatialValidationTests(unittest.TestCase):
         # Changing an interval cannot turn the same measured/predicted pair
         # within one physical test unit into a new independent observation.
         with self.assertRaisesRegex(ValueError, "duplicate held-out observation"):
-            self.validate(VALID + "2,3,0,9,test,B\\n")
+            self.validate(VALID + "2,3,0,9,test,B\n")
 
     def test_reject_duplicate_measured_pair_with_float_and_unicode_alias(self):
         with self.assertRaisesRegex(ValueError, "duplicate held-out observation"):
-            self.validate(VALID + "2.0,3.0,0,9,test,ｂ\\n")
+            self.validate(VALID + "2.0,3.0,0,9,test,ｂ\n")
 
     def test_distinct_predicted_pairs_within_unit_remain_descriptive(self):
         # Distinct pairs in the same unit are permitted, but not treated as
         # additional independent spatial units.
-        result = self.validate(VALID + "2,4,1,5,test,B\\n")
+        result = self.validate(VALID + "2,4,1,5,test,B\n")
         self.assertEqual(result["independent_sample_count"], 2)
         self.assertEqual(result["test_observation_count"], 3)
 
