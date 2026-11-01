@@ -41,18 +41,33 @@ def _profile_csv(path, expected_columns=()):
         if any(column not in header for column in expected_columns):
             raise ValueError("CSV missing expected observational columns")
         counts, biomes, states, units = 0, Counter(), Counter(), set()
+        missing_biome_rows = missing_state_rows = unresolved_ua_identity_rows = 0
         ua_by_biome, typology_by_ua, strata_ua, equations_by_ua = (
             defaultdict(set), defaultdict(set), defaultdict(set), defaultdict(set))
         for row in reader:
             if not any(value for value in row.values()):
                 continue
             counts += 1
+            # Official CSV exports can have empty cells parsed as None.
+            # Never sort mixed None/string keys or call a missing UF a plot.
+            biome = str(row.get("bioma") or "").strip()
+            state = str(row.get("uf") or "").strip()
+            ua = str(row.get("ua") or "").strip()
             if "bioma" in row:
-                biomes[row["bioma"]] += 1
+                if biome:
+                    biomes[biome] += 1
+                else:
+                    missing_biome_rows += 1
             if "uf" in row:
-                states[row["uf"]] += 1
-            if row.get("ua"):
-                key = (row.get("bioma", ""), row.get("uf", ""), row["ua"])
+                if state:
+                    states[state] += 1
+                else:
+                    missing_state_rows += 1
+            if ua:
+                if not biome or not state:
+                    unresolved_ua_identity_rows += 1
+                    continue
+                key = (biome, state, ua)
                 units.add(key)
                 ua_by_biome[key[0]].add(key)
                 if row.get("tipologia_da_vegetacao"):
@@ -67,6 +82,9 @@ def _profile_csv(path, expected_columns=()):
         raise ValueError("CSV has no observation rows")
     return {"csv_encoding": encoding, "csv_header": header[:100],
             "csv_data_rows": counts, "biome_rows": dict(sorted(biomes.items())),
+            "missing_biome_rows": missing_biome_rows,
+            "missing_state_rows": missing_state_rows,
+            "unresolved_ua_identity_rows": unresolved_ua_identity_rows,
             "state_rows": dict(sorted(states.items())), "unique_ua": len(units),
             "unique_ua_by_biome": {b: len(v) for b, v in sorted(ua_by_biome.items())},
             "strata_ua_counts": [
@@ -120,27 +138,39 @@ def _profile_xlsx(path, expected_columns=()):
         biomes, states, units = Counter(), Counter(), set()
         ua_by_biome = defaultdict(set)
         count = 0
+        missing_biome_rows = missing_state_rows = unresolved_ua_identity_rows = 0
         for row in rows[1:]:
             values = cells(row)
             if not any(values.values()):
                 continue
             count += 1
+            biome = str(values.get(biome_col, "") if biome_col else "").strip()
+            state = str(values.get(state_col, "") if state_col else "").strip()
+            ua = str(values.get(ua_col, "") if ua_col else "").strip()
             if biome_col:
-                biomes[values.get(biome_col, "")] += 1
+                if biome:
+                    biomes[biome] += 1
+                else:
+                    missing_biome_rows += 1
             if state_col:
-                states[values.get(state_col, "")] += 1
-            if ua_col and values.get(ua_col):
-                # UA identifiers are not necessarily nationally unique. Keep
-                # the same (biome, UF, UA) sampling-unit key as CSV imports;
-                # multiple model/equation rows never create new plots.
-                key = (values.get(biome_col, "") if biome_col else "",
-                       values.get(state_col, "") if state_col else "",
-                       values[ua_col])
+                if state:
+                    states[state] += 1
+                else:
+                    missing_state_rows += 1
+            if ua:
+                if not biome or not state:
+                    unresolved_ua_identity_rows += 1
+                    continue
+                # Missing biome/UF cannot establish a distinct physical UA.
+                key = (biome, state, ua)
                 units.add(key)
                 ua_by_biome[key[0]].add(key)
         if count == 0:
             raise ValueError("XLSX has no observation rows")
         return {"xlsx_header": columns[:100], "xlsx_data_rows": count,
+                "missing_biome_rows": missing_biome_rows,
+                "missing_state_rows": missing_state_rows,
+                "unresolved_ua_identity_rows": unresolved_ua_identity_rows,
                 "biome_rows": dict(sorted(biomes.items())),
                 "state_rows": dict(sorted(states.items())), "unique_ua": len(units),
                 "unique_ua_by_biome": {b: len(v) for b, v in sorted(ua_by_biome.items())}}

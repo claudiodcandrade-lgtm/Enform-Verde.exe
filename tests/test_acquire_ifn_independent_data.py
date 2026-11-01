@@ -37,6 +37,27 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertEqual(item["unique_ua"], 1)
             self.assertFalse(item["carbon_stock_ready"])
 
+    def test_missing_biome_or_state_is_counted_but_not_an_independent_ua(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_missing", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            raw = ("bioma;uf;ua;equacoes\\n"
+                   "Cerrado;GO;UA_1;AGB_Chave\\n"
+                   "Cerrado;;UA_2;AGB_Chave\\n"
+                   ";GO;UA_3;AGB_Chave\\n"
+                   "Cerrado;GO;;AGB_Chave\\n").encode("utf-8")
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["csv_data_rows"], 4)
+            self.assertEqual(item["missing_state_rows"], 1)
+            self.assertEqual(item["missing_biome_rows"], 1)
+            self.assertEqual(item["unresolved_ua_identity_rows"], 2)
+            self.assertEqual(item["unique_ua"], 1)
+            self.assertEqual(item["state_rows"], {"GO": 3})
+            self.assertFalse(result["scientific_validation"])
+
     def test_multiple_equations_do_not_inflate_primary_sampling_units(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_models", "url": URL,
@@ -121,6 +142,8 @@ class IFNAcquisitionTests(unittest.TestCase):
                 ("Cerrado", "GO", "UA_01"),  # second equation, same UA
                 ("Amazônia", "PA", "UA_01"),
                 ("Cerrado", "MG", "UA_01"),
+                ("Cerrado", "", "UA_02"),
+                ("", "GO", "UA_03"),
             ]
             rows = []
             for i, values_row in enumerate(values, 1):
@@ -141,7 +164,10 @@ class IFNAcquisitionTests(unittest.TestCase):
                 opener=lambda request, timeout: io.BytesIO(buffer.getvalue()))
             item = result["resources"][0]
             self.assertEqual(item["status"], "downloaded_unvalidated")
-            self.assertEqual(item["xlsx_data_rows"], 4)
+            self.assertEqual(item["xlsx_data_rows"], 6)
+            self.assertEqual(item["missing_biome_rows"], 1)
+            self.assertEqual(item["missing_state_rows"], 1)
+            self.assertEqual(item["unresolved_ua_identity_rows"], 2)
             self.assertEqual(item["unique_ua"], 3)
             self.assertEqual(item["unique_ua_by_biome"],
                              {"Amazônia": 1, "Cerrado": 2})
