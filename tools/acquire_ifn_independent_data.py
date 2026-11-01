@@ -134,14 +134,18 @@ def _profile_xlsx(path, expected_columns=()):
                 return shared[int(value.text)]
             return value.text or ""
         def cells(row):
-            # Never silently overwrite duplicate XML cells or accept malformed
-            # references: either can corrupt observational values without
-            # changing the apparent workbook schema.
+            # A cell assigned to a different XML row or calculated by a
+            # spreadsheet formula cannot be accepted as a primary observation.
+            row_number = row.get("r", "")
+            if not re.fullmatch(r"[1-9][0-9]*", row_number):
+                raise ValueError("XLSX invalid row reference")
             result = {}
             for cell in row.findall("m:c", namespace):
-                match = re.fullmatch(r"([A-Z]+)[1-9][0-9]*", cell.get("r", ""))
-                if match is None:
-                    raise ValueError("XLSX invalid cell reference")
+                match = re.fullmatch(r"([A-Z]+)([1-9][0-9]*)", cell.get("r", ""))
+                if match is None or match.group(2) != row_number:
+                    raise ValueError("XLSX invalid or mismatched cell reference")
+                if cell.find("m:f", namespace) is not None:
+                    raise ValueError("XLSX formula cell is not a primary observation")
                 column = match.group(1)
                 if column in result:
                     raise ValueError("XLSX duplicate cell column")
