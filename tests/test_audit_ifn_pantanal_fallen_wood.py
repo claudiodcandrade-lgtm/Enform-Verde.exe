@@ -13,11 +13,12 @@ FIELDS = ["bioma", "uf", "mun", "lon_pc", "lat_pc", "ua", "data",
 LITTER_HEADER = "bioma;uf;ua;mun;lon_pc;lat_pc;data;Uso_terra_PC;Ponto;Profundidade\n"
 
 
-def xlsx(records):
+def xlsx(records, row_number_overrides=None):
     ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     root = ET.Element("worksheet", xmlns=ns)
     data = ET.SubElement(root, "sheetData")
     for n, record in enumerate([FIELDS] + records, 1):
+        n = (row_number_overrides or {}).get(n, n)
         row = ET.SubElement(data, "row", r=str(n))
         for i, value in enumerate(record):
             col = chr(65 + i)
@@ -137,6 +138,26 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_ua_with_mixed_flags_within_same_nonblank_transect"], 1)
         self.assertEqual(report["wood_ua_with_mixed_flags_and_blank_transect"], 0)
         self.assertFalse(report["scientific_validation"])
+
+    def test_duplicate_xml_row_reference_is_rejected(self):
+        litter, wood, _ = fixture()
+        sid = next(k for k, v in WOOD_IDS.items() if v == "MS")
+        record = ["Pantanal", "Mato Grosso do Sul", "Mun", "-57.5",
+                  "-17.4", "MS_1", "2018", "14", "S", "", "", "", "", ""]
+        wood[sid] = xlsx([record, record], row_number_overrides={3: 2})
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        with self.assertRaisesRegex(ValueError, "non-increasing IFN XLSX row"):
+            audit(litter, wood, sha)
+
+    def test_reordered_xml_row_reference_is_rejected(self):
+        litter, wood, _ = fixture()
+        sid = next(k for k, v in WOOD_IDS.items() if v == "MS")
+        record = ["Pantanal", "Mato Grosso do Sul", "Mun", "-57.5",
+                  "-17.4", "MS_1", "2018", "14", "S", "", "", "", "", ""]
+        wood[sid] = xlsx([record, record], row_number_overrides={2: 3, 3: 2})
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        with self.assertRaisesRegex(ValueError, "non-increasing IFN XLSX row"):
+            audit(litter, wood, sha)
 
 if __name__ == "__main__":
     unittest.main()
