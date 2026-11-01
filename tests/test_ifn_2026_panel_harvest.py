@@ -208,6 +208,14 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"], {})
         self.assertEqual(report["ua_rows_missing_biome_crosschecked_for_coordinates"], 1)
 
+    def test_biome_less_nonspatial_row_is_not_counted_as_coordinate_crosscheck(self):
+        body = ("bioma;uf;ua\n"
+                "Cerrado;GO;UA706\n"
+                ";GO;ua706\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["ua_rows_missing_biome_crosschecked_for_coordinates"], 0)
+
     def test_xlsx_missing_biome_row_with_conflicting_centroid_quarantines(self):
         from openpyxl import Workbook
         with tempfile.TemporaryDirectory() as tmp:

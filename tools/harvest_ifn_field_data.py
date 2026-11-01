@@ -181,9 +181,9 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
                 unique_ua.setdefault(biome, set()).add(identity)
                 if uf:
                     physical_biomes_by_ua.setdefault(identity, set()).add(biome)
-            elif uf:
-                # Missing biome cannot be silently used as a separate
-                # observation, but its centroid still crosschecks this UA.
+            elif uf and lat_i is not None and lon_i is not None:
+                # Count crosschecks only where coordinate columns actually
+                # exist; a biome-less UA in a nonspatial table is not evidence.
                 unlabeled_ua_rows_crosschecked += 1
             if lat_i is not None and lon_i is not None:
                 try:
