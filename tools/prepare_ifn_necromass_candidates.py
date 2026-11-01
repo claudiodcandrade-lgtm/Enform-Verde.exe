@@ -16,7 +16,8 @@ from collections import Counter, defaultdict
 from functools import lru_cache
 from pathlib import Path
 
-from tools.ifn_state_identity import canonical_state
+from tools.ifn_state_identity import (InvalidUAIdentity, canonical_state, canonical_ua,
+                                      quarantine_ua_alias)
 
 NECRO_FIELDS = {"bioma", "uf", "ua", "n_transectos", "cod_classe_uso_da_terra", "necromassa_t_por_ha"}
 BIOMASS_FIELDS = {"bioma", "uf", "ua", "sanidade", "classe_uso_da_terra", "tipologia_da_vegetacao", "equacoes"}
@@ -77,7 +78,7 @@ def _canonical_uf(value):
 
 def _key(row):
     uf = _canonical_uf(row.get("uf"))
-    ua = _identity(row.get("ua"))
+    ua = canonical_ua(row.get("ua"))
     return (uf, ua) if uf and ua else None
 
 
@@ -100,10 +101,21 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
                                    "sanidade": set(), "coords": set(), "key_equation": False})
     biomass_rows = 0
     excluded = Counter()
+    quarantined_ua_aliases = set()
     for row in _rows(biomass_raw, BIOMASS_FIELDS, "biomass"):
         biomass_rows += 1
         try:
             key = _key(row)
+        except InvalidUAIdentity:
+            try:
+                uf = _canonical_uf(row.get("uf"))
+            except ValueError:
+                uf = ""
+            alias = quarantine_ua_alias(row.get("ua"))
+            if uf and alias:
+                quarantined_ua_aliases.add((uf, alias))
+            excluded["biomass_invalid_ua_rows"] += 1
+            continue
         except ValueError:
             excluded["biomass_invalid_state_rows"] += 1
             continue
@@ -124,6 +136,16 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
         necromass_rows += 1
         try:
             key = _key(row)
+        except InvalidUAIdentity:
+            try:
+                uf = _canonical_uf(row.get("uf"))
+            except ValueError:
+                uf = ""
+            alias = quarantine_ua_alias(row.get("ua"))
+            if uf and alias:
+                quarantined_ua_aliases.add((uf, alias))
+            excluded["necromass_invalid_ua_rows"] += 1
+            continue
         except ValueError:
             excluded["necromass_invalid_state_rows"] += 1
             continue
@@ -133,6 +155,9 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
         necromass[key].append(row)
     candidates, strata, biome_counts = [], Counter(), Counter()
     for key, records in sorted(necromass.items()):
+        if key in quarantined_ua_aliases:
+            excluded["ambiguous_physical_ua_control_alias"] += 1
+            continue
         if len(records) != 1:
             excluded["duplicate_necromass_physical_ua"] += 1
             continue
@@ -208,6 +233,7 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
         "necromass_rows": necromass_rows, "necromass_unique_physical_ua": len(necromass),
         "biomass_equation_rows": biomass_rows, "biomass_unique_physical_ua": len(biomass),
         "candidate_ua": len(candidates), "candidate_ua_by_biome": dict(sorted(biome_counts.items())),
+        "ua_control_format_aliases_quarantined": len(quarantined_ua_aliases),
         "candidate_strata": [
             {"biome": b, "source_typology": t, "tree_land_class": land, "candidate_ua": n}
             for (b, t, land), n in sorted(strata.items())

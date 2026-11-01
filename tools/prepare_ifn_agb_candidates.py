@@ -15,11 +15,11 @@ import hashlib
 import io
 import json
 import math
-import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from tools.ifn_state_identity import canonical_state
+from tools.ifn_state_identity import (InvalidUAIdentity, canonical_state, canonical_ua,
+                                      quarantine_ua_alias)
 
 TARGET_BIOMES = frozenset(("Amazônia", "Caatinga", "Cerrado", "Mata Atlântica", "Pantanal"))
 NATIVE_CLASSES = frozenset((
@@ -50,7 +50,7 @@ def _number(raw):
 
 def _physical_ua(uf, ua):
     """Canonical physical UA key; Unicode width and case aliases are not independent plots."""
-    return uf, unicodedata.normalize("NFKC", ua.strip()).casefold()
+    return uf, canonical_ua(ua)
 
 
 def prepare(raw, expected_sha256):
@@ -86,6 +86,7 @@ def prepare(raw, expected_sha256):
     # typology across equation rows cannot support a single native stratum.
     source_land_classes_by_ua = defaultdict(set)
     source_typologies_by_ua = defaultdict(set)
+    quarantined_ua_aliases = set()  # Invalid invisible aliases invalidate matching clean UAs.
     counters = Counter()
     total_rows = 0
     chosen_rows = 0
@@ -97,7 +98,7 @@ def prepare(raw, expected_sha256):
         total_rows += 1
         key_equation = str(row["equacoes"]).strip() == "AGB_Chave"
         biome = str(row["bioma"]).strip()
-        ua = str(row["ua"]).strip()
+        ua = str(row["ua"] or "")  # Keep controls until the identity check.
         try:
             uf = canonical_state(row["uf"])
         except ValueError:
@@ -105,10 +106,18 @@ def prepare(raw, expected_sha256):
                 raise
             counters["nonkey_rows_with_invalid_uf_not_crosschecked"] += 1
             continue
+        try:
+            canonical_ua(ua)
+        except InvalidUAIdentity:
+            alias = quarantine_ua_alias(ua)
+            if uf and alias:
+                quarantined_ua_aliases.add((uf, alias))
+            counters["invalid_ua_identifier_rows_quarantined"] += 1
+            continue
         # A missing biome on an alternative equation does NOT erase its
         # physical UA identity. Crosscheck its centroid and vegetation when
         # UF+UA are known, while never treating an absent biome as a label.
-        if uf and ua:
+        if uf and ua.strip():
             identity = _physical_ua(uf, ua)
             if biome:
                 source_biomes_by_ua[identity].add(biome)
@@ -139,7 +148,7 @@ def prepare(raw, expected_sha256):
         if not key_equation:
             continue
         chosen_rows += 1
-        if not biome or not uf or not ua:
+        if not biome or not uf or not ua.strip():
             raise ValueError("AGB_Chave row has incomplete sampling-unit identity")
         grouped[(biome, uf, _physical_ua(uf, ua)[1])].append(row)
 
@@ -150,6 +159,9 @@ def prepare(raw, expected_sha256):
     # merely because conflicting source rows label it with different biomes.
     # Exclude every occurrence until the primary field identity is audited.
     for (biome, uf, ua), rows in sorted(grouped.items()):
+        if (uf, ua) in quarantined_ua_aliases:
+            counters["excluded_ua_with_control_format_alias"] += 1
+            continue
         if len(source_biomes_by_ua[(uf, ua)]) > 1:
             counters["excluded_cross_biome_ua_identity_conflict"] += 1
             continue
@@ -231,6 +243,7 @@ def prepare(raw, expected_sha256):
         ),
         "unique_ua_with_agb_chave": len({(uf, ua) for _, uf, ua in grouped}),
         "agb_chave_biome_ua_groups": len(grouped),
+        "ua_control_format_aliases_quarantined": len(quarantined_ua_aliases),
         "candidate_ua": len(candidates),
         "candidate_ua_by_biome": dict(sorted(by_biome.items())),
         "exclusions": dict(sorted(counters.items())),

@@ -111,6 +111,20 @@ class IFNNecromassCandidateTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "incomplete or unsafe"):
                 sources_from_download_audit(audit_path, directory)
 
+    def test_necromass_invisible_ua_alias_quarantines_clean_candidate(self):
+        candidates, report = run([necro(), necro(ua="GO_001" + chr(0x200B))], [bio()])
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["necromass_invalid_ua_rows"], 1)
+        self.assertEqual(report["exclusions"]["ambiguous_physical_ua_control_alias"], 1)
+        self.assertEqual(report["ua_control_format_aliases_quarantined"], 1)
+
+    def test_biomass_invisible_ua_alias_quarantines_clean_candidate(self):
+        candidates, report = run([necro()], [bio(), bio(ua="GO_001" + chr(0x202E), eq="Eq.183")])
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["biomass_invalid_ua_rows"], 1)
+        self.assertEqual(report["exclusions"]["ambiguous_physical_ua_control_alias"], 1)
+        self.assertFalse(report["scientific_validation"])
+
     def test_same_ua_different_states_remains_distinct(self):
         candidates, report = run([necro(ua="UA_1"), necro(uf="Mato Grosso", ua="UA_1")],
                                  [bio(ua="UA_1"), bio(uf="MT", ua="UA_1")])

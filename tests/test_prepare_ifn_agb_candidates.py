@@ -245,6 +245,23 @@ class IFNAGBCandidateTests(unittest.TestCase):
         self.assertEqual(candidates, [])
         self.assertEqual(report["exclusions"]["excluded_cross_equation_coordinate_conflict"], 1)
 
+    def test_invisible_nonkey_alias_quarantines_matching_physical_ua(self):
+        candidates, report = run(
+            record(ua="UA_701"),
+            record(ua="UA_701" + chr(0x200B), eq="Eq.183", lat="-15,86"),
+            record(ua="UA_702"),
+        )
+        self.assertEqual([row["ua"] for row in candidates], ["ua_702"])
+        self.assertEqual(report["exclusions"]["invalid_ua_identifier_rows_quarantined"], 1)
+        self.assertEqual(report["exclusions"]["excluded_ua_with_control_format_alias"], 1)
+        self.assertEqual(report["ua_control_format_aliases_quarantined"], 1)
+
+    def test_invisible_key_identifier_not_counted_as_an_independent_ua(self):
+        candidates, report = run(record(ua="UA_801" + chr(0x202E)), record(ua="UA_802"))
+        self.assertEqual([row["ua"] for row in candidates], ["ua_802"])
+        self.assertEqual(report["exclusions"]["invalid_ua_identifier_rows_quarantined"], 1)
+        self.assertFalse(report["scientific_validation"])
+
     def test_unexpected_extra_csv_columns_are_rejected(self):
         raw = (HEADER + record().rstrip("\n") + ";unexpected\n").encode("utf-8")
         with self.assertRaisesRegex(ValueError, "unexpected extra CSV columns"):

@@ -38,3 +38,32 @@ def canonical_state(value):
     raise ValueError(f"unrecognized UF/estado value: {value!r}")
 
 
+
+
+class InvalidUAIdentity(ValueError):
+    """A physical IFN sampling-unit ID contains forbidden invisible characters."""
+
+
+def canonical_ua(value):
+    """Canonical IFN UA identity; reject controls before whitespace trimming.
+
+    Unicode format/control aliases cannot become distinct field sampling units.
+    """
+    raw = str(value or "")
+    if any(unicodedata.category(char) in {"Cc", "Cf"} for char in raw):
+        raise InvalidUAIdentity("IFN physical UA contains control/format character")
+    canonical = unicodedata.normalize("NFKC", raw.strip()).casefold()
+    if any(unicodedata.category(char) in {"Cc", "Cf"} for char in canonical):
+        raise InvalidUAIdentity("IFN normalized UA contains control/format character")
+    return canonical
+
+
+def quarantine_ua_alias(value):
+    """Only find potentially affected clean UAs; NEVER create evidence IDs.
+
+    Removing invisible characters here is strictly for excluding matching
+    otherwise-valid records, not accepting or repairing corrupted identifiers.
+    """
+    visible = "".join(char for char in str(value or "")
+                      if unicodedata.category(char) not in {"Cc", "Cf"})
+    return unicodedata.normalize("NFKC", visible.strip()).casefold()
