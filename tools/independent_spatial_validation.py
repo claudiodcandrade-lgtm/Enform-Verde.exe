@@ -20,7 +20,16 @@ def _spatial_identity(value):
 
     This is a data-integrity safeguard, not proof of geographic independence.
     """
-    return unicodedata.normalize("NFKC", value.strip()).casefold()
+    # Invisible format/control characters can make the same physical unit
+    # appear as two distinct labels (e.g. A versus A\u200b), bypassing the
+    # spatial train/test disjointness check. Quarantine rather than strip:
+    # removing them silently could conceal corrupted source identifiers.
+    if any(unicodedata.category(char) in {"Cc", "Cf"} for char in value):
+        raise ValueError("spatial_unit contains invisible control/format character")
+    canonical = unicodedata.normalize("NFKC", value.strip()).casefold()
+    if any(unicodedata.category(char) in {"Cc", "Cf"} for char in canonical):
+        raise ValueError("spatial_unit contains invisible control/format character")
+    return canonical
 
 def validate_csv(path, dataset_sha256, unit):
     raw = Path(path).read_bytes()
