@@ -65,6 +65,11 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["litter_wood_same_physical_ua_with_matching_centroid_and_land_code"], 2)
         self.assertEqual(report["wood_raw_absence_flag_rows"], {"N": 1, "S": 2})
         self.assertEqual(report["wood_ua_with_mixed_absence_flags"], 1)
+        self.assertEqual(report["wood_ua_with_only_S_flags"], 1)
+        self.assertEqual(report["wood_ua_with_any_N_flag"], 1)
+        self.assertEqual(report["wood_ua_with_only_N_flags"], 0)
+        self.assertEqual(report["wood_present_flag_without_diameter_rows"], 0)
+        self.assertEqual(report["wood_ua_with_mixed_flags_within_same_nonblank_transect"], 0)
         self.assertEqual(report["wood_rows_with_numeric_diameter"], 1)
         self.assertEqual(report["wood_diameter_decay_level_rows"], {"3": 1})
         self.assertTrue(report["absence_flag_dictionary_version_verified"])
@@ -80,6 +85,38 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
     def test_source_sha256_is_mandatory(self):
         with self.assertRaisesRegex(ValueError, "SHA256"):
             audit(*fixture(mismatch=True))
+
+    def test_absence_flag_with_measured_diameter_is_rejected(self):
+        litter, wood, _ = fixture()
+        sid = next(iter(WOOD_IDS))
+        wood[sid] = xlsx([["Pantanal", "Mato Grosso", "Mun", "-57.5",
+                           "-17.4", "MT_1", "2018", "14", "S", "", "3",
+                           "", "9", ""]])
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        with self.assertRaisesRegex(ValueError, "contradicts measured diameter"):
+            audit(litter, wood, sha)
+
+    def test_zero_diameter_is_not_a_measured_log(self):
+        litter, wood, _ = fixture()
+        sid = next(iter(WOOD_IDS))
+        wood[sid] = xlsx([["Pantanal", "Mato Grosso", "Mun", "-57.5",
+                           "-17.4", "MT_1", "2018", "14", "N", "", "3",
+                           "", "0", ""]])
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        with self.assertRaisesRegex(ValueError, "nonpositive"):
+            audit(litter, wood, sha)
+
+    def test_presence_without_diameter_remains_incomplete_not_zero(self):
+        litter, wood, _ = fixture()
+        sid = next(iter(WOOD_IDS))
+        wood[sid] = xlsx([["Pantanal", "Mato Grosso", "Mun", "-57.5",
+                           "-17.4", "MT_1", "2018", "14", "N", "", "",
+                           "", "", ""]])
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        report = audit(litter, wood, sha)
+        self.assertEqual(report["wood_present_flag_without_diameter_rows"], 1)
+        self.assertEqual(report["wood_rows_with_numeric_diameter"], 1)
+        self.assertIsNone(report["carbon_stock_tC_ha"])
 
 
 if __name__ == "__main__":

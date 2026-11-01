@@ -132,6 +132,8 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     wood = {}
     flags = defaultdict(set)
     flag_rows = Counter()
+    transect_flags = defaultdict(lambda: defaultdict(set))
+    presence_without_diameter_rows = 0
     pantanal_rows = diameter_rows = 0
     decay_levels = Counter()
     for sid, uf in WOOD_IDS.items():
@@ -155,19 +157,30 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
                 raise ValueError("unknown IFN fallen wood absence flag")
             flags[key].add(flag)
             flag_rows[flag] += 1
+            transect = str(row.get("transecto", "")).strip()
+            if transect:
+                transect_flags[key][transect].add(flag)
             diameter = str(row["diam"]).strip()
             if diameter:
-                number(diameter, Decimal(0), Decimal("Infinity"))
+                measured_diameter = number(diameter, Decimal(0), Decimal("Infinity"))
+                if measured_diameter <= 0:
+                    raise ValueError("nonpositive IFN fallen wood diameter")
+                if flag == "S":
+                    raise ValueError("IFN fallen wood absence flag contradicts measured diameter")
                 level = str(row["decomp_nivel"]).strip()
                 if level not in {"1", "2", "3"}:
                     raise ValueError("invalid IFN wood decay level")
                 decay_levels[level] += 1
                 diameter_rows += 1
+            elif flag == "N":
+                presence_without_diameter_rows += 1
     overlap = set(litter) & set(wood)
     for key in overlap:
         if litter[key] != wood[key]:
             raise ValueError("IFN litter/wood UA centroid or land-code mismatch")
     mixed = sorted(key for key, values in flags.items() if len(values) > 1)
+    mixed_same_transect = sorted(key for key, transects in transect_flags.items()
+                                 if any(len(values) > 1 for values in transects.values()))
     return {
         "report_type": "licensed_IFN_Pantanal_litter_fallen_wood_screening_only",
         "source_sha256": digests,
@@ -176,6 +189,10 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "pantanal_wood_physical_ua": len(wood),
         "litter_wood_same_physical_ua_with_matching_centroid_and_land_code": len(overlap),
         "wood_raw_absence_flag_rows": dict(sorted(flag_rows.items())),
+        "wood_ua_with_only_S_flags": sum(values == {"S"} for values in flags.values()),
+        "wood_ua_with_any_N_flag": sum("N" in values for values in flags.values()),
+        "wood_ua_with_only_N_flags": sum(values == {"N"} for values in flags.values()),
+        "wood_present_flag_without_diameter_rows": presence_without_diameter_rows,
         "wood_rows_with_numeric_diameter": diameter_rows,
         "wood_diameter_decay_level_rows": dict(sorted(decay_levels.items())),
         "diameter_unit": "cm",
@@ -183,6 +200,8 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
                                   "3": "decomposição avançada"},
         "wood_ua_with_mixed_absence_flags": len(mixed),
         "mixed_flag_ua_ids_for_audit": [list(k) for k in mixed],
+        "wood_ua_with_mixed_flags_within_same_nonblank_transect": len(mixed_same_transect),
+        "mixed_same_transect_ua_ids_for_audit": [list(k) for k in mixed_same_transect],
         "absence_flag_dictionary_version_verified": True,
         "absence_flag_meanings_official": {"S": "ausência de necromassa: sim",
                                            "N": "ausência de necromassa: não"},
@@ -193,7 +212,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "Matched UAs are not independent carbon stocks. S means necromass absent and N means present per official 2025 metadata; mixed flags within one UA require transect-level review. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
+        "warning": "Matched UAs are not independent carbon stocks. S/N flags describe individual records, not UA-wide absence. Mixed flags require transect-level review; blank transect IDs cannot be assigned to a transect. Presence without diameter is incomplete, not zero biomass. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
     }
 
 
