@@ -171,9 +171,12 @@ def assess(evidence, expected_sha, evidence_root=None):
         if not _provenance(row, label, errors):
             continue
         name = row.get("biome")
-        names.add(name)
-        if name not in BIOMES:
+        if not isinstance(name, str) or name not in BIOMES:
             errors.append(f"{label}: unsupported biome {name!r}")
+        elif name in names:
+            errors.append(f"{label}: duplicate biome evidence {name!r}")
+        else:
+            names.add(name)
         for field in ("rmse_mg_ha", "bias_mg_ha", "mae_mg_ha", "r2", "independent_plot_count"):
             if not _is_number(row.get(field)):
                 errors.append(f"{label}: missing independent validation metric {field}")
@@ -204,12 +207,18 @@ def assess(evidence, expected_sha, evidence_root=None):
         if not _provenance(row, label, errors):
             continue
         pair = (row.get("biome"), row.get("pool"))
-        covered.add(pair)
-        if pair[1] not in POOLS or pair[0] not in BIOMES:
+        if (not isinstance(pair[0], str) or pair[0] not in BIOMES
+                or not isinstance(pair[1], str) or pair[1] not in POOLS):
             errors.append(f"{label}: invalid biome/pool")
+        elif pair in covered:
+            errors.append(f"{label}: duplicate biome/pool evidence {pair!r}")
+        else:
+            covered.add(pair)
         for field in ("stock_tc_ha", "ci95_lower_tc_ha", "ci95_upper_tc_ha"):
             if not _is_number(row.get(field)):
                 errors.append(f"{label}: missing numeric uncertainty field {field}")
+        if _is_number(row.get("stock_tc_ha")) and row["stock_tc_ha"] < 0:
+            errors.append(f"{label}: carbon stock cannot be negative")
         if all(_is_number(row.get(f)) for f in ("stock_tc_ha", "ci95_lower_tc_ha", "ci95_upper_tc_ha")):
             if not row["ci95_lower_tc_ha"] <= row["stock_tc_ha"] <= row["ci95_upper_tc_ha"]:
                 errors.append(f"{label}: invalid 95% uncertainty interval")
