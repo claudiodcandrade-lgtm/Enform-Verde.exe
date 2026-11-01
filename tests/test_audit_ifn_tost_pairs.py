@@ -54,6 +54,21 @@ class IFNTOSTAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate headers"):
             self._run(ROWS.replace("equacao_2,reject_intercept", "equacao_2,equacao_2,reject_intercept"))
 
+    def test_semicolon_delimited_official_export(self):
+        data = ("bioma;tipologia;equacao_1;equacao_2;reject_intercept;reject_slope;equivalente\\n"
+                "Cerrado;Savana;Eq1;Eq2;Sim;Sim;Equivalente\\n")
+        result = self._run(data.replace("\\n", "\n"))
+        self.assertEqual(result["comparisons"], 1)
+        self.assertEqual(pair_decision(result, "Cerrado", "Savana", "Eq1", "Eq2"),
+                         "equivalent_pairwise")
+
+    def test_quoted_commas_do_not_confuse_semicolon_delimiter(self):
+        data = ("bioma;tipologia;equacao_1;equacao_2;reject_intercept;reject_slope;equivalente\\n"
+                'Cerrado;Savana;"log(DAP,altura)";Eq2;1;1;Sim\\n')
+        result = self._run(data.replace("\\n", "\n"))
+        self.assertEqual(pair_decision(result, "Cerrado", "Savana", "log(DAP,altura)", "Eq2"),
+                         "equivalent_pairwise")
+
     def test_sfb_xlsx_payload_with_csv_filename(self):
         workbook = Workbook()
         sheet = workbook.active

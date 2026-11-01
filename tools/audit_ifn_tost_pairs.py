@@ -42,7 +42,17 @@ def _records(raw):
             decoded = raw.decode("utf-8-sig")
         except UnicodeDecodeError:
             decoded = raw.decode("cp1252")
-        reader = csv.DictReader(io.StringIO(decoded))
+        # Official SFB exports can use comma, semicolon or tab. Determine
+        # the separator from the mandatory schema, not a fragile frequency
+        # guess that can be confused by commas in equation expressions.
+        candidates = []
+        for separator in (",", ";", "\t"):
+            probe = csv.DictReader(io.StringIO(decoded), delimiter=separator)
+            if set(FIELDS).issubset(set(probe.fieldnames or [])):
+                candidates.append(separator)
+        if len(candidates) != 1:
+            raise ValueError("TOST CSV delimiter or mandatory columns ambiguous")
+        reader = csv.DictReader(io.StringIO(decoded), delimiter=candidates[0])
         headers = reader.fieldnames or []
         rows = list(reader)
     if not headers or any(not isinstance(h, str) or not h.strip() for h in headers):
