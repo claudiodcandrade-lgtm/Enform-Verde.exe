@@ -94,12 +94,27 @@ def audit(litter_by_id, necro_raw, expected_sha256):
     necro_keys = set()
     necro_pantanal = set()
     necro_biomes = Counter()
+    necro_quarantined = Counter()
+    necro_valid_rows_with_identity = 0
     for row in rows(necro_raw, NECRO_FIELDS):
         biome = row["bioma"].strip()
         necro_biomes[biome or "N/D"] += 1
+        # A record with no biome or no finite, nonnegative measured/modelled
+        # biomass cannot substantiate even an observational identity join.
+        # Quarantine it; never infer a carbon stock from this screening.
+        if not biome:
+            necro_quarantined["missing_biome"] += 1
+            continue
+        try:
+            number(row["necromassa_t_por_ha"], Decimal(0), Decimal("Infinity"))
+        except ValueError:
+            necro_quarantined["invalid_or_missing_biomass"] += 1
+            continue
         uf, ua = canonical_state(row["uf"]), canonical_ua(row["ua"])
         if not uf or not ua:
+            necro_quarantined["missing_identity"] += 1
             continue
+        necro_valid_rows_with_identity += 1
         key = (uf, ua)
         necro_keys.add(key)
         if biome == "Pantanal":
@@ -115,6 +130,8 @@ def audit(litter_by_id, necro_raw, expected_sha256):
         "pantanal_litter_zero_depth_measurements": sum(v == 0 for v in points),
         "pantanal_litter_land_codes_provisional": dict(sorted(land_codes.items())),
         "necromass_source_rows_by_biome": dict(sorted(necro_biomes.items())),
+        "necromass_valid_rows_with_identity": necro_valid_rows_with_identity,
+        "necromass_quarantined_rows_by_reason": dict(sorted(necro_quarantined.items())),
         "pantanal_necromass_source_rows": necro_biomes.get("Pantanal", 0),
         "litter_necromass_same_physical_ua_any_biome": len(set(litter) & necro_keys),
         "litter_necromass_same_physical_ua_both_pantanal": len(set(litter) & necro_pantanal),
