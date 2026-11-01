@@ -173,6 +173,54 @@ class IFNAcquisitionTests(unittest.TestCase):
                              {"Amazônia": 1, "Cerrado": 2})
             self.assertFalse(item["carbon_stock_ready"])
 
+    def test_unicode_equivalent_and_blank_csv_headers_are_rejected(self):
+        for header in ("bioma;uf;ｕｆ", "bioma;;uf"):
+            with self.subTest(header=header), tempfile.TemporaryDirectory() as temp:
+                raw = (header + "\\nCerrado;GO;GO\\n").replace("\\n", "\n").encode("utf-8")
+                registry = {"sources": [{"id": "ifn_bad_schema", "url": URL,
+                            "license": "CC BY", "role": "biomass"}]}
+                item = fetch_sources(registry, temp,
+                    opener=lambda request, timeout: io.BytesIO(raw))["resources"][0]
+                self.assertEqual(item["status"], "download_failed")
+                self.assertIn("duplicate or blank", item["reason"])
+                self.assertFalse((Path(temp) / "ifn_bad_schema.csv").exists())
+
+    def test_late_csv_extra_column_is_not_silently_counted(self):
+        with tempfile.TemporaryDirectory() as temp:
+            # The sniffer samples only the first 8192 characters; a corrupt
+            # later row must still invalidate the entire raw source profile.
+            raw = ("parcela,serapilheira\\n" + "1,2.4\\n" * 1500 +
+                   "2,3.5,unreported_field\\n").replace("\\n", "\n").encode("utf-8")
+            registry = {"sources": [{"id": "ifn_extra", "url": URL,
+                        "license": "CC BY", "role": "litter"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("unexpected extra columns", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_extra.csv").exists())
+
+    def test_unicode_equivalent_xlsx_headers_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c>'
+                   '<c r="C1" t="inlineStr"><is><t>ｕｆ</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_xlsx_alias", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("duplicate or blank", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_xlsx_alias.xlsx").exists())
+
     def test_expected_columns_required(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_bad_header", "url": URL,
