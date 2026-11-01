@@ -47,5 +47,36 @@
     "1": "novo",
     "2": "decomposição inicial",
     "3": "decomposição avançada"
-  }
+  },
+  "wood_ua_with_only_S_flags": 11,
+  "wood_ua_with_any_N_flag": 1,
+  "wood_ua_with_only_N_flags": 0,
+  "wood_present_flag_without_diameter_rows": 0,
+  "wood_ua_with_mixed_flags_within_same_nonblank_transect": 0,
+  "mixed_same_transect_ua_ids_for_audit": [],
+  "wood_ua_with_mixed_flags_and_blank_transect": 1,
+  "mixed_blank_transect_ua_ids_for_audit": [
+    [
+      "MS",
+      "ms_439"
+    ]
+  ],
+  "mixed_ua_source_row_review": {
+    "ua": "MS_439",
+    "N_record": {
+      "transecto": "1",
+      "diam_cm": 9,
+      "decomp_nivel": "3"
+    },
+    "S_record": {
+      "transecto": null,
+      "diam_cm": null,
+      "decomp_nivel": null
+    },
+    "same_transect_proven": false,
+    "interpretation": "A S row lacks transect ID and cannot negate the measured N row or prove absence for the entire UA; no stock or variance estimated."
+  },
+  "source_zip_sha256_rechecked_locally": true,
+  "source_license": "Creative Commons Atribuição (CC BY), SFB IFN Madeira caída por UF_disp-set2025",
+  "source_license_url": "https://dados.florestal.gov.br/pt_BR/dataset/ifn-madeira-caida-por-uf_disp-set2025"
 }
