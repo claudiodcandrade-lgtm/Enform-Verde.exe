@@ -1,0 +1,37 @@
+{
+  "report_type": "licensed_IFN_Pantanal_litter_fallen_wood_screening_only",
+  "source_workflow_run_id": 41344416109,
+  "source_commit_sha": "361d6ef86149d434197693a53a268644617d834c",
+  "source_artifact_id": 13098318383,
+  "source_artifact_zip_sha256": "4a4025743b3c73ece5bd51fff90bec415ac25431040780ecb632fc12db1f9f65",
+  "source_sha256": {
+    "ifn_serapilheira_mato_grosso_retificada_2025": "dc88e80c5f9d1f8be05eb25afdb277d8f76759f4c960ac0f95e4fb1773945aa1",
+    "ifn_serapilheira_mato_grosso_do_sul_retificada_2025": "02b08e2a5a8b42e6ebb487e6a33ab0f508cd78feb1e1808135919fde4ce0b403",
+    "ifn_madeira_caida_mato_grosso_2025": "9d35812c51bcb16ab29548cf5a5b5087e5822c7c1de121e99549572a87fb289c",
+    "ifn_madeira_caida_mato_grosso_do_sul_2025": "c9749a98437b8e0baa72d82b6fdb16501fa98d94941a9d6dd37bd1b8d44b9902"
+  },
+  "pantanal_litter_physical_ua": 12,
+  "pantanal_wood_rows": 13,
+  "pantanal_wood_physical_ua": 12,
+  "litter_wood_same_physical_ua_with_matching_centroid_and_land_code": 12,
+  "wood_raw_absence_flag_rows": {
+    "N": 1,
+    "S": 12
+  },
+  "wood_rows_with_numeric_diameter": 1,
+  "wood_ua_with_mixed_absence_flags": 1,
+  "mixed_flag_ua_ids_for_audit": [
+    [
+      "MS",
+      "ms_439"
+    ]
+  ],
+  "absence_flag_dictionary_version_verified": false,
+  "ibge_fitophysiognomy_verified": false,
+  "plot_pixel_sar_validation": false,
+  "sampling_design_and_wood_density_verified": false,
+  "carbon_stock_tC_ha": null,
+  "confidence_interval_95": null,
+  "scientific_validation": false,
+  "warning": "Matched UAs are not independent carbon stocks. Mixed S/N flags require protocol review; no dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
+}
