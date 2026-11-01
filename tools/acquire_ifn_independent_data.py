@@ -14,6 +14,7 @@ import hashlib
 import json
 import pathlib
 import re
+import unicodedata
 import zipfile
 import urllib.parse
 import urllib.request
@@ -38,6 +39,12 @@ def _profile_csv(path, expected_columns=()):
         header = reader.fieldnames or []
         if len(header) < 2:
             raise ValueError("CSV lacks multi-column header")
+        # DictReader silently overwrites duplicate names and stores surplus
+        # fields under a None key. Neither can be accepted as clean evidence.
+        normalized_header = [unicodedata.normalize("NFKC", str(name or "")).strip().casefold()
+                             for name in header]
+        if not all(normalized_header) or len(set(normalized_header)) != len(header):
+            raise ValueError("CSV duplicate or blank observational header")
         if any(column not in header for column in expected_columns):
             raise ValueError("CSV missing expected observational columns")
         counts, biomes, states, units = 0, Counter(), Counter(), set()
@@ -45,6 +52,8 @@ def _profile_csv(path, expected_columns=()):
         ua_by_biome, typology_by_ua, strata_ua, equations_by_ua = (
             defaultdict(set), defaultdict(set), defaultdict(set), defaultdict(set))
         for row in reader:
+            if None in row:
+                raise ValueError("CSV observation row contains unexpected extra columns")
             if not any(value for value in row.values()):
                 continue
             counts += 1
@@ -130,6 +139,10 @@ def _profile_xlsx(path, expected_columns=()):
                     if re.match(r"[A-Z]+", cell.get("r", ""))}
         headers = cells(rows[0])
         columns = list(headers.values())
+        normalized_columns = [unicodedata.normalize("NFKC", str(name or "")).strip().casefold()
+                              for name in columns]
+        if not all(normalized_columns) or len(set(normalized_columns)) != len(columns):
+            raise ValueError("XLSX duplicate or blank observational header")
         if any(column not in columns for column in expected_columns):
             raise ValueError("XLSX missing expected observational columns")
         biome_col = next((k for k, v in headers.items() if v == "bioma"), None)
