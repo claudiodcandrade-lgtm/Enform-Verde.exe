@@ -100,6 +100,23 @@ class SpatialValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "disjoint"):
             self.validate(VALID.replace("test,B", "test,Ａ"))
 
+    def test_reject_zero_width_spatial_unit_alias_of_training_unit(self):
+        # Invisible U+200B must not create a false independent holdout unit.
+        with self.assertRaisesRegex(ValueError, "invisible control/format"):
+            self.validate(VALID.replace("test,B", "test,A\\u200b"))
+
+    def test_reject_zero_width_pseudoreplicated_test_unit(self):
+        with self.assertRaisesRegex(ValueError, "invisible control/format"):
+            self.validate(VALID.replace("test,C", "test,B\\u200b"))
+
+    def test_reject_bidi_override_in_spatial_unit(self):
+        with self.assertRaisesRegex(ValueError, "invisible control/format"):
+            self.validate(VALID.replace("test,B", "test,B\\u202e"))
+
+    def test_reject_embedded_control_in_spatial_unit(self):
+        with self.assertRaisesRegex(ValueError, "invisible control/format"):
+            self.validate(VALID.replace("test,B", "test,B\\t"))
+
     def test_disallow_case_alias_pseudoreplication(self):
         with self.assertRaisesRegex(ValueError, "distinct test spatial units"):
             self.validate(VALID.replace("test,C", "test,b"))
