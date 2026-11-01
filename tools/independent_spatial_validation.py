@@ -122,6 +122,10 @@ def validate_csv(path, dataset_sha256, unit):
         "spatial_unit_identity_normalization": "Unicode NFKC, strip and casefold; does not establish geographic independence",
         "train_spatial_units": len(partitions["train"]),
         "test_spatial_units": len(partitions["test"]),
+        # Auditable canonical identities used by the modular scientific gate.
+        # These are supplied spatial-unit labels, not verified coordinates.
+        "train_spatial_unit_ids": sorted(partitions["train"]),
+        "test_spatial_unit_ids": sorted(partitions["test"]),
         "unit": unit,
         "method_limitations": (
             "CSV values and independence are supplied by the producer; this program "

@@ -18,6 +18,8 @@ class SpatialValidationTests(unittest.TestCase):
     def test_recompute_metrics_and_coverage(self):
         result = self.validate(VALID)
         self.assertEqual(result["independent_sample_count"], 2)
+        self.assertEqual(result["train_spatial_unit_ids"], ["a"])
+        self.assertEqual(result["test_spatial_unit_ids"], ["b", "c"])
         self.assertAlmostEqual(result["rmse"], 1)
         self.assertAlmostEqual(result["mae"], 1)
         self.assertAlmostEqual(result["bias"], 0)
@@ -30,6 +32,7 @@ class SpatialValidationTests(unittest.TestCase):
         self.assertEqual(result["independent_sample_count"], 2)
         self.assertEqual(result["test_observation_count"], 3)
         self.assertEqual(result["test_spatial_units"], 2)
+        self.assertEqual(result["test_spatial_unit_ids"], ["b", "c"])
         self.assertEqual(result["interval_n_nominal"], 3)
         self.assertEqual(result["interval_independent_spatial_unit_count"], 2)
         self.assertAlmostEqual(result["rmse"], 1.0)
