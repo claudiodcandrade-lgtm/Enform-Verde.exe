@@ -257,34 +257,39 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
 
 def inspect_workbook(path, source_uf=None):
     wb = load_workbook(path, read_only=True, data_only=True)
-    summaries = []
-    for ws in wb.worksheets:
-        iterator = iter(ws.iter_rows(values_only=True))
-        headers = None
-        header_index = None
-        preview = []
-        for idx, raw in enumerate(iterator):
-            values = [str(v).strip() if v is not None else "" for v in raw]
-            if not any(values):
+    try:
+        summaries = []
+        for ws in wb.worksheets:
+            iterator = iter(ws.iter_rows(values_only=True))
+            headers = None
+            header_index = None
+            preview = []
+            for idx, raw in enumerate(iterator):
+                values = [str(v).strip() if v is not None else "" for v in raw]
+                if not any(values):
+                    continue
+                if len(preview) < 3:
+                    preview.append(values[:30])
+                tokens = {norm(v) for v in values if v}
+                has_plot_id = bool(tokens & {"UA", "UNIDADE_AMOSTRAL", "UNIDADE_DE_AMOSTRAGEM"})
+                has_biome = bool(tokens & {"BIOMA", "NM_BIOMA"})
+                has_coords = bool(tokens & {"LON_PC", "LAT_PC", "LONGITUDE", "LATITUDE"})
+                if idx < 30 and (has_plot_id or has_biome or has_coords):
+                    headers = values
+                    header_index = idx + 1
+                    break
+            if headers is None:
+                summaries.append({"sheet": ws.title, "header_row_1based": None,
+                                  "headers": [], "preview": preview})
                 continue
-            if len(preview) < 3:
-                preview.append(values[:30])
-            tokens = {norm(v) for v in values if v}
-            has_plot_id = bool(tokens & {"UA", "UNIDADE_AMOSTRAL", "UNIDADE_DE_AMOSTRAGEM"})
-            has_biome = bool(tokens & {"BIOMA", "NM_BIOMA"})
-            has_coords = bool(tokens & {"LON_PC", "LAT_PC", "LONGITUDE", "LATITUDE"})
-            if idx < 30 and (has_plot_id or has_biome or has_coords):
-                headers = values
-                header_index = idx + 1
-                break
-        if headers is None:
-            summaries.append({"sheet": ws.title, "header_row_1based": None,
-                              "headers": [], "preview": preview})
-            continue
-        result = _summarize_rows(iterator, headers, source_uf=source_uf)
-        summaries.append({"sheet": ws.title, "header_row_1based": header_index,
-                          "preview": preview, **result})
-    wb.close()
+            result = _summarize_rows(iterator, headers, source_uf=source_uf)
+            summaries.append({"sheet": ws.title, "header_row_1based": header_index,
+                              "preview": preview, **result})
+        wb.close()
+    finally:
+        # read_only XLSX retains an open ZIP/file handle on Windows.
+        # Close even when identity/schema validation fails closed.
+        wb.close()
     # Sheet sums are not deduplicated across sheets and may undercount if UF is absent.
     ua_by_biome = {}
     coordinate_ua_by_biome = {}
