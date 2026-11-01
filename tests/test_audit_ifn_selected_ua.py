@@ -97,5 +97,16 @@ class IFNSelectedUATests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "nonnegative"):
             self.check(ROWS.replace(",100,true", ",-100,true"))
 
+    def test_invisible_unicode_ua_is_rejected_before_counting(self):
+        # U+200B is invisible and cannot create a new independent physical UA.
+        corrupted = ROWS.replace(",PA,UA2,", ",PA,UA2\u200b,")
+        with self.assertRaisesRegex(ValueError, "invalid physical UA identity"):
+            self.check(corrupted)
+
+    def test_tab_in_ua_is_rejected_before_whitespace_normalization(self):
+        corrupted = ROWS.replace(",PA,UA2,", ",PA,UA2\t,")
+        with self.assertRaisesRegex(ValueError, "invalid physical UA identity"):
+            self.check(corrupted)
+
 if __name__ == "__main__":
     unittest.main()
