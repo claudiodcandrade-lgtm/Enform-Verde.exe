@@ -66,5 +66,36 @@ class IFNPantanalCrossSourceTests(unittest.TestCase):
             audit(litter, necro, hashes)
 
 
+    def test_necromass_invalid_biomass_cannot_create_identity_match(self):
+        for invalid in ("", "-1", "NaN", "Infinity", "not_a_number"):
+            with self.subTest(invalid=invalid):
+                litter, necro, hashes = fixture(other_biome="Pantanal")
+                necro = (NECRO_HEADER + f"Pantanal;MT;MT_01;{invalid}\\n").encode()
+                hashes[NECRO_ID] = hashlib.sha256(necro).hexdigest()
+                report = audit(litter, necro, hashes)
+                self.assertEqual(report["litter_necromass_same_physical_ua_both_pantanal"], 0)
+                self.assertEqual(report["necromass_valid_rows_with_identity"], 0)
+                self.assertEqual(report["necromass_quarantined_rows_by_reason"]["invalid_or_missing_biomass"], 1)
+                self.assertIsNone(report["carbon_stock_tC_ha"])
+
+    def test_missing_necromass_biome_is_quarantined(self):
+        litter, necro, hashes = fixture()
+        necro = (NECRO_HEADER + " ;MT;MT_01;3,5\\n").encode()
+        hashes[NECRO_ID] = hashlib.sha256(necro).hexdigest()
+        report = audit(litter, necro, hashes)
+        self.assertEqual(report["litter_necromass_same_physical_ua_any_biome"], 0)
+        self.assertEqual(report["necromass_quarantined_rows_by_reason"]["missing_biome"], 1)
+
+    def test_zero_necromass_is_valid_identity_only_not_stock(self):
+        litter, necro, hashes = fixture(other_biome="Pantanal")
+        necro = (NECRO_HEADER + "Pantanal;MT;MT_01;0\\n").encode()
+        hashes[NECRO_ID] = hashlib.sha256(necro).hexdigest()
+        report = audit(litter, necro, hashes)
+        self.assertEqual(report["litter_necromass_same_physical_ua_both_pantanal"], 1)
+        self.assertEqual(report["necromass_valid_rows_with_identity"], 1)
+        self.assertEqual(report["necromass_quarantined_rows_by_reason"], {})
+        self.assertIsNone(report["carbon_stock_tC_ha"])
+
+
 if __name__ == "__main__":
     unittest.main()
