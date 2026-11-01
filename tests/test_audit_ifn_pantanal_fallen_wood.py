@@ -30,12 +30,12 @@ def xlsx(records, row_number_overrides=None, fields=FIELDS):
     return stream.getvalue()
 
 
-def fixture(mismatch=False, bad_meta=False):
+def fixture(mismatch=False, bad_meta=False, land_code="14"):
     litter, wood = {}, {}
     for sid, uf in LITTER_IDS.items():
         name = "Mato Grosso" if uf == "MT" else "Mato Grosso do Sul"
         ua = uf + "_1"
-        lines = [f"Pantanal;{name};{ua};Mun;-57,5;-17,4;2018;14;{i};0\n"
+        lines = [f"Pantanal;{name};{ua};Mun;-57,5;-17,4;2018;{land_code};{i};0\n"
                  for i in range(1, 6)]
         litter[sid] = (LITTER_HEADER + "".join(lines)).encode()
     for sid, uf in WOOD_IDS.items():
@@ -45,7 +45,7 @@ def fixture(mismatch=False, bad_meta=False):
         def row(flag, diam):
             values = {"bioma": "Pantanal", "uf": name, "mun": "Mun",
                       "lon_pc": lon, "lat_pc": "-17.4", "ua": ua,
-                      "data": "2018", "Uso_terra_PC": "14",
+                      "data": "2018", "Uso_terra_PC": land_code,
                       "Ausen_necro": flag, "transecto": "1" if flag == "N" else "", "diam": diam,
                       "decomp_nivel": "3" if diam else ""}
             return [values.get(k, "") for k in FIELDS]
@@ -65,6 +65,9 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["pantanal_wood_physical_ua"], 2)
         self.assertEqual(report["litter_wood_same_physical_ua_with_matching_centroid_and_land_code"], 2)
         self.assertEqual(report["wood_raw_absence_flag_rows"], {"N": 1, "S": 2})
+        self.assertEqual(report["overlap_ua_by_ifn_land_code_unverified_ibge"], {"14": 2})
+        self.assertEqual(report["overlap_ua_ifn_code_45_cultivated_pasture_excluded_from_native_carbon"], 0)
+        self.assertIsNone(report["ibge_confirmed_native_carbon_ua"])
         self.assertEqual(report["wood_ua_with_mixed_absence_flags"], 1)
         self.assertEqual(report["wood_ua_with_only_S_flags"], 1)
         self.assertEqual(report["wood_ua_with_any_N_flag"], 1)
@@ -183,6 +186,16 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
         with self.assertRaisesRegex(ValueError, "missing IFN wood fields"):
             audit(litter, wood, sha)
+
+    def test_cultivated_pasture_code_45_is_not_promoted_as_native(self):
+        report = audit(*fixture(land_code="45"))
+        self.assertEqual(report["litter_wood_same_physical_ua_with_matching_centroid_and_land_code"], 2)
+        self.assertEqual(report["overlap_ua_by_ifn_land_code_unverified_ibge"], {"45": 2})
+        self.assertEqual(report["overlap_ua_ifn_code_45_cultivated_pasture_excluded_from_native_carbon"], 2)
+        self.assertEqual(report["overlap_ua_not_code_45_still_unverified_ibge"], 0)
+        self.assertIsNone(report["ibge_confirmed_native_carbon_ua"])
+        self.assertIsNone(report["carbon_stock_tC_ha"])
+        self.assertFalse(report["scientific_validation"])
 
 if __name__ == "__main__":
     unittest.main()

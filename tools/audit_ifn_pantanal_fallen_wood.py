@@ -205,6 +205,11 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     mixed_same_transect = sorted(key for key, transects in transect_flags.items()
                                  if any(len(values) > 1 for values in transects.values()))
     mixed_with_blank_transect = sorted(set(mixed) & ua_with_blank_transect)
+    # IFN code 45 is cultivated pasture in the official 2024 dictionary.
+    # Preserve the raw physical-UA join but quarantine anthropic use from
+    # any future native-carbon evidence promotion.
+    overlap_land_codes = Counter(litter[key][3] for key in overlap)
+    pasture_ua = overlap_land_codes.get("45", 0)
     return {
         "report_type": "licensed_IFN_Pantanal_litter_fallen_wood_screening_only",
         "source_sha256": digests,
@@ -212,6 +217,13 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "pantanal_wood_rows": pantanal_rows,
         "pantanal_wood_physical_ua": len(wood),
         "litter_wood_same_physical_ua_with_matching_centroid_and_land_code": len(overlap),
+        "overlap_ua_by_ifn_land_code_unverified_ibge": dict(sorted(overlap_land_codes.items())),
+        "overlap_ua_ifn_code_45_cultivated_pasture_excluded_from_native_carbon": pasture_ua,
+        "overlap_ua_not_code_45_still_unverified_ibge": len(overlap) - pasture_ua,
+        "ibge_confirmed_native_carbon_ua": None,
+        "ifn_land_code_45_2024_dictionary": "pastagem cultivada",
+        "ifn_land_code_dictionary_2024_source": "https://dados.florestal.gov.br/pt_BR/dataset/a9f00fc5-176f-4c9c-94b3-08db2f2b5ce1/resource/4f30a6ca-b31d-43b4-b673-59ac26c908b2/download/metadados_necromassa_ifn.pdf",
+        "ifn_2025_land_code_dictionary_equivalence_verified": False,
         "wood_raw_absence_flag_rows": dict(sorted(flag_rows.items())),
         "wood_ua_with_only_S_flags": sum(values == {"S"} for values in flags.values()),
         "wood_ua_with_any_N_flag": sum("N" in values for values in flags.values()),
@@ -241,7 +253,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "Matched UAs are not independent carbon stocks. S/N flags describe individual records, not UA-wide absence. Mixed flags require transect-level review; blank transect IDs cannot be assigned to a transect. Presence without diameter is incomplete, not zero biomass. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
+        "warning": "Matched UAs are not independent carbon stocks. IFN code 45 indicates cultivated pasture in the published 2024 dictionary and is excluded from native-carbon candidates; all other codes still require IBGE and current-cover verification. S/N flags describe individual records, not UA-wide absence. Mixed flags require transect-level review; blank transect IDs cannot be assigned to a transect. Presence without diameter is incomplete, not zero biomass. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
     }
 
 
