@@ -178,6 +178,50 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(report["unique_ua_with_coordinates_by_biome"].get("Cerrado", 0), 0)
         self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"]["Cerrado"], 1)
 
+    def test_missing_biome_row_with_conflicting_centroid_quarantines_ua(self):
+        # A biome-less equation row can still identify the same physical UA.
+        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
+                "Cerrado;GO;UA701;-15.0;-47.0\\n"
+                ";Goiás;ｕａ７０１;-15.2;-47.0\\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"], {})
+        self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["ua_rows_missing_biome_crosschecked_for_coordinates"], 1)
+
+    def test_missing_biome_invalid_centroid_quarantines_labelled_ua(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
+                "Cerrado;GO;UA702;-15.0;-47.0\\n"
+                ";GO;UA702;0;0\\n"
+                "Cerrado;GO;UA703;-15.3;-47.3\\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["ua_with_invalid_coordinate_rows_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["ua_rows_invalid_coordinates"], 1)
+
+    def test_missing_biome_same_centroid_does_not_remove_candidate(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
+                "Cerrado;GO;UA704;-15.0;-47.0\\n"
+                ";GO;ua704;-15.0;-47.0\\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"], {})
+        self.assertEqual(report["ua_rows_missing_biome_crosschecked_for_coordinates"], 1)
+
+    def test_xlsx_missing_biome_row_with_conflicting_centroid_quarantines(self):
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "plots.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["bioma", "uf", "ua", "lat_pc", "lon_pc"])
+            ws.append(["Pantanal", "MS", "UA705", -18.0, -57.0])
+            ws.append(["", "Mato Grosso do Sul", "ua705", -18.2, -57.0])
+            wb.save(path)
+            report = inspect_workbook(path)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"], {})
+        self.assertEqual(report["sheets"][0]["ua_with_conflicting_coordinates_by_biome"]["Pantanal"], 1)
+
     def test_same_physical_ua_in_two_biomes_is_not_georeferenced_twice(self):
         # Mixed biome labels can describe ecotone subplots; neither is an
         # independently attributable biome-specific georeferenced plot.
