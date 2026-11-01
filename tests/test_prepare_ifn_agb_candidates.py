@@ -127,6 +127,34 @@ class IFNAGBCandidateTests(unittest.TestCase):
         self.assertEqual(report["exclusions"]["excluded_cross_equation_typology_conflict"], 1)
         self.assertEqual(report["ibge_spatial_crosswalk"], "not_performed")
 
+    def test_nonkey_missing_biome_still_crosschecks_conflicting_centroid(self):
+        # Biome absence cannot hide a contradictory coordinate for the same UA.
+        candidates, report = run(
+            record(uf="GO", ua="UA_601"),
+            record(biome="", uf="Goiás", ua="ua_601", eq="Eq.183", lat="-15,86"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["excluded_cross_equation_coordinate_conflict"], 1)
+        self.assertEqual(report["exclusions"]["nonkey_rows_missing_biome_crosschecked"], 1)
+
+    def test_nonkey_missing_biome_still_crosschecks_land_cover(self):
+        candidates, report = run(
+            record(uf="GO", ua="UA_602", land="Savana"),
+            record(biome="", uf="GO", ua="UA_602", eq="Eq.183", land="Pastagem"),
+        )
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["excluded_cross_equation_land_class_conflict"], 1)
+        self.assertFalse(report["scientific_validation"])
+
+    def test_nonkey_missing_biome_same_metadata_keeps_unvalidated_candidate(self):
+        candidates, report = run(
+            record(uf="GO", ua="UA_603"),
+            record(biome="", uf="GO", ua="UA_603", eq="Eq.183"),
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(report["exclusions"]["nonkey_rows_missing_biome_crosschecked"], 1)
+        self.assertEqual(candidates[0]["sar_pair_eligible"], "false")
+
     def test_nonkey_equation_same_centroid_does_not_exclude_candidate(self):
         candidates, report = run(
             record(uf="GO", ua="UA_202", lat="-15,84", lon="-48,42"),

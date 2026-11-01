@@ -105,9 +105,15 @@ def prepare(raw, expected_sha256):
                 raise
             counters["nonkey_rows_with_invalid_uf_not_crosschecked"] += 1
             continue
-        if biome and uf and ua:
+        # A missing biome on an alternative equation does NOT erase its
+        # physical UA identity. Crosscheck its centroid and vegetation when
+        # UF+UA are known, while never treating an absent biome as a label.
+        if uf and ua:
             identity = _physical_ua(uf, ua)
-            source_biomes_by_ua[identity].add(biome)
+            if biome:
+                source_biomes_by_ua[identity].add(biome)
+            elif not key_equation:
+                counters["nonkey_rows_missing_biome_crosschecked"] += 1
             land_class = str(row["classe_uso_da_terra"] or "").strip()
             typology = str(row["tipologia_da_vegetacao"] or "").strip()
             if land_class:
@@ -244,7 +250,9 @@ def prepare(raw, expected_sha256):
             "classes or vegetation typologies are checked across identifiable "
             "source equations; invalid/missing nonkey coordinates cannot "
             "establish location agreement, and nonkey rows with invalid UF or "
-            "incomplete identity are not crosschecked. "
+            "incomplete UF/UA identity are not crosschecked; nonkey rows "
+            "with missing biome but valid UF/UA are crosschecked for "
+            "location, land cover and typology. "
             "One UA may contain multiple source land-cover classes; all repeated "
             "AGB_Chave UA records are excluded rather than pseudoreplicated."
         ),
