@@ -221,6 +221,50 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertIn("duplicate or blank", item["reason"])
             self.assertFalse((Path(temp) / "ifn_xlsx_alias.xlsx").exists())
 
+    def test_xlsx_duplicate_xml_cell_column_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="A2" t="inlineStr"><is><t>Amazônia</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_duplicate_cell", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("duplicate cell column", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_duplicate_cell.xlsx").exists())
+
+    def test_xlsx_undeclared_populated_column_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c>'
+                   '<c r="C2" t="inlineStr"><is><t>unreported</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_extra_xlsx", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("unexpected columns", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_extra_xlsx.xlsx").exists())
+
     def test_expected_columns_required(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_bad_header", "url": URL,
