@@ -178,8 +178,7 @@ def fetch_sources(registry, output, opener=None):
             results.append(record)
             continue
         record["source_url_extension"] = actual_suffix
-        record["validated_file_extension"] = target_suffix
-        target = output / (source["id"] + target_suffix)
+        record["declared_file_extension"] = target_suffix
         try:
             with opener(urllib.request.Request(url, headers={"User-Agent": "EnformVerde-Scientific-Audit/1.0"}), timeout=90) as response:
                 final_url = response.geturl() if hasattr(response, "geturl") else url
@@ -188,7 +187,7 @@ def fetch_sources(registry, output, opener=None):
                     raise ValueError("download redirected outside the official HTTPS source host")
                 digest = hashlib.sha256()
                 size = 0
-                temp = target.with_suffix(target.suffix + ".partial")
+                temp = output / (source["id"] + ".partial")
                 try:
                     with temp.open("wb") as stream:
                         while True:
@@ -203,19 +202,25 @@ def fetch_sources(registry, output, opener=None):
                     if size == 0:
                         raise ValueError("empty response")
                     expected = source.get("expected_columns", [])
-                    if target.suffix == ".xlsx":
+                    with temp.open("rb") as raw:
+                        signature = raw.read(4)
+                        raw.seek(0)
+                        sample = raw.read(4096).lstrip().lower()
+                    # SFB metadata, URL suffix and actual bytes can disagree.
+                    # The validated format MUST follow the payload, never MIME.
+                    if signature.startswith(b"PK\\x03\\x04"):
                         if not zipfile.is_zipfile(temp):
-                            raise ValueError("xlsx response is not a ZIP workbook")
+                            raise ValueError("XLSX signature has invalid ZIP structure")
+                        validated_suffix = ".xlsx"
                         record.update(_profile_xlsx(temp, expected))
-                    elif target.suffix == ".csv":
-                        with temp.open("rb") as raw:
-                            sample = raw.read(4096).lstrip().lower()
+                    else:
                         if sample.startswith((b"<!doctype html", b"<html")):
                             raise ValueError("CSV endpoint returned an HTML error page")
+                        validated_suffix = ".csv"
                         record.update(_profile_csv(temp, expected))
-                    else:
-                        raise ValueError("unsupported observational file format")
+                    target = output / (source["id"] + validated_suffix)
                     temp.replace(target)
+                    record["validated_file_extension"] = validated_suffix
                 finally:
                     temp.unlink(missing_ok=True)
                 record.update(status="downloaded_unvalidated", sha256=digest.hexdigest(),

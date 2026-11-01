@@ -68,7 +68,7 @@ class IFNAcquisitionTests(unittest.TestCase):
                     '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
                     '<c r="B2" t="inlineStr"><is><t>Sim</t></is></c></row></sheetData></worksheet>')
             registry = {"sources": [{"id": "ifn_equivalence", "url": URL,
-                       "license": "CC BY", "role": "equivalence", "format_override": "xlsx",
+                       "license": "CC BY", "role": "equivalence",
                        "expected_columns": ["bioma", "equivalente"]}]}
             result = fetch_sources(registry, temp,
                 opener=lambda request, timeout: io.BytesIO(buffer.getvalue()))
@@ -78,6 +78,36 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertEqual(item["source_url_extension"], ".csv")
             self.assertEqual(item["xlsx_data_rows"], 1)
             self.assertEqual(item["biome_rows"], {"Cerrado": 1})
+            self.assertTrue((Path(temp) / "ifn_equivalence.xlsx").exists())
+            self.assertFalse((Path(temp) / "ifn_equivalence.csv").exists())
+
+    def test_mislabeled_xlsx_override_with_real_csv_is_profiled_as_csv(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_actual_csv", "url": URL,
+                       "license": "CC BY", "role": "equivalence",
+                       "format_override": "xlsx",
+                       "expected_columns": ["bioma", "equivalente"]}]}
+            raw = b"bioma,equivalente\\nCerrado,Sim\\n"
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["declared_file_extension"], ".xlsx")
+            self.assertEqual(item["validated_file_extension"], ".csv")
+            self.assertEqual(item["csv_data_rows"], 1)
+            self.assertTrue((Path(temp) / "ifn_actual_csv.csv").exists())
+            self.assertFalse((Path(temp) / "ifn_actual_csv.xlsx").exists())
+
+    def test_corrupt_xlsx_signature_is_not_silently_parsed_as_csv(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_corrupt", "url": URL,
+                       "license": "CC BY", "role": "equivalence"}]}
+            raw = b"PK\\x03\\x04not-a-valid-workbook"
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+            self.assertFalse((Path(temp) / "ifn_corrupt.xlsx").exists())
+            self.assertFalse((Path(temp) / "ifn_corrupt.csv").exists())
 
     def test_xlsx_ua_identity_is_biome_state_and_unit_not_id_alone(self):
         # IFN panels can reuse an UA identifier across UF/biomes, while
