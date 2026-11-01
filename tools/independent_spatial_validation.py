@@ -58,8 +58,10 @@ def validate_csv(path, dataset_sha256, unit):
         p = str(row["partition"]).strip().lower()
         if p not in partitions:
             raise ValueError(f"row {number}: partition must be train or test")
-        raw_group = str(row["spatial_unit"] or "").strip()
-        if not raw_group:
+        # Preserve the raw field until identity validation: stripping first
+        # would erase trailing tabs/control characters before quarantine.
+        raw_group = str(row["spatial_unit"] or "")
+        if not raw_group.strip():
             raise ValueError(f"row {number}: spatial_unit missing")
         # UA_001 / ua_001 and Unicode-width variants must not masquerade as
         # independent train/test spatial units or independent test clusters.
