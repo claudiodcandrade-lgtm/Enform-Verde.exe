@@ -41,11 +41,11 @@ class IFNAcquisitionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_missing", "url": URL,
                         "license": "CC BY", "role": "biomass"}]}
-            raw = ("bioma;uf;ua;equacoes\\n"
-                   "Cerrado;GO;UA_1;AGB_Chave\\n"
-                   "Cerrado;;UA_2;AGB_Chave\\n"
-                   ";GO;UA_3;AGB_Chave\\n"
-                   "Cerrado;GO;;AGB_Chave\\n").encode("utf-8")
+            raw = ("bioma;uf;ua;equacoes\n"
+                   "Cerrado;GO;UA_1;AGB_Chave\n"
+                   "Cerrado;;UA_2;AGB_Chave\n"
+                   ";GO;UA_3;AGB_Chave\n"
+                   "Cerrado;GO;;AGB_Chave\n").encode("utf-8")
             result = fetch_sources(registry, temp,
                 opener=lambda request, timeout: io.BytesIO(raw))
             item = result["resources"][0]
