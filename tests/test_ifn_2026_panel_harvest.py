@@ -148,6 +148,45 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(report["unique_ua_with_coordinates_by_biome"].get("Cerrado", 0), 0)
         self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"]["Cerrado"], 1)
 
+    def test_same_physical_ua_in_two_biomes_is_not_georeferenced_twice(self):
+        # Mixed biome labels can describe ecotone subplots; neither is an
+        # independently attributable biome-specific georeferenced plot.
+        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
+                "Cerrado;GO;UA101;-15.0;-47.0\\n"
+                "Mata Atlântica;Goiás;ｕａ１０１;-15.0;-47.0\\n"
+                "Cerrado;GO;UA102;-15.2;-47.1\\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 2)
+        self.assertEqual(report["unique_ua_by_biome"]["Mata Atlântica"], 1)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Cerrado"], 1)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"].get("Mata Atlântica", 0), 0)
+        self.assertEqual(report["ua_with_conflicting_biome_labels_by_biome"],
+                         {"Cerrado": 1, "Mata Atlântica": 1})
+
+    def test_same_ua_in_different_states_remains_independent_across_biomes(self):
+        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
+                "Cerrado;GO;UA101;-15.0;-47.0\\n"
+                "Pantanal;MS;UA101;-18.0;-57.0\\n").encode("utf-8")
+        report = inspect_csv(body)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"],
+                         {"Cerrado": 1, "Pantanal": 1})
+        self.assertEqual(report["ua_with_conflicting_biome_labels_by_biome"], {})
+
+    def test_cross_biome_physical_ua_quarantined_in_xlsx(self):
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "plots.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["bioma", "uf", "ua", "lat_pc", "lon_pc"])
+            ws.append(["Cerrado", "GO", "UA101", -15.0, -47.0])
+            ws.append(["Mata Atlântica", "Goiás", "ｕａ１０１", -15.0, -47.0])
+            wb.save(path)
+            report = inspect_workbook(path)
+        self.assertEqual(report["unique_ua_with_coordinates_by_biome"], {})
+        self.assertEqual(report["sheets"][0]["ua_with_conflicting_biome_labels_by_biome"],
+                         {"Cerrado": 1, "Mata Atlântica": 1})
+
     def test_xlsx_ua_unicode_aliases_do_not_inflate_unit_count(self):
         from openpyxl import Workbook
         with tempfile.TemporaryDirectory() as tmp:

@@ -103,6 +103,10 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
     lat_i = idx("LAT_PC", "LATITUDE", "LAT")
     lon_i = idx("LON_PC", "LONGITUDE", "LON", "LONG")
     unique_ua = {}
+    # A physical UA may contain multiple source biome labels (ecotones,
+    # subplots or contradictory records). Such a UA is not an independently
+    # attributable georeferenced unit for *either* biome.
+    physical_biomes_by_ua = {}
     coordinate_values = {}
     # A mixed valid/invalid centroid is not a fully verified UA location.
     invalid_coordinate_ua = set()
@@ -154,6 +158,8 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             if not uf:
                 missing_state_ua += 1
             unique_ua.setdefault(biome, set()).add(identity)
+            if uf:
+                physical_biomes_by_ua.setdefault(identity, set()).add(biome)
             if lat_i is not None and lon_i is not None:
                 try:
                     lat = float(str(val(lat_i)).replace(",", "."))
@@ -174,12 +180,20 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
                 except (TypeError, ValueError):
                     invalid_coordinate_rows += 1
                     invalid_coordinate_ua.add((biome, identity))
+    # Preserve raw label coverage but quarantine physical units attributed
+    # to multiple biomes from biome-specific georeferenced UA counts.
+    cross_biome_ua = {
+        (biome, identity)
+        for identity, biomes in physical_biomes_by_ua.items() if len(biomes) > 1
+        for biome in biomes
+    }
     coordinate_ua = {}
     conflicting_coordinate_ua = {}
     for (biome, identity), points in coordinate_values.items():
         if len(points) > 1:
             conflicting_coordinate_ua.setdefault(biome, set()).add(identity)
-        elif (biome, identity) not in invalid_coordinate_ua:
+        elif ((biome, identity) not in invalid_coordinate_ua
+              and (biome, identity) not in cross_biome_ua):
             coordinate_ua.setdefault(biome, set()).add(identity)
     columns = [norm(h) for h in headers]
     return {
@@ -198,6 +212,10 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             "UF missing for some sampling units: repeated UA codes may be distinct across states; counts may understate units"),
         "unique_ua_by_biome": {k: len(v) for k, v in sorted(unique_ua.items())},
         "unique_ua_with_coordinates_by_biome": {k: len(v) for k, v in sorted(coordinate_ua.items())},
+        "ua_with_conflicting_biome_labels_by_biome": {
+            biome: sum(b == biome for b, _ in cross_biome_ua)
+            for biome in sorted({b for b, _ in cross_biome_ua})
+        },
         "ua_with_conflicting_coordinates_by_biome": {
             k: len(v) for k, v in sorted(conflicting_coordinate_ua.items())},
         "ua_rows_invalid_coordinates": invalid_coordinate_rows,
@@ -209,7 +227,9 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
             for biome in sorted({b for b, _ in missing_state_coordinate_ua})},
         "coordinate_validation_note": (
             "WGS84 centroid candidates only: reject zero placeholders, mixed valid/invalid "
-            "centroid rows, missing UF and conflicting coordinates for one (biome, UF, UA); "
+            "centroid rows, missing UF, conflicting coordinates, and multiple "
+            "biome labels for one physical (UF, UA); raw biome label counts "
+            "are not independent georeferenced plot counts; "
             "no IBGE crosswalk, plot-pixel "
             "pairing, SAR validation or positional accuracy inferred."),
         "observation_rows_by_biome": dict(sorted(row_counts.items())),
