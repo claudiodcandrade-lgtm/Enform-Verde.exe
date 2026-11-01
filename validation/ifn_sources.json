@@ -15,6 +15,32 @@
       ]
     },
     {
+      "id": "ifn_serapilheira_mato_grosso_retificada_2025",
+      "url": "https://dados.florestal.gov.br/pt_BR/dataset/97ab0c26-c5c7-421c-8fb7-e4dab47d35ea/resource/d4088c92-e04c-4d86-965e-664d669acc73/download/ifn_serapilheira_mato_grosso_disp-set2025_retificado.csv",
+      "license": "Creative Commons Attribution (SFB resource, corrected 2025-10-24)",
+      "role": "real field litter depth, Mato Grosso; Pantanal biome must be checked per observation; not carbon stock",
+      "observed_measurement": "litter_layer_depth_not_dry_mass",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Profundidade"
+      ]
+    },
+    {
+      "id": "ifn_serapilheira_mato_grosso_do_sul_retificada_2025",
+      "url": "https://dados.florestal.gov.br/pt_BR/dataset/97ab0c26-c5c7-421c-8fb7-e4dab47d35ea/resource/066c5f30-5669-4a4f-8a6d-2f6b9f85b120/download/ifn_serapilheira_mato_grosso_do_sul_disp-set2025_retificado.csv",
+      "license": "Creative Commons Attribution (SFB resource, corrected 2025-10-24)",
+      "role": "real field litter depth, Mato Grosso do Sul; Pantanal biome must be checked per observation; not carbon stock",
+      "observed_measurement": "litter_layer_depth_not_dry_mass",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Profundidade"
+      ]
+    },
+    {
       "id": "ifn_madeira_caida_para_2025",
       "url": "https://dados.florestal.gov.br/pt_BR/dataset/be526045-c776-4f69-a4ce-53ffdb96e38d/resource/d797c70e-7ef2-431f-97e7-7a46f328ce83/download/ifn_madeira-caida_para_disp-set2025.xlsx",
       "license": "Creative Commons Attribution (dataset portal)",
