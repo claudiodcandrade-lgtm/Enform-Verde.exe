@@ -70,7 +70,7 @@ class IFNPantanalCrossSourceTests(unittest.TestCase):
         for invalid in ("", "-1", "NaN", "Infinity", "not_a_number"):
             with self.subTest(invalid=invalid):
                 litter, necro, hashes = fixture(other_biome="Pantanal")
-                necro = (NECRO_HEADER + f"Pantanal;MT;MT_01;{invalid}\\n").encode()
+                necro = (NECRO_HEADER + f"Pantanal;MT;MT_01;{invalid}\n").encode()
                 hashes[NECRO_ID] = hashlib.sha256(necro).hexdigest()
                 report = audit(litter, necro, hashes)
                 self.assertEqual(report["litter_necromass_same_physical_ua_both_pantanal"], 0)
@@ -80,7 +80,7 @@ class IFNPantanalCrossSourceTests(unittest.TestCase):
 
     def test_missing_necromass_biome_is_quarantined(self):
         litter, necro, hashes = fixture()
-        necro = (NECRO_HEADER + " ;MT;MT_01;3,5\\n").encode()
+        necro = (NECRO_HEADER + " ;MT;MT_01;3,5\n").encode()
         hashes[NECRO_ID] = hashlib.sha256(necro).hexdigest()
         report = audit(litter, necro, hashes)
         self.assertEqual(report["litter_necromass_same_physical_ua_any_biome"], 0)
@@ -88,7 +88,7 @@ class IFNPantanalCrossSourceTests(unittest.TestCase):
 
     def test_zero_necromass_is_valid_identity_only_not_stock(self):
         litter, necro, hashes = fixture(other_biome="Pantanal")
-        necro = (NECRO_HEADER + "Pantanal;MT;MT_01;0\\n").encode()
+        necro = (NECRO_HEADER + "Pantanal;MT;MT_01;0\n").encode()
         hashes[NECRO_ID] = hashlib.sha256(necro).hexdigest()
         report = audit(litter, necro, hashes)
         self.assertEqual(report["litter_necromass_same_physical_ua_both_pantanal"], 1)
