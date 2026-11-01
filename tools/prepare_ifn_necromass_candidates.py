@@ -22,6 +22,20 @@ NECRO_FIELDS = {"bioma", "uf", "ua", "n_transectos", "cod_classe_uso_da_terra", 
 BIOMASS_FIELDS = {"bioma", "uf", "ua", "sanidade", "classe_uso_da_terra", "tipologia_da_vegetacao", "equacoes"}
 BIOMES = {"Amazônia", "Cerrado", "Caatinga", "Mata Atlântica", "Pantanal"}
 NATIVE_CLASSES = {"Floresta Natural", "Savana", "Savana-estépica", "Estepe", "Palmeiral", "Formação Pioneira", "Campinarana"}
+# SFB/IFN land-use dictionary, 2024, Table 3. The 2026 panel uses
+# cod_classe_uso_da_terra but the dictionary version match is not independently
+# audited: a category match is only a provisional screening, NOT an IBGE overlay.
+IFN_LAND_DICTIONARY = "https://dados.florestal.gov.br/dataset/344012f6-8bdc-43ec-b76f-7b7c51b053e6/resource/6bf07d59-fce4-46e4-83e8-34d82ae27640/download/metadados_uso_da_terra_uf_ifn_mai_2024.pdf"
+NATIVE_FOREST_CODE_LAND = {
+    **{c: {"Floresta Natural"} for c in ("111", "112", "113", "18")},
+    **{c: {"Floresta Natural", "Formação Pioneira"} for c in ("12", "13")},
+    "14": {"Savana", "Floresta Natural"},
+    "15": {"Savana-estépica", "Floresta Natural"},
+    "16": {"Campinarana", "Floresta Natural"},
+    "17": {"Palmeiral", "Floresta Natural"},
+}
+OTHER_NATURAL_CODES = {"31", "32"}  # natural shrublands/grasslands, not forest
+ANTHROPIC_CODES = {"19", "41", "42", "43", "44", "45"}  # planted forests, crops, pasture
 
 
 def _identity(value):
@@ -125,9 +139,11 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
         row = records[0]
         try:
             biomass_t_ha = _number(row["necromassa_t_por_ha"])
-            transects = _number(row["n_transectos"])
-            if transects < 1 or not transects.is_integer():
-                raise ValueError("transect count invalid")
+            # SFB panel metadata describes n_transectos as "Número do
+            # transecto", NOT a statistically independent sample count.
+            transect_field = str(row["n_transectos"] or "").strip()
+            if not transect_field:
+                raise ValueError("missing source transect field")
         except (TypeError, ValueError):
             excluded["invalid_necromass_measurement_or_transects"] += 1
             continue
@@ -153,15 +169,30 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
         if land not in NATIVE_CLASSES or sanidade != "Vivas":
             excluded["not_unambiguously_native_living_tree_metadata"] += 1
             continue
-        # Class code is NOT decoded here: no independently audited crosswalk
-        # from the deadwood transect to the tree subplot / IBGE class exists.
+        code = str(row["cod_classe_uso_da_terra"] or "").strip()
+        if code not in NATIVE_FOREST_CODE_LAND:
+            if not code:
+                excluded["missing_necromass_land_code"] += 1
+            elif code in OTHER_NATURAL_CODES:
+                excluded["natural_nonforest_code_needs_separate_domain"] += 1
+            elif code in ANTHROPIC_CODES:
+                excluded["planted_or_agricultural_necromass_land_code"] += 1
+            else:
+                excluded["unverified_necromass_land_code"] += 1
+            continue
+        if land not in NATIVE_FOREST_CODE_LAND[code]:
+            excluded["tree_land_class_incompatible_with_necromass_code"] += 1
+            continue
+        # Code category is screened against SFB 2024 metadata, but no
+        # independently verified transect-to-subplot/IBGE join is implied.
         candidate = {
             "biome": biome, "uf": key[0], "ua": key[1],
             "source_typology_unverified_ibge": typology,
             "source_tree_land_class": land,
-            "source_necromass_land_code_unmapped": row["cod_classe_uso_da_terra"],
+            "source_necromass_land_code": code,
+            "source_necromass_code_category": "natural_forest_2024_dictionary_provisional",
+            "source_n_transectos_uninterpreted": transect_field,
             "necromass_biomass_t_ha": biomass_t_ha,
-            "transects_reported": int(transects),
             "necromass_carbon_tC_ha": None,
             "ibge_spatial_overlay_verified": False,
             "deadwood_transect_land_crosswalk_verified": False,
@@ -181,10 +212,12 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
             {"biome": b, "source_typology": t, "tree_land_class": land, "candidate_ua": n}
             for (b, t, land), n in sorted(strata.items())
         ], "exclusions": dict(sorted(excluded.items())),
+        "ifn_land_code_dictionary_url": IFN_LAND_DICTIONARY,
+        "land_code_dictionary_version_compatibility_verified": False,
         "scientific_validation": False, "sar_pair_eligible": False,
         "uncertainty_tC_ha": None, "carbon_stock_tC_ha": None,
         "ibge_fitophysiognomy_verified": False, "transfer_error_quantified": False,
-        "warning": "Matched UA only; no verified deadwood-to-subplot crosswalk, IBGE spatial overlay, carbon fraction, design-based variance, or SAR positional accuracy. Never promote to homologation.",
+        "warning": "Matched UA and provisional native-forest code only; n_transectos is not treated as sample count. No verified code-version equivalence, deadwood-to-subplot crosswalk, IBGE overlay, carbon fraction, design-based variance, or SAR positional accuracy. Never promote to homologation.",
     }
     return candidates, report
 

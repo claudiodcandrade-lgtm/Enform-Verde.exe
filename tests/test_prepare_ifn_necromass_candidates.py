@@ -11,7 +11,7 @@ NECRO_HEADER = "bioma;uf;ua;n_transectos;cod_classe_uso_da_terra;necromassa_t_po
 BIO_HEADER = "bioma;uf;ua;sanidade;classe_uso_da_terra;tipologia_da_vegetacao;equacoes;lon_pc;lat_pc\n"
 
 
-def necro(biome="Cerrado", uf="Goiás", ua="GO_001", value="15,5", transects="2", code="111"):
+def necro(biome="Cerrado", uf="Goiás", ua="GO_001", value="15,5", transects="2", code="14"):
     return ";".join((biome, uf, ua, transects, code, value)) + "\n"
 
 
@@ -34,6 +34,9 @@ class IFNNecromassCandidateTests(unittest.TestCase):
         self.assertEqual(candidates[0]["necromass_carbon_tC_ha"], None)
         self.assertFalse(candidates[0]["deadwood_transect_land_crosswalk_verified"])
         self.assertFalse(candidates[0]["sar_pair_eligible"])
+        self.assertEqual(candidates[0]["source_n_transectos_uninterpreted"], "2")
+        self.assertNotIn("transects_reported", candidates[0])
+        self.assertFalse(report["land_code_dictionary_version_compatibility_verified"])
         self.assertFalse(report["scientific_validation"])
         self.assertIsNone(report["uncertainty_tC_ha"])
 
@@ -70,6 +73,26 @@ class IFNNecromassCandidateTests(unittest.TestCase):
         duplicated = (BIO_HEADER.replace("bioma;uf;", "bioma;uf;uf;") + bio()).encode()
         with self.assertRaisesRegex(ValueError, "duplicate or blank headers"):
             prepare(n, duplicated, hashlib.sha256(n).hexdigest(), hashlib.sha256(duplicated).hexdigest())
+
+    def test_field_code_prevents_planted_forest_and_pasture_promotion(self):
+        candidates, report = run([necro(code="19"), necro(ua="GO_002", code="45"),
+                                  necro(ua="GO_003", code="")],
+                                 [bio(), bio(ua="GO_002"), bio(ua="GO_003")])
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["planted_or_agricultural_necromass_land_code"], 2)
+        self.assertEqual(report["exclusions"]["missing_necromass_land_code"], 1)
+
+    def test_forest_code_requires_compatible_tree_land_class(self):
+        candidates, report = run([necro(code="111"), necro(ua="GO_002", code="111")],
+                                 [bio(), bio(ua="GO_002", land="Floresta Natural")])
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(report["exclusions"]["tree_land_class_incompatible_with_necromass_code"], 1)
+        self.assertEqual(candidates[0]["source_necromass_land_code"], "111")
+
+    def test_natural_nonforest_code_is_not_promoted_as_forest(self):
+        candidates, report = run([necro(code="31")], [bio()])
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["natural_nonforest_code_needs_separate_domain"], 1)
 
     def test_download_audit_source_filenames_and_hashes_are_checked(self):
         with tempfile.TemporaryDirectory() as directory:
