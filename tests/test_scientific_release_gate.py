@@ -188,6 +188,38 @@ class ScientificReleaseGateTests(unittest.TestCase):
                                 for e in audit(row, dict(report, unit="tC/ha"))))
             self.assertTrue(any("r2 disagrees" in e
                                 for e in audit(row, dict(report, r2=None))))
+    def test_duplicate_or_malformed_strata_fail_closed_without_crash(self):
+        base = {"status": "passed", "evidence_type": "independent_real_data",
+                "source_url": "https://example.org/observations",
+                "dataset_sha256": "f" * 64, "observed_at": "2026-10-31",
+                "aoi_id": "field-site", "validation_report": "heldout.json"}
+        biome = dict(base, biome="Cerrado", independent_plot_count=2,
+                     rmse_mg_ha=4, mae_mg_ha=3, bias_mg_ha=0, r2=0.5)
+        pool = dict(base, biome="Cerrado", pool="agb", stock_tc_ha=2,
+                    ci95_lower_tc_ha=1, ci95_upper_tc_ha=3,
+                    uncertainty_includes_transfer_error=True)
+        errors = assess({"source_sha": SHA, "biomes": [biome, dict(biome)],
+                         "carbon": [pool, dict(pool)]}, SHA)
+        self.assertTrue(any("duplicate biome evidence" in e for e in errors))
+        self.assertTrue(any("duplicate biome/pool evidence" in e for e in errors))
+        errors = assess({"source_sha": SHA,
+                         "biomes": [dict(biome, biome=["Cerrado"])],
+                         "carbon": [dict(pool, pool=["agb"])]}, SHA)
+        self.assertTrue(any("unsupported biome" in e for e in errors))
+        self.assertTrue(any("invalid biome/pool" in e for e in errors))
+
+    def test_negative_carbon_stock_is_not_a_valid_release_estimate(self):
+        base = {"status": "passed", "evidence_type": "independent_real_data",
+                "source_url": "https://example.org/observations",
+                "dataset_sha256": "f" * 64, "observed_at": "2026-10-31",
+                "aoi_id": "field-site", "validation_report": "heldout.json"}
+        row = dict(base, biome="Cerrado", pool="agb", stock_tc_ha=-2,
+                   ci95_lower_tc_ha=-3, ci95_upper_tc_ha=-1,
+                   uncertainty_includes_transfer_error=True)
+        errors = assess({"source_sha": SHA, "carbon": [row]}, SHA)
+        self.assertTrue(any("carbon stock cannot be negative" in e for e in errors))
+
+
 
 if __name__ == "__main__":
     unittest.main()
