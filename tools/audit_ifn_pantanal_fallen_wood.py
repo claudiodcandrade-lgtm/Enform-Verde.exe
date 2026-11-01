@@ -28,7 +28,7 @@ WOOD_IDS = {
     "ifn_madeira_caida_mato_grosso_do_sul_2025": "MS",
 }
 WOOD_FIELDS = {"bioma", "uf", "ua", "mun", "lon_pc", "lat_pc",
-               "Uso_terra_PC", "Ausen_necro", "diam"}
+               "Uso_terra_PC", "Ausen_necro", "diam", "decomp_nivel"}
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 
@@ -133,6 +133,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     flags = defaultdict(set)
     flag_rows = Counter()
     pantanal_rows = diameter_rows = 0
+    decay_levels = Counter()
     for sid, uf in WOOD_IDS.items():
         for row in xlsx_rows(wood_by_id[sid]):
             if canonical_state(row["uf"]) != uf:
@@ -157,6 +158,10 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
             diameter = str(row["diam"]).strip()
             if diameter:
                 number(diameter, Decimal(0), Decimal("Infinity"))
+                level = str(row["decomp_nivel"]).strip()
+                if level not in {"1", "2", "3"}:
+                    raise ValueError("invalid IFN wood decay level")
+                decay_levels[level] += 1
                 diameter_rows += 1
     overlap = set(litter) & set(wood)
     for key in overlap:
@@ -172,16 +177,23 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "litter_wood_same_physical_ua_with_matching_centroid_and_land_code": len(overlap),
         "wood_raw_absence_flag_rows": dict(sorted(flag_rows.items())),
         "wood_rows_with_numeric_diameter": diameter_rows,
+        "wood_diameter_decay_level_rows": dict(sorted(decay_levels.items())),
+        "diameter_unit": "cm",
+        "decay_levels_official": {"1": "novo", "2": "decomposição inicial",
+                                  "3": "decomposição avançada"},
         "wood_ua_with_mixed_absence_flags": len(mixed),
         "mixed_flag_ua_ids_for_audit": [list(k) for k in mixed],
-        "absence_flag_dictionary_version_verified": False,
+        "absence_flag_dictionary_version_verified": True,
+        "absence_flag_meanings_official": {"S": "ausência de necromassa: sim",
+                                           "N": "ausência de necromassa: não"},
+        "source_field_dictionary": "https://dados.florestal.gov.br/pt_BR/dataset/be526045-c776-4f69-a4ce-53ffdb96e38d/resource/1a25f349-0ba4-40b7-af4a-952da3725abd/download/metadados_ifn_madeira-caida_disp-set2025.pdf",
         "ibge_fitophysiognomy_verified": False,
         "plot_pixel_sar_validation": False,
         "sampling_design_and_wood_density_verified": False,
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "Matched UAs are not independent carbon stocks. Mixed S/N flags require protocol review; no dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
+        "warning": "Matched UAs are not independent carbon stocks. S means necromass absent and N means present per official 2025 metadata; mixed flags within one UA require transect-level review. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
     }
 
 
