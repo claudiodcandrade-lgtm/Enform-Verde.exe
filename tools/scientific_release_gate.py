@@ -12,6 +12,7 @@ import json
 import math
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 BIOMES = {"Amazônia", "Cerrado", "Caatinga", "Mata Atlântica", "Pantanal"}
@@ -97,6 +98,26 @@ def _verify_local_report(row, label, errors, root):
             errors.append(f"{label}: independent test spatial units invalid")
         elif type(n) is int and n != test:
             errors.append(f"{label}: independent sample count must equal distinct test spatial units")
+        # The national release gate must enforce the same auditable spatial
+        # holdout identities as the modular gate. Counts and partition labels
+        # alone cannot detect train/test leakage or Unicode aliases.
+        def checked_ids(field, count, kind):
+            values = payload.get(field)
+            if not isinstance(values, list) or not values or any(
+                    not isinstance(value, str) or not value.strip() for value in values):
+                errors.append(f"{label}: explicit {kind} spatial unit IDs missing or invalid")
+                return None
+            normalized = [unicodedata.normalize("NFKC", value.strip()).casefold()
+                          for value in values]
+            if len(normalized) != len(set(normalized)):
+                errors.append(f"{label}: duplicate {kind} spatial unit IDs")
+            if type(count) is int and len(values) != count:
+                errors.append(f"{label}: {kind} spatial unit ID count mismatch")
+            return set(normalized)
+        training_ids = checked_ids("train_spatial_unit_ids", train, "training")
+        testing_ids = checked_ids("test_spatial_unit_ids", test, "test")
+        if training_ids is not None and testing_ids is not None and training_ids & testing_ids:
+            errors.append(f"{label}: training and test spatial unit IDs overlap")
         # The executive biome row is a claim about the SAME held-out data.
         # Hashing a report must not allow a different (inflated) plot count,
         # accuracy or unit to be published in the release manifest.

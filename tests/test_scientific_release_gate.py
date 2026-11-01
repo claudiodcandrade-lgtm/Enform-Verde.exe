@@ -129,6 +129,8 @@ class ScientificReleaseGateTests(unittest.TestCase):
             root = Path(tmp)
             report = {"dataset_sha256": "b" * 64, "independent_sample_count": 3,
                       "train_spatial_units": 4, "test_spatial_units": 3,
+                      "train_spatial_unit_ids": ["A1", "A2", "A3", "A4"],
+                      "test_spatial_unit_ids": ["B1", "B2", "B3"],
                       "train_partition": "A", "test_partition": "B",
                       "validation_design": "blocked holdout",
                       "rmse": 4.2, "mae": 3.0, "bias": -0.1,
@@ -156,6 +158,17 @@ class ScientificReleaseGateTests(unittest.TestCase):
                                 for e in audit(dict(report, evidence_type="synthetic"))))
             self.assertTrue(any("independent test spatial units" in e
                                 for e in audit(dict(report, test_spatial_units=1))))
+            self.assertTrue(any("explicit test spatial unit IDs" in e
+                                for e in audit({k: v for k, v in report.items()
+                                               if k != "test_spatial_unit_ids"})))
+            self.assertTrue(any("IDs overlap" in e
+                                for e in audit(dict(report, test_spatial_unit_ids=["Ａ１", "B2", "B3"]))))
+            self.assertTrue(any("duplicate test spatial unit IDs" in e
+                                for e in audit(dict(report, test_spatial_unit_ids=["B1", "ｂ１", "B3"]))))
+            self.assertTrue(any("test spatial unit ID count mismatch" in e
+                                for e in audit(dict(report, test_spatial_unit_ids=["B1", "B2"]))))
+            self.assertTrue(any("explicit training spatial unit IDs" in e
+                                for e in audit(dict(report, train_spatial_unit_ids=["A1", "", "A3", "A4"]))))
 
     def test_biome_claims_must_match_hashed_independent_metrics_and_units(self):
         from tools.scientific_release_gate import _verify_local_report
@@ -163,6 +176,8 @@ class ScientificReleaseGateTests(unittest.TestCase):
             root = Path(tmp)
             report = {"dataset_sha256": "d" * 64, "independent_sample_count": 2,
                       "train_spatial_units": 3, "test_spatial_units": 2,
+                      "train_spatial_unit_ids": ["A1", "A2", "A3"],
+                      "test_spatial_unit_ids": ["B1", "B2"],
                       "train_partition": "train", "test_partition": "test",
                       "validation_design": "spatial holdout", "unit": "Mg/ha",
                       "rmse": 4.0, "mae": 3.0, "bias": -1.0, "r2": 0.65}
