@@ -285,7 +285,6 @@ def inspect_workbook(path, source_uf=None):
             result = _summarize_rows(iterator, headers, source_uf=source_uf)
             summaries.append({"sheet": ws.title, "header_row_1based": header_index,
                               "preview": preview, **result})
-        wb.close()
     finally:
         # read_only XLSX retains an open ZIP/file handle on Windows.
         # Close even when identity/schema validation fails closed.
