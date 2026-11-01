@@ -208,7 +208,7 @@ def fetch_sources(registry, output, opener=None):
                         sample = raw.read(4096).lstrip().lower()
                     # SFB metadata, URL suffix and actual bytes can disagree.
                     # The validated format MUST follow the payload, never MIME.
-                    if signature.startswith(b"PK\\x03\\x04"):
+                    if signature.startswith(b"PK\x03\x04"):
                         if not zipfile.is_zipfile(temp):
                             raise ValueError("XLSX signature has invalid ZIP structure")
                         validated_suffix = ".xlsx"

@@ -102,7 +102,7 @@ class IFNAcquisitionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_corrupt", "url": URL,
                        "license": "CC BY", "role": "equivalence"}]}
-            raw = b"PK\\x03\\x04not-a-valid-workbook"
+            raw = b"PK\x03\x04not-a-valid-workbook"
             result = fetch_sources(registry, temp,
                 opener=lambda request, timeout: io.BytesIO(raw))
             self.assertEqual(result["resources"][0]["status"], "download_failed")
