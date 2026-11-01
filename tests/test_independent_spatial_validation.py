@@ -58,6 +58,19 @@ class SpatialValidationTests(unittest.TestCase):
         self.assertAlmostEqual(result["cluster_equal_weight_interval_coverage"], 0.75)
         self.assertIn("no cluster-robust CI", result["cluster_metric_weighting"])
 
+    def test_reject_exact_duplicate_heldout_record_in_same_spatial_unit(self):
+        with self.assertRaisesRegex(ValueError, "duplicate held-out observation"):
+            self.validate(VALID + "2,3,1,4,test,B\n")
+
+    def test_reject_unicode_case_alias_duplicate_heldout_record(self):
+        with self.assertRaisesRegex(ValueError, "duplicate held-out observation"):
+            self.validate(VALID + "2,3,1,4,test,ｂ\n")
+
+    def test_equal_measurements_from_distinct_units_remain_independent(self):
+        result = self.validate(VALID.replace("4,3,2,5,test,C", "2,3,1,4,test,C"))
+        self.assertEqual(result["independent_sample_count"], 2)
+        self.assertEqual(result["test_observation_count"], 2)
+
     def test_disallow_spatial_leakage(self):
         with self.assertRaisesRegex(ValueError, "disjoint"):
             self.validate(VALID.replace("test,B", "test,A"))

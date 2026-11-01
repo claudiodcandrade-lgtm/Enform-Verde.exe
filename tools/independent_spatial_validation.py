@@ -44,6 +44,7 @@ def validate_csv(path, dataset_sha256, unit):
     partitions = {"train": set(), "test": set()}
     test = []
     test_groups = {}  # Independent test units, not individual plot rows.
+    seen_heldout_rows = set()  # Reject exact duplicate records within a canonical test unit.
     for number, row in enumerate(records, 2):
         p = str(row["partition"]).strip().lower()
         if p not in partitions:
@@ -64,6 +65,14 @@ def validate_csv(path, dataset_sha256, unit):
         if lower > upper:
             raise ValueError(f"row {number}: invalid prediction interval")
         if p == "test":
+            # A repeated record (including Unicode/case aliases of its unit)
+            # is not a second observed plot. Without a plot identifier, exact
+            # duplicates cannot be independently established as distinct.
+            # Fail closed rather than inflate row-weighted validation metrics.
+            signature = (_spatial_identity(raw_group), *values)
+            if signature in seen_heldout_rows:
+                raise ValueError(f"row {number}: duplicate held-out observation in spatial unit")
+            seen_heldout_rows.add(signature)
             test.append(values)
             test_groups.setdefault(_spatial_identity(raw_group), []).append(values)
     if not partitions["train"] or not partitions["test"] or partitions["train"] & partitions["test"]:
@@ -132,6 +141,8 @@ def validate_csv(path, dataset_sha256, unit):
             "verifies partition disjointness but not whether predictions were fitted "
             "without access to held-out measurements or whether field data are real. "
             "RMSE, MAE, bias, R2 and interval coverage are observation-weighted. "
+            "Exact duplicate held-out observations within a canonical spatial unit "
+            "are rejected conservatively because no independent plot ID is supplied. "
             "Additional equal-spatial-unit metrics are descriptive; they do not "
             "correct cluster correlation for inference, and no confidence interval is inferred."
         ),
