@@ -140,6 +140,10 @@ class SFBPanelHarvestTests(unittest.TestCase):
             wb.save(path)
             with self.assertRaisesRegex(ValueError, "ambiguous IFN identity columns"):
                 inspect_workbook(path)
+            # A rejected workbook must release its Windows file handle.
+            # Deleting immediately catches leaked read_only ZIP archives.
+            path.unlink()
+            self.assertFalse(path.exists())
 
     def test_ua_identity_is_composite_of_state_and_plot_in_csv(self):
         body = ("bioma;uf;ua;lat_pc;lon_pc\n"
