@@ -56,6 +56,36 @@
       ]
     },
     {
+      "id": "ifn_madeira_caida_mato_grosso_2025",
+      "url": "https://dados.florestal.gov.br/pt_BR/dataset/be526045-c776-4f69-a4ce-53ffdb96e38d/resource/82ce78de-51a9-4a56-bea1-254f36a5a08a/download/ifn_madeira-caida_mato_grosso_disp-set2025.xlsx",
+      "license": "Creative Commons Attribution (official SFB IFN fallen-wood-by-UF dataset)",
+      "role": "raw fallen-wood IFN observations in Mato Grosso; biome and IBGE physiognomy to screen per record; no inferred carbon",
+      "observed_measurement": "downed_wood_diameter_and_decay_not_stock",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Ausen_necro",
+        "diam",
+        "decomp_nivel"
+      ]
+    },
+    {
+      "id": "ifn_madeira_caida_mato_grosso_do_sul_2025",
+      "url": "https://dados.florestal.gov.br/pt_BR/dataset/be526045-c776-4f69-a4ce-53ffdb96e38d/resource/4a4d6253-00f4-468b-8005-a0f6388a5fc7/download/ifn_madeira-caida_mato_grosso_do_sul_disp-set2025.xlsx",
+      "license": "Creative Commons Attribution (official SFB IFN fallen-wood-by-UF dataset)",
+      "role": "raw fallen-wood IFN observations in Mato Grosso do Sul; biome and IBGE physiognomy to screen per record; no inferred carbon",
+      "observed_measurement": "downed_wood_diameter_and_decay_not_stock",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "Ausen_necro",
+        "diam",
+        "decomp_nivel"
+      ]
+    },
+    {
       "id": "ifn_painel_necromassa_t_ha_2026",
       "observed_measurement": "IFN-derived necromass biomass tonnes per hectare, not validated tC/ha",
       "expected_columns": [
