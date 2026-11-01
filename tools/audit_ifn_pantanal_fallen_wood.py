@@ -28,7 +28,8 @@ WOOD_IDS = {
     "ifn_madeira_caida_mato_grosso_do_sul_2025": "MS",
 }
 WOOD_FIELDS = {"bioma", "uf", "ua", "mun", "lon_pc", "lat_pc",
-               "Uso_terra_PC", "Ausen_necro", "diam", "decomp_nivel"}
+               "Uso_terra_PC", "Ausen_necro", "diam", "decomp_nivel",
+               "transecto", "data"}
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 
@@ -146,6 +147,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     transect_flags = defaultdict(lambda: defaultdict(set))
     ua_with_blank_transect = set()
     presence_without_diameter_rows = 0
+    missing_transect_rows = missing_collection_date_rows = 0
     pantanal_rows = diameter_rows = 0
     decay_levels = Counter()
     for sid, uf in WOOD_IDS.items():
@@ -169,7 +171,14 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
                 raise ValueError("unknown IFN fallen wood absence flag")
             flags[key].add(flag)
             flag_rows[flag] += 1
-            transect = str(row.get("transecto", "")).strip()
+            # A missing transect column is rejected at ingestion. A blank
+            # value in a present column remains explicitly unknown, not a
+            # presumed independent transect or evidence of absence.
+            transect = str(row["transecto"]).strip()
+            if not str(row["data"]).strip():
+                missing_collection_date_rows += 1
+            if not transect:
+                missing_transect_rows += 1
             if transect:
                 transect_flags[key][transect].add(flag)
             else:
@@ -208,6 +217,9 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "wood_ua_with_any_N_flag": sum("N" in values for values in flags.values()),
         "wood_ua_with_only_N_flags": sum(values == {"N"} for values in flags.values()),
         "wood_present_flag_without_diameter_rows": presence_without_diameter_rows,
+        "wood_rows_missing_transect_id": missing_transect_rows,
+        "wood_rows_missing_collection_date": missing_collection_date_rows,
+        "cross_source_collection_date_equivalence_verified": False,
         "wood_rows_with_numeric_diameter": diameter_rows,
         "wood_diameter_decay_level_rows": dict(sorted(decay_levels.items())),
         "diameter_unit": "cm",

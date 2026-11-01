@@ -13,11 +13,11 @@ FIELDS = ["bioma", "uf", "mun", "lon_pc", "lat_pc", "ua", "data",
 LITTER_HEADER = "bioma;uf;ua;mun;lon_pc;lat_pc;data;Uso_terra_PC;Ponto;Profundidade\n"
 
 
-def xlsx(records, row_number_overrides=None):
+def xlsx(records, row_number_overrides=None, fields=FIELDS):
     ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     root = ET.Element("worksheet", xmlns=ns)
     data = ET.SubElement(root, "sheetData")
-    for n, record in enumerate([FIELDS] + records, 1):
+    for n, record in enumerate([fields] + records, 1):
         n = (row_number_overrides or {}).get(n, n)
         row = ET.SubElement(data, "row", r=str(n))
         for i, value in enumerate(record):
@@ -70,6 +70,9 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_ua_with_any_N_flag"], 1)
         self.assertEqual(report["wood_ua_with_only_N_flags"], 0)
         self.assertEqual(report["wood_present_flag_without_diameter_rows"], 0)
+        self.assertEqual(report["wood_rows_missing_transect_id"], 2)
+        self.assertEqual(report["wood_rows_missing_collection_date"], 0)
+        self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
         self.assertEqual(report["wood_ua_with_mixed_flags_within_same_nonblank_transect"], 0)
         self.assertEqual(report["wood_ua_with_mixed_flags_and_blank_transect"], 1)
         self.assertEqual(report["mixed_blank_transect_ua_ids_for_audit"], [["MS", "ms_1"]])
@@ -157,6 +160,28 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         wood[sid] = xlsx([record, record], row_number_overrides={2: 3, 3: 2})
         sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
         with self.assertRaisesRegex(ValueError, "non-increasing IFN XLSX row"):
+            audit(litter, wood, sha)
+
+    def test_missing_transect_column_cannot_masquerade_as_unknown_ids(self):
+        litter, wood, _ = fixture()
+        sid = next(iter(WOOD_IDS))
+        columns = [field for field in FIELDS if field != "transecto"]
+        record = ["Pantanal", "Mato Grosso", "Mun", "-57.5", "-17.4",
+                  "MT_1", "2018", "14", "S", "", "", "", ""]
+        wood[sid] = xlsx([record], fields=columns)
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        with self.assertRaisesRegex(ValueError, "missing IFN wood fields"):
+            audit(litter, wood, sha)
+
+    def test_missing_collection_date_column_blocks_temporal_provenance(self):
+        litter, wood, _ = fixture()
+        sid = next(iter(WOOD_IDS))
+        columns = [field for field in FIELDS if field != "data"]
+        record = ["Pantanal", "Mato Grosso", "Mun", "-57.5", "-17.4",
+                  "MT_1", "14", "S", "", "", "", "", ""]
+        wood[sid] = xlsx([record], fields=columns)
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        with self.assertRaisesRegex(ValueError, "missing IFN wood fields"):
             audit(litter, wood, sha)
 
 if __name__ == "__main__":
