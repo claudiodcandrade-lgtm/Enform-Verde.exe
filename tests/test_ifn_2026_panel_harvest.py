@@ -118,14 +118,14 @@ class SFBPanelHarvestTests(unittest.TestCase):
     def test_csv_rejects_duplicate_unicode_ua_identity_columns(self):
         # Without a guard, the second UA column silently wins, potentially
         # changing plot identities and inflating independent plot counts.
-        body = ("bioma;uf;ua;ｕａ;lat_pc;lon_pc\\n"
-                "Cerrado;GO;UA001;UA999;-15;-47\\n").encode("utf-8")
+        body = ("bioma;uf;ua;ｕａ;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA001;UA999;-15;-47\n").encode("utf-8")
         with self.assertRaisesRegex(ValueError, "ambiguous IFN identity columns"):
             inspect_csv(body)
 
     def test_csv_rejects_competing_coordinate_aliases(self):
-        body = (b"bioma;uf;ua;lat_pc;latitude;lon_pc\\n"
-                b"Cerrado;GO;UA001;-15;-16;-47\\n")
+        body = (b"bioma;uf;ua;lat_pc;latitude;lon_pc\n"
+                b"Cerrado;GO;UA001;-15;-16;-47\n")
         with self.assertRaisesRegex(ValueError, "ambiguous IFN identity columns"):
             inspect_csv(body)
 
