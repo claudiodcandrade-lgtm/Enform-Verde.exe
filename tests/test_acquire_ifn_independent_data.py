@@ -265,6 +265,46 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertIn("unexpected columns", item["reason"])
             self.assertFalse((Path(temp) / "ifn_extra_xlsx.xlsx").exists())
 
+    def test_xlsx_cross_row_reference_is_not_an_observation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A3" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_wrong_row", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("mismatched cell reference", item["reason"])
+
+    def test_xlsx_formula_cached_value_is_not_primary_observation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2"><f>CONCAT("G","O")</f><v>GO</v></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_formula", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("formula cell", item["reason"])
+
     def test_expected_columns_required(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "ifn_bad_header", "url": URL,
