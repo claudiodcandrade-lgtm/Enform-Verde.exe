@@ -45,7 +45,7 @@ def fixture(mismatch=False, bad_meta=False):
             values = {"bioma": "Pantanal", "uf": name, "mun": "Mun",
                       "lon_pc": lon, "lat_pc": "-17.4", "ua": ua,
                       "data": "2018", "Uso_terra_PC": "14",
-                      "Ausen_necro": flag, "diam": diam,
+                      "Ausen_necro": flag, "transecto": "1" if flag == "N" else "", "diam": diam,
                       "decomp_nivel": "3" if diam else ""}
             return [values.get(k, "") for k in FIELDS]
         wood[sid] = xlsx([row("S", "")] if uf == "MT"
@@ -70,6 +70,8 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_ua_with_only_N_flags"], 0)
         self.assertEqual(report["wood_present_flag_without_diameter_rows"], 0)
         self.assertEqual(report["wood_ua_with_mixed_flags_within_same_nonblank_transect"], 0)
+        self.assertEqual(report["wood_ua_with_mixed_flags_and_blank_transect"], 1)
+        self.assertEqual(report["mixed_blank_transect_ua_ids_for_audit"], [["MS", "ms_1"]])
         self.assertEqual(report["wood_rows_with_numeric_diameter"], 1)
         self.assertEqual(report["wood_diameter_decay_level_rows"], {"3": 1})
         self.assertTrue(report["absence_flag_dictionary_version_verified"])
@@ -118,6 +120,23 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_rows_with_numeric_diameter"], 1)
         self.assertIsNone(report["carbon_stock_tC_ha"])
 
+
+    def test_same_nonblank_transect_with_mixed_flags_requires_review(self):
+        litter, wood, _ = fixture()
+        sid = next(k for k, v in WOOD_IDS.items() if v == "MS")
+        def row(flag, diameter):
+            values = {"bioma": "Pantanal", "uf": "Mato Grosso do Sul",
+                      "mun": "Mun", "lon_pc": "-57.5", "lat_pc": "-17.4",
+                      "ua": "MS_1", "data": "2018", "Uso_terra_PC": "14",
+                      "Ausen_necro": flag, "transecto": "1",
+                      "diam": diameter, "decomp_nivel": "3" if diameter else ""}
+            return [values.get(k, "") for k in FIELDS]
+        wood[sid] = xlsx([row("S", ""), row("N", "9")])
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        report = audit(litter, wood, sha)
+        self.assertEqual(report["wood_ua_with_mixed_flags_within_same_nonblank_transect"], 1)
+        self.assertEqual(report["wood_ua_with_mixed_flags_and_blank_transect"], 0)
+        self.assertFalse(report["scientific_validation"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -133,6 +133,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     flags = defaultdict(set)
     flag_rows = Counter()
     transect_flags = defaultdict(lambda: defaultdict(set))
+    ua_with_blank_transect = set()
     presence_without_diameter_rows = 0
     pantanal_rows = diameter_rows = 0
     decay_levels = Counter()
@@ -160,6 +161,8 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
             transect = str(row.get("transecto", "")).strip()
             if transect:
                 transect_flags[key][transect].add(flag)
+            else:
+                ua_with_blank_transect.add(key)
             diameter = str(row["diam"]).strip()
             if diameter:
                 measured_diameter = number(diameter, Decimal(0), Decimal("Infinity"))
@@ -181,6 +184,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     mixed = sorted(key for key, values in flags.items() if len(values) > 1)
     mixed_same_transect = sorted(key for key, transects in transect_flags.items()
                                  if any(len(values) > 1 for values in transects.values()))
+    mixed_with_blank_transect = sorted(set(mixed) & ua_with_blank_transect)
     return {
         "report_type": "licensed_IFN_Pantanal_litter_fallen_wood_screening_only",
         "source_sha256": digests,
@@ -202,6 +206,8 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "mixed_flag_ua_ids_for_audit": [list(k) for k in mixed],
         "wood_ua_with_mixed_flags_within_same_nonblank_transect": len(mixed_same_transect),
         "mixed_same_transect_ua_ids_for_audit": [list(k) for k in mixed_same_transect],
+        "wood_ua_with_mixed_flags_and_blank_transect": len(mixed_with_blank_transect),
+        "mixed_blank_transect_ua_ids_for_audit": [list(k) for k in mixed_with_blank_transect],
         "absence_flag_dictionary_version_verified": True,
         "absence_flag_meanings_official": {"S": "ausência de necromassa: sim",
                                            "N": "ausência de necromassa: não"},
