@@ -115,6 +115,32 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(infer_state("IFN_Uso-da-terra_Mato_Grosso_disp-set2025.xlsx"), "MT")
         self.assertEqual(infer_state("IFN_Uso-da-terra_Para_disp-set2025.xlsx"), "PA")
 
+    def test_csv_rejects_duplicate_unicode_ua_identity_columns(self):
+        # Without a guard, the second UA column silently wins, potentially
+        # changing plot identities and inflating independent plot counts.
+        body = ("bioma;uf;ua;ｕａ;lat_pc;lon_pc\\n"
+                "Cerrado;GO;UA001;UA999;-15;-47\\n").encode("utf-8")
+        with self.assertRaisesRegex(ValueError, "ambiguous IFN identity columns"):
+            inspect_csv(body)
+
+    def test_csv_rejects_competing_coordinate_aliases(self):
+        body = (b"bioma;uf;ua;lat_pc;latitude;lon_pc\\n"
+                b"Cerrado;GO;UA001;-15;-16;-47\\n")
+        with self.assertRaisesRegex(ValueError, "ambiguous IFN identity columns"):
+            inspect_csv(body)
+
+    def test_xlsx_rejects_competing_biome_identity_columns(self):
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ambiguous.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["bioma", "nm_bioma", "uf", "ua", "lat_pc", "lon_pc"])
+            ws.append(["Cerrado", "Pantanal", "GO", "UA001", -15, -47])
+            wb.save(path)
+            with self.assertRaisesRegex(ValueError, "ambiguous IFN identity columns"):
+                inspect_workbook(path)
+
     def test_ua_identity_is_composite_of_state_and_plot_in_csv(self):
         body = ("bioma;uf;ua;lat_pc;lon_pc\n"
                 "Amazônia;PA;UA001;-3.1;-54.9\n"
