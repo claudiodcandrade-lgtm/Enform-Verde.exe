@@ -44,7 +44,7 @@ def validate_csv(path, dataset_sha256, unit):
     partitions = {"train": set(), "test": set()}
     test = []
     test_groups = {}  # Independent test units, not individual plot rows.
-    seen_heldout_rows = set()  # Reject exact duplicate records within a canonical test unit.
+    seen_heldout_rows = set()  # Reject repeated measured/predicted pairs even if interval bounds differ.
     for number, row in enumerate(records, 2):
         p = str(row["partition"]).strip().lower()
         if p not in partitions:
@@ -65,11 +65,11 @@ def validate_csv(path, dataset_sha256, unit):
         if lower > upper:
             raise ValueError(f"row {number}: invalid prediction interval")
         if p == "test":
-            # A repeated record (including Unicode/case aliases of its unit)
-            # is not a second observed plot. Without a plot identifier, exact
-            # duplicates cannot be independently established as distinct.
-            # Fail closed rather than inflate row-weighted validation metrics.
-            signature = (_spatial_identity(raw_group), *values)
+            # A repeated measured/predicted pair (including Unicode/case aliases)
+            # is not evidence of a second plot, even when interval bounds
+            # differ. Without plot IDs, fail closed on such ambiguity to avoid
+            # inflating the apparent sample size and interval coverage.
+            signature = (_spatial_identity(raw_group), observed, predicted)
             if signature in seen_heldout_rows:
                 raise ValueError(f"row {number}: duplicate held-out observation in spatial unit")
             seen_heldout_rows.add(signature)
@@ -141,7 +141,7 @@ def validate_csv(path, dataset_sha256, unit):
             "verifies partition disjointness but not whether predictions were fitted "
             "without access to held-out measurements or whether field data are real. "
             "RMSE, MAE, bias, R2 and interval coverage are observation-weighted. "
-            "Exact duplicate held-out observations within a canonical spatial unit "
+            "Repeated observed/predicted pairs within a canonical spatial unit "
             "are rejected conservatively because no independent plot ID is supplied. "
             "Additional equal-spatial-unit metrics are descriptive; they do not "
             "correct cluster correlation for inference, and no confidence interval is inferred."
