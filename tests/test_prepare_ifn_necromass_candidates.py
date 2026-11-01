@@ -65,6 +65,25 @@ class IFNNecromassCandidateTests(unittest.TestCase):
         self.assertEqual(report["exclusions"]["biome_mismatch"], 1)
         self.assertEqual(report["exclusions"]["outside_five_target_biomes"], 1)
 
+    def test_blank_necromass_biome_quarantined_without_relabeling(self):
+        candidates, report = run([necro(biome="")], [bio()])
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["missing_necromass_biome"], 1)
+        self.assertFalse(report["scientific_validation"])
+
+    def test_short_necromass_csv_with_missing_trailing_biome_is_quarantined(self):
+        # The same mandatory columns in another order: DictReader assigns
+        # None to an absent trailing field instead of raising an error.
+        header = "uf;ua;n_transectos;cod_classe_uso_da_terra;necromassa_t_por_ha;bioma\\n"
+        raw_necro = (header + "GO;GO_001;2;14;15,5\\n").encode("utf-8")
+        raw_bio = (BIO_HEADER + bio()).encode("utf-8")
+        candidates, report = prepare(
+            raw_necro, raw_bio, hashlib.sha256(raw_necro).hexdigest(),
+            hashlib.sha256(raw_bio).hexdigest())
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["exclusions"]["missing_necromass_biome"], 1)
+        self.assertEqual(report["candidate_ua"], 0)
+
     def test_checksum_and_duplicate_headers_fail_closed(self):
         n = (NECRO_HEADER + necro()).encode()
         b = (BIO_HEADER + bio()).encode()
