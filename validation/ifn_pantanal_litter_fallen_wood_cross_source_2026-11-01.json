@@ -26,12 +26,26 @@
       "ms_439"
     ]
   ],
-  "absence_flag_dictionary_version_verified": false,
+  "absence_flag_dictionary_version_verified": true,
   "ibge_fitophysiognomy_verified": false,
   "plot_pixel_sar_validation": false,
   "sampling_design_and_wood_density_verified": false,
   "carbon_stock_tC_ha": null,
   "confidence_interval_95": null,
   "scientific_validation": false,
-  "warning": "Matched UAs are not independent carbon stocks. Mixed S/N flags require protocol review; no dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
+  "warning": "Matched UAs are not independent carbon stocks. S means necromass absent and N means present per official 2025 metadata; mixed flags within one UA require transect-level review. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof.",
+  "absence_flag_meanings_official": {
+    "S": "ausência de necromassa: sim",
+    "N": "ausência de necromassa: não"
+  },
+  "source_field_dictionary": "https://dados.florestal.gov.br/pt_BR/dataset/be526045-c776-4f69-a4ce-53ffdb96e38d/resource/1a25f349-0ba4-40b7-af4a-952da3725abd/download/metadados_ifn_madeira-caida_disp-set2025.pdf",
+  "wood_diameter_decay_level_rows": {
+    "3": 1
+  },
+  "diameter_unit": "cm",
+  "decay_levels_official": {
+    "1": "novo",
+    "2": "decomposição inicial",
+    "3": "decomposição avançada"
+  }
 }
