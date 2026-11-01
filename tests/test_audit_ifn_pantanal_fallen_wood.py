@@ -65,6 +65,10 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_raw_absence_flag_rows"], {"N": 1, "S": 2})
         self.assertEqual(report["wood_ua_with_mixed_absence_flags"], 1)
         self.assertEqual(report["wood_rows_with_numeric_diameter"], 1)
+        self.assertEqual(report["wood_diameter_decay_level_rows"], {"3": 1})
+        self.assertTrue(report["absence_flag_dictionary_version_verified"])
+        self.assertEqual(report["diameter_unit"], "cm")
+        self.assertIn("ausência", report["absence_flag_meanings_official"]["S"])
         self.assertIsNone(report["carbon_stock_tC_ha"])
         self.assertFalse(report["scientific_validation"])
 
