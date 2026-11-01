@@ -30,7 +30,7 @@ def xlsx(records, row_number_overrides=None, fields=FIELDS):
     return stream.getvalue()
 
 
-def fixture(mismatch=False, bad_meta=False, land_code="14"):
+def fixture(mismatch=False, bad_meta=False, land_code="14", wood_date_override=None):
     litter, wood = {}, {}
     for sid, uf in LITTER_IDS.items():
         name = "Mato Grosso" if uf == "MT" else "Mato Grosso do Sul"
@@ -45,7 +45,8 @@ def fixture(mismatch=False, bad_meta=False, land_code="14"):
         def row(flag, diam):
             values = {"bioma": "Pantanal", "uf": name, "mun": "Mun",
                       "lon_pc": lon, "lat_pc": "-17.4", "ua": ua,
-                      "data": "2018", "Uso_terra_PC": land_code,
+                      "data": (wood_date_override if wood_date_override is not None and uf == "MT" else "2018"),
+                      "Uso_terra_PC": land_code,
                       "Ausen_necro": flag, "transecto": "1" if flag == "N" else "", "diam": diam,
                       "decomp_nivel": "3" if diam else ""}
             return [values.get(k, "") for k in FIELDS]
@@ -75,7 +76,10 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_present_flag_without_diameter_rows"], 0)
         self.assertEqual(report["wood_rows_missing_transect_id"], 2)
         self.assertEqual(report["wood_rows_missing_collection_date"], 0)
-        self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
+        self.assertTrue(report["cross_source_collection_date_equivalence_verified"])
+        self.assertEqual(report["cross_source_same_field_collection_date_ua"], 2)
+        self.assertEqual(report["cross_source_different_field_collection_date_ua"], 0)
+        self.assertFalse(report["sar_acquisition_date_equivalence_verified"])
         self.assertEqual(report["wood_ua_with_mixed_flags_within_same_nonblank_transect"], 0)
         self.assertEqual(report["wood_ua_with_mixed_flags_and_blank_transect"], 1)
         self.assertEqual(report["mixed_blank_transect_ua_ids_for_audit"], [["MS", "ms_1"]])
@@ -195,6 +199,23 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["overlap_ua_not_code_45_still_unverified_ibge"], 0)
         self.assertIsNone(report["ibge_confirmed_native_carbon_ua"])
         self.assertIsNone(report["carbon_stock_tC_ha"])
+        self.assertFalse(report["scientific_validation"])
+
+    def test_different_field_dates_do_not_prove_temporal_equivalence(self):
+        report = audit(*fixture(wood_date_override="2019"))
+        self.assertEqual(report["litter_wood_same_physical_ua_with_matching_centroid_and_land_code"], 2)
+        self.assertEqual(report["cross_source_same_field_collection_date_ua"], 1)
+        self.assertEqual(report["cross_source_different_field_collection_date_ua"], 1)
+        self.assertEqual(report["cross_source_missing_field_collection_date_ua"], 0)
+        self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
+        self.assertIsNone(report["carbon_stock_tC_ha"])
+
+    def test_missing_field_date_does_not_prove_temporal_equivalence(self):
+        report = audit(*fixture(wood_date_override=""))
+        self.assertEqual(report["cross_source_same_field_collection_date_ua"], 1)
+        self.assertEqual(report["cross_source_missing_field_collection_date_ua"], 1)
+        self.assertEqual(report["wood_rows_missing_collection_date"], 1)
+        self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
         self.assertFalse(report["scientific_validation"])
 
 if __name__ == "__main__":

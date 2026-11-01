@@ -102,7 +102,8 @@ def identity(row):
     return (str(row["mun"]).strip(),
             number(row["lon_pc"], Decimal(-180), Decimal(180)),
             number(row["lat_pc"], Decimal(-90), Decimal(90)),
-            str(row["Uso_terra_PC"]).strip())
+            str(row["Uso_terra_PC"]).strip(),
+            str(row["data"]).strip())
 
 
 def audit(litter_by_id, wood_by_id, expected_sha256):
@@ -199,7 +200,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
                 presence_without_diameter_rows += 1
     overlap = set(litter) & set(wood)
     for key in overlap:
-        if litter[key] != wood[key]:
+        if litter[key][:4] != wood[key][:4]:
             raise ValueError("IFN litter/wood UA centroid or land-code mismatch")
     mixed = sorted(key for key, values in flags.items() if len(values) > 1)
     mixed_same_transect = sorted(key for key, transects in transect_flags.items()
@@ -210,6 +211,14 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     # any future native-carbon evidence promotion.
     overlap_land_codes = Counter(litter[key][3] for key in overlap)
     pasture_ua = overlap_land_codes.get("45", 0)
+    # Same physical UA and centroid do not imply simultaneous measurements.
+    # Compare the original field collection-date strings, without inventing
+    # temporal equivalence when either source omitted the date.
+    same_date_ua = sum(bool(litter[key][4]) and litter[key][4] == wood[key][4]
+                       for key in overlap)
+    different_date_ua = sum(bool(litter[key][4]) and bool(wood[key][4])
+                            and litter[key][4] != wood[key][4] for key in overlap)
+    unknown_date_ua = len(overlap) - same_date_ua - different_date_ua
     return {
         "report_type": "licensed_IFN_Pantanal_litter_fallen_wood_screening_only",
         "source_sha256": digests,
@@ -231,7 +240,11 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "wood_present_flag_without_diameter_rows": presence_without_diameter_rows,
         "wood_rows_missing_transect_id": missing_transect_rows,
         "wood_rows_missing_collection_date": missing_collection_date_rows,
-        "cross_source_collection_date_equivalence_verified": False,
+        "cross_source_same_field_collection_date_ua": same_date_ua,
+        "cross_source_different_field_collection_date_ua": different_date_ua,
+        "cross_source_missing_field_collection_date_ua": unknown_date_ua,
+        "cross_source_collection_date_equivalence_verified": bool(overlap) and same_date_ua == len(overlap),
+        "sar_acquisition_date_equivalence_verified": False,
         "wood_rows_with_numeric_diameter": diameter_rows,
         "wood_diameter_decay_level_rows": dict(sorted(decay_levels.items())),
         "diameter_unit": "cm",
