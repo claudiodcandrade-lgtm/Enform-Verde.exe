@@ -10,20 +10,15 @@ import hashlib
 import json
 import math
 import statistics
-import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
-from tools.ifn_state_identity import canonical_state
+from tools.ifn_state_identity import canonical_state, canonical_ua, InvalidUAIdentity
 
 TARGET_BIOMES = frozenset(("Amazônia", "Caatinga", "Cerrado", "Mata Atlântica", "Pantanal"))
 
 REQUIRED = ("bioma", "uf", "ua", "fitofisionomia_ibge", "equacao_selecionada",
             "agb_mg_ha", "equation_choice_audited")
-
-def _physical_ua_identity(value):
-    """Normalize typographic aliases; not proof of geospatial independence."""
-    return unicodedata.normalize("NFKC", value.strip()).casefold()
 
 
 def summarize(path, expected_sha256):
@@ -59,7 +54,15 @@ def summarize(path, expected_sha256):
             # A physical IFN unit is identified by (UF, UA), not by the
             # biome label assigned to it. A conflicting biome must never
             # turn one unit into two independent observations.
-            key = (uf, _physical_ua_identity(ua))
+            # Validate the ORIGINAL field before stripping whitespace:
+            # otherwise tabs/format controls can create fictitious independent UAs.
+            try:
+                physical_ua = canonical_ua(row["ua"])
+            except InvalidUAIdentity as exc:
+                raise ValueError(f"row {line}: invalid physical UA identity") from exc
+            if not physical_ua:
+                raise ValueError(f"row {line}: missing physical UA identity")
+            key = (uf, physical_ua)
             if key in seen:
                 raise ValueError(f"row {line}: repeated sampling UA or conflicting biome; equations are not independent units")
             seen.add(key)
