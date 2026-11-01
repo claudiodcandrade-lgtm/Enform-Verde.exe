@@ -7,10 +7,54 @@ SAR/AGB predictions, uncertainty for an AOI, or the accuracy of either equation.
 import argparse
 import csv
 import hashlib
+import io
 import json
+import unicodedata
 from pathlib import Path
+from openpyxl import load_workbook
 
 FIELDS = ("bioma", "tipologia", "equacao_1", "equacao_2", "reject_intercept", "reject_slope", "equivalente")
+
+
+def _identity(value):
+    return unicodedata.normalize("NFKC", str(value or "").strip()).casefold()
+
+
+def _records(raw):
+    """Read the licensed SFB file by payload magic, not its misleading suffix."""
+    if raw.startswith(b"PK\x03\x04"):
+        workbook = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+        try:
+            iterator = iter(workbook.active.iter_rows(values_only=True))
+            headers = list(next(iterator, ()))
+            rows = []
+            for values in iterator:
+                if not any(value not in (None, "") for value in values):
+                    continue
+                if len(values) > len(headers) and any(
+                        value not in (None, "") for value in values[len(headers):]):
+                    raise ValueError("TOST unexpected extra workbook columns")
+                rows.append(dict(zip(headers, values)))
+        finally:
+            workbook.close()
+    else:
+        try:
+            decoded = raw.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            decoded = raw.decode("cp1252")
+        reader = csv.DictReader(io.StringIO(decoded))
+        headers = reader.fieldnames or []
+        rows = list(reader)
+    if not headers or any(not isinstance(h, str) or not h.strip() for h in headers):
+        raise ValueError("TOST blank or missing headers")
+    normalized_headers = [_identity(h) for h in headers]
+    if len(normalized_headers) != len(set(normalized_headers)):
+        raise ValueError("TOST duplicate headers")
+    if any(field not in headers for field in FIELDS):
+        raise ValueError("TOST mandatory columns absent")
+    if any(None in row for row in rows):
+        raise ValueError("TOST unexpected extra CSV columns")
+    return rows
 
 def _bool(value):
     v = str(value).strip().casefold()
@@ -35,26 +79,24 @@ def audit(path, expected_sha256):
         raise ValueError("TOST dataset checksum mismatch")
     pairs = {}
     count = equivalent_count = 0
-    with Path(path).open("r", encoding="utf-8-sig", newline="") as stream:
-        reader = csv.DictReader(stream)
-        if not reader.fieldnames or any(field not in reader.fieldnames for field in FIELDS):
-            raise ValueError("TOST mandatory columns absent")
-        for line_number, row in enumerate(reader, 2):
-            biome, typology = str(row["bioma"]).strip(), str(row["tipologia"]).strip()
-            eq1, eq2 = str(row["equacao_1"]).strip(), str(row["equacao_2"]).strip()
-            if not all((biome, typology, eq1, eq2)) or eq1 == eq2:
-                raise ValueError(f"row {line_number}: incomplete domain/equations or self-comparison")
-            a = _bool(row["reject_intercept"])
-            b = _bool(row["reject_slope"])
-            verdict = _equivalence_label(row["equivalente"])
-            if verdict != (a and b):
-                raise ValueError(f"row {line_number}: TOST label conflicts with reject flags")
-            key = (biome, typology, *sorted((eq1, eq2)))
-            if key in pairs and pairs[key] != verdict:
+    for line_number, row in enumerate(_records(raw), 2):
+        biome, typology = _identity(row["bioma"]), _identity(row["tipologia"])
+        eq1, eq2 = _identity(row["equacao_1"]), _identity(row["equacao_2"])
+        if not all((biome, typology, eq1, eq2)) or eq1 == eq2:
+            raise ValueError(f"row {line_number}: incomplete domain/equations or self-comparison")
+        a = _bool(row["reject_intercept"])
+        b = _bool(row["reject_slope"])
+        verdict = _equivalence_label(row["equivalente"])
+        if verdict != (a and b):
+            raise ValueError(f"row {line_number}: TOST label conflicts with reject flags")
+        key = (biome, typology, *sorted((eq1, eq2)))
+        if key in pairs:
+            if pairs[key] != verdict:
                 raise ValueError(f"row {line_number}: contradictory duplicate pair")
-            pairs[key] = verdict
-            count += 1
-            equivalent_count += verdict
+            raise ValueError(f"row {line_number}: duplicate pair (not independent evidence)")
+        pairs[key] = verdict
+        count += 1
+        equivalent_count += verdict
     if count == 0:
         raise ValueError("empty TOST dataset")
     return {"source_sha256": observed_digest, "comparisons": count,
@@ -66,6 +108,7 @@ def pair_decision(audited, biome, typology, equation_a, equation_b):
     if not all(isinstance(x, str) and x.strip() for x in
                (biome, typology, equation_a, equation_b)):
         return "not_assessed"
+    biome, typology, equation_a, equation_b = map(_identity, (biome, typology, equation_a, equation_b))
     if equation_a == equation_b:
         return "same_equation"
     key = (biome, typology, *sorted((equation_a, equation_b)))

@@ -2,6 +2,7 @@ import hashlib
 import tempfile
 import unittest
 from pathlib import Path
+from openpyxl import Workbook
 from tools.audit_ifn_tost_pairs import audit, pair_decision
 
 HEADER = "bioma,tipologia,equacao_1,equacao_2,reject_intercept,reject_slope,equivalente\n"
@@ -36,6 +37,35 @@ class IFNTOSTAuditTests(unittest.TestCase):
     def test_source_digest_must_match(self):
         with self.assertRaisesRegex(ValueError, "checksum"):
             self._run(ROWS, sha="0" * 64)
+
+    def test_identical_duplicate_is_not_independent_evidence(self):
+        with self.assertRaisesRegex(ValueError, "duplicate pair"):
+            self._run(ROWS + "Amazônia,FOD,B,A,True,True,Equivalente\n")
+
+    def test_unicode_alias_duplicate_is_not_independent_evidence(self):
+        with self.assertRaisesRegex(ValueError, "duplicate pair"):
+            self._run(ROWS + "Amazônia,FOD,Ａ,Ｂ,True,True,Equivalente\n")
+
+    def test_unicode_equation_alias_lookup(self):
+        result = self._run(ROWS)
+        self.assertEqual(pair_decision(result, "AMAZÔNIA", "fod", "Ａ", "b"), "equivalent_pairwise")
+
+    def test_duplicate_csv_headers_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "duplicate headers"):
+            self._run(ROWS.replace("equacao_2,reject_intercept", "equacao_2,equacao_2,reject_intercept"))
+
+    def test_sfb_xlsx_payload_with_csv_filename(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.append(HEADER.strip().split(","))
+        sheet.append(["Amazônia", "FOD", "A", "B", True, True, "Equivalente"])
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "resource.csv"
+            workbook.save(path)
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            result = audit(path, digest)
+        self.assertEqual(result["distinct_pairs"], 1)
+        self.assertEqual(pair_decision(result, "Amazônia", "FOD", "A", "B"), "equivalent_pairwise")
 
     def test_conflicting_duplicate_fails(self):
         with self.assertRaisesRegex(ValueError, "contradictory"):
