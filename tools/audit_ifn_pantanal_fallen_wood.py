@@ -48,6 +48,17 @@ def xlsx_rows(raw):
         xml_rows = root.findall(".//m:sheetData/m:row", NS)
         if len(xml_rows) < 2:
             raise ValueError("empty IFN XLSX")
+        # Spreadsheet row references must identify unique physical records.
+        # Repeated or reordered XML row IDs can otherwise inflate IFN counts.
+        previous_row = 0
+        for xml_row in xml_rows:
+            row_ref = xml_row.get("r", "")
+            if not re.fullmatch(r"[1-9][0-9]*", row_ref):
+                raise ValueError("invalid IFN XLSX row reference")
+            current_row = int(row_ref)
+            if current_row <= previous_row:
+                raise ValueError("non-increasing IFN XLSX row references")
+            previous_row = current_row
         def extract(row):
             row_number = row.get("r", "")
             if not re.fullmatch(r"[1-9][0-9]*", row_number):
