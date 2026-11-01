@@ -151,10 +151,10 @@ class SFBPanelHarvestTests(unittest.TestCase):
     def test_same_physical_ua_in_two_biomes_is_not_georeferenced_twice(self):
         # Mixed biome labels can describe ecotone subplots; neither is an
         # independently attributable biome-specific georeferenced plot.
-        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
-                "Cerrado;GO;UA101;-15.0;-47.0\\n"
-                "Mata Atlântica;Goiás;ｕａ１０１;-15.0;-47.0\\n"
-                "Cerrado;GO;UA102;-15.2;-47.1\\n").encode("utf-8")
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA101;-15.0;-47.0\n"
+                "Mata Atlântica;Goiás;ｕａ１０１;-15.0;-47.0\n"
+                "Cerrado;GO;UA102;-15.2;-47.1\n").encode("utf-8")
         report = inspect_csv(body)
         self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 2)
         self.assertEqual(report["unique_ua_by_biome"]["Mata Atlântica"], 1)
@@ -164,9 +164,9 @@ class SFBPanelHarvestTests(unittest.TestCase):
                          {"Cerrado": 1, "Mata Atlântica": 1})
 
     def test_same_ua_in_different_states_remains_independent_across_biomes(self):
-        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
-                "Cerrado;GO;UA101;-15.0;-47.0\\n"
-                "Pantanal;MS;UA101;-18.0;-57.0\\n").encode("utf-8")
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA101;-15.0;-47.0\n"
+                "Pantanal;MS;UA101;-18.0;-57.0\n").encode("utf-8")
         report = inspect_csv(body)
         self.assertEqual(report["unique_ua_with_coordinates_by_biome"],
                          {"Cerrado": 1, "Pantanal": 1})
