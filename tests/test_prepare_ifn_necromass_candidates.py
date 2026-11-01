@@ -74,8 +74,8 @@ class IFNNecromassCandidateTests(unittest.TestCase):
     def test_short_necromass_csv_with_missing_trailing_biome_is_quarantined(self):
         # The same mandatory columns in another order: DictReader assigns
         # None to an absent trailing field instead of raising an error.
-        header = "uf;ua;n_transectos;cod_classe_uso_da_terra;necromassa_t_por_ha;bioma\\n"
-        raw_necro = (header + "GO;GO_001;2;14;15,5\\n").encode("utf-8")
+        header = "uf;ua;n_transectos;cod_classe_uso_da_terra;necromassa_t_por_ha;bioma\n"
+        raw_necro = (header + "GO;GO_001;2;14;15,5\n").encode("utf-8")
         raw_bio = (BIO_HEADER + bio()).encode("utf-8")
         candidates, report = prepare(
             raw_necro, raw_bio, hashlib.sha256(raw_necro).hexdigest(),
