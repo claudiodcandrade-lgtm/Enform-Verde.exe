@@ -18,14 +18,16 @@ class EvidencePromotionTests(unittest.TestCase):
     def test_verified_candidate_promotes_and_corrupted_data_blocks(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            raw = b"genuine independent observations from named inventory"
+            raw = b"synthetic promotion fixture, not independent field observations"
             (root / "plot.csv").write_bytes(raw)
             report = {"dataset_sha256": hashlib.sha256(raw).hexdigest(),
                       "independent_sample_count": 4, "rmse": 2.0, "mae": 1.5,
                       "bias": 0.3, "interval_coverage": 0.9,
                       "train_partition": "A", "test_partition": "B",
                       "validation_design": "spatial holdout", "unit": "Mg/ha",
-                      "train_spatial_units": 3, "test_spatial_units": 4}
+                      "train_spatial_units": 3, "test_spatial_units": 4,
+                      "train_spatial_unit_ids": ["A1", "A2", "A3"],
+                      "test_spatial_unit_ids": ["B1", "B2", "B3", "B4"]}
             data = json.dumps(report).encode()
             (root / "report.json").write_bytes(data)
             candidate = {
