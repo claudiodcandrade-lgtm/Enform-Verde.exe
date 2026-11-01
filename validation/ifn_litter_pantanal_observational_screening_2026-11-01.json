@@ -57,7 +57,6 @@
     "depth_positive_rows": 16
   },
   "interpretation": {
-    "provisional_natural_forest_code_14_ua": 2,
     "provisional_natural_nonforest_code_31_ua": 1,
     "anthropic_code_45_ua": 9,
     "land_code_dictionary_version_compatibility_verified": false,
@@ -72,7 +71,9 @@
     "carbon_stock_ready": false,
     "confidence_interval_95": null,
     "sar_pair_eligible": false,
-    "scientific_validation": false
+    "scientific_validation": false,
+    "provisional_natural_savanna_or_forest_code_14_ua": 2,
+    "code_14_is_not_verified_as_forest_or_ibge_fitophysiognomy": true
   },
   "warning": "Real licensed litter depth observations are not 60 independent sampling units, and are not carbon stocks. Native-code screening is provisional; coordinates alone do not establish pixel-plot correspondence or positional accuracy. Do not promote to release evidence."
 }
