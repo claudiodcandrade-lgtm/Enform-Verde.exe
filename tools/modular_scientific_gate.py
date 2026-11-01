@@ -32,6 +32,25 @@ def _check_independent_report(payload, row, label, errors):
     # independent_sample_count must match distinct held-out spatial units.
     if type(n) is int and type(test_units) is int and n != test_units:
         errors.append(f"{label}: independent sample count must equal distinct test spatial units")
+    # Counts and distinct partition names alone do not prove spatial holdout.
+    # Require auditable unit IDs and reject Unicode aliases and leakage.
+    import unicodedata
+    def checked_units(field, count, kind):
+        ids = payload.get(field)
+        if not isinstance(ids, list) or not ids or any(
+                not isinstance(v, str) or not v.strip() for v in ids):
+            errors.append(f"{label}: explicit {kind} spatial unit IDs missing or invalid")
+            return None
+        canonical = [unicodedata.normalize("NFKC", v.strip()).casefold() for v in ids]
+        if len(canonical) != len(set(canonical)):
+            errors.append(f"{label}: duplicate {kind} spatial unit IDs")
+        if type(count) is int and len(ids) != count:
+            errors.append(f"{label}: {kind} spatial unit ID count mismatch")
+        return set(canonical)
+    training_ids = checked_units("train_spatial_unit_ids", train_units, "training")
+    testing_ids = checked_units("test_spatial_unit_ids", test_units, "test")
+    if training_ids is not None and testing_ids is not None and training_ids & testing_ids:
+        errors.append(f"{label}: training and test spatial unit IDs overlap")
     for field in ("rmse", "mae", "bias", "interval_coverage"):
         value = payload.get(field)
         if type(value) not in (int, float) or not math.isfinite(value):

@@ -37,7 +37,9 @@ class ModularGateTests(unittest.TestCase):
                       "rmse": 5.2, "mae": 4.1, "bias": -0.4, "interval_coverage": 0.9,
                       "train_partition": "geographic_tile_A", "test_partition": "geographic_tile_B",
                       "validation_design": "spatial holdout", "unit": "Mg/ha",
-                      "train_spatial_units": 4, "test_spatial_units": 3}
+                      "train_spatial_units": 4, "test_spatial_units": 3,
+                      "train_spatial_unit_ids": ["A1", "A2", "A3", "A4"],
+                      "test_spatial_unit_ids": ["B1", "B2", "B3"]}
             report_bytes = json.dumps(report).encode("utf-8")
             (root / "report.json").write_bytes(report_bytes)
             row = dict(BASE, status="validated", evidence_type="independent_real_data",
@@ -80,6 +82,40 @@ class ModularGateTests(unittest.TestCase):
             row["validation_report_sha256"] = hashlib.sha256(report_bytes).hexdigest()
             (root / "report.json").write_bytes(b"tampered")
             self.assertFalse(assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)["passed"])
+
+    def test_spatial_holdout_unit_ids_are_explicit_unique_disjoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw = b"synthetic regression fixture, not field observations"
+            (root / "plots.csv").write_bytes(raw)
+            raw_sha = hashlib.sha256(raw).hexdigest()
+            report = {"dataset_sha256": raw_sha, "independent_sample_count": 2,
+                      "rmse": 1.0, "mae": 0.9, "bias": 0.1, "interval_coverage": 0.8,
+                      "train_partition": "tile_A", "test_partition": "tile_B",
+                      "validation_design": "spatial holdout", "unit": "Mg/ha",
+                      "train_spatial_units": 2, "test_spatial_units": 2,
+                      "train_spatial_unit_ids": ["UA1", "UA2"],
+                      "test_spatial_unit_ids": ["UB1", "UB2"]}
+            row = dict(BASE, status="validated", evidence_type="independent_real_data",
+                       source_url="https://example.org/fixture", dataset_sha256=raw_sha,
+                       dataset_file="plots.csv", validation_report="report.json",
+                       uncertainty_kind="predictive_interval", domain="synthetic test only",
+                       transfer_error_method="spatial holdout")
+            def check(data):
+                encoded = json.dumps(data).encode("utf-8")
+                (root / "report.json").write_bytes(encoded)
+                row["validation_report_sha256"] = hashlib.sha256(encoded).hexdigest()
+                return assess({"source_sha": SHA, "capabilities": [row]}, SHA, root)
+            self.assertTrue(check(report)["passed"])
+            missing = dict(report)
+            missing.pop("test_spatial_unit_ids")
+            self.assertTrue(any("explicit test spatial unit IDs" in e for e in check(missing)["errors"]))
+            overlap = dict(report, test_spatial_unit_ids=["ＵＡ１", "UB2"])
+            self.assertTrue(any("IDs overlap" in e for e in check(overlap)["errors"]))
+            duplicate = dict(report, test_spatial_unit_ids=["UB1", "ｕｂ１"])
+            self.assertTrue(any("duplicate test spatial unit IDs" in e for e in check(duplicate)["errors"]))
+            wrong_count = dict(report, test_spatial_unit_ids=["UB1"])
+            self.assertTrue(any("ID count mismatch" in e for e in check(wrong_count)["errors"]))
 
     def test_malformed_types_do_not_crash(self):
         row = dict(BASE, biome=["Amazônia"], status="validated")
