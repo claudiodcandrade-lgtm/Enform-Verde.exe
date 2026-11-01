@@ -56,8 +56,8 @@ jobs:
       - name: Audit Pantanal litter versus fallen wood without inferring carbon
         if: steps.acquire.outcome == 'success'
         run: |
-          python -m tools.audit_ifn_pantanal_fallen_wood \\
-            --raw-dir ifn_raw --download-audit ifn_download_audit.json \\
+          python -m tools.audit_ifn_pantanal_fallen_wood \
+            --raw-dir ifn_raw --download-audit ifn_download_audit.json \
             --report ifn_pantanal_litter_fallen_wood_overlap.json
       - name: Publish unvalidated acquisition audit and raw source files
         if: always()
