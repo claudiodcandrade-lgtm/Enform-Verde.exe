@@ -8,6 +8,8 @@ on:
       - 'validation/ifn_sources.json'
       - '.github/workflows/ifn-data-ingestion.yml'
       - 'tests/test_acquire_ifn_independent_data.py'
+      - 'tools/prepare_ifn_necromass_candidates.py'
+      - 'tests/test_prepare_ifn_necromass_candidates.py'
 permissions:
   contents: read
 jobs:
@@ -24,10 +26,19 @@ jobs:
           python-version: '3.11'
       - name: Verify IFN acquisition and encoding regression tests
         run: python -m unittest tests.test_acquire_ifn_independent_data -v
+      - name: Verify conservative necromass UA join regressions
+        run: python -m unittest tests.test_prepare_ifn_necromass_candidates -v
       - name: Acquire official source bytes and record SHA256
         id: acquire
         run: |
           python tools/acquire_ifn_independent_data.py --registry validation/ifn_sources.json --out ifn_raw --report ifn_download_audit.json
+      - name: Prepare non-homologating IFN necromass UA candidates
+        if: steps.acquire.outcome == 'success'
+        run: |
+          python -m tools.prepare_ifn_necromass_candidates \
+            --download-audit ifn_download_audit.json --raw-dir ifn_raw \
+            --audit ifn_necromass_join_audit.json \
+            --candidates ifn_necromass_candidates.json
       - name: Publish unvalidated acquisition audit and raw source files
         if: always()
         uses: actions/upload-artifact@v4
@@ -35,6 +46,8 @@ jobs:
           name: ifn-raw-source-audit-${{ github.sha }}
           path: |
             ifn_download_audit.json
+            ifn_necromass_join_audit.json
+            ifn_necromass_candidates.json
             ifn_raw/
           if-no-files-found: warn
           retention-days: 30
