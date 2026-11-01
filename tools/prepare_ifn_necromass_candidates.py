@@ -185,7 +185,14 @@ def prepare(necromass_raw, biomass_raw, necromass_sha256, biomass_sha256):
         typology = next(iter(metadata["typologies"]))
         land = next(iter(metadata["land"]))
         sanidade = next(iter(metadata["sanidade"]))
-        if biome != row["bioma"].strip():
+        # CSV rows may omit trailing columns. A missing biome is not a
+        # mismatch that can be repaired from the tree table: the deadwood
+        # observation must independently declare its source biome.
+        necromass_biome = str(row.get("bioma") or "").strip()
+        if not necromass_biome:
+            excluded["missing_necromass_biome"] += 1
+            continue
+        if biome != necromass_biome:
             excluded["biome_mismatch"] += 1
             continue
         if biome not in BIOMES:
