@@ -134,9 +134,19 @@ def _profile_xlsx(path, expected_columns=()):
                 return shared[int(value.text)]
             return value.text or ""
         def cells(row):
-            return {re.match(r"[A-Z]+", cell.get("r", "")).group(): cell_text(cell)
-                    for cell in row.findall("m:c", namespace)
-                    if re.match(r"[A-Z]+", cell.get("r", ""))}
+            # Never silently overwrite duplicate XML cells or accept malformed
+            # references: either can corrupt observational values without
+            # changing the apparent workbook schema.
+            result = {}
+            for cell in row.findall("m:c", namespace):
+                match = re.fullmatch(r"([A-Z]+)[1-9][0-9]*", cell.get("r", ""))
+                if match is None:
+                    raise ValueError("XLSX invalid cell reference")
+                column = match.group(1)
+                if column in result:
+                    raise ValueError("XLSX duplicate cell column")
+                result[column] = cell_text(cell)
+            return result
         headers = cells(rows[0])
         columns = list(headers.values())
         normalized_columns = [unicodedata.normalize("NFKC", str(name or "")).strip().casefold()
@@ -154,6 +164,11 @@ def _profile_xlsx(path, expected_columns=()):
         missing_biome_rows = missing_state_rows = unresolved_ua_identity_rows = 0
         for row in rows[1:]:
             values = cells(row)
+            # Extra populated columns absent from the header must not be
+            # silently discarded, even if they appear late in the workbook.
+            if any(column not in headers and str(value).strip()
+                   for column, value in values.items()):
+                raise ValueError("XLSX observation row contains unexpected columns")
             if not any(values.values()):
                 continue
             count += 1
