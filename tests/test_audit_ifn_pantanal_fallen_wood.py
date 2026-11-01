@@ -45,7 +45,8 @@ def fixture(mismatch=False, bad_meta=False):
             values = {"bioma": "Pantanal", "uf": name, "mun": "Mun",
                       "lon_pc": lon, "lat_pc": "-17.4", "ua": ua,
                       "data": "2018", "Uso_terra_PC": "14",
-                      "Ausen_necro": flag, "diam": diam}
+                      "Ausen_necro": flag, "diam": diam,
+                      "decomp_nivel": "3" if diam else ""}
             return [values.get(k, "") for k in FIELDS]
         wood[sid] = xlsx([row("S", "")] if uf == "MT"
                          else [row("S", ""), row("N", "9")])
