@@ -87,7 +87,7 @@ class IFNAcquisitionTests(unittest.TestCase):
                        "license": "CC BY", "role": "equivalence",
                        "format_override": "xlsx",
                        "expected_columns": ["bioma", "equivalente"]}]}
-            raw = b"bioma,equivalente\\nCerrado,Sim\\n"
+            raw = b"bioma,equivalente\nCerrado,Sim\n"
             result = fetch_sources(registry, temp,
                 opener=lambda request, timeout: io.BytesIO(raw))
             item = result["resources"][0]
