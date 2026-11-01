@@ -94,7 +94,24 @@ def _summarize_rows(rows, headers, *, encoding=None, delimiter=None, source_uf=N
     # domain as a provenance-tagged hint, never as an unverified national default.
     if source_uf is not None and source_uf not in STATE_NAMES:
         raise ValueError("invalid source UF hint")
-    normalized = {norm(name): i for i, name in enumerate(headers) if name}
+    # A repeated identity column (including Unicode/case aliases) makes plot
+    # attribution ambiguous: silently choosing the last column can fabricate
+    # a biome, UF, sampling unit or centroid. Ignore duplicate unrelated
+    # metadata headers, but fail closed on the five identity domains.
+    normalized_headers = [norm(name) if name else "" for name in headers]
+    identity_alias_groups = (
+        ("UA", "UNIDADE_AMOSTRAL", "UNIDADE_DE_AMOSTRAGEM"),
+        ("BIOMA", "NM_BIOMA"),
+        ("UF", "SG_UF", "ESTADO", "SIGLA_UF"),
+        ("LAT_PC", "LATITUDE", "LAT"),
+        ("LON_PC", "LONGITUDE", "LON", "LONG"),
+    )
+    for aliases in identity_alias_groups:
+        matches = [str(headers[i]) for i, name in enumerate(normalized_headers)
+                   if name in aliases]
+        if len(matches) > 1:
+            raise ValueError(f"ambiguous IFN identity columns: {matches!r}")
+    normalized = {name: i for i, name in enumerate(normalized_headers) if name}
     def idx(*names):
         return next((normalized[norm(name)] for name in names if norm(name) in normalized), None)
     ua_i = idx("UA", "UNIDADE_AMOSTRAL", "UNIDADE_DE_AMOSTRAGEM")
