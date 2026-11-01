@@ -180,9 +180,9 @@ class SFBPanelHarvestTests(unittest.TestCase):
 
     def test_missing_biome_row_with_conflicting_centroid_quarantines_ua(self):
         # A biome-less equation row can still identify the same physical UA.
-        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
-                "Cerrado;GO;UA701;-15.0;-47.0\\n"
-                ";Goiás;ｕａ７０１;-15.2;-47.0\\n").encode("utf-8")
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA701;-15.0;-47.0\n"
+                ";Goiás;ｕａ７０１;-15.2;-47.0\n").encode("utf-8")
         report = inspect_csv(body)
         self.assertEqual(report["unique_ua_by_biome"]["Cerrado"], 1)
         self.assertEqual(report["unique_ua_with_coordinates_by_biome"], {})
@@ -190,19 +190,19 @@ class SFBPanelHarvestTests(unittest.TestCase):
         self.assertEqual(report["ua_rows_missing_biome_crosschecked_for_coordinates"], 1)
 
     def test_missing_biome_invalid_centroid_quarantines_labelled_ua(self):
-        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
-                "Cerrado;GO;UA702;-15.0;-47.0\\n"
-                ";GO;UA702;0;0\\n"
-                "Cerrado;GO;UA703;-15.3;-47.3\\n").encode("utf-8")
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA702;-15.0;-47.0\n"
+                ";GO;UA702;0;0\n"
+                "Cerrado;GO;UA703;-15.3;-47.3\n").encode("utf-8")
         report = inspect_csv(body)
         self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Cerrado"], 1)
         self.assertEqual(report["ua_with_invalid_coordinate_rows_by_biome"]["Cerrado"], 1)
         self.assertEqual(report["ua_rows_invalid_coordinates"], 1)
 
     def test_missing_biome_same_centroid_does_not_remove_candidate(self):
-        body = ("bioma;uf;ua;lat_pc;lon_pc\\n"
-                "Cerrado;GO;UA704;-15.0;-47.0\\n"
-                ";GO;ua704;-15.0;-47.0\\n").encode("utf-8")
+        body = ("bioma;uf;ua;lat_pc;lon_pc\n"
+                "Cerrado;GO;UA704;-15.0;-47.0\n"
+                ";GO;ua704;-15.0;-47.0\n").encode("utf-8")
         report = inspect_csv(body)
         self.assertEqual(report["unique_ua_with_coordinates_by_biome"]["Cerrado"], 1)
         self.assertEqual(report["ua_with_conflicting_coordinates_by_biome"], {})
