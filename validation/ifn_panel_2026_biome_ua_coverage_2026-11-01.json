@@ -71,5 +71,36 @@
   "carbon_stock_tC_ha": null,
   "confidence_interval_95": null,
   "scientific_validation": false,
-  "warning": "Observational SFB/IFN-derived model outputs, not 781041 independent plots. Repeated equations/subunits must not be pseudoreplicated. Pantanal absent in both 2026 panel CSVs (N/D, not zero). No fitophysiognomy IBGE spatial crosswalk, current-cover check, field/SAR temporal pairing, sampling-design CI95 or transfer error established."
+  "warning": "Observational SFB/IFN-derived model outputs, not 781041 independent plots. Repeated equations/subunits must not be pseudoreplicated. Pantanal absent in both 2026 panel CSVs (N/D, not zero). No fitophysiognomy IBGE spatial crosswalk, current-cover check, field/SAR temporal pairing, sampling-design CI95 or transfer error established.",
+  "cross_panel_reported_centroid_screening_2026_11_01": {
+    "source_workflow_run_id": 41376189999,
+    "source_commit_sha": "1165fdc107434c4da7006acde65191756b932106",
+    "source_artifact_id": 13110944276,
+    "artifact_upload_zip_sha256_reported_by_github_actions": "3a530d9353e7d696c871cdbb9a8b568c6bfbf8f90707f94d487479085914e5c3",
+    "official_source_resources_downloaded": 11,
+    "official_source_resources_failed_or_blocked": 0,
+    "physical_ua_overlap_with_identical_reported_centroid_by_biome": {
+      "Amazônia": 1705,
+      "Caatinga": 1227,
+      "Cerrado": 2083,
+      "Mata Atlântica": 841,
+      "Pantanal": 0
+    },
+    "physical_ua_overlap_with_missing_or_discordant_reported_centroid_by_biome": {
+      "Amazônia": 0,
+      "Caatinga": 0,
+      "Cerrado": 0,
+      "Mata Atlântica": 0,
+      "Pantanal": 0
+    },
+    "total_identical_reported_centroid_ua_in_target_biomes": 5856,
+    "independent_plot_pixel_sar_validation": false,
+    "positional_accuracy_verified": false,
+    "ibge_fitophysiognomy_crosswalk_verified": false,
+    "independent_sampling_design_and_transfer_error_verified": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "note": "Derived from official SFB/IFN CSVs in GitHub Actions acquisition run. Identical reported centroid coordinates for the same physical UA across two model-output panels do not establish ground-truth geolocation, positional accuracy, temporal SAR coincidence, or independent observations. Artifact upload checksum is the Actions-reported digest, not an independently downloaded ZIP digest."
+  }
 }
