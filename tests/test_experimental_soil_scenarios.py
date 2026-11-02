@@ -25,6 +25,10 @@ def example_horizons():
     } for a, b in zip(DEPTHS[:-1], DEPTHS[1:])]
 
 
+def example_horizons_0_30():
+    return example_horizons()[:3]
+
+
 class ExperimentalSoilScenarioTests(unittest.TestCase):
     def evaluate(self, rows):
         return soil_0_100_scenario_envelope(rows, biome=BIOME, physiognomy=PHYS)
@@ -34,12 +38,22 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
         self.assertTrue(r["available"])
         self.assertEqual(r["status"], "experimental")
         # 100 cm * 100 * BD * C * (1 - rock)
-        self.assertAlmostEqual(r["stock_tc_ha"], 64.8)
+        self.assertAlmostEqual(r["stock_tc_ha"], 216.0)
         self.assertAlmostEqual(r["scenario_range_tc_ha"][0], 80.0)
         self.assertAlmostEqual(r["scenario_range_tc_ha"][1], 420.0)
         self.assertAlmostEqual(r["stock_tco2e_ha"], 216 * 44 / 12)
         self.assertEqual(r["depth_cm"], [0, 100])
         self.assertEqual(r["source_count"], 1)
+
+    def test_experimental_0_30_profile_sums_only_first_three_horizons(self):
+        r = soil_0_30_scenario_envelope(example_horizons_0_30(), biome=BIOME, physiognomy=PHYS)
+        self.assertTrue(r["available"])
+        self.assertEqual(r["depth_cm"], [0, 30])
+        self.assertAlmostEqual(r["stock_tc_ha"], 64.8)
+        self.assertAlmostEqual(r["scenario_range_tc_ha"][0], 24.0)
+        self.assertAlmostEqual(r["scenario_range_tc_ha"][1], 126.0)
+        self.assertFalse(r["scientifically_homologated"])
+        self.assertFalse(r["is_target_aoi_ci95"])
 
     def test_scenario_is_never_homologated_or_a_confidence_interval(self):
         r = self.evaluate(example_horizons())
@@ -140,10 +154,10 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
             None, PHYS, BIOME, lambda *_: {}, lambda _: soil)
         rows = {x["parametro"]: x for x in result["components"]}
         self.assertEqual(rows["Solo 0–30 cm"]["origem"], "EXPERIMENTAL_FISICO")
-        self.assertAlmostEqual(rows["Solo 0–100 cm"]["tc"], 216.0)
-        self.assertFalse(rows["Solo 0–100 cm"]["scientifically_homologated"])
-        self.assertFalse(rows["Solo 0–100 cm"]["include_in_total"])
-        self.assertEqual(rows["Solo 0–100 cm"]["range_tc_ha"], [24, 126])
+        self.assertAlmostEqual(rows["Solo 0–30 cm"]["tc"], 64.8)
+        self.assertFalse(rows["Solo 0–30 cm"]["scientifically_homologated"])
+        self.assertFalse(rows["Solo 0–30 cm"]["include_in_total"])
+        self.assertEqual(rows["Solo 0–30 cm"]["range_tc_ha"], [24, 126])
 
     def test_measured_soil_profile_precedes_experimental(self):
         from native_carbon import estimate_native_components
