@@ -213,5 +213,62 @@
     "scientific_validation": false,
     "carbon_stock_tC_ha": null,
     "confidence_interval_95": null
+  },
+  "cross_panel_source_native_land_class_screening_2026_11_02": {
+    "report_type": "licensed_IFN_SFB_panel_source_land_class_consistency_screening_not_IBGE_or_current_cover",
+    "source_workflow_run_id": 41413230135,
+    "source_code_and_test_sha": "41b844dda0dfb770869ae48f519faeeba1fb2843",
+    "source_artifact_id": 13126077964,
+    "artifact_upload_sha256_reported_by_github_actions": "8fe6b3ea8aca4a09499bf9787484e0bebf886ba31224a795cc01dcfe836f2ba9",
+    "artifact_zip_sha256_independently_verified": false,
+    "source_license_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "official_resources_downloaded": 11,
+    "official_resources_failed_or_blocked": 0,
+    "method": "Source CSV SHA256 validated against acquisition manifest by tools.audit_ifn_panel_biome_coverage; physical (UF,UA) must have exactly one identical NFKC/casefold source native land-use class in all rows of each panel and across both panels; conflicting biomes quarantined. Source class is neither current cover nor IBGE fitophysiognomy. Output reproduced in GitHub Actions job 125170836862.",
+    "by_biome": {
+      "Amazônia": {
+        "overlapping_physical_ua": 1705,
+        "single_matching_native_source_land_class_provisional": 1597,
+        "not_single_matching_native_source_land_class": 108,
+        "independently_validated": false
+      },
+      "Cerrado": {
+        "overlapping_physical_ua": 2083,
+        "single_matching_native_source_land_class_provisional": 1662,
+        "not_single_matching_native_source_land_class": 421,
+        "independently_validated": false
+      },
+      "Caatinga": {
+        "overlapping_physical_ua": 1227,
+        "single_matching_native_source_land_class_provisional": 1160,
+        "not_single_matching_native_source_land_class": 67,
+        "independently_validated": false
+      },
+      "Mata Atlântica": {
+        "overlapping_physical_ua": 841,
+        "single_matching_native_source_land_class_provisional": 768,
+        "not_single_matching_native_source_land_class": 73,
+        "independently_validated": false
+      },
+      "Pantanal": {
+        "overlapping_physical_ua": 0,
+        "single_matching_native_source_land_class_provisional": 0,
+        "not_single_matching_native_source_land_class": 0,
+        "independently_validated": false
+      }
+    },
+    "total_overlapping_physical_ua": 5856,
+    "total_provisional_native_source_class_ua": 5187,
+    "total_excluded_or_unresolved_source_class_ua": 669,
+    "pantanal_panel_data": "N/D — no Pantanal rows in these two panel resources",
+    "current_cover_verified": false,
+    "ibge_fitophysiognomy_crosswalk_verified": false,
+    "geolocation_accuracy_verified": false,
+    "independent_sar_plot_pixel_validation": false,
+    "transfer_error_validated": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "note": "Conservative reduction of candidate source labels only, not independent observational validation or native land cover. No model or carbon stock was promoted. The artifact ZIP SHA-256 above is the Actions upload-reported digest, not an independently downloaded digest."
   }
 }
