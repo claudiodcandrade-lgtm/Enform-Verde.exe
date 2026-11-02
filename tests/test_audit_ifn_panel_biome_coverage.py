@@ -339,6 +339,8 @@ class PanelCoverageTests(unittest.TestCase):
         self.assertEqual(candidates[0]["precisao_geografica_de_campo_verificada"], "false")
         self.assertEqual(candidates[0]["precisao_posicional_m"], "N/D")
         self.assertFalse(report["sar_plot_pixel_validation"])
+        self.assertIn("WGS84", report["centroid_collision_warning"])
+        self.assertIn("WGS84", report["warning"])
 
     def test_official_panel_typology_is_secondary_inference_not_field_truth(self):
         report = audit(*fixture())
