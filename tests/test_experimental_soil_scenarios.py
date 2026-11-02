@@ -142,6 +142,7 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
         self.assertEqual(rows["Solo 0–100 cm"]["origem"], "EXPERIMENTAL_FISICO")
         self.assertAlmostEqual(rows["Solo 0–100 cm"]["tc"], 216.0)
         self.assertFalse(rows["Solo 0–100 cm"]["scientifically_homologated"])
+        self.assertFalse(rows["Solo 0–100 cm"]["include_in_total"])
         self.assertEqual(rows["Solo 0–100 cm"]["range_tc_ha"], [80, 420])
 
     def test_measured_soil_profile_precedes_experimental(self):
