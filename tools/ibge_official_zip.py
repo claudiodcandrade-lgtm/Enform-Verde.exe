@@ -19,12 +19,12 @@ def _digest(path):
     return h.hexdigest()
 
 
-def _archive_ok(path):
+def _archive_ok(path, check_crc=False):
     try:
         if not path.is_file() or path.stat().st_size <= 1024 * 1024:
             return False
         with zipfile.ZipFile(path) as archive:
-            return bool(archive.infolist()) and archive.testzip() is None
+            return bool(archive.infolist()) and (not check_crc or archive.testzip() is None)
     except (OSError, zipfile.BadZipFile, RuntimeError):
         return False
 
@@ -59,7 +59,7 @@ def download_ibge_zip(url, folder, tag, version, attempts=3, pause=time.sleep):
                     for chunk in response.iter_content(4 * 1024 * 1024):
                         if chunk:
                             out.write(chunk)
-            if not _archive_ok(partial):
+            if not _archive_ok(partial, check_crc=True):
                 raise ValueError("Official IBGE response is not a complete valid ZIP")
             digest = _digest(partial)
             partial.replace(path)
