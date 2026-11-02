@@ -290,6 +290,31 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
                 })
         if len(candidate_rows) != sum(provisional_geolocated_native_typology.values()):
             raise AssertionError("candidate rows do not reconcile with screened physical UAs")
+        # Two different physical UAs can share one *published* coordinate.
+        # Diagnose coordinate aliasing before any proposed IBGE or SAR join.
+        # Numeric Decimal keys avoid false non-collisions from textual precision.
+        centroid_members = defaultdict(set)
+        centroid_biomes = defaultdict(set)
+        for candidate in candidate_rows:
+            coord = (Decimal(candidate["lon_pc_publicado"]),
+                     Decimal(candidate["lat_pc_publicado"]))
+            centroid_members[coord].add((candidate["uf"], candidate["ua"]))
+            centroid_biomes[coord].add(candidate["bioma_declarado"])
+        shared_centroids = {
+            coord for coord, members in centroid_members.items() if len(members) > 1
+        }
+        multi_biome_centroids = {
+            coord for coord, biomes in centroid_biomes.items() if len(biomes) > 1
+        }
+        candidate_shared_centroid_by_biome = Counter()
+        for candidate in candidate_rows:
+            coord = (Decimal(candidate["lon_pc_publicado"]),
+                     Decimal(candidate["lat_pc_publicado"]))
+            shared = coord in shared_centroids
+            candidate["centroide_publicado_compartilhado_entre_ua"] = str(shared).lower()
+            candidate["numero_ua_fisicas_no_mesmo_centroide_publicado"] = len(centroid_members[coord])
+            if shared:
+                candidate_shared_centroid_by_biome[candidate["bioma_declarado"]] += 1
     for report in reports.values():
         del report["_units_by_biome"]
         del report["_centroids_by_ua"]
@@ -339,6 +364,24 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
         result["candidate_centroids_both_coordinates_on_0_02_degree_grid_fraction"] = (
             on_grid_total / len(candidate_rows) if candidate_rows else None
         )
+        result["candidate_distinct_published_centroids_shared_by_multiple_ua"] = len(shared_centroids)
+        result["candidate_physical_ua_at_shared_published_centroids"] = sum(
+            len(centroid_members[coord]) for coord in shared_centroids
+        )
+        result["candidate_physical_ua_at_shared_published_centroids_by_biome"] = {
+            biome: candidate_shared_centroid_by_biome[biome] for biome in TARGET_BIOMES
+        }
+        result["candidate_distinct_published_centroids_with_multiple_declared_biomes"] = len(
+            multi_biome_centroids
+        )
+        result["candidate_centroid_collision_is_independent_plot_geolocation"] = False
+        result["centroid_collision_warning"] = (
+            "Distinct physical UAs sharing a published coordinate are a descriptive "
+            "aliasing diagnostic in the provisional native candidate subset only. "
+            "They are NOT the same field plot and must not be treated as distinct "
+            "independent plot-pixel SAR pairs at that published coordinate. "
+            "No source positional accuracy, CRS or IBGE class is verified."
+        )
         result["centroid_grid_coincidence_is_positional_accuracy"] = False
         result["source_centroid_accuracy_m"] = None
         result["centroid_grid_warning"] = (
@@ -379,7 +422,9 @@ def main():
                    "lat_pc_publicado", "classe_nativa_declarada",
                    "tipologia_origem_declarada", "crs_fonte_verificado",
                    "centroide_ambas_coordenadas_na_grade_0_02_grau",
-                   "precisao_posicional_m", "legenda_1_ibge_verificada", "par_sar_validado",
+                   "precisao_posicional_m", "centroide_publicado_compartilhado_entre_ua",
+                   "numero_ua_fisicas_no_mesmo_centroide_publicado",
+                   "legenda_1_ibge_verificada", "par_sar_validado",
                    "estoque_carbono_validado")
         with csv_path.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=columns)
@@ -390,7 +435,7 @@ def main():
         result["candidate_csv_scientifically_validated"] = False
         result["candidate_csv_warning"] = (
             "Source-reported IFN coordinates and labels only. A 0.02-degree "
-            "grid coincidence is NOT a positional-accuracy measurement. "
+            "grid coincidence and shared published centroids are NOT positional-accuracy measurements. "
             "Source CRS, positional accuracy, IBGE legenda_1, SAR and carbon "
             "remain unverified."
         )
