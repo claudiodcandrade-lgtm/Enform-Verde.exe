@@ -1,0 +1,75 @@
+{
+  "report_type": "licensed_IFN_panel_2026_biome_UA_coverage_screening_only",
+  "source_workflow_run_id": 41363359480,
+  "source_commit_sha": "e132e60bb3087abae080ea832259727efa93b9a9",
+  "source_artifact_id": 13105568962,
+  "source_artifact_zip_sha256": "85aa4efc0cd5dd33c90a14089f3ad7afc9218c6501dcd385474ea56a512f3d19",
+  "source_sha256": {
+    "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+    "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+  },
+  "source_license": "Creative Commons Attribution (official SFB portal)",
+  "source_license_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+  "living_tree_panel": {
+    "rows": 439970,
+    "unique_physical_ua": 7466,
+    "ua_with_multiple_equation_labels": 7466,
+    "ua_with_multiple_typology_labels": 684,
+    "ua_with_conflicting_biome_labels": 0,
+    "rows_by_biome": {
+      "Amazônia": 119536,
+      "Caatinga": 78754,
+      "Cerrado": 170627,
+      "Mata Atlântica": 61836,
+      "Pampa": 9217,
+      "Pantanal": 0
+    },
+    "unique_physical_ua_by_biome": {
+      "Amazônia": 1937,
+      "Caatinga": 1744,
+      "Cerrado": 2537,
+      "Mata Atlântica": 1078,
+      "Pampa": 170,
+      "Pantanal": 0
+    }
+  },
+  "standing_dead_tree_panel": {
+    "rows": 341071,
+    "unique_physical_ua": 6014,
+    "ua_with_multiple_equation_labels": 6014,
+    "ua_with_multiple_typology_labels": 277,
+    "ua_with_conflicting_biome_labels": 0,
+    "rows_by_biome": {
+      "Amazônia": 103185,
+      "Caatinga": 54733,
+      "Cerrado": 130884,
+      "Mata Atlântica": 46708,
+      "Pampa": 5561,
+      "Pantanal": 0
+    },
+    "unique_physical_ua_by_biome": {
+      "Amazônia": 1709,
+      "Caatinga": 1245,
+      "Cerrado": 2093,
+      "Mata Atlântica": 843,
+      "Pampa": 124,
+      "Pantanal": 0
+    }
+  },
+  "same_physical_ua_in_both_panels_by_biome": {
+    "Amazônia": 1705,
+    "Caatinga": 1227,
+    "Cerrado": 2083,
+    "Mata Atlântica": 841,
+    "Pantanal": 0
+  },
+  "ibge_fitophysiognomy_verified": false,
+  "current_cover_verified": false,
+  "field_acquisition_date_per_record_verified": false,
+  "independent_sar_plot_pixel_validation": false,
+  "sampling_design_variance_and_transfer_error_validated": false,
+  "carbon_stock_tC_ha": null,
+  "confidence_interval_95": null,
+  "scientific_validation": false,
+  "warning": "Observational SFB/IFN-derived model outputs, not 781041 independent plots. Repeated equations/subunits must not be pseudoreplicated. Pantanal absent in both 2026 panel CSVs (N/D, not zero). No fitophysiognomy IBGE spatial crosswalk, current-cover check, field/SAR temporal pairing, sampling-design CI95 or transfer error established."
+}

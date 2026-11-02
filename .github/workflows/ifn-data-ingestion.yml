@@ -36,6 +36,8 @@ jobs:
         run: python -m unittest tests.test_audit_ifn_pantanal_litter_necromass -v
       - name: Verify Pantanal litter-fallen-wood cross-source regressions
         run: python -m unittest tests.test_audit_ifn_pantanal_fallen_wood -v
+      - name: Verify IFN 2026 panel biome coverage and anti-pseudoreplication regressions
+        run: python -m unittest tests.test_audit_ifn_panel_biome_coverage -v
       - name: Acquire official source bytes and record SHA256
         id: acquire
         run: |
@@ -59,6 +61,12 @@ jobs:
           python -m tools.audit_ifn_pantanal_fallen_wood \
             --raw-dir ifn_raw --download-audit ifn_download_audit.json \
             --report ifn_pantanal_litter_fallen_wood_overlap.json
+      - name: Audit IFN 2026 panel coverage without inferring stocks
+        if: steps.acquire.outcome == 'success'
+        run: |
+          python -m tools.audit_ifn_panel_biome_coverage \
+            --raw-dir ifn_raw --download-audit ifn_download_audit.json \
+            --report ifn_panel_biome_coverage.json
       - name: Publish unvalidated acquisition audit and raw source files
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,6 +78,7 @@ jobs:
             ifn_necromass_candidates.json
             ifn_pantanal_litter_necromass_overlap.json
             ifn_pantanal_litter_fallen_wood_overlap.json
+            ifn_panel_biome_coverage.json
             ifn_raw/
           if-no-files-found: warn
           retention-days: 30
