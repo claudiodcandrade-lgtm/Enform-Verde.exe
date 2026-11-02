@@ -30,12 +30,12 @@ def xlsx(records, row_number_overrides=None, fields=FIELDS):
     return stream.getvalue()
 
 
-def fixture(mismatch=False, bad_meta=False, land_code="14", wood_date_override=None):
+def fixture(mismatch=False, bad_meta=False, land_code="14", wood_date_override=None, litter_date="2018"):
     litter, wood = {}, {}
     for sid, uf in LITTER_IDS.items():
         name = "Mato Grosso" if uf == "MT" else "Mato Grosso do Sul"
         ua = uf + "_1"
-        lines = [f"Pantanal;{name};{ua};Mun;-57,5;-17,4;2018;{land_code};{i};0\n"
+        lines = [f"Pantanal;{name};{ua};Mun;-57,5;-17,4;{litter_date};{land_code};{i};0\n"
                  for i in range(1, 6)]
         litter[sid] = (LITTER_HEADER + "".join(lines)).encode()
     for sid, uf in WOOD_IDS.items():
@@ -45,7 +45,7 @@ def fixture(mismatch=False, bad_meta=False, land_code="14", wood_date_override=N
         def row(flag, diam):
             values = {"bioma": "Pantanal", "uf": name, "mun": "Mun",
                       "lon_pc": lon, "lat_pc": "-17.4", "ua": ua,
-                      "data": (wood_date_override if wood_date_override is not None and uf == "MT" else "2018"),
+                      "data": (wood_date_override if wood_date_override is not None and uf == "MT" else litter_date),
                       "Uso_terra_PC": land_code,
                       "Ausen_necro": flag, "transecto": "1" if flag == "N" else "", "diam": diam,
                       "decomp_nivel": "3" if diam else ""}
@@ -76,8 +76,11 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_present_flag_without_diameter_rows"], 0)
         self.assertEqual(report["wood_rows_missing_transect_id"], 2)
         self.assertEqual(report["wood_rows_missing_collection_date"], 0)
-        self.assertTrue(report["cross_source_collection_date_equivalence_verified"])
+        self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
         self.assertEqual(report["cross_source_same_field_collection_date_ua"], 2)
+        self.assertEqual(report["cross_source_same_reported_year_ua"], 2)
+        self.assertEqual(report["cross_source_same_exact_field_day_ua"], 0)
+        self.assertEqual(report["cross_source_unverified_day_resolution_ua"], 2)
         self.assertEqual(report["cross_source_different_field_collection_date_ua"], 0)
         self.assertFalse(report["sar_acquisition_date_equivalence_verified"])
         self.assertEqual(report["wood_ua_with_mixed_flags_within_same_nonblank_transect"], 0)
@@ -217,6 +220,29 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertEqual(report["wood_rows_missing_collection_date"], 1)
         self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
         self.assertFalse(report["scientific_validation"])
+
+    def test_full_calendar_dates_are_required_for_exact_day_proof(self):
+        report = audit(*fixture(litter_date="2018-04-01"))
+        self.assertEqual(report["cross_source_same_reported_year_ua"], 2)
+        self.assertEqual(report["cross_source_same_exact_field_day_ua"], 2)
+        self.assertEqual(report["cross_source_unverified_day_resolution_ua"], 0)
+        self.assertTrue(report["cross_source_collection_date_equivalence_verified"])
+        self.assertFalse(report["scientific_validation"])
+
+    def test_same_year_different_days_cannot_be_called_temporally_equivalent(self):
+        report = audit(*fixture(litter_date="2018-04-01",
+                                wood_date_override="2018-04-02"))
+        self.assertEqual(report["cross_source_same_reported_year_ua"], 2)
+        self.assertEqual(report["cross_source_same_exact_field_day_ua"], 1)
+        self.assertEqual(report["cross_source_different_exact_field_day_ua"], 1)
+        self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
+        self.assertIsNone(report["carbon_stock_tC_ha"])
+
+    def test_invalid_calendar_date_is_not_inferred_from_year(self):
+        report = audit(*fixture(litter_date="2018-02-30"))
+        self.assertEqual(report["cross_source_same_exact_field_day_ua"], 0)
+        self.assertEqual(report["cross_source_unverified_day_resolution_ua"], 2)
+        self.assertFalse(report["cross_source_collection_date_equivalence_verified"])
 
 if __name__ == "__main__":
     unittest.main()

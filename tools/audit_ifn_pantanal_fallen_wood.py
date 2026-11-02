@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter, defaultdict
 from decimal import Decimal
+from datetime import date
 from pathlib import Path
 
 from tools.audit_ifn_pantanal_litter_necromass import rows, number, LITTER_FIELDS
@@ -104,6 +105,30 @@ def identity(row):
             number(row["lat_pc"], Decimal(-90), Decimal(90)),
             str(row["Uso_terra_PC"]).strip(),
             str(row["data"]).strip())
+
+
+def parsed_field_date(value):
+    """Return (reported year, exact ISO day); year-only is never an exact date.
+
+    The official IFN 'data' field can contain only a collection year. Matching
+    year labels establish annual overlap, not simultaneous field measurement.
+    Unrecognized or invalid dates remain N/D, without guessed day/month.
+    """
+    value = str(value).strip()
+    if re.fullmatch(r"[0-9]{4}", value):
+        year = int(value)
+        return (year if 1900 <= year <= 2100 else None, None)
+    try:
+        if re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+            day = date.fromisoformat(value)
+        elif re.fullmatch(r"[0-9]{2}/[0-9]{2}/[0-9]{4}", value):
+            dd, mm, yyyy = (int(part) for part in value.split("/"))
+            day = date(yyyy, mm, dd)
+        else:
+            return (None, None)
+    except ValueError:
+        return (None, None)
+    return (day.year, day.isoformat())
 
 
 def audit(litter_by_id, wood_by_id, expected_sha256):
@@ -214,11 +239,25 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     # Same physical UA and centroid do not imply simultaneous measurements.
     # Compare the original field collection-date strings, without inventing
     # temporal equivalence when either source omitted the date.
+    # Preserve raw-string matches for audit/backward compatibility, but do
+    # not call year-only (e.g. "2018") an exact coincident collection date.
     same_date_ua = sum(bool(litter[key][4]) and litter[key][4] == wood[key][4]
                        for key in overlap)
     different_date_ua = sum(bool(litter[key][4]) and bool(wood[key][4])
                             and litter[key][4] != wood[key][4] for key in overlap)
     unknown_date_ua = len(overlap) - same_date_ua - different_date_ua
+    same_year_ua = exact_day_ua = different_exact_day_ua = unresolved_day_ua = 0
+    for key in overlap:
+        left_year, left_day = parsed_field_date(litter[key][4])
+        right_year, right_day = parsed_field_date(wood[key][4])
+        if left_year is not None and left_year == right_year:
+            same_year_ua += 1
+        if left_day is None or right_day is None:
+            unresolved_day_ua += 1
+        elif left_day == right_day:
+            exact_day_ua += 1
+        else:
+            different_exact_day_ua += 1
     return {
         "report_type": "licensed_IFN_Pantanal_litter_fallen_wood_screening_only",
         "source_sha256": digests,
@@ -243,7 +282,11 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "cross_source_same_field_collection_date_ua": same_date_ua,
         "cross_source_different_field_collection_date_ua": different_date_ua,
         "cross_source_missing_field_collection_date_ua": unknown_date_ua,
-        "cross_source_collection_date_equivalence_verified": bool(overlap) and same_date_ua == len(overlap),
+        "cross_source_same_reported_year_ua": same_year_ua,
+        "cross_source_same_exact_field_day_ua": exact_day_ua,
+        "cross_source_different_exact_field_day_ua": different_exact_day_ua,
+        "cross_source_unverified_day_resolution_ua": unresolved_day_ua,
+        "cross_source_collection_date_equivalence_verified": bool(overlap) and exact_day_ua == len(overlap),
         "sar_acquisition_date_equivalence_verified": False,
         "wood_rows_with_numeric_diameter": diameter_rows,
         "wood_diameter_decay_level_rows": dict(sorted(decay_levels.items())),
@@ -266,7 +309,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "Matched UAs are not independent carbon stocks. IFN code 45 indicates cultivated pasture in the published 2024 dictionary and is excluded from native-carbon candidates; all other codes still require IBGE and current-cover verification. S/N flags describe individual records, not UA-wide absence. Mixed flags require transect-level review; blank transect IDs cannot be assigned to a transect. Presence without diameter is incomplete, not zero biomass. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
+        "warning": "Matched UAs are not independent carbon stocks. IFN code 45 indicates cultivated pasture in the published 2024 dictionary and is excluded from native-carbon candidates; all other codes still require IBGE and current-cover verification. S/N flags describe individual records, not UA-wide absence. Mixed flags require transect-level review; blank transect IDs cannot be assigned to a transect. Presence without diameter is incomplete, not zero biomass. Matching year-only collection labels do not establish the same field day. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
     }
 
 
