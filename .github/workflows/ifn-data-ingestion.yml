@@ -14,6 +14,8 @@ on:
       - 'tests/test_audit_ifn_pantanal_litter_necromass.py'
       - 'tools/audit_ifn_pantanal_fallen_wood.py'
       - 'tests/test_audit_ifn_pantanal_fallen_wood.py'
+      - 'tools/audit_ifn_panel_biome_coverage.py'
+      - 'tests/test_audit_ifn_panel_biome_coverage.py'
 permissions:
   contents: read
 jobs:
