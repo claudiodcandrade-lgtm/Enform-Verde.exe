@@ -169,7 +169,7 @@ def partition_land_use(aoi, layers):
     return out.to_crs('EPSG:4326'), {
         'classes': records, 'area_aoi_ha': geom.area/10000,
         'method': 'interseção exata AOI × polígonos das células; área em EPSG:6933; denominador: AOI inteira',
-        'priority': 'SAR com validação elegível > IBGE > MapBiomas > não classificado',
+        'priority': 'camadas de cobertura atual elegíveis na ordem fornecida; IBGE legenda_1 não confirma uso atual',
         'area_uncertainty': 'Área cartográfica; sem correção amostral de área e sem IC de área.',
     }
 
@@ -453,7 +453,11 @@ def ibge_formation(name):
 
 
 def name_native_from_ibge(predicted, reference):
-    """IBGE names compatible native structure; no distance in user outputs."""
+    """Name native SAR classes from IBGE only where polygons intersect exactly.
+
+    IBGE legenda_1 is a phytogeographic reference, not a transferable land-use
+    classifier. Do not spread the nearest IBGE name into neighboring SAR areas.
+    """
     import geopandas as gpd
     pieces=[]
     ref=reference.to_crs(AREA_CRS) if reference is not None else None
@@ -470,14 +474,9 @@ def name_native_from_ibge(predicted, reference):
                 pieces.append(dict(class_name=item.class_name,source='SAR_VALIDADO+IBGE',taxonomy='Formação SAR: '+formation+'; nome: IBGE legenda_1',geometry=clipped))
                 remaining=remaining.difference(clipped)
         if remaining.area>0:
-            if not compatible.empty:
-                distances=compatible.geometry.distance(remaining)
-                nearest=compatible.loc[distances.idxmin()]
-                name,source=nearest.class_name,'SAR_VALIDADO+IBGE'
-                taxonomy='Formação SAR: '+formation+'; nome: IBGE legenda_1'
-            else:
-                name,source,taxonomy=row.class_name,row.source,'Formação SAR ampla; nome IBGE compatível indisponível'
-            pieces.append(dict(class_name=name,source=source,taxonomy=taxonomy,geometry=remaining))
+            pieces.append(dict(class_name=row.class_name,source=row.source,
+                               taxonomy='Formação SAR ampla; sem interseção IBGE compatível',
+                               geometry=remaining))
     return gpd.GeoDataFrame(pieces,crs=AREA_CRS).to_crs(predicted.crs) if pieces else predicted
 
 
@@ -707,11 +706,14 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             detail['taxonomy']='IBGE legenda_1 em cobertura nativa MapBiomas'
             layers.append(detail)
         layers.append(mb[native])
-    if reference is not None:layers.append(reference)
+    # legenda_1 is only a phytoregion label. It cannot fill current land-use
+    # gaps; without a current-cover source those pixels remain unclassified.
     source_distributions=[]
     for layer in raw_layers:
         if layer is not None and not layer.empty:
             _,source_audit=partition_land_use(aoi,[layer])
+            source_audit['diagnostic_only']=True
+            source_audit['diagnostic_role']='Distribuição bruta da fonte; não integra nem substitui as classes finais de cobertura atual.'
             source_distributions.append(source_audit)
     polygons, summary = partition_land_use(aoi,layers)
     summary['original_source_distributions']=source_distributions
@@ -719,7 +721,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     summary['mapbiomas_access_attempts']=mapbiomas_access_attempts
     summary['cover_verification']='COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL' if mapbiomas_failure else 'FONTES_PROCESSADAS'
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r.get('native_status') is None) if all('native_status' in r for r in summary['classes']) else None
-    summary['priority']='SAR com confiança demonstrada; nas lacunas, IBGE para fitofisionomia e MapBiomas para uso/cobertura atual'
+    summary['priority']=('SAR com validação independente para classes elegíveis; MapBiomas para uso/cobertura atual nas lacunas; '
+                         'IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível; '
+                         'sem evidência de cobertura atual, manter Não classificado.')
     metadata=(validation or {}).get('class_metadata',{})
     polygons['native_status']=[native_class(r.class_name,r.source,metadata) for r in polygons.itertuples()]
     for row in summary['classes']:row['native_status']=native_class(row['class_name'],row['source'],metadata)
