@@ -66,12 +66,15 @@ class LandUseTests(unittest.TestCase):
             for row in r['classes']:self.assertAlmostEqual(row['area_pct'],50,places=4)
             self.assertEqual(len(r['classes']),2)
 
-    def test_missing_model_and_map_retains_ibge(self):
+    def test_missing_model_and_map_keeps_current_cover_unclassified(self):
         with tempfile.TemporaryDirectory() as d:
             aoi=gpd.GeoDataFrame(geometry=[box(-50,-10,-49.99,-9.99)],crs=4326)
             ibge=aoi.copy();ibge['legenda_1']='FOD'
             r=run_land_use(aoi,d,mapbiomas_path=str(Path(d)/'absent.tif'),ibge=ibge)
-            self.assertEqual(r['status'],'FALLBACK_CARTOGRAFICO');self.assertEqual(r['classes'][0]['source'],'IBGE');self.assertIsNone(r['validation'])
+            self.assertEqual(r['status'],'FALLBACK_CARTOGRAFICO')
+            self.assertEqual(r['classes'][0]['source'],'SEM_COBERTURA')
+            self.assertEqual(r['classes'][0]['class_name'],'Não classificado')
+            self.assertIsNone(r['validation'])
 
     def fixture(self,directory):
         root=Path(directory);transform=from_origin(500000,9000000,1000,1000)
@@ -160,19 +163,19 @@ class LandUseTests(unittest.TestCase):
         self.assertEqual(sar_row['class_name'],'Soja')
         self.assertAlmostEqual(sar_row['area_ha'],0.6,places=5)
         self.assertAlmostEqual(map_row['area_ha'],0.4,places=5)
-        self.assertEqual(result['priority'],'SAR com confiança demonstrada; nas lacunas, IBGE para fitofisionomia e MapBiomas para uso/cobertura atual')
+        self.assertIn('IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível',result['priority'])
 
 if __name__=='__main__':unittest.main()
 
 class NativeNamingTests(unittest.TestCase):
-    def test_ibge_only_names_preserving_structure(self):
+    def test_ibge_name_is_not_transferred_from_nonintersecting_polygon(self):
         from land_use_sar import name_native_from_ibge
         a=gpd.GeoDataFrame([dict(class_name='Floresta',source='SAR_VALIDADO',taxonomy='SAR',geometry=box(0,0,10,10))],crs=6933)
         ref=gpd.GeoDataFrame([dict(class_name='Savana Arborizada',geometry=box(0,0,10,10)),dict(class_name='Floresta Ombrófila Densa',geometry=box(20,0,30,10))],crs=6933)
         result=name_native_from_ibge(a,ref)
-        self.assertEqual(result.iloc[0].class_name,'Floresta Ombrófila Densa')
-        self.assertEqual(result.iloc[0].source,'SAR_VALIDADO+IBGE')
-        self.assertIn('floresta',result.iloc[0].taxonomy)
+        self.assertEqual(result.iloc[0].class_name,'Floresta')
+        self.assertEqual(result.iloc[0].source,'SAR_VALIDADO')
+        self.assertIn('sem interseção IBGE',result.iloc[0].taxonomy)
         self.assertFalse(any('dist' in c for c in result.columns))
         self.assertAlmostEqual(result.geometry.area.sum(),100)
 
