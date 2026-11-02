@@ -12,6 +12,7 @@ import io
 import json
 import math
 from collections import Counter, defaultdict
+from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 from pathlib import Path
 
@@ -44,6 +45,21 @@ def _finite_nonnegative(value, field, line):
     return number
 
 
+def _coordinate(value, field, line):
+    """Parse reported centroid coordinates; blank remains unresolved, not zero."""
+    raw = str(value).strip()
+    if not raw:
+        return None
+    try:
+        coordinate = Decimal(raw.replace(",", "."))
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError(f"row {line}: invalid {field}") from exc
+    limit = Decimal(180 if field == "lon_pc" else 90)
+    if not coordinate.is_finite() or not -limit <= coordinate <= limit:
+        raise ValueError(f"row {line}: invalid {field}")
+    return coordinate
+
+
 def _screen(raw):
     stream = io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8-sig", newline="")
     reader = csv.DictReader(stream, delimiter=";", strict=True)
@@ -58,6 +74,7 @@ def _screen(raw):
     equations_by_ua = defaultdict(set)
     typologies_by_ua = defaultdict(set)
     biomes_by_ua = defaultdict(set)
+    centroids_by_ua = defaultdict(set)
     for line, row in enumerate(reader, 2):
         if None in row or any(row.get(name) is None for name in REQUIRED):
             raise ValueError(f"row {line}: malformed IFN panel CSV record")
@@ -74,6 +91,9 @@ def _screen(raw):
         _finite_nonnegative(row["agb_variancia_por_ua"], "UA variance", line)
         _finite_nonnegative(row["area_ha"], "area", line)
         key = (uf, ua)
+        lon = _coordinate(row["lon_pc"], "lon_pc", line)
+        lat = _coordinate(row["lat_pc"], "lat_pc", line)
+        centroids_by_ua[key].add((lon, lat) if lon is not None and lat is not None else None)
         counts[biome] += 1
         units[biome].add(key)
         typology_units[(biome, typology)].add(key)
@@ -91,11 +111,14 @@ def _screen(raw):
         "ua_with_multiple_equation_labels": sum(len(v) > 1 for v in equations_by_ua.values()),
         "ua_with_multiple_typology_labels": sum(len(v) > 1 for v in typologies_by_ua.values()),
         "ua_with_conflicting_biome_labels": sum(len(v) > 1 for v in biomes_by_ua.values()),
+        "ua_with_missing_or_conflicting_centroid": sum(
+            len(v) != 1 or None in v for v in centroids_by_ua.values()),
         "typology_ua_counts_provisional_not_ibge_verified": {
             b: {t: len(v) for (bb, t), v in sorted(typology_units.items()) if bb == b}
             for b in sorted(ALLOWED_BIOMES) if counts[b]
         },
         "_units_by_biome": units,
+        "_centroids_by_ua": centroids_by_ua,
     }
 
 
@@ -112,8 +135,19 @@ def audit(raw_by_id, expected_sha256):
     overlap = {biome: len(reports["ifn_painel_biomassa_2026"]["_units_by_biome"][biome]
                           & reports["ifn_painel_arvores_mortas_2026"]["_units_by_biome"][biome])
                for biome in TARGET_BIOMES}
+    concordant = {}
+    for biome in TARGET_BIOMES:
+        left = reports["ifn_painel_biomassa_2026"]["_centroids_by_ua"]
+        right = reports["ifn_painel_arvores_mortas_2026"]["_centroids_by_ua"]
+        common = (reports["ifn_painel_biomassa_2026"]["_units_by_biome"][biome]
+                  & reports["ifn_painel_arvores_mortas_2026"]["_units_by_biome"][biome])
+        concordant[biome] = sum(
+            len(left[ua]) == len(right[ua]) == 1
+            and None not in left[ua] and left[ua] == right[ua]
+            for ua in common)
     for report in reports.values():
         del report["_units_by_biome"]
+        del report["_centroids_by_ua"]
     return {
         "report_type": "licensed_IFN_panel_2026_biome_UA_coverage_screening_only",
         "source_sha256": digests,
@@ -125,6 +159,8 @@ def audit(raw_by_id, expected_sha256):
                 "living_tree_panel_present": bool(reports["ifn_painel_biomassa_2026"]["rows_by_biome"].get(biome)),
                 "standing_dead_panel_present": bool(reports["ifn_painel_arvores_mortas_2026"]["rows_by_biome"].get(biome)),
                 "physical_ua_overlap_between_panels": overlap[biome],
+                "overlap_ua_with_identical_reported_centroid": concordant[biome],
+                "overlap_ua_centroid_missing_or_discordant": overlap[biome] - concordant[biome],
                 "independent_validation": False,
             } for biome in TARGET_BIOMES
         },
@@ -136,7 +172,7 @@ def audit(raw_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Unique physical UAs are descriptive coverage only; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
+        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
 
 
