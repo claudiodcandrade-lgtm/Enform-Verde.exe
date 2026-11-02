@@ -158,7 +158,7 @@ def assess(manifest, source_sha, root):
                                 errors.append(f"{label}: independent report must be valid JSON")
                             else:
                                 _check_independent_report(payload, row, label, errors)
-            if pool == "soil_0_30" and row.get("depth_cm") != [0, 100]:
+            if pool == "soil_0_30" and row.get("depth_cm") != [0, 30]:
                 errors.append(f"{label}: soil requires 0-30 cm")
         rows_out.append({"biome": biome, "pool": pool, "fitofisionomia": physio, "status": status})
     # A failed registry must never advertise approved capability counts.
