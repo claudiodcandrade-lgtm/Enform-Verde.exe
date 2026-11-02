@@ -109,7 +109,13 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
             value=row.get('tc')
             if value is not None and (not math.isfinite(float(value)) or float(value)<0):raise ValueError('Densidade de carbono inválida.')
             included=value is not None and row.get('include_in_total',True) is not False
+            experimental=(value is not None and row.get('origem')=='EXPERIMENTAL_FISICO')
+            # Never include unvalidated physical scenario estimates in the
+            # measured/known carbon total or the scientific completeness flag.
+            if experimental:
+                included=False
             row.update({'area_ha':area,'area_pct':100*area/area_aoi,'total_tc':float(value)*area if included else None,
+                        'experimental_total_tc':float(value)*area if experimental else None,
                         'include_in_total':included})
             components.append(row)
         known=sum(c['total_tc'] for c in components if c['total_tc'] is not None)
@@ -128,6 +134,9 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
                        'tc_on_all_native_area':known/native_area if native_area and abs(covered-native_area)<1e-6 else None})
     has_number=any(r['known_total_tc'] is not None for r in totals)
     known_total=sum(r['known_total_tc'] or 0 for r in totals) if has_number else None
+    experimental_parts=[c['experimental_total_tc'] for st in strata
+                        for c in st['components'] if c.get('experimental_total_tc') is not None]
+    experimental_only_total_tc=sum(experimental_parts) if experimental_parts else None
     complete=bool(strata) and all(s['complete'] for s in strata) and unknown_area<1e-6
     total_uncertainty=None
     uncertainty_note=('Incertezas individuais preservadas por fonte/classe; covariâncias e erro '
@@ -155,6 +164,9 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
             'unmapped_aoi_area_ha':unmapped_area,
             'cover_completeness':'COMPLETE' if unknown_area<1e-6 else 'PARTIAL_OR_UNKNOWN',
             'known_total_tc':known_total,'known_total_tco2':known_total*44/12 if known_total is not None else None,
+            'experimental_only_total_tc':experimental_only_total_tc,
+            'experimental_only_total_tco2':(experimental_only_total_tc*44/12
+                                             if experimental_only_total_tc is not None else None),
             'complete':complete,'total_uncertainty':total_uncertainty,
             'uncertainty_note':uncertainty_note,
             'method':'C conhecido = soma por fitofisionomia nativa e compartimento de (tC/ha × hectares da interseção). Outras classes: ocorrência apenas.'}
@@ -318,6 +330,7 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                     'range_tc_ha':experimental_soil['scenario_range_tc_ha'],
                     'uncertainty_kind':experimental_soil['uncertainty_kind'],
                     'scientifically_homologated':False,
+                    'include_in_total':False,
                     'is_target_aoi_ci95':False,
                     'source_bytes_verified':False,
                     'transfer_error_tc_ha':None,
