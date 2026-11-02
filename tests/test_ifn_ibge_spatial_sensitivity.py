@@ -119,3 +119,57 @@ class IFNIBGESourceTypologyCrossTabTests(unittest.TestCase):
             summarize_source_typology_ibge_crosswalk([row])
 
 
+
+class IFNIBGEStableScenarioCrossTabTests(unittest.TestCase):
+    """Only descriptive scenario robustness; never a measured error or CI."""
+
+    def make_row(self, ua, legend="Savana", flags=("true", "true", "false")):
+        return {"uf": "GO", "ua": str(ua), "bioma_declarado": "Cerrado",
+                "tipologia_origem_declarada": "Savana",
+                "ibge_legenda_1_centroide_publicado_nao_validado": legend,
+                **{f"estavel_cenario_{r}_m_nao_erro": v
+                   for r, v in zip((0, 250, 1000), flags)}}
+
+    def test_scenario_counts_deduplicated_and_not_validation(self):
+        from tools.ifn_ibge_spatial_sensitivity import summarize_source_typology_ibge_stability
+        rows = [self.make_row(1, flags=("true", "true", "true")),
+                self.make_row(2),
+                self.make_row(3, legend="N/D", flags=("false", "false", "false"))]
+        result = summarize_source_typology_ibge_stability(rows)
+        summary = result["source_typology_ibge_stability_by_biome_UNVALIDATED"]["Cerrado"]
+        self.assertEqual([summary[f"ua_fisicas_estaveis_cenario_{r}_m_nao_erro"]
+                          for r in (0, 250, 1000)], [2, 2, 1])
+        self.assertFalse(result["source_typology_ibge_scenario_stability_is_positional_accuracy"])
+        self.assertFalse(result["source_typology_ibge_scenario_stability_is_field_validation"])
+
+    def test_zero_stable_biome_retained(self):
+        from tools.ifn_ibge_spatial_sensitivity import summarize_source_typology_ibge_stability
+        result = summarize_source_typology_ibge_stability([
+            self.make_row(1, legend="N/D", flags=("false", "false", "false"))])
+        self.assertEqual(result["source_typology_ibge_stability_by_biome_UNVALIDATED"]
+                         ["Cerrado"]["ua_fisicas_estaveis_cenario_250_m_nao_erro"], 0)
+
+    def test_bad_or_non_nested_flags_fail_closed(self):
+        from tools.ifn_ibge_spatial_sensitivity import summarize_source_typology_ibge_stability
+        for flags in (("true", "false", "true"),
+                      ("false", "true", "true"),
+                      ("true", "missing", "false")):
+            with self.subTest(flags=flags), self.assertRaises(ValueError):
+                summarize_source_typology_ibge_stability([self.make_row(1, flags=flags)])
+        with self.assertRaisesRegex(ValueError, "N/D IBGE"):
+            summarize_source_typology_ibge_stability([
+                self.make_row(1, legend="N/D", flags=("true", "true", "true"))])
+
+    def test_duplicate_ua_rejected(self):
+        from tools.ifn_ibge_spatial_sensitivity import summarize_source_typology_ibge_stability
+        row = self.make_row(1)
+        with self.assertRaisesRegex(ValueError, "duplicate IFN physical"):
+            summarize_source_typology_ibge_stability([row, dict(row)])
+
+    def test_same_class_overlapping_polygons_never_stable(self):
+        engine = IbgeSensitivity([box(-50, -16, -48, -14),
+                                  box(-49.5, -16, -48, -14)], ["Savana", "Savana"])
+        result = engine.evaluate(-49, -15)
+        self.assertEqual(result["legenda_1_no_centroide_publicado"], "Savana")
+        self.assertEqual(result["estabilidade_geometrica_cenarios_m"],
+                         {"0": False, "250": False, "1000": False})
