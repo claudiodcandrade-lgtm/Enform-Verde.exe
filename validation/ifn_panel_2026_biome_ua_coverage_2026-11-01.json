@@ -628,5 +628,81 @@
     "sar_plot_pixel_validation": false,
     "carbon_homologation": false,
     "warning": "Physical UA counts are descriptive only. Source typology is secondary-data inference; IBGE legend is joined to published centroids with unknown field positional accuracy. Even exact text agreement does not establish field fitophysiognomy, SAR calibration, transfer error, IC95 or any carbon stock. Pantanal N/D. Do not promote this evidence to validated capability."
+  },
+  "ifn_2025_field_subplots_cross_panel_2026_2026_11_02": {
+    "report_type": "official_IFN_2025_field_subparcel_vs_2026_model_panel_physical_UA_cross_source_screening_NOT_validation",
+    "source_workflow_run_id": 41481587964,
+    "source_commit_sha": "a5fc65f367206379884b37aaa36346e120a1b016",
+    "source_artifact_id": 13160485804,
+    "independently_verified_artifact_zip_sha256": "42d8a9983ac5cffcfcaf2abefef3b67ebc31f50fcc225b90ecdb20c9e85982a5",
+    "artifact_zip_crc_verified": true,
+    "field_crosscheck_json_sha256": "2d220e4d8535627227517ac68ec6c4d50e9cbe40e93f1d502c226397c3b2987c",
+    "field_download_audit_json_sha256": "a9ce962c3537ab03959c02e94a5ea3af6a012c09512181fbe487691ec639bb85",
+    "source_dataset": "https://dados.florestal.gov.br/dataset/ifn-uso-da-terra-por-uf_disp-set2025",
+    "source_license": "Creative Commons Attribution (SFB 2025 official dataset)",
+    "field_source_xlsx_sha256": {
+      "MT": "99ba15aad654d9fd69e9fbc342f9efb25f3a78b5fea0fecc9ef8d93ca649676b",
+      "MS": "7c4e7b0ae48aa3047b617761e3ebd8c09472b73da91d3b92f4383411412b964a",
+      "PA": "214aa0091e9aec6ddfbd13bd1c6b093280d7430c95a465981eb7d0c4311b1e67"
+    },
+    "field_subplot_rows_by_state": {
+      "MT": 46016,
+      "MS": 21270,
+      "PA": 47751
+    },
+    "field_unique_physical_ua": 2226,
+    "panel_candidate_physical_ua": 5187,
+    "matched_unique_physical_ua": 973,
+    "by_declared_biome": {
+      "Amazônia": {
+        "candidate": 1597,
+        "matched": 525,
+        "forest_S_only": 364,
+        "forest_N_only": 12,
+        "mixed_S_N": 135,
+        "uninterpretable_flag": 8,
+        "identity_or_biome_unresolved": 6,
+        "no_match": 1072
+      },
+      "Cerrado": {
+        "candidate": 1662,
+        "matched": 447,
+        "forest_S_only": 231,
+        "forest_N_only": 44,
+        "mixed_S_N": 154,
+        "uninterpretable_flag": 1,
+        "identity_or_biome_unresolved": 17,
+        "no_match": 1215
+      },
+      "Caatinga": {
+        "candidate": 1160,
+        "matched": 0,
+        "no_match": 1160
+      },
+      "Mata Atlântica": {
+        "candidate": 768,
+        "matched": 1,
+        "mixed_S_N": 1,
+        "no_match": 767
+      },
+      "Pantanal": {
+        "candidate": 0,
+        "matched": 0,
+        "interpretation": "N/D — no 2026 panel candidate; not zero Pantanal forest cover"
+      }
+    },
+    "official_panel_candidate_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "field_collection_years": "2011-2024 (source metadata), per-record dates N/D",
+    "per_subplot_flags_not_independent_UA": true,
+    "forest_flag_not_native_vegetation_validation": true,
+    "temporal_alignment_validated": false,
+    "field_geolocation_independently_validated": false,
+    "ibge_fitophysiognomy_validation": false,
+    "sar_plot_pixel_validation": false,
+    "transfer_error": null,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "note": "Real licensed 2025 field subparcel observations joined by canonical UF+UA to 2026 modeled panel candidate physical UAs. Flags S/N describe forest coverage in observed subplots, not whether vegetation is native; natural grasslands and savannas may be nonforest. No independent geolocation, date pairing, native-cover confirmation, transfer error, IC95 or SAR calibration. Only 3 states (MT/MS/PA) acquired; unmatched units and Pantanal are N/D, never zero."
   }
 }
