@@ -540,6 +540,10 @@ jobs:
           '@ | Set-Content live_sar_test.py -Encoding UTF8
           python live_sar_test.py
 
+      - name: Official IBGE ZIP transport/cache regression
+        shell: pwsh
+        run: python -m unittest discover -s tests -p 'test_ibge_official_zip.py' -v
+
       - name: Official IBGE phytoregion classification — real Tapajos AOI
         shell: pwsh
         timeout-minutes: 12
