@@ -9,6 +9,19 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # PR merge refs are synthetic; tests must run on the same exact SHA
+          # as scientific gate, Windows EXE and any future release ZIP.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify dashboard tests use exact branch source SHA
+        shell: pwsh
+        run: |
+          $expectedSha = '${{ github.event.pull_request.head.sha || github.sha }}'
+          $sourceSha = (git rev-parse HEAD).Trim()
+          if ($sourceSha -ne $expectedSha) {
+            throw "Dashboard checkout SHA mismatch: $sourceSha vs $expectedSha"
+          }
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
