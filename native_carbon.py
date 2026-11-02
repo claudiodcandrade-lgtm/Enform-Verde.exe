@@ -298,6 +298,30 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                          'metodo':'Estoque cumulativo 0–100 cm; perfis sobrepostos não somados',
                          'obs':'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha')})
+        elif soil.get('experimental_horizons_0_100') is not None:
+            # Strictly optional: only explicit, fitophysiognomy-compatible,
+            # licensed 0-100 cm physical input bounds can yield a scenario.
+            # No synthetic field data, statistical CI or claim of homologation.
+            from experimental_soil_scenarios import soil_0_100_scenario_envelope
+            experimental_soil=soil_0_100_scenario_envelope(
+                soil['experimental_horizons_0_100'], biome=biome,
+                physiognomy=physiognomy)
+            soil['experimental_scenario_audit']=experimental_soil
+            if experimental_soil['available']:
+                rows.append({
+                    'parametro':'Solo 0–100 cm',
+                    'tc':experimental_soil['stock_tc_ha'],
+                    'origem':'EXPERIMENTAL_FISICO',
+                    'fonte':'Fontes rastreáveis declaradas nos horizontes; SHA a verificar',
+                    'metodo':experimental_soil['method'],
+                    'obs':experimental_soil['limitations'],
+                    'range_tc_ha':experimental_soil['scenario_range_tc_ha'],
+                    'uncertainty_kind':experimental_soil['uncertainty_kind'],
+                    'scientifically_homologated':False,
+                    'is_target_aoi_ci95':False,
+                    'source_bytes_verified':False,
+                    'transfer_error_tc_ha':None,
+                })
     except Exception:pass
     secondary_audit=None
     if inventory_evidence is not None:
