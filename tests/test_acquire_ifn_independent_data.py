@@ -326,8 +326,8 @@ class IFNAcquisitionTests(unittest.TestCase):
     def test_truncated_panel_csv_is_retried_and_replaced_atomically(self):
         with tempfile.TemporaryDirectory() as temp:
             calls = []
-            complete = (b"bioma;uf;ua;equacoes\\nCerrado;GO;GO_1;Eq.1\\n"
-                        b"Cerrado;GO;GO_2;Eq.2\\n")
+            complete = (b"bioma;uf;ua;equacoes\nCerrado;GO;GO_1;Eq.1\n"
+                        b"Cerrado;GO;GO_2;Eq.2\n")
             truncated = complete[:-7]
             def fake_open(request, timeout):
                 calls.append(1)
@@ -343,7 +343,7 @@ class IFNAcquisitionTests(unittest.TestCase):
 
     def test_persistently_truncated_csv_never_published(self):
         with tempfile.TemporaryDirectory() as temp:
-            truncated = b"bioma;uf;ua;equacoes\\nCerrado;GO;GO_1;Eq.1\\nCerrado;GO;GO"
+            truncated = b"bioma;uf;ua;equacoes\nCerrado;GO;GO_1;Eq.1\nCerrado;GO;GO"
             calls = []
             def fake_open(request, timeout):
                 calls.append(1)
@@ -360,7 +360,7 @@ class IFNAcquisitionTests(unittest.TestCase):
 
     def test_http_declared_length_mismatch_retried(self):
         with tempfile.TemporaryDirectory() as temp:
-            data = b"parcela,serapilheira\\n1,2.4\\n"
+            data = b"parcela,serapilheira\n1,2.4\n"
             calls = []
             class ShortBody(io.BytesIO):
                 headers = {"Content-Length": str(len(data) + 5)}
