@@ -5,6 +5,9 @@ on:
   push:
     branches: [feature/agricultural-identification-native-carbon]
   workflow_dispatch:
+concurrency:
+  group: enform-science-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
