@@ -67,6 +67,30 @@ class FieldSubplotCrossCheckTests(unittest.TestCase):
         self.assertIsNone(r["confidence_interval_95"])
         self.assertFalse(r["scientific_validation"])
 
+    def test_field_only_ua_including_pantanal_are_visible_not_carbon(self):
+        with self.candidates.open(encoding="utf-8", newline="") as f:
+            rows = [row for row in csv.DictReader(f) if row["bioma_declarado"] != "Pantanal"]
+        with self.candidates.open("w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        r = audit(self.candidates, self.paths, self.report)
+        p = r["field_physical_ua_by_declared_biome_including_without_panel"]["pantanal"]
+        self.assertEqual(p["field_physical_ua"], 1)
+        self.assertEqual(p["field_ua_without_panel_candidate"], 1)
+        self.assertEqual(r["matched_unique_physical_ua"], 2)
+        self.assertIsNone(r["carbon_stock_tC_ha"])
+        self.assertFalse(r["scientific_validation"])
+
+    def test_field_biome_conflict_quarantined_from_field_biome_counts(self):
+        self.samples["MT"].append(("Amazônia", "MT", "1", "1", "3", "S", "A"))
+        self._save()
+        r = audit(self.candidates, self.paths, self.report)
+        self.assertEqual(r["field_ua_with_unresolved_or_unrecognized_biome"], 1)
+        self.assertEqual(sum(v["field_physical_ua"] for v in
+                             r["field_physical_ua_by_declared_biome_including_without_panel"].values()), 3)
+        self.assertEqual(r["by_declared_biome"]["cerrado"]["field_identity_or_biome_unresolved"], 1)
+
     def test_duplicate_subplot_quarantined(self):
         self.samples["MT"].append(("Cerrado", "MT", "1", "1", "1", "S", "A"))
         self._save()
