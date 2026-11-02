@@ -13,6 +13,14 @@ class WorkflowProvenanceTests(unittest.TestCase):
         self.assertIn("Clean-folder EXE UI smoke", src)
         self.assertNotIn("$env:GITHUB_EVENT_NAME -ne 'pull_request'", src)
 
+    def test_dashboard_uses_exact_pr_head_sha_not_synthetic_merge(self):
+        src = (ROOT / ".github/workflows/dashboard-dual-tests.yml").read_text(encoding="utf-8")
+        self.assertIn("ref: ${{ github.event.pull_request.head.sha || github.sha }}", src)
+        self.assertIn("persist-credentials: false", src)
+        self.assertIn("if ($sourceSha -ne $expectedSha)", src)
+        self.assertIn("Dashboard checkout SHA mismatch", src)
+        self.assertIn("Verify dashboard tests use exact branch source SHA", src)
+
     def test_ifn_harvest_imports_shared_identity_as_module(self):
         src = (ROOT / ".github/workflows/harvest-ifn-field-data.yml").read_text(encoding="utf-8")
         self.assertIn("python -m tools.harvest_ifn_field_data", src)
