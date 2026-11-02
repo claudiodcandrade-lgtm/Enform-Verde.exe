@@ -50,3 +50,32 @@ class IFNIBGESensitivityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IBGEQuarantineTests(unittest.TestCase):
+    def test_missing_legend_blocks_instead_of_fabricating_class(self):
+        from tools.ifn_ibge_spatial_sensitivity import sanitize_official_ibge
+        geometries, names, qc = sanitize_official_ibge([box(-50, -16, -48, -14)], [None])
+        self.assertEqual(names, ["N/D"])
+        self.assertEqual(qc["missing_legenda_1_quarantined"], 1)
+        row = IbgeSensitivity(geometries, names).evaluate(-49, -15)
+        self.assertEqual(row["legenda_1_no_centroide_publicado"], "N/D")
+        self.assertFalse(row["estabilidade_geometrica_cenarios_m"]["250"])
+
+    def test_invalid_polygon_quarantined_after_geometric_repair(self):
+        from shapely.geometry import Polygon
+        from tools.ifn_ibge_spatial_sensitivity import sanitize_official_ibge
+        bowtie = Polygon([(-50, -16), (-48, -14), (-50, -14), (-48, -16)])
+        self.assertFalse(bowtie.is_valid)
+        geoms, names, qc = sanitize_official_ibge([bowtie], ["Savana"])
+        self.assertEqual(names, ["N/D"])
+        self.assertEqual(qc["invalid_geometry_quarantined"], 1)
+        self.assertTrue(geoms[0].is_valid)
+
+    def test_missing_geometry_explicitly_counted(self):
+        from tools.ifn_ibge_spatial_sensitivity import sanitize_official_ibge
+        geoms, names, qc = sanitize_official_ibge(
+            [None, box(-50, -16, -48, -14)], ["Savana", "Floresta"])
+        self.assertEqual(len(geoms), 1)
+        self.assertEqual(names, ["Floresta"])
+        self.assertEqual(qc["missing_or_empty_geometry"], 1)

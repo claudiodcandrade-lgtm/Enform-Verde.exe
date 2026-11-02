@@ -16,6 +16,7 @@ from pathlib import Path
 
 from pyproj import Geod
 from shapely.geometry import Point, Polygon
+from shapely import make_valid
 from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
@@ -39,6 +40,43 @@ def geodesic_disc(lon, lat, radius_m, vertices=128):
     lons, lats, _ = GEOD.fwd([lon] * vertices, [lat] * vertices,
                              bearings, [radius_m] * vertices)
     return Polygon(zip(lons, lats))
+
+
+
+def sanitize_official_ibge(polygons, labels):
+    """Quarantine unclassified/invalid features; never silently assign a class."""
+    if len(polygons) != len(labels):
+        raise ValueError("IBGE geometry/legend lengths differ")
+    kept, names = [], []
+    stats = Counter()
+    for geom, label in zip(polygons, labels):
+        if geom is None or geom.is_empty:
+            stats["missing_or_empty_geometry"] += 1
+            continue
+        if geom.geom_type not in ("Polygon", "MultiPolygon"):
+            stats["nonpolygon_geometry"] += 1
+            continue
+        name = label.strip() if isinstance(label, str) else ""
+        if not name:
+            name = "N/D"
+            stats["missing_legenda_1_quarantined"] += 1
+        if not geom.is_valid:
+            stats["invalid_geometry_quarantined"] += 1
+            geom = make_valid(geom)
+            if geom.geom_type == "GeometryCollection":
+                polys = [g for g in geom.geoms
+                         if g.geom_type in ("Polygon", "MultiPolygon")]
+                geom = unary_union(polys) if polys else None
+            if (geom is None or geom.is_empty
+                    or geom.geom_type not in ("Polygon", "MultiPolygon")):
+                stats["invalid_geometry_without_polygon"] += 1
+                continue
+            name = "N/D"  # Repaired geometries cannot prove IBGE class.
+        kept.append(geom)
+        names.append(name)
+    if not kept:
+        raise ValueError("IBGE has no usable polygon footprint")
+    return kept, names, dict(stats)
 
 
 class IbgeSensitivity:
@@ -66,7 +104,7 @@ class IbgeSensitivity:
         point_ids = [int(i) for i in self.tree.query(point)
                      if self.polygons[int(i)].covers(point)]
         point_labels = {self.labels[i] for i in point_ids}
-        point_label = next(iter(point_labels)) if len(point_labels) == 1 else None
+        point_label = next(iter(point_labels)) if len(point_labels) == 1 and "N/D" not in point_labels else None
         stability = {}
         for radius in radii_m:
             if radius == 0:
@@ -122,7 +160,9 @@ def main(argv=None):
         parser.error("IBGE legenda_1 missing or ambiguous")
     original_crs = str(vector.crs)
     vector = vector.to_crs("EPSG:4326")
-    engine = IbgeSensitivity(vector.geometry.tolist(), vector[fields[0]].tolist())
+    polygons, labels, ibge_qc = sanitize_official_ibge(
+        vector.geometry.tolist(), vector[fields[0]].tolist())
+    engine = IbgeSensitivity(polygons, labels)
 
     with ifn.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
@@ -169,6 +209,8 @@ def main(argv=None):
         "counts": dict(counts),
         "radii_m_scenarios_not_errors": list(RADII_M),
         "ibge_crs_original": original_crs,
+        "ibge_geometry_quarantine": ibge_qc,
+        "ibge_source_polygon_completeness_verified": not any(ibge_qc.values()),
         "field_positional_accuracy": None,
         "transfer_error": None,
         "independent_field_ibge_validation": False,
