@@ -26,9 +26,24 @@ jobs:
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
       - name: Run fail-closed synthetic spatial regression tests
         run: python -m unittest tests.test_ifn_ibge_spatial_sensitivity -v
-      - name: Acquire licensed SFB/IFN panels with integrity audit
+      - name: Select ONLY the two official panel resources required by this spatial audit
         run: |
-          python -m tools.acquire_ifn_independent_data --registry validation/ifn_sources.json --out ifn_raw --report ifn_download_audit.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path("validation/ifn_sources.json").read_text(encoding="utf-8"))
+          required = {"ifn_painel_biomassa_2026", "ifn_painel_arvores_mortas_2026"}
+          selected = [row for row in registry["sources"] if row["id"] in required]
+          if {row["id"] for row in selected} != required:
+              raise SystemExit("Required official IFN panel source missing from registry")
+          Path("ifn_panel_sources.json").write_text(
+              json.dumps({"description": "Required official IFN panels only; NOT homologation",
+                          "sources": selected}, ensure_ascii=False, indent=2),
+              encoding="utf-8")
+          PY
+      - name: Acquire BOTH required licensed SFB/IFN panels with integrity audit
+        run: |
+          python -m tools.acquire_ifn_independent_data --registry ifn_panel_sources.json --out ifn_raw --report ifn_download_audit.json
       - name: Export deduplicated provisional IFN physical UAs
         run: |
           python -m tools.audit_ifn_panel_biome_coverage --raw-dir ifn_raw --download-audit ifn_download_audit.json --report ifn_panel_biome_coverage.json --candidate-csv ifn_panel_native_ua_pre_ibge_unvalidated.csv

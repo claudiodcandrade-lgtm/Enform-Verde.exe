@@ -37,3 +37,12 @@ class WorkflowProvenanceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IFNIBGEWorkflowScopeTests(unittest.TestCase):
+    def test_spatial_workflow_acquires_only_required_official_panels(self):
+        src = (ROOT / ".github/workflows/ifn-ibge-spatial-sensitivity.yml").read_text(encoding="utf-8")
+        self.assertIn('required = {"ifn_painel_biomassa_2026", "ifn_painel_arvores_mortas_2026"}', src)
+        self.assertIn("--registry ifn_panel_sources.json", src)
+        self.assertIn('if {row["id"] for row in selected} != required:', src)
+        self.assertIn("IFN panels with integrity audit", src)
