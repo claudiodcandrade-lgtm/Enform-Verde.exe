@@ -271,5 +271,40 @@ class PanelCoverageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "control/format"):
             audit(*fixture(living=line(ua="GO_1\u200b")))
 
+
+    def test_candidate_export_deduplicates_equation_rows(self):
+        report, candidates = audit(*fixture(), include_candidate_rows=True)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual((candidates[0]["uf"], candidates[0]["ua"]), ("GO", "go_1"))
+        self.assertEqual(candidates[0]["lon_pc_publicado"], "-48.0")
+        self.assertEqual(candidates[0]["lat_pc_publicado"], "-15.0")
+        self.assertEqual(candidates[0]["legenda_1_ibge_verificada"], "false")
+        self.assertEqual(candidates[0]["par_sar_validado"], "false")
+        self.assertFalse(report["scientific_validation"])
+
+    def test_candidate_export_quarantines_typology_and_centroid_conflicts(self):
+        for dead in (line(typology="Floresta Estacional"), line(lon="-49")):
+            with self.subTest(dead=dead):
+                report, candidates = audit(*fixture(dead=dead), include_candidate_rows=True)
+                self.assertEqual(candidates, [])
+                self.assertEqual(report["target_biome_coverage"]["Cerrado"][
+                    "overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional"], 0)
+
+    def test_candidate_export_quarantines_pasture_and_biome_conflicts(self):
+        for raw, sha in (
+            fixture(dead=line(land_class="Pastagem")),
+            fixture(living=line() + line(biome="Caatinga")),
+        ):
+            report, candidates = audit(raw, sha, include_candidate_rows=True)
+            self.assertEqual(candidates, [])
+            self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
+
+    def test_candidate_export_stable_across_equation_order(self):
+        a = audit(*fixture(living=line() + line(equation="Eq.2")),
+                  include_candidate_rows=True)[1]
+        b = audit(*fixture(living=line(equation="Eq.2") + line()),
+                  include_candidate_rows=True)[1]
+        self.assertEqual(a, b)
+
 if __name__ == "__main__":
     unittest.main()
