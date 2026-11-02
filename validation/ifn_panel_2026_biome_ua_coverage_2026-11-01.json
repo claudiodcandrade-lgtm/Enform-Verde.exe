@@ -443,6 +443,18 @@
     "independent_sar_plot_pixel_validation": false,
     "ibge_fitophysiognomy_crosswalk_verified": false,
     "carbon_stock_tC_ha": null,
-    "confidence_interval_95": null
+    "confidence_interval_95": null,
+    "code_integration_acquisition_run_id": 41445902475,
+    "code_integration_source_sha": "c5d619c20658062de69c049b5604b66c7823c789",
+    "code_integration_artifact_id": 13141683125,
+    "code_integration_zip_sha256_independently_verified": "df4a0ae8b19633eb547719a4efeae21f8215026d9e84d321312a9fa62da06918",
+    "code_integration_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "code_integration_zip_crc_valid": true,
+    "code_integration_candidate_ua_count": 5187,
+    "code_integration_candidate_ua_with_official_documented_epsg4326": 5187,
+    "code_integration_candidate_ua_with_field_positional_accuracy_verified": 0,
+    "code_integration_candidate_ua_with_positional_accuracy_ND": 5187,
+    "code_integration_published_centroid_collisions": 0,
+    "code_integration_scientific_validation": false
   }
 }
