@@ -183,6 +183,67 @@ def summarize_source_typology_ibge_crosswalk(rows):
     }
 
 
+def summarize_source_typology_ibge_stability(rows, radii_m=RADII_M):
+    """Descriptive cross-tab restricted to geometric scenario stability.
+
+    Counts physical UAs once; 250/1000 m are hypothetical displacement
+    scenarios, NOT measured positional errors or independent validation.
+    A stable 1000 m class must also be stable at 250 m and at the point.
+    """
+    if tuple(radii_m) != RADII_M:
+        raise ValueError("unexpected geometric sensitivity scenarios")
+    flags = [f"estavel_cenario_{radius}_m_nao_erro" for radius in radii_m]
+    counts, seen = Counter(), set()
+    for row in rows:
+        identity = (row.get("uf", "").strip(), row.get("ua", "").strip())
+        biome = row.get("bioma_declarado", "").strip()
+        typology = row.get("tipologia_origem_declarada", "").strip()
+        legend = row.get("ibge_legenda_1_centroide_publicado_nao_validado", "").strip()
+        if not all(identity) or not biome or not typology or not legend:
+            raise ValueError("missing IFN identity or source-IBGE screening label")
+        if identity in seen:
+            raise ValueError("duplicate IFN physical UF+UA in stability cross-tab")
+        seen.add(identity)
+        values = [str(row.get(flag, "")).strip().casefold() for flag in flags]
+        if any(value not in ("true", "false") for value in values):
+            raise ValueError("missing/invalid geometric stability scenario flag")
+        stable = [value == "true" for value in values]
+        if any(stable[i] and not stable[i - 1] for i in range(1, len(stable))):
+            raise ValueError("non-nested geometric stability scenarios")
+        if legend == "N/D" and any(stable):
+            raise ValueError("N/D IBGE label cannot be geometrically stable")
+        for radius, is_stable in zip(radii_m, stable):
+            if is_stable:
+                counts[(biome, typology, legend, radius)] += 1
+    pairs = sorted({(b, t, l) for b, t, l, _ in counts})
+    by_biome = {}
+    for (biome, typology, legend, radius), n in counts.items():
+        by_biome.setdefault(biome, Counter())[radius] += n
+    return {
+        "source_typology_ibge_stable_scenarios_cross_tab_UNVALIDATED": [
+            {"bioma_declarado": biome,
+             "tipologia_origem_declarada": typology,
+             "ibge_legenda_1_centroide_publicado_nao_validado": legend,
+             **{f"ua_fisicas_estaveis_cenario_{r}_m_nao_erro":
+                counts[(biome, typology, legend, r)] for r in radii_m}}
+            for biome, typology, legend in pairs
+        ],
+        "source_typology_ibge_stability_by_biome_UNVALIDATED": {
+            biome: {f"ua_fisicas_estaveis_cenario_{r}_m_nao_erro": c[r]
+                    for r in radii_m}
+            for biome, c in sorted(by_biome.items())
+        },
+        "source_typology_ibge_scenario_stability_is_positional_accuracy": False,
+        "source_typology_ibge_scenario_stability_is_field_validation": False,
+        "source_typology_ibge_scenario_stability_warning": (
+            "Each physical UF+UA counted once, only where a single published-centroid "
+            "IBGE class remains geometrically stable in the stated hypothetical scenario. "
+            "These are descriptive sensitivity counts, NOT confidence bounds, independent "
+            "field typology, positional accuracy, SAR validation or transfer error."
+        ),
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ifn-csv", required=True)
@@ -260,6 +321,7 @@ def main(argv=None):
         "ifn_physical_ua": len(rows),
         "counts": dict(counts),
         **summarize_source_typology_ibge_crosswalk(rows),
+        **summarize_source_typology_ibge_stability(rows),
         "radii_m_scenarios_not_errors": list(RADII_M),
         "ibge_crs_original": original_crs,
         "ibge_geometry_quarantine": ibge_qc,
