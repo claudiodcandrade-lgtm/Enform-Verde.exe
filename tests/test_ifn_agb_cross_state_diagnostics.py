@@ -166,6 +166,20 @@ class IFNAGBCrossStateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"non-native"):
             report(data)
 
+    def test_rehash_of_original_ifn_bytes_is_independent_and_fail_closed(self):
+        candidate_raw,candidate_sha=encode(rows())
+        original=b"synthetic-only IFN-like source fixture, not observed data"
+        official_sha=hashlib.sha256(original).hexdigest()
+        verified=evaluate(candidate_raw,candidate_sha,
+                          raw_ifn_sha256=official_sha,raw_ifn_bytes=original)
+        self.assertTrue(verified["raw_official_ifn_bytes_verified_by_this_tool"])
+        with self.assertRaisesRegex(ValueError,"source bytes do not match"):
+            evaluate(candidate_raw,candidate_sha,raw_ifn_sha256=official_sha,
+                     raw_ifn_bytes=original+b" tampered")
+        with self.assertRaisesRegex(ValueError,"source bytes do not match"):
+            evaluate(candidate_raw,candidate_sha,raw_ifn_sha256=official_sha,
+                     raw_ifn_bytes="not bytes")
+
     def test_blank_or_duplicate_headers_fail(self):
         raw,digest=encode(rows())
         corrupted=raw.replace(b"agb_mg_ha",b"wrong_col")
