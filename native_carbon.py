@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 import unicodedata
 
-COMPARTMENTS=('Biomassa aérea','Biomassa subterrânea','Necromassa aérea','Necromassa subterrânea','Serapilheira','Solo 0–100 cm')
+COMPARTMENTS=('Biomassa aérea','Biomassa subterrânea','Necromassa aérea','Necromassa subterrânea','Serapilheira','Solo 0–30 cm')
 
 
 def normalize(value):
@@ -304,10 +304,10 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                      'range_tc_ha':c.get('range_tc_ha'),'range_dry_mg_ha':c.get('range_dry_mg_ha')})
     soil={}
     try:
-        soil=soil_estimator(aoi) or {};top=soil.get('0–100 cm')
+        soil=soil_estimator(aoi) or {};top=soil.get('0–30 cm')
         if top and top.get('tc_ha') is not None:
-            rows.append({'parametro':'Solo 0–100 cm','tc':float(top['tc_ha']),'origem':'MAPEAMENTO','fonte':'Embrapa Solos/PronaSolos',
-                         'metodo':'Estoque cumulativo 0–100 cm; perfis sobrepostos não somados',
+            rows.append({'parametro':'Solo 0–30 cm','tc':float(top['tc_ha']),'origem':'MAPEAMENTO','fonte':'Embrapa Solos/PronaSolos',
+                         'metodo':'Estoque cumulativo 0–30 cm; perfis sobrepostos não somados',
                          'obs':'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha')})
         elif soil.get('experimental_horizons_0_100') is not None:
