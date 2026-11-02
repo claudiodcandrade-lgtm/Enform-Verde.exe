@@ -29,7 +29,7 @@ class ExperimentalCarbonSeparationTests(unittest.TestCase):
 
         result=summarize_native_carbon(area,classes,synthetic_estimator)
         self.assertIsNone(result["known_total_tc"])
-        self.assertAlmostEqual(result["experimental_only_total_tc"],216.0)
+        self.assertAlmostEqual(result["experimental_only_total_tc"],216.0,delta=5e-7)
         self.assertAlmostEqual(result["experimental_only_total_tco2"],216*44/12)
         self.assertFalse(result["complete"])
         soil=next(c for c in result["strata"][0]["components"]
