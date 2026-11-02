@@ -33,7 +33,7 @@
   "carbon_stock_tC_ha": null,
   "confidence_interval_95": null,
   "scientific_validation": false,
-  "warning": "12 coincident physical UAs and exact field collection dates are observational joins, not IBGE fitophysiognomy or SAR plot-pixel validation. Nine UAs carry IFN code 45 (cultivated pasture in the official 2024 dictionary) and are excluded from native-carbon candidates; three others still require IBGE/current-cover checks. Twelve of thirteen fallen-wood rows lack transect identifiers; MS_439 mixed flags cannot be assigned to the same transect. No dry litter mass, wood volume/area, density, sampling variance, carbon stock or defensible IC95.",
+  "warning": "12 coincident physical UAs and exact field collection dates are observational joins, not IBGE fitophysiognomy or SAR plot-pixel validation. Nine UAs carry IFN code 45 (cultivated pasture in the official 2024 dictionary) and are excluded from native-carbon candidates; three others still require IBGE/current-cover checks. Twelve of thirteen fallen-wood rows lack transect identifiers; MS_439 mixed flags cannot be assigned to the same transect. No dry litter mass, wood volume/area, density, sampling variance, carbon stock or defensible IC95. CORRECTION 2026-11-01: 12 identical raw 'data' strings do not establish the same calendar day; year-only values cannot prove day-level collection coincidence. Previous cross_source_collection_date_equivalence_verified=true is withdrawn pending re-audit of original field-date granularity. No carbon or SAR validation follows from this correction.",
   "absence_flag_meanings_official": {
     "S": "ausência de necromassa: sim",
     "N": "ausência de necromassa: não"
@@ -95,6 +95,11 @@
   "cross_source_same_field_collection_date_ua": 12,
   "cross_source_different_field_collection_date_ua": 0,
   "cross_source_missing_field_collection_date_ua": 0,
-  "cross_source_collection_date_equivalence_verified": true,
-  "sar_acquisition_date_equivalence_verified": false
+  "cross_source_collection_date_equivalence_verified": false,
+  "sar_acquisition_date_equivalence_verified": false,
+  "cross_source_same_exact_field_day_ua": null,
+  "cross_source_same_reported_year_ua": null,
+  "cross_source_unverified_day_resolution_ua": null,
+  "cross_source_date_granularity_audit_status": "pending_rerun_against_original_IFN_field_date_values",
+  "cross_source_raw_date_match_is_exact_day_proof": false
 }
