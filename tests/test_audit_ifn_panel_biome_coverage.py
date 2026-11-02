@@ -5,8 +5,8 @@ from tools.audit_ifn_panel_biome_coverage import SOURCES, audit
 
 HEADER = "bioma;uf;lon_pc;lat_pc;ua;n_subunidades;sanidade;classe_uso_da_terra;tipologia_da_vegetacao;equacoes;area_ha;agb_media_kg_por_ha;agb_variancia_por_ua;valor_r\n"
 
-def line(biome="Cerrado", uf="GO", ua="GO_1", typology="Savana", equation="Eq.1", agb="150,5"):
-    return ";".join((biome, uf, "-48,0", "-15,0", ua, "1", "Vivas", "Savana", typology,
+def line(biome="Cerrado", uf="GO", ua="GO_1", typology="Savana", equation="Eq.1", agb="150,5", lon="-48,0", lat="-15,0"):
+    return ";".join((biome, uf, lon, lat, ua, "1", "Vivas", "Savana", typology,
                      equation, "0,4", agb, "0", "0,56")) + "\n"
 
 def fixture(living=None, dead=None):
@@ -44,6 +44,37 @@ class PanelCoverageTests(unittest.TestCase):
         living = report["panel_data"]["ifn_painel_biomassa_2026"]
         self.assertEqual(living["unique_physical_ua_count"], 1)
         self.assertEqual(living["ua_with_conflicting_biome_labels"], 1)
+
+    def test_centroid_concordance_does_not_claim_sar_validation(self):
+        report = audit(*fixture())
+        result = report["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(result["physical_ua_overlap_between_panels"], 1)
+        self.assertEqual(result["overlap_ua_with_identical_reported_centroid"], 1)
+        self.assertEqual(result["overlap_ua_centroid_missing_or_discordant"], 0)
+        self.assertFalse(result["independent_validation"])
+
+    def test_cross_panel_centroid_mismatch_is_explicit(self):
+        report = audit(*fixture(dead=line(equation="Eq.dead", lon="-49,0")))
+        result = report["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(result["physical_ua_overlap_between_panels"], 1)
+        self.assertEqual(result["overlap_ua_with_identical_reported_centroid"], 0)
+        self.assertEqual(result["overlap_ua_centroid_missing_or_discordant"], 1)
+
+    def test_repeated_ua_conflicting_centroid_quarantined(self):
+        report = audit(*fixture(living=line() + line(equation="Eq.2", lat="-16,0")))
+        living = report["panel_data"]["ifn_painel_biomassa_2026"]
+        self.assertEqual(living["ua_with_missing_or_conflicting_centroid"], 1)
+        self.assertEqual(report["target_biome_coverage"]["Cerrado"]["overlap_ua_with_identical_reported_centroid"], 0)
+
+    def test_blank_centroid_not_interpreted_as_zero(self):
+        report = audit(*fixture(living=line(lon="")))
+        self.assertEqual(report["panel_data"]["ifn_painel_biomassa_2026"]["ua_with_missing_or_conflicting_centroid"], 1)
+        self.assertEqual(report["target_biome_coverage"]["Cerrado"]["overlap_ua_centroid_missing_or_discordant"], 1)
+
+    def test_invalid_coordinate_rejected(self):
+        for lon in ("181", "NaN", "not_a_number"):
+            with self.subTest(lon=lon), self.assertRaisesRegex(ValueError, "invalid lon_pc"):
+                audit(*fixture(living=line(lon=lon)))
 
     def test_malformed_or_duplicate_header_rejected(self):
         raw, sha = fixture()
