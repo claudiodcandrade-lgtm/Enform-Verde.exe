@@ -45,6 +45,24 @@ class ScientificReleaseGateTests(unittest.TestCase):
         self.assertTrue(any("0-100 cm" in e for e in errors))
         self.assertTrue(any("transfer error" in e for e in errors))
 
+    def test_shallow_soil_cannot_replace_0_100_release_requirement(self):
+        from tools.scientific_release_gate import POOLS
+        self.assertIn("soil_0_100", POOLS)
+        self.assertNotIn("soil_0_30", POOLS)
+        row = {
+            "status": "passed", "evidence_type": "independent_real_data",
+            "source_url": "https://example.org/synthetic-fixture",
+            "dataset_sha256": "f" * 64, "observed_at": "2026-11-02",
+            "aoi_id": "synthetic", "validation_report": "unavailable.json",
+            "biome": "Pantanal", "pool": "soil_0_30",
+            "depth_cm": [0, 30], "stock_tc_ha": 25,
+            "ci95_lower_tc_ha": 24, "ci95_upper_tc_ha": 26,
+            "uncertainty_includes_transfer_error": True
+        }
+        errors = assess({"source_sha": SHA, "carbon": [row]}, SHA)
+        self.assertTrue(any("invalid biome/pool" in e for e in errors))
+        self.assertTrue(any("missing soil_0_100 in Pantanal" in e for e in errors))
+
     def test_report_integrity_rejects_missing_and_tampered_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
