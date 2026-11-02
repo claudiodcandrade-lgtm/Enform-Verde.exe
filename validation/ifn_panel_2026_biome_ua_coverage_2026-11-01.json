@@ -102,5 +102,44 @@
     "confidence_interval_95": null,
     "scientific_validation": false,
     "note": "Derived from official SFB/IFN CSVs in GitHub Actions acquisition run. Identical reported centroid coordinates for the same physical UA across two model-output panels do not establish ground-truth geolocation, positional accuracy, temporal SAR coincidence, or independent observations. Artifact upload checksum is the Actions-reported digest, not an independently downloaded ZIP digest."
+  },
+  "cross_panel_biome_conflict_screening_2026_11_02": {
+    "report_type": "official_IFN_2026_panel_cross_biome_identity_screening_not_validation",
+    "source_workflow_run_id": 41387248098,
+    "source_commit_sha": "dfe4472f854e4f03e32a0b6ccb451caffc205997",
+    "source_artifact_id": 13115623602,
+    "independently_verified_artifact_zip_sha256": "9441375c6c5ad22b6de3bab49e798feb88c2da8115f9bf82431d20c39d5d87c0",
+    "source_resources_downloaded": 11,
+    "source_resources_failed_or_blocked": 0,
+    "living_panel": {
+      "source_sha256": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "byte_size": 53145536,
+      "rows": 439970,
+      "download_attempts": 1,
+      "complete_terminal_newline": true
+    },
+    "standing_dead_panel": {
+      "source_sha256": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346",
+      "byte_size": 41294521,
+      "rows": 341071,
+      "download_attempts": 1,
+      "complete_terminal_newline": true
+    },
+    "physical_ua_quarantined_for_conflicting_biome_labels": 0,
+    "physical_ua_overlap_by_biome_after_quarantine": {
+      "Amazônia": 1705,
+      "Cerrado": 2083,
+      "Caatinga": 1227,
+      "Mata Atlântica": 841,
+      "Pantanal": 0
+    },
+    "observed_pantanal_panel_coverage": "N/D — no Pantanal records in these panel files",
+    "independent_validation": false,
+    "ibge_fitophysiognomy_spatial_crosswalk_verified": false,
+    "sar_plot_pixel_validation": false,
+    "sampling_design_and_transfer_error_validated": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "note": "Counts and hashes verified from downloaded GitHub Actions artifact and official SFB CSV bytes. No conflicting biome labels were observed across the two panels in this acquisition; synthetic conflict tests remain active. Identical reported centroids are descriptive, not geolocation accuracy or independent validation. A prior acquisition artifact 13115448380 contained a demonstrably truncated 53,066,954-byte living panel and was rejected; no rows from that incomplete response were promoted."
   }
 }
