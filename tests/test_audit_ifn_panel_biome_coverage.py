@@ -328,6 +328,51 @@ class PanelCoverageTests(unittest.TestCase):
             self.assertEqual(candidates, [])
             self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
 
+    def test_distinct_physical_ua_sharing_published_centroid_are_flagged(self):
+        living = line(ua="GO_1") + line(ua="GO_2", equation="Eq.2")
+        dead = line(ua="GO_1", equation="Dead.1") + line(ua="GO_2", equation="Dead.2")
+        report, candidates = audit(*fixture(living=living, dead=dead),
+                                   include_candidate_rows=True)
+        self.assertEqual(len(candidates), 2)
+        self.assertEqual(report["candidate_distinct_published_centroids_shared_by_multiple_ua"], 1)
+        self.assertEqual(report["candidate_physical_ua_at_shared_published_centroids"], 2)
+        self.assertEqual(report["candidate_physical_ua_at_shared_published_centroids_by_biome"]["Cerrado"], 2)
+        self.assertEqual(report["candidate_distinct_published_centroids_with_multiple_declared_biomes"], 0)
+        for candidate in candidates:
+            self.assertEqual(candidate["centroide_publicado_compartilhado_entre_ua"], "true")
+            self.assertEqual(candidate["numero_ua_fisicas_no_mesmo_centroide_publicado"], 2)
+            self.assertEqual(candidate["precisao_posicional_m"], "N/D")
+            self.assertEqual(candidate["par_sar_validado"], "false")
+        self.assertFalse(report["candidate_centroid_collision_is_independent_plot_geolocation"])
+        self.assertFalse(report["scientific_validation"])
+
+    def test_distinct_candidate_centroids_not_falsely_collided(self):
+        living = line(ua="GO_1") + line(ua="GO_2", lon="-48.02")
+        dead = line(ua="GO_1") + line(ua="GO_2", lon="-48.02")
+        report, candidates = audit(*fixture(living=living, dead=dead),
+                                   include_candidate_rows=True)
+        self.assertEqual(report["candidate_distinct_published_centroids_shared_by_multiple_ua"], 0)
+        self.assertEqual(report["candidate_physical_ua_at_shared_published_centroids"], 0)
+        self.assertEqual({x["centroide_publicado_compartilhado_entre_ua"] for x in candidates}, {"false"})
+        self.assertEqual({x["numero_ua_fisicas_no_mesmo_centroide_publicado"] for x in candidates}, {1})
+
+    def test_published_centroid_shared_across_declared_biomes_is_not_verified(self):
+        living = line(ua="GO_1") + line(biome="Caatinga", uf="BA", ua="BA_2")
+        dead = line(ua="GO_1") + line(biome="Caatinga", uf="BA", ua="BA_2")
+        report, candidates = audit(*fixture(living=living, dead=dead),
+                                   include_candidate_rows=True)
+        self.assertEqual(len(candidates), 2)
+        self.assertEqual(report["candidate_distinct_published_centroids_with_multiple_declared_biomes"], 1)
+        self.assertEqual(report["candidate_physical_ua_at_shared_published_centroids"], 2)
+        self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
+        self.assertFalse(report["sar_plot_pixel_validation"])
+
+    def test_repeated_equation_rows_do_not_create_spurious_centroid_collision(self):
+        report, candidates = audit(*fixture(), include_candidate_rows=True)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(report["candidate_distinct_published_centroids_shared_by_multiple_ua"], 0)
+        self.assertEqual(candidates[0]["centroide_publicado_compartilhado_entre_ua"], "false")
+
     def test_candidate_export_stable_across_equation_order(self):
         a = audit(*fixture(living=line() + line(equation="Eq.2")),
                   include_candidate_rows=True)[1]
