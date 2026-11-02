@@ -310,18 +310,18 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                          'metodo':'Estoque cumulativo 0–30 cm; perfis sobrepostos não somados',
                          'obs':'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha')})
-        elif soil.get('experimental_horizons_0_100') is not None:
+        elif soil.get('experimental_horizons_0_30') is not None:
             # Strictly optional: only explicit, fitophysiognomy-compatible,
-            # licensed 0-100 cm physical input bounds can yield a scenario.
+            # licensed 0-30 cm physical input bounds can yield a scenario.
             # No synthetic field data, statistical CI or claim of homologation.
-            from experimental_soil_scenarios import soil_0_100_scenario_envelope
-            experimental_soil=soil_0_100_scenario_envelope(
-                soil['experimental_horizons_0_100'], biome=biome,
+            from experimental_soil_scenarios import soil_0_30_scenario_envelope
+            experimental_soil=soil_0_30_scenario_envelope(
+                soil['experimental_horizons_0_30'], biome=biome,
                 physiognomy=physiognomy)
             soil['experimental_scenario_audit']=experimental_soil
             if experimental_soil['available']:
                 rows.append({
-                    'parametro':'Solo 0–100 cm',
+                    'parametro':'Solo 0–30 cm',
                     'tc':experimental_soil['stock_tc_ha'],
                     'origem':'EXPERIMENTAL_FISICO',
                     'fonte':'Fontes rastreáveis declaradas nos horizontes; SHA a verificar',
