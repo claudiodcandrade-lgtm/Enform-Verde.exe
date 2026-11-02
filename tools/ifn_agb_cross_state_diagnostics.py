@@ -19,6 +19,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from tools.ifn_state_identity import canonical_state, canonical_ua
+from tools.prepare_ifn_agb_candidates import NATIVE_CLASSES
 
 REQUIRED = (
     "bioma", "uf", "ua", "tipologia_da_vegetacao", "classe_uso_da_terra",
@@ -69,8 +70,10 @@ def evaluate(raw, expected_sha256, *, raw_ifn_sha256):
             raise ValueError(f"row {i}: unsupported or missing sampling domain")
         uf = canonical_state(row["uf"])
         ua = canonical_ua(row["ua"])
-        if not ua:
-            raise ValueError(f"row {i}: blank physical UA")
+        if not uf or not ua:
+            raise ValueError(f"row {i}: blank physical UF/UA")
+        if row["classe_uso_da_terra"].strip() not in NATIVE_CLASSES:
+            raise ValueError(f"row {i}: non-native or unsupported source land-cover class")
         physical = (uf, ua)
         if physical in seen:
             raise ValueError(f"row {i}: duplicated physical UF+UA across source rows")
