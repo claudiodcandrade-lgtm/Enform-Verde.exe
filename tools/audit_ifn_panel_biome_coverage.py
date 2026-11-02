@@ -40,6 +40,16 @@ REQUIRED = {"bioma", "uf", "lon_pc", "lat_pc", "ua", "n_subunidades", "sanidade"
             "classe_uso_da_terra", "tipologia_da_vegetacao", "equacoes", "area_ha",
             "agb_media_kg_por_ha", "agb_variancia_por_ua", "valor_r"}
 LICENSE_URL = "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono"
+# Official 2026 SFB panel metadata, dictionary p. 8, explicitly defines
+# lon_pc/lat_pc as geographic WGS 84. This documents the declared CRS, NOT
+# physical plot accuracy, public point authenticity or SAR pixel suitability.
+SOURCE_CRS_METADATA_URL = (
+    "https://dados.florestal.gov.br/dataset/"
+    "2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/"
+    "dcd83340-a57b-4a2f-bd08-4cf2a84edb78/download/"
+    "metadados_painelbiomassacarbono_snif_fonte_ifn_sfb.pdf"
+)
+SOURCE_CRS_DECLARED = "EPSG:4326"
 # Intentionally generous bounding box: plausibility screen only, NOT IBGE
 # state/biome overlay, geolocation accuracy, or a verified source CRS.
 BRAZIL_SCREEN_ENVELOPE = (Decimal("-75"), Decimal("-32"), Decimal("-35"), Decimal("7"))
@@ -281,7 +291,9 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
                     "lon_pc_publicado": str(lon), "lat_pc_publicado": str(lat),
                     "classe_nativa_declarada": next(iter(left_classes[ua])),
                     "tipologia_origem_declarada": next(iter(left_typologies[ua])),
-                    "crs_fonte_verificado": "false",
+                    "crs_fonte_verificado": "true",
+                    "crs_fonte_documentado": SOURCE_CRS_DECLARED,
+                    "precisao_geografica_de_campo_verificada": "false",
                     "centroide_ambas_coordenadas_na_grade_0_02_grau": str(on_grid).lower(),
                     "precisao_posicional_m": "N/D",
                     "legenda_1_ibge_verificada": "false",
@@ -345,6 +357,15 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
             } for biome in TARGET_BIOMES
         },
         "source_native_land_class_screening_only_not_current_cover": True,
+        "source_coordinate_crs_declared_by_official_metadata": SOURCE_CRS_DECLARED,
+        "source_coordinate_crs_metadata_url": SOURCE_CRS_METADATA_URL,
+        "source_coordinate_crs_documentation_verified": True,
+        "source_coordinate_positional_accuracy_verified": False,
+        "source_typology_direct_field_observation_verified": False,
+        "source_typology_inferred_from_secondary_evidence": True,
+        "source_panel_field_years_from_metadata": "2011-2024",
+        "source_sampling_design_from_metadata": "two-stage systematic clusters, approximately 20 km first-stage spacing",
+        "source_panel_tree_dap_min_cm": 10,
         "ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified": False,
         "ifn_panel_equation_independence_verified": False,
         "field_acquisition_date_per_record_verified": False,
@@ -353,7 +374,7 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders and locations outside a generous Brazil bounding envelope are unresolved, never concordant; this envelope is only a plausibility screen, not a verified IBGE overlay or source CRS; panel typology and source land-use labels are not a verified spatial IBGE crosswalk or current-cover confirmation; provisional native overlaps require identical single native source class in both panels and exclude mixed, missing or anthropized classes; the stricter geolocatable candidate subset additionally requires a single matching source vegetation typology and a resolved identical centroid in both panels, but still requires an actual IBGE legenda_1 overlay and independent verification. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
+        "warning": "Official 2026 SFB metadata documents lon_pc/lat_pc as WGS84 (EPSG:4326) but NOT positional accuracy; typology is secondary-data inference, not direct field observation. IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders and locations outside a generous Brazil bounding envelope are unresolved, never concordant; this envelope is only a plausibility screen, not a verified IBGE overlay or source CRS; panel typology and source land-use labels are not a verified spatial IBGE crosswalk or current-cover confirmation; provisional native overlaps require identical single native source class in both panels and exclude mixed, missing or anthropized classes; the stricter geolocatable candidate subset additionally requires a single matching source vegetation typology and a resolved identical centroid in both panels, but still requires an actual IBGE legenda_1 overlay and independent verification. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
     if include_candidate_rows:
         on_grid_total = sum(on_grid_by_biome.values())
@@ -421,6 +442,7 @@ def main():
         columns = ("bioma_declarado", "uf", "ua", "lon_pc_publicado",
                    "lat_pc_publicado", "classe_nativa_declarada",
                    "tipologia_origem_declarada", "crs_fonte_verificado",
+                   "crs_fonte_documentado", "precisao_geografica_de_campo_verificada",
                    "centroide_ambas_coordenadas_na_grade_0_02_grau",
                    "precisao_posicional_m", "centroide_publicado_compartilhado_entre_ua",
                    "numero_ua_fisicas_no_mesmo_centroide_publicado",
@@ -436,8 +458,8 @@ def main():
         result["candidate_csv_warning"] = (
             "Source-reported IFN coordinates and labels only. A 0.02-degree "
             "grid coincidence and shared published centroids are NOT positional-accuracy measurements. "
-            "Source CRS, positional accuracy, IBGE legenda_1, SAR and carbon "
-            "remain unverified."
+            "The official source metadata documents WGS84, but field positional "
+            "accuracy, IBGE legenda_1, SAR and carbon remain unverified."
         )
     else:
         result = audit(raw, digests)
