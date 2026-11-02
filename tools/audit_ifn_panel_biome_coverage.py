@@ -172,7 +172,7 @@ def _screen(raw):
     }
 
 
-def audit(raw_by_id, expected_sha256):
+def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
     if set(raw_by_id) != set(SOURCES) or set(expected_sha256) != set(SOURCES):
         raise ValueError("incomplete IFN panel source set")
     reports, digests = {}, {}
@@ -248,13 +248,44 @@ def audit(raw_by_id, expected_sha256):
             for ua in valid_overlap[biome]
         ) for biome in TARGET_BIOMES
     }
+    # Export only source-consistent physical UAs for a future IBGE overlay.
+    # This does not establish the source CRS, positional accuracy, IBGE class,
+    # independent SAR pairs or scientifically defensible carbon estimates.
+    candidate_rows = []
+    if include_candidate_rows:
+        for biome in TARGET_BIOMES:
+            for ua in sorted(valid_overlap[biome]):
+                if not (
+                    len(left_classes[ua]) == len(right_classes[ua]) == 1
+                    and left_classes[ua] == right_classes[ua]
+                    and next(iter(left_classes[ua])) in NATIVE_SOURCE_LAND_CLASSES
+                    and len(left_typologies[ua]) == len(right_typologies[ua]) == 1
+                    and left_typologies[ua] == right_typologies[ua]
+                    and len(left_centroids[ua]) == len(right_centroids[ua]) == 1
+                    and None not in left_centroids[ua]
+                    and left_centroids[ua] == right_centroids[ua]
+                ):
+                    continue
+                lon, lat = next(iter(left_centroids[ua]))
+                candidate_rows.append({
+                    "bioma_declarado": biome, "uf": ua[0], "ua": ua[1],
+                    "lon_pc_publicado": str(lon), "lat_pc_publicado": str(lat),
+                    "classe_nativa_declarada": next(iter(left_classes[ua])),
+                    "tipologia_origem_declarada": next(iter(left_typologies[ua])),
+                    "crs_fonte_verificado": "false",
+                    "legenda_1_ibge_verificada": "false",
+                    "par_sar_validado": "false",
+                    "estoque_carbono_validado": "false",
+                })
+        if len(candidate_rows) != sum(provisional_geolocated_native_typology.values()):
+            raise AssertionError("candidate rows do not reconcile with screened physical UAs")
     for report in reports.values():
         del report["_units_by_biome"]
         del report["_centroids_by_ua"]
         del report["_biomes_by_ua"]
         del report["_land_classes_by_ua"]
         del report["_source_typologies_by_ua"]
-    return {
+    result = {
         "report_type": "licensed_IFN_panel_2026_biome_UA_coverage_screening_only",
         "source_sha256": digests,
         "source_license": "Creative Commons Attribution (official SFB portal)",
@@ -288,6 +319,7 @@ def audit(raw_by_id, expected_sha256):
         "scientific_validation": False,
         "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders and locations outside a generous Brazil bounding envelope are unresolved, never concordant; this envelope is only a plausibility screen, not a verified IBGE overlay or source CRS; panel typology and source land-use labels are not a verified spatial IBGE crosswalk or current-cover confirmation; provisional native overlaps require identical single native source class in both panels and exclude mixed, missing or anthropized classes; the stricter geolocatable candidate subset additionally requires a single matching source vegetation typology and a resolved identical centroid in both panels, but still requires an actual IBGE legenda_1 overlay and independent verification. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
+    return (result, candidate_rows) if include_candidate_rows else result
 
 
 def main():
@@ -295,6 +327,8 @@ def main():
     parser.add_argument("--raw-dir", required=True)
     parser.add_argument("--download-audit", required=True)
     parser.add_argument("--report", required=True)
+    parser.add_argument("--candidate-csv", default=None,
+                        help="Optional unvalidated physical-UA source table for future IBGE overlay")
     args = parser.parse_args()
     registry = json.loads(Path(args.download_audit).read_text(encoding="utf-8"))
     resources = {r["id"]: r for r in registry["resources"]}
@@ -307,7 +341,28 @@ def main():
             raise ValueError("IFN panel raw source not acquired")
         raw[sid] = (Path(args.raw_dir) / (sid + ".csv")).read_bytes()
         digests[sid] = row["sha256"]
-    result = audit(raw, digests)
+    if args.candidate_csv:
+        result, candidates = audit(raw, digests, include_candidate_rows=True)
+        csv_path = Path(args.candidate_csv)
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
+        columns = ("bioma_declarado", "uf", "ua", "lon_pc_publicado",
+                   "lat_pc_publicado", "classe_nativa_declarada",
+                   "tipologia_origem_declarada", "crs_fonte_verificado",
+                   "legenda_1_ibge_verificada", "par_sar_validado",
+                   "estoque_carbono_validado")
+        with csv_path.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=columns)
+            writer.writeheader()
+            writer.writerows(candidates)
+        result["candidate_csv_sha256"] = hashlib.sha256(csv_path.read_bytes()).hexdigest()
+        result["candidate_csv_physical_ua_count"] = len(candidates)
+        result["candidate_csv_scientifically_validated"] = False
+        result["candidate_csv_warning"] = (
+            "Source-reported IFN coordinates and labels only; source CRS, "
+            "positional accuracy, IBGE legenda_1, SAR and carbon NOT verified."
+        )
+    else:
+        result = audit(raw, digests)
     Path(args.report).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"panel_coverage": result["target_biome_coverage"],
                       "scientific_validation": False}, ensure_ascii=False))
