@@ -89,6 +89,7 @@ def _screen(raw):
     typology_units = defaultdict(set)
     equations_by_ua = defaultdict(set)
     typologies_by_ua = defaultdict(set)
+    source_typologies_by_ua = defaultdict(set)
     biomes_by_ua = defaultdict(set)
     land_classes_by_ua = defaultdict(set)
     centroids_by_ua = defaultdict(set)
@@ -132,6 +133,9 @@ def _screen(raw):
         typology_units[(biome, typology)].add(key)
         equations_by_ua[key].add(equation)
         typologies_by_ua[key].add(typology)
+        # Source terminology is only a preliminary label, not IBGE legenda_1.
+        source_typologies_by_ua[key].add(unicodedata.normalize(
+            "NFKC", typology).strip().casefold())
         biomes_by_ua[key].add(biome)
         # Multiple source equations/subunits may carry different land-use
         # classes for one physical UA. A mixed or missing class cannot be
@@ -164,6 +168,7 @@ def _screen(raw):
         "_centroids_by_ua": centroids_by_ua,
         "_biomes_by_ua": biomes_by_ua,
         "_land_classes_by_ua": land_classes_by_ua,
+        "_source_typologies_by_ua": source_typologies_by_ua,
     }
 
 
@@ -215,11 +220,40 @@ def audit(raw_by_id, expected_sha256):
             for ua in valid_overlap[biome]
         ) for biome in TARGET_BIOMES
     }
+    # A provisional native land-use label does not imply a unique source
+    # vegetation typology. Require a single matching typology in ALL equation
+    # rows of BOTH panels before identifying a geolocatable IBGE crosswalk
+    # candidate. This is still not an IBGE polygon intersection or validation.
+    left_typologies = reports["ifn_painel_biomassa_2026"]["_source_typologies_by_ua"]
+    right_typologies = reports["ifn_painel_arvores_mortas_2026"]["_source_typologies_by_ua"]
+    left_centroids = reports["ifn_painel_biomassa_2026"]["_centroids_by_ua"]
+    right_centroids = reports["ifn_painel_arvores_mortas_2026"]["_centroids_by_ua"]
+    matching_source_typology = {
+        biome: sum(
+            len(left_typologies[ua]) == len(right_typologies[ua]) == 1
+            and left_typologies[ua] == right_typologies[ua]
+            for ua in valid_overlap[biome]
+        ) for biome in TARGET_BIOMES
+    }
+    provisional_geolocated_native_typology = {
+        biome: sum(
+            len(left_classes[ua]) == len(right_classes[ua]) == 1
+            and left_classes[ua] == right_classes[ua]
+            and next(iter(left_classes[ua])) in NATIVE_SOURCE_LAND_CLASSES
+            and len(left_typologies[ua]) == len(right_typologies[ua]) == 1
+            and left_typologies[ua] == right_typologies[ua]
+            and len(left_centroids[ua]) == len(right_centroids[ua]) == 1
+            and None not in left_centroids[ua]
+            and left_centroids[ua] == right_centroids[ua]
+            for ua in valid_overlap[biome]
+        ) for biome in TARGET_BIOMES
+    }
     for report in reports.values():
         del report["_units_by_biome"]
         del report["_centroids_by_ua"]
         del report["_biomes_by_ua"]
         del report["_land_classes_by_ua"]
+        del report["_source_typologies_by_ua"]
     return {
         "report_type": "licensed_IFN_panel_2026_biome_UA_coverage_screening_only",
         "source_sha256": digests,
@@ -237,6 +271,9 @@ def audit(raw_by_id, expected_sha256):
                 "overlap_ua_centroid_missing_or_discordant": overlap[biome] - concordant[biome],
                 "overlap_ua_with_single_matching_source_native_land_class_provisional": provisional_native_overlap[biome],
                 "overlap_ua_without_single_matching_source_native_land_class": overlap[biome] - provisional_native_overlap[biome],
+                "overlap_ua_with_single_matching_source_typology_provisional": matching_source_typology[biome],
+                "overlap_ua_without_single_matching_source_typology": overlap[biome] - matching_source_typology[biome],
+                "overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional": provisional_geolocated_native_typology[biome],
                 "independent_validation": False,
             } for biome in TARGET_BIOMES
         },
@@ -249,7 +286,7 @@ def audit(raw_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders and locations outside a generous Brazil bounding envelope are unresolved, never concordant; this envelope is only a plausibility screen, not a verified IBGE overlay or source CRS; panel typology and source land-use labels are not a verified spatial IBGE crosswalk or current-cover confirmation; provisional native overlaps require identical single native source class in both panels and exclude mixed, missing or anthropized classes. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
+        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders and locations outside a generous Brazil bounding envelope are unresolved, never concordant; this envelope is only a plausibility screen, not a verified IBGE overlay or source CRS; panel typology and source land-use labels are not a verified spatial IBGE crosswalk or current-cover confirmation; provisional native overlaps require identical single native source class in both panels and exclude mixed, missing or anthropized classes; the stricter geolocatable candidate subset additionally requires a single matching source vegetation typology and a resolved identical centroid in both panels, but still requires an actual IBGE legenda_1 overlay and independent verification. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
 
 

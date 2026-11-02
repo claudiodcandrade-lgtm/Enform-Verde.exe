@@ -217,6 +217,46 @@ class PanelCoverageTests(unittest.TestCase):
                 self.assertEqual(result["overlap_ua_with_single_matching_source_native_land_class_provisional"], 0)
                 self.assertIsNone(report["carbon_stock_tC_ha"])
 
+    def test_native_source_typology_and_centroid_subset_is_only_provisional(self):
+        report = audit(*fixture())
+        item = report["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(item["overlap_ua_with_single_matching_source_typology_provisional"], 1)
+        self.assertEqual(item["overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional"], 1)
+        self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
+        self.assertIsNone(report["confidence_interval_95"])
+
+    def test_mixed_typology_across_equations_is_not_crosswalk_candidate(self):
+        living = line() + line(equation="Eq.2", typology="Floresta Estacional")
+        item = audit(*fixture(living=living))["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(item["overlap_ua_with_single_matching_source_native_land_class_provisional"], 1)
+        self.assertEqual(item["overlap_ua_with_single_matching_source_typology_provisional"], 0)
+        self.assertEqual(item["overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional"], 0)
+
+    def test_cross_panel_typology_disagreement_is_not_crosswalk_candidate(self):
+        item = audit(*fixture(dead=line(typology="Floresta Estacional")))[
+            "target_biome_coverage"]["Cerrado"]
+        self.assertEqual(item["overlap_ua_with_single_matching_source_typology_provisional"], 0)
+        self.assertEqual(item["overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional"], 0)
+
+    def test_source_typology_unicode_case_normalization_preserves_matching(self):
+        item = audit(*fixture(dead=line(typology="ＳＡＶＡＮＡ")))[
+            "target_biome_coverage"]["Cerrado"]
+        self.assertEqual(item["overlap_ua_with_single_matching_source_typology_provisional"], 1)
+        self.assertEqual(item["overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional"], 1)
+
+    def test_matching_typology_but_discordant_centroid_not_geolocatable(self):
+        item = audit(*fixture(dead=line(lon="-49,0")))[
+            "target_biome_coverage"]["Cerrado"]
+        self.assertEqual(item["overlap_ua_with_single_matching_source_typology_provisional"], 1)
+        self.assertEqual(item["overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional"], 0)
+
+    def test_matching_typology_on_pasture_is_not_native_crosswalk_candidate(self):
+        item = audit(*fixture(living=line(land_class="Pastagem"),
+                              dead=line(land_class="Pastagem")))[
+            "target_biome_coverage"]["Cerrado"]
+        self.assertEqual(item["overlap_ua_with_single_matching_source_typology_provisional"], 1)
+        self.assertEqual(item["overlap_ua_with_native_source_class_matching_typology_and_centroid_provisional"], 0)
+
     def test_source_sha_mismatch_rejected(self):
         raw, sha = fixture()
         sha["ifn_painel_biomassa_2026"] = "0" * 64
