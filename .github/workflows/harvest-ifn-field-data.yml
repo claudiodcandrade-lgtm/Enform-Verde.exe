@@ -74,6 +74,7 @@ jobs:
               "--candidate-csv", str(root / "agb_candidates" / "ifn_agb_chave_candidates_unvalidated.csv"),
               "--candidate-sha256", audit["candidate_csv_sha256"],
               "--raw-ifn-sha256", resources[0]["sha256"],
+              "--raw-ifn-file", str(root / "panel_biomass" / resources[0]["filename"]),
               "--report", str(root / "agb_candidates" / "ifn_agb_cross_state_transfer_diagnostic.json"),
           ])
           PY
