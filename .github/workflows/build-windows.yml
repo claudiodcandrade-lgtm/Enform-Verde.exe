@@ -5,6 +5,9 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+concurrency:
+  group: enform-windows-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
   actions: read
