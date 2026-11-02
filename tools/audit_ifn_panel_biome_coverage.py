@@ -119,6 +119,7 @@ def _screen(raw):
         },
         "_units_by_biome": units,
         "_centroids_by_ua": centroids_by_ua,
+        "_biomes_by_ua": biomes_by_ua,
     }
 
 
@@ -132,15 +133,27 @@ def audit(raw_by_id, expected_sha256):
             raise ValueError("IFN panel source SHA256 mismatch: " + sid)
         digests[sid] = digest
         reports[sid] = _screen(raw_by_id[sid])
-    overlap = {biome: len(reports["ifn_painel_biomassa_2026"]["_units_by_biome"][biome]
-                          & reports["ifn_painel_arvores_mortas_2026"]["_units_by_biome"][biome])
-               for biome in TARGET_BIOMES}
+    # A physical UA with inconsistent biome labels cannot support any biome,
+    # even when both panels report the same centroid for that UA.
+    biome_labels_by_ua = defaultdict(set)
+    for report in reports.values():
+        for ua, labels in report["_biomes_by_ua"].items():
+            biome_labels_by_ua[ua].update(labels)
+    ambiguous_ua = {ua for ua, labels in biome_labels_by_ua.items() if len(labels) > 1}
+    raw_overlap = {
+        biome: reports["ifn_painel_biomassa_2026"]["_units_by_biome"][biome]
+               & reports["ifn_painel_arvores_mortas_2026"]["_units_by_biome"][biome]
+        for biome in TARGET_BIOMES
+    }
+    valid_overlap = {biome: raw_overlap[biome] - ambiguous_ua for biome in TARGET_BIOMES}
+    overlap = {biome: len(valid_overlap[biome]) for biome in TARGET_BIOMES}
+    quarantined_overlap = {biome: len(raw_overlap[biome] & ambiguous_ua)
+                           for biome in TARGET_BIOMES}
     concordant = {}
     for biome in TARGET_BIOMES:
         left = reports["ifn_painel_biomassa_2026"]["_centroids_by_ua"]
         right = reports["ifn_painel_arvores_mortas_2026"]["_centroids_by_ua"]
-        common = (reports["ifn_painel_biomassa_2026"]["_units_by_biome"][biome]
-                  & reports["ifn_painel_arvores_mortas_2026"]["_units_by_biome"][biome])
+        common = valid_overlap[biome]
         concordant[biome] = sum(
             len(left[ua]) == len(right[ua]) == 1
             and None not in left[ua] and left[ua] == right[ua]
@@ -148,17 +161,20 @@ def audit(raw_by_id, expected_sha256):
     for report in reports.values():
         del report["_units_by_biome"]
         del report["_centroids_by_ua"]
+        del report["_biomes_by_ua"]
     return {
         "report_type": "licensed_IFN_panel_2026_biome_UA_coverage_screening_only",
         "source_sha256": digests,
         "source_license": "Creative Commons Attribution (official SFB portal)",
         "source_license_url": LICENSE_URL,
         "panel_data": reports,
+        "physical_ua_quarantined_for_conflicting_biome_labels": len(ambiguous_ua),
         "target_biome_coverage": {
             biome: {
                 "living_tree_panel_present": bool(reports["ifn_painel_biomassa_2026"]["rows_by_biome"].get(biome)),
                 "standing_dead_panel_present": bool(reports["ifn_painel_arvores_mortas_2026"]["rows_by_biome"].get(biome)),
                 "physical_ua_overlap_between_panels": overlap[biome],
+                "overlap_ua_quarantined_for_conflicting_biome_labels": quarantined_overlap[biome],
                 "overlap_ua_with_identical_reported_centroid": concordant[biome],
                 "overlap_ua_centroid_missing_or_discordant": overlap[biome] - concordant[biome],
                 "independent_validation": False,
@@ -172,7 +188,7 @@ def audit(raw_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
+        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
 
 

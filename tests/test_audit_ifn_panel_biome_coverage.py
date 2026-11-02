@@ -45,6 +45,31 @@ class PanelCoverageTests(unittest.TestCase):
         self.assertEqual(living["unique_physical_ua_count"], 1)
         self.assertEqual(living["ua_with_conflicting_biome_labels"], 1)
 
+    def test_same_ua_conflicting_biomes_in_both_panels_not_double_counted(self):
+        living = line() + line(biome="Caatinga", equation="Eq.2")
+        dead = line(equation="Dead.1") + line(biome="Caatinga", equation="Dead.2")
+        report = audit(*fixture(living=living, dead=dead))
+        self.assertEqual(report["physical_ua_quarantined_for_conflicting_biome_labels"], 1)
+        for biome in ("Cerrado", "Caatinga"):
+            result = report["target_biome_coverage"][biome]
+            self.assertEqual(result["physical_ua_overlap_between_panels"], 0)
+            self.assertEqual(result["overlap_ua_quarantined_for_conflicting_biome_labels"], 1)
+            self.assertEqual(result["overlap_ua_with_identical_reported_centroid"], 0)
+        self.assertFalse(report["scientific_validation"])
+
+    def test_biome_disagreement_across_panels_quarantined(self):
+        report = audit(*fixture(living=line(), dead=line(biome="Caatinga")))
+        self.assertEqual(report["physical_ua_quarantined_for_conflicting_biome_labels"], 1)
+        self.assertEqual(report["target_biome_coverage"]["Cerrado"]["physical_ua_overlap_between_panels"], 0)
+        self.assertEqual(report["target_biome_coverage"]["Caatinga"]["physical_ua_overlap_between_panels"], 0)
+        self.assertIsNone(report["carbon_stock_tC_ha"])
+
+    def test_unambiguous_ua_still_counted_once(self):
+        report = audit(*fixture())
+        self.assertEqual(report["physical_ua_quarantined_for_conflicting_biome_labels"], 0)
+        self.assertEqual(report["target_biome_coverage"]["Cerrado"]["physical_ua_overlap_between_panels"], 1)
+        self.assertEqual(report["target_biome_coverage"]["Cerrado"]["overlap_ua_quarantined_for_conflicting_biome_labels"], 0)
+
     def test_centroid_concordance_does_not_claim_sar_validation(self):
         report = audit(*fixture())
         result = report["target_biome_coverage"]["Cerrado"]
