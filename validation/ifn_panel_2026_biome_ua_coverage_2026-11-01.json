@@ -141,5 +141,36 @@
     "carbon_stock_tC_ha": null,
     "confidence_interval_95": null,
     "note": "Counts and hashes verified from downloaded GitHub Actions artifact and official SFB CSV bytes. No conflicting biome labels were observed across the two panels in this acquisition; synthetic conflict tests remain active. Identical reported centroids are descriptive, not geolocation accuracy or independent validation. A prior acquisition artifact 13115448380 contained a demonstrably truncated 53,066,954-byte living panel and was rejected; no rows from that incomplete response were promoted."
+  },
+  "zero_zero_centroid_screening_2026_11_02": {
+    "report_type": "independent_real_bytes_zero_zero_coordinate_screening_not_validation",
+    "source_workflow_run_id": 41387248098,
+    "source_artifact_id": 13115623602,
+    "independently_verified_artifact_zip_sha256": "9441375c6c5ad22b6de3bab49e798feb88c2da8115f9bf82431d20c39d5d87c0",
+    "source_csv_sha256": {
+      "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+    },
+    "independent_scan_method": "Python csv.DictReader strict=True; all rows; raw UF+UA grouped; decimal comma parsed as float; zero-zero requires both lon_pc and lat_pc numerically zero; blank coordinates screened separately",
+    "panels": {
+      "ifn_painel_biomassa_2026": {
+        "rows_scanned": 439970,
+        "zero_zero_rows": 0,
+        "zero_zero_distinct_raw_uf_ua": 0,
+        "blank_coordinate_distinct_raw_uf_ua": 0,
+        "invalid_coordinate_rows": 0
+      },
+      "ifn_painel_arvores_mortas_2026": {
+        "rows_scanned": 341071,
+        "zero_zero_rows": 0,
+        "zero_zero_distinct_raw_uf_ua": 0,
+        "blank_coordinate_distinct_raw_uf_ua": 0,
+        "invalid_coordinate_rows": 0
+      }
+    },
+    "interpretation": "The code fix is a prospective fail-closed safeguard. No (0,0) or blank coordinate was observed in these two particular complete source CSVs; previously published overlap counts are not changed. A matching published centroid does not establish independent SAR geolocation or IBGE fitophysiognomy.",
+    "scientific_validation": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null
   }
 }
