@@ -469,5 +469,76 @@
     "final_warning_consistency_scientific_ci_run_id": 41446046277,
     "final_warning_consistency_scientific_contract_tests_passed": 261,
     "final_warning_consistency_scientific_gate_accepted_count": 0
+  },
+  "ifn_ibge_published_centroid_sensitivity_2026_11_02": {
+    "report_type": "real_official_IFN_IBGE_spatial_sensitivity_DESCRIPTIVE_NOT_VALIDATION",
+    "acquisition_workflow_run_id": 41449569849,
+    "code_source_sha": "11073a82ce40fdf86f8e544a88a70d0079b539b1",
+    "source_artifact_id": 13144022719,
+    "source_artifact_zip_sha256_independently_verified": "245561377ce0196257ba15898e42a8e15e28a9259f0d09c695658c3a1d2ffb89",
+    "source_artifact_zip_crc_valid": true,
+    "ifn_candidate_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "ibge_2026_vector_zip_sha256": "bcacc74011c86ba11ef4f4826bed38836340191208c9e98e821d52f0d68a5fb7",
+    "output_unvalidated_csv_sha256": "16fbae642d80f3f084c76a0cbdf7d7395f72703711f04eba7073aebaac977eea",
+    "ifn_source": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "ifn_source_license": "Creative Commons Attribution (official SFB portal)",
+    "ibge_source": "https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip",
+    "ibge_reuse_terms_independently_verified": false,
+    "ibge_vector_crs_original": "EPSG:4674",
+    "ibge_vector_reprojected_for_screening": "EPSG:4326",
+    "ibge_invalid_polygon_geometries_quarantined_as_unknown": 30,
+    "ibge_source_geometry_completeness_independently_verified": false,
+    "ifn_unique_physical_ua_screened": 5187,
+    "ibge_published_centroid_single_label_present": 5168,
+    "ibge_published_centroid_label_nd": 19,
+    "stable_in_geometric_scenario_0m": 5168,
+    "stable_in_geometric_scenario_250m": 4765,
+    "stable_in_geometric_scenario_1000m": 3910,
+    "scenarios_are_positional_accuracy_or_confidence_intervals": false,
+    "descriptive_by_declared_biome": {
+      "Amazônia": {
+        "ua": 1597,
+        "published_centroid_label_present": 1584,
+        "stable_250m": 1495,
+        "stable_1000m": 1277
+      },
+      "Cerrado": {
+        "ua": 1662,
+        "published_centroid_label_present": 1657,
+        "stable_250m": 1470,
+        "stable_1000m": 1141
+      },
+      "Caatinga": {
+        "ua": 1160,
+        "published_centroid_label_present": 1160,
+        "stable_250m": 1093,
+        "stable_1000m": 910
+      },
+      "Mata Atlântica": {
+        "ua": 768,
+        "published_centroid_label_present": 767,
+        "stable_250m": 707,
+        "stable_1000m": 582
+      },
+      "Pantanal": {
+        "ua": 0,
+        "published_centroid_label_present": null,
+        "stable_250m": null,
+        "stable_1000m": null
+      }
+    },
+    "field_coordinate_positional_accuracy_m": null,
+    "field_ibge_fitophysiognomy_independently_verified": false,
+    "source_typology_field_observed_verified": false,
+    "sar_plot_pixel_validation": false,
+    "transfer_error": null,
+    "carbon_pool_estimates_homologated": 0,
+    "scientific_release_homologated": false,
+    "scientific_ci_run_id": 41449569415,
+    "scientific_contract_tests_passed": 272,
+    "scientific_gate_accepted_count": 0,
+    "dashboard_ci_run_id": 41449569479,
+    "dashboard_ci_success": true,
+    "warning": "The published IFN centroids have unknown field positional accuracy. The IBGE legenda_1 overlay and arbitrary 250/1000 m displacement sensitivity are descriptive ONLY; neither independent field location nor fitophysiognomy, current native cover, SAR plot-pixel pairs, transfer error, IC95 or carbon stocks are validated. Pantanal remains N/D. Quarantined invalid IBGE polygons never supply verified class."
   }
 }
