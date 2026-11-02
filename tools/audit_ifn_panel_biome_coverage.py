@@ -11,6 +11,7 @@ import hashlib
 import io
 import json
 import math
+import unicodedata
 from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
 from functools import lru_cache
@@ -64,7 +65,13 @@ def _screen(raw):
     stream = io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8-sig", newline="")
     reader = csv.DictReader(stream, delimiter=";", strict=True)
     fields = reader.fieldnames or []
-    if len(fields) != len(set(fields)) or any(not name or not name.strip() for name in fields):
+    # Header aliases (case, NFKC, whitespace) and invisible controls must not
+    # create ambiguous observation fields or conceal an alternative UF/UA.
+    normalized = [unicodedata.normalize("NFKC", name).strip().casefold()
+                  for name in fields]
+    if (len(fields) != len(set(normalized))
+            or any(not name or any(unicodedata.category(ch) in {"Cc", "Cf"}
+                                   for ch in name) for name in normalized)):
         raise ValueError("duplicate or blank IFN panel CSV headers")
     if not REQUIRED.issubset(fields):
         raise ValueError("missing IFN panel columns")
