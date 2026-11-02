@@ -154,6 +154,18 @@ class IFNAGBCrossStateTests(unittest.TestCase):
         ac_mean=(50+60)/2
         self.assertAlmostEqual(fold["mean_predicted_agb_mg_ha"],(pa_mean+ac_mean)/2)
 
+    def test_empty_state_cannot_be_a_third_holdout_state(self):
+        data=rows()
+        data[0]["uf"]=""
+        with self.assertRaisesRegex(ValueError,"blank physical UF/UA"):
+            report(data)
+
+    def test_non_native_land_cover_cannot_enter_ifn_transfer(self):
+        data=rows()
+        data[0]["classe_uso_da_terra"]="Lavoura"
+        with self.assertRaisesRegex(ValueError,"non-native"):
+            report(data)
+
     def test_blank_or_duplicate_headers_fail(self):
         raw,digest=encode(rows())
         corrupted=raw.replace(b"agb_mg_ha",b"wrong_col")
