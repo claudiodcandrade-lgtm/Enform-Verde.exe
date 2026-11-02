@@ -2,7 +2,7 @@
 import copy
 import unittest
 
-from experimental_soil_scenarios import soil_0_100_scenario_envelope
+from experimental_soil_scenarios import soil_0_100_scenario_envelope, soil_0_30_scenario_envelope
 
 BIOME = "Amazônia"
 PHYS = "Floresta Ombrófila Densa"
@@ -34,7 +34,7 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
         self.assertTrue(r["available"])
         self.assertEqual(r["status"], "experimental")
         # 100 cm * 100 * BD * C * (1 - rock)
-        self.assertAlmostEqual(r["stock_tc_ha"], 216.0)
+        self.assertAlmostEqual(r["stock_tc_ha"], 64.8)
         self.assertAlmostEqual(r["scenario_range_tc_ha"][0], 80.0)
         self.assertAlmostEqual(r["scenario_range_tc_ha"][1], 420.0)
         self.assertAlmostEqual(r["stock_tco2e_ha"], 216 * 44 / 12)
@@ -135,22 +135,22 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
 
     def test_optional_pipeline_fills_soil_only_without_measured_profile(self):
         from native_carbon import estimate_native_components
-        soil = {"experimental_horizons_0_100": example_horizons()}
+        soil = {"experimental_horizons_0_30": example_horizons_0_30()}
         result = estimate_native_components(
             None, PHYS, BIOME, lambda *_: {}, lambda _: soil)
         rows = {x["parametro"]: x for x in result["components"]}
-        self.assertEqual(rows["Solo 0–100 cm"]["origem"], "EXPERIMENTAL_FISICO")
+        self.assertEqual(rows["Solo 0–30 cm"]["origem"], "EXPERIMENTAL_FISICO")
         self.assertAlmostEqual(rows["Solo 0–100 cm"]["tc"], 216.0)
         self.assertFalse(rows["Solo 0–100 cm"]["scientifically_homologated"])
         self.assertFalse(rows["Solo 0–100 cm"]["include_in_total"])
-        self.assertEqual(rows["Solo 0–100 cm"]["range_tc_ha"], [80, 420])
+        self.assertEqual(rows["Solo 0–100 cm"]["range_tc_ha"], [24, 126])
 
     def test_measured_soil_profile_precedes_experimental(self):
         from native_carbon import estimate_native_components
         soil = {
             "0–30 cm": {"tc_ha": 25},
             "0–100 cm": {"tc_ha": 999},
-            "experimental_horizons_0_100": example_horizons()
+            "experimental_horizons_0_30": example_horizons_0_30()
         }
         result = estimate_native_components(
             None, PHYS, BIOME, lambda *_: {}, lambda _: soil)
@@ -158,6 +158,7 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["tc"], 25)
         self.assertEqual(rows[0]["origem"], "MAPEAMENTO")
+        self.assertEqual(rows[0]["tc"], 25)
 
 
 if __name__ == "__main__":
