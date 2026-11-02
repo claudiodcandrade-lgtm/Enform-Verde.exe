@@ -374,19 +374,9 @@ def _ibge_cache():
     root.mkdir(parents=True,exist_ok=True); return root
 
 def _download_zip(url,folder,tag):
-    """Cache the official ZIP without extracting the national dataset into RAM/disk."""
-    import requests
-    folder.mkdir(parents=True,exist_ok=True)
-    zpath=folder/(tag+".zip")
-    if zpath.exists() and zpath.stat().st_size>1024*1024:return zpath
-    tmp=zpath.with_suffix(".part")
-    with requests.get(url,stream=True,timeout=(15,300),headers={"User-Agent":f"Enform-Verde/{APP_VERSION}"}) as r:
-        r.raise_for_status()
-        with open(tmp,"wb") as out:
-            for chunk in r.iter_content(4*1024*1024):
-                if chunk:out.write(chunk)
-    tmp.replace(zpath)
-    return zpath
+    """Official IBGE ZIP cache with atomic integrity check and transient retries."""
+    from tools.ibge_official_zip import download_ibge_zip
+    return download_ibge_zip(url, folder, tag, APP_VERSION)
 
 def _read_zip_bbox(zpath,bbox4326,preferred=("area",)):
     """Read only polygons intersecting the property bbox directly from ZIP (GDAL /vsizip)."""
