@@ -790,5 +790,46 @@
     "confidence_interval_95": null,
     "scientific_validation": false,
     "warning": "12 physical UF+UA matches among 14 Pantanal field UAs and 12 corrected litter-depth UAs. Cross-source identity is not independent geolocation, same-day evidence, native-cover/IBGE validation, sampling-design variance, dry litter mass or SAR calibration. Forest flags S/N are subplot observations; land-code equality is descriptive, not temporal/dictionary equivalence. No Pantanal carbon or IC95 inferred."
+  },
+  "ifn_pantanal_field_litter_reported_centroid_screening_2026_11_02": {
+    "report_type": "licensed_IFN_Pantanal_field_and_litter_reported_centroid_agreement_NOT_field_accuracy",
+    "source_workflow_run_id": 41495161233,
+    "source_commit_sha": "79ffebff9f856264eaffe3b6ac43c4f79707aadc",
+    "artifact_id": 13167055080,
+    "artifact_zip_sha256_independently_verified": "f58e2b849af2e99cba774c787176202f2e3678af40bacc5ce074c4e2d674a073",
+    "artifact_zip_crc_verified": true,
+    "audit_json_sha256_independently_verified": "7e5c2da2361d7700b6c8f2bd86468d9cb0dd70fffc716ea9e015678f69188358",
+    "field_acquisition_json_sha256": "817c6c8afd144455b618c11fea1c4a870b0205d1ca0810b70f516fd449ebe64b",
+    "litter_acquisition_json_sha256": "f3671e9dff025abcf54303445ee9e42f73f0830321976406faa48ceb64f68a98",
+    "regression_tests": 8,
+    "regression_tests_passed": true,
+    "official_resources_downloaded": 5,
+    "official_resources_failed": 0,
+    "field_pantanal_physical_ua": 14,
+    "litter_pantanal_physical_ua": 12,
+    "overlap_physical_ua": 12,
+    "reported_centroid_equal_ua": 12,
+    "reported_centroid_disagree_ua": 0,
+    "reported_centroid_ND_or_conflicting_ua": 0,
+    "by_uf": {
+      "MT": {
+        "overlap_ua": 5,
+        "reported_centroid_equal_ua": 5
+      },
+      "MS": {
+        "overlap_ua": 7,
+        "reported_centroid_equal_ua": 7
+      }
+    },
+    "reported_centroid_independently_measured": false,
+    "field_geolocation_accuracy_independently_validated": false,
+    "same_day_field_collection_verified": false,
+    "ibge_fitophysiognomy_verified": false,
+    "SAR_plot_pixel_pairs_verified": false,
+    "transfer_error": null,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "warning": "The same published centroid in both IFN field-subplot and litter-depth sources for all 12 matching UAs is a source-consistency result only, not an independent field positional accuracy estimate. Published locations may share rounding or origin. No IBGE, SAR, carbon, IC95 or transfer error is established."
   }
 }
