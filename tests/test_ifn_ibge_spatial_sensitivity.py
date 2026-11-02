@@ -79,3 +79,43 @@ class IBGEQuarantineTests(unittest.TestCase):
         self.assertEqual(len(geoms), 1)
         self.assertEqual(names, ["Floresta"])
         self.assertEqual(qc["missing_or_empty_geometry"], 1)
+
+
+class IFNIBGESourceTypologyCrossTabTests(unittest.TestCase):
+    """Synthetic physical-UA counts; no observational validation claim."""
+
+    def test_physical_ua_cross_tab_and_nd_are_descriptive(self):
+        from tools.ifn_ibge_spatial_sensitivity import summarize_source_typology_ibge_crosswalk
+        rows = [
+            {"uf": "GO", "ua": str(i), "bioma_declarado": "Cerrado",
+             "tipologia_origem_declarada": "Savana",
+             "ibge_legenda_1_centroide_publicado_nao_validado": legend}
+            for i, legend in enumerate(("Savana", "Floresta", "N/D"), 1)
+        ]
+        result = summarize_source_typology_ibge_crosswalk(rows)
+        self.assertEqual(sum(x["ua_fisicas"] for x in
+            result["source_typology_ibge_cross_tab_published_centroid_UNVALIDATED"]), 3)
+        summary = result["source_typology_ibge_by_biome_UNVALIDATED"]["Cerrado"]
+        self.assertEqual(summary["published_centroid_ibge_label_present"], 2)
+        self.assertEqual(summary["published_centroid_ibge_label_ND"], 1)
+        self.assertEqual(summary["source_typologies_with_multiple_published_ibge_legends"], 1)
+        self.assertFalse(result["source_typology_ibge_independently_validated"])
+        self.assertIsNone(result["source_typology_ibge_transfer_error"])
+
+    def test_duplicate_physical_ua_rejected(self):
+        from tools.ifn_ibge_spatial_sensitivity import summarize_source_typology_ibge_crosswalk
+        row = {"uf": "GO", "ua": "1", "bioma_declarado": "Cerrado",
+               "tipologia_origem_declarada": "Savana",
+               "ibge_legenda_1_centroide_publicado_nao_validado": "Savana"}
+        with self.assertRaisesRegex(ValueError, "duplicate IFN physical"):
+            summarize_source_typology_ibge_crosswalk([row, dict(row)])
+
+    def test_missing_source_typology_fails_closed(self):
+        from tools.ifn_ibge_spatial_sensitivity import summarize_source_typology_ibge_crosswalk
+        row = {"uf": "GO", "ua": "1", "bioma_declarado": "Cerrado",
+               "tipologia_origem_declarada": "",
+               "ibge_legenda_1_centroide_publicado_nao_validado": "Savana"}
+        with self.assertRaisesRegex(ValueError, "missing IFN"):
+            summarize_source_typology_ibge_crosswalk([row])
+
+

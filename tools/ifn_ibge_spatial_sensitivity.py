@@ -132,6 +132,57 @@ class IbgeSensitivity:
         }
 
 
+def summarize_source_typology_ibge_crosswalk(rows):
+    """Descriptive physical-UA cross-tab, NOT independent fitophysiognomy validation.
+
+    IFN typology is inferred from secondary evidence; IBGE legenda_1 is
+    joined to published centroids with unknown field positional accuracy.
+    """
+    pairs, seen = Counter(), set()
+    for row in rows:
+        identity = (row.get("uf", "").strip(), row.get("ua", "").strip())
+        biome = row.get("bioma_declarado", "").strip()
+        typology = row.get("tipologia_origem_declarada", "").strip()
+        legend = row.get("ibge_legenda_1_centroide_publicado_nao_validado", "").strip()
+        if not all(identity) or not biome or not typology or not legend:
+            raise ValueError("missing IFN identity, source typology or IBGE screening label")
+        if identity in seen:
+            raise ValueError("duplicate IFN physical UF+UA in source-IBGE cross-tab")
+        seen.add(identity)
+        pairs[(biome, typology, legend)] += 1
+    by_biome, known_by_biome, source_legends = Counter(), Counter(), {}
+    for (biome, typology, legend), count in pairs.items():
+        by_biome[biome] += count
+        if legend != "N/D":
+            known_by_biome[biome] += count
+            source_legends.setdefault((biome, typology), set()).add(legend)
+    return {
+        "source_typology_ibge_cross_tab_published_centroid_UNVALIDATED": [
+            {"bioma_declarado": biome, "tipologia_origem_declarada": typology,
+             "ibge_legenda_1_centroide_publicado_nao_validado": legend,
+             "ua_fisicas": count}
+            for (biome, typology, legend), count in sorted(pairs.items())
+        ],
+        "source_typology_ibge_by_biome_UNVALIDATED": {
+            biome: {
+                "physical_ua": by_biome[biome],
+                "published_centroid_ibge_label_present": known_by_biome[biome],
+                "published_centroid_ibge_label_ND": by_biome[biome] - known_by_biome[biome],
+                "source_typologies_with_multiple_published_ibge_legends": sum(
+                    len(legends) > 1 for (b, _), legends in source_legends.items() if b == biome),
+            } for biome in sorted(by_biome)
+        },
+        "source_typology_ibge_independently_validated": False,
+        "source_typology_ibge_transfer_error": None,
+        "source_typology_ibge_warning": (
+            "Each UF+UA counted once. IFN source typology is secondary-data inference, "
+            "not independent field truth; IBGE legenda_1 is assigned at published "
+            "centroids of unknown field accuracy. Differences and agreements are NOT "
+            "classification accuracy, field validation, carbon calibration or transfer error."
+        ),
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ifn-csv", required=True)
@@ -166,7 +217,8 @@ def main(argv=None):
 
     with ifn.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
-        required = {"uf", "ua", "lon_pc_publicado", "lat_pc_publicado"}
+        required = {"uf", "ua", "lon_pc_publicado", "lat_pc_publicado",
+                    "bioma_declarado", "tipologia_origem_declarada"}
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
             parser.error("IFN candidate columns missing")
         rows = list(reader)
@@ -207,6 +259,7 @@ def main(argv=None):
         "output_csv_sha256": sha256(output),
         "ifn_physical_ua": len(rows),
         "counts": dict(counts),
+        **summarize_source_typology_ibge_crosswalk(rows),
         "radii_m_scenarios_not_errors": list(RADII_M),
         "ibge_crs_original": original_crs,
         "ibge_geometry_quarantine": ibge_qc,
