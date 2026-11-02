@@ -172,5 +172,46 @@
     "scientific_validation": false,
     "carbon_stock_tC_ha": null,
     "confidence_interval_95": null
+  },
+  "brazil_broad_envelope_screening_2026_11_02": {
+    "report_type": "independent_real_bytes_IFN_2026_centroid_plausibility_screen_not_validation",
+    "source_workflow_run_id": 41387248098,
+    "source_artifact_id": 13115623602,
+    "independently_verified_artifact_zip_sha256": "9441375c6c5ad22b6de3bab49e798feb88c2da8115f9bf82431d20c39d5d87c0",
+    "source_csv_sha256": {
+      "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+    },
+    "broad_envelope_degrees": {
+      "longitude_min": -75,
+      "longitude_max": -32,
+      "latitude_min": -35,
+      "latitude_max": 7
+    },
+    "method": "Independent full scan of both SHA-verified official CSVs from ZIP; csv.DictReader delimiter semicolon strict=True; Decimal coordinates with decimal comma normalized; outside when longitude or latitude is beyond inclusive broad screen; counted rows and distinct raw (UF,UA). This is not an IBGE polygon, spatial verification, positional accuracy or source CRS validation.",
+    "panels": {
+      "ifn_painel_biomassa_2026": {
+        "rows_scanned": 439970,
+        "rows_outside_broad_envelope": 0,
+        "distinct_raw_uf_ua_outside_broad_envelope": 0,
+        "observed_longitude_min": -73.08,
+        "observed_longitude_max": -32.43375,
+        "observed_latitude_min": -32.22,
+        "observed_latitude_max": 4.14
+      },
+      "ifn_painel_arvores_mortas_2026": {
+        "rows_scanned": 341071,
+        "rows_outside_broad_envelope": 0,
+        "distinct_raw_uf_ua_outside_broad_envelope": 0,
+        "observed_longitude_min": -73.08,
+        "observed_longitude_max": -32.43375,
+        "observed_latitude_min": -32.22,
+        "observed_latitude_max": 3.96
+      }
+    },
+    "interpretation": "All published panel coordinates in these two complete source files fall inside the generous screen; code correction is prospective and does not alter observed panel centroid-overlap counts. Inside-envelope coordinates are not validated geolocations, fitophysiognomies or SAR plot-pixel pairs.",
+    "scientific_validation": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null
   }
 }
