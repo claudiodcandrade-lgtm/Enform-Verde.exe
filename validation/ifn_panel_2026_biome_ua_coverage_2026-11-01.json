@@ -270,5 +270,77 @@
     "confidence_interval_95": null,
     "scientific_validation": false,
     "note": "Conservative reduction of candidate source labels only, not independent observational validation or native land cover. No model or carbon stock was promoted. The artifact ZIP SHA-256 above is the Actions upload-reported digest, not an independently downloaded digest."
+  },
+  "cross_panel_source_native_typology_centroid_screening_2026_11_02": {
+    "report_type": "licensed_IFN_SFB_source_typology_centroid_pre_IBGE_screening_not_validation",
+    "source_code_and_tests_sha": "c69d09b81493a0926a749f07c60e2b601c45f680",
+    "source_workflow_run_id": 41423008016,
+    "source_job_id": 125202831650,
+    "source_artifact_id": 13130238723,
+    "artifact_upload_zip_sha256_reported_by_github_actions": "ae4b306a142156bb97f8101545d90e46d82bd6497052554bf814c98d4a76bbdd",
+    "artifact_zip_sha256_independently_verified": false,
+    "source_license_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "source_sha256": {
+      "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+    },
+    "official_resources_downloaded": 11,
+    "official_resources_failed_or_blocked": 0,
+    "method": "Source CSV bytes verified by SHA256 against acquisition manifest. Deduplicate physical UF+UA and quarantine conflicting biomes. Single source vegetation typology must match across all equation/subunit rows in both panels after NFKC/casefold; strict native subset additionally requires identical single native source land-use class and valid identical reported centroids. This is not IBGE legenda_1 intersection, verified GPS accuracy, contemporary cover, independent SAR plot-pixel calibration, or independent observations.",
+    "by_biome": {
+      "Amazônia": {
+        "physical_ua_overlap": 1705,
+        "single_matching_source_native_land_class_provisional": 1597,
+        "single_matching_source_typology_provisional": 1649,
+        "source_typology_unresolved_or_conflicting": 56,
+        "native_source_class_typology_and_centroid_coherent_provisional": 1597,
+        "independently_validated": false
+      },
+      "Cerrado": {
+        "physical_ua_overlap": 2083,
+        "single_matching_source_native_land_class_provisional": 1662,
+        "single_matching_source_typology_provisional": 1715,
+        "source_typology_unresolved_or_conflicting": 368,
+        "native_source_class_typology_and_centroid_coherent_provisional": 1662,
+        "independently_validated": false
+      },
+      "Caatinga": {
+        "physical_ua_overlap": 1227,
+        "single_matching_source_native_land_class_provisional": 1160,
+        "single_matching_source_typology_provisional": 1181,
+        "source_typology_unresolved_or_conflicting": 46,
+        "native_source_class_typology_and_centroid_coherent_provisional": 1160,
+        "independently_validated": false
+      },
+      "Mata Atlântica": {
+        "physical_ua_overlap": 841,
+        "single_matching_source_native_land_class_provisional": 768,
+        "single_matching_source_typology_provisional": 771,
+        "source_typology_unresolved_or_conflicting": 70,
+        "native_source_class_typology_and_centroid_coherent_provisional": 768,
+        "independently_validated": false
+      },
+      "Pantanal": {
+        "physical_ua_overlap": 0,
+        "single_matching_source_native_land_class_provisional": 0,
+        "single_matching_source_typology_provisional": 0,
+        "source_typology_unresolved_or_conflicting": 0,
+        "native_source_class_typology_and_centroid_coherent_provisional": 0,
+        "independently_validated": false
+      }
+    },
+    "total_physical_ua_overlap": 5856,
+    "total_matching_source_typology_provisional": 5316,
+    "total_typology_unresolved_or_conflicting": 540,
+    "total_native_source_class_typology_and_centroid_coherent_provisional": 5187,
+    "additional_excluded_from_previous_native_source_class_screen": 0,
+    "pantanal_panel_data": "N/D (no Pantanal records in the two official panels)",
+    "ibge_fitophysiognomy_spatial_crosswalk_verified": false,
+    "source_coordinates_independently_verified": false,
+    "independent_sar_plot_pixel_validation": false,
+    "transfer_error_validated": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false
   }
 }
