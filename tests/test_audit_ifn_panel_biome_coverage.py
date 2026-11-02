@@ -328,6 +328,26 @@ class PanelCoverageTests(unittest.TestCase):
             self.assertEqual(candidates, [])
             self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
 
+    def test_official_2026_metadata_documents_wgs84_not_plot_accuracy(self):
+        report, candidates = audit(*fixture(), include_candidate_rows=True)
+        self.assertTrue(report["source_coordinate_crs_documentation_verified"])
+        self.assertEqual(report["source_coordinate_crs_declared_by_official_metadata"], "EPSG:4326")
+        self.assertIn("metadados_painelbiomassacarbono", report["source_coordinate_crs_metadata_url"])
+        self.assertFalse(report["source_coordinate_positional_accuracy_verified"])
+        self.assertEqual(candidates[0]["crs_fonte_verificado"], "true")
+        self.assertEqual(candidates[0]["crs_fonte_documentado"], "EPSG:4326")
+        self.assertEqual(candidates[0]["precisao_geografica_de_campo_verificada"], "false")
+        self.assertEqual(candidates[0]["precisao_posicional_m"], "N/D")
+        self.assertFalse(report["sar_plot_pixel_validation"])
+
+    def test_official_panel_typology_is_secondary_inference_not_field_truth(self):
+        report = audit(*fixture())
+        self.assertFalse(report["source_typology_direct_field_observation_verified"])
+        self.assertTrue(report["source_typology_inferred_from_secondary_evidence"])
+        self.assertEqual(report["source_panel_field_years_from_metadata"], "2011-2024")
+        self.assertEqual(report["source_panel_tree_dap_min_cm"], 10)
+        self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
+
     def test_distinct_physical_ua_sharing_published_centroid_are_flagged(self):
         living = line(ua="GO_1") + line(ua="GO_2", equation="Eq.2")
         dead = line(ua="GO_1", equation="Dead.1") + line(ua="GO_2", equation="Dead.2")
