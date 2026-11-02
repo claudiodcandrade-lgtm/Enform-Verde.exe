@@ -94,6 +94,45 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertIsNone(report["carbon_stock_tC_ha"])
         self.assertFalse(report["scientific_validation"])
 
+    def test_diameter_metadata_review_queue_requires_only_N_complete_rows(self):
+        litter, wood, _ = fixture()
+        sid = next(k for k, uf in WOOD_IDS.items() if uf == "MS")
+        values = {"bioma": "Pantanal", "uf": "Mato Grosso do Sul",
+                  "mun": "Mun", "lon_pc": "-57.5", "lat_pc": "-17.4",
+                  "ua": "MS_1", "data": "2018", "Uso_terra_PC": "14",
+                  "Ausen_necro": "N", "transecto": "1", "diam": "9",
+                  "decomp_nivel": "3"}
+        wood[sid] = xlsx([[values.get(k, "") for k in FIELDS]])
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        report = audit(litter, wood, sha)
+        self.assertEqual(report["wood_ua_with_only_N_flags_and_every_N_row_has_diameter_and_transect_id_for_metadata_review"], 1)
+        self.assertEqual(report["wood_diameter_metadata_review_ua_ids_not_stock"], [["MS", "ms_1"]])
+        self.assertEqual(report["wood_ua_with_any_N_row_missing_diameter_or_transect_id"], 0)
+        self.assertIsNone(report["carbon_stock_tC_ha"])
+        self.assertFalse(report["scientific_validation"])
+
+    def test_missing_transect_excludes_measured_log_from_metadata_review_queue(self):
+        litter, wood, _ = fixture()
+        sid = next(k for k, uf in WOOD_IDS.items() if uf == "MS")
+        values = {"bioma": "Pantanal", "uf": "Mato Grosso do Sul",
+                  "mun": "Mun", "lon_pc": "-57.5", "lat_pc": "-17.4",
+                  "ua": "MS_1", "data": "2018", "Uso_terra_PC": "14",
+                  "Ausen_necro": "N", "transecto": "", "diam": "9",
+                  "decomp_nivel": "3"}
+        wood[sid] = xlsx([[values.get(k, "") for k in FIELDS]])
+        sha = {k: hashlib.sha256(v).hexdigest() for k, v in {**litter, **wood}.items()}
+        report = audit(litter, wood, sha)
+        self.assertEqual(report["wood_ua_with_any_N_row_missing_diameter_or_transect_id"], 1)
+        self.assertEqual(report["wood_ua_with_only_N_flags_and_every_N_row_has_diameter_and_transect_id_for_metadata_review"], 0)
+        self.assertEqual(report["wood_diameter_metadata_review_ua_ids_not_stock"], [])
+        self.assertIsNone(report["confidence_interval_95"])
+
+    def test_mixed_absence_flags_are_never_diameter_review_candidates(self):
+        report = audit(*fixture())
+        self.assertEqual(report["wood_ua_with_mixed_absence_flags"], 1)
+        self.assertEqual(report["wood_ua_with_only_N_flags_and_every_N_row_has_diameter_and_transect_id_for_metadata_review"], 0)
+        self.assertEqual(report["wood_diameter_metadata_review_ua_ids_not_stock"], [])
+
     def test_conflicting_centroid_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "centroid"):
             audit(*fixture(bad_meta=True))
