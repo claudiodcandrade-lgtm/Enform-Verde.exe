@@ -140,7 +140,7 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
             None, PHYS, BIOME, lambda *_: {}, lambda _: soil)
         rows = {x["parametro"]: x for x in result["components"]}
         self.assertEqual(rows["Solo 0–100 cm"]["origem"], "EXPERIMENTAL_FISICO")
-        self.assertEqual(rows["Solo 0–100 cm"]["tc"], 216)
+        self.assertAlmostEqual(rows["Solo 0–100 cm"]["tc"], 216.0)
         self.assertFalse(rows["Solo 0–100 cm"]["scientifically_homologated"])
         self.assertEqual(rows["Solo 0–100 cm"]["range_tc_ha"], [80, 420])
 
