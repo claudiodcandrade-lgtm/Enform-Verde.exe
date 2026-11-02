@@ -540,5 +540,93 @@
     "dashboard_ci_run_id": 41449569479,
     "dashboard_ci_success": true,
     "warning": "The published IFN centroids have unknown field positional accuracy. The IBGE legenda_1 overlay and arbitrary 250/1000 m displacement sensitivity are descriptive ONLY; neither independent field location nor fitophysiognomy, current native cover, SAR plot-pixel pairs, transfer error, IC95 or carbon stocks are validated. Pantanal remains N/D. Quarantined invalid IBGE polygons never supply verified class."
+  },
+  "ifn_ibge_source_typology_cross_tab_real_2026_11_02": {
+    "report_type": "REAL_LICENSED_SFB_IFN_IBGE_PUBLISHED_CENTROID_CROSS_TAB_DESCRIPTIVE_NOT_VALIDATION",
+    "source_code_sha": "c90347dc4c1c11a809c680863d55d10c8c586574",
+    "ci_spatial_run_id": 41461739238,
+    "ci_spatial_conclusion": "success",
+    "artifact_id": 13149701254,
+    "artifact_zip_sha256_independently_verified": "f036d767c16dcd48eefde7222edc3f45105ad38dd07ab2c490603c9f74550b3a",
+    "artifact_zip_crc_valid": true,
+    "cross_tab_json_sha256_independently_verified": "464aaef3367d7041264b61fd11df935b081474faab469bec4e712f271351fcd0",
+    "output_csv_sha256_independently_verified": "16fbae642d80f3f084c76a0cbdf7d7395f72703711f04eba7073aebaac977eea",
+    "physical_ua_count": 5187,
+    "distinct_biome_typology_ibge_pairs": 151,
+    "published_centroid_ibge_label_present": 5168,
+    "published_centroid_ibge_label_ND": 19,
+    "ibge_invalid_geometries_quarantined": 30,
+    "by_declared_biome": {
+      "Amazônia": {
+        "physical_ua": 1597,
+        "published_centroid_ibge_label_present": 1584,
+        "published_centroid_ibge_label_ND": 13,
+        "source_typologies_with_multiple_published_ibge_legends": 7
+      },
+      "Caatinga": {
+        "physical_ua": 1160,
+        "published_centroid_ibge_label_present": 1160,
+        "published_centroid_ibge_label_ND": 0,
+        "source_typologies_with_multiple_published_ibge_legends": 6
+      },
+      "Cerrado": {
+        "physical_ua": 1662,
+        "published_centroid_ibge_label_present": 1657,
+        "published_centroid_ibge_label_ND": 5,
+        "source_typologies_with_multiple_published_ibge_legends": 8
+      },
+      "Mata Atlântica": {
+        "physical_ua": 768,
+        "published_centroid_ibge_label_present": 767,
+        "published_centroid_ibge_label_ND": 1,
+        "source_typologies_with_multiple_published_ibge_legends": 10
+      },
+      "Pantanal": {
+        "physical_ua": 0,
+        "published_centroid_ibge_label_present": null,
+        "published_centroid_ibge_label_ND": null,
+        "source_typologies_with_multiple_published_ibge_legends": null
+      }
+    },
+    "selected_descriptive_pairs_NOT_accuracy": [
+      {
+        "biome": "Amazônia",
+        "source_typology": "floresta ombrófila densa",
+        "published_ibge_legend": "Floresta Ombrófila Densa",
+        "physical_ua": 823
+      },
+      {
+        "biome": "Cerrado",
+        "source_typology": "savana",
+        "published_ibge_legend": "Savana",
+        "physical_ua": 733
+      },
+      {
+        "biome": "Caatinga",
+        "source_typology": "savana-estépica",
+        "published_ibge_legend": "Savana-Estépica",
+        "physical_ua": 715
+      },
+      {
+        "biome": "Cerrado",
+        "source_typology": "savana",
+        "published_ibge_legend": "Contato (Ecótono e Encrave)",
+        "physical_ua": 278
+      }
+    ],
+    "source_sfb_license": "Creative Commons Attribution (official SFB portal)",
+    "source_sfb_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "ibge_source": "https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip",
+    "ibge_reuse_terms_independently_verified": false,
+    "full_151_pair_cross_tab_retained_in_artifact": true,
+    "field_plot_geolocation_independently_verified": false,
+    "source_typology_direct_field_observation_verified": false,
+    "ibge_fitophysiognomy_independently_validated": false,
+    "source_ibge_agreement_is_accuracy": false,
+    "transfer_error": null,
+    "confidence_interval_95": null,
+    "sar_plot_pixel_validation": false,
+    "carbon_homologation": false,
+    "warning": "Physical UA counts are descriptive only. Source typology is secondary-data inference; IBGE legend is joined to published centroids with unknown field positional accuracy. Even exact text agreement does not establish field fitophysiognomy, SAR calibration, transfer error, IC95 or any carbon stock. Pantanal N/D. Do not promote this evidence to validated capability."
   }
 }
