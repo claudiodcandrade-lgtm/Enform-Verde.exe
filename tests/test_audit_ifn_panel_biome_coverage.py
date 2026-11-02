@@ -111,7 +111,7 @@ class PanelCoverageTests(unittest.TestCase):
     def test_normalized_or_invisible_header_alias_rejected(self):
         # A second UF column must not shadow the true identity field even if
         # its spelling differs by case, Unicode width or invisible formatting.
-        for alias in (" UF ", "ｕｆ", "u\\u200bf"):
+        for alias in (" UF ", "ｕｆ", "u\u200bf"):
             with self.subTest(alias=alias):
                 raw, sha = fixture()
                 sid = "ifn_painel_biomassa_2026"
