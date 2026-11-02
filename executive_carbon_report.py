@@ -6,6 +6,18 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
     if not isinstance(value,(int,float)) or value<=0:
         return {"absolute_tc_ha":None,"percent":None,"kind":"não quantificada"}
     interval=row.get("range_tc_ha")
+    # A hypothetical physical endpoint envelope is NOT an observed error, a
+    # published CI, nor a transferable AOI prediction interval. Keep its
+    # statistics N/D and display the scenario bounds in a separate field.
+    if row.get("origem") == "EXPERIMENTAL_FISICO":
+        from math import isfinite
+        bounds=(list(interval) if isinstance(interval,(list,tuple))
+                and len(interval)==2 and all(type(x) in (int,float) and isfinite(x)
+                                             for x in interval)
+                and 0 <= interval[0] <= value <= interval[1] else None)
+        return {"absolute_tc_ha":None,"percent":None,
+                "kind":"faixa exploratória de cenários físicos, NÃO é IC95%, erro medido ou intervalo preditivo",
+                "scenario_range_tc_ha":bounds}
     if isinstance(interval,(list,tuple)) and len(interval)==2:
         lo,hi=interval
         if isinstance(lo,(int,float)) and isinstance(hi,(int,float)) and lo<=hi:
@@ -67,6 +79,17 @@ def executive_carbon_lines(native, fmt):
                     "N/D tC/ha | N/D tCO₂e/ha | N/D % — incerteza não quantificada"))
             lines.append("  "+row["parametro"]+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | incerteza: "+error)
             lines.append("    Natureza: "+u["kind"])
+            scenario=u.get("scenario_range_tc_ha")
+            if scenario is not None:
+                lo,hi=scenario
+                lines.append("    CENÁRIOS FÍSICOS (sem cobertura estatística): "+
+                             fmt(lo)+"–"+fmt(hi)+" tC/ha | "+
+                             fmt(lo*44/12)+"–"+fmt(hi*44/12)+" tCO₂e/ha")
+    experimental=native.get("experimental_only_total_tc")
+    if isinstance(experimental,(int,float)):
+        lines.append("Subtotal APENAS EXPERIMENTAL: "+fmt(experimental)+
+                     " tC | "+fmt(experimental*44/12)+
+                     " tCO₂e; excluído do estoque parcial conhecido e sem IC95%.")
     lines.extend(["ATENÇÃO: as medidas acima têm naturezas estatísticas distintas; não somar como erros independentes.",
                   "Não há IC95% defensável do total sem covariâncias, validação de transferência e erro de área.",
                   "Componentes sem estimativa permanecem excluídos do estoque parcial conhecido.",""])
