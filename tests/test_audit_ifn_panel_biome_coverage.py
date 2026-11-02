@@ -153,6 +153,38 @@ class PanelCoverageTests(unittest.TestCase):
         for panel in report["panel_data"].values():
             self.assertEqual(panel["ua_with_zero_zero_centroid_placeholder"], 0)
 
+    def test_globally_valid_but_non_brazilian_centroid_not_concordant(self):
+        # Two panels repeating the same non-Brazilian coordinate must not
+        # count as verified Brazilian centroid concordance.
+        report = audit(*fixture(living=line(lon="-10", lat="-15"),
+                                dead=line(lon="-10", lat="-15")))
+        result = report["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(result["physical_ua_overlap_between_panels"], 1)
+        self.assertEqual(result["overlap_ua_with_identical_reported_centroid"], 0)
+        self.assertEqual(result["overlap_ua_centroid_missing_or_discordant"], 1)
+        for panel in report["panel_data"].values():
+            self.assertEqual(panel["ua_with_centroid_outside_brazil_screen_envelope"], 1)
+            self.assertEqual(panel["ua_with_missing_or_conflicting_centroid"], 1)
+        self.assertFalse(report["scientific_validation"])
+
+    def test_equatorial_brazilian_centroid_stays_concordant(self):
+        report = audit(*fixture(living=line(lon="-60", lat="0"),
+                                dead=line(lon="-60", lat="0")))
+        self.assertEqual(report["target_biome_coverage"]["Cerrado"][
+            "overlap_ua_with_identical_reported_centroid"], 1)
+        for panel in report["panel_data"].values():
+            self.assertEqual(panel["ua_with_centroid_outside_brazil_screen_envelope"], 0)
+
+    def test_one_non_brazilian_panel_centroid_does_not_match(self):
+        report = audit(*fixture(living=line(lon="-10", lat="-15"),
+                                dead=line(lon="-50", lat="-15")))
+        self.assertEqual(report["target_biome_coverage"]["Cerrado"][
+            "overlap_ua_with_identical_reported_centroid"], 0)
+        self.assertEqual(report["panel_data"]["ifn_painel_biomassa_2026"][
+            "ua_with_centroid_outside_brazil_screen_envelope"], 1)
+        self.assertEqual(report["panel_data"]["ifn_painel_arvores_mortas_2026"][
+            "ua_with_centroid_outside_brazil_screen_envelope"], 0)
+
     def test_source_sha_mismatch_rejected(self):
         raw, sha = fixture()
         sha["ifn_painel_biomassa_2026"] = "0" * 64

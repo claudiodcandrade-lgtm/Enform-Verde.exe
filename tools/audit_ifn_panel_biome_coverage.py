@@ -34,6 +34,9 @@ REQUIRED = {"bioma", "uf", "lon_pc", "lat_pc", "ua", "n_subunidades", "sanidade"
             "classe_uso_da_terra", "tipologia_da_vegetacao", "equacoes", "area_ha",
             "agb_media_kg_por_ha", "agb_variancia_por_ua", "valor_r"}
 LICENSE_URL = "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono"
+# Intentionally generous bounding box: plausibility screen only, NOT IBGE
+# state/biome overlay, geolocation accuracy, or a verified source CRS.
+BRAZIL_SCREEN_ENVELOPE = (Decimal("-75"), Decimal("-32"), Decimal("-35"), Decimal("7"))
 
 
 def _finite_nonnegative(value, field, line):
@@ -83,6 +86,7 @@ def _screen(raw):
     biomes_by_ua = defaultdict(set)
     centroids_by_ua = defaultdict(set)
     zero_zero_centroid_ua = set()
+    outside_brazil_envelope_ua = set()
     for line, row in enumerate(reader, 2):
         if None in row or any(row.get(name) is None for name in REQUIRED):
             raise ValueError(f"row {line}: malformed IFN panel CSV record")
@@ -107,6 +111,14 @@ def _screen(raw):
         if lon is not None and lat is not None and lon == 0 and lat == 0:
             zero_zero_centroid_ua.add(key)
             lon = lat = None
+        elif lon is not None and lat is not None:
+            west, east, south, north = BRAZIL_SCREEN_ENVELOPE
+            if not (west <= lon <= east and south <= lat <= north):
+                # A globally valid longitude/latitude is not necessarily a
+                # plausible Brazilian plot. Keep UA counts, but do not certify
+                # centroid concordance for locations outside this broad screen.
+                outside_brazil_envelope_ua.add(key)
+                lon = lat = None
         centroids_by_ua[key].add((lon, lat) if lon is not None and lat is not None else None)
         counts[biome] += 1
         units[biome].add(key)
@@ -128,6 +140,7 @@ def _screen(raw):
         "ua_with_missing_or_conflicting_centroid": sum(
             len(v) != 1 or None in v for v in centroids_by_ua.values()),
         "ua_with_zero_zero_centroid_placeholder": len(zero_zero_centroid_ua),
+        "ua_with_centroid_outside_brazil_screen_envelope": len(outside_brazil_envelope_ua),
         "typology_ua_counts_provisional_not_ibge_verified": {
             b: {t: len(v) for (bb, t), v in sorted(typology_units.items()) if bb == b}
             for b in sorted(ALLOWED_BIOMES) if counts[b]
@@ -203,7 +216,7 @@ def audit(raw_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders are unresolved, never concordant; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
+        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders and locations outside a generous Brazil bounding envelope are unresolved, never concordant; this envelope is only a plausibility screen, not a verified IBGE overlay or source CRS; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
 
 
