@@ -30,7 +30,7 @@ REQUIRED = (
 BIOMES = {"Amazônia", "Caatinga", "Cerrado", "Mata Atlântica", "Pantanal"}
 
 
-def evaluate(raw, expected_sha256, *, raw_ifn_sha256):
+def evaluate(raw, expected_sha256, *, raw_ifn_sha256, raw_ifn_bytes=None):
     """Leave-one-UF-out transfer error by EXACT source IFN typology.
 
     Each training UF contributes one state mean to the transferred predictor,
@@ -46,6 +46,9 @@ def evaluate(raw, expected_sha256, *, raw_ifn_sha256):
         c not in "0123456789abcdefABCDEF" for c in raw_ifn_sha256
     ):
         raise ValueError("raw official IFN source SHA256 is required")
+    if raw_ifn_bytes is not None:
+        if not isinstance(raw_ifn_bytes, bytes) or hashlib.sha256(raw_ifn_bytes).hexdigest().lower() != raw_ifn_sha256.lower():
+            raise ValueError("raw official IFN source bytes do not match SHA256")
     try:
         decoded = raw.decode("utf-8-sig", errors="strict")
     except UnicodeDecodeError as exc:
@@ -158,7 +161,7 @@ def evaluate(raw, expected_sha256, *, raw_ifn_sha256):
         "status": "diagnostic_not_scientifically_homologated",
         "candidate_csv_sha256": digest,
         "raw_official_ifn_sha256_claim": raw_ifn_sha256.lower(),
-        "raw_official_ifn_bytes_verified_by_this_tool": False,
+        "raw_official_ifn_bytes_verified_by_this_tool": raw_ifn_bytes is not None,
         "candidate_ua_count": total,
         "strata_count": len(strata),
         "strata_with_transfer_diagnostic": sum(bool(s["folds"]) for s in strata),
@@ -189,11 +192,13 @@ def main():
     p.add_argument("--candidate-csv", required=True)
     p.add_argument("--candidate-sha256", required=True)
     p.add_argument("--raw-ifn-sha256", required=True)
+    p.add_argument("--raw-ifn-file", required=True)
     p.add_argument("--report", required=True)
     args = p.parse_args()
     result = evaluate(Path(args.candidate_csv).read_bytes(),
                       args.candidate_sha256,
-                      raw_ifn_sha256=args.raw_ifn_sha256)
+                      raw_ifn_sha256=args.raw_ifn_sha256,
+                      raw_ifn_bytes=Path(args.raw_ifn_file).read_bytes())
     target = Path(args.report)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
