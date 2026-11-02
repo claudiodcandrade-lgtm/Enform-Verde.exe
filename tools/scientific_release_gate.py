@@ -16,7 +16,7 @@ import unicodedata
 from pathlib import Path
 
 BIOMES = {"Amazônia", "Cerrado", "Caatinga", "Mata Atlântica", "Pantanal"}
-POOLS = {"agb", "roots", "standing_deadwood", "downed_deadwood", "litter", "soil_0_30"}
+POOLS = {"agb", "roots", "standing_deadwood", "downed_deadwood", "litter", "soil_0_100"}
 SECTIONS = {"biomes", "sar", "carbon", "agriculture", "weather",
             "vigor", "yield", "executive_panel", "performance", "regression", "windows"}
 
@@ -243,8 +243,8 @@ def assess(evidence, expected_sha, evidence_root=None):
         if all(_is_number(row.get(f)) for f in ("stock_tc_ha", "ci95_lower_tc_ha", "ci95_upper_tc_ha")):
             if not row["ci95_lower_tc_ha"] <= row["stock_tc_ha"] <= row["ci95_upper_tc_ha"]:
                 errors.append(f"{label}: invalid 95% uncertainty interval")
-        if row.get("pool") == "soil_0_30" and row.get("depth_cm") != [0, 30]:
-            errors.append(f"{label}: soil must explicitly cover 0-30 cm")
+        if row.get("pool") == "soil_0_100" and row.get("depth_cm") != [0, 100]:
+            errors.append(f"{label}: soil must explicitly cover 0-100 cm")
         if row.get("uncertainty_includes_transfer_error") is not True:
             errors.append(f"{label}: uncertainty must include spatial/model transfer error")
     for biome in BIOMES:
