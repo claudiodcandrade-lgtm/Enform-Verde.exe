@@ -703,6 +703,26 @@
     "carbon_stock_tC_ha": null,
     "confidence_interval_95": null,
     "scientific_validation": false,
-    "note": "Real licensed 2025 field subparcel observations joined by canonical UF+UA to 2026 modeled panel candidate physical UAs. Flags S/N describe forest coverage in observed subplots, not whether vegetation is native; natural grasslands and savannas may be nonforest. No independent geolocation, date pairing, native-cover confirmation, transfer error, IC95 or SAR calibration. Only 3 states (MT/MS/PA) acquired; unmatched units and Pantanal are N/D, never zero."
+    "note": "Real licensed 2025 field subparcel observations joined by canonical UF+UA to 2026 modeled panel candidate physical UAs. Flags S/N describe forest coverage in observed subplots, not whether vegetation is native; natural grasslands and savannas may be nonforest. No independent geolocation, date pairing, native-cover confirmation, transfer error, IC95 or SAR calibration. Only 3 states (MT/MS/PA) acquired; unmatched units and Pantanal are N/D, never zero.",
+    "field_source_physical_ua_by_declared_biome": {
+      "MT": {
+        "Amazônia": 352,
+        "Cerrado": 659,
+        "Pantanal": 5
+      },
+      "MS": {
+        "Cerrado": 541,
+        "Mata Atlântica": 5,
+        "Pantanal": 9
+      },
+      "PA": {
+        "Amazônia": 635,
+        "Cerrado": 20
+      }
+    },
+    "pantanal_field_unique_physical_ua_in_MT_MS": 14,
+    "pantanal_field_subplot_rows_in_MT_MS": 482,
+    "pantanal_field_data_not_carbon_or_2026_panel_overlap": true,
+    "pantanal_field_observation_note": "2025 official field-subplot XLSX profiling records 5 physical UAs (200 subplot rows) in MT and 9 UAs (282 rows) in MS labelled Pantanal. No 2026 panel candidate UAs labelled Pantanal; do not equate missing panel coverage with no Pantanal observations or infer stock."
   }
 }
