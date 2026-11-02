@@ -185,14 +185,14 @@ class IFNAGBCrossStateTests(unittest.TestCase):
         from tools.prepare_ifn_agb_candidates import prepare, COLUMNS as FULL_COLUMNS
         header=("bioma;uf;ua;lon_pc;lat_pc;sanidade;classe_uso_da_terra;"
                 "tipologia_da_vegetacao;equacoes;area_ha;agb_media_kg_por_ha;"
-                "agb_variancia_por_ua\\n")
+                "agb_variancia_por_ua\n")
         lines=[]
         for uf,base in (("PA",0),("AM",20),("AC",40)):
             for j in (1,2):
                 lines.append(";".join((
                     "Amazônia",uf,f"UA{j}","-50","-3","Vivas",
                     "Floresta Natural","Floresta Natural","AGB_Chave",
-                    "0.1",str((base+j*10)*1000),"0"))+"\\n")
+                    "0.1",str((base+j*10)*1000),"0"))+"\n")
         original=(header+"".join(lines)).encode("utf-8")
         original_sha=hashlib.sha256(original).hexdigest()
         candidates,_=prepare(original,original_sha)
