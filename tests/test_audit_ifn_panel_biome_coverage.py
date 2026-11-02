@@ -108,6 +108,19 @@ class PanelCoverageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate or blank"):
             audit(raw, sha)
 
+    def test_normalized_or_invisible_header_alias_rejected(self):
+        # A second UF column must not shadow the true identity field even if
+        # its spelling differs by case, Unicode width or invisible formatting.
+        for alias in (" UF ", "ｕｆ", "u\\u200bf"):
+            with self.subTest(alias=alias):
+                raw, sha = fixture()
+                sid = "ifn_painel_biomassa_2026"
+                raw[sid] = raw[sid].replace(
+                    b"bioma;uf;", ("bioma;uf;" + alias + ";").encode("utf-8"))
+                sha[sid] = hashlib.sha256(raw[sid]).hexdigest()
+                with self.assertRaisesRegex(ValueError, "duplicate or blank"):
+                    audit(raw, sha)
+
     def test_source_sha_mismatch_rejected(self):
         raw, sha = fixture()
         sha["ifn_painel_biomassa_2026"] = "0" * 64
