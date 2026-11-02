@@ -15,13 +15,19 @@ class FieldSubplotCrossCheckTests(unittest.TestCase):
         self.candidates = self.base / "candidates.csv"
         with self.candidates.open("w", encoding="utf-8", newline="") as f:
             w = csv.DictWriter(f, fieldnames=["uf", "ua", "bioma_declarado", "classe_nativa_declarada",
-                                               "legenda_1_ibge_verificada", "par_sar_validado"])
+                                               "legenda_1_ibge_verificada", "par_sar_validado",
+                                               "estoque_carbono_validado",
+                                               "precisao_geografica_de_campo_verificada",
+                                               "crs_fonte_documentado"])
             w.writeheader()
             for uf, ua, biome in [("MT", "1", "Cerrado"), ("MT", "2", "Cerrado"),
                                   ("MS", "3", "Pantanal"), ("PA", "4", "Amazônia")]:
                 w.writerow({"uf": uf, "ua": ua, "bioma_declarado": biome,
-                            "classe_nativa_declarada": "native",
-                            "legenda_1_ibge_verificada": "false", "par_sar_validado": "false"})
+                            "classe_nativa_declarada": "Floresta Natural",
+                            "legenda_1_ibge_verificada": "false", "par_sar_validado": "false",
+                            "estoque_carbono_validado": "false",
+                            "precisao_geografica_de_campo_verificada": "false",
+                            "crs_fonte_documentado": "EPSG:4326"})
         self.paths = {}
         self.report = {"resources": []}
         self.samples = {
@@ -87,10 +93,42 @@ class FieldSubplotCrossCheckTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "formula"):
             audit(self.candidates, self.paths, self.report)
 
+    def _tamper_candidate(self, field, value):
+        with self.candidates.open(encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+        rows[0][field] = value
+        with self.candidates.open("w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+
     def test_panel_cannot_claim_ibge_validation(self):
-        raw = self.candidates.read_text(encoding="utf-8").replace("false,false", "true,false", 1)
-        self.candidates.write_text(raw, encoding="utf-8")
+        self._tamper_candidate("legenda_1_ibge_verificada", "true")
         with self.assertRaisesRegex(ValueError, "cannot assert"):
+            audit(self.candidates, self.paths, self.report)
+
+    def test_candidate_non_native_label_rejected(self):
+        self._tamper_candidate("classe_nativa_declarada", "Agricultura")
+        with self.assertRaisesRegex(ValueError, "provisional native"):
+            audit(self.candidates, self.paths, self.report)
+
+    def test_candidate_fictitious_carbon_or_field_validation_rejected(self):
+        for field in ("estoque_carbono_validado", "precisao_geografica_de_campo_verificada"):
+            with self.subTest(field=field):
+                original = self.candidates.read_text(encoding="utf-8")
+                self._tamper_candidate(field, "true")
+                with self.assertRaisesRegex(ValueError, "cannot assert"):
+                    audit(self.candidates, self.paths, self.report)
+                self.candidates.write_text(original, encoding="utf-8")
+
+    def test_candidate_unknown_biome_and_crs_rejected(self):
+        original = self.candidates.read_text(encoding="utf-8")
+        self._tamper_candidate("bioma_declarado", "N/D")
+        with self.assertRaisesRegex(ValueError, "unexpected biome"):
+            audit(self.candidates, self.paths, self.report)
+        self.candidates.write_text(original, encoding="utf-8")
+        self._tamper_candidate("crs_fonte_documentado", "EPSG:3857")
+        with self.assertRaisesRegex(ValueError, "CRS differs"):
             audit(self.candidates, self.paths, self.report)
 
 

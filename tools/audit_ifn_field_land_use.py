@@ -14,6 +14,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from tools.ifn_state_identity import canonical_state, canonical_ua
+from tools.audit_ifn_panel_biome_coverage import (NATIVE_SOURCE_LAND_CLASSES,
+                                                 TARGET_BIOMES, SOURCE_CRS_DECLARED)
 
 SOURCES = {
     "ifn_uso_terra_mato_grosso_2025": "MT",
@@ -22,7 +24,10 @@ SOURCES = {
 }
 FIELD_COLUMNS = {"bioma", "uf", "ua", "sub", "subp", "cobertura_florestal", "uso_da_terra"}
 CANDIDATE_COLUMNS = {"uf", "ua", "bioma_declarado", "classe_nativa_declarada",
-                     "legenda_1_ibge_verificada", "par_sar_validado"}
+                     "legenda_1_ibge_verificada", "par_sar_validado",
+                     "estoque_carbono_validado", "precisao_geografica_de_campo_verificada",
+                     "crs_fonte_documentado"}
+ALLOWED_CANDIDATE_BIOMES = frozenset(normalized_name.casefold() for normalized_name in TARGET_BIOMES)
 
 
 def digest(path):
@@ -55,10 +60,18 @@ def load_candidates(path):
             key = (canonical_state(row["uf"]), canonical_ua(row["ua"]))
             if not all(key) or key in seen:
                 raise ValueError("missing or duplicated physical UF+UA candidate")
-            if (normalized(row["legenda_1_ibge_verificada"]) != "false"
-                    or normalized(row["par_sar_validado"]) != "false"):
-                raise ValueError("unvalidated candidate source cannot assert IBGE/SAR validation")
-            seen[key] = normalized(row["bioma_declarado"])
+            biome = normalized(row["bioma_declarado"])
+            if biome not in ALLOWED_CANDIDATE_BIOMES:
+                raise ValueError("candidate source has missing or unexpected biome")
+            if normalized(row["classe_nativa_declarada"]) not in NATIVE_SOURCE_LAND_CLASSES:
+                raise ValueError("candidate source lacks a consistent provisional native land-use class")
+            if normalized(row["crs_fonte_documentado"]) != normalized(SOURCE_CRS_DECLARED):
+                raise ValueError("candidate source CRS differs from documented panel metadata")
+            if any(normalized(row[name]) != "false" for name in (
+                    "legenda_1_ibge_verificada", "par_sar_validado",
+                    "estoque_carbono_validado", "precisao_geografica_de_campo_verificada")):
+                raise ValueError("unvalidated candidate source cannot assert IBGE/SAR/field/carbon validation")
+            seen[key] = biome
     if not seen:
         raise ValueError("empty IFN candidate CSV")
     return seen
@@ -166,6 +179,8 @@ def audit(candidate_path, source_paths, download_report):
         "field_unique_physical_ua": len(field),
         "panel_candidate_unique_physical_ua": len(candidates),
         "matched_unique_physical_ua": matched,
+        "candidate_native_label_and_all_validation_flags_strictly_checked": True,
+        "candidate_crs_documented_not_field_accuracy": SOURCE_CRS_DECLARED,
         "by_declared_biome": {b: dict(sorted(c.items())) for b, c in sorted(by_biome.items())},
         "subparcel_codes_are_not_native_cover_classes": True,
         "field_forest_flag_is_not_proof_of_native_vegetation": True,
