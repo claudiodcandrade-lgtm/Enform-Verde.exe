@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter, defaultdict
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from tools.audit_ifn_pantanal_litter_necromass import rows, number, LITTER_FIELDS
@@ -124,6 +124,10 @@ def parsed_field_date(value):
         elif re.fullmatch(r"[0-9]{2}/[0-9]{2}/[0-9]{4}", value):
             dd, mm, yyyy = (int(part) for part in value.split("/"))
             day = date(yyyy, mm, dd)
+        elif re.fullmatch(r"[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", value):
+            # Official IFN 2025 XLSX/CSV stores full collection dates this way.
+            # Midnight can be an export placeholder: prove the day, not time.
+            day = datetime.strptime(value, "%Y/%m/%d %H:%M:%S").date()
         else:
             return (None, None)
     except ValueError:

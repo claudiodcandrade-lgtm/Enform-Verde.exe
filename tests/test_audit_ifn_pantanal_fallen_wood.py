@@ -229,6 +229,14 @@ class IFNFallenWoodPantanalTests(unittest.TestCase):
         self.assertTrue(report["cross_source_collection_date_equivalence_verified"])
         self.assertFalse(report["scientific_validation"])
 
+    def test_official_ifn_timestamp_format_proves_calendar_day_not_hour(self):
+        report = audit(*fixture(litter_date="2018/07/09 00:00:00"))
+        self.assertEqual(report["cross_source_same_exact_field_day_ua"], 2)
+        self.assertEqual(report["cross_source_unverified_day_resolution_ua"], 0)
+        self.assertTrue(report["cross_source_collection_date_equivalence_verified"])
+        self.assertFalse(report["sar_acquisition_date_equivalence_verified"])
+        self.assertFalse(report["scientific_validation"])
+
     def test_same_year_different_days_cannot_be_called_temporally_equivalent(self):
         report = audit(*fixture(litter_date="2018-04-01",
                                 wood_date_override="2018-04-02"))
