@@ -33,6 +33,10 @@ def _profile_csv(path, expected_columns=()):
         raise ValueError("CSV encoding cannot be decoded without replacement")
     if "\ufffd" in decoded:
         raise ValueError("CSV contains Unicode replacement characters")
+    # Check EOF integrity BEFORE csv.Sniffer: truncated final records can
+    # prevent delimiter detection, hiding the recoverable transport failure.
+    if "equacoes" in decoded.splitlines()[0].casefold() and not raw.endswith((b"\n", b"\r")):
+        raise ValueError("truncated CSV: IFN equation panel lacks terminal newline")
     try:
         dialect = csv.Sniffer().sniff(decoded[:8192], delimiters=",;")
         reader = csv.DictReader(io.StringIO(decoded, newline=""), dialect=dialect)
@@ -47,11 +51,6 @@ def _profile_csv(path, expected_columns=()):
             raise ValueError("CSV duplicate or blank observational header")
         if any(column not in header for column in expected_columns):
             raise ValueError("CSV missing expected observational columns")
-        # The official IFN equation panels are newline-terminated. A missing
-        # final record terminator can indicate a silently shortened HTTP 200
-        # response (observed on the 2026 biomass CSV on 2026-11-02).
-        if "equacoes" in header and not raw.endswith((b"\n", b"\r")):
-            raise ValueError("truncated CSV: IFN equation panel lacks terminal newline")
         counts, biomes, states, units = 0, Counter(), Counter(), set()
         missing_biome_rows = missing_state_rows = unresolved_ua_identity_rows = 0
         ua_by_biome, typology_by_ua, strata_ua, equations_by_ua = (
