@@ -167,6 +167,38 @@ def audit(candidate_path, source_paths, download_report):
             c["missing_or_uninterpretable_forest_flag"] += 1
         else:
             c["mixed_forest_S_N_subplots"] += 1
+    # Field-only UAs (notably Pantanal) must remain visible even if the
+    # modeled 2026 panel has no candidate there. Count UF+UA once; never
+    # treat subplot S/N as a native-cover or carbon observation.
+    field_by_biome = defaultdict(Counter)
+    field_ua_unresolved_biome = 0
+    for key, info in field.items():
+        labels = info["biomes"]
+        if len(labels) != 1 or next(iter(labels)) not in ALLOWED_CANDIDATE_BIOMES:
+            field_ua_unresolved_biome += 1
+            continue
+        biome = next(iter(labels))
+        counts = field_by_biome[biome]
+        counts["field_physical_ua"] += 1
+        if key not in candidates:
+            counts["field_ua_without_panel_candidate"] += 1
+        elif candidates[key] != biome:
+            counts["field_ua_with_panel_biome_disagreement"] += 1
+        else:
+            counts["field_ua_with_same_biome_panel_candidate"] += 1
+        if info["duplicate"] or info["unresolved"]:
+            counts["field_subplot_identity_unresolved"] += 1
+        elif info["flags"] == {"s"}:
+            counts["all_recorded_subplots_forest_S"] += 1
+        elif info["flags"] == {"n"}:
+            counts["all_recorded_subplots_forest_N"] += 1
+        elif "N/D" in info["flags"]:
+            counts["missing_or_uninterpretable_forest_flag"] += 1
+        else:
+            counts["mixed_forest_S_N_subplots"] += 1
+    if (sum(c["field_physical_ua"] for c in field_by_biome.values())
+            + field_ua_unresolved_biome != len(field)):
+        raise AssertionError("field physical UA biome counts do not reconcile")
     return {
         "type": "IFN_2025_field_subplots_vs_2026_panel_UA_descriptive_NOT_homologation",
         "source_license": "Creative Commons Attribution (official SFB 2025 field land-use dataset)",
@@ -177,6 +209,10 @@ def audit(candidate_path, source_paths, download_report):
         "panel_candidate_csv_sha256": digest(candidate_path),
         "field_rows_by_state_source": source_rows,
         "field_unique_physical_ua": len(field),
+        "field_ua_with_unresolved_or_unrecognized_biome": field_ua_unresolved_biome,
+        "field_physical_ua_by_declared_biome_including_without_panel": {
+            b: dict(sorted(c.items())) for b, c in sorted(field_by_biome.items())
+        },
         "panel_candidate_unique_physical_ua": len(candidates),
         "matched_unique_physical_ua": matched,
         "candidate_native_label_and_all_validation_flags_strictly_checked": True,
