@@ -148,12 +148,13 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
     def test_measured_soil_profile_precedes_experimental(self):
         from native_carbon import estimate_native_components
         soil = {
-            "0–100 cm": {"tc_ha": 25},
+            "0–30 cm": {"tc_ha": 25},
+            "0–100 cm": {"tc_ha": 999},
             "experimental_horizons_0_100": example_horizons()
         }
         result = estimate_native_components(
             None, PHYS, BIOME, lambda *_: {}, lambda _: soil)
-        rows = [x for x in result["components"] if x["parametro"] == "Solo 0–100 cm"]
+        rows = [x for x in result["components"] if x["parametro"] == "Solo 0–30 cm"]
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["tc"], 25)
         self.assertEqual(rows[0]["origem"], "MAPEAMENTO")
