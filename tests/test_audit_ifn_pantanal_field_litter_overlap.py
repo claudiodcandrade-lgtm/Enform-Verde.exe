@@ -4,7 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 from tools.audit_ifn_field_land_use import SOURCES as FIELD_IDS
 from tools.audit_ifn_pantanal_field_litter_overlap import LITTER_IDS, audit
@@ -38,10 +38,10 @@ class PantanalFieldLitterJoinTests(unittest.TestCase):
             path = self.fd / (sid + ".xlsx")
             wb = Workbook()
             ws = wb.active
-            ws.append(["bioma", "uf", "ua", "sub", "subp",
+            ws.append(["bioma", "uf", "ua", "lon_pc", "lat_pc", "sub", "subp",
                        "cobertura_florestal", "uso_da_terra"])
             for row in self.field_rows[uf]:
-                ws.append(row)
+                ws.append([row[0], row[1], row[2], "-57,5", "-17,4", *row[3:]])
             wb.save(path)
             self.fp[sid] = path
             self.fr["resources"].append({"id": sid, "local_file": path.name,
@@ -72,6 +72,8 @@ class PantanalFieldLitterJoinTests(unittest.TestCase):
         self.assertEqual(r["by_uf"]["MT"]["single_land_code_equal_across_sources"], 1)
         self.assertEqual(r["by_uf"]["MS"]["single_land_code_disagrees_across_sources"], 1)
         self.assertEqual(r["by_uf"]["MT"]["mixed_field_forest_flags"], 1)
+        self.assertEqual(r["by_uf"]["MT"]["same_reported_centroid_not_independent_accuracy"], 1)
+        self.assertEqual(r["by_uf"]["MS"]["same_reported_centroid_not_independent_accuracy"], 1)
         self.assertIsNone(r["carbon_stock_tC_ha"])
         self.assertIsNone(r["confidence_interval_95"])
         self.assertFalse(r["scientific_validation"])
@@ -108,6 +110,32 @@ class PantanalFieldLitterJoinTests(unittest.TestCase):
         r = audit(self.fp, self.lp, self.fr, self.lr)
         self.assertEqual(r["by_uf"]["MT"]["field_land_code_mixed_or_missing"], 1)
         self.assertNotIn("single_land_code_equal_across_sources", r["by_uf"]["MT"])
+
+
+    def _edit_reported_centroid(self, state, ua, longitude):
+        sid = next(sid for sid, uf in FIELD_IDS.items() if uf == state)
+        path = self.fp[sid]
+        wb = load_workbook(path)
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2):
+            if row[2].value == ua:
+                row[3].value = longitude
+        wb.save(path)
+        self.fr["resources"][list(FIELD_IDS).index(sid)]["sha256"] = digest(path)
+
+    def test_reported_centroid_disagreement_not_promoted_to_accuracy(self):
+        self._edit_reported_centroid("MS", "C", "-58,0")
+        r = audit(self.fp, self.lp, self.fr, self.lr)
+        self.assertEqual(r["by_uf"]["MS"]["reported_centroid_disagrees_between_sources"], 1)
+        self.assertNotIn("same_reported_centroid_not_independent_accuracy", r["by_uf"]["MS"])
+        self.assertFalse(r["ibge_fitophysiognomy_verified"])
+        self.assertIsNone(r["carbon_stock_tC_ha"])
+
+    def test_missing_reported_centroid_is_ND(self):
+        self._edit_reported_centroid("MS", "C", None)
+        r = audit(self.fp, self.lp, self.fr, self.lr)
+        self.assertEqual(r["by_uf"]["MS"]["field_reported_centroid_missing_or_conflicting"], 1)
+        self.assertFalse(r["scientific_validation"])
 
 
 if __name__ == "__main__":
