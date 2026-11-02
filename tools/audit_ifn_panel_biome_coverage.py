@@ -82,6 +82,7 @@ def _screen(raw):
     typologies_by_ua = defaultdict(set)
     biomes_by_ua = defaultdict(set)
     centroids_by_ua = defaultdict(set)
+    zero_zero_centroid_ua = set()
     for line, row in enumerate(reader, 2):
         if None in row or any(row.get(name) is None for name in REQUIRED):
             raise ValueError(f"row {line}: malformed IFN panel CSV record")
@@ -100,6 +101,12 @@ def _screen(raw):
         key = (uf, ua)
         lon = _coordinate(row["lon_pc"], "lon_pc", line)
         lat = _coordinate(row["lat_pc"], "lat_pc", line)
+        # (0, 0) is outside Brazil and is a common missing-location sentinel.
+        # Retain the observation for coverage counts, but never treat this
+        # placeholder as a matching physical centroid across source panels.
+        if lon is not None and lat is not None and lon == 0 and lat == 0:
+            zero_zero_centroid_ua.add(key)
+            lon = lat = None
         centroids_by_ua[key].add((lon, lat) if lon is not None and lat is not None else None)
         counts[biome] += 1
         units[biome].add(key)
@@ -120,6 +127,7 @@ def _screen(raw):
         "ua_with_conflicting_biome_labels": sum(len(v) > 1 for v in biomes_by_ua.values()),
         "ua_with_missing_or_conflicting_centroid": sum(
             len(v) != 1 or None in v for v in centroids_by_ua.values()),
+        "ua_with_zero_zero_centroid_placeholder": len(zero_zero_centroid_ua),
         "typology_ua_counts_provisional_not_ibge_verified": {
             b: {t: len(v) for (bb, t), v in sorted(typology_units.items()) if bb == b}
             for b in sorted(ALLOWED_BIOMES) if counts[b]
@@ -195,7 +203,7 @@ def audit(raw_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
+        "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders are unresolved, never concordant; panel typology is not a verified spatial IBGE crosswalk. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
 
 
