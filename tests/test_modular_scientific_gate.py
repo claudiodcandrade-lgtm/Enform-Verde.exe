@@ -123,6 +123,23 @@ class ModularGateTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertEqual(result["validated_count"], 0)
 
+    def test_shallow_soil_never_counts_as_valid_0_100_capability(self):
+        from tools.modular_scientific_gate import POOLS
+        self.assertIn("soil_0_100", POOLS)
+        self.assertNotIn("soil_0_30", POOLS)
+        shallow = dict(BASE, pool="soil_0_30", status="not_available",
+                       reason="only 0-30 cm mapped")
+        result = assess({"source_sha": SHA, "capabilities": [shallow]}, SHA, ".")
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["validated_count"], 0)
+        self.assertTrue(any("invalid biome/pool" in e for e in result["errors"]))
+        deep_nd = dict(BASE, pool="soil_0_100", status="not_available",
+                       reason="no independently validated full profile")
+        result = assess({"source_sha": SHA, "capabilities": [deep_nd]}, SHA, ".")
+        self.assertTrue(result["passed"])
+        self.assertFalse(result["scientifically_homologated"])
+        self.assertEqual(result["validated_count"], 0)
+
     def test_soil_depth_must_be_complete(self):
         row = dict(BASE, pool="soil_0_100", status="experimental", reason="transferred model",
                    source_url="https://example.org", dataset_sha256="f" * 64,
