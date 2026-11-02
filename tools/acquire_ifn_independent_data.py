@@ -47,6 +47,11 @@ def _profile_csv(path, expected_columns=()):
             raise ValueError("CSV duplicate or blank observational header")
         if any(column not in header for column in expected_columns):
             raise ValueError("CSV missing expected observational columns")
+        # The official IFN equation panels are newline-terminated. A missing
+        # final record terminator can indicate a silently shortened HTTP 200
+        # response (observed on the 2026 biomass CSV on 2026-11-02).
+        if "equacoes" in header and not raw.endswith((b"\n", b"\r")):
+            raise ValueError("truncated CSV: IFN equation panel lacks terminal newline")
         counts, biomes, states, units = 0, Counter(), Counter(), set()
         missing_biome_rows = missing_state_rows = unresolved_ua_identity_rows = 0
         ua_by_biome, typology_by_ua, strata_ua, equations_by_ua = (
@@ -54,6 +59,8 @@ def _profile_csv(path, expected_columns=()):
         for row in reader:
             if None in row:
                 raise ValueError("CSV observation row contains unexpected extra columns")
+            if any(value is None for value in row.values()):
+                raise ValueError("truncated CSV: observation row has missing fields")
             if not any(value for value in row.values()):
                 continue
             counts += 1
@@ -241,54 +248,67 @@ def fetch_sources(registry, output, opener=None):
             continue
         record["source_url_extension"] = actual_suffix
         record["declared_file_extension"] = target_suffix
-        try:
-            with opener(urllib.request.Request(url, headers={"User-Agent": "EnformVerde-Scientific-Audit/1.0"}), timeout=90) as response:
-                final_url = response.geturl() if hasattr(response, "geturl") else url
-                final_parts = urllib.parse.urlsplit(final_url)
-                if final_parts.scheme != "https" or final_parts.hostname != "dados.florestal.gov.br":
-                    raise ValueError("download redirected outside the official HTTPS source host")
-                digest = hashlib.sha256()
-                size = 0
-                temp = output / (source["id"] + ".partial")
-                try:
-                    with temp.open("wb") as stream:
-                        while True:
-                            block = response.read(1024 * 1024)
-                            if not block:
-                                break
-                            size += len(block)
-                            if size > MAX_BYTES:
-                                raise ValueError("download exceeds size limit")
-                            digest.update(block)
-                            stream.write(block)
-                    if size == 0:
-                        raise ValueError("empty response")
-                    expected = source.get("expected_columns", [])
-                    with temp.open("rb") as raw:
-                        signature = raw.read(4)
-                        raw.seek(0)
-                        sample = raw.read(4096).lstrip().lower()
-                    # SFB metadata, URL suffix and actual bytes can disagree.
-                    # The validated format MUST follow the payload, never MIME.
-                    if signature.startswith(b"PK\x03\x04"):
-                        if not zipfile.is_zipfile(temp):
-                            raise ValueError("XLSX signature has invalid ZIP structure")
-                        validated_suffix = ".xlsx"
-                        record.update(_profile_xlsx(temp, expected))
-                    else:
-                        if sample.startswith((b"<!doctype html", b"<html")):
-                            raise ValueError("CSV endpoint returned an HTML error page")
-                        validated_suffix = ".csv"
-                        record.update(_profile_csv(temp, expected))
-                    target = output / (source["id"] + validated_suffix)
-                    temp.replace(target)
-                    record["validated_file_extension"] = validated_suffix
-                finally:
-                    temp.unlink(missing_ok=True)
-                record.update(status="downloaded_unvalidated", sha256=digest.hexdigest(),
-                              byte_size=size, local_file=target.name)
-        except (OSError, ValueError, TimeoutError) as exc:
-            record.update(status="download_failed", reason=str(exc)[:400])
+        # Retry once only for a demonstrably incomplete payload; never
+        # salvage partial rows or publish a truncated file as observed data.
+        for attempt in range(1, 3):
+            record["download_attempts"] = attempt
+            try:
+                with opener(urllib.request.Request(url, headers={"User-Agent": "EnformVerde-Scientific-Audit/1.0"}), timeout=90) as response:
+                    final_url = response.geturl() if hasattr(response, "geturl") else url
+                    final_parts = urllib.parse.urlsplit(final_url)
+                    if final_parts.scheme != "https" or final_parts.hostname != "dados.florestal.gov.br":
+                        raise ValueError("download redirected outside the official HTTPS source host")
+                    digest = hashlib.sha256()
+                    size = 0
+                    temp = output / (source["id"] + ".partial")
+                    try:
+                        with temp.open("wb") as stream:
+                            while True:
+                                block = response.read(1024 * 1024)
+                                if not block:
+                                    break
+                                size += len(block)
+                                if size > MAX_BYTES:
+                                    raise ValueError("download exceeds size limit")
+                                digest.update(block)
+                                stream.write(block)
+                        if size == 0:
+                            raise ValueError("empty response")
+                        declared_size = (response.headers.get("Content-Length")
+                                         if hasattr(response, "headers") else None)
+                        if declared_size is not None and str(declared_size).isdigit() and size != int(declared_size):
+                            raise ValueError("download length mismatch: incomplete HTTP body")
+                        expected = source.get("expected_columns", [])
+                        with temp.open("rb") as raw:
+                            signature = raw.read(4)
+                            raw.seek(0)
+                            sample = raw.read(4096).lstrip().lower()
+                        # SFB metadata, URL suffix and actual bytes can disagree.
+                        # The validated format MUST follow the payload, never MIME.
+                        if signature.startswith(b"PK\x03\x04"):
+                            if not zipfile.is_zipfile(temp):
+                                raise ValueError("XLSX signature has invalid ZIP structure")
+                            validated_suffix = ".xlsx"
+                            record.update(_profile_xlsx(temp, expected))
+                        else:
+                            if sample.startswith((b"<!doctype html", b"<html")):
+                                raise ValueError("CSV endpoint returned an HTML error page")
+                            validated_suffix = ".csv"
+                            record.update(_profile_csv(temp, expected))
+                        target = output / (source["id"] + validated_suffix)
+                        temp.replace(target)
+                        record["validated_file_extension"] = validated_suffix
+                    finally:
+                        temp.unlink(missing_ok=True)
+                    record.update(status="downloaded_unvalidated", sha256=digest.hexdigest(),
+                                  byte_size=size, local_file=target.name)
+            except (OSError, ValueError, TimeoutError) as exc:
+                reason = str(exc)
+                if attempt < 2 and (reason.startswith("truncated CSV:") or
+                                    reason.startswith("download length mismatch:")):
+                    continue
+                record.update(status="download_failed", reason=reason[:400])
+            break
         results.append(record)
     return {"source_registry_only": True, "scientific_validation": False, "resources": results}
 

@@ -323,6 +323,57 @@ class IFNAcquisitionTests(unittest.TestCase):
             self.assertEqual(result["resources"][0]["status"], "download_failed")
             self.assertFalse((Path(temp) / "bad_csv.csv").exists())
 
+    def test_truncated_panel_csv_is_retried_and_replaced_atomically(self):
+        with tempfile.TemporaryDirectory() as temp:
+            calls = []
+            complete = (b"bioma;uf;ua;equacoes\\nCerrado;GO;GO_1;Eq.1\\n"
+                        b"Cerrado;GO;GO_2;Eq.2\\n")
+            truncated = complete[:-7]
+            def fake_open(request, timeout):
+                calls.append(1)
+                return io.BytesIO(truncated if len(calls) == 1 else complete)
+            registry = {"sources": [{"id": "ifn_panel", "url": URL,
+                        "license": "CC BY", "role": "panel"}]}
+            item = fetch_sources(registry, temp, opener=fake_open)["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["download_attempts"], 2)
+            self.assertEqual(item["csv_data_rows"], 2)
+            self.assertEqual((Path(temp) / "ifn_panel.csv").read_bytes(), complete)
+            self.assertFalse((Path(temp) / "ifn_panel.partial").exists())
+
+    def test_persistently_truncated_csv_never_published(self):
+        with tempfile.TemporaryDirectory() as temp:
+            truncated = b"bioma;uf;ua;equacoes\\nCerrado;GO;GO_1;Eq.1\\nCerrado;GO;GO"
+            calls = []
+            def fake_open(request, timeout):
+                calls.append(1)
+                return io.BytesIO(truncated)
+            registry = {"sources": [{"id": "ifn_panel", "url": URL,
+                        "license": "CC BY", "role": "panel"}]}
+            item = fetch_sources(registry, temp, opener=fake_open)["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertEqual(item["download_attempts"], 2)
+            self.assertIn("truncated CSV", item["reason"])
+            self.assertEqual(len(calls), 2)
+            self.assertFalse((Path(temp) / "ifn_panel.csv").exists())
+            self.assertFalse((Path(temp) / "ifn_panel.partial").exists())
+
+    def test_http_declared_length_mismatch_retried(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = b"parcela,serapilheira\\n1,2.4\\n"
+            calls = []
+            class ShortBody(io.BytesIO):
+                headers = {"Content-Length": str(len(data) + 5)}
+            def fake_open(request, timeout):
+                calls.append(1)
+                return ShortBody(data) if len(calls) == 1 else io.BytesIO(data)
+            registry = {"sources": [{"id": "ifn_length", "url": URL,
+                        "license": "CC BY", "role": "litter"}]}
+            item = fetch_sources(registry, temp, opener=fake_open)["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["download_attempts"], 2)
+            self.assertEqual(item["csv_data_rows"], 1)
+
     def test_header_only_csv_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             registry = {"sources": [{"id": "empty_csv", "url": URL, "license": "CC BY", "role": "litter"}]}
