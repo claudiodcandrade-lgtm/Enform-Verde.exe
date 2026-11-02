@@ -174,6 +174,8 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     wood = {}
     flags = defaultdict(set)
     flag_rows = Counter()
+    n_rows_by_ua = Counter()
+    n_rows_with_diameter_and_transect_by_ua = Counter()
     transect_flags = defaultdict(lambda: defaultdict(set))
     ua_with_blank_transect = set()
     presence_without_diameter_rows = 0
@@ -201,6 +203,8 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
                 raise ValueError("unknown IFN fallen wood absence flag")
             flags[key].add(flag)
             flag_rows[flag] += 1
+            if flag == "N":
+                n_rows_by_ua[key] += 1
             # A missing transect column is rejected at ingestion. A blank
             # value in a present column remains explicitly unknown, not a
             # presumed independent transect or evidence of absence.
@@ -225,6 +229,8 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
                     raise ValueError("invalid IFN wood decay level")
                 decay_levels[level] += 1
                 diameter_rows += 1
+                if flag == "N" and transect:
+                    n_rows_with_diameter_and_transect_by_ua[key] += 1
             elif flag == "N":
                 presence_without_diameter_rows += 1
     overlap = set(litter) & set(wood)
@@ -235,6 +241,18 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
     mixed_same_transect = sorted(key for key, transects in transect_flags.items()
                                  if any(len(values) > 1 for values in transects.values()))
     mixed_with_blank_transect = sorted(set(mixed) & ua_with_blank_transect)
+    # This is a strict metadata-only review queue, NOT a field protocol,
+    # complete transect census, biomass estimate or carbon calibration.
+    # Mixed S/N UAs remain outside this queue even if some logs have diameters.
+    diameter_review_ua = sorted(
+        key for key, values in flags.items()
+        if values == {"N"} and n_rows_by_ua[key] > 0
+        and n_rows_with_diameter_and_transect_by_ua[key] == n_rows_by_ua[key]
+    )
+    incomplete_n_ua = sum(
+        n_rows_with_diameter_and_transect_by_ua[key] < count
+        for key, count in n_rows_by_ua.items()
+    )
     # IFN code 45 is cultivated pasture in the official 2024 dictionary.
     # Preserve the raw physical-UA join but quarantine anthropic use from
     # any future native-carbon evidence promotion.
@@ -280,6 +298,9 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "wood_ua_with_only_S_flags": sum(values == {"S"} for values in flags.values()),
         "wood_ua_with_any_N_flag": sum("N" in values for values in flags.values()),
         "wood_ua_with_only_N_flags": sum(values == {"N"} for values in flags.values()),
+        "wood_ua_with_any_N_row_missing_diameter_or_transect_id": incomplete_n_ua,
+        "wood_ua_with_only_N_flags_and_every_N_row_has_diameter_and_transect_id_for_metadata_review": len(diameter_review_ua),
+        "wood_diameter_metadata_review_ua_ids_not_stock": [list(key) for key in diameter_review_ua],
         "wood_present_flag_without_diameter_rows": presence_without_diameter_rows,
         "wood_rows_missing_transect_id": missing_transect_rows,
         "wood_rows_missing_collection_date": missing_collection_date_rows,
@@ -313,7 +334,7 @@ def audit(litter_by_id, wood_by_id, expected_sha256):
         "carbon_stock_tC_ha": None,
         "confidence_interval_95": None,
         "scientific_validation": False,
-        "warning": "Matched UAs are not independent carbon stocks. IFN code 45 indicates cultivated pasture in the published 2024 dictionary and is excluded from native-carbon candidates; all other codes still require IBGE and current-cover verification. S/N flags describe individual records, not UA-wide absence. Mixed flags require transect-level review; blank transect IDs cannot be assigned to a transect. Presence without diameter is incomplete, not zero biomass. Matching year-only collection labels do not establish the same field day. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
+        "warning": "Matched UAs are not independent carbon stocks. IFN code 45 indicates cultivated pasture in the published 2024 dictionary and is excluded from native-carbon candidates; all other codes still require IBGE and current-cover verification. S/N flags describe individual records, not UA-wide absence. Mixed flags require transect-level review; blank transect IDs cannot be assigned to a transect. Presence without diameter or a transect identifier is incomplete, not zero biomass. The strict all-N diameter-metadata review queue is not proof of complete field sampling, density, biomass or carbon. Matching year-only collection labels do not establish the same field day. No dry litter mass, wood volume/area, density, sampling variance or SAR plot-pixel proof."
     }
 
 
