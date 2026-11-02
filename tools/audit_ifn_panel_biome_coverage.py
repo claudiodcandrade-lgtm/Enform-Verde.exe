@@ -70,6 +70,11 @@ def _coordinate(value, field, line):
     return coordinate
 
 
+def _on_002_degree_grid(lon, lat):
+    """Exact arithmetic coincidence, NOT geolocation accuracy or grid provenance."""
+    return (lon * 50) % 1 == 0 and (lat * 50) % 1 == 0
+
+
 def _screen(raw):
     stream = io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8-sig", newline="")
     reader = csv.DictReader(stream, delimiter=";", strict=True)
@@ -252,6 +257,7 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
     # This does not establish the source CRS, positional accuracy, IBGE class,
     # independent SAR pairs or scientifically defensible carbon estimates.
     candidate_rows = []
+    on_grid_by_biome = Counter()
     if include_candidate_rows:
         for biome in TARGET_BIOMES:
             for ua in sorted(valid_overlap[biome]):
@@ -267,12 +273,17 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
                 ):
                     continue
                 lon, lat = next(iter(left_centroids[ua]))
+                on_grid = _on_002_degree_grid(lon, lat)
+                if on_grid:
+                    on_grid_by_biome[biome] += 1
                 candidate_rows.append({
                     "bioma_declarado": biome, "uf": ua[0], "ua": ua[1],
                     "lon_pc_publicado": str(lon), "lat_pc_publicado": str(lat),
                     "classe_nativa_declarada": next(iter(left_classes[ua])),
                     "tipologia_origem_declarada": next(iter(left_typologies[ua])),
                     "crs_fonte_verificado": "false",
+                    "centroide_ambas_coordenadas_na_grade_0_02_grau": str(on_grid).lower(),
+                    "precisao_posicional_m": "N/D",
                     "legenda_1_ibge_verificada": "false",
                     "par_sar_validado": "false",
                     "estoque_carbono_validado": "false",
@@ -319,6 +330,25 @@ def audit(raw_by_id, expected_sha256, include_candidate_rows=False):
         "scientific_validation": False,
         "warning": "IFN panel AGB rows are repeated subunit/allometric-equation outputs, not independent field plots or independent SAR pairs. Physical UAs with conflicting biome labels are quarantined across panels. Unique physical UAs and identical reported centroids are descriptive joins only, not positional accuracy or independent spatial validation; zero-zero placeholders and locations outside a generous Brazil bounding envelope are unresolved, never concordant; this envelope is only a plausibility screen, not a verified IBGE overlay or source CRS; panel typology and source land-use labels are not a verified spatial IBGE crosswalk or current-cover confirmation; provisional native overlaps require identical single native source class in both panels and exclude mixed, missing or anthropized classes; the stricter geolocatable candidate subset additionally requires a single matching source vegetation typology and a resolved identical centroid in both panels, but still requires an actual IBGE legenda_1 overlay and independent verification. Missing Pantanal panel rows are N/D, not zero. No AOI carbon, root/wood stock, design-based IC95, SAR error or transfer uncertainty can be inferred."
     }
+    if include_candidate_rows:
+        on_grid_total = sum(on_grid_by_biome.values())
+        result["candidate_centroids_both_coordinates_on_0_02_degree_grid"] = on_grid_total
+        result["candidate_centroids_both_coordinates_on_0_02_degree_grid_by_biome"] = {
+            biome: on_grid_by_biome[biome] for biome in TARGET_BIOMES
+        }
+        result["candidate_centroids_both_coordinates_on_0_02_degree_grid_fraction"] = (
+            on_grid_total / len(candidate_rows) if candidate_rows else None
+        )
+        result["centroid_grid_coincidence_is_positional_accuracy"] = False
+        result["source_centroid_accuracy_m"] = None
+        result["centroid_grid_warning"] = (
+            "Exact coincidence of both published decimal coordinates with a "
+            "0.02-degree arithmetic grid is a descriptive diagnostic only. "
+            "It does not establish that IFN rounded, jittered or displaced "
+            "the coordinates; it is NOT an accuracy estimate, independent "
+            "CRS verification, plot-to-pixel SAR eligibility, or a valid "
+            "IBGE legenda_1 intersection."
+        )
     return (result, candidate_rows) if include_candidate_rows else result
 
 
@@ -348,7 +378,8 @@ def main():
         columns = ("bioma_declarado", "uf", "ua", "lon_pc_publicado",
                    "lat_pc_publicado", "classe_nativa_declarada",
                    "tipologia_origem_declarada", "crs_fonte_verificado",
-                   "legenda_1_ibge_verificada", "par_sar_validado",
+                   "centroide_ambas_coordenadas_na_grade_0_02_grau",
+                   "precisao_posicional_m", "legenda_1_ibge_verificada", "par_sar_validado",
                    "estoque_carbono_validado")
         with csv_path.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=columns)
@@ -358,8 +389,10 @@ def main():
         result["candidate_csv_physical_ua_count"] = len(candidates)
         result["candidate_csv_scientifically_validated"] = False
         result["candidate_csv_warning"] = (
-            "Source-reported IFN coordinates and labels only; source CRS, "
-            "positional accuracy, IBGE legenda_1, SAR and carbon NOT verified."
+            "Source-reported IFN coordinates and labels only. A 0.02-degree "
+            "grid coincidence is NOT a positional-accuracy measurement. "
+            "Source CRS, positional accuracy, IBGE legenda_1, SAR and carbon "
+            "remain unverified."
         )
     else:
         result = audit(raw, digests)

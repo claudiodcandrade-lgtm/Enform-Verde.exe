@@ -282,6 +282,35 @@ class PanelCoverageTests(unittest.TestCase):
         self.assertEqual(candidates[0]["par_sar_validado"], "false")
         self.assertFalse(report["scientific_validation"])
 
+    def test_export_grid_coincidence_is_not_positional_accuracy(self):
+        report, candidates = audit(*fixture(), include_candidate_rows=True)
+        self.assertEqual(candidates[0]["centroide_ambas_coordenadas_na_grade_0_02_grau"], "true")
+        self.assertEqual(candidates[0]["precisao_posicional_m"], "N/D")
+        self.assertEqual(report["candidate_centroids_both_coordinates_on_0_02_degree_grid"], 1)
+        self.assertEqual(report["candidate_centroids_both_coordinates_on_0_02_degree_grid_fraction"], 1.0)
+        self.assertFalse(report["centroid_grid_coincidence_is_positional_accuracy"])
+        self.assertIsNone(report["source_centroid_accuracy_m"])
+        self.assertFalse(report["sar_plot_pixel_validation"])
+
+    def test_export_off_grid_point_is_not_discarded_or_claimed_accurate(self):
+        report, candidates = audit(*fixture(living=line(lon="-48.01"),
+                                            dead=line(lon="-48.01")),
+                                   include_candidate_rows=True)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(candidates[0]["centroide_ambas_coordenadas_na_grade_0_02_grau"], "false")
+        self.assertEqual(candidates[0]["precisao_posicional_m"], "N/D")
+        self.assertEqual(report["candidate_centroids_both_coordinates_on_0_02_degree_grid"], 0)
+        self.assertEqual(report["candidate_centroids_both_coordinates_on_0_02_degree_grid_fraction"], 0.0)
+        self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
+
+    def test_grid_count_excludes_non_native_and_handles_empty_subset(self):
+        report, candidates = audit(*fixture(dead=line(land_class="Pastagem")),
+                                   include_candidate_rows=True)
+        self.assertEqual(candidates, [])
+        self.assertEqual(report["candidate_centroids_both_coordinates_on_0_02_degree_grid"], 0)
+        self.assertIsNone(report["candidate_centroids_both_coordinates_on_0_02_degree_grid_fraction"])
+        self.assertEqual(report["candidate_centroids_both_coordinates_on_0_02_degree_grid_by_biome"]["Pantanal"], 0)
+
     def test_candidate_export_quarantines_typology_and_centroid_conflicts(self):
         for dead in (line(typology="Floresta Estacional"), line(lon="-49")):
             with self.subTest(dead=dead):
