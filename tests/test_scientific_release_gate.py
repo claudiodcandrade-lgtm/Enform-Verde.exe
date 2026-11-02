@@ -37,12 +37,12 @@ class ScientificReleaseGateTests(unittest.TestCase):
                "source_url": "https://example.org/study", "dataset_sha256": "f"*64,
                "observed_at": "2026-10-28", "aoi_id": "aoi",
                "validation_report": "test.json", "biome": "Pantanal",
-               "pool": "soil_0_100", "depth_cm": [0, 30],
+               "pool": "soil_0_30", "depth_cm": [0, 100],
                "stock_tc_ha": 25, "ci95_lower_tc_ha": 24,
                "ci95_upper_tc_ha": 26,
                "uncertainty_includes_transfer_error": False}
         errors = assess({"source_sha": SHA, "carbon": [row]}, SHA)
-        self.assertTrue(any("0-100 cm" in e for e in errors))
+        self.assertTrue(any("0-30 cm" in e for e in errors))
         self.assertTrue(any("transfer error" in e for e in errors))
 
     def test_report_integrity_rejects_missing_and_tampered_files(self):
