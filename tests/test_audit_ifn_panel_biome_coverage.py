@@ -5,8 +5,8 @@ from tools.audit_ifn_panel_biome_coverage import SOURCES, audit
 
 HEADER = "bioma;uf;lon_pc;lat_pc;ua;n_subunidades;sanidade;classe_uso_da_terra;tipologia_da_vegetacao;equacoes;area_ha;agb_media_kg_por_ha;agb_variancia_por_ua;valor_r\n"
 
-def line(biome="Cerrado", uf="GO", ua="GO_1", typology="Savana", equation="Eq.1", agb="150,5", lon="-48,0", lat="-15,0"):
-    return ";".join((biome, uf, lon, lat, ua, "1", "Vivas", "Savana", typology,
+def line(biome="Cerrado", uf="GO", ua="GO_1", typology="Savana", equation="Eq.1", agb="150,5", lon="-48,0", lat="-15,0", land_class="Savana"):
+    return ";".join((biome, uf, lon, lat, ua, "1", "Vivas", land_class, typology,
                      equation, "0,4", agb, "0", "0,56")) + "\n"
 
 def fixture(living=None, dead=None):
@@ -184,6 +184,38 @@ class PanelCoverageTests(unittest.TestCase):
             "ua_with_centroid_outside_brazil_screen_envelope"], 1)
         self.assertEqual(report["panel_data"]["ifn_painel_arvores_mortas_2026"][
             "ua_with_centroid_outside_brazil_screen_envelope"], 0)
+
+    def test_source_native_land_class_screen_remains_unvalidated(self):
+        report = audit(*fixture())
+        result = report["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(result["overlap_ua_with_single_matching_source_native_land_class_provisional"], 1)
+        self.assertEqual(result["overlap_ua_without_single_matching_source_native_land_class"], 0)
+        self.assertFalse(result["independent_validation"])
+        self.assertFalse(report["ifn_panel_fitophysiognomy_ibge_spatial_crosswalk_verified"])
+
+    def test_agricultural_source_class_not_native_candidate(self):
+        report = audit(*fixture(living=line(land_class="Pastagem"),
+                                dead=line(land_class="Pastagem")))
+        result = report["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(result["physical_ua_overlap_between_panels"], 1)
+        self.assertEqual(result["overlap_ua_with_single_matching_source_native_land_class_provisional"], 0)
+        self.assertEqual(result["overlap_ua_without_single_matching_source_native_land_class"], 1)
+
+    def test_mixed_source_land_class_in_one_ua_not_native_candidate(self):
+        report = audit(*fixture(living=line() + line(equation="Eq.2", land_class="Pastagem")))
+        result = report["target_biome_coverage"]["Cerrado"]
+        self.assertEqual(report["panel_data"]["ifn_painel_biomassa_2026"][
+            "ua_with_missing_or_conflicting_source_land_class"], 1)
+        self.assertEqual(result["overlap_ua_with_single_matching_source_native_land_class_provisional"], 0)
+
+    def test_cross_panel_or_missing_source_land_class_not_native_candidate(self):
+        for dead_class in ("Floresta Natural", ""):
+            with self.subTest(dead_class=dead_class):
+                report = audit(*fixture(dead=line(land_class=dead_class)))
+                result = report["target_biome_coverage"]["Cerrado"]
+                self.assertEqual(result["physical_ua_overlap_between_panels"], 1)
+                self.assertEqual(result["overlap_ua_with_single_matching_source_native_land_class_provisional"], 0)
+                self.assertIsNone(report["carbon_stock_tC_ha"])
 
     def test_source_sha_mismatch_rejected(self):
         raw, sha = fixture()
