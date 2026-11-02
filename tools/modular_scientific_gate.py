@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 BIOMES = {"Amazônia", "Cerrado", "Caatinga", "Mata Atlântica", "Pantanal"}
-POOLS = {"agb", "roots", "standing_deadwood", "downed_deadwood", "litter", "soil_0_30"}
+POOLS = {"agb", "roots", "standing_deadwood", "downed_deadwood", "litter", "soil_0_100"}
 STATUSES = {"validated", "experimental", "not_available"}
 
 def _check_independent_report(payload, row, label, errors):
@@ -158,8 +158,8 @@ def assess(manifest, source_sha, root):
                                 errors.append(f"{label}: independent report must be valid JSON")
                             else:
                                 _check_independent_report(payload, row, label, errors)
-            if pool == "soil_0_30" and row.get("depth_cm") != [0, 30]:
-                errors.append(f"{label}: soil requires 0-30 cm")
+            if pool == "soil_0_100" and row.get("depth_cm") != [0, 100]:
+                errors.append(f"{label}: soil requires 0-100 cm")
         rows_out.append({"biome": biome, "pool": pool, "fitofisionomia": physio, "status": status})
     # A failed registry must never advertise approved capability counts.
     passed = not errors
