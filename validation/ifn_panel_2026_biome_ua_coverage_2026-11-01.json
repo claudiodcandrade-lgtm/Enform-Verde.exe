@@ -383,5 +383,33 @@
     "scientific_validation": false,
     "restricted_georeferenced_ua_dataset_not_used": "https://dados.florestal.gov.br/ar/dataset/ifn-coordenadas-georreferenciadas-das-unidades-amostrais",
     "warning": "Arithmetic coincidence of published longitude and latitude with 0.02-degree grid is NOT evidence of rounding mechanism, coordinate positional accuracy, true field GPS position, IBGE fitophysiognomy or independent SAR pairing. Dedicated 2026 IFN georeferenced-UA dataset is classified Other (Not Open); do not treat it as licensed source or use inaccessible coordinates. Pantanal panel candidate count is N/D, not measured zero carbon."
+  },
+  "source_published_centroid_aliasing_diagnostic_2026_11_02": {
+    "report_type": "independent_real_IFN_panel_published_centroid_aliasing_screen_not_validation",
+    "source_workflow_run_id": 41435750887,
+    "source_artifact_id": 13135359664,
+    "independently_verified_artifact_zip_sha256": "64174b56034930c32624975e31d7c804fed2ba6c0410b6a7bbd161e6e6dd7392",
+    "candidate_csv_sha256": "829a73aa39e2f7bf6fba17a5a730b76d3492b8bfe951a5c698973782356900b5",
+    "method": "Full independent scan of all candidate CSV rows from CRC-valid, SHA256-verified official IFN acquisition ZIP; csv.DictReader; published coordinates parsed as Decimal; group by numeric (lon_pc_publicado, lat_pc_publicado), count distinct (UF,UA) per coordinate and declared biomes. Counts apply ONLY to the provisional native candidate subset, not all source units.",
+    "candidate_physical_ua_count": 5187,
+    "distinct_numeric_published_centroid_count": 5187,
+    "distinct_centroids_shared_by_multiple_physical_ua": 0,
+    "physical_ua_at_shared_published_centroids": 0,
+    "distinct_centroids_with_multiple_declared_biomes": 0,
+    "candidate_physical_ua_at_shared_published_centroids_by_biome": {
+      "Amazônia": 0,
+      "Cerrado": 0,
+      "Caatinga": 0,
+      "Mata Atlântica": 0,
+      "Pantanal": 0
+    },
+    "source_coordinate_accuracy_m": null,
+    "source_crs_independently_verified": false,
+    "ibge_legenda_1_spatial_crosswalk_verified": false,
+    "independent_sar_plot_pixel_validation": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "interpretation": "No exact published-centroid collision was found among 5,187 provisional physical UAs in this acquired CSV. This does NOT establish true positional uniqueness or geolocation accuracy, particularly with 4,555 points coincident with a 0.02-degree arithmetic grid. Synthetic anti-aliasing regressions remain important for other source versions. No carbon or SAR validation."
   }
 }
