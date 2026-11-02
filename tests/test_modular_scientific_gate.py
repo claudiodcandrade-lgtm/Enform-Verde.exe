@@ -124,13 +124,13 @@ class ModularGateTests(unittest.TestCase):
         self.assertEqual(result["validated_count"], 0)
 
     def test_soil_depth_must_be_complete(self):
-        row = dict(BASE, pool="soil_0_100", status="experimental", reason="transferred model",
+        row = dict(BASE, pool="soil_0_30", status="experimental", reason="transferred model",
                    source_url="https://example.org", dataset_sha256="f" * 64,
                    validation_report="missing.json", validation_report_sha256="f" * 64,
                    uncertainty_kind="prediction_interval", domain="test",
-                   transfer_error_method="spatial validation", depth_cm=[0, 30])
+                   transfer_error_method="spatial validation", depth_cm=[0, 100])
         result = assess({"source_sha": SHA, "capabilities": [row]}, SHA, ".")
-        self.assertTrue(any("0-100" in e for e in result["errors"]))
+        self.assertTrue(any("0-30" in e for e in result["errors"]))
 
 if __name__ == "__main__":
     unittest.main()
