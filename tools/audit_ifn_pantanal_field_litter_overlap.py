@@ -46,6 +46,44 @@ def verified_paths(raw_dir, report, ids, suffix):
     return result, digests
 
 
+
+def read_field_reported_centroids(paths):
+    """Read reported panel-style centroids, never independent GPS accuracy."""
+    from openpyxl import load_workbook
+    result = defaultdict(set)
+    for sid, uf in FIELD_IDS.items():
+        wb = load_workbook(paths[sid], read_only=True, data_only=False, keep_links=False)
+        try:
+            if len(wb.worksheets) != 1:
+                raise ValueError("unexpected field workbook sheet count")
+            iterator = wb.worksheets[0].iter_rows(values_only=True)
+            header = next(iterator, None)
+            labels = [normalized(v) for v in (header or ())]
+            required = {"bioma", "uf", "ua", "lon_pc", "lat_pc"}
+            if not required.issubset(labels) or len(set(labels)) != len(labels):
+                raise ValueError("field reported coordinate headers missing or ambiguous")
+            indices = {name: labels.index(name) for name in required}
+            for values in iterator:
+                if not values or normalized(values[indices["bioma"]]) != "pantanal":
+                    continue
+                if canonical_state(values[indices["uf"]]) != uf:
+                    raise ValueError("field reported coordinate UF conflicts with source")
+                ua = canonical_ua(values[indices["ua"]])
+                if not ua:
+                    raise ValueError("field Pantanal physical UA missing")
+                key = (uf, ua)
+                try:
+                    lon = number(values[indices["lon_pc"]], Decimal(-180), Decimal(180))
+                    lat = number(values[indices["lat_pc"]], Decimal(-90), Decimal(90))
+                    coord = (lon, lat) if (lon, lat) != (0, 0) else None
+                except ValueError:
+                    coord = None
+                result[key].add(coord)
+        finally:
+            wb.close()
+    return result
+
+
 def read_pantanal_litter(paths):
     litter = {}
     for sid, uf in LITTER_IDS.items():
@@ -66,13 +104,17 @@ def read_pantanal_litter(paths):
             code = normalized(row["Uso_terra_PC"])
             if not code:
                 raise ValueError("litter land code missing")
-            entry = litter.setdefault(key, {"points": set(), "codes": set()})
+            lon = number(row["lon_pc"], Decimal(-180), Decimal(180))
+            lat = number(row["lat_pc"], Decimal(-90), Decimal(90))
+            entry = litter.setdefault(key, {"points": set(), "codes": set(), "centroids": set()})
+            entry["centroids"].add((lon, lat))
             if point in entry["points"]:
                 raise ValueError("duplicate litter point")
             entry["points"].add(point)
             entry["codes"].add(code)
     for entry in litter.values():
-        if entry["points"] != {1, 2, 3, 4, 5} or len(entry["codes"]) != 1:
+        if (entry["points"] != {1, 2, 3, 4, 5} or len(entry["codes"]) != 1
+                or len(entry["centroids"]) != 1):
             raise ValueError("incomplete litter points or conflicting land codes")
     return litter
 
@@ -88,6 +130,7 @@ def audit(field_paths, litter_paths, field_report, litter_report):
     if field_paths != field_verified or litter_paths != litter_verified:
         raise ValueError("unverified observational source paths")
     field, source_rows = load_subplots(field_paths)
+    field_centroids = read_field_reported_centroids(field_paths)
     litter = read_pantanal_litter(litter_paths)
     field_pantanal = {
         key: info for key, info in field.items()
@@ -107,6 +150,13 @@ def audit(field_paths, litter_paths, field_report, litter_report):
         uf = key[0]
         c = by_uf[uf]
         c["same_physical_ua"] += 1
+        reported = field_centroids.get(key, set())
+        if len(reported) != 1 or None in reported:
+            c["field_reported_centroid_missing_or_conflicting"] += 1
+        elif next(iter(reported)) == next(iter(litter[key]["centroids"])):
+            c["same_reported_centroid_not_independent_accuracy"] += 1
+        else:
+            c["reported_centroid_disagrees_between_sources"] += 1
         info = field_pantanal[key]
         if info["duplicate"] or info["unresolved"]:
             c["field_subplot_identity_unresolved"] += 1
@@ -137,6 +187,7 @@ def audit(field_paths, litter_paths, field_report, litter_report):
         "field_ua_with_conflicting_pantanal_biome_quarantined": len(conflicting_field_biome),
         "by_uf": {uf: dict(sorted(counts.items())) for uf, counts in sorted(by_uf.items())},
         "same_UA_not_independent_spatial_or_temporal_validation": True,
+        "reported_centroid_equality_not_independent_position_accuracy": True,
         "land_code_dictionary_2025_equivalence_verified": False,
         "ibge_fitophysiognomy_verified": False,
         "sar_plot_pixel_pairs_verified": False,
