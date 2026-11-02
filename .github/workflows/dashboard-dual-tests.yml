@@ -4,6 +4,9 @@ on:
     branches: [feature/agricultural-identification-native-carbon]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: enform-dashboard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   dashboard:
     runs-on: windows-latest
