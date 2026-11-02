@@ -180,6 +180,51 @@ class IFNAGBCrossStateTests(unittest.TestCase):
             evaluate(candidate_raw,candidate_sha,raw_ifn_sha256=official_sha,
                      raw_ifn_bytes="not bytes")
 
+    def test_official_source_lineage_recomputed_from_synthetic_panel(self):
+        # Synthetic official-format rows, NEVER genuine SFB observations.
+        from tools.prepare_ifn_agb_candidates import prepare, COLUMNS as FULL_COLUMNS
+        header=("bioma;uf;ua;lon_pc;lat_pc;sanidade;classe_uso_da_terra;"
+                "tipologia_da_vegetacao;equacoes;area_ha;agb_media_kg_por_ha;"
+                "agb_variancia_por_ua\\n")
+        lines=[]
+        for uf,base in (("PA",0),("AM",20),("AC",40)):
+            for j in (1,2):
+                lines.append(";".join((
+                    "Amazônia",uf,f"UA{j}","-50","-3","Vivas",
+                    "Floresta Natural","Floresta Natural","AGB_Chave",
+                    "0.1",str((base+j*10)*1000),"0"))+"\\n")
+        original=(header+"".join(lines)).encode("utf-8")
+        original_sha=hashlib.sha256(original).hexdigest()
+        candidates,_=prepare(original,original_sha)
+        self.assertEqual(len(candidates),6)
+        out=io.StringIO(newline="")
+        writer=csv.DictWriter(out,fieldnames=FULL_COLUMNS)
+        writer.writeheader()
+        writer.writerows(candidates)
+        canonical=out.getvalue().encode("utf-8")
+        result=evaluate(canonical,hashlib.sha256(canonical).hexdigest(),
+                        raw_ifn_sha256=original_sha,raw_ifn_bytes=original,
+                        verify_source_lineage=True)
+        self.assertTrue(result["candidate_lineage_verified_by_recomputation"])
+        self.assertFalse(result["scientifically_homologated"])
+        self.assertEqual(result["candidate_ua_count"],6)
+        self.assertEqual(result["heldout_state_folds"],3)
+        # A forged candidate with a freshly recalculated SHA is still rejected.
+        altered=canonical.replace(b"10.0",b"11.0",1)
+        self.assertNotEqual(altered,canonical)
+        with self.assertRaisesRegex(ValueError,"does not match deterministic extraction"):
+            evaluate(altered,hashlib.sha256(altered).hexdigest(),
+                     raw_ifn_sha256=original_sha,raw_ifn_bytes=original,
+                     verify_source_lineage=True)
+        # Rehashing a completely unrelated candidate CSV also fails.
+        foreign,foreign_sha=encode(rows())
+        with self.assertRaisesRegex(ValueError,"does not match deterministic extraction"):
+            evaluate(foreign,foreign_sha,raw_ifn_sha256=original_sha,
+                     raw_ifn_bytes=original,verify_source_lineage=True)
+        with self.assertRaisesRegex(ValueError,"raw IFN bytes required"):
+            evaluate(canonical,hashlib.sha256(canonical).hexdigest(),
+                     raw_ifn_sha256=original_sha,verify_source_lineage=True)
+
     def test_blank_or_duplicate_headers_fail(self):
         raw,digest=encode(rows())
         corrupted=raw.replace(b"agb_mg_ha",b"wrong_col")
