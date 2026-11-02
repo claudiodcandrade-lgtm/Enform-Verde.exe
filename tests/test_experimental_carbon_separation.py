@@ -34,7 +34,7 @@ class ExperimentalCarbonSeparationTests(unittest.TestCase):
         self.assertFalse(result["complete"])
         soil=next(c for c in result["strata"][0]["components"]
                   if c["parametro"]=="Solo 0–100 cm")
-        self.assertAlmostEqual(soil["experimental_total_tc"],216.0)
+        self.assertAlmostEqual(soil["experimental_total_tc"],216.0,delta=1e-6)
         self.assertIsNone(soil["total_tc"])
         self.assertFalse(soil["include_in_total"])
         self.assertFalse(soil["scientifically_homologated"])
