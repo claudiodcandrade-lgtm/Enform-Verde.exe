@@ -29,10 +29,24 @@ jobs:
         run: python -m pip install 'openpyxl==3.1.5'
       - name: Run field-source anti-pseudoreplication regression tests
         run: python -m unittest tests.test_audit_ifn_field_land_use -v
+      - name: Select ONLY two necessary licensed IFN panel sources
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path("validation/ifn_sources.json").read_text(encoding="utf-8"))
+          required = {"ifn_painel_biomassa_2026", "ifn_painel_arvores_mortas_2026"}
+          selected = [r for r in registry["sources"] if r["id"] in required]
+          if len(selected) != 2 or {r["id"] for r in selected} != required:
+              raise SystemExit("Required IFN panel resources missing or duplicated")
+          Path("ifn_panel_sources.json").write_text(
+              json.dumps({"sources": selected}, ensure_ascii=False, indent=2),
+              encoding="utf-8")
+          PY
       - name: Acquire licensed IFN panels for candidate UA join
         run: |
           python tools/acquire_ifn_independent_data.py \
-            --registry validation/ifn_sources.json --out ifn_raw \
+            --registry ifn_panel_sources.json --out ifn_raw \
             --report ifn_panel_download_audit.json
       - name: Produce provisional physical UA candidate CSV
         run: |
