@@ -28,7 +28,7 @@ jobs:
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
       - name: Run fail-closed synthetic spatial regression tests
         run: python -m unittest tests.test_ifn_ibge_spatial_sensitivity tests.test_audit_ifn_necromass_ibge_crosswalk -v
-      - name: Select ONLY the two official panel resources required by this spatial audit
+      - name: Select ONLY the three official panel resources required by this spatial audit
         run: |
           python - <<'PY'
           import json
@@ -43,7 +43,7 @@ jobs:
                           "sources": selected}, ensure_ascii=False, indent=2),
               encoding="utf-8")
           PY
-      - name: Acquire BOTH required licensed SFB/IFN panels with integrity audit
+      - name: Acquire THREE required licensed SFB/IFN panels with integrity audit
         run: |
           python -m tools.acquire_ifn_independent_data --registry ifn_panel_sources.json --out ifn_raw --report ifn_download_audit.json
       - name: Export deduplicated provisional IFN physical UAs
