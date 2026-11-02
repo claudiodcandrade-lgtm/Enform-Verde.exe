@@ -114,7 +114,7 @@ class IbgeSensitivity:
             indices = [int(i) for i in self.tree.query(disc)
                        if self.polygons[int(i)].intersects(disc)]
             labels = {self.labels[i] for i in indices}
-            if not point_label or labels != {point_label}:
+            if not stability["0"] or labels != {point_label}:
                 stable = False
             else:
                 stable = unary_union([self.polygons[i] for i in indices]).covers(disc)
@@ -193,7 +193,7 @@ def summarize_source_typology_ibge_stability(rows, radii_m=RADII_M):
     if tuple(radii_m) != RADII_M:
         raise ValueError("unexpected geometric sensitivity scenarios")
     flags = [f"estavel_cenario_{radius}_m_nao_erro" for radius in radii_m]
-    counts, seen = Counter(), set()
+    counts, seen, biomes = Counter(), set(), set()
     for row in rows:
         identity = (row.get("uf", "").strip(), row.get("ua", "").strip())
         biome = row.get("bioma_declarado", "").strip()
@@ -201,6 +201,7 @@ def summarize_source_typology_ibge_stability(rows, radii_m=RADII_M):
         legend = row.get("ibge_legenda_1_centroide_publicado_nao_validado", "").strip()
         if not all(identity) or not biome or not typology or not legend:
             raise ValueError("missing IFN identity or source-IBGE screening label")
+        biomes.add(biome)
         if identity in seen:
             raise ValueError("duplicate IFN physical UF+UA in stability cross-tab")
         seen.add(identity)
@@ -216,7 +217,7 @@ def summarize_source_typology_ibge_stability(rows, radii_m=RADII_M):
             if is_stable:
                 counts[(biome, typology, legend, radius)] += 1
     pairs = sorted({(b, t, l) for b, t, l, _ in counts})
-    by_biome = {}
+    by_biome = {biome: Counter() for biome in biomes}
     for (biome, typology, legend, radius), n in counts.items():
         by_biome.setdefault(biome, Counter())[radius] += n
     return {
