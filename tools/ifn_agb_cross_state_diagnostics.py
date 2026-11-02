@@ -30,7 +30,8 @@ REQUIRED = (
 BIOMES = {"Amazônia", "Caatinga", "Cerrado", "Mata Atlântica", "Pantanal"}
 
 
-def evaluate(raw, expected_sha256, *, raw_ifn_sha256, raw_ifn_bytes=None):
+def evaluate(raw, expected_sha256, *, raw_ifn_sha256, raw_ifn_bytes=None,
+             verify_source_lineage=False):
     """Leave-one-UF-out transfer error by EXACT source IFN typology.
 
     Each training UF contributes one state mean to the transferred predictor,
@@ -49,6 +50,23 @@ def evaluate(raw, expected_sha256, *, raw_ifn_sha256, raw_ifn_bytes=None):
     if raw_ifn_bytes is not None:
         if not isinstance(raw_ifn_bytes, bytes) or hashlib.sha256(raw_ifn_bytes).hexdigest().lower() != raw_ifn_sha256.lower():
             raise ValueError("raw official IFN source bytes do not match SHA256")
+    if verify_source_lineage:
+        # A hash of the official file and a hash of the candidate CSV do not
+        # establish that the candidate was actually derived from that file.
+        # Recompute the deterministic selection from the exact raw bytes,
+        # compare the complete CSV (including values, row order and headers),
+        # and reject altered, substituted or injected plot observations.
+        if raw_ifn_bytes is None:
+            raise ValueError("raw IFN bytes required for candidate lineage verification")
+        from tools.prepare_ifn_agb_candidates import prepare, COLUMNS
+        recomputed, _ = prepare(raw_ifn_bytes, raw_ifn_sha256)
+        output = io.StringIO(newline="")
+        writer = csv.DictWriter(output, fieldnames=COLUMNS)
+        writer.writeheader()
+        writer.writerows(recomputed)
+        expected_csv = output.getvalue().encode("utf-8")
+        if raw != expected_csv:
+            raise ValueError("candidate CSV does not match deterministic extraction from original IFN bytes")
     try:
         decoded = raw.decode("utf-8-sig", errors="strict")
     except UnicodeDecodeError as exc:
@@ -162,6 +180,7 @@ def evaluate(raw, expected_sha256, *, raw_ifn_sha256, raw_ifn_bytes=None):
         "candidate_csv_sha256": digest,
         "raw_official_ifn_sha256_claim": raw_ifn_sha256.lower(),
         "raw_official_ifn_bytes_verified_by_this_tool": raw_ifn_bytes is not None,
+        "candidate_lineage_verified_by_recomputation": bool(verify_source_lineage),
         "candidate_ua_count": total,
         "strata_count": len(strata),
         "strata_with_transfer_diagnostic": sum(bool(s["folds"]) for s in strata),
@@ -198,7 +217,8 @@ def main():
     result = evaluate(Path(args.candidate_csv).read_bytes(),
                       args.candidate_sha256,
                       raw_ifn_sha256=args.raw_ifn_sha256,
-                      raw_ifn_bytes=Path(args.raw_ifn_file).read_bytes())
+                      raw_ifn_bytes=Path(args.raw_ifn_file).read_bytes(),
+                      verify_source_lineage=True)
     target = Path(args.report)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
