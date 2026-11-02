@@ -455,6 +455,19 @@
     "code_integration_candidate_ua_with_field_positional_accuracy_verified": 0,
     "code_integration_candidate_ua_with_positional_accuracy_ND": 5187,
     "code_integration_published_centroid_collisions": 0,
-    "code_integration_scientific_validation": false
+    "code_integration_scientific_validation": false,
+    "final_warning_consistency_acquisition_run_id": 41446038887,
+    "final_warning_consistency_source_sha": "9162ba86ecc22574b72a58916c09d4b7374e4e3a",
+    "final_warning_consistency_artifact_id": 13141868821,
+    "final_warning_consistency_zip_sha256_independently_verified": "11b7857ec96eabc1bd0154b9e36f5561e00b93c9847f8573c4de8ec92431af7f",
+    "final_warning_consistency_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "final_warning_consistency_crc_valid": true,
+    "final_warning_consistency_ua_count": 5187,
+    "final_warning_consistency_collision_count": 0,
+    "final_warning_consistency_wgs84_documented": true,
+    "final_warning_consistency_accuracy_still_ND": true,
+    "final_warning_consistency_scientific_ci_run_id": 41446046277,
+    "final_warning_consistency_scientific_contract_tests_passed": 261,
+    "final_warning_consistency_scientific_gate_accepted_count": 0
   }
 }
