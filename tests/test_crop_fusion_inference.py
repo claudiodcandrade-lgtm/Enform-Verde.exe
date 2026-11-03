@@ -18,7 +18,8 @@ class CropFusionTests(unittest.TestCase):
                 "valid_year":2026,"planting_windows":[{"start":"2025-11-01","end":"2025-12-15"}],
                 "stage_intervals_days":{"vegetative":[30,115]},
                 "stage_reference_url":"https://example.invalid/fenologia"}
-        gate={"Soja":{"eligible":True,"n_independent":100,"precision_wilson95_lower":.96}}
+        gate={"Soja":{"eligible":True,"n_independent":100,"precision_wilson95_lower":.96,
+                      "calibrated_probability_threshold":.90}}
         return obs,height,record,gate
     def call(self,p=None):
         o,h,r,g=self.fixture()
@@ -29,6 +30,20 @@ class CropFusionTests(unittest.TestCase):
         self.assertEqual(r["status"],"ACEITO_COM_EVIDENCIA_REGIONAL")
     def test_weak_score_rejected(self):
         self.assertIsNone(self.call({"Soja":.6,"Milho":.4})["crop"])
+    def test_nonuniversal_lower_calibrated_threshold_can_pass(self):
+        o,h,r,g=self.fixture()
+        g["Soja"]["calibrated_probability_threshold"]=.55
+        result=decide_crop_with_phenology(
+            {"Soja":.6,"Milho":.4},o,h,{"Soja":r},g,model_source="fixture")
+        self.assertEqual(result["crop"],"Soja")
+        self.assertEqual(result["threshold_from_validation"],.55)
+
+    def test_missing_class_calibration_abstains(self):
+        o,h,r,g=self.fixture()
+        del g["Soja"]["calibrated_probability_threshold"]
+        self.assertIsNone(decide_crop_with_phenology(
+            {"Soja":.95,"Milho":.05},o,h,{"Soja":r},g,model_source="fixture")["crop"])
+
     def test_independent_validation_is_required(self):
         o,h,r,g=self.fixture();g["Soja"]["eligible"]=False
         self.assertIsNone(decide_crop_with_phenology({"Soja":1},o,h,{"Soja":r},g,model_source="fixture")["crop"])
