@@ -943,3 +943,11 @@ Implementar três resultados distintos, sem relaxar o gate nacional:
 
 ### Estado desta decisão
 Este adendo define uma rota tecnicamente defensável; não declara que o gate científico já passou, que um piloto foi implementado, nem que a versão está liberada. O PR #50 permanece sujeito aos checks atuais. Próximo passo de código é implementar o perfil/gate experimental e sua apresentação no produto, preservando os gates empírico nacional e modular.
+
+
+### ADENDO v51.1 — INCONSISTÊNCIA DE PROFUNDIDADE DO SOLO A CORRIGIR ANTES DO PILOTO
+Na revisão do código remoto `tools/scientific_release_gate.py`, o conjunto de pools ainda declara `soil_0_100` e exige profundidade `[0, 100]`, enquanto a decisão de produto já registrada é usar o mapa nacional de carbono do solo de **0–30 cm**. Isso pode bloquear indevidamente o escopo pretendido ou levar a documentação/manifesto incompatíveis. Antes de aprovar qualquer perfil experimental:
+- alinhar o identificador para `soil_0_30`, profundidade `[0, 30]`, no gate, schema, testes, templates, documentação, relatórios e interface;
+- preservar 0–30 como estimativa desse estrato; não extrapolar para 0–100 nem chamar de estoque de perfil completo;
+- confirmar no diff e no gate report que o perfil exato apresentado ao usuário foi avaliado.
+Essa correção de escopo não cria observações nem valida o modelo; apenas torna o critério coerente com a profundidade autorizada.
