@@ -307,9 +307,11 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
         soil=soil_estimator(aoi) or {};top=soil.get('0–100 cm')
         if top and top.get('tc_ha') is not None:
             rows.append({'parametro':'Solo 0–100 cm','tc':float(top['tc_ha']),'origem':'MAPEAMENTO','fonte':'Embrapa Solos/PronaSolos',
-                         'metodo':'Estoque cumulativo 0–100 cm; somente horizontes pareados na mesma localização; perfis sobrepostos não somados',
-                         'obs':'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
-                         'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha')})
+                         'metodo':top.get('profile_pairing') or 'Estoque cumulativo 0–100 cm; horizontes pareados na mesma localização',
+                         'obs':top.get('uncertainty_kind') or 'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
+                         'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha'),
+                         'soil_coverage_fraction':top.get('coverage_fraction'),
+                         'soil_area_covered_ha':top.get('area_covered_ha')})
         elif soil.get('experimental_horizons_0_100') is not None:
             # Only explicit, compatible, licensed five-horizon bounds can yield
             # a scenario. Shallow 0-30/0-60 profiles never stand in for 0-100.
@@ -343,8 +345,17 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
             rows.append({'parametro':'Solo 0–100 cm','tc':None,'origem':'N/D',
                          'fonte':'Embrapa Solos/PronaSolos',
                          'metodo':'Alvo 0–100 cm; perfis mais rasos são apenas diagnósticos e não foram extrapolados',
-                         'obs':status,'include_in_total':False})
-    except Exception:pass
+                         'obs':status+(' — '+str(audit.get('reason'))[:350] if audit.get('reason') else ''),
+                         'include_in_total':False})
+    except Exception as exc:
+        # Scientific N/D is not an empty or silently lost pool. Do not mask a
+        # failed service as zero carbon or prevent successful SAR/other pools.
+        soil={'_diagnostic':{'target_status':'SOIL_ESTIMATOR_FAILED',
+                             'reason':type(exc).__name__+': '+str(exc)[:350]}}
+        rows.append({'parametro':'Solo 0–100 cm','tc':None,'origem':'N/D',
+                     'fonte':'Embrapa Solos/PronaSolos',
+                     'metodo':'consulta de perfis 0–100 cm falhou; sem extrapolação',
+                     'obs':soil['_diagnostic']['reason'],'include_in_total':False})
     secondary_audit=None
     if inventory_evidence is not None:
         # Explicit, licensed class-specific records only. No implicit statewide
