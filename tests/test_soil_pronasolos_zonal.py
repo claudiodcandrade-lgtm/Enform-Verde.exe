@@ -49,6 +49,15 @@ class SoilPolygonZonalTests(unittest.TestCase):
         self.assertAlmostEqual(out["0–100 cm"]["tc_ha"],54)
         self.assertAlmostEqual(out["_diagnostic"]["intersected_area_ha"],.03)
 
+    def test_thin_polygon_across_pixel_boundary_keeps_both_cells(self):
+        # A 2 m-wide strip straddles column boundary; both columns contribute.
+        with rasterio.open(self.paths[6],"r+") as ds:
+            ds.write(np.array([[20,50],[20,50]],dtype="float32"),1)
+        out=mapped_soil_0_100_on_polygon(self.gdf(box(9,0,11,20)),self.paths)
+        self.assertAlmostEqual(out["0–100 cm"]["tc_ha"],49)
+        self.assertAlmostEqual(out["_diagnostic"]["coverage_fraction"],1)
+        self.assertEqual(out["_diagnostic"]["valid_complete_pixels"],4)
+
     def test_missing_deep_horizon_is_nd_not_extrapolated(self):
         partial={i:p for i,p in self.paths.items() if i!=6}
         self.assertNotIn("0–100 cm",mapped_soil_0_100_on_polygon(self.gdf(box(0,0,20,20)),partial))
