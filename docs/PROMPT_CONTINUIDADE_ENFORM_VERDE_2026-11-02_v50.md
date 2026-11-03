@@ -908,3 +908,38 @@ O run `41547099651`, também no SHA `ebfd84362e7222e995c5be6bf8fee2784954d8b8`, 
 A correção IBGE/SAR está incluída no executável do artefato: o código limita nomes IBGE a interseções compatíveis e mantém cobertura sem evidência atual como desconhecida. **O relatório de monitoramento que motivou o pedido não foi anexado nesta conversa** (o anexo visível foi uma imagem de equação), portanto ainda é necessário reprocessar o relatório original com esse ZIP e comparar o GeoJSON/JSON de auditoria antes de confirmar que a ocorrência concreta foi eliminada.
 
 Este checkpoint registra o resultado publicado; ele não transforma a falha científica do gate em aprovação. O build aprovado é para o SHA exato informado, e qualquer nova alteração de código exige nova execução dos testes e do build, com os hashes novamente conferidos.
+
+
+## ADENDO v51 — SOLUÇÃO PARA O BLOQUEIO CIENTÍFICO: APROVAÇÃO EXPERIMENTAL DE ESCOPO LIMITADO
+
+### Diagnóstico verificado no gate
+O workflow atual combina, em uma única homologação integral, evidência para 5 biomas × 6 compartimentos e evidência de SAR, agricultura, clima, vigor, safra, painéis, desempenho, regressão e Windows. O caminho modular também exige pelo menos uma capacidade com validação independente real para retornar homologação científica. No último resultado publicado, a promoção modular tinha `accepted_count=0`; portanto, nenhum manifesto ou mudança de nome pode transformar o gate empírico atual em aprovado. Os checksums e testes de software comprovam integridade/execução, não validade dos modelos.
+
+### Decisão técnica recomendada
+Implementar três resultados distintos, sem relaxar o gate nacional:
+1. **Homologação científica integral:** só aprova quando todas as capacidades abrangidas pelo claim nacional tiverem evidência independente correspondente. Continua bloqueada.
+2. **Homologação científica modular:** aprova apenas as capacidades `validated` com dados observacionais independentes, relatório reproduzível, domínio, erro de transferência e incerteza avaliados. Capacidades fora desse conjunto devem ser `not_available` ou permanecer explicitamente experimentais e não podem herdar o selo validado.
+3. **Prontidão para piloto experimental:** permite a distribuição de capacidades matematicamente fundamentadas para monitoramento de campo, mas o resultado do gate deve chamar-se `experimental_pilot_approved` (ou equivalente), nunca homologação/validação científica. Esse é o caminho de release possível antes de acumular dados locais, condicionado à aprovação dos controles abaixo.
+
+### Critérios mínimos do novo gate experimental
+- Manifesto de escopo versionado e vinculado ao SHA, listando modelo, equações executadas, unidade de análise, bioma/fitofisionomia/cultura, sensor, período/domínio, parâmetros e fontes/licenças.
+- Fundamentação matemática/científica rastreável; hipóteses, restrições, plausibilidade física/ecológica, identificabilidade dos parâmetros e condições de extrapolação documentadas.
+- Sensibilidade e propagação de incerteza executáveis e reprodutíveis. Distinguir intervalo preditivo/transferência/faixa de cenários de IC95%; não declarar cobertura empírica sem teste observado.
+- Comparação com baselines apropriados, checagens de consistência dimensional, limites físicos e testes de extremos; fixtures sintéticas contam somente para engenharia, nunca como validação observacional.
+- Interface e exportações rotulam cada saída como **EXPERIMENTAL — NÃO HOMOLOGADA**, mostram domínio e limitações e preservam proveniência; funcionalidades sem modelo defensável ficam N/D/desativadas.
+- Protocolo de monitoramento prospectivo antes da coleta: desenho amostral estratificado e representativo, medições de campo e datas, pré-registro de métricas, holdout por fazenda/UA/bloco espacial e safra, predições congeladas antes de abrir rótulos, dados brutos/licença/hash e auditoria externa. Treino, calibração e teste não podem compartilhar grupos espaciais.
+- Agricultura: separar máscara de área cultivada, identificador de cultura, estágio fenológico, vigor/estresse e produtividade como capacidades distintas; não promover PAM municipal ou mapas usados no treino a verdade de pixel independente. Previsão de safra só após holdout temporal/espacial e cobertura empírica das incertezas.
+- Carbono: declarar pool e profundidade exatos; solo desta versão segue 0–30 cm quando disponível. Valores de biomassa/estoque não recebem rótulo validado por simples transferência bibliográfica. Monitoramento posterior pode validar, mas não retroativamente.
+- Auditoria deve exibir dois estados independentes: `software_release_gate` e o perfil científico selecionado (nacional, modular validado ou piloto experimental). O status verde do primeiro jamais pode mascarar o segundo.
+- Workflow CI deve produzir relatórios separados. Uma aprovação de piloto pode tornar verde apenas o workflow de prontidão experimental; o workflow nacional continua falhando enquanto faltar evidência, e o PR/release não deve anunciar homologação integral.
+
+### Plano de implementação para destravar uma versão de piloto
+1. Criar `validation/experimental_release_profile.json` com as capacidades habilitadas e bloqueadas, equações, domínio e rótulos obrigatórios; schema fail-closed.
+2. Implementar `tools/experimental_release_gate.py` e testes de contrato para hashes, campos obrigatórios, coerência de unidades, limites, rotulagem, bloqueios N/D e vínculo de SHA. O gate não recebe métrica observacional fictícia e não altera `scientific_release_gate.py`.
+3. Conectar o perfil à interface/relatórios para que a instalação jamais suprima o selo experimental nem apresente funções desabilitadas como resultados.
+4. Executar validação de engenharia, build Windows limpo e revisão independente das equações/perfil no mesmo SHA.
+5. Distribuir, se os gates de software e piloto passarem, somente como **versão experimental de monitoramento**. Acumular então campo prospectivo com protocolo cego e promover cada capacidade separadamente após métricas externas satisfatórias.
+6. Manter a homologação científica integral e a publicação de estimativas validadas bloqueadas até as evidências independentes reais serem aceitas.
+
+### Estado desta decisão
+Este adendo define uma rota tecnicamente defensável; não declara que o gate científico já passou, que um piloto foi implementado, nem que a versão está liberada. O PR #50 permanece sujeito aos checks atuais. Próximo passo de código é implementar o perfil/gate experimental e sua apresentação no produto, preservando os gates empírico nacional e modular.
