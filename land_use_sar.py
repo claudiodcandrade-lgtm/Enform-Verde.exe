@@ -133,8 +133,10 @@ def partition_land_use(aoi, layers):
         # per-pixel loop was quadratic for large AOIs (e.g. Marary), despite
         # raster reads already being tiled. Preserve contradictory overlaps as
         # gaps that may be filled by the next source.
+        if 'secondary_crop' not in projected.columns:
+            projected['secondary_crop'] = None
         projected = projected.dissolve(
-            by=['class_name', 'source', 'taxonomy'], as_index=False)
+            by=['class_name', 'source', 'taxonomy', 'secondary_crop'], as_index=False)
         from shapely.ops import unary_union
         conflicts = []
         for pos, row in enumerate(projected.itertuples()):
@@ -154,13 +156,15 @@ def partition_land_use(aoi, layers):
             if clipped.is_empty or clipped.area <= 0:
                 continue
             pieces.append({'class_name': row.class_name, 'source': row.source,
-                           'taxonomy': row.taxonomy, 'geometry': clipped})
+                           'taxonomy': row.taxonomy, 'secondary_crop': getattr(row, 'secondary_crop', None), 'geometry': clipped})
             remaining = _robust_polygon_overlay(remaining, clipped, 'difference')
     if remaining.area > 1e-6:
         pieces.append({'class_name': 'Não classificado', 'source': 'SEM_COBERTURA',
                        'taxonomy': 'sem classificação', 'geometry': remaining})
     out = gpd.GeoDataFrame(pieces, crs=AREA_CRS)
-    out = out.dissolve(by=['class_name', 'source', 'taxonomy'], as_index=False)
+    if 'secondary_crop' not in out.columns:
+        out['secondary_crop'] = None
+    out = out.dissolve(by=['class_name', 'source', 'taxonomy', 'secondary_crop'], as_index=False)
     out['area_ha'] = out.geometry.area / 10000
     out['area_pct'] = 100 * out.geometry.area / geom.area
     records = out.drop(columns='geometry').to_dict('records')
@@ -538,7 +542,60 @@ def _download_official_mapbiomas(url, destination):
         raise
 
 
-def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=None, ibge_field='legenda_1'):
+def _annotate_second_crop(primary, secondary):
+    """Attach complementary second-season labels without double-counting AOI area."""
+    import geopandas as gpd
+    from shapely.ops import unary_union
+    if primary is None or primary.empty or secondary is None or secondary.empty:
+        return primary
+    secondary = secondary.to_crs(primary.crs)
+    crop_codes = {1: "milho (2ª safra)", 62: "algodão (2ª safra)", 41: "outras culturas (2ª safra)"}
+    agricultural_primary = {18, 19, 20, 21, 39, 40, 41, 46, 47, 48, 62}
+    output = []
+    for row in primary.itertuples(index=False):
+        item = row._asdict()
+        code = item.get("class_code")
+        try:
+            code = int(code)
+        except (TypeError, ValueError):
+            code = -1
+        geom = item["geometry"]
+        matches = secondary[secondary.geometry.intersects(geom)]
+        if code not in agricultural_primary or matches.empty:
+            output.append(item)
+            continue
+        overlaps = []
+        for second in matches.itertuples(index=False):
+            second_item = second._asdict()
+            second_code = int(second_item.get("class_code", -1))
+            label = crop_codes.get(second_code)
+            if not label:
+                continue
+            intersection = _robust_polygon_overlay(geom, second_item["geometry"], "intersection")
+            if not intersection.is_empty and intersection.area > 0:
+                overlaps.append((intersection, label))
+        if not overlaps:
+            output.append(item)
+            continue
+        union = unary_union([g for g, _ in overlaps])
+        remainder = _robust_polygon_overlay(geom, union, "difference")
+        if not remainder.is_empty and remainder.area > 0:
+            base = dict(item); base["geometry"] = remainder
+            output.append(base)
+        for intersection, label in overlaps:
+            annotated = dict(item)
+            annotated["geometry"] = intersection
+            annotated["secondary_crop"] = label
+            annotated["taxonomy"] = str(annotated.get("taxonomy", "")) + "; MapBiomas C11 2ª safra beta: " + label
+            # A seasonal class refines only a generic cultivated-map label.
+            # It never overwrites a named first-season crop.
+            if annotated.get("class_name") == "Áreas cultivadas" and label in ("milho (2ª safra)", "algodão (2ª safra)"):
+                annotated["class_name"] = "Lavoura de " + label
+            output.append(annotated)
+    return gpd.GeoDataFrame(output, geometry="geometry", crs=primary.crs)
+
+
+def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=None, ibge_field='legenda_1', second_crop_path=None):
     import geopandas as gpd
     from mapbiomas_zonal import RASTER_URL, YEAR
     layers, warnings = [], []
@@ -682,6 +739,49 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         mapbiomas_failure=str(exc)
         warnings.append('MapBiomas indisponível: '+mapbiomas_failure)
         warnings.append('Cobertura atual não verificada por falha das fontes; IBGE indica fitofisionomia potencial, não confirma cobertura presente.')
+    second_crop=None
+    second_crop_status="not_available"
+    second_crop_source=None
+    second_crop_detection=[]
+    if mb is not None and not mb.empty:
+        try:
+            second_crop_source = second_crop_path or os.environ.get("ENFORM_MAPBIOMAS_SECOND_CROP_TIF", "").strip()
+            if not second_crop_source:
+                second_crop_source = ("https://storage.googleapis.com/mapbiomas-public/initiatives/brazil/lulc/"
+                                      f"collection_11/agriculture_second_crop/agriculture_second_crop-brazil_classification_{YEAR}.tif")
+            second_crop = raster_class_polygons(aoi, second_crop_source)
+            if second_crop.empty:
+                raise ValueError("produto 2ª safra sem pixels válidos na AOI")
+            second_crop["class_code"] = second_crop["class_code"].map(
+                lambda value: int(value) if str(value).strip().lstrip("-").isdigit() else -1)
+            names = {1:"Milho de segunda safra",62:"Algodão de segunda safra",41:"Outras culturas de segunda safra"}
+            second_crop = second_crop[second_crop.class_code.isin(names)].copy()
+            second_crop["class_name"] = second_crop.class_code.map(names)
+            second_crop["source"] = "MAPBIOMAS_2SAFRA_EXPERIMENTAL"
+            second_crop["taxonomy"] = (f"MapBiomas C11, produto complementar beta, ano {YEAR}; "
+                                       "classe cartográfica de segunda safra; não é validação SAR local")
+            # Count only spatial overlap with MapBiomas agricultural coverage;
+            # this is a separate seasonal occurrence statistic, not additive AOI area.
+            primary_crop = mb[mb.class_code.isin([18,19,20,21,39,40,41,46,47,48,62])]
+            if not primary_crop.empty:
+                primary_union = primary_crop.geometry.union_all()
+                for code, label in names.items():
+                    subset = second_crop[second_crop.class_code.eq(code)]
+                    if subset.empty:
+                        continue
+                    overlap = unary_union([_robust_polygon_overlay(g, primary_union, "intersection")
+                                           for g in subset.geometry])
+                    area_ha = overlap.area / 10000.0
+                    if area_ha > 0:
+                        second_crop_detection.append({"class_code":code,"crop":label,"overlap_area_ha":area_ha,
+                                                      "year":YEAR,"status":"experimental_cartographic_beta"})
+            mb = _annotate_second_crop(mb, second_crop)
+            raw_layers.append(second_crop.copy())
+            second_crop_status="available"
+        except Exception as exc:
+            second_crop_status="unavailable"
+            warnings.append("Produto MapBiomas C11 2ª safra beta indisponível; mantida classificação principal: "
+                            +type(exc).__name__+": "+str(exc)[:300])
     reference=None
     if ibge is not None and not ibge.empty:
         if ibge_field not in ibge.columns:raise ValueError('Campo IBGE ausente.')
@@ -718,6 +818,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     polygons, summary = partition_land_use(aoi,layers)
     summary['original_source_distributions']=source_distributions
     summary['mapbiomas_failure']=mapbiomas_failure
+    summary['second_crop_detection']=second_crop_detection
+    summary['second_crop_source']=second_crop_source
+    summary['second_crop_status']=second_crop_status
     summary['mapbiomas_access_attempts']=mapbiomas_access_attempts
     summary['cover_verification']='COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL' if mapbiomas_failure else 'FONTES_PROCESSADAS'
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r.get('native_status') is None) if all('native_status' in r for r in summary['classes']) else None
@@ -726,7 +829,26 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                          'sem evidência de cobertura atual, manter Não classificado.')
     metadata=(validation or {}).get('class_metadata',{})
     polygons['native_status']=[native_class(r.class_name,r.source,metadata) for r in polygons.itertuples()]
-    for row in summary['classes']:row['native_status']=native_class(row['class_name'],row['source'],metadata)
+    for row in summary['classes']:
+        row['native_status']=native_class(row['class_name'],row['source'],metadata)
+        row['land_use_group']=("Vegetação nativa" if row['native_status'] is True else
+                               "Uso agropecuário/cultivado" if row['native_status'] is False else
+                               "Não classificado")
+    polygons['land_use_group'] = polygons['native_status'].map(
+        lambda value: "Vegetação nativa" if value is True else
+                      "Uso agropecuário/cultivado" if value is False else "Não classificado")
+    native_rows=[row for row in summary['classes'] if row['native_status'] is True]
+    native_area=sum(float(row['area_ha']) for row in native_rows)
+    summary['native_occurrence']={
+        "status":"detected_cartographically" if native_area>0 else ("not_detected_in_mapped_classes" if not mapbiomas_failure else "not_verifiable"),
+        "label":"Vegetação nativa — ocorrência cartográfica genérica",
+        "area_ha":native_area,
+        "area_pct_aoi":(100.0*native_area/summary['area_aoi_ha'] if summary['area_aoi_ha'] else None),
+        "source":"MapBiomas C11 / classes de vegetação natural, complementado por SAR elegível quando aplicável",
+        "field_confirmed":False,
+        "native_class_breakdown":[{"class_name":row["class_name"],"area_ha":row["area_ha"],"source":row["source"]} for row in native_rows],
+        "diversified_property_with_native_and_other_use":bool(native_area>0 and any(row['native_status'] is False for row in summary['classes']))
+    }
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r['native_status'] is None)
     outdir=Path(output_dir);outdir.mkdir(parents=True,exist_ok=True)
     vector_path=outdir/'uso_solo_intersecao.geojson'
