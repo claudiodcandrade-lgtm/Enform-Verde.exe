@@ -1455,9 +1455,16 @@ class App(tk.Tk):
         classified_ha=sum(float(item.get("area_ha") or 0) for item in classes)
         aoi_ha=float(self.project.get("area_ha") or 0)
         complete_coverage=aoi_ha>0 and abs(classified_ha-aoi_ha)<=max(0.05,0.001*aoi_ha)
+        native_occurrence=land.get("native_occurrence") if isinstance(land.get("native_occurrence"),dict) else {}
+        native_area=float(native_occurrence.get("area_ha") or sum(
+            float(item.get("area_ha") or 0) for item in classes if item.get("native_status") is True))
+        native_summary=("Vegetação nativa detectada cartograficamente: "+format_ptbr(native_area,2)+
+                        " ha; não equivale a confirmação de campo." if native_area>0 else
+                        "Ocorrência de vegetação nativa: não detectada nas classes mapeadas." if complete_coverage else
+                        "Ocorrência de vegetação nativa: não verificável na área sem classificação.")
         if not has_cultivated_area(classes) and complete_coverage and land.get("status") not in ("error","erro","indisponivel"):
-            self._crop_monitoring_base_report="sem cultivos detectados"
-            self._crop_monitoring_audit_base="Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
+            self._crop_monitoring_base_report="sem cultivos detectados\n"+native_summary
+            self._crop_monitoring_audit_base="Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n"+native_summary+"\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
             self._set(self.crop_res,self._crop_monitoring_base_report)
             self._set(self.crop_audit,self._crop_monitoring_audit_base)
             generation=self._weather_query_generation
@@ -1482,6 +1489,16 @@ class App(tk.Tk):
                                  ("; referência: "+str(item.get("taxonomy")) if item.get("taxonomy") else ""))
         else:
             executive.append("• Não determinado")
+        executive.append(native_summary)
+        second_detections=land.get("second_crop_detection") if isinstance(land.get("second_crop_detection"),list) else []
+        for detection in second_detections:
+            try:
+                detection_area=float(detection.get("overlap_area_ha") or 0)
+            except (TypeError,ValueError):
+                detection_area=0
+            if detection_area>0:
+                executive.append("Detecção complementar experimental de "+str(detection.get("crop"))+
+                                 ": "+format_ptbr(detection_area,2)+" ha de sobreposição (safra 2; não somar à área total da propriedade).")
         if any(str(item.get("class_name","")).startswith("Lavoura de ") and item.get("source")=="MAPBIOMAS" for item in non_native):
             executive.append("Identificação nominal proveniente da classe cartográfica anual MapBiomas (2025); não representa observação SAR atual nem validação independente desta propriedade.")
         age_assessment=land.get("probable_crop_age") if isinstance(land.get("probable_crop_age"),dict) else {}
