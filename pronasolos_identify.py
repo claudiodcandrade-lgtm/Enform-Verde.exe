@@ -13,7 +13,10 @@ SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_ca
 # "Estoque de Carbono (Mg/ha)" and horizons 2-6 match the primary service.
 # Validate each response independently; NEVER sum horizons across services.
 ALTERNATE_SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/solos_90m/MapServer/identify"
-SERVICE_CANDIDATES=(SERVICE,ALTERNATE_SERVICE)
+# Independently published SGB service: raw SOC layers 2..6, identical horizon
+# semantics. No cross-service mixing within a single paired 0-100cm profile.
+THIRD_SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/atributos_solo_90m/MapServer/identify"
+SERVICE_CANDIDATES=(SERVICE,ALTERNATE_SERVICE,THIRD_SERVICE)
 
 
 def build_identify_params(x,y,extent,layer_ids=LAYER_IDS):
