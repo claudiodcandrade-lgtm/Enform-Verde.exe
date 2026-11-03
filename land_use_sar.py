@@ -551,7 +551,7 @@ def _annotate_second_crop(primary, secondary):
     if primary is None or primary.empty or secondary is None or secondary.empty:
         return primary
     secondary = secondary.to_crs(primary.crs)
-    crop_codes = {1: "milho (2ª safra)", 62: "algodão (2ª safra)", 41: "outras culturas (2ª safra)"}
+    crop_codes = {1: "milho", 62: "algodão", 41: "outras culturas"}
     agricultural_primary = {18, 19, 20, 21, 39, 40, 41, 46, 47, 48, 62}
     output = []
     for row in primary.itertuples(index=False):
@@ -588,10 +588,10 @@ def _annotate_second_crop(primary, secondary):
             annotated = dict(item)
             annotated["geometry"] = intersection
             annotated["secondary_crop"] = label
-            annotated["taxonomy"] = str(annotated.get("taxonomy", "")) + "; MapBiomas C11 2ª safra beta: " + label
+            annotated["taxonomy"] = str(annotated.get("taxonomy", "")) + "; MapBiomas C11 2ª safra beta: " + label + " (classe complementar, ano " + str(YEAR) + ")"
             # A seasonal class refines only a generic cultivated-map label.
             # It never overwrites a named first-season crop.
-            if annotated.get("class_name") == "Áreas cultivadas" and label in ("milho (2ª safra)", "algodão (2ª safra)"):
+            if annotated.get("class_name") == "Áreas cultivadas" and label in ("milho", "algodão"):
                 annotated["class_name"] = "Lavoura de " + label
             output.append(annotated)
     return gpd.GeoDataFrame(output, geometry="geometry", crs=primary.crs)
