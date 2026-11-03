@@ -110,7 +110,14 @@ def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=1500000):
             window = from_bounds(max(bounds[0],left), max(bounds[1],bottom),
                                  min(bounds[2],right), min(bounds[3],top),
                                  transform=first.transform)
-            # Expand to enclosing integer pixels; rounding to nearest can omit edge cells.\n            from rasterio.windows import Window\n            col0 = math.floor(window.col_off)\n            row0 = math.floor(window.row_off)\n            col1 = math.ceil(window.col_off + window.width)\n            row1 = math.ceil(window.row_off + window.height)\n            window = Window(col0,row0,col1-col0,row1-row0).intersection(\n                Window(0,0,first.width,first.height))
+            # Expand to enclosing integer pixels; rounding to nearest can omit edge cells.
+            from rasterio.windows import Window
+            col0 = math.floor(window.col_off)
+            row0 = math.floor(window.row_off)
+            col1 = math.ceil(window.col_off + window.width)
+            row1 = math.ceil(window.row_off + window.height)
+            window = Window(col0,row0,col1-col0,row1-row0).intersection(
+                Window(0,0,first.width,first.height))
             width, height = int(window.width), int(window.height)
             if width<1 or height<1 or width*height>max_cells:
                 return nd("recorte excede capacidade para cálculo de interseções exatas",
