@@ -7,7 +7,7 @@ promote a weak class into a seemingly validated prediction.
 from __future__ import annotations
 import math
 from crop_regional_phenology import regional_stage_evidence
-from crop_model_registry import SCORE_THRESHOLD, MIN_INDEPENDENT, MIN_PRECISION_LOWER
+from crop_model_registry import MIN_INDEPENDENT, MIN_PRECISION_LOWER
 
 def decide_crop_with_phenology(probabilities, observation, height_contract,
                               regional_records, validation_gates, *, model_source):
@@ -33,10 +33,19 @@ def decide_crop_with_phenology(probabilities, observation, height_contract,
         return audit
     ranking=sorted(values, key=values.get,reverse=True)
     best=ranking[0]
-    if values[best]<SCORE_THRESHOLD:
-        audit["reasons"].append("probabilidade abaixo de 0,90")
-        return audit
     gate=(validation_gates or {}).get(best,{})
+    # Never impose an arbitrary national probability cutoff. A crop-specific
+    # calibrated decision threshold must come from the independent validation
+    # report of this actual model/season/domain.
+    selected_threshold=gate.get("calibrated_probability_threshold")
+    if (type(selected_threshold) not in (float,int)
+            or not math.isfinite(selected_threshold)
+            or not 0 <= selected_threshold <= 1):
+        audit["reasons"].append("limiar de probabilidade calibrado e auditável ausente")
+        return audit
+    if values[best]<selected_threshold:
+        audit["reasons"].append("probabilidade abaixo do limiar calibrado para a classe")
+        return audit
     if not (gate.get("eligible") is True and int(gate.get("n_independent",0))>=MIN_INDEPENDENT
             and float(gate.get("precision_wilson95_lower",0))>=MIN_PRECISION_LOWER):
         audit["reasons"].append("validação independente insuficiente para classe")
@@ -53,5 +62,6 @@ def decide_crop_with_phenology(probabilities, observation, height_contract,
         return audit
     audit.update({"status":"ACEITO_COM_EVIDENCIA_REGIONAL","crop":best,
                   "score_calibrated_sar":values[best],
+                  "threshold_from_validation":selected_threshold,
                   "warning":"Confiança regional não foi recalibrada pela altura; evidências apenas vetam. Exige validação prospectiva da política de fusão."})
     return audit
