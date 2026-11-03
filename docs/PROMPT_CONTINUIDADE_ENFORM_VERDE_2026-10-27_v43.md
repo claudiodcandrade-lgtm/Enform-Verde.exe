@@ -3537,3 +3537,12 @@ $$
 No SHA `fc142575f1cdef38f891797c9501d738721135bb`, dashboard `41557807361` falhou somente no teste `test_measured_soil_profile_precedes_experimental`: restou uma asserção duplicada esperando 25 tC/ha (antiga amostra 0–30 cm), enquanto a fixture alterada entrega 999 tC/ha no perfil cumulativo 0–100 cm. A seleção de código retornou 999 corretamente; a falha expôs expectativa de teste obsoleta. Remover essa asserção duplicada e conservar as verificações de valor 0–100 e origem MAPEAMENTO. A mesma verificação de perfil completo deve ser executada localmente e no CI subsequente.
 
 O gate científico `41557807430` reprovou, sem evidência independente homologada; não contornar nem relaxar os manifestos. O build Windows `41557807375` estava em execução quando a falha do dashboard foi registrada, mas seu resultado não valida o commit corretivo que será gerado. Próximo SHA precisa executar novamente dashboard, build Windows e gate científico. A correção de teste não altera evidências nem resultados observacionais.
+
+
+## CHECKPOINT MATERIAL — 2026-11-03 — build Windows concluído e gate científico ainda bloqueado
+
+SHA de código validado nesta rodada: `ca4c8278e8f1167c6a9b8715ea39863cc8bc73d4`. Dashboard dual `41558171285` e build Windows `41558171287` concluíram com sucesso nesse mesmo SHA. A cópia limpa do pacote passou no smoke test UI e no teste de aceitação da AOI Tapajós; o manifesto registrou EXE SHA-256 `243b0ea63b3dc6d145795dba6e63d407e70cf72c812a43d3fdf82af2891891e3`. O ZIP candidato v3.25.1-CLIMA-DINAMICO é artefato `13196886260`, 522.659.295 bytes, digest SHA-256 `adce9362e22dd0c7aa4d427f7d0bd08dfdf7169706ed5ea5c9681e15353c83a5`.
+
+O gate científico `41558171354` terminou reprovado no mesmo SHA, corretamente, com `accepted_count=0` e ausência dos manifestos/evidências independentes obrigatórios. Não registrar homologação integral nem converter o build aprovado em aprovação científica. PR #50 segue aberto e em rascunho. O escopo de solo operacional da correção é 0–100 cm, com cinco horizontes pareados; perfis incompletos permanecem N/D, sem extrapolação.
+
+O prompt e a especificação técnica foram atualizados. Esta alteração de prompt gera um novo SHA documental sem alterar código; por exigência de identidade, executar novamente dashboard, build Windows e gate científico e registrar os resultados do novo SHA antes de declarar a rodada final. Manter rascunho e não mesclar/liberar como versão homologada enquanto o gate científico falhar.
