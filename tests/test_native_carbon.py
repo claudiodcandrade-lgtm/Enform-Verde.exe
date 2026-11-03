@@ -319,6 +319,8 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertIsNone(report['mapbiomas_failure'])
             self.assertEqual(read.call_count,1)
             download.assert_not_called()
+            self.assertEqual(report['second_crop_status'],'not_applicable_no_primary_crop')
+            self.assertIsNone(report['second_crop_source'])
             self.assertAlmostEqual(report['unknown_cover_ha'],0.0,places=4)
 
     def test_mapbiomas_retry_restores_native_carbon(self):
