@@ -547,6 +547,7 @@ def _download_official_mapbiomas(url, destination):
 def _annotate_second_crop(primary, secondary):
     """Attach complementary second-season labels without double-counting AOI area."""
     import geopandas as gpd
+    from mapbiomas_zonal import YEAR
     from shapely.ops import unary_union
     if primary is None or primary.empty or secondary is None or secondary.empty:
         return primary
