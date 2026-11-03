@@ -81,5 +81,45 @@ class EvidencePromotionTests(unittest.TestCase):
             self.assertFalse(audit["promoted"])
             self.assertIsNone(manifest)
 
+class ManifestLifecycleTests(unittest.TestCase):
+    def test_failed_promotion_deletes_stale_manifest_from_previous_run(self):
+        from unittest.mock import patch
+        from tools.promote_independent_evidence import main
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            manifest = root / "modular_capabilities.json"
+            audit = root / "audit.json"
+            candidates = root / "candidates"
+            candidates.mkdir()
+            # Deliberately stale: a prior workflow result is not evidence for
+            # the current source SHA or candidate directory.
+            manifest.write_text(json.dumps({
+                "source_sha": SHA, "capabilities": [{"status": "validated"}]
+            }), encoding="utf-8")
+            args = ["promote_independent_evidence.py", "--source-sha", SHA,
+                    "--root", str(root), "--candidates", str(candidates),
+                    "--manifest", str(manifest), "--audit", str(audit)]
+            with patch("sys.argv", args):
+                self.assertEqual(main(), 1)
+            self.assertFalse(manifest.exists())
+            result = json.loads(audit.read_text(encoding="utf-8"))
+            self.assertFalse(result["promoted"])
+            self.assertEqual(result["accepted_count"], 0)
+
+    def test_repeated_failure_is_idempotent(self):
+        from unittest.mock import patch
+        from tools.promote_independent_evidence import main
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            args = ["promote_independent_evidence.py", "--source-sha", SHA,
+                    "--root", str(root), "--candidates", str(root / "missing"),
+                    "--manifest", str(root / "missing_manifest.json"),
+                    "--audit", str(root / "audit.json")]
+            with patch("sys.argv", args):
+                self.assertEqual(main(), 1)
+                self.assertEqual(main(), 1)
+            self.assertFalse((root / "missing_manifest.json").exists())
+
+
 if __name__ == "__main__":
     unittest.main()
