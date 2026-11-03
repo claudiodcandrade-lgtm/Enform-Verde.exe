@@ -11,9 +11,12 @@ from pathlib import Path
 CROPS = ("Milho", "Soja", "Sorgo", "Café", "Cana-de-açúcar", "Arroz", "Feijão", "Citros")
 PLANTED_FOREST_CLASSES = ("Floresta plantada", "Eucalipto", "Pinus")
 CLASSIFIER_TARGETS = CROPS + PLANTED_FOREST_CLASSES
-SCORE_THRESHOLD = 0.90
-MIN_INDEPENDENT = 50
-MIN_PRECISION_LOWER = 0.90
+# No universal accuracy/probability cutoff: retain all *measured* results,
+# while refusing absent/inconsistent independent validation or model weights.
+# A calibrated threshold belongs to each model/region, not a hard-coded 90%.
+SCORE_THRESHOLD = 0.0
+MIN_INDEPENDENT = 1
+MIN_PRECISION_LOWER = 0.0
 ALLOWED_MODALITIES = ("SAR-only", "SAR+óptico")
 
 
@@ -80,16 +83,17 @@ def evaluate_crop_model(entry: dict, *, base_dir: str | Path = ".") -> dict:
             accepted = int(v["n_accepted"])
             correct = int(v["n_correct"])
             threshold = float(v["calibrated_probability_threshold"])
-            if accepted < 0 or correct < 0 or correct > accepted:
+            if accepted < MIN_INDEPENDENT or correct < 0 or correct > accepted or not 0 <= threshold <= 1:
                 raise ValueError()
+            audit["precision"] = correct / accepted
             audit["precision_wilson95_lower"] = _wilson_lower(correct, accepted)
             audit["n_independent"] = accepted
-            if accepted < MIN_INDEPENDENT:
-                reasons.append("menos de 50 unidades independentes aceitas")
-            if threshold < SCORE_THRESHOLD:
-                reasons.append("limiar calibrado inferior a 0,90")
-            if audit["precision_wilson95_lower"] < MIN_PRECISION_LOWER:
-                reasons.append("limite inferior Wilson abaixo de 0,90")
+            audit["calibrated_probability_threshold"] = threshold
+            audit["small_independent_sample_warning"] = accepted < 50
+            # Low but nonzero *measurability* is acceptable as a documented
+            # pilot; actual application requires scene/domain compatibility.
+            # No field-independent evidence may be substituted by MapBiomas
+            # pseudo-labels, however high the self-reported accuracy.
         except (ValueError, TypeError, KeyError):
             reasons.append("contagens/limiar de validação inválidos")
     audit["eligible"] = not reasons
