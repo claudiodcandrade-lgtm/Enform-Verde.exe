@@ -73,8 +73,29 @@ def main():
     args = parser.parse_args()
     audit, manifest = promote(args.source_sha, args.root, args.candidates)
     Path(args.audit).write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    manifest_path = Path(args.manifest)
     if manifest is not None:
-        Path(args.manifest).write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        # Replace atomically: never expose a truncated manifest to the next gate.
+        import os
+        import tempfile
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        fd, temporary = tempfile.mkstemp(
+            prefix=".modular_manifest_", suffix=".json", dir=manifest_path.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                json.dump(manifest, stream, ensure_ascii=False, indent=2)
+                stream.write("\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, manifest_path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+    else:
+        # Fail closed: a previously promoted manifest on the same workspace
+        # must never survive an unsuccessful current evidence acquisition.
+        # Otherwise the next 'if: always()' modular gate could read stale data.
+        manifest_path.unlink(missing_ok=True)
     print(json.dumps(audit, ensure_ascii=False, indent=2))
     return 0 if audit["promoted"] else 1
 
