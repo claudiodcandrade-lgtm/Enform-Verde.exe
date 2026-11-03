@@ -3581,3 +3581,7 @@ LIMITE DE IMPLEMENTAÇÃO: o repositório contém indicadores de anomalia SAR e 
 
 ### Checkpoint material 2026-11-03 — regressão de validação SAR
 SHA base `df9600c29aa9dad487878324d8ddc21010e78fd3`; SHA final deste conjunto: consultar commit HEAD após publicação. Falha reproduzida no CI Windows run 41572145501: `test_50_with_five_errors_fails_wilson_gate` contradiz política de aceitar qualquer precisão independentemente mensurada. Teste atualizado para 45/50=0,90, Wilson inferior <0,90, elegibilidade documental da classe e ausência de homologação integral de todas as classes. A integridade de campo/independência continua exigida. CI do SHA novo: pendente de verificação; nenhum EXE/ZIP liberado. Solo 0–100 cm ainda requer cinco rasters brutos oficiais licenciados, interseção e validação; demais biomas/compartimentos, SAR agrícola, vigor e safra sem homologação integral.
+
+
+### Checkpoint material 2026-11-03 — janela raster nas bordas de pixels
+Corrigido arredondamento da janela em `soil_pronasolos_zonal.py`: offsets por piso e limites finais por teto, preservando pixels parcialmente interceptados pela AOI×fitofisionomia. Regressão sintética adicionada para polígono estreito atravessando limite de colunas. Nenhum raster real ou licença foi inferido; teste sintético não é homologação. SHA final e CI: verificar após commits; pendentes dados oficiais 5 horizontes, validação independente, SAR agrícola e ZIP Windows no SHA homologado.
