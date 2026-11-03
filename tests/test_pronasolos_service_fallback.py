@@ -63,6 +63,26 @@ class SoilEndpointFallbackTests(unittest.TestCase):
         self.assertNotIn("0–100 cm",result)
         self.assertEqual(result["_diagnostic"]["target_status"],"INCOMPLETO_NAO_EXTRAPOLAR")
 
+    def test_local_verified_exact_pixel_intersection_precedes_http(self):
+        result={"0–100 cm":{"tc_ha":107.5,"spatial_sd_tc_ha":3.2},
+                "_diagnostic":{"target_status":"COMPLETO_POR_INTERSECAO_RASTER"}}
+        with patch("soil_pronasolos_zonal.verified_local_horizons",return_value={i:object() for i in range(2,7)}), patch(
+                "soil_pronasolos_zonal.mapped_soil_0_100_on_polygon",return_value=result) as mapped, patch(
+                "requests.Session",side_effect=AssertionError("No HTTP when verified local map intersects AOI")):
+            received=pronasolos_soc_profiles(self.aoi,max_points=1)
+        self.assertEqual(received["0–100 cm"]["tc_ha"],107.5)
+        mapped.assert_called_once()
+
+    def test_no_raw_pixel_values_returns_explicit_nd_reason(self):
+        session=Mock()
+        session.get.side_effect=RuntimeError("Synthetic offline endpoint")
+        with patch("requests.Session",return_value=session):
+            result=pronasolos_soc_profiles(self.aoi,max_points=1)
+        self.assertNotIn("0–100 cm",result)
+        self.assertEqual(result["_diagnostic"]["target_status"],
+                         "SERVICO_SEM_VALORES_BRUTOS_VALIDOS")
+        self.assertIn("Synthetic offline endpoint",result["_diagnostic"]["reason"])
+
     def test_probe_records_each_attempt_without_blending(self):
         session=Mock()
         session.get.side_effect=lambda url,**kwargs: (
