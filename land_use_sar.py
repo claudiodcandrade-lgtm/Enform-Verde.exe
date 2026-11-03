@@ -747,7 +747,18 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     second_crop_status="not_available"
     second_crop_source=None
     second_crop_detection=[]
-    if mb is not None and not mb.empty:
+    # The second-season raster is a refinement of agricultural coverage,
+    # never a prerequisite for confirming native vegetation. Avoid a second
+    # network/raster query where the primary map contains no crop candidate.
+    # In particular, do not classify an intact native AOI as an unavailable
+    # agricultural service merely because a beta seasonal product is offline.
+    primary_agricultural_codes={18,19,20,21,39,40,41,46,47,48,62}
+    has_primary_crop=(mb is not None and not mb.empty and
+                      'class_code' in mb.columns and
+                      mb['class_code'].isin(primary_agricultural_codes).any())
+    if mb is not None and not mb.empty and not has_primary_crop:
+        second_crop_status="not_applicable_no_primary_crop"
+    if has_primary_crop:
         try:
             second_crop_source = second_crop_path or os.environ.get("ENFORM_MAPBIOMAS_SECOND_CROP_TIF", "").strip()
             if not second_crop_source:
