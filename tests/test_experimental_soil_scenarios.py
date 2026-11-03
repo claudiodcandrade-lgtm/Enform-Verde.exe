@@ -181,7 +181,6 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["tc"], 999)
         self.assertEqual(rows[0]["origem"], "MAPEAMENTO")
-        self.assertEqual(rows[0]["tc"], 25)
 
 
 if __name__ == "__main__":
