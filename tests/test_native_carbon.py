@@ -465,8 +465,8 @@ class NativeCarbonTests(unittest.TestCase):
             r=estimate_native_components(frame,'Formação Campestre','Cerrado',sar,soil)
         self.assertEqual([x[0] for x in called],['sar','soil'])
         self.assertFalse(any(c['parametro']=='Biomassa subterrânea' for c in r['components']))
-        self.assertEqual(next(c['tc'] for c in r['components'] if c['parametro']=='Solo 0–30 cm'),5)
-        self.assertFalse(any(c['parametro']=='Solo 0–100 cm' for c in r['components']))
+        self.assertEqual(next(c['tc'] for c in r['components'] if c['parametro']=='Solo 0–100 cm'),999)
+        self.assertFalse(any(c['parametro']=='Solo 0–30 cm' for c in r['components']))
 
 if __name__=='__main__':unittest.main()
 

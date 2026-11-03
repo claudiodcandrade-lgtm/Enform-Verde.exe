@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 import unicodedata
 
-COMPARTMENTS=('Biomassa aérea','Biomassa subterrânea','Necromassa aérea','Necromassa subterrânea','Serapilheira','Solo 0–30 cm')
+COMPARTMENTS=('Biomassa aérea','Biomassa subterrânea','Necromassa aérea','Necromassa subterrânea','Serapilheira','Solo 0–100 cm')
 
 
 def normalize(value):
@@ -304,24 +304,24 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                      'range_tc_ha':c.get('range_tc_ha'),'range_dry_mg_ha':c.get('range_dry_mg_ha')})
     soil={}
     try:
-        soil=soil_estimator(aoi) or {};top=soil.get('0–30 cm')
+        soil=soil_estimator(aoi) or {};top=soil.get('0–100 cm')
         if top and top.get('tc_ha') is not None:
-            rows.append({'parametro':'Solo 0–30 cm','tc':float(top['tc_ha']),'origem':'MAPEAMENTO','fonte':'Embrapa Solos/PronaSolos',
-                         'metodo':'Estoque cumulativo 0–30 cm; perfis sobrepostos não somados',
+            rows.append({'parametro':'Solo 0–100 cm','tc':float(top['tc_ha']),'origem':'MAPEAMENTO','fonte':'Embrapa Solos/PronaSolos',
+                         'metodo':'Estoque cumulativo 0–100 cm; somente horizontes pareados na mesma localização; perfis sobrepostos não somados',
                          'obs':'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha')})
-        elif soil.get('experimental_horizons_0_30') is not None:
-            # Strictly optional: only explicit, fitophysiognomy-compatible,
-            # licensed 0-30 cm physical input bounds can yield a scenario.
+        elif soil.get('experimental_horizons_0_100') is not None:
+            # Only explicit, compatible, licensed five-horizon bounds can yield
+            # a scenario. Shallow 0-30/0-60 profiles never stand in for 0-100.
             # No synthetic field data, statistical CI or claim of homologation.
-            from experimental_soil_scenarios import soil_0_30_scenario_envelope
-            experimental_soil=soil_0_30_scenario_envelope(
-                soil['experimental_horizons_0_30'], biome=biome,
+            from experimental_soil_scenarios import soil_0_100_scenario_envelope
+            experimental_soil=soil_0_100_scenario_envelope(
+                soil['experimental_horizons_0_100'], biome=biome,
                 physiognomy=physiognomy)
             soil['experimental_scenario_audit']=experimental_soil
             if experimental_soil['available']:
                 rows.append({
-                    'parametro':'Solo 0–30 cm',
+                    'parametro':'Solo 0–100 cm',
                     'tc':experimental_soil['stock_tc_ha'],
                     'origem':'EXPERIMENTAL_FISICO',
                     'fonte':'Fontes rastreáveis declaradas nos horizontes; SHA a verificar',
@@ -335,6 +335,15 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                     'source_bytes_verified':False,
                     'transfer_error_tc_ha':None,
                 })
+        else:
+            # Explicitly preserve the target depth as unavailable. Shallower
+            # mapped profiles remain diagnostics and are never extrapolated.
+            audit=soil.get('_diagnostic') or {}
+            status=audit.get('target_status','INCOMPLETO_NAO_EXTRAPOLAR')
+            rows.append({'parametro':'Solo 0–100 cm','tc':None,'origem':'N/D',
+                         'fonte':'Embrapa Solos/PronaSolos',
+                         'metodo':'Alvo 0–100 cm; perfis mais rasos são apenas diagnósticos e não foram extrapolados',
+                         'obs':status,'include_in_total':False})
     except Exception:pass
     secondary_audit=None
     if inventory_evidence is not None:

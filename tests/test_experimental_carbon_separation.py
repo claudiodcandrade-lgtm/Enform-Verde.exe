@@ -19,7 +19,7 @@ class ExperimentalCarbonSeparationTests(unittest.TestCase):
 
         def synthetic_estimator(frame, physiognomy):
             return {"components":[{
-                "parametro":"Solo 0–30 cm",
+                "parametro":"Solo 0–100 cm",
                 "tc":64.8,
                 "origem":"EXPERIMENTAL_FISICO",
                 "range_tc_ha":[24.0,126.0],
@@ -33,7 +33,7 @@ class ExperimentalCarbonSeparationTests(unittest.TestCase):
         self.assertAlmostEqual(result["experimental_only_total_tco2"],64.8*44/12,delta=1e-6)
         self.assertFalse(result["complete"])
         soil=next(c for c in result["strata"][0]["components"]
-                  if c["parametro"]=="Solo 0–30 cm")
+                  if c["parametro"]=="Solo 0–100 cm")
         self.assertAlmostEqual(soil["experimental_total_tc"],64.8,delta=1e-6)
         self.assertIsNone(soil["total_tc"])
         self.assertFalse(soil["include_in_total"])

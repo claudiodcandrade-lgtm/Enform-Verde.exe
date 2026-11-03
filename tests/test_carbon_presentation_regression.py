@@ -26,7 +26,7 @@ class CarbonPresentationRegression(unittest.TestCase):
                 "known_total_tc":20, "complete":False,
                 "strata":[{"class_name":"Floresta Ombrófila Densa","area_ha":1,
                   "components":[{"parametro":"Biomassa aérea","tc":20,"range_tc_ha":[18,22]},
-                                {"parametro":"Solo 0–30 cm","tc":15}]}]}
+                                {"parametro":"Solo 0–100 cm","tc":15}]}]}
         result="\n".join(executive_carbon_lines(report,pt))
         self.assertIn("±", "±")
         self.assertIn("2,00 tC/ha | 7,33 tCO₂e/ha | 10,00%",result)
