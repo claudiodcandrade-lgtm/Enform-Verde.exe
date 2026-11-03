@@ -966,3 +966,23 @@ O SFB confirma que o Painel Biomassa e Carbono deriva de dados de campo IFN, com
 **Correção de escopo do adendo v51.1:** manter solo 0–100 cm como requisito do projeto, conforme decisão mais recente do usuário; não rebaixar para 0–30 cm para facilitar o gate. Se uma fonte só sustenta 0–30 cm, publicá-la como tal e manter 30–100/0–100 como N/D ou cenário explicitamente não homologado até haver perfis/dados e incerteza defensáveis. Alinhar código remoto, manifestos, especificação e rótulos ao escopo de 0–100 cm.
 
 Estado: este inventário não cria observações nem declara qualquer gate aprovado. Próximo trabalho: (1) obter/verificar bytes originais IFN/SFB, (2) reconstruir tabelas por UA e estimar distribuições/transferência, (3) agregar evidências e incerteza por capacidade elegível, (4) implementar workflow `experimental_pilot_gate`, mantendo gate integral bloqueado, (5) só então publicar status verde de piloto se o perfil e o software passarem.
+
+
+## ADENDO v53 — FONTES SIF/UFV E REVISTA ÁRVORE NA BUSCA DE INVENTÁRIOS — 03/11/2026
+
+A busca nacional de evidências deve incluir explicitamente a Sociedade de Investigações Florestais (SIF), a UFV/Locus e a Revista Árvore/SciELO. O catálogo rastreável foi atualizado em `validation/CATALOGO_REPOSITORIOS_INVENTARIO_FLORESTAL_2026-11-03.md` (commit do catálogo `5c458f5934a0f5b9c3e5ab1ef83034251e27feaf`).
+
+### Conclusões desta triagem
+- Revista Árvore é periódico científico da SIF vinculado à UFV, revisado por pares e relevante para inventário, mensuração, modelagem e carbono; não é, por si só, uma base harmonizada de parcelas.
+- Foram identificados candidatos bibliográficos úteis: estudo com dez parcelas em fragmento de Mata Atlântica e comparação multissensor; estudo temporal com parcelas permanentes em Floresta Estacional Semidecidual em MG; e equações construídas para arborização urbana em Viçosa. Estudos de eucalipto são apenas referência para povoamentos plantados.
+- O artigo de Mata Atlântica reporta erros específicos do seu desenho e domínio, que não podem ser transferidos ao país ou usados como erro do Enform sem validação externa. Artigos sem microdados/suplementos auditáveis só podem fundamentar escolhas de método e envelopes experimentais; não se convertem em UA sintética.
+- Acesso gratuito ao artigo não implica licença de reuso dos dados, redistribuição comercial ou autorização de incorporação no executável.
+
+### Procedimento obrigatório a partir deste checkpoint
+1. Buscar no Locus/UFV e na Revista Árvore por bioma, fitofisionomia IBGE legenda_1 e pool; registrar DOI, local, desenho amostral, amostra independente, datas, variáveis, equações, erros, suplementos e licença.
+2. Classificar cada achado como dado primário microrregional, parâmetro/modelo publicado, resultado agregado, método apenas, ou inelegível. Não preencher parcela ausente com valores de artigo.
+3. Usar evidência microrregional somente se a localização/unidade, classe ecológica, protocolo e licença forem compatíveis. Em falta, buscar UA SFB/IFN regional por fitofisionomia compatível e máxima proximidade ecológica/geográfica possível; estimar transferência por holdout espacial e rotular experimental se a cobertura de incerteza não foi demonstrada.
+4. Não tratar artigos da Revista Árvore que contribuíram para uma equação/modelo como validação independente desse mesmo modelo. Separar calibração e teste por sítio/região/UA.
+5. Solo mantém requisito 0–100 cm. Se os estudos ou fontes cobrirem somente 0–30 cm, reportar apenas esse estrato explicitamente e manter o restante/estoque completo N/D ou experimental sem homologação.
+
+Fontes primárias e estudos localizados estão no catálogo. Esta etapa atualiza a busca e as regras de evidência; não baixou e integrou microdados dos artigos, não calculou novas métricas do Enform e não aprova qualquer gate. A homologação científica integral permanece bloqueada até auditoria de dados e avaliação independente por capacidade.
