@@ -47,7 +47,13 @@ def verified_local_horizons(root=None):
             path = (root/name).resolve()
             if not path.is_relative_to(root) or not path.is_file():
                 return None
-            if hashlib.sha256(path.read_bytes()).hexdigest() != digest.lower():
+            hasher=hashlib.sha256()
+            with path.open("rb") as stream:
+                while True:
+                    block=stream.read(1024*1024)
+                    if not block:break
+                    hasher.update(block)
+            if hasher.hexdigest() != digest.lower():
                 return None
             paths[i] = path
         return paths
