@@ -75,3 +75,32 @@ em que (q_i) representa qualidade/desenho/licença, (d_{geo}) a distância físi
 
 ## Situação
 Este catálogo define seleção e fallback e identifica fontes adicionais relevantes à busca anterior. A extração/harmonização de microdados, checagem de licença e cálculo dos erros de transferência **ainda precisam ser executados** por AOI/fitofisionomia. Não declara gate aprovado nem cria estimativas.
+
+
+## ADENDO — SIF/UFV E REVISTA ÁRVORE — 03/11/2026
+
+A busca solicitada foi ampliada à Sociedade de Investigações Florestais (SIF), à Universidade Federal de Viçosa (UFV) e à Revista Árvore. A revista é publicada pela SIF, vinculada ao Departamento de Engenharia Florestal da UFV, é revisada por pares e cobre inventário, mensuração e modelagem florestal. É repositório bibliográfico científico, não uma base nacional padronizada de parcelas: cada artigo e suplemento deve ser triado individualmente para coordenadas, unidade amostral, fitofisionomia IBGE, data, variáveis, incerteza, dados reutilizáveis e licença.
+
+### Estudos encontrados e uso adequado
+- **Mata Atlântica, fragmento florestal (artigo de 2025/vol. 50):** dez parcelas de 0,1 ha em fragmento de 17 ha; comparação de Sentinel-1, Sentinel-2, fotogrametria e fusão para biomassa; RMSE de mapeamento relatado de 41% para fusão e 64% para DAP, enquanto o estimador de regressão baseado em S2 apresentou SE populacional de 21 Mg/ha. Evidência útil para método e benchmark de escala local, não parâmetro nacional nem erro transferível para qualquer AOI; verificar suplemento e disponibilidade dos dados antes de incorporar.
+- **Floresta Estacional Semidecidual em MG:** estudo de parcelas permanentes medidas em 2002 e 2007, estágios médio e médio/avançado, com volume, biomassa, carbono e crescimento. Candidato para contexto local e desenho temporal; confirmar número/geometria das parcelas e dados por UA antes de qualquer validação independente.
+- **Carbono em árvores do campus UFV:** estudo inventariou árvores urbanas DAP≥5 cm e cubou amostras (721 não palmeiras e 100% de palmeiras) para ajustar equações. É base metodológica/calibração de arborização urbana; não transferir equações automaticamente a floresta nativa.
+- **Biomassa/carbono de povoamento de eucalipto:** comparação de métodos destrutivos e não destrutivos e equações Schumacher–Hall. Relevante apenas a povoamentos plantados com domínio compatível; excluir de estimativa de vegetação nativa.
+- A coleção SciELO da Revista Árvore inclui artigos de Cerrado e outros biomas, mas resultados de busca por artigo não equivalem a catálogo exaustivo nem comprovam que microdados estejam disponíveis.
+
+### Como incorporar à busca e ao gate
+1. Pesquisar títulos/resumos da Revista Árvore e repositório institucional Locus/UFV por fitofisionomia e variável; registrar DOI, local, desenho, n de parcelas/árvores, domínio e métricas.
+2. Dar prioridade a datasets/suplementos abertos com coordenadas ou unidades rastreáveis e observações primárias. Se o artigo só publicar média/coeficientes, usar como literatura/modelo de referência (experimental) e não fabricar registros por parcela.
+3. Fazer deduplicação por estudo/dataset e separar treino, calibração e validação. Um artigo usado para desenvolver a equação não valida independentemente a equação ou o SAR contra os mesmos dados.
+4. Confirmar licença de reutilização de dados e permissão de redistribuição por suplemento/dataset. Acesso gratuito ao texto da revista não significa licença aberta dos dados nem autorização para embutir microdados em produto.
+5. Aplicar a hierarquia microrregional→SFB já definida somente após esta triagem: estudo da SIF/UFV conta como inventário microrregional se tiver cobertura, parcelas, tipologia e condições de reutilização adequadas; na falta delas, não substitui automaticamente o IFN nem o fallback regional SFB.
+
+### URLs primárias consultadas
+- Revista Árvore/SciELO: https://www.scielo.br/rarv
+- Sobre a revista (SIF vinculada à UFV, escopo e revisão): https://revistaarvore.ufv.br/rarv/about
+- Estudo de fragmento de Mata Atlântica com múltiplos sensores: https://www.revistaarvore.ufv.br/rarv/article/view/263981
+- Estudo de parcelas permanentes em Floresta Estacional Semidecidual: https://locus.ufv.br/items/761ddecf-5936-4fe5-b8d0-15c4e86a7048
+- Equações de carbono em árvores urbanas de Viçosa: https://www.scielo.br/j/rarv/a/zXWQRyhLynQXhRWLWnVBLKt/
+- Comparação destrutiva/não destrutiva em eucalipto: https://revistaarvore.ufv.br/rarv/article/view/256163
+
+**Limite da verificação:** esta etapa fez busca e triagem bibliográfica, mas não baixou suplementos nem integrou os dados desses artigos ao pipeline; também não atesta licença comercial. O gate científico permanece sem aprovação.
