@@ -16,11 +16,15 @@ class IndependentSarValidationTests(unittest.TestCase):
           reference_source="field_fixture",reference_date="2026-01-01",
           observation_date="2026-01-01",independent_field_reference=independent,
           source_record_id=str(uid),biome="Mata Atlântica",state="MG")
-    def test_50_with_five_errors_fails_wilson_gate(self):
+    def test_50_with_five_errors_reports_precision_without_arbitrary_cutoff(self):
         with tempfile.TemporaryDirectory() as d:
             p=self.make_csv(d,[self.row(i,truth='Pinus' if i<5 else 'Eucalipto') for i in range(50)])
             r=validate_independent_predictions(p,model_sha256="synthetic",reference_url="https://example.org")
-            self.assertFalse(r["gates"]["Eucalipto"]["eligible"])
+            self.assertTrue(r["gates"]["Eucalipto"]["eligible"])
+            self.assertEqual(r["gates"]["Eucalipto"]["n_independent_accepted"],50)
+            self.assertEqual(r["gates"]["Eucalipto"]["correct"],45)
+            self.assertAlmostEqual(r["gates"]["Eucalipto"]["precision"],0.9)
+            self.assertLess(r["gates"]["Eucalipto"]["precision_wilson95_lower"],0.9)
             self.assertFalse(r["all_targets_validated"])
     def test_100_independent_perfect_can_pass_single_class_only(self):
         with tempfile.TemporaryDirectory() as d:
