@@ -951,3 +951,18 @@ Na revisão do código remoto `tools/scientific_release_gate.py`, o conjunto de 
 - preservar 0–30 como estimativa desse estrato; não extrapolar para 0–100 nem chamar de estoque de perfil completo;
 - confirmar no diff e no gate report que o perfil exato apresentado ao usuário foi avaliado.
 Essa correção de escopo não cria observações nem valida o modelo; apenas torna o critério coerente com a profundidade autorizada.
+
+
+## ADENDO v52 — TRABALHO DE EVIDÊNCIAS EXPERIMENTAIS — 03/11/2026
+
+O usuário autorizou expressamente o uso de modelos experimentais bem fundamentados, desde que a incerteza seja dimensionalizada. Isso autoriza desenvolver um **perfil/gate de piloto experimental**, sem apagar a distinção entre experimental e homologação observacional.
+
+Registro detalhado: `validation/REGISTRO_EVIDENCIAS_EXPERIMENTAIS_2026-11-03.md` (inclui fontes, limitações, hashes, contagens, candidatas e sequência de trabalho).
+
+Achados mensurados no material já versionado: `data/ifn_necromass_biome_uf_v1.csv` tem SHA-256 local `7752fc4c8ff3ae23b30f182c75a848d5f42ab0fe2e0a81ecba4399a0936f5da7`; soma 42 estratos UF×bioma, 3.059 UA em quatro biomas (Amazônia 1.155, Caatinga 753, Cerrado 786, Mata Atlântica 365) e nenhum registro Pantanal nessa tabela. Trata-se de resumo processado, não bytes originais; recuperar o CSV oficial, confirmar licença e reproduzir o resumo antes de promover. A estimativa é biomassa seca de necromassa, não carbono nem validação SAR, e não traz fitofisionomia.
+
+O SFB confirma que o Painel Biomassa e Carbono deriva de dados de campo IFN, com anos-base 2011–2024, fonte SFB/IFN, licença CC BY e dados estaduais; isso sustenta referência experimental, não validação independente do próprio modelo. Chave et al. (2014) e Mokany et al. (2006) são rotas matemáticas candidatas para AGB e raízes; frações internacionais de C em madeira morta podem ser priors experimentais, nunca frações medidas localmente. O IPCC requer documentar PDFs, correlações e propagação; quando cobertura probabilística não foi observada, rotular faixa/cenário e não IC95%. SoilGrids disponibiliza intervalos preditivos Q05–Q95 (90%) por pixel; estes não viram IC95% da AOI por simples soma.
+
+**Correção de escopo do adendo v51.1:** manter solo 0–100 cm como requisito do projeto, conforme decisão mais recente do usuário; não rebaixar para 0–30 cm para facilitar o gate. Se uma fonte só sustenta 0–30 cm, publicá-la como tal e manter 30–100/0–100 como N/D ou cenário explicitamente não homologado até haver perfis/dados e incerteza defensáveis. Alinhar código remoto, manifestos, especificação e rótulos ao escopo de 0–100 cm.
+
+Estado: este inventário não cria observações nem declara qualquer gate aprovado. Próximo trabalho: (1) obter/verificar bytes originais IFN/SFB, (2) reconstruir tabelas por UA e estimar distribuições/transferência, (3) agregar evidências e incerteza por capacidade elegível, (4) implementar workflow `experimental_pilot_gate`, mantendo gate integral bloqueado, (5) só então publicar status verde de piloto se o perfil e o software passarem.
