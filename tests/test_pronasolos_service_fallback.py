@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock
 import geopandas as gpd
 from shapely.geometry import box
 
-from pronasolos_identify import SERVICE, ALTERNATE_SERVICE, SERVICE_CANDIDATES
+from pronasolos_identify import SERVICE, ALTERNATE_SERVICE, THIRD_SERVICE, SERVICE_CANDIDATES
 from desktop_app import pronasolos_soc_profiles
 from tools.probe_pronasolos_100cm import query_site
 
@@ -23,8 +23,8 @@ class SoilEndpointFallbackTests(unittest.TestCase):
     def setUp(self):
         self.aoi=gpd.GeoDataFrame(geometry=[box(-54.96,-3.04,-54.95,-3.03)],crs="EPSG:4326")
 
-    def test_registry_contains_two_verified_services(self):
-        self.assertEqual(SERVICE_CANDIDATES,(SERVICE,ALTERNATE_SERVICE))
+    def test_registry_contains_three_verified_services(self):
+        self.assertEqual(SERVICE_CANDIDATES,(SERVICE,ALTERNATE_SERVICE,THIRD_SERVICE))
         self.assertTrue(all("pronasolos/" in x and x.endswith("/MapServer/identify")
                             for x in SERVICE_CANDIDATES))
 
@@ -38,6 +38,18 @@ class SoilEndpointFallbackTests(unittest.TestCase):
         self.assertEqual(result["0–100 cm"]["tc_ha"],15)
         self.assertTrue(result["_diagnostic"]["no_cross_service_horizon_combination"])
         self.assertGreater(result["_diagnostic"]["selected_points_by_service"][ALTERNATE_SERVICE],0)
+        self.assertEqual(result["_diagnostic"]["selected_points_by_service"][SERVICE],0)
+
+    def test_third_official_service_recovers_complete_profile(self):
+        incomplete=response({2:10,3:20,4:30})
+        third=response({2:1,3:2,4:3,5:4,6:5})
+        session=Mock()
+        session.get.side_effect=lambda url,**kwargs: (
+            third if url==THIRD_SERVICE else incomplete)
+        with patch("requests.Session",return_value=session):
+            result=pronasolos_soc_profiles(self.aoi,max_points=1)
+        self.assertEqual(result["0–100 cm"]["tc_ha"],15)
+        self.assertEqual(result["_diagnostic"]["selected_points_by_service"][THIRD_SERVICE],1)
         self.assertEqual(result["_diagnostic"]["selected_points_by_service"][SERVICE],0)
 
     def test_two_incomplete_services_never_fake_complete_profile(self):
@@ -58,7 +70,7 @@ class SoilEndpointFallbackTests(unittest.TestCase):
             response({5:40,6:50}))
         result=query_site(session,"synthetic",-54.95,-3.03)
         self.assertEqual(result["status"],"INCOMPLETE_NO_EXTRAPOLATION")
-        self.assertEqual(len(result["attempts"]),2)
+        self.assertEqual(len(result["attempts"]),3)
         self.assertNotIn("0–100 cm",result["profiles_tc_ha"])
 
 if __name__=="__main__":
