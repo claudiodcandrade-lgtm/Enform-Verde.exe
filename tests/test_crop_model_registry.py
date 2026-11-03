@@ -36,13 +36,25 @@ class CropRegistryTests(unittest.TestCase):
             r=evaluate_crop_model(m,base_dir=d)
             self.assertFalse(r["eligible"])
             self.assertIn("arquivo de pesos indisponível",r["reasons"])
-    def test_precision_and_samples(self):
+    def test_any_independently_measured_precision_is_reportable(self):
         with tempfile.TemporaryDirectory() as d:
             m=self.specimen(d)
             m["validation"]["n_accepted"]=49
+            m["validation"]["n_correct"]=25
+            report=evaluate_crop_model(m,base_dir=d)
+            self.assertTrue(report["eligible"])
+            self.assertTrue(report["small_independent_sample_warning"])
+            self.assertAlmostEqual(report["precision"],25/49)
+            self.assertLess(report["precision_wilson95_lower"],report["precision"])
+            m["validation"]["n_accepted"]=100
+            m["validation"]["n_correct"]=0
+            report=evaluate_crop_model(m,base_dir=d)
+            self.assertTrue(report["eligible"])
+            self.assertEqual(report["precision"],0)
+            m["validation"]["n_accepted"]=0
             self.assertFalse(evaluate_crop_model(m,base_dir=d)["eligible"])
             m["validation"]["n_accepted"]=100
-            m["validation"]["n_correct"]=90
+            m["validation"]["calibrated_probability_threshold"]=1.2
             self.assertFalse(evaluate_crop_model(m,base_dir=d)["eligible"])
     def test_incompatible_scene(self):
         with tempfile.TemporaryDirectory() as d:
