@@ -50,13 +50,18 @@ def promote(source_sha, root, candidates):
         accepted.append(record)
     if not accepted:
         errors.append("No independently validated candidate with verified source bytes and report")
-    if errors:
-        return {"promoted": False, "errors": errors, "accepted_count": len(accepted)}, None
+        return {"promoted": False, "errors": errors, "accepted_count": 0,
+                "rejected_count": len(errors), "partial": False}, None
+    # Modular homologation must not discard independently verified capabilities
+    # merely because an unrelated candidate was rejected. Preserve every
+    # rejection in the audit; never include a rejected row in the manifest.
+    # This does NOT approve the whole scientific release.
     result = {"source_sha": source_sha, "capabilities": accepted}
     final_audit = assess(result, source_sha, root)
     if not final_audit["passed"]:
         return {"promoted": False, "errors": final_audit["errors"], "accepted_count": 0}, None
-    return {"promoted": True, "errors": [], "accepted_count": len(accepted)}, result
+    return {"promoted": True, "errors": errors, "accepted_count": len(accepted),
+            "rejected_count": len(errors), "partial": bool(errors)}, result
 
 def main():
     parser = argparse.ArgumentParser()
