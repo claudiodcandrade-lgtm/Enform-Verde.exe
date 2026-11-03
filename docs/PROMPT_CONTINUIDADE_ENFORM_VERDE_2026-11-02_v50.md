@@ -986,3 +986,33 @@ A busca nacional de evidências deve incluir explicitamente a Sociedade de Inves
 5. Solo mantém requisito 0–100 cm. Se os estudos ou fontes cobrirem somente 0–30 cm, reportar apenas esse estrato explicitamente e manter o restante/estoque completo N/D ou experimental sem homologação.
 
 Fontes primárias e estudos localizados estão no catálogo. Esta etapa atualiza a busca e as regras de evidência; não baixou e integrou microdados dos artigos, não calculou novas métricas do Enform e não aprova qualquer gate. A homologação científica integral permanece bloqueada até auditoria de dados e avaliação independente por capacidade.
+
+## ADENDO v54 — CULTURAS EXPERIMENTAIS E OCORRÊNCIA GENÉRICA DE VEGETAÇÃO NATIVA — 03/11/2026
+
+### Busca de algoritmos brasileiros e critério adotado
+A pesquisa priorizou MapBiomas/INPE/Embrapa e estudos com área de estudo brasileira. O relatório `docs/ALGORITMOS_BRASILEIROS_VEGETACAO_NATIVA_CULTURAS_2026-11-03.md` registra algoritmos, domínio, métricas e restrições. Evidências centrais:
+- MapBiomas C11 Cobertura 30 m é a rota cartográfica nacional para ocorrência anual de formações nativas, com métodos próprios por bioma/tema e avaliação de acurácia publicada para Cobertura 30 m baseada em cerca de 85 mil pontos de referência 1985–2024. Isso autoriza consulta cartográfica e rotulagem experimental no Enform; não equivale a validação de campo local ou acurácia do produto agrícola/SAR.
+- Lewis et al. (2022), Cerrado em Goiás (~1,1 Mha), emprega RF em duas etapas com formações e oito fisionomias; resultados 88,6–92,6% para formações e 70,7–77,9% para fisionomias. Sentinel‑1 sazonal + Sentinel‑2 teve melhor desempenho entre esquemas avaliados. É candidato brasileiro prioritário a refinamento regional; não foi portado, não tem seus pesos integrados e não é modelo nacional.
+- TerraClass/INPE/Embrapa e Brazil Data Cube/SITS complementam a Amazônia nas áreas de domínio TerraClass; não são verdade nacional de pixel para toda vegetação ou todos os biomas.
+- MapBiomas C11 1ª safra nomeia explicitamente algumas culturas (soja 39, cana 20, arroz 40, café 46, citrus 47, algodão beta 62). Demais classes permanecem genéricas. O produto C11 complementar beta 2ª safra nomeia milho (código 1), algodão (62) e outras culturas (41); primeira versão mapeada em MT, MS, GO, PR, SP, MG, BA, MA, PI e TO. Fora do domínio não inferir ausência.
+
+### Implementação no PR #50
+Alterações realizadas na branch `feature/agricultural-identification-native-carbon`:
+- `land_use_sar.py`: rótulos cartográficos específicos permitidos da C11 permanecem separados de classe “Áreas cultivadas”; aquisição opcional do GeoTIFF oficial C11 2ª safra por AOI, com configuração `ENFORM_MAPBIOMAS_SECOND_CROP_TIF`, anotação nas geometrias e estatística de sobreposição sazonal separada para evitar dupla contagem; rótulos primeira safra nunca são sobrescritos pela safra 2.
+- Saída/GeoJSON/auditoria passa a incluir grupo “Vegetação nativa”, hectares e percentual da AOI, decomposição pelas classes MapBiomas/SAR, indicação de usos diversificados e aviso explícito de que ocorrência cartográfica não é confirmação de campo.
+- `desktop_app.py`: o painel agrícola informa hectares de vegetação nativa cartograficamente detectada mesmo quando a AOI tem usos mistos; produtos de segunda safra são descritos como detecção experimental beta e sua área de sobreposição não é somada ao total do imóvel.
+- Milho somente recebe nome nominal via classe beta de segunda safra. Sorgo, feijão e milho de primeira safra permanecem “Áreas cultivadas” até fonte que os distinga; não criar classes específicas a partir de códigos “outras culturas”.
+- Silvicultura, pastagem e agricultura continuam não nativas para contabilização de carbono; IBGE legenda_1 continua apenas referência fitoecológica em interseção nativa compatível.
+- Commits de implementação: `160a6ec718b0f407dea463b18c4b0972dc1b1b83`, `faf468af7284c72e7c638a96d073a524032f8aa8`, `e305b992e1691ef838d1f70af6deaf4c51f7c2f8`, `3ab26f1f77f8780df1a51a7ed4969c1437c80de7`, `61c81a452eb18ee985d791f4cb3ba67bbff77247`; relatório bibliográfico commit `87619711c99211ec9cd5b12529cb4320663cb270`.
+
+### Estado verificável e trabalho restante
+Esta etapa altera código para operacionalizar os produtos cartográficos e a exibição genérica nativa, mas **não foram executados testes, CI, download real do TIFF de 2ª safra, smoke test do EXE Windows, nem validação independente da AOI**. Antes de anunciar instalação operacional: inspecionar diff final, executar suite direcionada e workflows Windows no mesmo SHA, verificar que a URL oficial de segunda safra é lida sob GDAL do pacote, avaliar polígonos de propriedade agrícola/nativa mista, conferir status/áreas e então registrar o próximo checkpoint. O produto MapBiomas é anual e o beta da 2ª safra tem cobertura estadual limitada; ausência não significa ausência de cultura. Manter a classificação como **EXPERIMENTAL CARTOGRÁFICA** e não chamá-la de acurácia SAR ou homologação científica.
+
+### Fontes primárias
+- Algoritmos e avaliação MapBiomas: https://brasil.mapbiomas.org/iniciativas-e-produtos/metodologia-mapbiomas/analise-de-acuracia/
+- Uso Agrícola C11 e seus códigos/método: https://brasil.mapbiomas.org/iniciativas-e-produtos/cobertura-e-uso-da-terra/agricultura/uso-agricola/
+- Segunda safra, códigos, produto beta, UFs mapeadas e URL GeoTIFF: https://brasil.mapbiomas.org/iniciativas-e-produtos/cobertura-e-uso-da-terra/agricultura/uso-agricola-2a-safra/
+- Vegetação nativa no Cerrado via RF + séries Sentinel-1/2: https://www.nature.com/articles/s41598-022-05332-6
+- Relatório de algoritmos brasileiros: `docs/ALGORITMOS_BRASILEIROS_VEGETACAO_NATIVA_CULTURAS_2026-11-03.md`
+
+Este adendo atualiza a decisão e o estado do código; não altera os gates científicos nacionais nem autoriza liberação definitiva do PR #50 ou do ZIP Windows.
