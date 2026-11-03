@@ -49,6 +49,21 @@ class EvidencePromotionTests(unittest.TestCase):
             self.assertTrue(audit["promoted"])
             self.assertEqual(len(manifest["capabilities"]), 1)
             self.assertEqual(manifest["capabilities"][0]["dataset_file"], "plot.csv")
+            # One malformed or unlicensed candidate cannot suppress a separate
+            # verified biome/pool, nor may it be silently promoted.
+            (candidates / "unverified.json").write_text(json.dumps({
+                "biome": "Cerrado", "pool": "agb", "status": "validated",
+                "dataset_file": "missing.csv", "dataset_sha256": "0" * 64,
+            }))
+            audit, manifest = promote(SHA, root, candidates)
+            self.assertTrue(audit["promoted"])
+            self.assertTrue(audit["partial"])
+            self.assertEqual(audit["accepted_count"], 1)
+            self.assertGreater(audit["rejected_count"], 0)
+            self.assertTrue(any("unverified.json" in e for e in audit["errors"]))
+            self.assertEqual(len(manifest["capabilities"]), 1)
+            self.assertEqual(manifest["capabilities"][0]["biome"], "Amazônia")
+            (candidates / "unverified.json").unlink()
             # Promotion must reject a hashed report inflating n from 4
             # independent spatial units to 12 repeated observations.
             inflated = dict(report, independent_sample_count=12)
