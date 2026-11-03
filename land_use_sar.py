@@ -134,7 +134,8 @@ def partition_land_use(aoi, layers):
         # raster reads already being tiled. Preserve contradictory overlaps as
         # gaps that may be filled by the next source.
         if 'secondary_crop' not in projected.columns:
-            projected['secondary_crop'] = None
+            projected['secondary_crop'] = ''
+        projected['secondary_crop'] = projected['secondary_crop'].fillna('')
         projected = projected.dissolve(
             by=['class_name', 'source', 'taxonomy', 'secondary_crop'], as_index=False)
         from shapely.ops import unary_union
@@ -156,14 +157,15 @@ def partition_land_use(aoi, layers):
             if clipped.is_empty or clipped.area <= 0:
                 continue
             pieces.append({'class_name': row.class_name, 'source': row.source,
-                           'taxonomy': row.taxonomy, 'secondary_crop': getattr(row, 'secondary_crop', None), 'geometry': clipped})
+                           'taxonomy': row.taxonomy, 'secondary_crop': getattr(row, 'secondary_crop', '') or '', 'geometry': clipped})
             remaining = _robust_polygon_overlay(remaining, clipped, 'difference')
     if remaining.area > 1e-6:
         pieces.append({'class_name': 'Não classificado', 'source': 'SEM_COBERTURA',
                        'taxonomy': 'sem classificação', 'geometry': remaining})
     out = gpd.GeoDataFrame(pieces, crs=AREA_CRS)
     if 'secondary_crop' not in out.columns:
-        out['secondary_crop'] = None
+        out['secondary_crop'] = ''
+    out['secondary_crop'] = out['secondary_crop'].fillna('')
     out = out.dissolve(by=['class_name', 'source', 'taxonomy', 'secondary_crop'], as_index=False)
     out['area_ha'] = out.geometry.area / 10000
     out['area_pct'] = 100 * out.geometry.area / geom.area
@@ -740,6 +742,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         warnings.append('MapBiomas indisponível: '+mapbiomas_failure)
         warnings.append('Cobertura atual não verificada por falha das fontes; IBGE indica fitofisionomia potencial, não confirma cobertura presente.')
     second_crop=None
+    from shapely.ops import unary_union
     second_crop_status="not_available"
     second_crop_source=None
     second_crop_detection=[]
