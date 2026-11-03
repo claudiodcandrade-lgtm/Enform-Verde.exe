@@ -596,6 +596,18 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     Cumulative 0–30 cm, 0–60 cm and 0–100 cm profiles are computed
     from collocated horizons only, using the official MapServer.
     Spatial SD is descriptive, not an AOI predictive confidence interval."""
+    # First use a locally cached, SHA256-verified set of the five official
+    # raw 90m Embrapa SOC rasters, when present. The native stratum passed
+    # here is the EXACT AOI × fitophysiognomy intersection; do not sample its
+    # bbox or read colour-stretched TIFFs from the map renderer.
+    from soil_pronasolos_zonal import verified_local_horizons, mapped_soil_0_100_on_polygon
+    local_paths=verified_local_horizons()
+    local_audit=None
+    if local_paths:
+        local_result=mapped_soil_0_100_on_polygon(gdf,local_paths)
+        if local_result.get("0–100 cm",{}).get("tc_ha") is not None:
+            return local_result
+        local_audit=local_result.get("_diagnostic")
     import requests
     from shapely.geometry import Point
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
@@ -657,13 +669,20 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         detail=[]
         for i,k in enumerate(layer_ids[:3]):
             detail.append(f"{names[i]} cm: n={len(vals[k])}; "+(("; ".join(errors[k][:2])) if errors[k] else "sem retorno"))
-        raise RuntimeError("PronaSolos oficial consultado, mas 0–30 cm não pôde ser composto. "+" | ".join(detail))
+        # Preserve the failure instead of silently suppressing it upstream.
+        # N/D is NOT zero carbon; no 0-30 model is extended to 0-100.
+        out["_diagnostic"]={"target_status":"SERVICO_SEM_VALORES_BRUTOS_VALIDOS",
+                             "reason":" | ".join(detail),"local_raster_audit":local_audit,
+                             "services_checked":list(SERVICE_CANDIDATES),
+                             "samples_requested":len(pts),"target_0_100_available":False}
+        return out
     out["_diagnostic"]={"samples_requested":len(pts),"valid_by_layer":{names[i]:len(vals[k]) for i,k in enumerate(layer_ids)},
                         "service":service,"services_checked":list(SERVICE_CANDIDATES),
                         "selected_points_by_service":service_used_counts,
                         "no_cross_service_horizon_combination":True,
                         "target_depth_cm":100,
                         "target_0_100_available":"0–100 cm" in out,
+                        "local_raster_audit":local_audit,
                         "target_status":"COMPLETO_POR_PONTO" if "0–100 cm" in out else "INCOMPLETO_NAO_EXTRAPOLAR"}
     return out
 
