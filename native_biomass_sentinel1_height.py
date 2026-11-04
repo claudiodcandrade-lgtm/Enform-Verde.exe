@@ -154,16 +154,32 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
         raise ValueError("Fonte, SHA-256 e fitofisionomia compatível são obrigatórios.")
     if len(feature_columns)<1 or len(set(feature_columns))!=len(feature_columns):
         raise ValueError("Declare preditores X/L únicos e não vazios.")
-    required=set(feature_columns)|{group_column,target_column,"plot_id"}
+    qa_columns={"sar_product_id","field_height_definition","spatial_match_error_m",
+                "pixel_size_m","date_field","date_sar"}
+    required=set(feature_columns)|{group_column,target_column,"plot_id"}|qa_columns
     missing=sorted(required-set(frame.columns))
     if missing:
-        raise ValueError("Pares X/L incompletos: "+", ".join(missing))
+        raise ValueError("Pares X/L incompletos; faltam controles parcela-pixel: "+", ".join(missing))
     data=frame.copy()
-    for col in list(feature_columns)+[target_column]:
+    for col in list(feature_columns)+[target_column,"spatial_match_error_m","pixel_size_m"]:
         data[col]=pd.to_numeric(data[col],errors="coerce")
-    data=data.dropna(subset=list(feature_columns)+[target_column,group_column,"plot_id"])
-    numeric=data[list(feature_columns)+[target_column]].to_numpy(float)
+    data["date_field"]=pd.to_datetime(data["date_field"],errors="coerce",utc=True)
+    data["date_sar"]=pd.to_datetime(data["date_sar"],errors="coerce",utc=True)
+    data=data.dropna(subset=list(feature_columns)+[target_column,group_column,"plot_id"]+
+                     ["sar_product_id","field_height_definition","spatial_match_error_m",
+                      "pixel_size_m","date_field","date_sar"])
+    numeric=data[list(feature_columns)+[target_column,"spatial_match_error_m","pixel_size_m"]].to_numpy(float)
     data=data.loc[np.isfinite(numeric).all(axis=1)].copy()
+    date_delta=(data["date_field"]-data["date_sar"]).abs().dt.total_seconds()/86400.0
+    matched=(data["spatial_match_error_m"]>=0)&(data["pixel_size_m"]>0)&(
+        data["spatial_match_error_m"]<=0.5*data["pixel_size_m"])&(date_delta<=365)
+    data=data.loc[matched].copy()
+    if data.empty:
+        raise ValueError("Nenhum par passou a QA de co-registro <= meio pixel e diferença temporal <=365 dias.")
+    if data["sar_product_id"].astype(str).nunique()!=1:
+        raise ValueError("Separe produtos SAR; o modelo não pode misturar resoluções/processamentos.")
+    if data["field_height_definition"].astype(str).str.strip().eq("").any() or data["field_height_definition"].astype(str).nunique()!=1:
+        raise ValueError("Use uma única definição de altura de campo, explicitamente declarada.")
     data=data.loc[(data[target_column]>0)&data[group_column].astype(str).str.strip().ne("")&
                   data["plot_id"].astype(str).str.strip().ne("")].copy()
     if data["plot_id"].duplicated().any():
@@ -210,6 +226,11 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
         "reference_url":reference_url,
         "reference_sha256":str(reference_sha256),
         "reference_kind":reference_kind,
+        "sar_product_id":str(data["sar_product_id"].iloc[0]),
+        "field_height_definition":str(data["field_height_definition"].iloc[0]),
+        "pairing_qc":{"max_spatial_match_fraction_of_pixel":0.5,
+                      "max_date_delta_days":365,
+                      "n_pairs_passing_qc":int(len(data))},
         "scope":"somente a banda/produto, fitofisionomia, região e intervalo de preditores representados pelas parcelas",
         "limitation":"Modelo experimental; GroupKFold não substitui holdout externo independente por região.",
     }
