@@ -1,7 +1,7 @@
 # PROMPT DE CONTINUIDADE — ENFORM VERDE 3.26.0-SOLO-SAFRA
 **Revisão v73 — 04/11/2026 (UTC−3)**  
 **Missão principal:** concluir o desenvolvimento, publicar o código e o executável Windows para **testes de acurácia em propriedades reais posteriormente**, sem exigir previamente a homologação científica final.  
-**Situação confirmada na revisão v73:** HEAD e29da330d0b334568951da247e4ced34edf8bb9e; testes de dashboard e build Windows em execução no momento da revisão; gate científico independente reprovado por ausência de evidências observacionais reais. Não declarar executável pronto sem artefato, SHA, instalação e execução verificáveis.nesse HEAD; workflow Windows ainda em execução na consulta; gate científico independente reprovado por ausência de evidências observacionais exigidas. Não declarar EXE 3.26.0 pronto sem conferir artefato, SHA, instalação e execução.  
+**Situação confirmada na revisão v73:** HEAD e29da330d0b334568951da247e4ced34edf8bb9e; testes de dashboard e build Windows estavam em execução na consulta. O gate científico independente estava reprovado por ausência de evidências observacionais reais. Antes de anunciar executável, conferir artefato, SHA, instalação e execução.  
 **Repositório:** https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe  
 **PR #50:** https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/pull/50  
 **Branch de trabalho:** `feature/agricultural-identification-native-carbon`.
