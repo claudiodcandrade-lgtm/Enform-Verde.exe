@@ -623,7 +623,7 @@ def _annotate_second_crop(primary, secondary):
     return gpd.GeoDataFrame(output, geometry="geometry", crs=primary.crs)
 
 
-def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=None, ibge_field='legenda_1', second_crop_path=None):
+def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=None, ibge_field='legenda_1', second_crop_path=None, sar_paths=None):
     import geopandas as gpd
     from mapbiomas_zonal import RASTER_URL, YEAR
     layers, warnings = [], []
@@ -909,6 +909,17 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     }
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r['native_status'] is None)
     outdir=Path(output_dir);outdir.mkdir(parents=True,exist_ok=True)
+    # Experimental overlay is separate from categorical cover totals: it ranks
+    # current S1 structure candidates for field inspection and never relabels
+    # MapBiomas/IBGE classes as confirmed native cover.
+    try:
+        from native_sar_experimental import run_sentinel1_native_screen
+        summary['native_sar_experimental']=run_sentinel1_native_screen(
+            aoi,sar_paths,outdir,ibge=ibge,ibge_field=ibge_field)
+    except Exception as exc:
+        summary['native_sar_experimental']={
+            'status':'ERROR','reason':type(exc).__name__+': '+str(exc)[:400],
+            'native_presence_confirmed':False,'probability':None,'accuracy':None}
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
     summary.update({'warnings':warnings,'validation':validation,'vector_path':str(vector_path),
@@ -927,6 +938,20 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
         lines.append(f"  {row['class_name']}: {fmt(row['area_ha'])} ha ({fmt(row['area_pct'])}%) — {row['source']} / {row['taxonomy']}")
     lines.append('Identificador SAR utilizado: '+str(summary.get('sar_model_config') or 'NENHUM; classes cartográficas claramente identificadas.'))
     lines.append('Seleção SAR: '+str(summary.get('sar_selection') or 'não especificada'))
+    exp=summary.get('native_sar_experimental') or {}
+    if exp.get('status')=='SAR_EXPERIMENTAL_CANDIDATE_SCREEN':
+        sensitivity=exp.get('threshold_sensitivity_area_ha') or {}
+        lines.append('TRIAGEM EXPERIMENTAL SAR DE VEGETAÇÃO NATIVA — candidatos para vistoria, não confirmação nem probabilidade.')
+        for threshold,row in sensitivity.items():
+            lines.append(f"  Limiar de índice {threshold}: {fmt(row.get('area_ha'))} ha; n de manchas={row.get('patch_count')}.")
+        lines.append('  Sensibilidade a limiares: '+str(exp.get('sensitivity_is')))
+        lines.append('  Raster de pontuação: '+str(exp.get('score_raster_path')))
+        lines.append('  Polígonos candidatos: '+str(exp.get('candidate_vector_path')))
+        lines.append('  Nomes IBGE: '+str(exp.get('ibge_naming')))
+    elif exp.get('status') not in (None,'N/D'):
+        lines.append('Triagem SAR experimental indisponível: '+str(exp.get('reason') or exp.get('status')))
+    elif exp.get('status')=='N/D':
+        lines.append('Triagem SAR experimental indisponível: '+str(exp.get('reason')))
     validation=summary.get('validation') or {}
     for level,report in [('classe',validation),('grupo',validation.get('parent_validation',{}))]:
         for label,gate in report.get('gates',{}).items():
