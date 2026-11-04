@@ -92,3 +92,43 @@ def extract_paired_horizons(payload,layer_ids=LAYER_IDS):
             raise ValueError("Conflicting raster values for soil horizon "+str(lid))
         found[lid]=value
     return found
+
+
+def sample_points_in_stratum(geom, max_points=36, grid_steps=(6, 12, 24, 48, 96, 192)):
+    """Deterministic query points strictly inside thin/fragmented polygons.
+
+    Always samples each sizeable polygon part, then refines cell-center grids.
+    No image or carbon values are synthesized by this procedure.
+    """
+    from shapely.geometry import Point
+    if geom is None or geom.is_empty:
+        return []
+    max_points=max(1,int(max_points))
+    parts=sorted(getattr(geom,"geoms",[geom]),key=lambda g:g.area,reverse=True)
+    chosen,seen=[],set()
+    def add(p):
+        key=(round(p.x,2),round(p.y,2))
+        if key not in seen and geom.covers(p):
+            seen.add(key)
+            chosen.append(p)
+    add(geom.representative_point())
+    for part in parts[:max(1,max_points//2)]:
+        if part.area>0:
+            add(part.representative_point())
+    minx,miny,maxx,maxy=geom.bounds
+    inside=[]
+    for n in grid_steps:
+        dx=(maxx-minx)/n
+        dy=(maxy-miny)/n
+        cand=[Point(minx+(i+0.5)*dx,miny+(j+0.5)*dy)
+              for j in range(n) for i in range(n)]
+        inside=[p for p in cand if geom.covers(p)]
+        if len(inside)+len(chosen)>=max_points:
+            break
+    room=max_points-len(chosen)
+    if room>0 and inside:
+        stride=max(1,len(inside)/room)
+        idx=sorted({int(k*stride) for k in range(room) if int(k*stride)<len(inside)})
+        for k in idx:
+            add(inside[k])
+    return chosen[:max_points]

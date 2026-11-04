@@ -612,18 +612,10 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     from shapely.geometry import Point
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
     minx,miny,maxx,maxy=geom.bounds
-    # systematic polygon sampling plus representative point; avoid dependence on bbox corners
-    n=max(4,int(math.ceil(math.sqrt(max_points))))
-    xs=np.linspace(minx,maxx,n); ys=np.linspace(miny,maxy,n)
-    pts=[Point(float(x),float(y)) for y in ys for x in xs if geom.covers(Point(float(x),float(y)))]
-    rp=geom.representative_point()
-    pts=[rp]+pts
-    # de-duplicate and cap
-    uniq=[]; seen=set()
-    for p in pts:
-        k=(round(p.x,2),round(p.y,2))
-        if k not in seen: seen.add(k); uniq.append(p)
-    pts=uniq[:max_points]
+    # Patch 0003: every subpolygon contributes an interior point; refine grid
+    # adaptively for fragmented/narrow IBGE strata, never invent soil values.
+    from pronasolos_identify import sample_points_in_stratum
+    pts=sample_points_in_stratum(geom,max_points)
     service="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
     layer_ids=[2,3,4,5,6]
     names=["0–5","5–15","15–30","30–60","60–100"]
@@ -674,12 +666,15 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         out["_diagnostic"]={"target_status":"SERVICO_SEM_VALORES_BRUTOS_VALIDOS",
                              "reason":" | ".join(detail),"local_raster_audit":local_audit,
                              "services_checked":list(SERVICE_CANDIDATES),
-                             "samples_requested":len(pts),"target_0_100_available":False}
+                             "samples_requested":len(pts),"query_points_inside_stratum":len(pts),
+                             "target_0_100_available":False}
         return out
     out["_diagnostic"]={"samples_requested":len(pts),"valid_by_layer":{names[i]:len(vals[k]) for i,k in enumerate(layer_ids)},
                         "service":service,"services_checked":list(SERVICE_CANDIDATES),
                         "selected_points_by_service":service_used_counts,
                         "no_cross_service_horizon_combination":True,
+                        "mixed_service_products_in_stratum":sum(1 for v in service_used_counts.values() if v)>1,
+                        "query_points_inside_stratum":len(pts),
                         "target_depth_cm":100,
                         "target_0_100_available":"0–100 cm" in out,
                         "local_raster_audit":local_audit,
