@@ -188,24 +188,40 @@ def classify_vigor(vh_db, vv_db, reference_fields, *, height_m=None, weights=Non
     t = _reference_terciles(ref, weights)
     rng = np.random.default_rng(seed)
     counts = np.zeros(3); boot = []
+    metric_boot = {k: [] for k in ("size", "uniformity", "texture_homogeneity")}
     for _ in range(n_boot):
         bb = [blocks[i] for i in rng.integers(0, len(blocks), len(blocks))]
         rr = [ref[i] for i in rng.integers(0, len(ref), len(ref))]
         try:
             st = {k: _robust([r[k] for r in rr]) for k in weights}
             tb = _reference_terciles(rr, weights)
-            vb = _composite(_metrics_from_blocks(bb), st, weights)[0]
+            bm = _metrics_from_blocks(bb)
+            vb = _composite(bm, st, weights)[0]
         except (ValueError, IndexError):
             continue
         if np.isfinite(vb) and np.all(np.isfinite(tb)):
             counts[_klass(vb, tb)] += 1; boot.append(vb)
-    probs = counts / counts.sum() if counts.sum() else np.full(3, np.nan)
+            for key in metric_boot:
+                if np.isfinite(bm.get(key, np.nan)):
+                    metric_boot[key].append(float(bm[key]))
+    if counts.sum() == 0 or not np.isfinite(V) or not np.all(np.isfinite(t)):
+        return {"status": "N/D", "reason": "bootstrap espacial ou referências inválidos para a estimativa de incerteza"}
+    probs = counts / counts.sum()
+    metric_intervals = {key: [float(np.quantile(values, .05)), float(np.quantile(values, .95))]
+                        for key, values in metric_boot.items() if len(values) >= 10}
     return {"status": "experimental", "class": CLASSES[_klass(V, t)],
             "probabilities": dict(zip(CLASSES, map(float, probs))),
             "composite": float(V), "composite_boot_p05_p95": (
                 [float(np.quantile(boot, .05)), float(np.quantile(boot, .95))] if boot else None),
             "reference_terciles": [float(x) for x in t], "z_scores": z, "metrics": m,
             "weights": weights, "n_reference_fields": len(ref), "n_bootstrap": int(counts.sum()),
+            "metric_boot_p05_p95": metric_intervals,
+            "uncertainty_scope": ("Intervalo percentílico 90% dos indicadores por bootstrap espacial em blocos; "
+                                  "probabilidades são estabilidade interna da classificação, NÃO acurácia "
+                                  "observada em campo nem IC de produtividade."),
+            "radar_interpretation": {"size": "RVI mediano, proxy da cobertura vegetal; altura só com produto independente",
+                                     "uniformity": "1/(1+CV) do RVI multilook 3×3",
+                                     "texture_homogeneity": "homogeneidade GLCM do VH dB; proxy de textura/rugosidade do radar"},
             "method": "z robusto vs. talhões de referência; tercis da referência; bootstrap espacial em blocos 5×5",
             "limitations": ("Pesos iguais não calibrados; textura SAR não é rugosidade física; "
                             "classes relativas à referência regional; validar com vigor observado em campo.")}
