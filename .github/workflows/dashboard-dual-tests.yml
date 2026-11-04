@@ -71,6 +71,7 @@ jobs:
             'test_sicar_wfs_integrity.py',
             'test_experimental_transfer.py',
             'test_experimental_soil_scenarios.py',
+            'test_experimental_audit.py',
             'test_experimental_carbon_separation.py',
             'test_executive_carbon_report.py',
             'test_sar_height_preservation.py'
