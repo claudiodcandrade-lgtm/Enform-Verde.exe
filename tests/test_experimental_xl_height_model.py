@@ -83,12 +83,12 @@ class ExperimentalXLHeightTests(unittest.TestCase):
 
     def test_spatial_temporal_and_product_matching_qc_is_mandatory(self):
         bad=self.frame.copy()
-        bad.loc[0,"spatial_match_error_m"]=11.0
-        with self.assertRaisesRegex(ValueError,"pelo menos cinco sítios"):
+        bad.loc[:,"spatial_match_error_m"]=11.0
+        with self.assertRaisesRegex(ValueError,"Nenhum par passou a QA"):
             fit_experimental_xl_height_model(bad,**self.kw)
         bad=self.frame.copy()
-        bad.loc[0,"date_sar"]="2020-01-01T00:00:00Z"
-        with self.assertRaisesRegex(ValueError,"pelo menos cinco sítios"):
+        bad.loc[:,"date_sar"]="2020-01-01T00:00:00Z"
+        with self.assertRaisesRegex(ValueError,"Nenhum par passou a QA"):
             fit_experimental_xl_height_model(bad,**self.kw)
         bad=self.frame.copy()
         bad.loc[0,"sar_product_id"]="different-product"
