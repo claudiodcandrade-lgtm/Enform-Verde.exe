@@ -458,30 +458,55 @@ def ibge_formation(name):
     return None
 
 
-def name_native_from_ibge(predicted, reference):
-    """Name native SAR classes from IBGE only where polygons intersect exactly.
+def name_native_from_ibge(predicted, reference, *, max_proximity_m=0):
+    """Name SAR-validated native patches from compatible IBGE physiognomies.
 
-    IBGE legenda_1 is a phytogeographic reference, not a transferable land-use
-    classifier. Do not spread the nearest IBGE name into neighboring SAR areas.
+    First intersect exact polygons. Remaining native geometry may inherit
+    ONLY the name (not a cover-classification) of the nearest compatible IBGE
+    polygon when an explicit bounded metric proximity is authorized. The
+    result keeps the SAR-validated native geometry and records distance.
     """
     import geopandas as gpd
+    from math import isfinite
+    if not isinstance(max_proximity_m,(int,float)) or not isfinite(max_proximity_m) or not 0 <= max_proximity_m <= 10000:
+        raise ValueError("max_proximity_m deve estar entre 0 e 10000")
     pieces=[]
     ref=reference.to_crs(AREA_CRS) if reference is not None else None
     for row in predicted.to_crs(AREA_CRS).itertuples():
         formation=native_formation(row.class_name)
         if not formation or ref is None:
-            pieces.append(dict(class_name=row.class_name,source=row.source,taxonomy=row.taxonomy,geometry=row.geometry));continue
+            pieces.append(dict(class_name=row.class_name,source=row.source,taxonomy=row.taxonomy,geometry=row.geometry))
+            continue
         compatible=ref[ref.class_name.map(ibge_formation)==formation]
         remaining=row.geometry
-        # Keep distinct local IBGE names where the recognized patch intersects them.
         for item in compatible.itertuples():
+            if remaining.is_empty:
+                break
             clipped=remaining.intersection(item.geometry)
             if clipped.area>0:
-                pieces.append(dict(class_name=item.class_name,source='SAR_VALIDADO+IBGE',taxonomy='Formação SAR: '+formation+'; nome: IBGE legenda_1',geometry=clipped))
+                pieces.append(dict(class_name=item.class_name,source="SAR_VALIDADO+IBGE",
+                                   taxonomy="Formação SAR: "+formation+"; nome: IBGE legenda_1 por interseção",
+                                   geometry=clipped))
                 remaining=remaining.difference(clipped)
-        if remaining.area>0:
+        if not remaining.is_empty and remaining.area>0:
+            if max_proximity_m>0 and not compatible.empty:
+                # Distance refers to equal-area projection metres; approximate
+                # proximity, not a survey/legal ecological boundary.
+                nearest=min(compatible.itertuples(),
+                            key=lambda item:remaining.distance(item.geometry))
+                distance_m=float(remaining.distance(nearest.geometry))
+                if distance_m <= max_proximity_m:
+                    pieces.append(dict(class_name=nearest.class_name,
+                                       source="SAR_VALIDADO+IBGE_PROXIMIDADE",
+                                       taxonomy=("Presença de vegetação: classe SAR validada "+formation+
+                                                 "; nome fitofisionômico INFERIDO por proximidade IBGE legenda_1; "+
+                                                 "distância cartográfica aproximada "+f"{distance_m:.1f} m"+
+                                                 "; limite "+f"{max_proximity_m:.0f} m"+
+                                                 "; NÃO comprova extensão da classe IBGE"),
+                                       geometry=remaining))
+                    continue
             pieces.append(dict(class_name=row.class_name,source=row.source,
-                               taxonomy='Formação SAR ampla; sem interseção IBGE compatível',
+                               taxonomy="Formação SAR ampla; sem interseção IBGE compatível ou proximidade autorizada",
                                geometry=remaining))
     return gpd.GeoDataFrame(pieces,crs=AREA_CRS).to_crs(predicted.crs) if pieces else predicted
 
@@ -813,7 +838,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         raw_layers.append(reference)
     else:warnings.append('IBGE sem polígonos disponíveis; não há detalhamento fitofisionômico oficial.')
     if layers:
-        layers[0]=name_native_from_ibge(layers[0],reference)
+        # Use IBGE only to NAME SAR-confirmed native polygons; inference by\n        # proximity is explicit and bounded to 3 km in a metric projection.\n        layers[0]=name_native_from_ibge(layers[0],reference,max_proximity_m=3000)
     # IBGE legenda_1 describes phytoregions, not proof of current native cover.
     # Below accepted SAR, MapBiomas masks current anthropic/native cover, and
     # IBGE supplies the detailed physiognomy within its native intersections.
