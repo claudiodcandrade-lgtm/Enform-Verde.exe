@@ -1535,6 +1535,19 @@ class App(tk.Tk):
         else:
             executive.append("• Não determinado")
         executive.append(native_summary)
+        # A mostly urban classification in an operator-supplied agricultural AOI
+        # is a QA anomaly, not permission to erase real class-24 pixels or
+        # relabel them as crops from the filename or historical location.
+        urban_ha=sum(float(item.get("area_ha") or 0) for item in classes
+                     if str(item.get("class_name") or "") == "Infraestrutura Urbana")
+        if aoi_ha>0 and urban_ha/aoi_ha>=0.5:
+            executive.append(
+                "ALERTA DE CONSISTÊNCIA CARTOGRÁFICA: "+
+                format_ptbr(urban_ha,2)+" ha ("+
+                format_ptbr(100*urban_ha/aoi_ha,2)+
+                "%) classificados como Infraestrutura Urbana no MapBiomas anual. "+
+                "Verificar posicionamento/CRS do KMZ, mapa TIFF, classe 24, ano da imagem e "+
+                "interseção de pixels antes de atribuir uso agrícola; nenhuma classe foi alterada automaticamente.")
         second_detections=land.get("second_crop_detection") if isinstance(land.get("second_crop_detection"),list) else []
         for detection in second_detections:
             try:
