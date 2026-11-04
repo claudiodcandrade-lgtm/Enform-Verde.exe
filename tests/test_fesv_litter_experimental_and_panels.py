@@ -20,7 +20,7 @@ class NorthMatoGrossoLitterTest(unittest.TestCase):
         self.assertAlmostEqual(x["range_tc_ha"][1], 10.63*.50, places=6)
         self.assertEqual(x["origin"], "EXPERIMENTAL_FISICO")
         self.assertFalse(x["include_in_total"])
-        self.assertIn("NÃO é IC95%", x["uncertainty_kind"] if "NÃO é IC95%" in x["uncertainty_kind"] else x["method"])
+        self.assertIn("sem IC95%", x["uncertainty_kind"])
 
     def test_wrong_formation_biome_and_region_not_transferred(self):
         self.assertIsNone(northern_mato_grosso_fesv_litter_component(
