@@ -123,3 +123,158 @@ def combine_biomass_sentinel1_height(biomass_fh, sentinel1=None, *, residual_mod
     out["height_model_holdout_rmse_m"]=rmse
     out["uncertainty_kind"]="RMSE holdout e erro do produto apresentados separadamente; não assumir independência"
     return out
+
+
+def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognomy,
+                                      reference_url, reference_sha256,
+                                      reference_kind, primary_route_status,
+                                      group_column="site_id", target_column="field_height_m"):
+    """Fit an auditable X/L fallback height model from independent field pairs.
+
+    This route is allowed only after the priority P-band ESA + recent SAR route
+    is unavailable for the AOI. It reports grouped spatial holdout errors and
+    never uses arbitrary coefficients or pseudo-labels.
+    """
+    import numpy as np
+    import pandas as pd
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import GroupKFold
+    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+    band=str(band).upper().strip()
+    if band not in ("X","L"):
+        raise ValueError("A contingência de altura aceita apenas banda X ou L.")
+    unavailable={"UNAVAILABLE","NO_COVERAGE","ACCESS_DENIED","NO_VALID_PIXELS"}
+    status=str(primary_route_status or "").upper().strip()
+    if status not in unavailable:
+        raise ValueError("X/L só pode ser usado quando P-band ESA/SAR recente estiver indisponível na AOI.")
+    if reference_kind != "independent_field_observations":
+        raise ValueError("A calibração X/L exige observações de campo independentes; mapas não são rótulos de altura.")
+    if not reference_url or not reference_sha256 or not physiognomy:
+        raise ValueError("Fonte, SHA-256 e fitofisionomia compatível são obrigatórios.")
+    if len(feature_columns)<1 or len(set(feature_columns))!=len(feature_columns):
+        raise ValueError("Declare preditores X/L únicos e não vazios.")
+    required=set(feature_columns)|{group_column,target_column,"plot_id"}
+    missing=sorted(required-set(frame.columns))
+    if missing:
+        raise ValueError("Pares X/L incompletos: "+", ".join(missing))
+    data=frame.copy()
+    for col in list(feature_columns)+[target_column]:
+        data[col]=pd.to_numeric(data[col],errors="coerce")
+    data=data.dropna(subset=list(feature_columns)+[target_column,group_column,"plot_id"])
+    numeric=data[list(feature_columns)+[target_column]].to_numpy(float)
+    data=data.loc[np.isfinite(numeric).all(axis=1)].copy()
+    data=data.loc[(data[target_column]>0)&data[group_column].astype(str).str.strip().ne("")&
+                  data["plot_id"].astype(str).str.strip().ne("")].copy()
+    if data["plot_id"].duplicated().any():
+        raise ValueError("Agregue cada footprint de parcela a uma linha; pixels repetidos não são réplicas independentes.")
+    groups=data[group_column].astype(str).to_numpy()
+    n_sites=len(set(groups))
+    if n_sites<5 or len(data)<=len(feature_columns)+1:
+        raise ValueError("Exige pelo menos cinco sítios espaciais e pares suficientes para o número de preditores.")
+    x=data[list(feature_columns)].to_numpy(float)
+    y=data[target_column].to_numpy(float)
+    pred=np.full(len(y),np.nan)
+    cv=GroupKFold(n_splits=min(5,n_sites))
+    for train,test in cv.split(x,y,groups):
+        if len(train)<=len(feature_columns):
+            raise ValueError("Fold espacial sem observações suficientes para ajustar o modelo.")
+        model=LinearRegression().fit(x[train],y[train])
+        pred[test]=model.predict(x[test])
+    residual=pred-y
+    final=LinearRegression().fit(x,y)
+    metrics={
+        "n_independent_plots":int(len(data)),
+        "n_spatial_sites":int(n_sites),
+        "RMSE_m":float(np.sqrt(mean_squared_error(y,pred))),
+        "MAE_m":float(mean_absolute_error(y,pred)),
+        "bias_m":float(np.mean(pred-y)),
+        "R2":float(r2_score(y,pred)) if np.var(y)>0 else None,
+        "OOF_residual_quantiles_m":[float(v) for v in np.quantile(residual,[0.05,0.95])],
+        "validation":"GroupKFold espacial por sítio; previsão out-of-fold",
+        "minimum_accuracy_policy":"qualquer precisão mensurável é reportada; não há limiar universal",
+    }
+    return {
+        "status":"MODELO_XL_EXPERIMENTAL_COM_VALIDACAO_ESPACIAL",
+        "deployable":False,
+        "band":band,
+        "sensor_priority":"P ESA + Sentinel-1 recente; X; L",
+        "primary_route_status":status,
+        "physiognomy":str(physiognomy),
+        "feature_columns":list(feature_columns),
+        "coefficients":{"intercept_m":float(final.intercept_),
+                        **{name:float(value) for name,value in zip(feature_columns,final.coef_)}},
+        "feature_min":{name:float(data[name].min()) for name in feature_columns},
+        "feature_max":{name:float(data[name].max()) for name in feature_columns},
+        "metrics":metrics,
+        "reference_url":reference_url,
+        "reference_sha256":str(reference_sha256),
+        "reference_kind":reference_kind,
+        "scope":"somente a banda/produto, fitofisionomia, região e intervalo de preditores representados pelas parcelas",
+        "limitation":"Modelo experimental; GroupKFold não substitui holdout externo independente por região.",
+    }
+
+
+def predict_experimental_xl_height(features, model, *, band, physiognomy,
+                                    primary_route_status, x_route_status="UNAVAILABLE"):
+    """Predict height only through the authorized X-then-L fallback chain."""
+    import numpy as np
+    band=str(band).upper().strip()
+    status=str(primary_route_status or "").upper().strip()
+    if status not in {"UNAVAILABLE","NO_COVERAGE","ACCESS_DENIED","NO_VALID_PIXELS"}:
+        return {"status":"N/D","height_mean_m":None,
+                "reason":"Rota prioritária P ESA/Sentinel-1 recente está disponível; fallback X/L não acionado."}
+    if band=="L" and str(x_route_status or "").upper().strip() not in {
+            "UNAVAILABLE","NO_COVERAGE","ACCESS_DENIED","NO_VALID_PIXELS"}:
+        return {"status":"N/D","height_mean_m":None,
+                "reason":"L-band só é acionada quando a rota X-band também está indisponível."}
+    if not isinstance(model,dict) or model.get("band")!=band or model.get("physiognomy")!=str(physiognomy):
+        return {"status":"N/D","height_mean_m":None,
+                "reason":"Modelo X/L ausente ou incompatível com banda/fitofisionomia."}
+    names=model.get("feature_columns") or []
+    co=model.get("coefficients") or {}
+    if not names or any(name not in features for name in names):
+        return {"status":"N/D","height_mean_m":None,"reason":"Preditores do modelo X/L ausentes."}
+    values=[]
+    for name in names:
+        try:value=float(features[name])
+        except (TypeError,ValueError,OverflowError):
+            return {"status":"N/D","height_mean_m":None,"reason":"Preditor X/L inválido: "+name}
+        if not isfinite(value):
+            return {"status":"N/D","height_mean_m":None,"reason":"Preditor X/L não finito: "+name}
+        if value<float(model["feature_min"][name]) or value>float(model["feature_max"][name]):
+            return {"status":"N/D","height_mean_m":None,
+                    "reason":"Preditor fora do domínio de calibração: "+name}
+        values.append(value)
+    estimate=_num(co.get("intercept_m"))
+    if estimate is None:return {"status":"N/D","height_mean_m":None,"reason":"Intercepto inválido."}
+    for name,value in zip(names,values):
+        coefficient=_num(co.get(name))
+        if coefficient is None:return {"status":"N/D","height_mean_m":None,"reason":"Coeficiente inválido: "+name}
+        estimate+=coefficient*value
+    metrics=model.get("metrics") or {}
+    if estimate<=0:return {"status":"N/D","height_mean_m":None,"reason":"Altura prevista não física."}
+    residual=metrics.get("OOF_residual_quantiles_m")
+    rmse=_num(metrics.get("RMSE_m"))
+    if not isinstance(residual,list) or len(residual)!=2 or rmse is None or rmse<=0:
+        return {"status":"N/D","height_mean_m":None,"reason":"Incerteza espacial OOF ausente."}
+    lo=max(0.0,estimate+float(residual[0]));hi=max(lo,estimate+float(residual[1]))
+    return {
+        "status":"ALTURA_XL_EXPERIMENTAL",
+        "height_mean_m":estimate,
+        "height_interval_oof_m":[lo,hi],
+        "height_rmse_spatial_oof_m":rmse,
+        "height_mae_spatial_oof_m":metrics.get("MAE_m"),
+        "height_bias_spatial_oof_m":metrics.get("bias_m"),
+        "n_independent_plots":metrics.get("n_independent_plots"),
+        "n_spatial_sites":metrics.get("n_spatial_sites"),
+        "band":band,
+        "physiognomy":str(physiognomy),
+        "reference_url":model.get("reference_url"),
+        "reference_sha256":model.get("reference_sha256"),
+        "model_coefficients":dict(co),
+        "input_features":dict(zip(names,values)),
+        "uncertainty_kind":"quantis 5–95% dos resíduos out-of-fold por grupo espacial; RMSE reportado separadamente",
+        "deployment_scope":model.get("scope"),
+        "scientific_status":"EXPERIMENTAL; não homologado nacionalmente",
+    }
