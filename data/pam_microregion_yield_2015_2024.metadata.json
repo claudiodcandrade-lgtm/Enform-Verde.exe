@@ -12,10 +12,10 @@
     2015,
     2024
   ],
-  "retrieved_at_utc": "2026-10-24T20:16:16.985478+00:00",
+  "retrieved_at_utc": "2026-11-03T14:54:07.275408+00:00",
   "license": "IBGE public statistics; verify current IBGE terms before redistribution in commercial products",
   "output": "pam_microregion_yield_2015_2024.csv.gz",
-  "sha256": "fe35d64f3c170cb04420bce9fa2065d2074d39cc59b3c1a07537df9d29d2db7e",
+  "sha256": "18b375cc39de635cf78abd192f8ff05bfa5b058d631b9d0956a3d68c04165db8",
   "row_count": 133920,
   "products": {
     "arroz_grao": {
@@ -37,20 +37,20 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 3448,
-        "median_absolute_relative_difference": 4.969692889005769e-05,
+        "median_absolute_relative_difference": 0.00004969692889005769,
         "within_2_percent": 3448,
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 2132,
         "112": 2132,
-        "214": 2132
+        "214": 2132,
+        "216": 2132
       }
     },
     "cafe_total": {
@@ -72,9 +72,9 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 2415,
@@ -83,9 +83,9 @@
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 3165,
         "112": 3165,
-        "214": 3165
+        "214": 3165,
+        "216": 3165
       }
     },
     "cana_acucar": {
@@ -107,20 +107,20 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 4682,
-        "median_absolute_relative_difference": 4.045366763922897e-06,
+        "median_absolute_relative_difference": 0.000004045366763922897,
         "within_2_percent": 4682,
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 898,
         "112": 898,
-        "214": 898
+        "214": 898,
+        "216": 898
       }
     },
     "feijao_grao": {
@@ -142,9 +142,9 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 5249,
@@ -153,9 +153,9 @@
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 331,
         "112": 331,
-        "214": 331
+        "214": 331,
+        "216": 331
       }
     },
     "laranja": {
@@ -177,20 +177,20 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 4394,
-        "median_absolute_relative_difference": 1.0370340740761106e-05,
+        "median_absolute_relative_difference": 0.000010370340740761106,
         "within_2_percent": 4394,
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 1186,
         "112": 1186,
-        "214": 1186
+        "214": 1186,
+        "216": 1186
       }
     },
     "milho_grao": {
@@ -212,20 +212,20 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 5334,
-        "median_absolute_relative_difference": 6.961808834623674e-05,
+        "median_absolute_relative_difference": 0.00006961808834623674,
         "within_2_percent": 5331,
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 246,
         "112": 246,
-        "214": 246
+        "214": 246,
+        "216": 246
       }
     },
     "soja_grao": {
@@ -247,20 +247,20 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 2951,
-        "median_absolute_relative_difference": 7.181571243302515e-05,
+        "median_absolute_relative_difference": 0.00007181571243302515,
         "within_2_percent": 2951,
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 2629,
         "112": 2629,
-        "214": 2629
+        "214": 2629,
+        "216": 2629
       }
     },
     "sorgo_grao": {
@@ -282,20 +282,20 @@
         "2024"
       ],
       "rows_by_variable": {
-        "216": 5580,
         "112": 5580,
-        "214": 5580
+        "214": 5580,
+        "216": 5580
       },
       "yield_reconciliation": {
         "numeric_triplets": 1538,
-        "median_absolute_relative_difference": 4.927483862487235e-05,
+        "median_absolute_relative_difference": 0.00004927483862487235,
         "within_2_percent": 1538,
         "method": "published kg/ha compared with production tonnes × 1000 / harvested area ha; diagnostic only"
       },
       "suppressed_or_missing_by_variable": {
-        "216": 4042,
         "112": 4042,
-        "214": 4042
+        "214": 4042,
+        "216": 4042
       }
     }
   },
@@ -304,6 +304,5 @@
     "Production and harvested area remain separate; yield reconciliation must use same product, year and territory.",
     "N9 is the pre-2017 microregion geography; do not join to later municipal boundaries without a documented crosswalk."
   ],
-  "reconciliation_note": "For numeric production and area, compare published kg/ha yield with (production tonnes × 1000) / harvested area hectares; keep official yield and discrepancy separately.",
-  "recovery_note": "Arquivo recuperado do artefato de CI; gzip descompactado e recomprimido de forma determinística. O checksum foi recalculado sobre os bytes locais; linhas e esquema foram preservados."
+  "reconciliation_note": "For numeric production and area, compare published kg/ha yield with (production tonnes × 1000) / harvested area hectares; keep official yield and discrepancy separately."
 }

@@ -80,3 +80,10 @@ A cada alteração efetiva, atualizar **este prompt** e o Word `docs/ESPECIFICAC
 - Mantida a checagem operacional de tipos raster: apenas float32/float64; raster uint8/renderizado deve ser rejeitado.
 - Após o commit verificar `Dashboard dual - tests` e `Build Enform Verde Windows` no SHA novo. Não declarar sucesso antes da verificação.
 - Liberação 3.26.0: piloto experimental tecnicamente funcional; a acurácia em propriedades reais será medida depois, sem baixar o nível de transparência ou simular validação independente.
+
+
+## Integração de bases binárias — 2026-11-04
+- Substituir na árvore Git a série PAM N9 2015–2024 corrompida por `data/pam_microregion_yield_2015_2024.csv.gz` (945226 bytes; SHA-256 `18b375cc39de635cf78abd192f8ff05bfa5b058d631b9d0956a3d68c04165db8`; Git blob `93fe179618f2fb6b63b460ef05e58240fd4e0bb7`). Atualizar metadados da mesma fonte; validar gzip, contagens e CSV.
+- Incorporar `data/ibge_microrregioes_2021_simplificada.geojson.gz` (2496988 bytes; SHA-256 `1d8a48b938911831cc29b7c86af7e62f2ab8f762bd64d868a11b7e206f150bbc`; Git blob `b402109bd1d40f06c0f51f14f684f26f14c855fa`) e sua licença/metadados.
+- Atualizar `docs/ESPECIFICACAO_TECNICA_COMPLETA.docx` com a v51. Não interpretar a série histórica PAM como validação de previsão ao nível de talhão; não publicar acurácia não calculada.
+- Manter versão piloto tecnicamente testada como objetivo prioritário, reportar qualquer erro real de CI/Windows e conferir nome, tamanho e SHA do EXE antes de declarar liberado.

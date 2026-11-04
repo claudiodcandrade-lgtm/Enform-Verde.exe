@@ -30,3 +30,7 @@ Status: **build funcional / piloto experimental**. Não constitui homologação 
 - Vigor automático pelo Sentinel-1 RTC mais recente (Planetary Computer), comparado a talhões da mesma classe MapBiomas num raio de 8 km na mesma cena.
 - A aba “Monitoramento — áreas cultivadas” passa a mostrar identificação consolidada, vigor automático e previsão calibrada (soja e milho).
 - Aviso: em 03/11/2026 o link oficial do GeoTIFF MapBiomas C11 retornou HTTP 403; sem esse mapa (ou cópia local em ~/.enform_verde/mapbiomas), culturas e vigor ficam N/D e a previsão segue sem vigor.
+
+
+### Dados de referência no piloto 3.26.0
+O pacote-fonte integra a série oficial PAM N9 2015–2024 corrigida e o limite simplificado IBGE para identificação microrregional, com SHA-256 e metadados de proveniência. São insumos para modelos experimentais; não substituem testes de acurácia nas propriedades reais.
