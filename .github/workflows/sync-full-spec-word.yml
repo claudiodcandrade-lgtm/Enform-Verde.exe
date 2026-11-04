@@ -1,0 +1,54 @@
+name: Sync full Word specification from reviewed checkpoint
+on:
+  push:
+    branches:
+      - feature/agricultural-identification-native-carbon
+    paths:
+      - docs/spec_updates/2026-11-04_v61_sinop_report.md
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: enform-word-spec-sync
+  cancel-in-progress: false
+jobs:
+  update-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/agricultural-identification-native-carbon
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Append reviewed scientific checkpoint preserving full Word history
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/2026-11-04_v61_sinop_report.md \
+            --baseline "Enform Verde 3.26.0-SOLO-SAFRA (Sinop report correction)" \
+            --head-sha "${{ github.sha }}" \
+            --code-sha "${{ github.sha }}" \
+            --date "4 de novembro de 2026"
+      - name: Verify DOCX archive and preserve previous content
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          p=Path('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx')
+          with ZipFile(p) as z:
+              assert z.testzip() is None
+              xml=z.read('word/document.xml').decode()
+              assert 'PREVISÃO REGIONAL DE SOJA' in xml
+              assert 'ESPECIFICACAO' not in xml[:0]
+          print('Word specification updated with Sinop checkpoint and archive validated')
+          PY
+      - name: Commit DOCX to the same feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
+          git diff --cached --quiet || git commit -m "docs: sync full Word specification with Sinop forecast and climate fixes"
+          git push origin HEAD:feature/agricultural-identification-native-carbon
