@@ -55,14 +55,27 @@ def executive_carbon_lines(native, fmt):
     unknown=native.get("unknown_cover_area_ha") or 0
     known=native.get("known_total_tc")
     complete=bool(native.get("complete"))
+    aoi_ha=float(native.get("area_aoi_ha") or 0)
+    pct=(100*area/aoi_ha) if aoi_ha>0 else None
+    others=float(native.get("excluded_other_uses_ha") or 0)
+    cover_complete=(native.get("cover_completeness")=="COMPLETE")
     lines=["PAINEL EXECUTIVO — ESTOQUES DE CARBONO",
-           "Área total: "+fmt(native.get("area_aoi_ha"))+" ha | Área nativa: "+fmt(area)+" ha",
-           "Cobertura nativa: "+(fmt(100*area/native["area_aoi_ha"])+"%" if native.get("area_aoi_ha") and not unknown else "N/D — cobertura não integralmente verificada"),
-           "Cobertura não confirmada: "+fmt(unknown)+" ha"+(" — fonte de cobertura atual indisponível; não equivale a zero de vegetação nativa" if unknown else ""),
-           "Estoque "+("total" if complete else "parcial conhecido")+": "+
+           "ÁREA TOTAL ANALISADA: "+fmt(aoi_ha)+" ha (100%)",
+           "VEGETAÇÃO NATIVA MAPEADA: "+fmt(area)+" ha"+
+               (" ("+fmt(pct)+"% da AOI)" if pct is not None else ""),
+           "OUTROS USOS (não entram no estoque nativo): "+fmt(others)+" ha",
+           "SEM CLASSE / NÃO CONFIRMADO: "+fmt(unknown)+" ha",
+           "A formação IBGE nomeia SOMENTE a interseção nativa; NÃO é cobertura de toda a AOI.",
+           "Cobertura cartográfica: "+("completa dentro da precisão de área" if cover_complete
+                                    else "parcial — área sem classe; não inferir sua cobertura"),
+           "COMPARTIMENTOS DE CARBONO: "+("todos quantificados" if complete
+                                              else "PARCIAIS — um ou mais compartimentos sem estoque defensável"),
+           "Estoque "+("conhecido" if complete else "parcial conhecido")+": "+
            (fmt(known)+" tC | "+fmt(known*44/12)+" tCO₂e" if known is not None else "não estimado"),
-           "Densidade nativa: "+(fmt(known/area)+" tC/ha | "+fmt(known/area*44/12)+" tCO₂e/ha" if known is not None and area else "N/D"),
-           "INCERTEZA POR COMPARTIMENTO — valor ± medida disponível (tC/ha; %)"]
+           "Densidade sobre a área NATIVA mapeada: "+
+           (fmt(known/area)+" tC/ha | "+fmt(known/area*44/12)+" tCO₂e/ha"
+            if known is not None and area else "N/D"),
+           "INCERTEZA POR COMPARTIMENTO — valor e amplitude apenas quando quantificados (tC/ha; %)"]
     for st in native.get("strata",[]):
         if not st.get("area_ha"):
             continue
