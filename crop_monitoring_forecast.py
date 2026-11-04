@@ -106,7 +106,8 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     dates = vig.get("acquisition_period_utc")
                     if dates:
                         lines.append(f"  AQUISIÇÃO SENTINEL-1 REAL (UTC): {dates[0]} até {dates[1]}")
-                        lines.append(f"  Cenas auditáveis: {', '.join(sorted(set(v['scene_id'] for v in vig.get('accepted_scenes', [])))}")
+                        scene_ids = sorted({v["scene_id"] for v in vig.get("accepted_scenes", []) if v.get("scene_id")})
+                        lines.append("  Cenas auditáveis: " + ", ".join(scene_ids))
                     else:
                         lines.append("  Aquisição Sentinel-1: NÃO COMPROVADA por cena e data; resultado ainda não deve ser descrito como monitoramento orbital efetivo.")
                     lines.append(f"  Cobertura SAR válida da área cartográfica de {crop}: {100*vig.get('sar_sample_coverage_fraction',0):.3f}%")
