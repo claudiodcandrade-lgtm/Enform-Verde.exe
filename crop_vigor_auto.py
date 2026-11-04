@@ -115,8 +115,8 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
                 # Reject HTML/JSON mistakenly cached with a .tif extension.
                 with open(candidate, "rb") as handle:
                     magic = handle.read(4)
-                if magic not in (b"II*\\x00", b"MM\\x00*",
-                                 b"II+\\x00", b"MM\\x00+"):
+                if magic not in (b"II*\x00", b"MM\x00*",
+                                 b"II+\x00", b"MM\x00+"):
                     raise ValueError("arquivo local não possui assinatura TIFF")
             source = candidate if local else ("/vsicurl/" + candidate if
                      str(candidate).startswith("https://") else candidate)
