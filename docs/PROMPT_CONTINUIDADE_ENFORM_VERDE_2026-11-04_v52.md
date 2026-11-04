@@ -135,3 +135,13 @@ Correção publicada em `crop_forecast_pipeline.py` (commit bce37bc9), `desktop_
 - Requisitos de integração efetiva: dados reais Sentinel-1 VV/VH com cenas <=30 dias, SAR multitemporal e máscara de culturas, etapa fenológica com incerteza, NASA POWER diários com proveniência, solo, PAM por microrregião, validação independente temporal e espacial, erro de previsão total. Separar projeção histórica regional sem condicionamento SAR de verdadeira previsão condicionada a observações radar.
 - Pendências críticas N/D até evidência: coleta pixels atuais para cada AOI, treinamento/validação dos identificadores milho/sorgo/algodão, execução local dos solvers agrícolas por espécie e parâmetros de solo/genótipo/manejo, calibração gravimétrica de serrapilheira SFB/IFN e testes de classificação no município inteiro.
 - Nunca liberar ZIP anterior como contendo commits novos. Usar sha do HEAD, CI de suite, autoteste EXE, checksum e ZIP do MESMO SHA. Gate científico não pode ser dispensado nem adulterado.
+
+
+## CHECKPOINT 04/11/2026 — vigor SAR: porte, uniformidade e textura/rugosidade com incerteza por indicador
+Código real:
+- `crop_vigor.py` em 95da35fe: mede RVI mediano ou altura quando disponível (porte aparente), uniformidade = 1/(1+CV do RVI multilook 3×3), homogeneidade GLCM da polarização VH em dB (indicador de textura, NÃO rugosidade física). Produz quantis p05/p95 de cada índice por bootstrap espacial em blocos 5×5 e probabilidades descritivas de classe. Não afirma acurácia de campo; quando bootstrap inválido retorna N/D.
+- `crop_spatial_monitoring.py` em 916faa38: retém no JSON de cada recorte valores, intervalos dos índices, identificador e idade da cena, pixels, probabilidades, fontes e metadados de rastreabilidade quando fornecidos.
+- `crop_monitoring_forecast.py` em 0ee24bf6: mostra os três índices e seus intervalos nos relatórios e preserva auditoria detalhada; não extrapola amostra SAR para produtividade municipal.
+- `tests/test_crop_vigor_metric_uncertainty.py` em ff608047: testa métricas, intervalos, probabilidades normalizadas e ausência de referências. Arranjos sintéticos são APENAS fixtures de teste e não prova orbital.
+- Persistem requisitos de imagem REAL Sentinel-1 VV/VH recente <=30 dias, cobertura temporal e territorial, comparação com lavouras da mesma cultura e mesma fenofase; erros de transferência e acurácia somente com validação externa. Não converter automaticamente a textura em doença/praga, densidade de plantas, altura física ou produtividade.
+- Integrar a matriz PAM × fases FAO-56/FAO-33 × vigor SAR apenas quando forem estimados os coeficientes de vigor/interação com observações independentes de produtividade; sem isso, modelo regional PAM/FAO mantém rótulo experimental e SAR-conditional yield = N/D.
