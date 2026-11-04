@@ -17,3 +17,5 @@
 - tests/test_crop_report_consistency.py cobre textos multilinha e preservação de campos N/D; tests/test_agricultural_weather_source_period.py assegura fonte e período da consulta.
 - Testes de contrato não comprovam observação orbital; gate científico independente permanece condicionado a evidências e modelos experimentais precisam de calibração real para liberação definitiva.
 - A atualização do Word é aditiva e preserva a especificação histórica. Compilação EXE, hashes e ZIP devem corresponder ao último SHA, não a uma versão anterior.
+
+- Compatibilidade documental: o atualizador de Word agora cria o campo SHA do HEAD documental quando o DOCX histórico não o possuía; mantém todas as seções anteriores e o marcador de versão.
