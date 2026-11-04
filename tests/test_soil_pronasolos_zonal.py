@@ -69,6 +69,18 @@ class SoilPolygonZonalTests(unittest.TestCase):
         self.assertNotIn("0–100 cm",out)
         self.assertEqual(out["_diagnostic"]["target_status"],"INCOMPLETO_NAO_EXTRAPOLAR")
 
+    def test_integer_rendered_layers_fail_closed(self):
+        p=self.paths[6]
+        with rasterio.open(p) as ds:
+            profile=ds.profile.copy()
+        profile["dtype"]="uint8"
+        profile["nodata"]=None
+        with rasterio.open(p,"w",**profile) as ds:
+            ds.write(np.full((2,2),6,dtype="uint8"),1)
+        out=mapped_soil_0_100_on_polygon(self.gdf(box(0,0,20,20)),self.paths)
+        self.assertNotIn("0–100 cm",out)
+        self.assertEqual(out["_diagnostic"]["target_status"],"INCOMPLETO_NAO_EXTRAPOLAR")
+
     def test_misaligned_layers_fail_closed(self):
         p=self.paths[6]
         with rasterio.open(p,"r+") as ds:
