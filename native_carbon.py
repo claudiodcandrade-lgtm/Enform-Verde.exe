@@ -184,7 +184,8 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
     and the forest polygon is wholly contained within that property.
     """
     from carbon_compartments import (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,
-        pantanal_nhecolandia_litter_carbon_component,tapajos_necromass_components,ifn_necromass_component,infer_uf_from_aoi)
+        pantanal_nhecolandia_litter_carbon_component,northern_mato_grosso_fesv_litter_component,
+        tapajos_necromass_components,ifn_necromass_component,infer_uf_from_aoi)
     try:sar=sar_estimator(aoi,biome,physiognomy) or {}
     except Exception as exc:sar={'error':str(exc)}
     selected=sar if sar.get('agb_mg_ha') is not None else (sar.get('literature_reference') or {})
@@ -200,7 +201,8 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
     # its predictive interval cannot quantify ecological transfer bias.
     # Retain only class-compatible microrregional/validated source components.
     if not any('serapilheira' in normalize(k) for k in regional):
-        for provider in (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,pantanal_nhecolandia_litter_carbon_component):
+        for provider in (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,
+                         pantanal_nhecolandia_litter_carbon_component,northern_mato_grosso_fesv_litter_component):
             component=(provider(biome,physiognomy,aoi,property_aoi=property_aoi)
                        if provider is santo_ambrosio_litter_stock_component else
                        provider(biome,physiognomy,aoi))
