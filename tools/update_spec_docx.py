@@ -93,6 +93,15 @@ def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, dat
     xml, report["head"] = _replace_paragraph_text(xml, "SHA do HEAD documental:", "SHA do HEAD documental: " + head_sha)
     xml, report["date"] = _replace_paragraph_text(xml, "Revisão documental:", "Revisão documental: " + date)
     xml, report["control_sha"] = _replace_cell_after(xml, "SHA atual do código", code_sha)
+    # Legacy full specification versions may not contain a dedicated HEAD
+    # paragraph. Add it before the first Heading1 rather than failing the
+    # entire documentation synchronization or replacing the full document.
+    if not report["head"]:
+        first_h1 = xml.find('<w:pStyle w:val="Heading1"/>')
+        at = xml.rfind("<w:p>", 0, first_h1) if first_h1 >= 0 else -1
+        if at >= 0:
+            xml = xml[:at] + para("SHA do HEAD documental: " + head_sha) + xml[at:]
+            report["head"] = True
     first_h1 = xml.find('<w:pStyle w:val="Heading1"/>')
     p_start = xml.rfind("<w:p>", 0, first_h1)
     xml = xml[:p_start] + entry_xml(entry_markup) + xml[p_start:]
