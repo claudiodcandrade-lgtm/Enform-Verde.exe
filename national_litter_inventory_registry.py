@@ -20,6 +20,11 @@ IFN_METADATA = "https://dados.florestal.gov.br/dataset/97ab0c26-c5c7-421c-8fb7-e
 # Coordinates: (west, south, east, north). Operational proximity envelope,
 # never a legal/official study boundary. Match subtype with exact tokens.
 REFERENCES = (
+    dict(key="CAATINGA_ARBOREA_BA_CONTENDAS",biome="caatinga",
+         terms=("caatinga arborea",),
+         bbox=(-42.0,-14.5,-40.0,-12.5),dry_mg_ha=5.5889,
+         study="Matos (2017), UESB, Caatinga arborea NAO manejada, testemunha, Contendas do Sincora BA; tabela 1: 5.588,9 kg/ha acumulados, oito parcelas por tratamento",
+         url="https://www2.uesb.br/ppg/ppgciflor/wp-content/uploads/2020/08/PRISCILA-SILVA-MATOS.pdf"),
     dict(key="FESD_ES_SUBMONTANA",biome="mata atlantica",
          terms=("floresta estacional semidecidual","submontana"),
          bbox=(-42.0,-22.0,-39.0,-19.0),dry_mg_ha=5.50,
