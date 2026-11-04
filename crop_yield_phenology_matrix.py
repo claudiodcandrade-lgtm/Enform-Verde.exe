@@ -137,3 +137,81 @@ def integrate_yield_matrix(crop, *, pam_baseline_kg_ha, stages, ky_by_stage,
                                      "não inclui fatores sem evidência quantitativa"),
                   "calibration_sources": calibration["field_yield_observation_provenance"]})
     return audit
+
+
+def experimental_prior_projection(crop, *, pam_baseline_kg_ha, stages, ky_by_stage,
+                                  published_prior, n_mc=4000, seed=20261104):
+    """Enable explicitly EXPERIMENTAL SAR×phenology yield from a PUBLISHED parameter prior.
+
+    Unlike integrate_yield_matrix (which requires independently observed field
+    calibration), this exploratory route propagates uncertainty in published
+    crop/stage matched regression coefficients and documented historical error.
+    A crop name alone is NOT a justification for transferring coefficients.
+    Missing scientific evidence yields N/D, never synthetic coefficients.
+
+    Required prior: {source_url, crop, stage_names, feature_names, coeff_mean,
+    coeff_sd, historical_residuals_kg_ha, transfer_sd_kg_ha,
+    coefficient_domain, baseline_uncertainty_kg_ha}. The source must be
+    independently audited for appropriateness before use.
+    """
+    names, features = design_features(crop, {"stages": stages}, ky_by_stage=ky_by_stage)
+    baseline = float(pam_baseline_kg_ha)
+    result = {"status": "N/D", "crop": crop, "model": "PAM × FAO × SAR — coeficientes publicados",
+              "pam_baseline_kg_ha": baseline, "stage_feature_names": names,
+              "stage_feature_values": features}
+    if not isinstance(published_prior, Mapping):
+        result["reason"] = "sem publicação com coeficientes e dispersões por cultura e fase"
+        return result
+    if (published_prior.get("crop") != crop
+            or published_prior.get("feature_names") != names
+            or not str(published_prior.get("source_url", "")).startswith("https://")
+            or not published_prior.get("coefficient_domain")
+            or not published_prior.get("reviewed_crop_stage_transfer")):
+        result["reason"] = "domínio científico da publicação ou compatibilidade de estádios não documentados"
+        return result
+    means = published_prior.get("coeff_mean", [])
+    sds = published_prior.get("coeff_sd", [])
+    residuals = published_prior.get("historical_residuals_kg_ha", [])
+    sigma_base = published_prior.get("baseline_uncertainty_kg_ha")
+    sigma_transfer = published_prior.get("transfer_sd_kg_ha")
+    try:
+        import numpy as np
+        mu = np.asarray(means, dtype=float)
+        sig = np.asarray(sds, dtype=float)
+        e = np.asarray(residuals, dtype=float)
+        base_sd = float(sigma_base)
+        trans_sd = float(sigma_transfer)
+        if (len(mu) != len(names) or len(sig) != len(names) or len(e) < 6
+                or not np.isfinite(mu).all() or not np.isfinite(sig).all()
+                or not np.isfinite(e).all() or (sig < 0).any()
+                or not math.isfinite(baseline) or baseline < 0 or
+                not math.isfinite(base_sd) or base_sd < 0 or
+                not math.isfinite(trans_sd) or trans_sd < 0 or
+                not isinstance(n_mc, int) or not 500 <= n_mc <= 50000):
+            raise ValueError("parâmetros incompletos ou não finitos")
+    except (TypeError, ValueError, KeyError) as exc:
+        result["reason"] = "prior ou erros históricos inválidos: " + str(exc)
+        return result
+    rng = np.random.default_rng(seed)
+    c = rng.normal(mu, sig, size=(n_mc, len(mu)))
+    x = np.asarray(features, dtype=float)
+    samples = np.maximum(0.0, baseline + rng.normal(0, base_sd, n_mc)
+                         + c @ x + rng.choice(e, n_mc, replace=True)
+                         + rng.normal(0, trans_sd, n_mc))
+    median, lo, hi = (float(np.quantile(samples, q)) for q in (.5, .05, .95))
+    result.update({"status": "experimental_literature_prior_not_field_validated",
+                   "median_kg_ha": median, "p05_kg_ha": lo, "p95_kg_ha": hi,
+                   "median_t_ha": median / 1000, "interval_90_t_ha": [lo / 1000, hi / 1000],
+                   "source_url": published_prior["source_url"],
+                   "coefficient_domain": published_prior["coefficient_domain"],
+                   "n_mc": n_mc, "seed": seed,
+                   "uncertainty_scope": ("Propagação Monte Carlo do prior publicado, variabilidade PAM "
+                                         "e transferência informada. NÃO é validação em propriedade; "
+                                         "cobertura do intervalo preditivo não demonstrada."),
+                   "warning": "EXPERIMENTAL; verificação de campo e validação espacial pendentes"})
+    if crop == "Soja":
+        result.update({"median_sacks_60kg_ha": median / 60,
+                       "interval_90_sacks_60kg_ha": [lo / 60, hi / 60],
+                       "interval_90_relative_percent": ([100*(lo-median)/median, 100*(hi-median)/median]
+                                                       if median else None)})
+    return result
