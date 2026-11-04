@@ -98,6 +98,11 @@ def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=12_000_000,
     from shapely.geometry import mapping
     from pyproj import Transformer
 
+    def nd(reason, **extra):
+        return {"_diagnostic": {"target_depth_cm": 100,
+                "target_status": "INCOMPLETO_NAO_EXTRAPOLAR",
+                "target_0_100_available": False,
+                "method": "area_weighted_raw_raster_polygon_intersection",
                 "reason": reason, **extra}}
     if set(horizon_paths) != {i for i,_ in DEPTHS}:
         return nd("cinco rasters brutos de 0–100 cm obrigatórios")
@@ -105,6 +110,9 @@ def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=12_000_000,
     with rasterio.Env(), ExitStack() as stack:
         srcs = [stack.enter_context(rasterio.open(horizon_paths[i])) for i,_ in DEPTHS]
         first = srcs[0]
+        # Validate raw floating-point SOC values: reject byte-coded render images.
+        if any(src.count != 1 or src.dtypes[0] not in ("float32", "float64") for src in srcs):
+            return nd("as cinco camadas devem ser rasters contínuos brutos float32/float64")
         if not first.crs or first.count != 1:
             return nd("raster base sem CRS ou com mais de uma banda")
         if abs(first.transform.b)>1e-10 or abs(first.transform.d)>1e-10:

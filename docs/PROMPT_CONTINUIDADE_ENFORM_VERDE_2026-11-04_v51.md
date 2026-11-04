@@ -74,3 +74,9 @@ A cada alteração efetiva, atualizar **este prompt** e o Word `docs/ESPECIFICAC
 1. PR #50 atualizado com commits do código e documentação e relatório objetivo de patches aplicados; 2. prompt + especificação Word para download; 3. link **verificado** do arquivo ZIP Windows com `Enform Verde.exe`, SHA-256, build e instrução de instalação; 4. relatório de testes técnicos e limitações do piloto; 5. plano de validação de acurácia em propriedades reais em fase separada.
 
 **Instrução final:** prosseguir até entregar o marco A sem esperar os testes de acurácia do marco B. Em todas as comunicações, distinguir claramente **realmente integrado**, **testado**, **compilado** e **homologado**.
+
+## Correção CI e preservação da rastreabilidade — 2026-11-04
+- Recuperada a função `nd()` em `soil_pronasolos_zonal.py` após integração de patch que produziu `IndentationError` na linha 101 do SHA 3618ed66. O solo sem cinco horizontes válidos retorna N/D, nunca zero.
+- Mantida a checagem operacional de tipos raster: apenas float32/float64; raster uint8/renderizado deve ser rejeitado.
+- Após o commit verificar `Dashboard dual - tests` e `Build Enform Verde Windows` no SHA novo. Não declarar sucesso antes da verificação.
+- Liberação 3.26.0: piloto experimental tecnicamente funcional; a acurácia em propriedades reais será medida depois, sem baixar o nível de transparência ou simular validação independente.
