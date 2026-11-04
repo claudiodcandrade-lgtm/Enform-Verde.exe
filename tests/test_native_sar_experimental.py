@@ -57,7 +57,7 @@ class NativeSarExperimentalTests(unittest.TestCase):
                                  out["threshold_sensitivity_area_ha"]["0.55"]["area_ha"])
             self.assertTrue(Path(out["score_raster_path"]).is_file())
             self.assertTrue(Path(out["candidate_vector_path"]).is_file())
-            self.assertIn("not interval",out["sensitivity_is"])
+            self.assertIn("não intervalo de confiança",out["sensitivity_is"])
 
 
 if __name__=="__main__":
