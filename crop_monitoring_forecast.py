@@ -99,8 +99,13 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     vig = sampled_sentinel_vigor(crop_gdf, as_of, code, scene_vigor, require_scene_evidence=(vigor_fn is automatic_vigor))
                 elif municipal_scale:
                     vig = {"status": "N/D", "reason": "sem polígono de cultura disponível; proibido usar AOI municipal multiclasse para vigor"}
+                elif crop_gdf is None:
+                    # A 500–2.000 ha user-supplied AOI can still mix native,
+                    # pasture and agriculture. Never treat its outer boundary
+                    # as a homogeneous soybean/corn field for radar vigor.
+                    vig = {"status": "N/D", "reason": "sem máscara vetorial da cultura: polígono analisado não comprova talhão agrícola homogêneo"}
                 else:
-                    vig = scene_vigor(crop_gdf if crop_gdf is not None else gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
+                    vig = scene_vigor(crop_gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
             except Exception as exc:
                 vig = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
             entry["vigor"] = dict(vig)  # preserve numerical metrics, uncertainty and traceability
