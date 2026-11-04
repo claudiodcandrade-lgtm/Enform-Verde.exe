@@ -41,7 +41,7 @@ def northern_mato_grosso_fesv_litter_component(biome, physiognomy, aoi):
     if normalize(biome) != "amazonia" or aoi is None:
         return None
     p = normalize(physiognomy)
-    if "floresta estacional sempre verde" not in p:
+    if not ("floresta estacional sempre verde" in p or "floresta estacional sempre-verde" in p):
         return None
     try:
         west, south, east, north = map(float, aoi_to_wgs84(aoi).total_bounds)
