@@ -96,24 +96,48 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
     vh_db, vv_db = 10 * np.log10(vh), 10 * np.log10(vv)
     shp = vh.shape
     field_mask = geometry_mask([mapping(gf)], out_shape=shp, transform=tr, invert=True)
-    # MapBiomas class on the S1 grid
+    # MapBiomas class on the S1 grid. The land-use cache is a binary TIFF;
+    # GDAL remote error pages must never be decoded as raster text/UTF-8.
+    # A verified local TIFF may rescue a stale remote endpoint, but never
+    # replace a verified same-class mask with guessed pixels.
     url = mapbiomas_url or _local_mapbiomas() or RASTER_URL.format(year=YEAR)
     mb = np.zeros(shp, dtype="uint8")
-    try:
-        with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
-            with rasterio.open(url if url.startswith(("/", "file:")) or __import__("pathlib").Path(url).is_file() else "/vsicurl/" + url) as src:
-                rb = rasterio.warp.transform_bounds(crs, src.crs, *ring.bounds)
-                w = from_bounds(*rb, transform=src.transform).round_offsets().round_lengths()
-                arr = src.read(1, window=w, boundless=True, fill_value=0)
-                reproject(arr, mb, src_transform=src.window_transform(w), src_crs=src.crs,
-                          dst_transform=tr, dst_crs=crs, resampling=Resampling.nearest)
-    except Exception as exc:
-        # 03/11/2026: the official MapBiomas C11 GeoTIFF link returned HTTP 403
-        # (anonymous access denied). Without a same-class reference map the
-        # relative vigor is undefined → N/D, never a guessed reference.
+    tried, map_loaded = [], False
+    candidates = [url]
+    local_fallback = _local_mapbiomas()
+    if local_fallback and local_fallback not in candidates:
+        candidates.append(local_fallback)
+    for candidate in candidates:
+        try:
+            from pathlib import Path
+            local = Path(candidate).is_file()
+            if local:
+                # Reject HTML/JSON mistakenly cached with a .tif extension.
+                with open(candidate, "rb") as handle:
+                    magic = handle.read(4)
+                if magic not in (b"II*\\x00", b"MM\\x00*",
+                                 b"II+\\x00", b"MM\\x00+"):
+                    raise ValueError("arquivo local não possui assinatura TIFF")
+            source = candidate if local else ("/vsicurl/" + candidate if
+                     str(candidate).startswith("https://") else candidate)
+            with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
+                with rasterio.open(source) as src:
+                    if not src.crs or src.count < 1:
+                        raise ValueError("mapa MapBiomas sem CRS ou bandas")
+                    rb = rasterio.warp.transform_bounds(crs, src.crs, *ring.bounds)
+                    w = from_bounds(*rb, transform=src.transform).round_offsets().round_lengths()
+                    arr = src.read(1, window=w, boundless=True, fill_value=0)
+                    mb.fill(0)
+                    reproject(arr, mb, src_transform=src.window_transform(w), src_crs=src.crs,
+                              dst_transform=tr, dst_crs=crs, resampling=Resampling.nearest)
+                    map_loaded = True
+                    break
+        except (UnicodeError, OSError, ValueError, RuntimeError) as exc:
+            tried.append(type(exc).__name__ + ": " + str(exc)[:90])
+    if not map_loaded:
         return {"status": "N/D", "scene_id": scene["id"],
-                "reason": "mapa de referência MapBiomas indisponível (" + type(exc).__name__ + ": "
-                          + str(exc)[:120] + "); vigor relativo não definível"}
+                "reason": "mapa de referência da mesma cultura indisponível: " +
+                          "; ".join(tried)[:190] + "; vigor SAR não calculável"}
     in_field = field_mask & np.isfinite(vh_db) & np.isfinite(vv_db)
     if in_field.sum() < 30:
         return {"status": "N/D", "reason": "talhão com menos de 30 pixels SAR válidos"}
