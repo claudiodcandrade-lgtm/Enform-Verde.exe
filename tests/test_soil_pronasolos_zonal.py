@@ -97,6 +97,12 @@ class SoilPolygonZonalTests(unittest.TestCase):
            "source_url":"https://example.org/synthetic-fixture",
            "layers":items}
         (self.root/"manifest.json").write_text(json.dumps(m),encoding="utf-8")
+        # Synthetic example URLs must NEVER enable operational soil estimates.
+        self.assertIsNone(verified_local_horizons(self.root))
+        # A real-looking official domain is not, by itself, proof of provenance.
+        # This remains a structural/hash test only, not scientific validation.
+        m["source_url"] = "https://www.embrapa.br/fixture-not-a-real-product"
+        (self.root/"manifest.json").write_text(json.dumps(m),encoding="utf-8")
         self.assertEqual(set(verified_local_horizons(self.root)),set(self.paths))
         # SHA mismatch invalidates the entire five-layer source, not just one.
         m["layers"]["6"]["sha256"]="a"*64

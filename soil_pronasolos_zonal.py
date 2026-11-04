@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from urllib.parse import urlparse
 from pathlib import Path
 
 DEPTHS = ((2, "0-5"), (3, "5-15"), (4, "15-30"),
@@ -33,6 +34,17 @@ def verified_local_horizons(root=None):
                 or meta.get("raw_raster") is not True
                 or meta.get("license_reviewed") is not True
                 or not str(meta.get("source_url", "")).startswith("https://")):
+            return None
+        # A declared HTTPS URL and a SHA-256 hash do not authenticate a publisher.
+        # Reject example/test hosts and unrelated domains in the operational path.
+        # Even an accepted host is only a necessary provenance check, not proof
+        # of license, scientific accuracy or authenticity of the raster contents.
+        source = urlparse(str(meta["source_url"]))
+        host = (source.hostname or "").lower().rstrip(".")
+        allowed = ("embrapa.br", "sgb.gov.br")
+        if (source.scheme != "https" or source.username or source.password
+                or source.port not in (None, 443)
+                or not any(host == d or host.endswith("." + d) for d in allowed)):
             return None
         layers = meta["layers"]
         if set(layers) != {str(i) for i,_ in DEPTHS}:
