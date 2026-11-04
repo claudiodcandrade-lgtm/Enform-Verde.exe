@@ -16,7 +16,12 @@ class ExperimentalXLHeightTests(unittest.TestCase):
                 x=float(site*8+plot)/20
                 rows.append({"site_id":f"S{site}","plot_id":f"S{site}P{plot}",
                     "texture":x,"backscatter":x*2+0.1,
-                    "field_height_m":5+12*x+float(rng.normal(0,0.1))})
+                    "field_height_m":5+12*x+float(rng.normal(0,0.1)),
+                    "sar_product_id":"S1-X-test-v1",
+                    "field_height_definition":"H100",
+                    "spatial_match_error_m":5.0,"pixel_size_m":20.0,
+                    "date_field":"2025-06-01T00:00:00Z",
+                    "date_sar":"2025-08-01T00:00:00Z"})
         self.frame=pd.DataFrame(rows)
         self.kw=dict(feature_columns=["texture","backscatter"],band="X",
             physiognomy="Floresta Ombrófila Densa",
@@ -74,6 +79,21 @@ class ExperimentalXLHeightTests(unittest.TestCase):
         kwargs=dict(self.kw,reference_sha256="")
         with self.assertRaisesRegex(ValueError,"Fonte, SHA-256"):
             fit_experimental_xl_height_model(self.frame,**kwargs)
+
+
+    def test_spatial_temporal_and_product_matching_qc_is_mandatory(self):
+        bad=self.frame.copy()
+        bad.loc[0,"spatial_match_error_m"]=11.0
+        with self.assertRaisesRegex(ValueError,"pelo menos cinco sítios"):
+            fit_experimental_xl_height_model(bad,**self.kw)
+        bad=self.frame.copy()
+        bad.loc[0,"date_sar"]="2020-01-01T00:00:00Z"
+        with self.assertRaisesRegex(ValueError,"pelo menos cinco sítios"):
+            fit_experimental_xl_height_model(bad,**self.kw)
+        bad=self.frame.copy()
+        bad.loc[0,"sar_product_id"]="different-product"
+        with self.assertRaisesRegex(ValueError,"Separe produtos SAR"):
+            fit_experimental_xl_height_model(bad,**self.kw)
 
     def test_l_band_only_accepts_fallback_after_x_is_unavailable(self):
         model=fit_experimental_xl_height_model(
