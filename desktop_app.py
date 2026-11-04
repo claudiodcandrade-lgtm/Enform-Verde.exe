@@ -21,7 +21,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.25.1-CLIMA-DINAMICO"
+APP_VERSION="3.26.0-SOLO-SAFRA"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -608,6 +608,22 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         if local_result.get("0–100 cm",{}).get("tc_ha") is not None:
             return local_result
         local_audit=local_result.get("_diagnostic")
+    # Primary online route: download ONLY the polygon window of the five raw
+    # official 90 m horizons (Embrapa GeoInfo WCS) and intersect exactly.
+    # Identify-point sampling below is a last resort and is labelled as such.
+    wcs_audit=None
+    try:
+        from pronasolos_wcs import fetch_horizons, WcsAcquisitionError
+        acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
+        wcs_result=mapped_soil_0_100_on_polygon(
+            gdf,acquired["paths"],
+            source_label="Embrapa Solos/PronaSolos 90 m v2021 — rasters brutos via WCS GeoInfo")
+        wcs_result.setdefault("_diagnostic",{})["wcs_provenance"]=acquired["provenance"]
+        if wcs_result.get("0–100 cm",{}).get("tc_ha") is not None:
+            return wcs_result
+        wcs_audit=wcs_result.get("_diagnostic")
+    except Exception as exc:
+        wcs_audit={"target_status":"WCS_INDISPONIVEL","reason":type(exc).__name__+": "+str(exc)[:300]}
     import requests
     from shapely.geometry import Point
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
@@ -664,7 +680,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         # Preserve the failure instead of silently suppressing it upstream.
         # N/D is NOT zero carbon; no 0-30 model is extended to 0-100.
         out["_diagnostic"]={"target_status":"SERVICO_SEM_VALORES_BRUTOS_VALIDOS",
-                             "reason":" | ".join(detail),"local_raster_audit":local_audit,
+                             "reason":" | ".join(detail),"local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit,
                              "services_checked":list(SERVICE_CANDIDATES),
                              "samples_requested":len(pts),"query_points_inside_stratum":len(pts),
                              "target_0_100_available":False}
@@ -677,7 +693,8 @@ def pronasolos_soc_profiles(gdf,max_points=36):
                         "query_points_inside_stratum":len(pts),
                         "target_depth_cm":100,
                         "target_0_100_available":"0–100 cm" in out,
-                        "local_raster_audit":local_audit,
+                        "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit,
+                        "method":"identify_point_sampling_fallback",
                         "target_status":"COMPLETO_POR_PONTO" if "0–100 cm" in out else "INCOMPLETO_NAO_EXTRAPOLAR"}
     return out
 
@@ -1455,7 +1472,7 @@ class App(tk.Tk):
         self._set(self.crop_res,"PAINEL EXECUTIVO — PREVISÃO DE SAFRAS\n\n"
                   "Idade provável da lavoura: INDISPONÍVEL — requer evidência fenológica SAR validada.\n"
                   "Estado fitossanitário aparente: INDISPONÍVEL — opções: Bom, Médio ou Ruim; requer modelo e evidência validados. Não é diagnóstico de doença ou praga.\n"
-                  "Previsão de safra: BLOQUEADA — requer máscara independente, SAR recente, clima e validação espaço-temporal.\n\n"
+                  "Previsão de safra: após a análise — modelo calibrado no histórico PAM (soja e milho; experimental, validado fora da amostra), com vigor automático Sentinel-1 quando houver mapa de referência.\n\n"
                   "Execute a análise para consultar cobertura, cultura e disponibilidade dos dados.")
         self._set(self.crop_audit,"A trilha de auditoria da análise será apresentada aqui.")
 
@@ -1463,6 +1480,7 @@ class App(tk.Tk):
         """Present concise results and keep full evidence in a separate audit view."""
         from agricultural_native_policy import has_cultivated_area
         self._weather_query_generation+=1
+        self._last_land=land
         classes=land.get("classes",[])
         non_native=[item for item in classes if item.get("native_status") is not True and float(item.get("area_ha") or 0)>0]
         native=[item for item in classes if item.get("native_status") is True and float(item.get("area_ha") or 0)>0]
@@ -1669,6 +1687,16 @@ class App(tk.Tk):
                 power_summary,forecast_summary,format_ptbr)
             executive=([base_report,""] if base_report else [])+dashboard
             audit_text=([audit_base,""] if audit_base else [])+details
+            # Consolidated crop identification + automatic Sentinel-1 vigor +
+            # calibrated yield forecast (experimental). Never blocks the panel.
+            try:
+                from crop_monitoring_forecast import monitoring_forecast
+                land=getattr(self,"_last_land",None) or {}
+                fc_lines,fc_audit=monitoring_forecast(self.gdf.copy(),land)
+                executive+=fc_lines
+                audit_text+=["","PREVISÃO DE SAFRA — AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
+            except Exception as exc:
+                executive+=["","Previsão de safra: INDISPONÍVEL — "+type(exc).__name__+": "+str(exc)[:200]]
             def present():
                 if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
                     return
@@ -2113,6 +2141,8 @@ class App(tk.Tk):
                 if row["parametro"]=="Necromassa subterrânea":lines.append("  Necromassa subterrânea — raízes mortas")
                 value=(format_ptbr(row["tc"],2)+" tC/ha; "+format_ptbr(row["tc"]*44/12,2)+" tCO₂e/ha; "+format_ptbr(row["total_tc"],2)+" tC; "+format_ptbr(row["total_tc"]*44/12,2)+" tCO₂e na interseção") if row["total_tc"] is not None and row.get("tc") is not None else "NÃO ESTIMADO / EXCLUÍDO DO TOTAL"
                 lines += ["  "+row["parametro"]+": "+value,"    Fonte: "+str(row.get("fonte")),"    Método: "+str(row.get("metodo")),"    Erro/incerteza e limitação: "+str(row.get("obs")),"    Nível estatístico: conforme fonte por estrato; não há IC do total","    Intervalos/erro informados: "+json.dumps({k:row[k] for k in ("range_tc_ha","range_dry_mg_ha","agb_uncertainty_mg_ha","agb_range_mg_ha","spatial_sd_tc_ha","root_prediction_interval_tc_ha","root_uncertainty_status","root_uncertainty_source") if row.get(k) is not None},ensure_ascii=False)]
+            from soil_intersection_report import soil_intersection_lines
+            lines += soil_intersection_lines(st.get("soil_profiles"),format_ptbr)
             for depth,profile in (st.get("soil_profiles") or {}).items():
                 if depth!="0–100 cm" and isinstance(profile,dict) and profile.get("tc_ha") is not None:
                     lines.append("  Solo "+depth+": "+format_ptbr(profile["tc_ha"],2)+" tC/ha nesta formação; perfil informativo, não somado novamente ao total.")
@@ -2189,8 +2219,13 @@ class App(tk.Tk):
             for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Compartimento","tC/ha","tC na interseção","Fonte","Limitação / incerteza"],1):sh.cell(3,j,h).value=h
             put(sh,[[st["physiognomy"],st["area_ha"],st["area_pct"],r["parametro"],r.get("tc"),r.get("total_tc"),r.get("fonte"),st["physiognomy_resolution"]+"; classe reconhecida: "+st["class_name"]+"; "+str(r.get("obs"))] for st in native["strata"] for r in st["components"]])
             sh=wb.create_sheet("Solo por Formação");setup(sh,"Enform Verde — perfis de solo nas interseções nativas")
-            for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Profundidade","tC/ha","DP espacial","Fonte","Uso no total"],1):sh.cell(3,j,h).value=h
-            put(sh,[[st["physiognomy"],st["area_ha"],st["area_pct"],depth,profile.get("tc_ha"),profile.get("spatial_sd_tc_ha"),"Embrapa/PronaSolos","Somado" if depth=="0–100 cm" else "Informativo; não somado novamente"] for st in native["strata"] for depth,profile in (st.get("soil_profiles") or {}).items() if isinstance(profile,dict) and profile.get("tc_ha") is not None])
+            from soil_intersection_report import soil_intersection_summary
+            for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Profundidade","tC/ha","DP espacial","Fonte","Uso no total","Método","Área mapeada (ha)","Cobertura do mapa (%)","Pixels"],1):sh.cell(3,j,h).value=h
+            def _soil_row(st,depth,profile):
+                info=soil_intersection_summary(st.get("soil_profiles"))
+                use=("Somado (só área mapeada)" if profile.get("partial_coverage") else "Somado") if depth=="0–100 cm" else "Informativo; não somado novamente"
+                return [st["physiognomy"],st["area_ha"],st["area_pct"],depth,profile.get("tc_ha"),profile.get("spatial_sd_tc_ha"),"Embrapa/PronaSolos",use,info["method"],info["mapped_area_ha"],info["coverage_pct"],info["pixels"]]
+            put(sh,[_soil_row(st,depth,profile) for st in native["strata"] for depth,profile in (st.get("soil_profiles") or {}).items() if isinstance(profile,dict) and profile.get("tc_ha") is not None])
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
         for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
@@ -2288,8 +2323,64 @@ class App(tk.Tk):
         p=filedialog.asksaveasfilename(defaultextension=".txt",filetypes=[("Relatório TXT","*.txt")])
         if p:Path(p).write_text(txt+"\n\nFONTES\n"+self.src.get("1.0","end"),encoding="utf-8"); self.status.set("Relatório salvo.")
 
+def module_check():
+    """Offline check, run on the COMPILED EXE: new modules are packaged and
+    their bundled data resolve under sys._MEIPASS. Writes a JSON summary."""
+    out={"version":APP_VERSION}
+    import numpy as np, rasterio, geopandas as gpd
+    from rasterio.transform import from_origin
+    from shapely.geometry import Point, box
+    import pronasolos_wcs, soil_intersection_report, crop_model_priority, crop_vigor
+    import crop_climate_favorability, crop_forecast_pipeline
+    from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
+    from crop_yield_scenario import load_microregion_yields, microregion_of
+    tmp=Path(tempfile.mkdtemp(prefix="enform_modcheck_")); px=pronasolos_wcs.PIXEL_DEG; paths={}
+    for lid in range(2,7):
+        f=tmp/f"h{lid}.tif"
+        with rasterio.open(f,"w",driver="GTiff",height=10,width=10,count=1,dtype="float32",crs="EPSG:4326",
+                           transform=from_origin(-55.0,-3.0,px,px),nodata=-9999) as d:
+            d.write(np.full((10,10),float(lid),dtype="float32"),1)
+        paths[lid]=f
+    soil=mapped_soil_0_100_on_polygon(gpd.GeoDataFrame(geometry=[box(-55+px,-3-9*px,-55+9*px,-3-px)],crs=4326),paths)
+    if abs(soil["0–100 cm"]["tc_ha"]-20.0)>1e-6:raise RuntimeError("interseção exata EPSG:4326 incorreta")
+    out["soil_exact_intersection"]="ok"
+    m=microregion_of(gpd.GeoDataFrame(geometry=[Point(-55.7,-12.5).buffer(.01)],crs=4326))["dominant"]
+    y=load_microregion_yields("Soja",m["code"])
+    if m["code"]!="51006" or len(y)<10:raise RuntimeError("dados PAM/microrregiões não empacotados")
+    out.update(microregion=m["name"],pam_years=len(y))
+    from crop_panel_yield_model import load_artifact
+    art=load_artifact()
+    if not art or "Soja" not in art.get("crops",{}):raise RuntimeError("modelo de produtividade calibrado não empacotado")
+    out["yield_panel_model"]={c:{g:round(v["loyo"]["skill_vs_trend"],3) for g,v in d.items()} for c,d in art["crops"].items()}
+    (Path(tempfile.gettempdir())/"enform_verde_module_check.json").write_text(json.dumps(out,ensure_ascii=False),encoding="utf-8")
+    return out
+
+def visual_check():
+    """Compiled-EXE check: the approved shell (header, action bar, navigation,
+    tabs, footer, styles) matches the packaged visual baseline."""
+    import ui_visual_standard as uvs
+    app=App()
+    try:
+        app.update(); shell=uvs._normalise({"static":{},"shell":uvs.shell_snapshot(app)})["shell"]
+    finally:
+        app.destroy()
+    baseline=json.loads(uvs.packaged_baseline().read_text(encoding="utf-8"))["shell"]
+    d=uvs.diff(baseline,shell)
+    (Path(tempfile.gettempdir())/"enform_verde_visual_check.txt").write_text("\n".join(d) or "PADRAO_VISUAL_OK",encoding="utf-8")
+    if d:raise RuntimeError("padrão visual alterado: "+"; ".join(d[:5]))
+
 if __name__=="__main__":
-    if "--acceptance-test" in sys.argv:
+    if "--visual-check" in sys.argv:
+        try:visual_check()
+        except Exception:
+            (Path(tempfile.gettempdir())/"enform_verde_visual_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
+            sys.exit(1)
+    elif "--module-check" in sys.argv:
+        try:module_check()
+        except Exception:
+            (Path(tempfile.gettempdir())/"enform_verde_module_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
+            sys.exit(1)
+    elif "--acceptance-test" in sys.argv:
         try:acceptance_test(sys.argv[sys.argv.index("--acceptance-test")+1])
         except Exception:
             (Path(tempfile.gettempdir())/"enform_verde_acceptance_error.txt").write_text(traceback.format_exc(),encoding="utf-8")

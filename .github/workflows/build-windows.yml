@@ -26,6 +26,32 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: requirements_desktop.txt
+      - name: Resolve application version (single source - desktop_app.APP_VERSION)
+        id: version
+        shell: pwsh
+        run: |
+          $line = Select-String -Path desktop_app.py -Pattern '^APP_VERSION="([^"]+)"' | Select-Object -First 1
+          if (!$line) { throw 'APP_VERSION not found in desktop_app.py' }
+          $ver = $line.Matches[0].Groups[1].Value
+          $num = ($ver -split '-')[0]
+          if ($num -notmatch '^\d+\.\d+\.\d+$') { throw "APP_VERSION must start with MAJOR.MINOR.PATCH: $ver" }
+          $notes = "APP_RELEASE_NOTES_v$num.md"
+          if (!(Test-Path $notes)) { throw "Release notes $notes are required for every new version" }
+          git fetch --tags --quiet origin 2>$null
+          $tag = "v$ver"
+          $tagged = (git rev-list -n 1 $tag 2>$null)
+          $head = '${{ github.event.pull_request.head.sha || github.sha }}'
+          if ($tagged -and $tagged.Trim() -ne $head) {
+            $msg = "Version $ver is already published at $tagged. Increment APP_VERSION for this new build."
+            if ('${{ github.event_name }}' -eq 'push') { throw $msg } else { Write-Host "::warning::$msg" }
+          }
+          "APP_VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "APP_VERSION_NUM=$num" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "ENFORM_APP_VERSION $ver"
+          # git rev-list exits 128 when the tag does not exist; that is the
+          # normal case for a NEW version and must not fail the step.
+          $global:LASTEXITCODE = 0
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -893,7 +919,7 @@ jobs:
           '@ | Set-Content make_icon.py -Encoding UTF8
           python make_icon.py
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_ibge_map.json.gz;." --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj --collect-all sklearn desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_ibge_map.json.gz;." --add-data "data/pam_microregion_yield_2015_2024.csv.gz;data" --add-data "data/ibge_microrregioes_2021_simplificada.geojson.gz;data" --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj --collect-all sklearn --hidden-import pronasolos_wcs --hidden-import soil_intersection_report --hidden-import crop_model_priority --hidden-import crop_vigor --hidden-import crop_climate_favorability --hidden-import crop_yield_scenario --hidden-import crop_forecast_pipeline --hidden-import ui_visual_standard --hidden-import crop_water_balance_yield --hidden-import crop_panel_yield_model --hidden-import crop_identifier_consolidated --hidden-import crop_vigor_auto --hidden-import crop_monitoring_forecast --add-data "data/models/yield_panel_v1.json;data/models" --add-data "validation/ui_visual_baseline.json;validation" desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
         run: |
@@ -917,6 +943,8 @@ jobs:
           Copy-Item -Force 'docs\MODELOS_SAR_AGRICULTURA_INTERNACIONAL_2026-10-28.md' 'dist\Enform Verde\docs\MODELOS_SAR_AGRICULTURA_INTERNACIONAL_2026-10-28.md'
           Copy-Item -Force 'docs\ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md' 'dist\Enform Verde\docs\ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md'
           Copy-Item -Force 'TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md' 'dist\Enform Verde\TAPAJOS_HEIGHT_STRUCTURE_MODEL_v1.md'
+          Copy-Item -Force 'docs\ESPECIFICACAO_AGRICOLA_VIGOR_CLIMA_SAFRA_2026-11-03.md' 'dist\Enform Verde\docs\ESPECIFICACAO_AGRICOLA_VIGOR_CLIMA_SAFRA_2026-11-03.md'
+          Copy-Item -Force "APP_RELEASE_NOTES_v$env:APP_VERSION_NUM.md" "dist\Enform Verde\NOTAS_DA_VERSAO.md"
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Lope_Gabon.kml'
           Compress-Archive -Path 'acceptance\Teste_SAR_Cerrado_DF.kml' -DestinationPath 'acceptance\Teste_SAR_Cerrado_DF.zip' -Force
           Move-Item -Force 'acceptance\Teste_SAR_Cerrado_DF.zip' 'acceptance\Teste_SAR_Cerrado_DF.kmz'
@@ -963,6 +991,20 @@ jobs:
             $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
             $ui = Start-Process -FilePath $exe -ArgumentList '--ui-smoke' -WorkingDirectory $dst -PassThru -Wait
             if ($ui.ExitCode -ne 0) { throw "Compiled EXE UI smoke test failed: $($ui.ExitCode)" }
+            $mc = Start-Process -FilePath $exe -ArgumentList '--module-check' -WorkingDirectory $dst -PassThru -Wait
+            if ($mc.ExitCode -ne 0) {
+              $log = Join-Path $env:TEMP 'enform_verde_module_check_error.txt'
+              if (Test-Path $log) { Get-Content $log }
+              throw "Compiled EXE module/data check failed: $($mc.ExitCode)"
+            }
+            Get-Content (Join-Path $env:TEMP 'enform_verde_module_check.json')
+            $vc = Start-Process -FilePath $exe -ArgumentList '--visual-check' -WorkingDirectory $dst -PassThru -Wait
+            if ($vc.ExitCode -ne 0) {
+              foreach ($f in 'enform_verde_visual_check.txt','enform_verde_visual_check_error.txt') {
+                $log = Join-Path $env:TEMP $f; if (Test-Path $log) { Get-Content $log } }
+              throw "Compiled EXE changed the approved visual standard: $($vc.ExitCode)"
+            }
+            Get-Content (Join-Path $env:TEMP 'enform_verde_visual_check.txt')
             $p = Start-Process -FilePath $exe -ArgumentList @('--acceptance-test','acceptance\Teste_SAR_Biomassa_Tapajos.kmz') -WorkingDirectory $dst -PassThru -Wait
             if ($p.ExitCode -ne 0) {
               $log = Join-Path $env:TEMP 'enform_verde_acceptance_error.txt'
@@ -989,6 +1031,7 @@ jobs:
           $checksum = (Get-FileHash -Algorithm SHA256 -Path $exe).Hash.ToLowerInvariant()
           $manifest = @(
             'Enform Verde Multisource — Windows build audit',
+            "Application version: $env:APP_VERSION",
             "Git commit of checked-out source: $sourceSha",
             "Expected source SHA from branch/PR: $expectedSha",
             "Workflow run ID: $env:GITHUB_RUN_ID",
@@ -1000,12 +1043,13 @@ jobs:
           $manifest | Set-Content -Path (Join-Path $folder 'BUILD-MANIFEST.txt') -Encoding UTF8
           Write-Host "WINDOWS_EXE_SOURCE_SHA $sourceSha"
           Write-Host "WINDOWS_EXE_SHA256 $checksum"
+          Write-Host "WINDOWS_EXE_VERSION $env:APP_VERSION"
       - name: Add instructions
         shell: pwsh
         run: |
           @'
           ENFORM VERDE - WINDOWS
-          VERSÃO 3.25.1. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado; a busca automática de BIOMASS deve ser verificada por AOI e não implica cobertura universal. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
+          Notas desta versão: NOTAS_DA_VERSAO.md. Pixels SAR e AGB quantitativa ALOS-PALSAR foram testados no Cerrado; a busca automática de BIOMASS deve ser verificada por AOI e não implica cobertura universal. Para Tapajós, altura H100 e AGB derivada de SAR continuam NÃO VALIDADAS; a referência microrregional, quando apresentada, é literatura e nunca é AGB SAR.
           NOVO: carbono apenas em formações nativas, calculado separadamente por fitofisionomia e área de interseção; outros usos são apenas indicados. Identificadores SAR instalados são procurados automaticamente em %USERPROFILE%\.enform_verde\modelos_sar\ativo.json (e demais JSON) ou conforme ENFORM_LAND_USE_SAR_CONFIG / ENFORM_SAR_MODELS_DIR; configuração manual permanece opcional. PRIORIDADE: identificador SAR executado e avaliado independentemente > MapBiomas para uso/cobertura atual; IBGE apenas para nomear fitofisionomias naturais compatíveis. Sem um modelo SAR executável com dados e referências reais, o resultado MapBiomas NÃO é classificação SAR. Nenhum modelo treinado para todo o Brasil vem embutido. Modelos internacionais, teses e dissertações são fontes admissíveis com qualquer acurácia mensurada/publicada, divulgando métrica, domínio e incerteza; a acurácia estrangeira não é validação nesta AOI. O código de modelos publicado sem pesos/dados/inferência executáveis permanece bibliografia. Ver docs/CLASSIFICACAO_SAR_USO_SOLO.md e docs/MODELOS_SAR_AGRICULTURA_INTERNACIONAL_2026-10-28.md.
           Para abrir: dê duplo clique em "Enform Verde.exe".
           Não é necessário instalar Python. Mantenha o EXE e a pasta _internal juntos.
@@ -1013,9 +1057,58 @@ jobs:
           A análise espacial aceita vetor local e tenta consulta pública do SICAR, SIGEF e Embrapa quando houver internet.
           O pacote inclui acceptance\Teste_SAR_Cerrado_DF.kmz (baixa biomassa) e acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml (AOI candidata de alta biomassa; requer modelo AGB SAR compatível, não aceitar fallback bibliográfico como resultado SAR).
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
+          $body = Get-Content 'dist\Enform Verde\LEIA-ME.txt' -Raw
+          ("VERSÃO $env:APP_VERSION`r`n" + $body) | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
-          name: Enform-Verde-Windows-v3.25.1-CLIMA-DINAMICO
+          name: Enform-Verde-Windows-v${{ env.APP_VERSION }}
           path: dist/Enform Verde/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
+    outputs:
+      app_version: ${{ steps.version.outputs.version }}
+
+  publish-release:
+    # Every new version merged to main (or dispatched manually) becomes a
+    # permanent GitHub Release with the SAME tested package. PR builds only
+    # produce the 90-day artifact.
+    needs: build-windows
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: Enform-Verde-Windows-v${{ needs.build-windows.outputs.app_version }}
+          path: release_asset
+      - name: Package ZIP and checksum
+        run: |
+          VER="${{ needs.build-windows.outputs.app_version }}"
+          ASSET="Enform-Verde-Windows-v${VER}.zip"
+          (cd release_asset && zip -qr "../${ASSET}" .)
+          sha256sum "${ASSET}" | tee "${ASSET}.sha256"
+          echo "ASSET=${ASSET}" >> "$GITHUB_ENV"
+          echo "VER=${VER}" >> "$GITHUB_ENV"
+      - name: Publish permanent release (never overwrite another commit)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${VER}"
+          NUM="${VER%%-*}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            TARGET=$(gh api "repos/${{ github.repository }}/git/ref/tags/${TAG}" --jq .object.sha 2>/dev/null || true)
+            if [ -n "$TARGET" ] && [ "$TARGET" != "${{ github.sha }}" ]; then
+              echo "::error::Release ${TAG} already exists for ${TARGET}; increment APP_VERSION"; exit 1
+            fi
+            gh release upload "$TAG" "$ASSET" "$ASSET.sha256" --repo "${{ github.repository }}" --clobber
+          else
+            gh release create "$TAG" "$ASSET" "$ASSET.sha256" --repo "${{ github.repository }}" \
+              --target "${{ github.sha }}" --title "Enform Verde ${VER}" \
+              --notes-file "APP_RELEASE_NOTES_v${NUM}.md" --prerelease
+          fi
