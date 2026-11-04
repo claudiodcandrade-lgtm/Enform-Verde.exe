@@ -849,8 +849,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r.get('native_status') is None) if all('native_status' in r for r in summary['classes']) else None
     summary['priority']=('SAR RECENTE validado para classes elegíveis (PRIORITÁRIO); '
                          'MapBiomas anual apenas REFERÊNCIA HISTÓRICA para lacunas, '
-                         'não prova uso atual; IBGE legenda_1 nomeia somente a '
-                         'fitofisionomia nas interseções nativas; '
+                         'não prova uso atual; IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível; '
                          'sem evidência SAR atual manter cultura atual N/D.')
     summary['current_sar_crop_identification'] = (
         'CLASSIFICACAO_SAR_VALIDADA' if layers else
