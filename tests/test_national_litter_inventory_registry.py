@@ -43,6 +43,14 @@ class NationalLitterRegistryTests(unittest.TestCase):
         self.assertIsNone(published_national_litter_component(
             "Caatinga","Savana Estépica Arborizada",box(-40,-9,-39.9,-8.9)))
 
+    def test_caatinga_unmanaged_control_has_direct_stock_not_logging_residues(self):
+        obj=published_national_litter_component(
+            "Caatinga", "Caatinga arbórea",box(-41.2,-13.5,-41.1,-13.4))
+        self.assertEqual(obj["source_record_id"],"CAATINGA_ARBOREA_BA_CONTENDAS")
+        self.assertAlmostEqual(obj["mean_dry_mg_ha"],5.5889,places=5)
+        self.assertNotIn("IC95%", obj["status"])
+        self.assertFalse(obj["include_in_total"])
+
     def test_published_dry_stock_not_deposition(self):
         result=published_national_litter_component(
             "Mata Atlântica","Floresta Ombrófila Mista",box(-50.3,-29.5,-50.2,-29.4))
