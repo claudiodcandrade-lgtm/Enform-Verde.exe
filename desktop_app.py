@@ -1696,12 +1696,13 @@ class App(tk.Tk):
                 # Do not keep a stale "BLOQUEADA" headline after the calibrated
                 # experimental panel has returned a numeric result. Carbon
                 # presentation and native-stock routines are untouched.
-                panel_results = [item for item in fc_audit.get("crops", {}).values()
+                panel_results = [(crop_name, item) for crop_name, item in fc_audit.get("crops", {}).items()
                                  if isinstance(item, dict) and item.get("forecast_model") == "panel"
                                  and isinstance(item.get("forecast"), dict)
                                  and "production" in item["forecast"]]
                 if len(panel_results) == 1:
-                    panel = panel_results[0]["forecast"]
+                    crop_name, panel_entry = panel_results[0]
+                    panel = panel_entry["forecast"]
                     p = panel["production"]
                     fields = p.get("fields_kg_ha", {})
                     v = next(iter(fields.values()), None)
@@ -1713,7 +1714,12 @@ class App(tk.Tk):
                             "Produtividade provável: ESTIMATIVA EXPERIMENTAL regional — "
                             + format_ptbr(v["median"] / 1000, 2) + " t/ha (intervalo 90%: "
                             + format_ptbr(v["p05"] / 1000, 2) + "–"
-                            + format_ptbr(v["p95"] / 1000, 2) + " t/ha)",
+                            + format_ptbr(v["p95"] / 1000, 2) + " t/ha)"
+                            + (("; equivalente a " + format_ptbr(v["median"] / 60, 2)
+                                + " sacas/ha (60 kg/saca; intervalo 90%: "
+                                + format_ptbr(v["p05"] / 60, 2) + "–"
+                                + format_ptbr(v["p95"] / 60, 2) + " sacas/ha)")
+                               if str(crop_name).strip().casefold() == "soja" else ""),
                             "Produção provável: ESTIMATIVA EXPERIMENTAL sobre área cartográfica — "
                             + format_ptbr(t["median"], 2) + " t (intervalo 90%: "
                             + format_ptbr(t["p05"], 2) + "–"
