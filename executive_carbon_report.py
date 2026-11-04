@@ -85,6 +85,9 @@ def executive_carbon_lines(native, fmt):
             u=uncertainty_for_pool(row)
             if not isinstance(v,(int,float)):
                 lines.append("  "+row["parametro"]+": não estimado; incerteza: N/D tC/ha | N/D tCO₂e/ha | N/D %")
+                if row["parametro"] == "Serapilheira":
+                    lines.append("    Motivo: nenhuma referência gravimétrica de estoque seco compatível foi aceita para esta interseção.")
+                    lines.append("    IFN/SFB: espessura (cm) não representa massa seca (Mg/ha); conversão exige calibração e incerteza verificadas.")
                 continue
             abs_u=u["absolute_tc_ha"]
             error=(fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | "+fmt(u["percent"])+"%" if abs_u is not None and u["percent"] is not None else
