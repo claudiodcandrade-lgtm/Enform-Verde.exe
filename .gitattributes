@@ -1,0 +1,14 @@
+# Binary data must never pass through text/EOL normalisation. The committed
+# data/pam_microregion_yield_2015_2024.csv.gz was found corrupted (invalid
+# gzip stream, SHA-256 different from its own metadata) on 2026-11-03.
+*.gz    binary
+*.zip   binary
+*.tif   binary
+*.tiff  binary
+*.kmz   binary
+*.jpg   binary
+*.png   binary
+*.ico   binary
+*.xlsx  binary
+*.docx  binary
+*.h5    binary
