@@ -1693,6 +1693,33 @@ class App(tk.Tk):
                 from crop_monitoring_forecast import monitoring_forecast
                 land=getattr(self,"_last_land",None) or {}
                 fc_lines,fc_audit=monitoring_forecast(self.gdf.copy(),land)
+                # Do not keep a stale "BLOQUEADA" headline after the calibrated
+                # experimental panel has returned a numeric result. Carbon
+                # presentation and native-stock routines are untouched.
+                panel_results = [item for item in fc_audit.get("crops", {}).values()
+                                 if isinstance(item, dict) and item.get("forecast_model") == "panel"
+                                 and isinstance(item.get("forecast"), dict)
+                                 and "production" in item["forecast"]]
+                if len(panel_results) == 1:
+                    panel = panel_results[0]["forecast"]
+                    p = panel["production"]
+                    fields = p.get("fields_kg_ha", {})
+                    v = next(iter(fields.values()), None)
+                    t = p.get("production_t")
+                    if isinstance(v, dict) and isinstance(t, dict):
+                        executive = [line for line in executive
+                                     if not line.startswith(("Produtividade provável:", "Produção provável:"))]
+                        executive += [
+                            "Produtividade provável: ESTIMATIVA EXPERIMENTAL regional — "
+                            + format_ptbr(v["median"] / 1000, 2) + " t/ha (intervalo 90%: "
+                            + format_ptbr(v["p05"] / 1000, 2) + "–"
+                            + format_ptbr(v["p95"] / 1000, 2) + " t/ha)",
+                            "Produção provável: ESTIMATIVA EXPERIMENTAL sobre área cartográfica — "
+                            + format_ptbr(t["median"], 2) + " t (intervalo 90%: "
+                            + format_ptbr(t["p05"], 2) + "–"
+                            + format_ptbr(t["p95"], 2) + " t)",
+                            "Limite: classe MapBiomas anual, não confirmação de plantio atual; "
+                            "incertezas de classificação, manejo e transferência espacial não necessariamente quantificadas."]
                 executive+=fc_lines
                 audit_text+=["","PREVISÃO DE SAFRA — AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
             except Exception as exc:
