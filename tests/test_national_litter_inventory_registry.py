@@ -48,7 +48,7 @@ class NationalLitterRegistryTests(unittest.TestCase):
             "Caatinga", "Caatinga arbórea",box(-41.2,-13.5,-41.1,-13.4))
         self.assertEqual(obj["source_record_id"],"CAATINGA_ARBOREA_BA_CONTENDAS")
         self.assertAlmostEqual(obj["mean_dry_mg_ha"],5.5889,places=5)
-        self.assertNotIn("IC95%", obj["status"])
+        self.assertIn("SEM IC95%", obj["status"])
         self.assertFalse(obj["include_in_total"])
 
     def test_published_dry_stock_not_deposition(self):
