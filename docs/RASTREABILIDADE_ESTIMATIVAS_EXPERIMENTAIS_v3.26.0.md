@@ -9,3 +9,8 @@ A previsao experimental so pode ser exibida quando o modelo retornar dominio esp
 Fontes: PronaSolos/Embrapa Solos 0-100 cm https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer; SFB/IFN https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono; MapBiomas Colecao 11 https://brasil.mapbiomas.org/iniciativas-e-produtos/cobertura-e-uso-da-terra/cobertura-30m/cobertura/; PAM/IBGE https://sidra.ibge.gov.br; FAO56 https://www.fao.org/4/x0490e/x0490e05.htm; FAO33/66 https://www.fao.org/4/i2800e/i2800e00.htm.
 
 O gate `scientific_release_gate.py` segue intacto e continua exigindo dados primarios e avaliacao independente. Os patches de solo, agricultura e build Windows permanecem um item separado a integrar; nunca aceitar regressao ou pular o gate de evidencia.
+
+## Integracao patch 0003
+A amostragem pontual do servico PronaSolos para estratos estreitos/fragmentados foi corrigida em `pronasolos_identify.sample_points_in_stratum`. Pontos permanecem estritamente dentro do estrato, inclusive representantes das partes componentes, e a grade se refina para evitar apenas um ponto. Nenhum valor de carbono e imputado em ausencia de retorno. O diagnostico revela estratos cujas respostas pontuais misturam servicos de versoes possivelmente diferentes; tal mistura nao deve ser tratada automaticamente como um unico raster consistente.
+
+Importante: a amostragem de pontos continua uma aproximacao estatistica do mapa, nao uma intersecao exata de pixels originais. A aplicacao do patch 0005 de intersecao por area de pixel continua necessaria para o requisito de solo integral.

@@ -20,5 +20,5 @@ Commit a16be037abadb5d46af81111659aa56531f614f6: criado `experimental_audit.py`,
 
 ## Pendencias verificadas sem falsa aprovacao
 - CI `scientific-release-gate` reprova por ausencia de manifesto de dados independentes, e cobertura dos 5 biomas / 6 compartimentos e registros SAR/culturas/vigor/safra.
-- Patches 0001–0017 ainda precisam integracao completa com verificacao de conflitos, testes e build compilado 3.26.0 (o ultimo artefato comprovado antes da etapa era 3.25.1).
+- Patch 0003 aplicado no commit 521b0fd488bf18273ea29c22e45cd470cb641c66: amostragem adaptativa em estratos finos/fragmentados, testes regressivos e diagnostico de servicos misturados. Os outros patches ainda precisam integracao completa, testes e compilacao 3.26.0 (ultimo artefato confirmado antes desta etapa era 3.25.1).
 - Cada publicacao subsequente deve manter este prompt e a especificacao cientifica atualizados, anexar SHA e distinguir status "validado", "experimental" e "N/D".
