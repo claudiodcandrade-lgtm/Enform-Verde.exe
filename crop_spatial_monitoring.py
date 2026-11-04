@@ -98,7 +98,16 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
         attempts.append({"sample": idx+1, "area_ha": ha,
                          "status": result.get("status"), "reason": result.get("reason"),
                          "scene_id": result.get("scene_id"),
-                         "acquisition_utc": result.get("acquisition_utc")})
+                         "acquisition_utc": result.get("acquisition_utc"),
+                         "scene_age_days": result.get("scene_age_days"),
+                         "metrics": result.get("metrics"),
+                         "metric_boot_p05_p95": result.get("metric_boot_p05_p95"),
+                         "composite_boot_p05_p95": result.get("composite_boot_p05_p95"),
+                         "n_bootstrap": result.get("n_bootstrap"),
+                         "probabilities": result.get("probabilities"),
+                         "uncertainty_scope": result.get("uncertainty_scope"),
+                         "reference_blocks": result.get("reference_blocks"),
+                         "radar_interpretation": result.get("radar_interpretation")})
         p = result.get("probabilities")
         # Require actual georeferenced Sentinel-1 acquisition evidence, not
         # a model-only synthetic vigor estimate. Record all acquisition times.
