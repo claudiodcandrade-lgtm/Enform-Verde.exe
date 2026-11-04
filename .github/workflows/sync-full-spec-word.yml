@@ -4,7 +4,7 @@ on:
     branches:
       - feature/agricultural-identification-native-carbon
     paths:
-      - docs/spec_updates/2026-11-04_v61_sinop_report.md
+      - docs/spec_updates/2026-11-04_v65_sinop_litter.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -27,8 +27,8 @@ jobs:
         run: |
           python tools/update_spec_docx.py \
             --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-            --entry docs/spec_updates/2026-11-04_v61_sinop_report.md \
-            --baseline "Enform Verde 3.26.0-SOLO-SAFRA (Sinop report correction)" \
+            --entry docs/spec_updates/2026-11-04_v65_sinop_litter.md \
+            --baseline "Enform Verde 3.26.0-SOLO-SAFRA (v65 Sinop, litter registry, uncertainty)" \
             --head-sha "${{ github.sha }}" \
             --code-sha "${{ github.sha }}" \
             --date "4 de novembro de 2026"
@@ -42,6 +42,7 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert 'PREVISÃO REGIONAL DE SOJA' in xml
+              assert 'REVISÃO V65' in xml
               assert 'ESPECIFICACAO' not in xml[:0]
           print('Word specification updated with Sinop checkpoint and archive validated')
           PY
@@ -50,5 +51,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: sync full Word specification with Sinop forecast and climate fixes"
+          git diff --cached --quiet || git commit -m "docs: sync full Word specification with v65 national litter, executive panels and tests"
           git push origin HEAD:feature/agricultural-identification-native-carbon
