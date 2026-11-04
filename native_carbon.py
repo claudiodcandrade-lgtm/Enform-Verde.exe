@@ -49,7 +49,7 @@ def native_class(name, source, class_metadata=None):
         if text.startswith('grupo: '):return text=='grupo: vegetacao natural'
         meta=(class_metadata or {}).get(name,{})
         return meta.get('parent')=='vegetação natural' if meta else None
-    if source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE'):return True
+    if source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE','SAR_VALIDADO+IBGE_PROXIMIDADE'):return True
     if source=='IBGE':return None
     if source=='MAPBIOMAS':
         from mapbiomas_zonal import LEGEND
