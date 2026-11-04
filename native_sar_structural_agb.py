@@ -17,6 +17,13 @@ def _positive(v):
     except (TypeError,ValueError,OverflowError):
         return None
 
+def _finite_coeff(v):
+    try:
+        value=float(v)
+        return value if isfinite(value) else None
+    except (TypeError,ValueError,OverflowError):
+        return None
+
 def _nonnegative(v):
     try:
         v=float(v)
@@ -72,9 +79,8 @@ def agb_sar_crown_inventory_contract(height, crown, inventory, model, *,
         result["inventory_tier"]=inventory["tier"]
     coefficients=model.get("coefficients")
     needed=("intercept","height","crown_area","dbh","basal_area")
-    if (not isinstance(coefficients,dict) or any(k not in coefficients or
-        _nonnegative(coefficients[k]) is None and k!="intercept"
-        for k in needed)
+    if (not isinstance(coefficients,dict) or any(k not in coefficients or _finite_coeff(coefficients[k]) is None
+               for k in needed)
         or _positive(model.get("independent_rmse_mg_ha")) is None
         or model.get("independent_validation") is not True
         or model.get("biome")!=biome or model.get("physiognomy")!=physiognomy
