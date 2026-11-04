@@ -122,6 +122,7 @@ def run_sentinel1_native_screen(aoi, sar_paths, output_dir, *, ibge=None, ibge_f
     from rasterio.mask import mask as raster_mask
     from rasterio.warp import reproject, Resampling
     from rasterio.features import geometry_mask, shapes
+    from shapely.geometry import shape as shapely_shape
 
     paths=[Path(p) for p in (sar_paths or [])]
     if not paths:
@@ -139,7 +140,7 @@ def run_sentinel1_native_screen(aoi, sar_paths, output_dir, *, ibge=None, ibge_f
         target_crs=vsrc.crs
         geom=aoi.to_crs(target_crs).geometry
         vv_clip, transform=raster_mask(vsrc,[g.__geo_interface__ for g in geom],crop=True,filled=False)
-        vv=np.asarray(vv_clip[0].filled(np.nan),dtype=float)
+        vv=np.asarray(vv_clip[0].astype("float32").filled(np.nan),dtype=float)
         vh_full=np.full(vv.shape,np.nan,dtype=np.float32)
         reproject(source=rasterio.band(hsrc,1),destination=vh_full,
                   src_transform=hsrc.transform,src_crs=hsrc.crs,
@@ -173,8 +174,7 @@ def run_sentinel1_native_screen(aoi, sar_paths, output_dir, *, ibge=None, ibge_f
         for threshold in thresholds:
             binary=np.isfinite(score)&(score>=threshold)&valid
             features=list(shapes(binary.astype("uint8"),mask=binary,transform=transform))
-            geoms=[gpd.GeoSeries.from_wkb([__import__("shapely").geometry.shape(g).wkb],crs=target_crs).iloc[0]
-                   for g,val in features if val==1]
+            geoms=[shapely_shape(g) for g,val in features if val==1]
             # Use exact equal-area geometry, avoiding degree-squared area.
             area=gpd.GeoSeries(geoms,crs=target_crs).to_crs("EPSG:6933").area.sum()/10000 if geoms else 0.0
             areas[f"{threshold:.2f}"]={"area_ha":float(area),"patch_count":len(geoms)}
