@@ -103,7 +103,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     vig = scene_vigor(crop_gdf if crop_gdf is not None else gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
             except Exception as exc:
                 vig = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
-            entry["vigor"] = {k: v for k, v in vig.items() if k not in ("metrics", "z_scores")}
+            entry["vigor"] = dict(vig)  # preserve numerical metrics, uncertainty and traceability
             if vig.get("status") == "N/D":
                 lines.append("  Vigor automático: N/D — " + str(vig.get("reason")))
             else:
@@ -127,6 +127,26 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     lines.append(f"  Cobertura SAR válida da área cartográfica de {crop}: {100*vig.get('sar_sample_coverage_fraction',0):.3f}%")
                 else:
                     lines.append(f"  Vigor automático (Sentinel-1 {stamp}): {vig['class']} ({p})")
+            if vig.get("status") in ("experimental", "validated"):
+                metric_cases = vig.get("sample_audit") or [vig]
+                for sample in metric_cases:
+                    metrics = sample.get("metrics") or {}
+                    intervals = sample.get("metric_boot_p05_p95") or {}
+                    if not metrics:
+                        continue
+                    sample_ref = f"recorte {sample['sample']}" if sample.get("sample") else "talhão"
+                    labels = (("size", "Porte aparente do dossel (RVI/altura)"),
+                              ("uniformity", "Uniformidade do dossel"),
+                              ("texture_homogeneity", "Textura/rugosidade SAR VH (homogeneidade GLCM)"))
+                    for code, label in labels:
+                        value = metrics.get(code)
+                        if value is None:
+                            continue
+                        ci = intervals.get(code)
+                        note = (f"; bootstrap 90%: {ci[0]:.3f}–{ci[1]:.3f}"
+                                if ci is not None else "; incerteza N/D")
+                        lines.append(f"  {sample_ref} — {label}: {value:.3f}" + note)
+                lines.append("  Incerteza de vigor: bootstrap espacial interno; NÃO equivale à acurácia de campo nem mede rugosidade física.")
             try:
                 if municipal_scale:
                     lines.append("  Escala: previsão regional agregada à área cartográfica da cultura; vigor de subamostras SAR, quando disponível, não representa validação municipal.")
