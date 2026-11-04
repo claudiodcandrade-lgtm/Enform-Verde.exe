@@ -186,7 +186,7 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
     from carbon_compartments import (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,
         pantanal_nhecolandia_litter_carbon_component,northern_mato_grosso_fesv_litter_component,
         tapajos_necromass_components,ifn_necromass_component,infer_uf_from_aoi)
-    from national_litter_inventory_registry import published_national_litter_component
+    from national_litter_inventory_registry import published_national_litter_component, ifn_litter_context
     try:sar=sar_estimator(aoi,biome,physiognomy) or {}
     except Exception as exc:sar={'error':str(exc)}
     selected=sar if sar.get('agb_mg_ha') is not None else (sar.get('literature_reference') or {})
@@ -209,6 +209,17 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                        if provider is santo_ambrosio_litter_stock_component else
                        provider(biome,physiognomy,aoi))
             if component:regional['Serapilheira']=component;break
+    if not any('serapilheira' in normalize(k) for k in regional):
+        ifn=ifn_litter_context()
+        regional["Serapilheira"]={
+            "mean_tc_ha":None,
+            "origin":"NAO_ESTIMADO_IFN_ESPESSURA_SEM_CALIBRACAO",
+            "source":"SFB/IFN 2025 (base nacional de contexto, sem massa seca vinculada a esta classe)",
+            "method":"Consulta a fontes regionais compatíveis sem estoque seco demonstrado. IFN retificado mede espessura em centímetros, não estoque seco em Mg/ha.",
+            "uncertainty_kind":"N/D; faltam inventário gravimétrico compatível ou equação massa/espessura validada e incerteza de transferência.",
+            "ifn_context":ifn,
+            "include_in_total":False,
+        }
     if agb is not None:
         rows.append({'parametro':'Biomassa aérea','tc':float(agb)*.47,'origem':origin,'fonte':selected.get('source','Produto/modelo SAR'),
                      'metodo':selected.get('method',selected.get('status','SAR')),'obs':'Somente pixels/referência desta interseção nativa.',
