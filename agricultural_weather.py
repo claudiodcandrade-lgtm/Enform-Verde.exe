@@ -40,7 +40,9 @@ def summarize_weather(series,*,base_temperature_c=10):
     p=[r["PRECTOTCORR"] for r in rows if r.get("PRECTOTCORR") is not None]
     gdd=[max(0,(r["T2M_MAX"]+r["T2M_MIN"])/2-base_temperature_c)
          for r in rows if r.get("T2M_MAX") is not None and r.get("T2M_MIN") is not None]
-    return {"temperature_days":len(t),"rain_days":len(p),"gdd_days":len(gdd),
+    return {"source":series.get("source"),"start":series.get("start"),"end":series.get("end"),
+            "retrieved_utc":series.get("retrieved_utc"),"source_url":series.get("source_url"),
+            "temperature_days":len(t),"rain_days":len(p),"gdd_days":len(gdd),
             "mean_temperature_c":round(sum(t)/len(t),2) if t else None,
             "rain_mm":round(sum(p),2) if p else None,
             "gdd_c_day":round(sum(gdd),2) if gdd else None,
