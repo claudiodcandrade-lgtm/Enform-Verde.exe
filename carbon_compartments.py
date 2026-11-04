@@ -27,6 +27,49 @@ def aoi_to_wgs84(aoi):
         frame=frame.set_crs("EPSG:4326")
     return frame.to_crs("EPSG:4326")
 
+def northern_mato_grosso_fesv_litter_component(biome, physiognomy, aoi):
+    """Experimental standing-litter stock transfer for north-MT FESV only.
+
+    Volpato (2024), UFRRJ PhD, Table 8, FESV: 8.70 (+/- 1.93) Mg/ha
+    standing dry material. The +/- statistic is not identified in that table
+    as a prediction interval or site-transfer uncertainty, and no independent
+    local validation exists. This is NOT a SAR-derived litter prediction.
+    The loose geographical screen identifies the transition region only;
+    it is not a verified study-plot geofence.
+    """
+    from native_carbon import normalize
+    if normalize(biome) != "amazonia" or aoi is None:
+        return None
+    p = normalize(physiognomy)
+    if "floresta estacional sempre verde" not in p:
+        return None
+    try:
+        west, south, east, north = map(float, aoi_to_wgs84(aoi).total_bounds)
+        if not (-59.0 <= west <= east <= -52.0 and -15.0 <= south <= north <= -9.0):
+            return None
+    except (ValueError, TypeError):
+        return None
+    mean_dry, spread = 8.70, 1.93
+    # Illustrative envelope combines published descriptive +/- and an
+    # assumed 0.42-0.50 dry-mass carbon fraction: NOT an IC or PI.
+    return {
+        "mean_tc_ha": mean_dry * 0.47,
+        "range_tc_ha": [max(0.0, mean_dry - spread) * 0.42,
+                        (mean_dry + spread) * 0.50],
+        "mean_dry_mg_ha": mean_dry,
+        "published_spread_dry_mg_ha": spread,
+        "assumed_carbon_fraction_range": [0.42, 0.50],
+        "method": "Transferência EXPERIMENTAL por fitofisionomia: estoque seco observado 8,70 (+/-1,93) Mg/ha, tabela 8, Floresta Estacional Sempre Verde Submontana; tC/ha=Mg seco/ha x 0,47. Envelope ilustrativo (8,70-1,93)x0,42 até (8,70+1,93)x0,50, sem probabilidade de cobertura. NÃO é inventário local nem medição SAR.",
+        "source": "Volpato (2024), UFRRJ, tese de doutorado, Tabela 8 — FESV",
+        "url": "https://rima.ufrrj.br/jspui/bitstream/20.500.14407/19957/1/2024%20-%20Maristela%20Volpato.Pdf",
+        "status": "CENÁRIO EXPERIMENTAL DE TRANSFERÊNCIA — NÃO HOMOLOGADO",
+        "origin": "EXPERIMENTAL_FISICO",
+        "uncertainty_kind": "Envelope ilustrativo sem IC95%; dispersão publicada sem definição como SE/SD; erro de transferência espacial não quantificado",
+        "evidence_type": "standing_litter_dry_mass",
+        "include_in_total": False,
+    }
+
+
 def tapajos_litter_stock_component(biome, physiognomy, aoi):
     """Closest direct standing-stock inventory for the matching Tapajos physiognomy.
 
