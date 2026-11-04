@@ -1508,11 +1508,24 @@ class App(tk.Tk):
                     self.query_crop_weather()
             self.after(100,start_weather_if_current)
             return
+        crop_ha=sum(float(x.get("area_ha") or 0) for x in classes
+                    if str(x.get("class_name") or "").startswith("Lavoura de "))
+        generic_cultivated_ha=sum(float(x.get("area_ha") or 0) for x in classes
+                    if str(x.get("class_name") or "") in ("Áreas cultivadas","Lavoura Temporária","Outras Lavouras Temporárias"))
+        other_non_native_ha=sum(float(x.get("area_ha") or 0) for x in non_native)-crop_ha-generic_cultivated_ha
         executive=["PAINEL EXECUTIVO — MONITORAMENTO AGRÍCOLA",
-                   "Estado da classificação: "+str(land.get("status","não disponível")),
-                   "Área analisada: "+format_ptbr(aoi_ha,2)+" ha",
-                   "Área com classes reportadas: "+format_ptbr(classified_ha,2)+" ha",
-                   "Uso/cobertura não nativo:"]
+                   "Estado da classificação: "+str(land.get("status","não disponível"))+
+                   " — mapa anual de referência; NÃO é classificação SAR da safra atual",
+                   "ÁREA TOTAL DA AOI: "+format_ptbr(aoi_ha,2)+" ha (100%)",
+                   "Classes cartográficas reportadas: "+format_ptbr(classified_ha,2)+" ha",
+                   "RESUMO EXCLUSIVO DE COBERTURA (os grupos não se sobrepõem):",
+                   "  Vegetação nativa mapeada: "+format_ptbr(native_area,2)+" ha"+
+                   " ("+format_ptbr(100*native_area/aoi_ha if aoi_ha else 0,2)+"%)",
+                   "  Lavouras identificadas no mapa anual: "+format_ptbr(crop_ha,2)+" ha",
+                   "  Cultivos sem identificação da cultura: "+format_ptbr(generic_cultivated_ha,2)+" ha",
+                   "  Outros usos não nativos: "+format_ptbr(max(0,other_non_native_ha),2)+" ha",
+                   "ATENÇÃO: área da AOI NÃO é integralmente floresta nem integralmente lavoura.",
+                   "Uso/cobertura não nativo — discriminação por classe:"]
         if non_native:
             for item in non_native:
                 executive.append("• "+str(item.get("class_name","Uso não determinado"))+" — "+
@@ -2148,12 +2161,12 @@ class App(tk.Tk):
         self.project["analysis_rows"]=rows
         lines=[f"ENFORM VERDE {APP_VERSION} — CARBONO SOMENTE EM FORMAÇÕES NATIVAS",
                "Área do polígono: "+format_ptbr(native["area_aoi_ha"],2)+" ha",
-               "Formações nativas confirmadas: "+format_ptbr(area,2)+" ha",
+               "Formações nativas MAPEADAS: "+format_ptbr(area,2)+" ha (não confirmação de campo)",
                "Outros usos (somente ocorrência, sem carbono): "+format_ptbr(native["excluded_other_uses_ha"],2)+" ha",
                "Cobertura não confirmada (sem carbono): "+format_ptbr(native["unknown_cover_area_ha"],2)+" ha",
                "Área sem qualquer classe de cobertura mapeada: "+format_ptbr(native.get("unmapped_aoi_area_ha",0),2)+" ha",
-               "Completude cartográfica: "+native.get("cover_completeness","NÃO VERIFICADA")+
-                   " — área sem classe impede concluir que o estoque total da AOI foi estimado.",
+               "Completude do MAPA de cobertura: "+native.get("cover_completeness","NÃO VERIFICADA")+
+                   " — não indica completude dos compartimentos de carbono; o estoque segue PARCIAL enquanto houver compartimentos N/D.",
                native["method"],""]
         from executive_carbon_report import executive_carbon_lines
         lines = executive_carbon_lines(native,format_ptbr) + lines
