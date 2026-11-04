@@ -39,6 +39,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     from crop_panel_yield_model import load_artifact
     from crop_vigor_auto import automatic_vigor
     from crop_yield_scenario import microregion_of
+    from crop_spatial_monitoring import crop_geometry, sampled_sentinel_vigor
     as_of = as_of or (date.today() - timedelta(days=3))
     vigor_fn = vigor_fn or automatic_vigor
     forecast_fn = forecast_fn or forecast_fields
@@ -56,8 +57,8 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     aoi_ha = float(gdf.to_crs(6933).geometry.area.sum()) / 10000.0
     municipal_scale = aoi_ha > 5000.0
     audit["geometry_scope"] = {"aoi_ha": aoi_ha, "municipal_scale": municipal_scale,
-                               "crop_geometry_available": False,
-                               "note": "áreas de cultura são totais cartográficos, não polígonos de talhão"}
+                               "crop_geometry_available": bool(land.get("vector_path")),
+                               "note": "monitoramento SAR somente em polígonos mapeados de cultura; amostragem não equivale a validação de área"}
 
     for crop, area in sorted(crops.items(), key=lambda kv: -kv[1]):
         if crop == "__temporarias__":
@@ -74,13 +75,17 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
         lines.append(f"• {crop} ({area:.1f} ha) — {reg.get('product', 'rota não registrada')}; "
                      "mapa do ano anterior, sem validação desta propriedade")
         entry = {"area_ha": area, "identification": reg}
+        crop_gdf = crop_geometry(land, crop, canonical_fn=canonical_crop)
+        entry["crop_polygon_available"] = crop_gdf is not None
         if crop in art.get("crops", {}):
             code = NAME_TO_CODE.get(crop)
             try:
-                if municipal_scale:
-                    vig = {"status": "N/D", "reason": "sem geometria da lavoura: AOI municipal multiclasse; não atribuir vigor Sentinel-1 ao município inteiro"}
+                if crop_gdf is not None and municipal_scale and code is not None:
+                    vig = sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn)
+                elif municipal_scale:
+                    vig = {"status": "N/D", "reason": "sem polígono de cultura disponível; proibido usar AOI municipal multiclasse para vigor"}
                 else:
-                    vig = vigor_fn(gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
+                    vig = vigor_fn(crop_gdf if crop_gdf is not None else gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
             except Exception as exc:
                 vig = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
             entry["vigor"] = {k: v for k, v in vig.items() if k not in ("metrics", "z_scores")}
@@ -88,11 +93,15 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 lines.append("  Vigor automático: N/D — " + str(vig.get("reason")))
             else:
                 p = ", ".join(f"{k} {100*v:.0f}%" for k, v in vig["probabilities"].items())
-                lines.append(f"  Vigor automático (Sentinel-1 {str(vig.get('acquisition_utc', ''))[:10]}): {vig['class']} ({p})")
+                stamp = str(vig.get("acquisition_utc") or "")[:10]
+                if vig.get("patches_evaluated"):
+                    lines.append(f"  Vigor Sentinel-1 amostral ({vig['patches_valid']}/{vig['patches_evaluated']} parcelas): {vig['class']} ({p}); NÃO extrapolado como mapa municipal validado")
+                else:
+                    lines.append(f"  Vigor automático (Sentinel-1 {stamp}): {vig['class']} ({p})")
             try:
                 if municipal_scale:
-                    lines.append("  Escala: projeção regional experimental sobre a área cartográfica anual; não representa medição do talhão nem cultura atual confirmada por Sentinel-1.")
-                rep = forecast_fn([{"id": crop, "gdf": gdf, "crop": crop,
+                    lines.append("  Escala: previsão regional agregada à área cartográfica da cultura; vigor de subamostras SAR, quando disponível, não representa validação municipal.")
+                rep = forecast_fn([{"id": crop, "gdf": crop_gdf if crop_gdf is not None else gdf, "crop": crop,
                                     "identification": {"label_allowed": True}, "vigor": vig, "area_ha": area}],
                                   as_of=as_of)
                 lines += ["  " + l for l in forecast_lines(rep)]
