@@ -86,6 +86,9 @@ def weather_executive_lines(inmet=None,power=None,forecast=None,fmt=str):
     else:lines.append("Não disponível nesta consulta: "+str((inmet or {}).get("reason","endpoint de observação não integrado")))
     lines.append("NASA POWER — GRADE SATELITAL/MODELADA")
     if power:
+        if power.get("start") and power.get("end"):
+            lines.append("Período NASA POWER: "+str(power["start"])+" a "+str(power["end"])
+                         +" (consulta: "+str(power.get("retrieved_utc") or "N/D")+")")
         for key,label,unit in [("mean_temperature_c","Temperatura média","°C"),("rain_mm","Precipitação","mm"),("gdd_c_day","Graus-dia base 10 °C","°C dia")]:
             value=power.get(key)
             lines.append(label+": "+(fmt(value)+" "+unit if isinstance(value,(int,float)) else "N/D"))
