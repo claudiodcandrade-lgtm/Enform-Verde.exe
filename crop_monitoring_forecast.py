@@ -106,6 +106,12 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     dates = vig.get("acquisition_period_utc")
                     if dates:
                         lines.append(f"  AQUISIÇÃO SENTINEL-1 REAL (UTC): {dates[0]} até {dates[1]}")
+                        from datetime import datetime, timezone, timedelta
+                        utc_minus_3 = timezone(timedelta(hours=-3))
+                        def _date_br(iso):
+                            return datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone(utc_minus_3).isoformat()
+                        lines.append(f"  Aquisição Sentinel-1 (UTC−3): {_date_br(dates[0])} até {_date_br(dates[1])}")
+                        lines.append(f"  Janela operacional: até 24 dias, limite máximo 30 dias; data de referência {as_of.isoformat()}")
                         scene_ids = sorted({v["scene_id"] for v in vig.get("accepted_scenes", []) if v.get("scene_id")})
                         lines.append("  Cenas auditáveis: " + ", ".join(scene_ids))
                     else:
