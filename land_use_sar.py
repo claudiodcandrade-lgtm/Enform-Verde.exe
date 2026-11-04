@@ -635,10 +635,18 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             warnings.append('Identificador SAR recusado ['+str(candidate)+']: '
                             +type(exc).__name__+': '+str(exc)[:250])
     if not layers:
+        from international_crop_model_sources import installation_diagnostic
+        international = installation_diagnostic()
         warnings.append('Nenhum identificador SAR operacional nesta AOI. '
-                        'Mantida a alternativa cartográfica MapBiomas para uso atual; '
-                        'IBGE apenas para denominação fitofisionômica, sem apresentar '
-                        'resultado cartográfico como classificação SAR.')
+                        'MapBiomas é referência ANUAL HISTÓRICA; NÃO comprova uso atual. '
+                        'IBGE somente denomina fitofisionomias; sem inferência SAR '
+                        'validada, a cultura atual permanece N/D.')
+        warnings.append('Rota global prioritária: ESA WorldCereal (S1+S2; '
+                        'openEO/CDSE, modelos por cultura/estação). '
+                        'Base treinável: WorldCereal RDM e Radiant MLHub. '
+                        'Instalação/modelo/calibração brasileiros ainda NÃO comprovados. '
+                        'Ver international_crop_model_sources.py; head WorldCereal local: '+
+                        ('presente' if international['worldcereal_custom_head_file_present'] else 'ausente')+'.')
     from native_carbon import native_class
     raw_layers=list(layers)
     mb=None
@@ -839,9 +847,18 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     summary['mapbiomas_access_attempts']=mapbiomas_access_attempts
     summary['cover_verification']='COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL' if mapbiomas_failure else 'FONTES_PROCESSADAS'
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r.get('native_status') is None) if all('native_status' in r for r in summary['classes']) else None
-    summary['priority']=('SAR com validação independente para classes elegíveis; MapBiomas para uso/cobertura atual nas lacunas; '
-                         'IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível; '
-                         'sem evidência de cobertura atual, manter Não classificado.')
+    summary['priority']=('SAR RECENTE validado para classes elegíveis (PRIORITÁRIO); '
+                         'MapBiomas anual apenas REFERÊNCIA HISTÓRICA para lacunas, '
+                         'não prova uso atual; IBGE legenda_1 nomeia somente a '
+                         'fitofisionomia nas interseções nativas; '
+                         'sem evidência SAR atual manter cultura atual N/D.')
+    summary['current_sar_crop_identification'] = (
+        'CLASSIFICACAO_SAR_VALIDADA' if layers else
+        'N/D_SEM_MODELO_EXECUTAVEL_VALIDADO')
+    summary['worldwide_candidate_sources'] = (
+        ['ESA WorldCereal/Presto', 'agroimpacts LSTM/CNN',
+         'WorldCereal RDM', 'Radiant MLHub', 'EuroCropsML optico']
+        if not layers else [])
     metadata=(validation or {}).get('class_metadata',{})
     polygons['native_status']=[native_class(r.class_name,r.source,metadata) for r in polygons.itertuples()]
     for row in summary['classes']:
