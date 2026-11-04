@@ -108,8 +108,16 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
             try:
                 if municipal_scale:
                     lines.append("  Escala: previsão regional agregada à área cartográfica da cultura; vigor de subamostras SAR, quando disponível, não representa validação municipal.")
+                # Diagnostic patches do not constitute an area-representative
+                # vigor sample. Use unconditioned historical residuals for the
+                # municipality-wide yield distribution until a spatially
+                # exhaustive or probability-calibrated vigor product exists.
+                forecast_vigor = ({"status": "N/D",
+                                   "reason": "vigor SAR amostral não extrapolável ao município"}
+                                  if municipal_scale and vig.get("patches_evaluated") else vig)
+                entry["vigor_usable_for_municipal_yield"] = forecast_vigor is vig
                 rep = forecast_fn([{"id": crop, "gdf": crop_gdf if crop_gdf is not None else gdf, "crop": crop,
-                                    "identification": {"label_allowed": True}, "vigor": vig, "area_ha": area}],
+                                    "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
                                   as_of=as_of)
                 lines += ["  " + l for l in forecast_lines(rep)]
                 entry["forecast_status"] = rep.get("status")
