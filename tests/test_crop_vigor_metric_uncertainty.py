@@ -1,30 +1,28 @@
-"""Unit tests for SAR vigor metric uncertainty; synthetic arrays are TEST FIXTURES,
-never real Sentinel-1 observations or scientific validation."""
+"""SAR vigor test arrays are synthetic, and are never real orbit acquisitions."""
+import unittest
 import numpy as np
 from crop_vigor import classify_vigor, field_metrics
 
+class TestVigorUncertainty(unittest.TestCase):
+    def test_indicators_and_block_bootstrap(self):
+        rng=np.random.default_rng(12)
+        shape=(24,24)
+        refs=[field_metrics(rng.normal(-17+k*.5,2,shape),
+                            rng.normal(-10-k*.2,1.5,shape)) for k in range(8)]
+        r=classify_vigor(rng.normal(-17,2,shape),rng.normal(-10,1.5,shape),refs,n_boot=80,seed=12)
+        self.assertEqual(r["status"],"experimental")
+        metrics={"size","uniformity","texture_homogeneity"}
+        self.assertTrue(metrics.issubset(r["metrics"]))
+        self.assertEqual(set(r["metric_boot_p05_p95"]),metrics)
+        for lo,hi in r["metric_boot_p05_p95"].values():
+            self.assertTrue(np.isfinite([lo,hi]).all())
+            self.assertLessEqual(lo,hi)
+        self.assertGreater(r["n_bootstrap"],0)
+        self.assertAlmostEqual(sum(r["probabilities"].values()),1)
+        self.assertIn("NÃO acurácia",r["uncertainty_scope"])
+    def test_no_comparison_fields(self):
+        r=classify_vigor(np.full((25,25),-16.),np.full((25,25),-10.),[],n_boot=20)
+        self.assertEqual(r["status"],"N/D")
 
-def test_metric_components_and_bootstrap_ranges():
-    rng = np.random.default_rng(12)
-    shape = (24, 24)
-    vh = rng.normal(-17, 2, shape)
-    vv = rng.normal(-10, 1.5, shape)
-    refs = []
-    for k in range(8):
-        refs.append(field_metrics(rng.normal(-17 + k * .5, 2, shape),
-                                  rng.normal(-10 - k * .2, 1.5, shape)))
-    out = classify_vigor(vh, vv, refs, n_boot=80, seed=12)
-    assert out["status"] == "experimental"
-    assert set(out["metrics"]) >= {"size", "uniformity", "texture_homogeneity"}
-    assert set(out["metric_boot_p05_p95"]) == {"size", "uniformity", "texture_homogeneity"}
-    for lo, hi in out["metric_boot_p05_p95"].values():
-        assert np.isfinite([lo, hi]).all() and lo <= hi
-    assert out["n_bootstrap"] > 0
-    assert abs(sum(out["probabilities"].values()) - 1.) < 1e-8
-    assert "NÃO acurácia" in out["uncertainty_scope"]
-    assert "radar_interpretation" in out
-
-
-def test_no_reference_fields_is_nd_not_false_accuracy():
-    out = classify_vigor(np.full((25, 25), -16.), np.full((25, 25), -10.), [], n_boot=20)
-    assert out["status"] == "N/D"
+if __name__=="__main__":
+    unittest.main()
