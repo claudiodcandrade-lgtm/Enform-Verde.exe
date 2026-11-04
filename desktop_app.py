@@ -1708,8 +1708,8 @@ class App(tk.Tk):
                     v = next(iter(fields.values()), None)
                     t = p.get("production_t")
                     if isinstance(v, dict) and isinstance(t, dict):
-                        executive = [line for line in executive
-                                     if not line.startswith(("Produtividade provável:", "Produção provável:"))]
+                        from crop_report_consistency import remove_superseded_yield_placeholders
+                        executive = remove_superseded_yield_placeholders(executive)
                         executive += [
                             "Produtividade provável: ESTIMATIVA EXPERIMENTAL regional — "
                             + format_ptbr(v["median"] / 1000, 2) + " t/ha (intervalo 90%: "
@@ -1726,10 +1726,12 @@ class App(tk.Tk):
                                if str(crop_name).strip().casefold() == "soja" and v["median"] > 0
                                else ("; incerteza relativa: N/D (mediana igual a zero)"
                                      if str(crop_name).strip().casefold() == "soja" else "")),
-                            "Produção provável: ESTIMATIVA EXPERIMENTAL sobre área cartográfica — "
+                            "Produção provável: CENÁRIO EXPERIMENTAL CONDICIONAL sobre área cartográfica MapBiomas 2025 (assumindo área e cultura mantidas na safra projetada) — "
                             + format_ptbr(t["median"], 2) + " t (intervalo 90%: "
                             + format_ptbr(t["p05"], 2) + "–"
                             + format_ptbr(t["p95"], 2) + " t)",
+                            "Nota: a área de 2025 é hipótese de cenário, NÃO comprova hectares de soja plantados/colhidos em 2027; "
+                            "quantis de produção não abrangem o erro de classificação da máscara agrícola.",
                             "Limite: classe MapBiomas anual, não confirmação de plantio atual; "
                             "incertezas de classificação, manejo e transferência espacial não necessariamente quantificadas."]
                 executive+=fc_lines
