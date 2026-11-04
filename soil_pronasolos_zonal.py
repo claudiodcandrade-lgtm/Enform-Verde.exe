@@ -73,124 +73,154 @@ def verified_local_horizons(root=None):
         return None
 
 
-def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=1500000):
-    """Area-weighted raw raster 0-100 cm on EXACT clipped polygon intersection.
+def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=12_000_000,
+                                 full_coverage=0.995, block_rows=256, source_label=None):
+    """Area-weighted raw raster 0-100 cm on the EXACT polygon intersection.
 
-    Input gdf is the actual native fitophysiognomy intersection passed by the
-    carbon engine, not the AOI bbox or the entire property. Every raster cell
-    receives an equal-area (EPSG:6933) intersection weight. Only cells with
-    all five independent depth layers can contribute; no 0-30 extrapolation.
-    Incomplete mapped coverage is reported N/D rather than scaled to whole AOI.
+    ``gdf`` is the native fitophysiognomy intersection passed by the carbon
+    engine (never the AOI bbox). Every touched raster cell is weighted by the
+    true area of (cell ∩ polygon) in EPSG:6933 (equal area). Only cells with
+    all five horizons valid contribute; no 0-30 extrapolation.
+
+    Pixels without value (water, urban, rock, map gaps) are NOT filled: the
+    density refers to the mapped part and ``area_covered_ha`` is returned so the
+    stock is multiplied by the covered area only. Coverage below
+    ``full_coverage`` is labelled PARCIAL; zero coverage is N/D.
+
+    Geographic rasters (EPSG:4326, as published by Embrapa) are supported:
+    a lat/lon cell maps to an exact rectangle in EPSG:6933.
     """
     import numpy as np
     import rasterio
+    import shapely
     from rasterio.features import geometry_mask
-    from rasterio.windows import from_bounds, transform as window_transform
-    from shapely.geometry import box, mapping
-    from shapely.ops import transform as transform_geom
+    from rasterio.windows import Window, from_bounds, transform as window_transform
+    from shapely.geometry import mapping
     from pyproj import Transformer
-    from soil_profile_stats import summarize_paired_soil_profiles
 
-    def nd(reason, **extra):
-        return {"_diagnostic": {"target_depth_cm": 100,
-                "target_status": "INCOMPLETO_NAO_EXTRAPOLAR",
-                "method": "area_weighted_raw_raster_polygon_intersection",
                 "reason": reason, **extra}}
     if set(horizon_paths) != {i for i,_ in DEPTHS}:
         return nd("cinco rasters brutos de 0–100 cm obrigatórios")
-    with rasterio.Env():
-        from contextlib import ExitStack
-        with ExitStack() as stack:
-            srcs = [stack.enter_context(rasterio.open(horizon_paths[i])) for i,_ in DEPTHS]
-            first = srcs[0]
-            if not first.crs or first.count != 1 or not first.crs.is_projected:
-                return nd("raster base não é camada contínua projetada de banda única")
-            if abs(first.transform.b)>1e-10 or abs(first.transform.d)>1e-10:
-                return nd("rasters rotacionados requerem processamento específico")
-            # Reject RGB/rendered imagery and integer-coded display pixels.
-            # This is a necessary structural check, not proof of official origin.
-            for src in srcs:
-                if src.count != 1 or src.dtypes[0] not in ("float32", "float64"):
-                    return nd("camada não é raster científico contínuo float de banda única")
-                if src.colorinterp and any(str(ci).lower().endswith(
-                        ("red", "green", "blue", "palette")) for ci in src.colorinterp):
-                    return nd("raster de visualização RGB/paleta não é estoque bruto")
-            for src in srcs[1:]:
-                if (src.count != 1 or src.crs != first.crs
-                        or src.transform != first.transform
-                        or src.width != first.width or src.height != first.height):
-                    return nd("rasters não alinhados (CRS, pixel ou extensão distintos)")
-            geom = gdf.to_crs(first.crs).geometry.union_all()
-            if geom.is_empty or not geom.is_valid:
-                return nd("interseção poligonal nativa inválida")
-            bounds = geom.bounds
-            left, bottom, right, top = first.bounds
-            if bounds[2] <= left or bounds[0] >= right or bounds[3] <= bottom or bounds[1] >= top:
-                return nd("polígono fora da cobertura do mapa oficial")
-            window = from_bounds(max(bounds[0],left), max(bounds[1],bottom),
-                                 min(bounds[2],right), min(bounds[3],top),
-                                 transform=first.transform)
-            # Expand to enclosing integer pixels; rounding to nearest can omit edge cells.
-            from rasterio.windows import Window
-            col0 = math.floor(window.col_off)
-            row0 = math.floor(window.row_off)
-            col1 = math.ceil(window.col_off + window.width)
-            row1 = math.ceil(window.row_off + window.height)
-            window = Window(col0,row0,col1-col0,row1-row0).intersection(
-                Window(0,0,first.width,first.height))
-            width, height = int(window.width), int(window.height)
-            if width<1 or height<1 or width*height>max_cells:
-                return nd("recorte excede capacidade para cálculo de interseções exatas",
-                          raster_window_cells=width*height, maximum_cells=max_cells)
-            transform = window_transform(window, first.transform)
-            mask = geometry_mask([mapping(geom)], out_shape=(height,width),
-                                 transform=transform, invert=True, all_touched=True)
-            arrays = [src.read(1,window=window,masked=True) for src in srcs]
-            valid = mask.copy()
-            for data in arrays:
-                valid &= ~np.ma.getmaskarray(data) & np.isfinite(data.data) & (data.data >= 0)
-            valid_indices = np.argwhere(valid)
-            to_eq = Transformer.from_crs(first.crs, "EPSG:6933", always_xy=True).transform
-            geom_eq = transform_geom(to_eq,geom)
-            requested_area = geom_eq.area
-            if requested_area<=0:
-                return nd("área da interseção não positiva")
-            weights=[]; samples=[]; covered=0.0
-            for row,col in valid_indices:
-                x0,y0 = transform*(int(col),int(row))
-                x1,y1 = transform*(int(col)+1,int(row)+1)
-                pix = transform_geom(to_eq,box(min(x0,x1),min(y0,y1),
-                                                 max(x0,x1),max(y0,y1)))
-                overlap = pix.intersection(geom_eq).area
-                if overlap<=0:continue
-                weights.append(overlap)
-                samples.append(float(sum(float(a.data[row,col]) for a in arrays)))
-                covered+=overlap
-            coverage=min(1.0,covered/requested_area)
-            diagnostic={"coverage_fraction":coverage,
-                        "covered_area_ha":covered/10000,
-                        "intersected_area_ha":requested_area/10000,
-                        "valid_complete_pixels":len(samples),
-                        "source":"raw_aligned_pronasolos_geotiff",
-                        "method":"area_weighted_raw_raster_polygon_intersection",
-                        "target_depth_cm":100,
-                        "uncertainty":"Spatial SD is descriptive only; no AOI CI95 or transfer error"}
-            if not samples or coverage<0.995:
-                return nd("mapa 0–100 cm sem cobertura completa na interseção",
-                          **{k:v for k,v in diagnostic.items() if k!="method" and k!="target_depth_cm"})
-            weights=np.array(weights,dtype="float64")
-            samples=np.array(samples,dtype="float64")
-            mean=float(np.average(samples,weights=weights))
-            sd=float(np.sqrt(np.average((samples-mean)**2,weights=weights))) if len(samples)>1 else None
-            return {"0–100 cm":{
-                        "tc_ha":mean, "spatial_sd_tc_ha":sd,
-                        "n_samples":len(samples),
-                        "area_covered_ha":covered/10000,
-                        "coverage_fraction":coverage,
-                        "source":"Embrapa Solos/PronaSolos (5 mapas brutos, 90m)",
-                        "uncertainty_kind":"desvio espacial de pixels, sem IC95% da AOI",
-                        "profile_pairing":"mesmo pixel e cinco horizontes, interseção geométrica exata",
-                        "predictive_uncertainty_quantified":False},
-                    "_diagnostic":dict(diagnostic,
-                         target_status="COMPLETO_POR_INTERSECAO_RASTER",
-                         full_raster_0_100=True)}
+    from contextlib import ExitStack
+    with rasterio.Env(), ExitStack() as stack:
+        srcs = [stack.enter_context(rasterio.open(horizon_paths[i])) for i,_ in DEPTHS]
+        first = srcs[0]
+        if not first.crs or first.count != 1:
+            return nd("raster base sem CRS ou com mais de uma banda")
+        if abs(first.transform.b)>1e-10 or abs(first.transform.d)>1e-10:
+            return nd("rasters rotacionados requerem processamento específico")
+        for src in srcs[1:]:
+            if (src.count != 1 or src.crs != first.crs
+                    or src.transform != first.transform
+                    or src.width != first.width or src.height != first.height):
+                return nd("rasters não alinhados (CRS, pixel ou extensão distintos)")
+        geom = gdf.to_crs(first.crs).geometry.union_all()
+        if geom.is_empty:
+            return nd("interseção poligonal nativa vazia")
+        if not geom.is_valid:
+            from shapely.validation import make_valid
+            geom = make_valid(geom)
+        bounds = geom.bounds
+        left, bottom, right, top = first.bounds
+        if bounds[2] <= left or bounds[0] >= right or bounds[3] <= bottom or bounds[1] >= top:
+            return nd("polígono fora da cobertura do mapa oficial")
+        window = from_bounds(max(bounds[0],left), max(bounds[1],bottom),
+                             min(bounds[2],right), min(bounds[3],top),
+                             transform=first.transform)
+        # Enclosing integer pixels (floor/ceil): rounding can drop edge cells.
+        col0 = math.floor(window.col_off); row0 = math.floor(window.row_off)
+        col1 = math.ceil(window.col_off + window.width)
+        row1 = math.ceil(window.row_off + window.height)
+        window = Window(col0,row0,col1-col0,row1-row0).intersection(
+            Window(0,0,first.width,first.height))
+        width, height = int(window.width), int(window.height)
+        if width<1 or height<1 or width*height>max_cells:
+            return nd("recorte excede capacidade para cálculo de interseções exatas",
+                      raster_window_cells=width*height, maximum_cells=max_cells)
+        transform = window_transform(window, first.transform)
+        touched = geometry_mask([mapping(geom)], out_shape=(height,width),
+                                transform=transform, invert=True, all_touched=True)
+        arrays = [src.read(1,window=window,masked=True) for src in srcs]
+        valid = touched.copy()
+        for data in arrays:
+            valid &= ~np.ma.getmaskarray(data) & np.isfinite(data.data) & (data.data >= 0)
+        layers = np.stack([np.asarray(a.data, dtype="float64") for a in arrays])
+        to_eq = Transformer.from_crs(first.crs, "EPSG:6933", always_xy=True)
+        def eq(geoms):
+            return shapely.transform(geoms, lambda xy: np.column_stack(
+                to_eq.transform(xy[:,0], xy[:,1])))
+        requested_area = float(shapely.area(eq(shapely.segmentize(
+            geom, (abs(transform.a) / 4.0)))))
+        if requested_area<=0:
+            return nd("área da interseção não positiva")
+        shapely.prepare(geom)
+        w_all=[]; idx_all=[]
+        for r0 in range(0, height, block_rows):
+            r1 = min(height, r0+block_rows)
+            rows, cols = np.nonzero(valid[r0:r1]); rows = rows + r0
+            if not len(rows):
+                continue
+            x0 = transform.c + cols*transform.a; x1 = x0 + transform.a
+            y0 = transform.f + rows*transform.e; y1 = y0 + transform.e
+            boxes = shapely.box(np.minimum(x0,x1), np.minimum(y0,y1),
+                                np.maximum(x0,x1), np.maximum(y0,y1))
+            inside = shapely.contains_properly(geom, boxes)
+            weight = np.zeros(len(boxes))
+            if inside.any():
+                weight[inside] = shapely.area(eq(boxes[inside]))
+            edge = ~inside
+            if edge.any():
+                parts = shapely.intersection(boxes[edge], geom)
+                weight[edge] = shapely.area(eq(parts))
+            keep = weight > 0
+            w_all.append(weight[keep]); idx_all.append((rows[keep], cols[keep]))
+        if not w_all:
+            return nd("nenhum pixel com os cinco horizontes válidos na interseção",
+                      intersected_area_ha=requested_area/10000, coverage_fraction=0.0)
+        weights = np.concatenate(w_all)
+        rr = np.concatenate([a for a,_ in idx_all]); cc = np.concatenate([b for _,b in idx_all])
+        per_layer = layers[:, rr, cc]                       # (5, n)
+        covered = float(weights.sum())
+        coverage = min(1.0, covered/requested_area)
+        names = [name for _,name in DEPTHS]
+
+        def wstats(values):
+            m = float(np.average(values, weights=weights))
+            sd = float(np.sqrt(np.average((values-m)**2, weights=weights))) if len(values)>1 else None
+            return m, sd
+        label = source_label or "Embrapa Solos/PronaSolos (5 mapas brutos, 90 m)"
+        partial = coverage < full_coverage
+        out = {}
+        for depth_label, count in (("0–30 cm",3),("0–60 cm",4),("0–100 cm",5)):
+            m, sd = wstats(per_layer[:count].sum(axis=0))
+            out[depth_label] = {
+                "tc_ha": m, "spatial_sd_tc_ha": sd, "n_samples": int(len(weights)),
+                "area_covered_ha": covered/10000, "coverage_fraction": coverage,
+                "layers": names[:count],
+                "layer_means_tc_ha": {names[i]: float(np.average(per_layer[i], weights=weights))
+                                      for i in range(count)},
+                "source": label,
+                "uncertainty_kind": ("DP espacial ponderado por área dos pixels; descritivo, "
+                                     "NÃO é IC95% nem erro de predição do mapa"),
+                "profile_pairing": ("interseção geométrica exata polígono × pixel 90 m; "
+                                    "cinco horizontes do mesmo pixel; média ponderada por área"),
+                "predictive_uncertainty_quantified": False,
+                "partial_coverage": partial,
+            }
+            if count < 5:
+                out[depth_label]["diagnostic_only"] = True
+        out["_diagnostic"] = {
+            "coverage_fraction": coverage, "covered_area_ha": covered/10000,
+            "intersected_area_ha": requested_area/10000,
+            "unmapped_area_ha": max(0.0, requested_area-covered)/10000,
+            "valid_complete_pixels": int(len(weights)),
+            "source": "raw_aligned_pronasolos_geotiff",
+            "method": "area_weighted_raw_raster_polygon_intersection",
+            "raster_crs": str(first.crs), "pixel_size": [abs(first.transform.a), abs(first.transform.e)],
+            "target_depth_cm": 100, "target_0_100_available": True,
+            "target_status": ("PARCIAL_SEM_EXTRAPOLACAO" if partial
+                              else "COMPLETO_POR_INTERSECAO_RASTER"),
+            "full_raster_0_100": True,
+            "uncertainty": "Spatial SD is descriptive only; no AOI CI95 or transfer error",
+        }
+        return out

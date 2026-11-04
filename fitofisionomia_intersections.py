@@ -22,6 +22,27 @@ def _valid_geometry(geom):
             geom = geom.buffer(0)
     return None if geom.is_empty else geom
 
+# Maximum vertex spacing applied in the SOURCE CRS before reprojection to the
+# equal-area CRS. Reprojection moves vertices only; a long straight edge in
+# geographic coordinates becomes a curve in EPSG:5880. Without densification the
+# AOI outline and the IBGE class outlines (which carry extra vertices on shared
+# edges) are approximated differently, so class areas do not add up to the AOI
+# and a spurious "unclassified" sliver appears (regression: 0.0052 % on a
+# 2°×1° AOI). Densifying both layers makes them converge to the same curve.
+_DENSIFY_MAX_DEG = 0.0005      # ~55 m at the equator
+_DENSIFY_MAX_M = 50.0
+
+
+def _densify(gdf):
+    """Return a copy whose edges are segmentized in the layer's own CRS."""
+    import shapely
+    crs = gdf.crs
+    step = _DENSIFY_MAX_DEG if (crs is not None and crs.is_geographic) else _DENSIFY_MAX_M
+    out = gdf.copy()
+    out["geometry"] = shapely.segmentize(out.geometry.values, max_segment_length=step)
+    return out
+
+
 def ibge_class_intersections(aoi_gdf, ibge_gdf, class_field):
     """Intersect AOI with each mapped IBGE class; return class geometries and area audit."""
     import geopandas as gpd
@@ -32,7 +53,7 @@ def ibge_class_intersections(aoi_gdf, ibge_gdf, class_field):
     if class_field not in ibge_gdf.columns:
         raise ValueError("Campo de classe IBGE inexistente: " + str(class_field))
     equal_area = "EPSG:5880"
-    aoi = aoi_gdf.to_crs(equal_area)[["geometry"]].copy()
+    aoi = _densify(aoi_gdf[["geometry"]]).to_crs(equal_area)
     aoi["geometry"] = aoi.geometry.map(_valid_geometry)
     aoi = aoi[aoi.geometry.notna() & ~aoi.geometry.is_empty]
     if aoi.empty:
@@ -43,7 +64,13 @@ def ibge_class_intersections(aoi_gdf, ibge_gdf, class_field):
     mapped = mapped.rename(columns={class_field: "physiognomy"})
     mapped["geometry"] = mapped.geometry.map(_valid_geometry)
     mapped = mapped[mapped.geometry.notna() & ~mapped.geometry.is_empty & mapped["physiognomy"].notna()]
-    mapped = mapped.to_crs(equal_area)
+    # Pre-filter in the IBGE CRS so a national layer is not densified whole.
+    aoi_native = aoi_gdf.to_crs(mapped.crs).geometry.map(_valid_geometry).dropna()
+    if not aoi_native.empty:
+        mapped = mapped[mapped.geometry.intersects(aoi_native.union_all().envelope)]
+    if mapped.empty:
+        raise ValueError("A camada IBGE não intersecta a AOI.")
+    mapped = _densify(mapped).to_crs(equal_area)
     mapped = mapped[mapped.geometry.intersects(aoi_geom)]
     if mapped.empty:
         raise ValueError("A camada IBGE não intersecta a AOI.")
@@ -89,11 +116,20 @@ def zonal_raster_by_ibge_class(aoi_gdf, ibge_gdf, class_field, raster_path):
                 values=np.array([],dtype=float)
             rec={k:v for k,v in row.items() if k!="geometry"}
             if not len(values):
-                rec.update({"mean":None,"sd":None,"n":0,"min":None,"max":None})
+                rec.update({"mean":None,"sd":None,"n":0,"min":None,"max":None,
+                            "raster_total":None})
             else:
                 mean=float(values.mean())
                 rec.update({"mean":mean,"sd":float(values.std(ddof=1)) if len(values)>1 else 0.0,
-                            "n":int(len(values)),"min":float(values.min()),"max":float(values.max())})
+                            "n":int(len(values)),"min":float(values.min()),"max":float(values.max()),
+                            # Area-weighted total of a PER-HECTARE quantity
+                            # (e.g. Mg/ha -> Mg). Meaningless for height or
+                            # uncertainty rasters; callers must not sum those.
+                            "raster_total":mean*float(row["area_ha"])})
+            rec["raster_total_definition"]=(
+                "média dos pixels com centro na interseção AOI×classe IBGE × área exata "
+                "da interseção (ha); válido só para grandezas por hectare")
+            rec["pixel_selection"]="centro do pixel dentro do polígono (rasterio.mask, all_touched=False)"
             out.append(rec)
     return {"raster_path":str(Path(raster_path)),"class_field":class_field,
             "area_aoi_ha":audit["area_aoi_ha"],"area_classified_ha":audit["area_classified_ha"],

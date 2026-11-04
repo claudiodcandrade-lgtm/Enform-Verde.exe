@@ -114,19 +114,23 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
             # measured/known carbon total or the scientific completeness flag.
             if experimental:
                 included=False
-            row.update({'area_ha':area,'area_pct':100*area/area_aoi,'total_tc':float(value)*area if included else None,
-                        'experimental_total_tc':float(value)*area if experimental else None,
+            basis=area
+            if row.get('area_basis_ha') is not None:
+                basis=max(0.0,min(area,float(row['area_basis_ha'])))
+            row.update({'area_ha':area,'area_pct':100*area/area_aoi,'total_tc':float(value)*basis if included else None,
+                        'quantified_area_ha':basis if included else 0.0,
+                        'experimental_total_tc':float(value)*basis if experimental else None,
                         'include_in_total':included})
             components.append(row)
         known=sum(c['total_tc'] for c in components if c['total_tc'] is not None)
-        complete=all(c['total_tc'] is not None for c in components)
+        complete=all(c['total_tc'] is not None and not c.get('partial_coverage') for c in components)
         strata.append({'class_name':record.class_name,'physiognomy':physiognomy,'physiognomy_resolution':detail,'source':record.source,
                        'area_ha':area,'area_pct':100*area/area_aoi,'components':components,
                        'known_total_tc':known,'complete':complete,'sar_audit':estimated.get('sar_audit'),'sar_details':estimated.get('sar_details'),'soil_profiles':estimated.get('soil_profiles'),'secondary_evidence_audit':estimated.get('secondary_evidence_audit')})
     totals=[]
     for name in COMPARTMENTS:
         entries=[c for st in strata for c in st['components'] if c['parametro']==name and c['total_tc'] is not None]
-        covered=sum(c['area_ha'] for c in entries)
+        covered=sum(c.get('quantified_area_ha',c['area_ha']) for c in entries)
         known=sum(c['total_tc'] for c in entries)
         totals.append({'parametro':name,'known_total_tc':known if entries else None,
                        'quantified_area_ha':covered,'missing_native_area_ha':max(0,native_area-covered),
@@ -308,10 +312,17 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
         if top and top.get('tc_ha') is not None:
             rows.append({'parametro':'Solo 0–100 cm','tc':float(top['tc_ha']),'origem':'MAPEAMENTO','fonte':'Embrapa Solos/PronaSolos',
                          'metodo':top.get('profile_pairing') or 'Estoque cumulativo 0–100 cm; horizontes pareados na mesma localização',
-                         'obs':top.get('uncertainty_kind') or 'Variabilidade espacial do mapa não equivale a erro de predição/IC.',
+                         'obs':(top.get('uncertainty_kind') or 'Variabilidade espacial do mapa não equivale a erro de predição/IC.')+(
+                             (' | COBERTURA PARCIAL DO MAPA: %.1f%% da interseção com os cinco horizontes; estoque calculado só na área mapeada, sem extrapolação.'
+                              % (100*float(top.get('coverage_fraction') or 0))) if top.get('partial_coverage') else ''),
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha'),
                          'soil_coverage_fraction':top.get('coverage_fraction'),
-                         'soil_area_covered_ha':top.get('area_covered_ha')})
+                         'soil_area_covered_ha':top.get('area_covered_ha'),
+                         # Partial map coverage (water, urban, rock, gaps): the
+                         # stock is the density × MAPPED area only; the unmapped
+                         # remainder is not extrapolated.
+                         'area_basis_ha':(top.get('area_covered_ha') if top.get('partial_coverage') else None),
+                         'partial_coverage':bool(top.get('partial_coverage'))})
         elif soil.get('experimental_horizons_0_100') is not None:
             # Only explicit, compatible, licensed five-horizon bounds can yield
             # a scenario. Shallow 0-30/0-60 profiles never stand in for 0-100.

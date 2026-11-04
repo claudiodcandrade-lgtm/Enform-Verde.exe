@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           # PR merge refs are synthetic; tests must run on the same exact SHA
           # as scientific gate, Windows EXE and any future release ZIP.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -83,3 +84,32 @@ jobs:
               throw "Regression test failed: $pattern (exit code $LASTEXITCODE)"
             }
           }
+      - name: Install full desktop requirements for complete regression run
+        shell: pwsh
+        run: python -m pip install -r requirements_desktop.txt
+      - name: Byte-compile every Python module (not only a hand-picked list)
+        shell: pwsh
+        run: python -m compileall -q -x "(\\.git|build|dist)" .
+      - name: Guard - every tests/test_*.py must contribute unittest cases
+        shell: pwsh
+        run: python tools/check_test_collection.py
+      - name: Complete regression suite (all tests/test_*.py in one discovery)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw "Complete regression suite failed (exit code $LASTEXITCODE)" }
+          python -m unittest test_enform_uncertainty_core -v
+          if ($LASTEXITCODE -ne 0) { throw "Root uncertainty-core tests failed (exit code $LASTEXITCODE)" }
+      - name: Rule - every effective change updates the Word specification and the continuity prompt
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        run: |
+          # Check each pushed batch (synchronize: 'before'..HEAD); first PR event: whole PR.
+          $base = '${{ github.event.before }}'
+          if (!$base -or $base -match '^0+$' -or !(git cat-file -e "$base^{commit}" 2>$null; $?)) {
+            $base = (git merge-base '${{ github.event.pull_request.base.sha }}' HEAD).Trim()
+          }
+          $global:LASTEXITCODE = 0
+          python tools/check_docs_updated.py $base HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Specification (.docx) and continuity prompt must be updated with every effective change' }

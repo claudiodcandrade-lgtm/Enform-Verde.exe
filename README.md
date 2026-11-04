@@ -74,3 +74,10 @@ O PNLA agrega informações básicas de processos de licenciamento, mas não ofe
 5. Inventários privados anexos a processos de licenciamento são último recurso. Só podem apoiar estimativa quando obtidos por acesso autorizado e quando o estudo publica margem de erro, além de compatibilidade geográfica, fitofisionômica e amostral.
 
 A triagem não promove automaticamente qualquer arquivo a calibração SAR ou cálculo de carbono. Cada dataset precisa de validação de parcela/unidade amostral, coordenadas e CRS, período, fitofisionomia, método, área amostrada, licença e incerteza. Recursos individuais acima de 250 MiB e coleta acumulada acima de 2 GiB permanecem identificados no catálogo para obtenção seletiva posterior.
+
+## Nova versão = novo executável Windows
+
+1. Altere `APP_VERSION` em `desktop_app.py` (formato `MAJOR.MINOR.PATCH-SUFIXO`, ex.: `3.26.0-SOLO-SAFRA`).
+2. Crie `APP_RELEASE_NOTES_vMAJOR.MINOR.PATCH.md` — o build falha sem ele.
+3. Envie para a branch e abra/atualize o PR: o workflow **Build Enform Verde Windows** compila o EXE (PyInstaller, runtime embutido, mapa IBGE offline, dados), roda em pasta limpa o smoke de interface, a verificação de módulos/dados (`--module-check`) e a aceitação Tapajós, grava `BUILD-MANIFEST.txt` com versão, commit e SHA-256 do EXE, e publica o artefato **Enform-Verde-Windows-v<APP_VERSION>** (90 dias).
+4. Ao mesclar em `main` (ou por execução manual), o job **publish-release** cria a Release permanente `v<APP_VERSION>` com o ZIP e o `.sha256`. Uma versão já publicada em outro commit não é sobrescrita: incremente `APP_VERSION`.

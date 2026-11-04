@@ -22,6 +22,12 @@ def response(values):
 class SoilEndpointFallbackTests(unittest.TestCase):
     def setUp(self):
         self.aoi=gpd.GeoDataFrame(geometry=[box(-54.96,-3.04,-54.95,-3.03)],crs="EPSG:4326")
+        # These tests exercise the identify-point CONTINGENCY route; make the
+        # primary WCS raster route explicitly unavailable (no network, no sleep).
+        import pronasolos_wcs
+        p=patch.object(pronasolos_wcs,"fetch_horizons",
+                       side_effect=pronasolos_wcs.WcsAcquisitionError("WCS indisponível (teste)"))
+        p.start(); self.addCleanup(p.stop)
 
     def test_registry_contains_three_verified_services(self):
         self.assertEqual(SERVICE_CANDIDATES,(SERVICE,ALTERNATE_SERVICE,THIRD_SERVICE))
@@ -95,3 +101,27 @@ class SoilEndpointFallbackTests(unittest.TestCase):
 
 if __name__=="__main__":
     unittest.main()
+
+
+class WcsExactIntersectionPriorityTests(unittest.TestCase):
+    def test_wcs_raster_route_precedes_identify_points(self):
+        import tempfile, numpy as np, rasterio
+        from pathlib import Path
+        from rasterio.transform import from_origin
+        import pronasolos_wcs
+        tmp=tempfile.TemporaryDirectory(); self.addCleanup(tmp.cleanup)
+        px=pronasolos_wcs.PIXEL_DEG; paths={}
+        for lid in range(2,7):
+            p=Path(tmp.name)/f"h{lid}.tif"
+            with rasterio.open(p,"w",driver="GTiff",height=20,width=20,count=1,dtype="float32",
+                               crs="EPSG:4326",transform=from_origin(-54.97,-3.02,px,px),nodata=-9999) as d:
+                d.write(np.full((20,20),float(lid),dtype="float32"),1)
+            paths[lid]=p
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.965,-3.03,-54.958,-3.025)],crs="EPSG:4326")
+        with patch("soil_pronasolos_zonal.verified_local_horizons",return_value=None), \
+             patch.object(pronasolos_wcs,"fetch_horizons",return_value={"paths":paths,"provenance":{"retrieved_at_utc":"t"}}), \
+             patch("requests.Session",side_effect=AssertionError("identify não deve ser chamado")):
+            out=pronasolos_soc_profiles(aoi)
+        self.assertAlmostEqual(out["0–100 cm"]["tc_ha"],2+3+4+5+6)
+        self.assertEqual(out["_diagnostic"]["method"],"area_weighted_raw_raster_polygon_intersection")
+        self.assertIn("wcs_provenance",out["_diagnostic"])

@@ -131,6 +131,33 @@ CANDIDATES = (
      "url":"https://ir-library.ku.ac.ke/items/8a55af2b-58f7-45dd-b701-8e638e7d76ed",
      "method":"Crop area, spectral signatures and microclimatic characterization for sorghum",
      "weights_reusable":False,"note":"PhD cited as agronomic reference only; SAR input not verified, cannot activate SAR classifier"},
+    # --- Tier 1 (Brazilian institutions), verified 2026-11-03 -----------------
+    {"id":"INPE_OLDONI_S1_POLSAR_2020","institution":"INPE (Instituto Nacional de Pesquisas Espaciais)",
+     "kind":"peer_reviewed_study","origin":"brazil",
+     "crops":("soja","milho","áreas cultivadas"),"sensors":("Sentinel-1",),
+     "url":"https://doi.org/10.5194/isprs-archives-XLIII-B3-2020-1039-2020",
+     "method":"Random Forest on multitemporal Sentinel-1A backscatter (VH, VV, VH/VV) plus H/alpha polarimetric attributes; early-season scenarios",
+     "weights_reusable":False,"published_overall_accuracy":0.82,
+     "published_accuracy_scope":"overall accuracy ~0.82 (LEM-BA) and ~0.80 (Campo Verde-MT); not per-class precision",
+     "note":"Brazilian SAR-only method on LEM and Campo Verde benchmark data; retrain on local labels before use"},
+    {"id":"INPE_LEM_BENCHMARK_2018","institution":"INPE / PUC-Rio / Embrapa Meio Ambiente",
+     "kind":"reference_dataset","origin":"brazil",
+     "crops":("soja","milho","áreas cultivadas"),
+     "sensors":("Sentinel-1","Sentinel-2","Landsat-8"),
+     "url":"https://doi.org/10.5194/isprs-archives-XLII-1-387-2018",
+     "method":"Field-visited monthly crop labels 2017-2018 (Luís Eduardo Magalhães-BA) with pre-processed S1/S2/L8",
+     "weights_reusable":False,
+     "note":"Training/validation labels, not a model; one crop year and one municipality"},
+    # --- Tier 2 (African savannas; CIRAD first) -----------------------------
+    {"id":"CIRAD_JECAM_TROPICAL_2021","institution":"CIRAD (UMR TETIS / UPR AIDA) with ISRA, FOFIFA, Embrapa",
+     "kind":"reference_dataset","origin":"african_savanna",
+     "crops":("áreas cultivadas",),
+     "sensors":("Sentinel-1","Sentinel-2"),
+     "url":"https://doi.org/10.5194/essd-13-5951-2021",
+     "data_url":"https://doi.org/10.18167/DVN1/P7OLAP",
+     "method":"Harmonized JECAM in situ crop-type polygons (27 074) in seven tropical countries incl. Burkina Faso, Senegal, Madagascar and Brazil, 2013-2020",
+     "weights_reusable":False,
+     "note":"CIRAD reference data for training/transfer tests in savanna smallholder systems; crop classes differ by site and must be read from each site nomenclature before use; not a trained classifier"},
     {"id":"UFLA_SORGHUM_MAIZE_MSC_2023","institution":"Universidade Federal de Lavras, Brazil",
      "kind":"masters_dissertation","origin":"brazil",
      "crops":("sorgo","milho"),"sensors":("vegetation indices; SAR unverified",),
@@ -141,7 +168,7 @@ CANDIDATES = (
 
 SUPPORTED_CROPS = ("milho","soja","sorgo","café","cana-de-açúcar",
                    "arroz","feijão","citros","áreas cultivadas")
-SOURCE_TYPES = frozenset(("doctoral_thesis","masters_dissertation",
+SOURCE_TYPES = frozenset(("doctoral_thesis","masters_dissertation","reference_dataset",
                           "graduate_thesis","peer_reviewed_study",
                           "institutional_study","operational_open_source_framework"))
 
