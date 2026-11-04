@@ -149,6 +149,13 @@ def productivity_display(crop, summary, fmt=lambda x, nd=0: f"{x:,.{nd}f}".repla
     if str(crop).strip().casefold() == "soja":
         out += (f"; equivalente a {fmt(p['median']/60, 2)} sacas/ha (60 kg/saca; "
                 f"intervalo 90%: {fmt(p['p05']/60, 2)}–{fmt(p['p95']/60, 2)} sacas/ha)")
+        if p["median"] > 0:
+            low_pct = 100 * (p["median"] - p["p05"]) / p["median"]
+            high_pct = 100 * (p["p95"] - p["median"]) / p["median"]
+            out += (f"; incerteza relativa (intervalo preditivo 90%, base mediana): "
+                    f"-{fmt(low_pct, 1)}% / +{fmt(high_pct, 1)}%")
+        else:
+            out += "; incerteza relativa: N/D (mediana igual a zero)"
     return out
 
 
