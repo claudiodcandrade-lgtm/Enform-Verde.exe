@@ -19,11 +19,11 @@ class MunicipalCropMaskTests(unittest.TestCase):
         g=gpd.GeoDataFrame({
             "class_name":["Lavoura de soja","Formação Florestal","Infraestrutura Urbana"],
             "source":["MAPBIOMAS","MAPBIOMAS","MAPBIOMAS"],
-            "geometry":[box(500000, 8500000, 504000, 8504000),
-                        box(504000, 8500000, 508000, 8504000),
-                        box(500000, 8504000, 508000, 8505000)]},crs=6933)
+            "geometry":[box(500000, 1000000, 504000, 1004000),
+                        box(504000, 1000000, 508000, 1004000),
+                        box(500000, 1004000, 508000, 1005000)]},crs=6933)
         g.to_crs(4326).to_file(self.path,driver="GeoJSON")
-        self.full=gpd.GeoDataFrame(geometry=[box(500000,8500000,508000,8505000)],crs=6933).to_crs(4326)
+        self.full=gpd.GeoDataFrame(geometry=[box(500000,1000000,508000,1005000)],crs=6933).to_crs(4326)
         self.land={"vector_path":self.path,"classes":[
             {"class_name":"Lavoura de soja","source":"MAPBIOMAS","area_ha":1600},
             {"class_name":"Formação Florestal","source":"MAPBIOMAS","area_ha":1600}]}
@@ -34,7 +34,7 @@ class MunicipalCropMaskTests(unittest.TestCase):
         self.assertAlmostEqual(c.to_crs(6933).geometry.area.sum()/10000,1600,places=2)
         patches=sample_crop_patches(c)
         self.assertGreater(len(patches),0)
-        native=box(504000,8500000,508000,8504000)
+        native=box(504000,1000000,508000,1004000)
         for p in patches:
             self.assertLess(p.to_crs(6933).geometry.iloc[0].intersection(native).area,1.)
 
