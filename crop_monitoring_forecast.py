@@ -88,7 +88,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 return vigor_fn(patch, day, class_code)
             try:
                 if crop_gdf is not None and municipal_scale and code is not None:
-                    vig = sampled_sentinel_vigor(crop_gdf, as_of, code, scene_vigor)
+                    vig = sampled_sentinel_vigor(crop_gdf, as_of, code, scene_vigor, require_scene_evidence=(vigor_fn is automatic_vigor))
                 elif municipal_scale:
                     vig = {"status": "N/D", "reason": "sem polígono de cultura disponível; proibido usar AOI municipal multiclasse para vigor"}
                 else:
@@ -103,6 +103,13 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 stamp = str(vig.get("acquisition_utc") or "")[:10]
                 if vig.get("patches_evaluated"):
                     lines.append(f"  Vigor Sentinel-1 amostral ({vig['patches_valid']}/{vig['patches_evaluated']} parcelas): {vig['class']} ({p}); NÃO extrapolado como mapa municipal validado")
+                    dates = vig.get("acquisition_period_utc")
+                    if dates:
+                        lines.append(f"  AQUISIÇÃO SENTINEL-1 REAL (UTC): {dates[0]} até {dates[1]}")
+                        lines.append(f"  Cenas auditáveis: {', '.join(sorted(set(v['scene_id'] for v in vig.get('accepted_scenes', [])))}")
+                    else:
+                        lines.append("  Aquisição Sentinel-1: NÃO COMPROVADA por cena e data; resultado ainda não deve ser descrito como monitoramento orbital efetivo.")
+                    lines.append(f"  Cobertura SAR válida da área cartográfica de {crop}: {100*vig.get('sar_sample_coverage_fraction',0):.3f}%")
                 else:
                     lines.append(f"  Vigor automático (Sentinel-1 {stamp}): {vig['class']} ({p})")
             try:
