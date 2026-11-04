@@ -1540,7 +1540,9 @@ class App(tk.Tk):
         unit_conversion_audit=None
         productivity_text="BLOQUEADA — modelo/validação científica insuficientes"
         production_text="INDISPONÍVEL — área da cultura no polígono não quantificada"
-        if forecast.get("status")=="previsao_validada":
+        from experimental_audit import eligible_experimental_yield, audit_yield_forecast
+        yield_is_experimental=eligible_experimental_yield(forecast)
+        if forecast.get("status")=="previsao_validada" or yield_is_experimental:
             try:
                 value=float(forecast["yield_t_ha"]); low=float(interval["lower"]); high=float(interval["upper"])
                 if value>=0 and 0<=low<=value<=high:
@@ -1565,6 +1567,10 @@ class App(tk.Tk):
                             production_text+="; equivalente a "+format_ptbr(total["sacks"],2)+" sacas de 60 kg"
             except (KeyError,TypeError,ValueError):
                 productivity_text="BLOQUEADA — intervalo preditivo ausente ou inválido"
+        if yield_is_experimental:
+            productivity_text="ESTIMATIVA EXPERIMENTAL (não homologada) — "+productivity_text
+            if not production_text.startswith("INDISPONÍVEL"):
+                production_text="ESTIMATIVA EXPERIMENTAL (não homologada) — "+production_text
         executive.extend(["","PAINEL EXECUTIVO — PREVISÃO DE SAFRAS",
                           "Idade provável da lavoura: "+age_text,
                           "Estado fitossanitário aparente: "+health_text,
@@ -1583,6 +1589,7 @@ class App(tk.Tk):
                       json.dumps({"probable_crop_age":age_assessment,
                                   "apparent_phytosanitary_state":health,
                                   "yield_forecast":forecast,
+                                  "yield_calculation_trace":audit_yield_forecast(forecast,analysis_id=self.project.get("analysis_run_id")),
                                   "yield_unit_conversion":unit_conversion_audit},ensure_ascii=False,indent=2,default=str)])
         for item in classes:
             audit.append(json.dumps(item,ensure_ascii=False,sort_keys=True,default=str))
@@ -2105,6 +2112,9 @@ class App(tk.Tk):
                     if acquisition.get("reference_period"):lines.append("    Período de referência do produto: "+acquisition["reference_period"])
                     if acquisition.get("explanation"):lines.append("    Observação temporal: "+acquisition["explanation"])
             for row in st["components"]:
+                from experimental_audit import audit_carbon_component
+                calc_trace=audit_carbon_component(row,area_ha=st["area_ha"],formation=st["physiognomy"],analysis_id=self.project.get("analysis_run_id"))
+                lines.append("    RASTRO DO CÁLCULO EXPERIMENTAL (não homologado): "+json.dumps(calc_trace,ensure_ascii=False,sort_keys=True,default=str))
                 if row["parametro"]=="Necromassa subterrânea":lines.append("  Necromassa subterrânea — raízes mortas")
                 value=(format_ptbr(row["tc"],2)+" tC/ha; "+format_ptbr(row["tc"]*44/12,2)+" tCO₂e/ha; "+format_ptbr(row["total_tc"],2)+" tC; "+format_ptbr(row["total_tc"]*44/12,2)+" tCO₂e na interseção") if row["total_tc"] is not None and row.get("tc") is not None else "NÃO ESTIMADO / EXCLUÍDO DO TOTAL"
                 lines += ["  "+row["parametro"]+": "+value,"    Fonte: "+str(row.get("fonte")),"    Método: "+str(row.get("metodo")),"    Erro/incerteza e limitação: "+str(row.get("obs")),"    Nível estatístico: conforme fonte por estrato; não há IC do total","    Intervalos/erro informados: "+json.dumps({k:row[k] for k in ("range_tc_ha","range_dry_mg_ha","agb_uncertainty_mg_ha","agb_range_mg_ha","spatial_sd_tc_ha","root_prediction_interval_tc_ha","root_uncertainty_status","root_uncertainty_source") if row.get(k) is not None},ensure_ascii=False)]
