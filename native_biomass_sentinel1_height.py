@@ -125,7 +125,7 @@ def combine_biomass_sentinel1_height(biomass_fh, sentinel1=None, *, residual_mod
     return out
 
 
-def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognomy,
+def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognomy, biome, region,
                                       reference_url, reference_sha256,
                                       reference_kind, primary_route_status,
                                       group_column="site_id", target_column="field_height_m"):
@@ -155,7 +155,7 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
     if len(feature_columns)<1 or len(set(feature_columns))!=len(feature_columns):
         raise ValueError("Declare preditores X/L únicos e não vazios.")
     qa_columns={"sar_product_id","field_height_definition","spatial_match_error_m",
-                "pixel_size_m","date_field","date_sar"}
+                "pixel_size_m","date_field","date_sar","biome","physiognomy","region"}
     required=set(feature_columns)|{group_column,target_column,"plot_id"}|qa_columns
     missing=sorted(required-set(frame.columns))
     if missing:
@@ -180,6 +180,10 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
         raise ValueError("Separe produtos SAR; o modelo não pode misturar resoluções/processamentos.")
     if data["field_height_definition"].astype(str).str.strip().eq("").any() or data["field_height_definition"].astype(str).nunique()!=1:
         raise ValueError("Use uma única definição de altura de campo, explicitamente declarada.")
+    for column,expected in (("biome",biome),("physiognomy",physiognomy),("region",region)):
+        values=data[column].astype(str).str.strip()
+        if not expected or values.eq("").any() or set(values)!={str(expected)}:
+            raise ValueError("Pares de campo devem pertencer ao mesmo bioma, fitofisionomia e região declarados.")
     data=data.loc[(data[target_column]>0)&data[group_column].astype(str).str.strip().ne("")&
                   data["plot_id"].astype(str).str.strip().ne("")].copy()
     if data["plot_id"].duplicated().any():
@@ -217,6 +221,8 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
         "sensor_priority":"P ESA + Sentinel-1 recente; X; L",
         "primary_route_status":status,
         "physiognomy":str(physiognomy),
+        "biome":str(biome),
+        "region":str(region),
         "feature_columns":list(feature_columns),
         "coefficients":{"intercept_m":float(final.intercept_),
                         **{name:float(value) for name,value in zip(feature_columns,final.coef_)}},
@@ -236,7 +242,7 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
     }
 
 
-def predict_experimental_xl_height(features, model, *, band, physiognomy,
+def predict_experimental_xl_height(features, model, *, band, physiognomy, biome, region,
                                     primary_route_status, x_route_status="UNAVAILABLE"):
     """Predict height only through the authorized X-then-L fallback chain."""
     import numpy as np
@@ -249,7 +255,9 @@ def predict_experimental_xl_height(features, model, *, band, physiognomy,
             "UNAVAILABLE","NO_COVERAGE","ACCESS_DENIED","NO_VALID_PIXELS"}:
         return {"status":"N/D","height_mean_m":None,
                 "reason":"L-band só é acionada quando a rota X-band também está indisponível."}
-    if not isinstance(model,dict) or model.get("band")!=band or model.get("physiognomy")!=str(physiognomy):
+    if (not isinstance(model,dict) or model.get("band")!=band
+        or model.get("physiognomy")!=str(physiognomy)
+        or model.get("biome")!=str(biome) or model.get("region")!=str(region)):
         return {"status":"N/D","height_mean_m":None,
                 "reason":"Modelo X/L ausente ou incompatível com banda/fitofisionomia."}
     names=model.get("feature_columns") or []
@@ -291,6 +299,8 @@ def predict_experimental_xl_height(features, model, *, band, physiognomy,
         "n_spatial_sites":metrics.get("n_spatial_sites"),
         "band":band,
         "physiognomy":str(physiognomy),
+        "biome":str(biome),
+        "region":str(region),
         "reference_url":model.get("reference_url"),
         "reference_sha256":model.get("reference_sha256"),
         "model_coefficients":dict(co),
