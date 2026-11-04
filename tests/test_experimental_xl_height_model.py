@@ -18,7 +18,7 @@ class ExperimentalXLHeightTests(unittest.TestCase):
                     "texture":x,"backscatter":x*2+0.1,
                     "field_height_m":5+12*x+float(rng.normal(0,0.1)),
                     "sar_product_id":"S1-X-test-v1",
-                    "field_height_definition":"H100",
+                    "field_height_definition":"H100",\n                    "biome":"Amazônia","physiognomy":"Floresta Ombrófila Densa","region":"Tapajós",
                     "spatial_match_error_m":5.0,"pixel_size_m":20.0,
                     "date_field":"2025-06-01T00:00:00Z",
                     "date_sar":"2025-08-01T00:00:00Z"})
