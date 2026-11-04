@@ -86,6 +86,7 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
     by_class = {"baixo vigor": 0., "vigor adequado": 0., "alto vigor": 0.}
     attempts = []
     accepted = 0
+    total_crop_area_ha = float(crop_gdf.to_crs(6933).geometry.area.sum()/10000.0)
     weighted = 0.
     for idx, patch in enumerate(patches):
         ha = float(patch.to_crs(6933).geometry.area.sum()/10000)
@@ -112,11 +113,14 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
             by_class[name] += ha*weights[name]
     if not accepted:
         return {"status": "N/D", "reason": "Sentinel-1 ou referências da mesma classe indisponíveis nos polígonos amostrados",
-                "patches_evaluated": len(patches), "patches_valid": 0, "sample_audit": attempts}
+                "patches_evaluated": len(patches), "patches_valid": 0, "sample_audit": attempts,
+                "mapped_crop_area_ha": total_crop_area_ha, "sar_sample_coverage_fraction": 0.0}
     prob = {name: val/weighted for name,val in by_class.items()}
     label = max(prob, key=prob.get)
     return {"status": "experimental", "class": label, "probabilities": prob,
             "patches_evaluated": len(patches), "patches_valid": accepted,
-            "sample_area_ha": weighted, "sample_audit": attempts,
+            "sample_area_ha": weighted, "mapped_crop_area_ha": total_crop_area_ha,
+            "sar_sample_coverage_fraction": weighted/total_crop_area_ha if total_crop_area_ha>0 else 0.,
+            "sample_audit": attempts,
             "source": "Sentinel-1 RTC + classes MapBiomas, amostragem espacial dirigida",
             "uncertainty_warning": "Probabilidades descritivas das amostras, NÃO calibradas para todo o município; erro de transferência e seleção não quantificado"}
