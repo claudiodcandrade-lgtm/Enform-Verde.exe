@@ -95,6 +95,14 @@ def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=1500000):
                 return nd("raster base não é camada contínua projetada de banda única")
             if abs(first.transform.b)>1e-10 or abs(first.transform.d)>1e-10:
                 return nd("rasters rotacionados requerem processamento específico")
+            # Reject RGB/rendered imagery and integer-coded display pixels.
+            # This is a necessary structural check, not proof of official origin.
+            for src in srcs:
+                if src.count != 1 or src.dtypes[0] not in ("float32", "float64"):
+                    return nd("camada não é raster científico contínuo float de banda única")
+                if src.colorinterp and any(str(ci).lower().endswith(
+                        ("red", "green", "blue", "palette")) for ci in src.colorinterp):
+                    return nd("raster de visualização RGB/paleta não é estoque bruto")
             for src in srcs[1:]:
                 if (src.count != 1 or src.crs != first.crs
                         or src.transform != first.transform
