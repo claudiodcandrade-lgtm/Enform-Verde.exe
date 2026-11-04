@@ -64,7 +64,7 @@ def executive_carbon_lines(native, fmt):
            "VEGETAÇÃO NATIVA MAPEADA: "+fmt(area)+" ha"+
                (" ("+fmt(pct)+"% da AOI)" if pct is not None else ""),
            "OUTROS USOS (não entram no estoque nativo): "+fmt(others)+" ha",
-           "SEM CLASSE / NÃO CONFIRMADO: "+fmt(unknown)+" ha",
+           "Cobertura não confirmada: "+fmt(unknown)+" ha — pode conter vegetação; não classificar como zero de cobertura nativa",
            "A formação IBGE nomeia SOMENTE a interseção nativa; NÃO é cobertura de toda a AOI.",
            "Cobertura cartográfica: "+("completa dentro da precisão de área" if cover_complete
                                     else "parcial — área sem classe; não inferir sua cobertura"),
