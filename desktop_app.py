@@ -1719,7 +1719,13 @@ class App(tk.Tk):
                                 + " sacas/ha (60 kg/saca; intervalo 90%: "
                                 + format_ptbr(v["p05"] / 60, 2) + "–"
                                 + format_ptbr(v["p95"] / 60, 2) + " sacas/ha)")
-                               if str(crop_name).strip().casefold() == "soja" else ""),
+                               if str(crop_name).strip().casefold() == "soja" else "")
+                            + (("; incerteza relativa (intervalo preditivo 90%, base mediana): -"
+                                + format_ptbr(100 * (v["median"] - v["p05"]) / v["median"], 1)
+                                + "% / +" + format_ptbr(100 * (v["p95"] - v["median"]) / v["median"], 1) + "%")
+                               if str(crop_name).strip().casefold() == "soja" and v["median"] > 0
+                               else ("; incerteza relativa: N/D (mediana igual a zero)"
+                                     if str(crop_name).strip().casefold() == "soja" else "")),
                             "Produção provável: ESTIMATIVA EXPERIMENTAL sobre área cartográfica — "
                             + format_ptbr(t["median"], 2) + " t (intervalo 90%: "
                             + format_ptbr(t["p05"], 2) + "–"
