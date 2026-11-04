@@ -65,7 +65,19 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
     g = field_gdf.to_crs(4326).geometry.union_all()
     scene = _scene(g, as_of, window_days, search)
     if scene is None:
-        return {"status": "N/D", "reason": f"sem cena Sentinel-1 RTC VV/VH nos últimos {window_days} dias"}
+        return {"status": "N/D", "reason": f"sem cena Sentinel-1 RTC VV/VH nos últimos {window_days} dias",
+                "search_window_days": window_days, "as_of": as_of.isoformat()}
+    # Catalog entries alone are not evidence of current, acquired SAR pixels.
+    # Reject stale/future scene dates even if a custom STAC backend returns them.
+    acquired = datetime.fromisoformat(str(scene.get("acquisition_utc", "")).replace("Z", "+00:00"))
+    reference = datetime.combine(as_of, datetime.max.time()).replace(tzinfo=timezone.utc)
+    if acquired.tzinfo is None:
+        return {"status": "N/D", "reason": "cena sem timezone de aquisição", "scene_id": scene["id"]}
+    age_days = (reference - acquired.astimezone(timezone.utc)).total_seconds() / 86400.0
+    if age_days < 0 or age_days > window_days:
+        return {"status": "N/D", "reason": f"cena fora da janela de atualidade de {window_days} dias",
+                "scene_id": scene["id"], "acquisition_utc": scene["acquisition_utc"],
+                "scene_age_days": age_days}
     token = token_fn()
     with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", GDAL_HTTP_MAX_RETRY="3"):
         with rasterio.open(_signed_href(scene["assets"]["vh"]["href"], token)) as vh_src, \
@@ -125,6 +137,7 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
         return {"status": "N/D", "reason": f"só {used} talhões de referência da mesma classe MapBiomas no raio de {ring_km} km"}
     out = classify_vigor(fvh, fvv, refs, n_boot=200)
     out.update({"scene_id": scene["id"], "acquisition_utc": scene["acquisition_utc"],
+                "scene_age_days": round(age_days, 2), "search_window_days": window_days,
                 "reference_blocks": used, "reference_definition":
                 f"blocos de {side}×{side} px com ≥80% classe MapBiomas {mapbiomas_class} ({YEAR}) num raio de {ring_km} km, mesma cena",
                 "source": "Sentinel-1 RTC (Microsoft Planetary Computer) + MapBiomas C11"})
