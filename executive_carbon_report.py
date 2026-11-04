@@ -90,7 +90,9 @@ def executive_carbon_lines(native, fmt):
             error=(fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | "+fmt(u["percent"])+"%" if abs_u is not None and u["percent"] is not None else
                    (fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | N/D" if abs_u is not None else
                     "N/D tC/ha | N/D tCO₂e/ha | N/D % — incerteza não quantificada"))
-            lines.append("  "+row["parametro"]+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | incerteza: "+error)
+            pool_name=(row["parametro"]+" — CENÁRIO EXPERIMENTAL (fora do estoque conhecido)"
+                       if row.get("origem")=="EXPERIMENTAL_FISICO" else row["parametro"])
+            lines.append("  "+pool_name+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | incerteza: "+error)
             lines.append("    Natureza: "+u["kind"])
             scenario=u.get("scenario_range_tc_ha")
             if scenario is not None:
