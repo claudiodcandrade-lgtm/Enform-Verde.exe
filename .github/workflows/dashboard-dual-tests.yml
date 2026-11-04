@@ -107,7 +107,12 @@ jobs:
         run: |
           # Check each pushed batch (synchronize: 'before'..HEAD); first PR event: whole PR.
           $base = '${{ github.event.before }}'
-          if (!$base -or $base -match '^0+$' -or !(git cat-file -e "$base^{commit}" 2>$null; $?)) {
+          $baseVerified = $false
+          if ($base -match '^[0-9a-fA-F]{40}$' -and $base -notmatch '^0+$') {
+            git cat-file -e "$base^{commit}" 2>$null
+            if ($LASTEXITCODE -eq 0) { $baseVerified = $true }
+          }
+          if (-not $baseVerified) {
             $base = (git merge-base '${{ github.event.pull_request.base.sha }}' HEAD).Trim()
           }
           $global:LASTEXITCODE = 0

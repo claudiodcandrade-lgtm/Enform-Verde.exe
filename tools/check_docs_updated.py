@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """User rule (2026-11-03): every effective step updates BOTH the full technical
 specification (docs/ESPECIFICACAO_TECNICA_COMPLETA.docx) and the continuity
-prompt (docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md).
+prompt (docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md).
 
 Usage in CI:  python tools/check_docs_updated.py <base_sha> <head_sha>
 Fails when any code/data/workflow file changed in base..head but either
@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 SPEC = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
-PROMPT = "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md"
+PROMPT = "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md"
 
 
 def effective(path):
