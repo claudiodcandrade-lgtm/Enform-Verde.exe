@@ -10,6 +10,14 @@ from datetime import date, timedelta
 from crop_identifier_consolidated import MAPBIOMAS_C11, REGISTRY, attribute_unseparated
 
 NAME_TO_CODE = {v: k for k, v in MAPBIOMAS_C11.items()}
+CANONICAL_CROPS = {name.casefold(): name for name in REGISTRY}
+CANONICAL_CROPS.update({"citrus": "Citros", "cana": "Cana-de-açúcar", "cana de açúcar": "Cana-de-açúcar"})
+
+
+def canonical_crop(label):
+    """Case-insensitive bridge between MapBiomas display labels and PAM/model keys."""
+    return CANONICAL_CROPS.get(str(label).strip().casefold(), str(label).strip())
+
 
 
 def crops_in_land_result(land):
@@ -19,7 +27,7 @@ def crops_in_land_result(land):
         name = str(item.get("class_name", ""))
         if name.startswith("Lavoura de ") and item.get("source") in ("MAPBIOMAS", "SAR_VALIDADO"):
             crop = name.replace("Lavoura de ", "").strip()
-            crop = {"Citrus": "Citros", "Cana": "Cana-de-açúcar"}.get(crop, crop)
+            crop = canonical_crop(crop)
             out[crop] = out.get(crop, 0.0) + float(item.get("area_ha") or 0)
         elif name in ("Outras Lavouras Temporárias", "Lavoura Temporária"):
             out["__temporarias__"] = out.get("__temporarias__", 0.0) + float(item.get("area_ha") or 0)
@@ -43,6 +51,14 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
         return lines, audit
     art = load_artifact() or {"crops": {}}
     micro = micro_fn(gdf)["dominant"]
+    # A municipal AOI is not a crop mask. Never derive field-scale vigor or
+    # phytosanitary status from a mixed-cover municipality polygon.
+    aoi_ha = float(gdf.to_crs(6933).geometry.area.sum()) / 10000.0
+    municipal_scale = aoi_ha > 5000.0
+    audit["geometry_scope"] = {"aoi_ha": aoi_ha, "municipal_scale": municipal_scale,
+                               "crop_geometry_available": False,
+                               "note": "áreas de cultura são totais cartográficos, não polígonos de talhão"}
+
     for crop, area in sorted(crops.items(), key=lambda kv: -kv[1]):
         if crop == "__temporarias__":
             att = attribute_unseparated(micro["code"], area)
@@ -61,7 +77,10 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
         if crop in art.get("crops", {}):
             code = NAME_TO_CODE.get(crop)
             try:
-                vig = vigor_fn(gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
+                if municipal_scale:
+                    vig = {"status": "N/D", "reason": "sem geometria da lavoura: AOI municipal multiclasse; não atribuir vigor Sentinel-1 ao município inteiro"}
+                else:
+                    vig = vigor_fn(gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
             except Exception as exc:
                 vig = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
             entry["vigor"] = {k: v for k, v in vig.items() if k not in ("metrics", "z_scores")}
@@ -71,11 +90,15 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 p = ", ".join(f"{k} {100*v:.0f}%" for k, v in vig["probabilities"].items())
                 lines.append(f"  Vigor automático (Sentinel-1 {str(vig.get('acquisition_utc', ''))[:10]}): {vig['class']} ({p})")
             try:
+                if municipal_scale:
+                    lines.append("  Escala: projeção regional experimental sobre a área cartográfica anual; não representa medição do talhão nem cultura atual confirmada por Sentinel-1.")
                 rep = forecast_fn([{"id": crop, "gdf": gdf, "crop": crop,
                                     "identification": {"label_allowed": True}, "vigor": vig, "area_ha": area}],
                                   as_of=as_of)
                 lines += ["  " + l for l in forecast_lines(rep)]
                 entry["forecast_status"] = rep.get("status")
+                entry["forecast_model"] = rep.get("model")
+                entry["forecast"] = {k: v for k, v in rep.items() if k in ("production", "fields", "model_label", "status") }
             except Exception as exc:
                 lines.append("  Previsão de safra: N/D — " + type(exc).__name__ + ": " + str(exc)[:160])
         else:
