@@ -137,6 +137,21 @@ def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fe
     return report
 
 
+def productivity_display(crop, summary, fmt=lambda x, nd=0: f"{x:,.{nd}f}".replace(",", ".")):
+    """Display calibrated/scenario forecast in t/ha; soybean also in 60-kg bags/ha.
+
+    Input forecast quantiles are kg/ha, not independent bag estimates. The
+    conversion is exact: t/ha = kg/ha / 1000; 60-kg bags/ha = kg/ha / 60.
+    """
+    p = summary
+    out = (f"    Produtividade prevista: {fmt(p['median']/1000, 2)} t/ha "
+           f"(intervalo 90%: {fmt(p['p05']/1000, 2)}–{fmt(p['p95']/1000, 2)} t/ha)")
+    if str(crop).strip().casefold() == "soja":
+        out += (f"; equivalente a {fmt(p['median']/60, 2)} sacas/ha (60 kg/saca; "
+                f"intervalo 90%: {fmt(p['p05']/60, 2)}–{fmt(p['p95']/60, 2)} sacas/ha)")
+    return out
+
+
 def forecast_lines(report, fmt=lambda x, nd=0: f"{x:,.{nd}f}".replace(",", ".")):
     if report.get("model") == "panel":
         return _panel_lines(report, fmt)
@@ -153,7 +168,7 @@ def forecast_lines(report, fmt=lambda x, nd=0: f"{x:,.{nd}f}".replace(",", "."))
                 f"    Clima: {cl['class']} (P: " + ", ".join(f"{k} {100*x:.0f}%" for k, x in cl["probabilities"].items())
                 + f"; {100*cl['observed_fraction_of_season']:.0f}% da safra observada)",
                 f"    Microrregião (tendência projetada): piso {fmt(sc['floor'])}, média {fmt(sc['mean'])}, teto {fmt(sc['ceiling'])} kg/ha",
-                f"    Produtividade prevista: {fmt(p['median'])} kg/ha (intervalo 90%: {fmt(p['p05'])}–{fmt(p['p95'])})",
+                productivity_display(rid, p, fmt),
                 f"    Hindcast clima+histórico (n={hc.get('n')}): MAE {fmt(hc.get('mae_kg_ha', 0))} kg/ha; "
                 f"só tendência {fmt(hc.get('naive_trend_only_mae_kg_ha', 0))} kg/ha"]
     if "production" in report:
@@ -177,7 +192,7 @@ def _panel_lines(report, fmt):
                  f"(p10–p90 {r['ry_p10_p90'][0]:.2f}–{r['ry_p10_p90'][1]:.2f}; {r['n_analogs']} anos análogos)").replace(".", ","),
                 ("    Vigor: " + r["vigor"]["class"] + " (posiciona o resultado no terço correspondente dos erros históricos)")
                 if r["vigor"] else "    Vigor: N/D — intervalo cobre todos os erros históricos",
-                f"    Produtividade prevista: {fmt(p['median'])} kg/ha (intervalo 90%: {fmt(p['p05'])}–{fmt(p['p95'])})",
+                productivity_display(rid, p, fmt),
                 f"    Validação do modelo no grupo: MAE {fmt(l['mae_kg_ha'])} kg/ha vs. {fmt(l['trend_only_mae_kg_ha'])} só tendência "
                 f"(ganho {100*l['skill_vs_trend']:.0f}%; {l['units_improved']}/{l['units']} microrregiões melhoram)"]
     if "production" in report:
