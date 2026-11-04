@@ -78,7 +78,7 @@ def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
 
 
 def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
-                           max_patches=6):
+                           max_patches=6, require_scene_evidence=False):
     patches = sample_crop_patches(crop_gdf, max_patches=max_patches)
     if not patches:
         return {"status": "N/D", "reason": "sem parcelas internas suficientemente homogêneas no mapa anual",
@@ -106,7 +106,7 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
         acquired = result.get("acquisition_utc")
         if result.get("status") not in ("experimental", "validated") or not isinstance(p, dict):
             continue
-        if vigor_fn.__module__ == "crop_vigor_auto" and (not scene_id or not acquired):
+        if require_scene_evidence and (not scene_id or not acquired):
             attempts[-1]["status"] = "N/D"
             attempts[-1]["reason"] = "cena real sem identidade ou data de aquisição"
             continue
