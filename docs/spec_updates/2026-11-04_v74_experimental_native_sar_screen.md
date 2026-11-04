@@ -57,7 +57,7 @@ Os testes sintéticos verificam bounds do score, N/D com máscara sem pixels, al
 - ESA MAAP, produtos BIOMASS L2B, FP_FH__L2B (Forest Height) e FP_AGB_L2B (AGB): https://portal.maap.eo.esa.int/biomass/biomass-data-offer/
 - ESA Biomass Product User Guide e ATBD, documentos oficiais: https://climate.esa.int/en/projects/biomass/
 - Forest/non-forest separability using Sentinel-1 C-band: https://doi.org/10.3390/rs12111899
-- Balling et al. (2023), Sentinel-1 GLCM texture for tropical forest disturbance mapping: https://doi.org/10.1016/j.jag.2023.103463
+- Balling et al. (2023), Sentinel-1 GLCM texture for tropical forest disturbance mapping: https://doi.org/10.1016/j.jag.2023.103492
 - Gonçalves et al. (2018), ORNL DAAC 1552, parcelas/estrutura no Tapajós: https://doi.org/10.3334/ORNLDAAC/1552
 
 As publicações embasam o uso de retroespalhamento, textura e estrutura SAR como preditores. Elas não validam automaticamente o índice local ou seus limiares.
