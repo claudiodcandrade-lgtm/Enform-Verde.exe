@@ -198,3 +198,11 @@ Documentação local completa distribuída: `PROMPT_CONTINUIDADE_ENFORM_VERDE_20
 - Fonte científica revisada `docs/spec_updates/2026-11-04_v68_sar_global_catalog.md`; workflow canônico de especificação Word deve sincronizar este adendo, e controles de CI/testes devem passar no mesmo SHA final antes de compilar EXE.
 - Critério de aceite operacional: aquisição Sentinel-1 atual com data e VV/VH, preditores harmonizados, modelo de culturas realmente treinado + pesos, licença, validação independente da região/cultura, matriz de confusão, intervalos e trilha de auditoria por polígono. Sondagem SAR sozinha não atinge esse critério.
 - Arquivos de continuidade para usuário: `Enform_Verde_Prompt_Continuidade_v68.md`, `Enform_Verde_Especificacao_Tecnica_Completa_v68.docx`, `Enform_Verde_Documentos_v68.zip`.
+
+
+## CHECKPOINT v69 — 04/11/2026 — correção da última regressão IBGE/SAR
+- Código `land_use_sar.py` no commit `b5a142460ae11ae853e449dd6642832917ca5a1b`: preservada literalmente a cláusula `IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível` requisitada pelo teste `test_validated_sar_crop_precedes_mapbiomas_crop_layer`, mantendo classificador SAR de safra atual como fonte de primeira ordem, MapBiomas C11 de 2025 estritamente histórico, e falha segura N/D sem modelo SAR executável validado.
+- O run de testes `41920055953` (SHA `d1a0e29a`) registrou 858 testes, apenas uma falha textual. Reexecutar suíte integral e EXE Windows após commits finais; build de SHA anterior NÃO libera a revisão nova.
+- Adendo `docs/spec_updates/2026-11-04_v69_sar_priority_regression.md`; workflow canônico de Word sincroniza este conteúdo e deve terminar com sucesso.
+- Modelos globais, observações Sentinel-1 recentes e tratamentos de erro TIFF da v68 preservados. A instalação efetiva de pesos e validação do classificador por cultura ainda é trabalho em aberto; não declarar essa funcionalidade plenamente operacional.
+- Documentos atualizados deverão ser rotulados v69 e ter integridade DOCX/ZIP verificada. Cientificamente: homologação independente continua PENDENTE, separada da liberação de piloto experimental.
