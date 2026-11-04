@@ -89,7 +89,7 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
     mb = np.zeros(shp, dtype="uint8")
     try:
         with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
-            with rasterio.open(url if url.startswith(("/", "file:")) else "/vsicurl/" + url) as src:
+            with rasterio.open(url if url.startswith(("/", "file:")) or __import__("pathlib").Path(url).is_file() else "/vsicurl/" + url) as src:
                 rb = rasterio.warp.transform_bounds(crs, src.crs, *ring.bounds)
                 w = from_bounds(*rb, transform=src.transform).round_offsets().round_lengths()
                 arr = src.read(1, window=w, boundless=True, fill_value=0)
