@@ -126,3 +126,78 @@ def published_national_litter_component(biome, physiognomy, aoi):
         out["published_plusminus_dry_mg_ha"]=best["published_plusminus_mg_ha"]
         out["spread_caveat"]="O simbolo +/- do artigo NAO foi interpretado como IC/SD/SE e nao foi incorporado ao envelope de fracao de carbono."
     return out
+
+
+def inventory_litter_transfer_model(reference, *, biome, physiognomy, carbon_fraction=0.47):
+    """Quantify a class-matched standing-litter transfer ONLY with audited error.
+
+    E[L_C] = mean_dry_Mg_ha * carbon_fraction (tC/ha).
+    SE[mean_dry] = SD_between_independent_units / sqrt(n_eff).
+    SD[transfer prediction] = sqrt(SE[mean_dry]^2 + SD_transfer^2).
+    A normal 90% predictive interval is provisional and is NOT an empirically
+    verified coverage interval for a new Brazilian AOI. The carbon fraction is
+    held fixed; uncertainty in it must be included by a separately calibrated
+    model before claiming total uncertainty. If transfer SD is absent, do NOT
+    manufacture a 90/95% CI from the study SD.
+    """
+    import math
+    from native_carbon import normalize
+    def pos(k):
+        try:
+            v=float(reference.get(k))
+            return v if math.isfinite(v) and v>0 else None
+        except (ValueError,TypeError,OverflowError):
+            return None
+    if not isinstance(reference,dict):
+        return None
+    if (normalize(reference.get("biome"))!=normalize(biome) or
+        normalize(reference.get("physiognomy"))!=normalize(physiognomy)):
+        return None
+    mean=pos("standing_dry_mass_mg_ha")
+    if mean is None or reference.get("measurement")!="standing_litter_dry_mass":
+        return None
+    if not (0.35<=carbon_fraction<=0.60):
+        return None
+    if not reference.get("source_url") or not reference.get("institution"):
+        return None
+    if reference.get("source_tier") not in ("microrregional","regional"):
+        return None
+    result={
+        "mean_dry_mg_ha":mean,"mean_tc_ha":mean*carbon_fraction,
+        "source":reference["institution"]+" — "+reference["source_url"],
+        "source_url":reference["source_url"],
+        "source_tier":reference["source_tier"],
+        "origin":"EXPERIMENTAL_FISICO",
+        "include_in_total":False,
+        "evidence_type":"standing_litter_dry_mass",
+        "method":("Transferência de massa seca observada apenas para a mesma fitofisionomia; "
+                  "estoque tC/ha = Mg seco/ha × fração de C. Não substituir estoque por "
+                  "fluxo de queda anual, espessura IFN ou biomassa lenhosa."),
+        "uncertainty_kind":"Erro de transferência não quantificado; IC95% indisponível",
+        "scientifically_homologated":False,
+    }
+    n=pos("independent_sample_units")
+    sd=pos("dry_mass_sd_mg_ha")
+    transfer=pos("externally_validated_transfer_sd_mg_ha")
+    if (n is not None and n>=5 and sd is not None and transfer is not None
+        and reference.get("transfer_validation_independent") is True
+        and reference.get("transfer_validation_physiognomy")==physiognomy
+        and reference.get("transfer_validation_region")):
+        se=sd/math.sqrt(n)
+        predictive_sd=math.sqrt(se*se+transfer*transfer)
+        out_lower=max(0.0,(mean-1.6448536269514722*predictive_sd)*carbon_fraction)
+        out_upper=(mean+1.6448536269514722*predictive_sd)*carbon_fraction
+        result.update(
+            range_tc_ha=[out_lower,out_upper],
+            inventory_sample_mean_se_dry_mg_ha=se,
+            transfer_sd_dry_mg_ha=transfer,
+            uncertainty_kind=("Intervalo preditivo normal 90% CONDICIONAL a desvio-padrão "
+                              "de transferência estimado em validação independente; não é "
+                              "IC95% nem comprovação de cobertura na AOI."),
+            status="ESTIMATIVA EXPERIMENTAL COM INFERÊNCIA DE TRANSFERÊNCIA AUDITÁVEL")
+    else:
+        result["status"]="ESTIMATIVA EXPERIMENTAL SEM ERRO DE TRANSFERÊNCIA VERIFICADO"
+        result["uncertainty_missing"]=(
+            "Exigir n independente, SD de estoque seco, SD de transferência "
+            "validado externamente na mesma fitofisionomia e domínio regional.")
+    return result
