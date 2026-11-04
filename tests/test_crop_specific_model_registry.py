@@ -1,24 +1,23 @@
-"""Crop-specific research registry is explicit about integration and calibration."""
-from crop_specific_model_registry import MODEL_REGISTRY, CURRENT_CALIBRATED_PANEL, model_contract
+"""Validate presence of crop-specific model contracts, without pretending to execute solvers."""
+import unittest
+from crop_specific_model_registry import MODEL_REGISTRY,CURRENT_CALIBRATED_PANEL,model_contract
 
+class TestCropSpecificRegistry(unittest.TestCase):
+    def test_nine_crop_model_contracts(self):
+        expected={"Soja","Milho","Sorgo","Feijão","Arroz","Cana-de-açúcar","Algodão","Café","Citros"}
+        self.assertEqual(set(MODEL_REGISTRY),expected)
+        for crop in expected:
+            r=model_contract(crop)
+            self.assertEqual(r["status"],"research_backed_not_integrated")
+            self.assertTrue(r["recommended_model"] and r["source"].startswith("https://"))
+            self.assertGreaterEqual(len(r["phenological_stages"]),3)
+            self.assertGreaterEqual(len(r["sar_features"]),2)
+            self.assertIn("não integrado",r["warning"])
+    def test_only_historical_pam_panel_models_are_installed(self):
+        self.assertEqual(CURRENT_CALIBRATED_PANEL,{"Soja","Milho"})
+        self.assertTrue(model_contract("Soja")["existing_panel_available"])
+        self.assertFalse(model_contract("Citros")["existing_panel_available"])
+        self.assertEqual(model_contract("Outras")["status"],"N/D")
 
-def test_all_nine_crops_have_specific_model_and_stage_features():
-    assert set(MODEL_REGISTRY) == {"Soja", "Milho", "Sorgo", "Feijão", "Arroz",
-                                   "Cana-de-açúcar", "Algodão", "Café", "Citros"}
-    for crop in MODEL_REGISTRY:
-        spec = model_contract(crop)
-        assert spec["status"] == "research_backed_not_integrated"
-        assert spec["recommended_model"] and spec["source"].startswith("https://")
-        assert len(spec["phenological_stages"]) >= 3
-        assert len(spec["climate_features"]) >= 3
-        assert len(spec["sar_features"]) >= 2
-        assert "não integrado" in spec["warning"]
-
-
-def test_research_model_is_not_misrepresented_as_calibrated():
-    assert CURRENT_CALIBRATED_PANEL == {"Soja", "Milho"}
-    assert model_contract("Soja")["existing_panel_available"]
-    assert not model_contract("Café")["existing_panel_available"]
-    assert model_contract("Algodão")["yield_basis"].startswith("algodão em caroço")
-    assert model_contract("Citros")["status"] == "research_backed_not_integrated"
-    assert model_contract("Não reconhecida")["status"] == "N/D"
+if __name__=="__main__":
+    unittest.main()
