@@ -86,6 +86,7 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
     by_class = {"baixo vigor": 0., "vigor adequado": 0., "alto vigor": 0.}
     attempts = []
     accepted = 0
+    accepted_scenes = []
     total_crop_area_ha = float(crop_gdf.to_crs(6933).geometry.area.sum()/10000.0)
     weighted = 0.
     for idx, patch in enumerate(patches):
@@ -99,7 +100,15 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
                          "scene_id": result.get("scene_id"),
                          "acquisition_utc": result.get("acquisition_utc")})
         p = result.get("probabilities")
+        # Require actual georeferenced Sentinel-1 acquisition evidence, not
+        # a model-only synthetic vigor estimate. Record all acquisition times.
+        scene_id = result.get("scene_id")
+        acquired = result.get("acquisition_utc")
         if result.get("status") not in ("experimental", "validated") or not isinstance(p, dict):
+            continue
+        if vigor_fn.__module__ == "crop_vigor_auto" and (not scene_id or not acquired):
+            attempts[-1]["status"] = "N/D"
+            attempts[-1]["reason"] = "cena real sem identidade ou data de aquisição"
             continue
         try:
             weights = {c: float(p[c]) for c in by_class}
@@ -109,6 +118,8 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
             continue
         weighted += ha
         accepted += 1
+        if scene_id and acquired:
+            accepted_scenes.append({"scene_id": scene_id, "acquisition_utc": acquired, "area_ha": ha})
         for name in by_class:
             by_class[name] += ha*weights[name]
     if not accepted:
@@ -121,6 +132,8 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
             "patches_evaluated": len(patches), "patches_valid": accepted,
             "sample_area_ha": weighted, "mapped_crop_area_ha": total_crop_area_ha,
             "sar_sample_coverage_fraction": weighted/total_crop_area_ha if total_crop_area_ha>0 else 0.,
-            "sample_audit": attempts,
+            "sample_audit": attempts, "accepted_scenes": accepted_scenes,
+            "acquisition_period_utc": [min(x["acquisition_utc"] for x in accepted_scenes),
+                                       max(x["acquisition_utc"] for x in accepted_scenes)] if accepted_scenes else None,
             "source": "Sentinel-1 RTC + classes MapBiomas, amostragem espacial dirigida",
             "uncertainty_warning": "Probabilidades descritivas das amostras, NÃO calibradas para todo o município; erro de transferência e seleção não quantificado"}
