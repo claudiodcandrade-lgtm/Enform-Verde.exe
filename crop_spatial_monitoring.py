@@ -36,7 +36,7 @@ def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
     """
     import geopandas as gpd
     from shapely.geometry import box
-    from shapely.ops import unary_union
+    from shapely.geometry import Point
     from math import sqrt
 
     if geometry is None or geometry.empty or geometry.crs is None:
@@ -53,19 +53,27 @@ def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
             break
         if geom.area < min_area_ha * 10000.0:
             continue
-        # Interior point exists even for concave parcels; no unverified external
-        # crop geometry is introduced by a centroid outside the polygon.
-        p = geom.representative_point()
-        window = box(p.x-side/2, p.y-side/2, p.x+side/2, p.y+side/2)
-        clipped = geom.intersection(window)
-        if clipped.is_empty or clipped.area < min_area_ha*10000:
-            continue
-        if clipped.area/window.area < min_purity:
-            continue
-        # Prevent overlap between sampled windows; avoid duplicate evidence.
-        if any(clipped.intersects(old.to_crs(6933).geometry.iloc[0]) for old in patches):
-            continue
-        patches.append(gpd.GeoDataFrame(geometry=[clipped], crs=6933).to_crs(4326))
+        # Reproducible spatial spread across large agricultural polygons.
+        # These are diagnostic patches, NOT a random survey or exhaustive map.
+        minx, miny, maxx, maxy = geom.bounds
+        candidates = [geom.representative_point()]
+        for i in range(1, 8):
+            for j in range(1, 8):
+                p = Point(minx + (maxx-minx)*i/8, miny + (maxy-miny)*j/8)
+                if geom.contains(p):
+                    candidates.append(p)
+        for p in candidates:
+            if len(patches) >= max_patches:
+                break
+            window = box(p.x-side/2, p.y-side/2, p.x+side/2, p.y+side/2)
+            clipped = geom.intersection(window)
+            if clipped.is_empty or clipped.area < min_area_ha*10000:
+                continue
+            if clipped.area/window.area < min_purity:
+                continue
+            if any(clipped.intersects(old.to_crs(6933).geometry.iloc[0]) for old in patches):
+                continue
+            patches.append(gpd.GeoDataFrame(geometry=[clipped], crs=6933).to_crs(4326))
     return patches
 
 
