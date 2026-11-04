@@ -838,7 +838,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         raw_layers.append(reference)
     else:warnings.append('IBGE sem polígonos disponíveis; não há detalhamento fitofisionômico oficial.')
     if layers:
-        # Use IBGE only to NAME SAR-confirmed native polygons; inference by\n        # proximity is explicit and bounded to 3 km in a metric projection.\n        layers[0]=name_native_from_ibge(layers[0],reference,max_proximity_m=3000)
+        # Use IBGE only to NAME SAR-confirmed native polygons.
+        # Proximity is explicit and bounded to 3 km in a metric projection.
+        layers[0]=name_native_from_ibge(layers[0],reference,max_proximity_m=3000)
     # IBGE legenda_1 describes phytoregions, not proof of current native cover.
     # Below accepted SAR, MapBiomas masks current anthropic/native cover, and
     # IBGE supplies the detailed physiognomy within its native intersections.
