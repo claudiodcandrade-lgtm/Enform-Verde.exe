@@ -40,6 +40,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     from crop_vigor_auto import automatic_vigor
     from crop_yield_scenario import microregion_of
     from crop_spatial_monitoring import crop_geometry, sampled_sentinel_vigor
+    from crop_specific_model_registry import model_contract
     as_of = as_of or (date.today() - timedelta(days=3))
     vigor_fn = vigor_fn or automatic_vigor
     forecast_fn = forecast_fn or forecast_fields
@@ -71,6 +72,13 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 lines.append(f"• Outras lavouras temporárias ({area:.1f} ha): cultura NÃO identificada; "
                              f"probabilidade a priori na microrregião {micro['name']} (PAM): {probs}")
             continue
+        spec = model_contract(crop)
+        audit.setdefault("species_model_contracts", {})[crop] = spec
+        if spec["status"] != "N/D":
+            lines.append("  Modelo fisiológico prioritário (PESQUISA; não executado): " + spec["recommended_model"])
+            lines.append("  Estádios sensíveis: " + "; ".join(spec["phenological_stages"]))
+            lines.append("  Variáveis climáticas específicas: " + "; ".join(spec["climate_features"]))
+            lines.append("  Indicadores SAR a calibrar: " + "; ".join(spec["sar_features"]))
         reg = REGISTRY.get(crop, {})
         lines.append(f"• {crop} ({area:.1f} ha) — {reg.get('product', 'rota não registrada')}; "
                      "mapa do ano anterior, sem validação desta propriedade")
