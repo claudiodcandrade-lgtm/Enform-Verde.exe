@@ -60,6 +60,10 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     audit["geometry_scope"] = {"aoi_ha": aoi_ha, "municipal_scale": municipal_scale,
                                "crop_geometry_available": bool(land.get("vector_path")),
                                "note": "monitoramento SAR somente em polígonos mapeados de cultura; amostragem não equivale a validação de área"}
+    # At most ONE real SAR first-look per analysis: user-facing current
+    # measurements are not a calibrated or class-specific SAR classifier.
+    # Keeping a bounded query avoids repeated network calls for every crop.
+    sar_probe_done = False
 
     for crop, area in sorted(crops.items(), key=lambda kv: -kv[1]):
         if crop == "__temporarias__":
@@ -85,6 +89,27 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
         entry = {"area_ha": area, "identification": reg}
         crop_gdf = crop_geometry(land, crop, canonical_fn=canonical_crop)
         entry["crop_polygon_available"] = crop_gdf is not None
+        if crop_gdf is not None and not sar_probe_done:
+            sar_probe_done = True
+            try:
+                from sar_crop_live_probe import probe_recent_sar_crop_pixels
+                live_probe = probe_recent_sar_crop_pixels(gdf, crop_gdf)
+                audit["live_sar_probe"] = live_probe
+                if live_probe.get("status") == "SAR_PIXELS_RECENTES_PROCESSADOS":
+                    lines.append(
+                        "  SAR ATUAL — VV/VH realmente lidos em ponto agrícola: "+
+                        str(live_probe.get("latest_acquisition_utc"))+
+                        "; NÃO identifica cultura nem comprova a área da safra.")
+                    lines.append("  Identificador SAR atual por cultura: N/D — modelo calibrado/validado não instalado.")
+                else:
+                    lines.append("  SAR ATUAL: N/D — "+
+                                 str(live_probe.get("reason") or "consulta indisponível")[:180])
+            except Exception as exc:
+                audit["live_sar_probe"] = {
+                    "status": "SAR_NAO_VERIFICADO",
+                    "reason": type(exc).__name__ + ": " + str(exc)[:180]}
+                lines.append("  SAR ATUAL: N/D — "+
+                             audit["live_sar_probe"]["reason"])
         if crop in art.get("crops", {}):
             code = NAME_TO_CODE.get(crop)
             # Reuse the exact MapBiomas raster that succeeded in the land-use
