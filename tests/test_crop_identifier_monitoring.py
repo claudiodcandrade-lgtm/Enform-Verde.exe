@@ -54,10 +54,15 @@ class MonitoringTests(unittest.TestCase):
             return {"status": "ok", "model": "panel", "model_label": "TESTE", "fields": {}}
         lines, audit = monitoring_forecast(g, self.land, as_of=date(2026, 10, 31), vigor_fn=vig, forecast_fn=fake_forecast)
         txt = "\n".join(lines)
-        self.assertIn("Vigor automático (Sentinel-1 2026-10-31): alto vigor", txt)
+        # Even an injected vigor function must not receive a mixed AOI
+        # merely because its annual map contains a soybean class: without
+        # an actual crop polygon this is not a verified soybean field.
+        self.assertIn("Vigor automático: N/D", txt)
+        self.assertIn("sem máscara vetorial da cultura", txt)
         self.assertIn("cultura NÃO identificada", txt)
         self.assertIn("sem modelo calibrado", txt)                 # café has no calibrated model
-        self.assertEqual(seen["area"], 120.0); self.assertEqual(seen["vigor"]["class"], "alto vigor")
+        self.assertEqual(seen["area"], 120.0)
+        self.assertEqual(seen["vigor"]["status"], "N/D")
 
     def test_vigor_failure_does_not_stop_forecast(self):
         g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
