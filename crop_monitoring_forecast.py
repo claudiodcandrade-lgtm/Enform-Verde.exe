@@ -79,13 +79,20 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
         entry["crop_polygon_available"] = crop_gdf is not None
         if crop in art.get("crops", {}):
             code = NAME_TO_CODE.get(crop)
+            # Reuse the exact MapBiomas raster that succeeded in the land-use
+            # stage, including a user-supplied local Windows TIFF.
+            selected_map = (land or {}).get("mapbiomas_source")
+            def scene_vigor(patch, day, class_code):
+                if vigor_fn is automatic_vigor and selected_map:
+                    return automatic_vigor(patch, day, class_code, mapbiomas_url=selected_map)
+                return vigor_fn(patch, day, class_code)
             try:
                 if crop_gdf is not None and municipal_scale and code is not None:
-                    vig = sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn)
+                    vig = sampled_sentinel_vigor(crop_gdf, as_of, code, scene_vigor)
                 elif municipal_scale:
                     vig = {"status": "N/D", "reason": "sem polígono de cultura disponível; proibido usar AOI municipal multiclasse para vigor"}
                 else:
-                    vig = vigor_fn(crop_gdf if crop_gdf is not None else gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
+                    vig = scene_vigor(crop_gdf if crop_gdf is not None else gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
             except Exception as exc:
                 vig = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
             entry["vigor"] = {k: v for k, v in vig.items() if k not in ("metrics", "z_scores")}
