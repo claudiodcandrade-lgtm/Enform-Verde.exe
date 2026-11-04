@@ -1355,7 +1355,7 @@ class App(tk.Tk):
                 if reference is None:
                     try:reference,reference_field=load_ibge_land_use_reference(frame)
                     except Exception:pass
-                result_queue.put((True,run_land_use(frame,output,config,ibge=reference,ibge_field=reference_field)))
+                result_queue.put((True,run_land_use(frame,output,config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))))
             except Exception as exc:result_queue.put((False,str(exc)))
         def poll():
             try:ok,result=result_queue.get_nowait()
@@ -2081,7 +2081,7 @@ class App(tk.Tk):
                 if reference is None:
                     try:reference,reference_field=load_ibge_land_use_reference(gdf)
                     except Exception:pass
-                land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field)
+                land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))
                 options={"offline_token":token,"edl_user":edl_user,"edl_password":edl_password,"edl_token":edl_token,
                          "cdse_token":cdse_token,"cdse_client_id":cdse_client_id,"cdse_client_secret":cdse_client_secret,
                          "inventory_evidence":inventory_evidence,
@@ -2135,7 +2135,7 @@ class App(tk.Tk):
             if precomputed_land is None and reference is None:
                 try:reference,reference_field=load_ibge_land_use_reference(self.gdf)
                 except Exception:pass
-            land=precomputed_land if precomputed_land is not None else run_land_use(self.gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],self.land_use_config,ibge=reference,ibge_field=reference_field)
+            land=precomputed_land if precomputed_land is not None else run_land_use(self.gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],self.land_use_config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))
             if land.get("error"):raise ValueError(land["error"])
             self.project["land_use"]=land
             native=(precomputed_native if precomputed_native is not None
