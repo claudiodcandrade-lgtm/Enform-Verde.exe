@@ -2511,6 +2511,28 @@ class App(tk.Tk):
                                      measure.get("wcs_coverage_id"),measure.get("raster_sha256")])
         put(sh,rows_fert or [["N/D",fertility.get("reason") or "sem pixels numéricos oficiais",
                              None,None,None,None,None,None,None,"N/D",None,None]])
+        model_manifest=self.project.get("modeled_field_predictions") or {}
+        sh=wb.create_sheet("Modelo Para Campo")
+        setup(sh,"Enform Verde — resultados experimentais, NÃO medições de campo")
+        for j,h in enumerate(["ID previsão","Fitofisionomia","Compartimento/cultura",
+                              "Status","Estimativa (tC/ha ou t/ha)","Área (ha)",
+                              "Faixa condicional","Tipo de incerteza","Origem",
+                              "Protocolo de campo","Valor medido em campo (EM BRANCO)"],1):
+            sh.cell(3,j,h).value=h
+        model_rows=[]
+        for prediction in model_manifest.get("predictions") or []:
+            model_rows.append([prediction.get("prediction_id"),
+                prediction.get("physiognomy"),prediction.get("compartment"),
+                prediction.get("status"),
+                prediction.get("density_predicted_tc_ha",
+                               prediction.get("predicted_t_ha")),
+                prediction.get("area_basis_ha"),
+                str(prediction.get("density_range_tc_ha") or
+                    prediction.get("prediction_range_t_ha") or "N/D"),
+                prediction.get("uncertainty_kind"),prediction.get("source"),
+                prediction.get("field_protocol"),None])
+        put(sh,model_rows or [["N/D",None,None,"SEM RESULTADOS MODELADOS",None,None,
+                              "N/D","N/D","N/D","Executar análise",None]])
         land=self.project.get("land_use")
         if land:
             sh=wb.create_sheet("Uso do Solo"); setup(sh,"Enform Verde — classes de uso e cobertura")
