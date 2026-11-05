@@ -20,19 +20,34 @@ def canonical_crop(label):
 
 
 
-def crops_in_land_result(land):
-    """MapBiomas crop classes reported by land_use_sar → {crop: area_ha}."""
+def mapbiomas_historical_reference(land):
+    """Return MapBiomas crop areas as an explicitly historical reference only."""
     out = {}
     for item in (land or {}).get("classes", []) or []:
+        if item.get("source") != "MAPBIOMAS":
+            continue
         name = str(item.get("class_name", ""))
-        if name.startswith("Lavoura de ") and item.get("source") in ("MAPBIOMAS", "SAR_VALIDADO"):
-            crop = name.replace("Lavoura de ", "").strip()
-            crop = canonical_crop(crop)
-            out[crop] = out.get(crop, 0.0) + float(item.get("area_ha") or 0)
+        if name.startswith("Lavoura de "):
+            crop = canonical_crop(name.replace("Lavoura de ", "").strip())
+            out[crop] = out.get(crop, 0.0) + float(item.get("area_ha") or 0.0)
         elif name in ("Outras Lavouras Temporárias", "Lavoura Temporária"):
-            out["__temporarias__"] = out.get("__temporarias__", 0.0) + float(item.get("area_ha") or 0)
+            out["__temporarias__"] = out.get("__temporarias__", 0.0) + float(item.get("area_ha") or 0.0)
     return out
 
+
+def crops_in_land_result(land):
+    """Current crop masks must come from the independently validated SAR classifier."""
+    out = {}
+    for item in (land or {}).get("classes", []) or []:
+        if not str(item.get("source") or "").startswith("SAR_VALIDADO"):
+            continue
+        name = str(item.get("class_name", ""))
+        if name.startswith("Lavoura de "):
+            crop = canonical_crop(name.replace("Lavoura de ", "").strip())
+            out[crop] = out.get(crop, 0.0) + float(item.get("area_ha") or 0.0)
+        elif name in ("Outras Lavouras Temporárias", "Lavoura Temporária"):
+            out["__temporarias__"] = out.get("__temporarias__", 0.0) + float(item.get("area_ha") or 0.0)
+    return out
 
 def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=None, micro_fn=None):
     from crop_forecast_pipeline import forecast_fields, forecast_lines
@@ -46,10 +61,22 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     forecast_fn = forecast_fn or forecast_fields
     micro_fn = micro_fn or microregion_of
     crops = crops_in_land_result(land)
-    lines = ["", "IDENTIFICAÇÃO CONSOLIDADA DE CULTURAS E PREVISÃO DE SAFRA (experimental)"]
-    audit = {"as_of": as_of.isoformat(), "crops": {}}
+    historical = mapbiomas_historical_reference(land)
+    lines = ["", "IDENTIFICAÇÃO SAR ATUAL, VIGOR E PREVISÃO DE SAFRA"]
+    audit = {"as_of": as_of.isoformat(), "crops": {},
+             "current_crop_identification": "SAR_VALIDADO" if crops else "N/D",
+             "mapbiomas_historical_reference_only": historical}
     if not crops:
-        lines.append("• Nenhuma lavoura identificada pela rota consolidada (mapa brasileiro anual ou modelo SAR validado).")
+        lines.append("• Cultura atual: N/D — nenhum identificador SAR validado produziu máscara contemporânea nesta AOI.")
+        if historical:
+            area = sum(historical.values())
+            labels = ", ".join(sorted(k for k in historical if k != "__temporarias__"))
+            lines.append("• MapBiomas anual: referência histórica de "+format(area, ".2f")+" ha"+
+                         ((" ("+labels+")") if labels else "")+
+                         "; não usada para identificar cultura atual, vigor ou safra.")
+        lines.append("• Vigor: N/D — sem máscara atual de cultura derivada de SAR.")
+        lines.append("• Produtividade e produção da propriedade: N/D — exigem identificador SAR atual e vigor com cenas datadas.")
+        audit["forecast_block_reason"] = "sem classe de cultura SAR validada"
         return lines, audit
     art = load_artifact() or {"crops": {}}
     micro = micro_fn(gdf)["dominant"]
@@ -86,7 +113,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
         reg = REGISTRY.get(crop, {})
         lines.append(f"• {crop} ({area:.1f} ha) — {reg.get('product', 'rota não registrada')}; "
                      "mapa do ano anterior, sem validação desta propriedade")
-        entry = {"area_ha": area, "identification": reg}
+        entry = {"area_ha": area, "identification": reg, "identification_source": "SAR_VALIDADO"}
         crop_gdf = crop_geometry(land, crop, canonical_fn=canonical_crop)
         entry["crop_polygon_available"] = crop_gdf is not None
         if crop_gdf is not None and not sar_probe_done:
@@ -112,12 +139,10 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                              audit["live_sar_probe"]["reason"])
         if crop in art.get("crops", {}):
             code = NAME_TO_CODE.get(crop)
-            # Reuse the exact MapBiomas raster that succeeded in the land-use
-            # stage, including a user-supplied local Windows TIFF.
-            selected_map = (land or {}).get("mapbiomas_source")
+            # The field mask is an independently validated, contemporary SAR class.
+            # A historical MapBiomas raster must not select current crop pixels or
+            # provide pseudo-labels to the vigor assessment.
             def scene_vigor(patch, day, class_code):
-                if vigor_fn is automatic_vigor and selected_map:
-                    return automatic_vigor(patch, day, class_code, mapbiomas_url=selected_map)
                 return vigor_fn(patch, day, class_code)
             try:
                 if crop_gdf is not None and municipal_scale and code is not None:
@@ -177,9 +202,21 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                                 if ci is not None else "; incerteza N/D")
                         lines.append(f"  {sample_ref} — {label}: {value:.3f}" + note)
                 lines.append("  Incerteza de vigor: bootstrap espacial interno; NÃO equivale à acurácia de campo nem mede rugosidade física.")
+            scene_evidence = (bool(vig.get("scene_id") and vig.get("acquisition_utc")) or
+                             bool(vig.get("accepted_scenes")))
+            vigor_usable = (vig.get("status") in ("experimental", "validated") and
+                            isinstance(vig.get("probabilities"), dict) and scene_evidence and
+                            crop_gdf is not None)
+            if not vigor_usable:
+                reason = str(vig.get("reason") or "sem vigor SAR atual com cena datada sobre máscara SAR validada")
+                entry["forecast_status"] = "N/D"
+                entry["forecast"] = {"status": "N/D", "reason": reason}
+                lines.append("  Produtividade e produção da propriedade: N/D — vigor SAR atual indisponível ou sem máscara/cena verificável; o painel PAM/FAO regional não substitui essas entradas.")
+                audit["crops"][crop] = entry
+                continue
             try:
                 if municipal_scale:
-                    lines.append("  Escala: previsão regional agregada à área cartográfica da cultura; vigor de subamostras SAR, quando disponível, não representa validação municipal.")
+                    lines.append("  Escala: vigor amostral SAR; previsão permanece condicional ao domínio e às validações do modelo.")
                 # Diagnostic patches do not constitute an area-representative
                 # vigor sample. Use unconditioned historical residuals for the
                 # municipality-wide yield distribution until a spatially
