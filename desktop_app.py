@@ -2312,9 +2312,13 @@ class App(tk.Tk):
         try:
             from modeled_field_validation import (build_pre_field_manifest,
                                                   write_pre_field_evidence)
+            try:
+                from enform_build_source import SOURCE_SHA
+            except ImportError:
+                SOURCE_SHA=None
             prefield=build_pre_field_manifest(
                 native, analysis_id=self.project["analysis_run_id"], land=land,
-                source_sha=self.project.get("source_code_sha"))
+                source_sha=SOURCE_SHA or self.project.get("source_code_sha"))
             evidence_dir=Path(land["vector_path"]).parent
             evidence_files=write_pre_field_evidence(evidence_dir,prefield)
             self.project["modeled_field_predictions"]=prefield
