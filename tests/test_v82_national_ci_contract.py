@@ -24,9 +24,11 @@ class NationalCIContractTests(unittest.TestCase):
         self.assertIn("Código(s) das regiões fitoecológicas",src)
         self.assertIn("format_property_physiognomies",src)
         self.assertIn("POTENCIAL IBGE",src)
-    def test_workflows_group_by_sha_and_never_cancel_doc_build(self):
+    def test_workflows_verify_exact_sha_and_cancel_superseded_pr_jobs(self):
         for file in ("build-windows.yml","dashboard-dual-tests.yml"):
             s=(ROOT/".github"/"workflows"/file).read_text(encoding="utf-8")
             self.assertIn("github.event.pull_request.head.sha || github.sha",s)
-            self.assertIn("cancel-in-progress: false",s)
+            self.assertIn("github.event.pull_request.number || github.ref",s)
+            self.assertIn("cancel-in-progress: true",s)
+            self.assertIn("git rev-parse HEAD",s)
 if __name__=="__main__":unittest.main()

@@ -4,7 +4,7 @@ on:
     branches:
       - feature/agricultural-identification-native-carbon
     paths:
-      - docs/spec_updates/2026-11-05_v87_1_marginal_bounds_not_predictive_uncertainty.md
+      - docs/spec_updates/2026-11-05_v87_2_ci_contracts.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -27,8 +27,8 @@ jobs:
         run: |
           python tools/update_spec_docx.py \
             --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-            --entry docs/spec_updates/2026-11-05_v87_1_marginal_bounds_not_predictive_uncertainty.md \
-            --baseline "Enform Verde 3.26.1-PRECAMPO-EXPERIMENTAL (v87.1 semantica correta de limites marginais SOC 0-100 cm)" \
+            --entry docs/spec_updates/2026-11-05_v87_2_ci_contracts.md \
+            --baseline "Enform Verde 3.26.1-PRECAMPO-EXPERIMENTAL (v87.2 correcao de testes de contrato documental e CI)" \
             --head-sha "${{ github.sha }}" \
             --code-sha "${{ github.sha }}" \
             --date "5 de novembro de 2026"
@@ -42,7 +42,7 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert 'PREVISÃO REGIONAL DE SOJA' in xml
-              assert 'REVISÃO V87.1' in xml
+              assert 'REVISÃO V87.2' in xml
               assert 'ESPECIFICACAO' not in xml[:0]
           print('Word specification updated with Sinop checkpoint and archive validated')
           PY
@@ -51,5 +51,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: synchronize Word with v87.1 SOC marginal-uncertainty correction"
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with v87.2 CI contract tests"
           git push origin HEAD:feature/agricultural-identification-native-carbon
