@@ -106,16 +106,10 @@ jobs:
         if: github.event_name == 'pull_request'
         shell: pwsh
         run: |
-          # Check each pushed batch (synchronize: 'before'..HEAD); first PR event: whole PR.
-          $base = '${{ github.event.before }}'
-          $baseVerified = $false
-          if ($base -match '^[0-9a-fA-F]{40}$' -and $base -notmatch '^0+$') {
-            git cat-file -e "$base^{commit}" 2>$null
-            if ($LASTEXITCODE -eq 0) { $baseVerified = $true }
-          }
-          if (-not $baseVerified) {
-            $base = (git merge-base '${{ github.event.pull_request.base.sha }}' HEAD).Trim()
-          }
+          # Audit the entire PR history in commit order. A Word-bot commit
+          # after the latest code change is valid; older documentation is not.
+          $base = (git merge-base '${{ github.event.pull_request.base.sha }}' HEAD).Trim()
+          if (-not $base) { throw 'Cannot resolve merge-base for documentation audit' }
           $global:LASTEXITCODE = 0
           python tools/check_docs_updated.py $base HEAD
           if ($LASTEXITCODE -ne 0) { throw 'Specification (.docx) and continuity prompt must be updated with every effective change' }
