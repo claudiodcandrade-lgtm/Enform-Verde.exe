@@ -32,6 +32,37 @@ def classify_temporal(vv,vh,inside):
                     "valid_fraction":float(good.sum()/max(1,int(inside.sum()))),
                     "uncertainty":"Threshold heuristic only; no calibrated error, no IC95%, no classification accuracy"}
 
+def _select_orbit_series(candidates,ref):
+    """Select most recent COMPLETE same-orbit time series, not merely latest item."""
+    groups={}
+    for dt,scene in candidates:
+        orbit=(scene.get("orbit_state"),scene.get("relative_orbit"))
+        if orbit[0] is not None and orbit[1] is not None:
+            groups.setdefault(orbit,[]).append((dt,scene))
+    eligible=[]
+    for orbit,rows in groups.items():
+        picked=[]
+        for dt,scene in sorted(rows,key=lambda item:item[0],reverse=True):
+            if all(abs((dt-other).total_seconds())>5*86400 for other,_ in picked):
+                picked.append((dt,scene))
+            if len(picked)>=7:break
+        if (len(picked)>=3 and 0<=(ref-picked[0][0]).total_seconds()<=30*86400
+                and (picked[0][0]-picked[-1][0]).total_seconds()>=35*86400):
+            eligible.append((picked[0][0],len(picked),orbit,picked))
+    if not eligible:return [],None
+    eligible.sort(key=lambda item:(item[0],item[1]),reverse=True)
+    return eligible[0][3],eligible[0][2]
+
+
+def _safe_reason(error):
+    """Redact signed remote COG URLs, SAS parameters and credentials."""
+    import re
+    result=str(error)
+    result=re.sub(r"https?://[^\s]+","[URL_REDACTED]",result)
+    result=re.sub(r"(?i)(sig|se|sv|sp|st)=[^&\s]+",r"\1=[REDACTED]",result)
+    return result[:200]
+
+
 def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
     """Acquire at least three same-orbit actual VV/VH RTC scenes and map candidates."""
     result={"status":"N/D","native_confirmed":False,"crop_confirmed":False,
@@ -56,17 +87,9 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                     candidates.append((dt.astimezone(timezone.utc),scene))
             except (KeyError,ValueError,TypeError):pass
         candidates.sort(key=lambda v:v[0],reverse=True)
-        if not candidates or (ref-candidates[0][0]).days>30:
-            raise ValueError("No current dual-polarization Sentinel-1 scenes")
-        orbit=(candidates[0][1].get("orbit_state"),candidates[0][1].get("relative_orbit"))
-        candidates=[v for v in candidates if (v[1].get("orbit_state"),v[1].get("relative_orbit"))==orbit]
-        selected=[]
-        for dt,scene in candidates:
-            if all(abs((dt-d).total_seconds())>5*86400 for d,_ in selected):
-                selected.append((dt,scene))
-            if len(selected)>=7:break
-        if len(selected)<3 or (selected[0][0]-selected[-1][0]).days<35:
-            raise ValueError("Insufficient same-orbit acquisitions spanning 35 days")
+        selected,orbit=_select_orbit_series(candidates,ref)
+        if not selected:
+            raise ValueError("No complete recent same-orbit SAR series spanning 35 days")
         token=(token_fn or get_runtime_sas_token)()
         grid=None;data=[];errors=[]
         for dt,scene in selected:
@@ -101,8 +124,10 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         inside=geometry_mask([mapping(local)],out_shape=size,transform=tr,invert=True)
         codes,qa=classify_temporal(np.stack([r[2][0] for r in data]),
                                    np.stack([r[2][1] for r in data]),inside)
-        codes=sieve(codes,size=12,mask=codes>0).astype(np.uint8)
-        codes[(codes==0)&inside]=3
+        valid_observation=(codes>0)
+        codes=sieve(codes,size=12,mask=valid_observation).astype(np.uint8)
+        codes[(codes==0)&valid_observation]=3
+        # Pixels without SAR observations must remain nodata=0, not unknown class 3.
         dest=Path(output_dir);dest.mkdir(parents=True,exist_ok=True)
         raster=dest/"sar_cobertura_atual_candidatos_experimental.tif"
         with rasterio.open(raster,"w",driver="GTiff",height=size[0],width=size[1],
@@ -139,5 +164,5 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
              "areas_ha":{names[k]:round(areas[k],2) for k in names},
              "qa":qa,"method":"unsupervised VH temporal stability/variation; not a current native/crop classifier"})
     except (UnicodeError,OSError,RuntimeError,ValueError,ImportError) as exc:
-        result["reason"]=type(exc).__name__+": "+str(exc)[:200]
+        result["reason"]=type(exc).__name__+": "+_safe_reason(exc)
     return result

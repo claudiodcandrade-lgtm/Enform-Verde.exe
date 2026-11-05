@@ -927,6 +927,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         summary['recent_sar_cover']=run_recent_sar_screen(aoi,outdir)
     except Exception as exc:
         summary['recent_sar_cover']={'status':'N/D','reason':type(exc).__name__+': '+str(exc)[:200]}
+    # National audit: reconcile area, provenance and unknown uncertainty.
+    from national_analysis_audit import audit_national_coverage
+    summary['national_audit']=audit_national_coverage(aoi,summary)
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
     summary.update({'warnings':warnings,'validation':validation,'vector_path':str(vector_path),
@@ -959,6 +962,13 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
         lines.append('Triagem SAR experimental indisponível: '+str(exp.get('reason') or exp.get('status')))
     elif exp.get('status')=='N/D':
         lines.append('Triagem SAR experimental indisponível: '+str(exp.get('reason')))
+    national=summary.get('national_audit') or {}
+    if national:
+        lines.append('AUDITORIA NACIONAL — AOI '+fmt(national['aoi_area_ha'])+
+                     ' ha, EPSG:6933; SHA256 geom. '+national['aoi_sha256_wgs84'])
+        lines.append('  Fechamento: '+fmt(national['area_closure_error_ha'])+
+                     ' ha; incerteza de classificação local: N/D sem validação.')
+        lines.append('  '+national['uncertainty_policy'])
     orbital=summary.get('recent_sar_cover') or {}
     lines.append('SAR ATUAL ORBITAL (NÃO SOMAR COM MAPBIOMAS): '+str(orbital.get('status','N/D')))
     if orbital.get('status')=='SAR_REAL_EXPERIMENTAL_CANDIDATES':

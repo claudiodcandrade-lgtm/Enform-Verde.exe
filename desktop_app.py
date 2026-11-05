@@ -1535,6 +1535,11 @@ class App(tk.Tk):
         else:
             executive.append("• Não determinado")
         executive.append(native_summary)
+        national=land.get("national_audit") or {}
+        if national:
+            executive.append("AUDITORIA NACIONAL — "+str(national.get("current_sar_classification"))+
+                             "; incerteza de área de máscara: N/D quando não validada")
+            executive.append("Geometria SHA256 e fórmulas disponíveis no JSON de auditoria.")
         orbital=land.get("recent_sar_cover") or {}
         executive.append("TRIAGEM ORBITAL SAR ATUAL — "+str(orbital.get("status","N/D")))
         if orbital.get("status")=="SAR_REAL_EXPERIMENTAL_CANDIDATES":
