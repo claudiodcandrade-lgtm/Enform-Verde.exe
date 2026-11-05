@@ -2168,7 +2168,7 @@ class App(tk.Tk):
         # Network requests run in a worker. _finish_satellite_map uses IBGE only
         # as the fallback if Google/Sentinel-2/Esri sources all fail.
         self.show_google_map(refresh=False,prefer_public=False)
-        self.after(420,redraw)
+        # The AOI outline has already been rendered; do not schedule an undefined callback.
 
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
