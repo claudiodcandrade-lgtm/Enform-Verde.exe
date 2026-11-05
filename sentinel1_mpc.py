@@ -14,7 +14,14 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
 STAC_SEARCH = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
-SAS_TOKEN_URL = "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel1euwestrtc/sentinel1-grd-rtc"
+SAS_TOKEN_URLS = (
+    # The documented collection ID route is preferred. It automatically maps
+    # the current collection to its storage account/container.
+    "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-rtc",
+    # Keep the explicit storage route as compatibility fallback for older MPC
+    # deployment metadata.
+    "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel1euwestrtc/sentinel1-grd-rtc",
+)
 ALLOWED_HOSTS = {"planetarycomputer.microsoft.com", "sentinel1euwestrtc.blob.core.windows.net"}
 
 
@@ -97,12 +104,19 @@ def _aware(value):
 
 
 def get_runtime_sas_token(*, opener=urlopen):
-    """Request a fresh temporary SAS token; caller must keep it in memory only."""
-    payload = _https_json(SAS_TOKEN_URL, opener=opener)
-    token = payload.get("token") if isinstance(payload, dict) else None
-    if not token:
-        raise RuntimeError("MPC did not return a SAS token")
-    return str(token).lstrip("?")
+    """Request a fresh temporary SAS token; try official collection and legacy routes."""
+    failures = []
+    for endpoint in SAS_TOKEN_URLS:
+        try:
+            payload = _https_json(endpoint, opener=opener)
+            token = payload.get("token") if isinstance(payload, dict) else None
+            if token:
+                return str(token).lstrip("?")
+            failures.append("empty_token")
+        except (RuntimeError, ValueError, TypeError) as exc:
+            failures.append(type(exc).__name__)
+    raise RuntimeError("MPC Sentinel-1 SAS token unavailable via collection and storage routes ("
+                       + ",".join(failures) + ")")
 
 
 def _signed_href(href, token):
