@@ -213,7 +213,10 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
         rows.append({'parametro':'Biomassa aérea','tc':float(agb)*.47,'origem':origin,'fonte':selected.get('source','Produto/modelo SAR'),
                      'metodo':selected.get('method',selected.get('status','SAR')),'obs':'Somente pixels/referência desta interseção nativa.',
                      'uncertainty_kind':selected.get('uncertainty_kind'),'agb_uncertainty_mg_ha':selected.get('uncertainty_mg_ha'),
-                     'agb_range_mg_ha':selected.get('agb_range_mg_ha')})
+                     'agb_range_mg_ha':selected.get('agb_range_mg_ha'),
+                     'source_url':selected.get('source_url') or selected.get('url'),
+                     'source_sha256':selected.get('source_sha256') or selected.get('dataset_sha256'),
+                     'model_id':selected.get('model_id')})
         p=normalize(physiognomy)
         # Never apply a generalized upland-forest root equation to grassland,
         # savanna, mangrove, floodplain, or planted formations.
@@ -238,6 +241,7 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                         root_note='Calibração de raízes recusada: '+str(exc)+'. Sem IC95% do total.'
             roots={'parametro':'Biomassa subterrânea','tc':root_estimate['mean_model_tc_ha'],
                    'origem':'MODELAGEM_ALOMETRIA','fonte':'Cairns et al. (1997), doi:10.1007/s004420050201',
+                   'source_url':'https://doi.org/10.1007/s004420050201',
                    'metodo':'BGB=exp(-1,0587+0,8836 ln AGB); floresta tropical de terras altas, referência generalizada',
                    'obs':root_note,
                    'root_uncertainty_status':root_estimate['uncertainty_status']}
@@ -309,7 +313,9 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
         rows.append({'parametro':key,'tc':value,'origem':c.get('origin','INVENTARIO_REFERENCIA'),
                      'fonte':c.get('source'),'metodo':c.get('method'),'obs':c.get('uncertainty_kind'),
                      'include_in_total':c.get('include_in_total',True),
-                     'range_tc_ha':c.get('range_tc_ha'),'range_dry_mg_ha':c.get('range_dry_mg_ha')})
+                     'range_tc_ha':c.get('range_tc_ha'),'range_dry_mg_ha':c.get('range_dry_mg_ha'),
+                     'source_url':c.get('source_url') or c.get('url'),
+                     'source_sha256':c.get('source_sha256') or c.get('dataset_sha256')})
     soil={}
     try:
         soil=soil_estimator(aoi) or {};top=soil.get('0–100 cm')
@@ -320,6 +326,8 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                              (' | COBERTURA PARCIAL DO MAPA: %.1f%% da interseção com os cinco horizontes; estoque calculado só na área mapeada, sem extrapolação.'
                               % (100*float(top.get('coverage_fraction') or 0))) if top.get('partial_coverage') else ''),
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha'),
+                         'source_url':top.get('source_url') or 'https://geoinfo.dados.embrapa.br/geoserver/ows',
+                         'source_sha256':top.get('raster_sha256'),
                          'official_uncertainty':top.get('official_uncertainty'),
                          'soil_coverage_fraction':top.get('coverage_fraction'),
                          'soil_area_covered_ha':top.get('area_covered_ha'),
