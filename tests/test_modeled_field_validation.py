@@ -49,6 +49,25 @@ class PreFieldTests(unittest.TestCase):
         self.assertEqual(result["existing_native_stock_tC"],470)
         self.assertFalse(result["existing_native_stock_is_complete"])
 
+    def test_root_conditional_interval_is_preserved_without_claimed_aoi_coverage(self):
+        a=fixture()
+        a["strata"][0]["components"].append({
+            "parametro":"Biomassa subterrânea","tc":13.5,
+            "origem":"MODELAGEM_ALOMETRIA",
+            "fonte":"Cairns et al. (1997)",
+            "source_url":"https://doi.org/10.1007/s004420050201",
+            "metodo":"Equação raiz/AGB",
+            "root_prediction_interval_tc_ha":[10.,18.],
+        })
+        result=build_pre_field_manifest(a,analysis_id="ROOTS")
+        root=result["predictions"][-1]
+        self.assertEqual(root["density_range_tc_ha"],[10.,18.])
+        self.assertEqual(root["stock_range_tC"],[100.,180.])
+        self.assertEqual(root["source_url"],"https://doi.org/10.1007/s004420050201")
+        self.assertFalse(root["target_aoi_ci95_validated"])
+        self.assertEqual(root["uncertainty_kind"],
+            "INTERVALO_ALOMETRICO_CONDICIONAL_NAO_VALIDADO_NA_AOI")
+
     def test_no_source_or_no_input_does_not_fabricate_estimate(self):
         a=fixture()
         a["strata"][0]["components"][0]["fonte"]="N/D"
