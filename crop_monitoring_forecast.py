@@ -63,9 +63,11 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     crops = crops_in_land_result(land)
     historical = mapbiomas_historical_reference(land)
     lines = ["", "IDENTIFICAÇÃO SAR ATUAL, VIGOR E PREVISÃO DE SAFRA"]
+    from sensor_contingency import fallback_plan
     audit = {"as_of": as_of.isoformat(), "crops": {},
              "current_crop_identification": "SAR_VALIDADO" if crops else "N/D",
-             "mapbiomas_historical_reference_only": historical}
+             "mapbiomas_historical_reference_only": historical,
+             "sensor_contingency": fallback_plan(target="agricultura_area_vigor_safra")}
     if not crops:
         lines.append("• Cultura atual: N/D — nenhum identificador SAR validado produziu máscara contemporânea nesta AOI.")
         if historical:
