@@ -259,6 +259,12 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
             coverages = discover_coverages(response.content)
         if not coverages:
             result["reason"]="WCS oficial não retornou identificadores de coberturas químicas compatíveis"
+            from soil_fertility_arcgis_identify import sample_official_fertility
+            alternate=sample_official_fertility(aoi,session=session)
+            if alternate.get("status")=="MAPA_PREDITIVO_AMOSTRAL":
+                alternate["wcs_diagnostic"]=result["reason"]
+                return alternate
+            result["reason"]+="; MapServer Identify: "+str(alternate.get("reason") or "N/D")
             return result
         from shapely.geometry import mapping
         geom = aoi.to_crs(4326).geometry.union_all()
@@ -307,9 +313,25 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
                 result["layers"].append(layer)
         result["status"]="MAPEAMENTO_PREDITIVO_PARCIAL" if success else "N/D"
         result["reason"]=f"{success} de {len(ATTRS)*len(DEPTHS)} camadas processadas; sem validação local de acurácia"
+        if not success:
+            from soil_fertility_arcgis_identify import sample_official_fertility
+            alternate=sample_official_fertility(aoi,session=session)
+            if alternate.get("status")=="MAPA_PREDITIVO_AMOSTRAL":
+                alternate["wcs_diagnostic"]=result["reason"]
+                return alternate
+            result["reason"]+="; MapServer Identify: "+str(alternate.get("reason") or "N/D")
         result["uncertainty_note"]="Médias de mapas digitais, não ensaios da propriedade. DP entre pixels não fornece IC95%; variância do modelo indisponível."
     except Exception as exc:
         result["reason"]=type(exc).__name__+": "+str(exc).split("https://")[0][:180]
+        try:
+            from soil_fertility_arcgis_identify import sample_official_fertility
+            alternate=sample_official_fertility(aoi,session=session)
+            if alternate.get("status")=="MAPA_PREDITIVO_AMOSTRAL":
+                alternate["wcs_diagnostic"]=result["reason"]
+                return alternate
+            result["reason"]+="; MapServer Identify: "+str(alternate.get("reason") or "N/D")
+        except Exception as fallback_exc:
+            result["reason"]+="; MapServer Identify: "+type(fallback_exc).__name__
     return result
 
 
@@ -318,9 +340,14 @@ def fertility_report_lines(result, fmt):
     lines = ["", "FERTILIDADE DO SOLO — ESTIMATIVAS CARTOGRÁFICAS EMBRAPA 90 m"]
     lines.append("Previsões regionais de mapas digitais, NÃO são análises laboratoriais da propriedade.")
     lines.append("Serviço numérico consultado: " + str(result.get("source") or WCS))
-    lines.append("Estatística: interseção exata pixel × AOI e unidade cartográfica; áreas EPSG:6933.")
-    if result.get("status") != "MAPEAMENTO_PREDITIVO_PARCIAL":
-        lines.append("Valores numéricos: N/D — " + str(result.get("reason") or "raster oficial indisponível")[:230])
+    if result.get("status")=="MAPA_PREDITIVO_AMOSTRAL":
+        lines.append("AMOSTRAGEM NUMÉRICA OFICIAL — MapServer Identify; não é média zonal de toda a AOI.")
+        lines.append("Pontos amostrados: "+str(result.get("sampled_points"))+
+                     "; cobertura areal e erro preditivo: N/D.")
+    else:
+        lines.append("Estatística: interseção exata pixel × AOI e unidade cartográfica; áreas EPSG:6933.")
+        if result.get("status") != "MAPEAMENTO_PREDITIVO_PARCIAL":
+            lines.append("Valores numéricos: N/D — " + str(result.get("reason") or "raster oficial indisponível")[:230])
     for area_label, records in (result.get("units") or {}).items():
         lines.append("  ZONA: " + str(area_label))
         for item in records:
@@ -330,8 +357,8 @@ def fertility_report_lines(result, fmt):
             sd=("N/D" if item.get("spatial_sd") is None else fmt(item["spatial_sd"], 3))
             lines.append("    " + str(item.get("label")) + " [" + str(item.get("depth_cm")) + " cm]: "
                          + value + " " + str(item.get("unit") or "") +
-                         "; cobertura " + fmt(item.get("coverage_pct") or 0, 2) +
-                         "%; pixels " + str(item.get("valid_pixels") or 0) +
+                         "; cobertura " + (fmt(item.get("coverage_pct"),2)+"%" if item.get("coverage_pct") is not None else "N/D") +
+                         "; pixels " + str(item.get("valid_pixels") if item.get("valid_pixels") is not None else "N/D") +
                          "; DP espacial descritivo " + sd + ".")
             lines.append("      Layer WCS " + str(item.get("wcs_coverage_id")) +
                          "; SHA256 " + str(item.get("raster_sha256")) +
