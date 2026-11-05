@@ -2604,6 +2604,21 @@ def module_check():
     soil=mapped_soil_0_100_on_polygon(gpd.GeoDataFrame(geometry=[box(-55+px,-3-9*px,-55+9*px,-3-px)],crs=4326),paths)
     if abs(soil["0–100 cm"]["tc_ha"]-20.0)>1e-6:raise RuntimeError("interseção exata EPSG:4326 incorreta")
     out["soil_exact_intersection"]="ok"
+    # The compiled EXE must include the pre-field modeling engine and stamped SHA.
+    from modeled_field_validation import build_pre_field_manifest, field_measurement_rows
+    model_check=build_pre_field_manifest({"strata":[],"native_area_ha":0,
+        "known_total_tc":None},analysis_id="WINDOWS_MODULE_CHECK")
+    if model_check["scientifically_homologated"] or field_measurement_rows(model_check):
+        raise RuntimeError("Modelo pré-campo fabricou observações ou homologação")
+    out["pre_field_model_contract"]="ok"
+    try:
+        from enform_build_source import SOURCE_SHA
+    except ImportError:
+        SOURCE_SHA=None
+    if getattr(sys,"frozen",False) and not (
+            isinstance(SOURCE_SHA,str) and re.fullmatch("[0-9a-fA-F]{40}",SOURCE_SHA)):
+        raise RuntimeError("EXE sem identificação do SHA exato dos fontes compilados")
+    out["compiled_source_sha"]=SOURCE_SHA
     m=microregion_of(gpd.GeoDataFrame(geometry=[Point(-55.7,-12.5).buffer(.01)],crs=4326))["dominant"]
     y=load_microregion_yields("Soja",m["code"])
     if m["code"]!="51006" or len(y)<10:raise RuntimeError("dados PAM/microrregiões não empacotados")
