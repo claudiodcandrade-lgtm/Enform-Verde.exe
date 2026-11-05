@@ -185,12 +185,21 @@ def _download_coverage(session, coverage_id, geom, path, max_tiles=MAX_TILES):
     if len(tiles)>max_tiles:
         raise ValueError("AOI grande: cobertura dividida em mais blocos que o limite operacional")
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_file():
+    manifest_path = path.with_suffix(".provenance.json")
+    if path.is_file() and manifest_path.is_file():
         try:
+            recorded = json.loads(manifest_path.read_text(encoding="utf-8"))
             validate_tile(path)
-            return hashlib.sha256(path.read_bytes()).hexdigest()
-        except Exception:
-            path.unlink(missing_ok=True)
+            cached_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+            if (recorded.get("coverage_id") == coverage_id and
+                    recorded.get("source") == WCS and
+                    recorded.get("sha256") == cached_sha):
+                return cached_sha
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            pass
+    # Do not trust stale TIFFs without matching product identity and hash.
+    path.unlink(missing_ok=True)
+    manifest_path.unlink(missing_ok=True)
     tmpfiles = []
     for i,tile in enumerate(tiles):
         tmp = path.with_name(path.stem + f"_tile{i}.tif")
@@ -214,7 +223,13 @@ def _download_coverage(session, coverage_id, geom, path, max_tiles=MAX_TILES):
     h = hashlib.sha256()
     with path.open("rb") as src:
         for chunk in iter(lambda:src.read(1024*1024), b""): h.update(chunk)
-    return h.hexdigest()
+    digest = h.hexdigest()
+    manifest_path.write_text(json.dumps({
+        "coverage_id":coverage_id, "source":WCS, "sha256":digest,
+        "retrieval_kind":"numerical WCS GetCoverage, not MapServer render",
+        "downloaded_utc":datetime.now(timezone.utc).isoformat()
+    }, ensure_ascii=False, indent=2),encoding="utf-8")
+    return digest
 
 
 def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
@@ -269,17 +284,24 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
                 try:
                     digest=_download_coverage(session,cov,geom,out)
                     layer.update({"sha256":digest,"file":str(out),"source":WCS})
+                    mapped_property = False
                     for key,zone in geometry_units:
                         try:
                             stats=zonal_raster(zone,out,attribute=attr,depth=depth,max_cells=max_cells)
                         except (ValueError,RuntimeError) as exc:
                             stats={"status":"N/D","reason":str(exc)[:160]}
+                        if key == geometry_units[0][0] and stats.get("mean") is not None:
+                            mapped_property = True
                         result["units"].setdefault(key,[]).append({
                             "attribute":attr,"label":label,"unit":unit,
                             "depth_cm":depth,"wcs_coverage_id":cov,
                             "mapserver_layer_id":layer_first+i,"raster_sha256":digest, **stats})
-                    layer["status"]="RASTER_BRUTO_OBSERVADO"
-                    success+=1
+                    if mapped_property:
+                        layer["status"]="MAPA_PREDITIVO_NUMERICO_COM_INTERSECAO"
+                        success+=1
+                    else:
+                        layer["reason"]="Raster recebido, mas sem pixels numericamente válidos na propriedade"
+
                 except Exception as exc:
                     layer["reason"]=type(exc).__name__+": "+str(exc).split("https://")[0][:180]
                 result["layers"].append(layer)
