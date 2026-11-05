@@ -74,11 +74,12 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         from rasterio.features import geometry_mask,shapes,sieve
         from rasterio.windows import from_bounds,Window
         from rasterio.warp import reproject,Resampling,transform_geom
-        from sentinel1_mpc import search_sentinel1_rtc,get_runtime_sas_token,_signed_href
+        from sentinel1_sources import search_sentinel1_sources
+        from sentinel1_mpc import get_runtime_sas_token,_signed_href
         ref=(now or datetime.now(timezone.utc)).astimezone(timezone.utc)
         geom=aoi.to_crs(4326).geometry.union_all()
         if geom.is_empty:raise ValueError("AOI empty")
-        found=(search or search_sentinel1_rtc)(mapping(geom),start_utc=ref-timedelta(days=150),end_utc=ref)
+        found=(search or search_sentinel1_sources)(mapping(geom),start_utc=ref-timedelta(days=150),end_utc=ref)
         candidates=[]
         for scene in found.get("scenes",[]):
             try:
@@ -86,11 +87,14 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                 if dt.tzinfo and dt<=ref and {"vv","vh"}<=set(scene.get("assets") or {}):
                     candidates.append((dt.astimezone(timezone.utc),scene))
             except (KeyError,ValueError,TypeError):pass
-        if not found.get("pagination_complete", True):
-            raise RuntimeError("STAC Sentinel-1 search pagination incomplete; cannot assert data absence")
         candidates.sort(key=lambda v:v[0],reverse=True)
+        if not candidates and not found.get("pagination_complete", True):
+            result.update({"status":"ERRO_TECNICO","reason":"CATALOG_SEARCH_INCOMPLETE",
+                           "provider_diagnostics":found.get("providers",[])})
+            return result
         if not candidates:
-            result.update({"status":"N/D_DADOS", "reason":"CATALOGO_SEM_CENAS_COMPATIVEIS_VV_VH_NA_JANELA_150D",
+            result.update({"status":"N/D_DADOS", "reason":"CATALOGUES_COMPLETED_NO_COMPATIBLE_VV_VH_SERIES",
+                           "provider_diagnostics":found.get("providers",[]),
                            "catalog_scene_count":int(found.get("scene_count",0)), "selected_scene_count":0,
                            "readable_scene_count":0})
             return result
@@ -100,7 +104,8 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                            "catalog_scene_count":len(candidates), "selected_scene_count":0,
                            "readable_scene_count":0})
             return result
-        token=(token_fn or get_runtime_sas_token)()
+        mpc_candidates=[row for row in selected if row[1].get("provider","MPC")=="MPC"]
+        token=(token_fn or get_runtime_sas_token)() if mpc_candidates else ""
         grid=None;data=[];errors=[]
         for dt,scene in selected:
             scene_ok = False
@@ -111,7 +116,10 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                         with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
                                           GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
                                           GDAL_HTTP_RETRY_DELAY="1",GDAL_HTTP_UNSAFESSL="NO"):
-                            with rasterio.open(_signed_href(scene["assets"][pol]["href"],token)) as src:
+                            asset_href=scene["assets"][pol]["href"]
+                            read_href=(_signed_href(asset_href,token)
+                                       if scene.get("provider","MPC")=="MPC" else asset_href)
+                            with rasterio.open(read_href) as src:
                                 if not src.crs:raise ValueError("Missing georeferencing in SAR source")
                                 if grid is None:
                                     aoig=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
@@ -151,7 +159,8 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                    "recovered":False})
                     if attempt == 0:
                         try:
-                            token=(token_fn or get_runtime_sas_token)()
+                            if scene.get("provider","MPC")=="MPC":
+                                token=(token_fn or get_runtime_sas_token)()
                         except Exception as token_exc:
                             errors.append({"scene_id":str(scene.get("id","")),
                                            "error_type":"TOKEN_REFRESH_"+type(token_exc).__name__,
@@ -203,6 +212,8 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                       ensure_ascii=False),encoding="utf-8")
         result.update({"status":"SAR_REAL_EXPERIMENTAL_CANDIDATES",
              "raster_path":str(raster),"vector_path":str(vec) if len(features)<4000 else None,
+             "provider_diagnostics":found.get("providers",[]),
+             "providers_used":sorted({row[2].get("provider","MPC") for row in data}),
              "scene_ids":[r[1] for r in data],"scene_count":len(data),
              "acquisitions_utc":[r[0].isoformat() for r in data],
              "latest_acquisition_utc":data[0][0].isoformat(),
