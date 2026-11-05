@@ -3777,3 +3777,8 @@ Só usar blocos/telhas adaptativos quando o recorte cruzar múltiplos MGRS ou li
 Checkpoint: `docs/spec_updates/2026-11-05_v87_7_sentinel2_windowed_preview.md`. Build e regressões no SHA do pacote seguem obrigatórios.
 
 Fonte oficial resolução: https://sentinels.copernicus.eu/documents/d/sentinel/sentinel-2-products-specification-document-15_1 .
+
+
+### COMPLEMENTO V87.8 — LEITURA CONCORRENTE RGB LIMITADA
+
+Para acelerar o preview Sentinel-2 sem carregar cenas inteiras: ler as três bandas RGB de COG em paralelo com limite fixo de três workers; cada worker abre sua própria URL COG e lê somente window AOI/viewport via HTTP range, reamostrando diretamente ao canvas. Não usar concorrência sem limite. A geometria, ordem de banda RGB e dimensões do mapa permanecem. A mudança afeta apenas visualização óptica, não os motores SAR/biomassa/carbono. O mapa segue fora da thread da interface. Testar contrato e regressão; não publicar velocidade alegada sem benchmark. Incluído em docs/spec_updates/2026-11-05_v87_7_sentinel2_windowed_preview.md.
