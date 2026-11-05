@@ -16,6 +16,7 @@ from urllib.parse import urlencode
 from urllib.request import Request,urlopen
 
 SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/embrapa_solos_brasil_5kk/FeatureServer/0"
+FALLBACK_SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/embrapa_solos_brasil_5kk/MapServer/0"
 METADATA="https://geoinfo.dados.embrapa.br/datasets/geoinfo_data:geonode:brasil_solos_5m_20201104/metadata_detail"
 FIELDS="objectid,simbolos,leg_desc,comp1,comp2,comp3,ordem1,ordem2,ordem3"
 LICENSE="CC BY-NC 3.0 BR; verificar autorização para utilização profissional/comercial"
@@ -52,7 +53,7 @@ def _validate_geo(aoi):
         raise ValueError("Área da AOI inválida")
     return wgs,equal
 
-def fetch_embrapa_units(aoi,*,opener=urlopen,timeout=25):
+def fetch_embrapa_units(aoi,*,opener=urlopen,timeout=25,service=SERVICE):
     """Request bbox-intersecting polygons; fail on incomplete pagination."""
     wgs,_=_validate_geo(aoi)
     xmin,ymin,xmax,ymax=map(float,wgs.bounds)
@@ -65,7 +66,7 @@ def fetch_embrapa_units(aoi,*,opener=urlopen,timeout=25):
               "inSR":4326,"outSR":4326,"spatialRel":"esriSpatialRelIntersects",
               "geometryPrecision":6,"resultOffset":offset,"resultRecordCount":500,
               "returnGeometry":"true"}
-        req=Request(SERVICE+"/query?"+urlencode(args),headers={"Accept":"application/geo+json,application/json",
+        req=Request(service+"/query?"+urlencode(args),headers={"Accept":"application/geo+json,application/json",
                     "User-Agent":"Enform-Verde/soil-pedology"})
         with opener(req,timeout=timeout) as response:
             payload=json.load(response)
@@ -194,16 +195,22 @@ def exclusive_soil_unit_zones(aoi, features):
 
 
 def analyze_embrapa_pedology(aoi,*,fetcher=None,with_zones=False):
-    try:
-        features=(fetcher or fetch_embrapa_units)(aoi)
-        result=intersect_soil_units(aoi,features)
-        if with_zones:
-            return result,(exclusive_soil_unit_zones(aoi,features) if result.get("status")=="MAPEAMENTO_REGIONAL" else [])
-        return result
-    except Exception as exc:
-        # URLs from remote requests are not included in user-facing diagnostics.
-        failure=unavailable(type(exc).__name__+": "+str(exc).split("https://")[0])
-        return (failure,[]) if with_zones else failure
+    errors=[]
+    services=[SERVICE] if fetcher is not None else [SERVICE,FALLBACK_SERVICE]
+    for service in services:
+        try:
+            features=fetcher(aoi) if fetcher is not None else fetch_embrapa_units(aoi,service=service)
+            result=intersect_soil_units(aoi,features,service=service)
+            if result.get("status")!="MAPEAMENTO_REGIONAL":
+                errors.append(service.split("/services/")[-1]+": "+str(result.get("reason") or "sem polígonos"))
+                continue
+            if with_zones:
+                return result,exclusive_soil_unit_zones(aoi,features)
+            return result
+        except Exception as exc:
+            errors.append(service.split("/services/")[-1]+": "+type(exc).__name__+": "+str(exc).split("https://")[0][:140])
+    failure=unavailable("Falha nas rotas oficiais Embrapa: "+"; ".join(errors))
+    return (failure,[]) if with_zones else failure
 
 def pedology_report_lines(result,fmt):
     lines=["","CLASSIFICAÇÃO PEDOLÓGICA — EMBRAPA SOLOS / PRONASOLOS (NÃO É ESTOQUE DE CARBONO)"]
