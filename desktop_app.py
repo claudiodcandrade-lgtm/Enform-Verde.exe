@@ -2167,7 +2167,7 @@ class App(tk.Tk):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         self.project["analysis_run_id"]=uuid.uuid4().hex[:12].upper()
         self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
-        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility"):
+        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility","modeled_field_predictions","modeled_field_files"):
             self.project.pop(k,None)
         current_car=self.car.get().strip().upper()
         current_ccir=re.sub(r"\D","",self.ccir.get())
@@ -2308,6 +2308,29 @@ class App(tk.Tk):
                     +format_ptbr(joint["se_tC"],2)+" tC. Não inclui erros sem modelagem documentada."
             ])
         lines+=land_use_report_lines(land,lambda v:format_ptbr(v,2))
+        # Explicit PRE-FIELD outputs: actual estimates, not made-up observations.
+        try:
+            from modeled_field_validation import (build_pre_field_manifest,
+                                                  write_pre_field_evidence)
+            prefield=build_pre_field_manifest(
+                native, analysis_id=self.project["analysis_run_id"], land=land,
+                source_sha=self.project.get("source_code_sha"))
+            evidence_dir=Path(land["vector_path"]).parent
+            evidence_files=write_pre_field_evidence(evidence_dir,prefield)
+            self.project["modeled_field_predictions"]=prefield
+            self.project["modeled_field_files"]=evidence_files
+            lines.extend(["", "RESULTADOS MODELADOS — TESTES DE CAMPO PENDENTES",
+                "Estimativas numéricas modeladas: "+str(prefield["predictions_with_numeric_model"])+
+                "; resultados N/D: "+str(prefield["predictions_without_model"])+".",
+                "Manifesto pré-campo: "+str(evidence_files["predictions_json"]),
+                "Planilha em branco para medições independentes: "+
+                str(evidence_files["field_template_csv"]),
+                "As faixas dos modelos não são IC95% de campo. Nenhuma medição observada foi criada."])
+        except Exception as exc:
+            self.project["modeled_field_predictions"]={"status":"N/D",
+                "reason":type(exc).__name__+": "+str(exc)[:160]}
+            lines.extend(["", "MODELOS PARA VERIFICAÇÃO EM CAMPO: N/D — "+
+                          type(exc).__name__+": "+str(exc)[:160]])
         text="\n".join(lines)
         self.project["last_result"]=text
         self._set(self.res,text);self.nb.select(self.tabs[3])
