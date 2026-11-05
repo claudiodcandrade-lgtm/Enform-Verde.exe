@@ -20,7 +20,7 @@ def crop_geometry(land, crop, *, canonical_fn):
     mask = (frame["class_name"].map(
         lambda name: canonical_fn(str(name)[len("Lavoura de "):])
         if str(name).casefold().startswith("lavoura de ") else None) == crop)
-    mask &= frame["source"].isin(("MAPBIOMAS", "SAR_VALIDADO"))
+    mask &= frame["source"].astype(str).str.startswith("SAR_VALIDADO")
     selected = frame.loc[mask, ["geometry"]].copy()
     selected = selected[selected.geometry.notna() & ~selected.geometry.is_empty]
     return selected if not selected.empty else None
