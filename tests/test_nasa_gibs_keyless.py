@@ -26,11 +26,22 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         self.assertNotIn('"key"', source)
         self.assertNotIn("GOOGLE_MAPS_API_KEY", source)
 
-    def test_keyless_preview_runs_before_esri_and_offline_fallback(self):
+    def test_anonymous_sentinel2_aws_preview_uses_public_cogs(self):
+        source = self._function_source("sentinel2_earthsearch_preview")
+        self.assertIn("https://earth-search.aws.element84.com/v1/search", source)
+        self.assertIn('"sentinel-2-l2a"', source)
+        self.assertIn('("red","green","blue")', source)
+        self.assertIn("public COGs", source)
+        self.assertNotIn("Authorization", source)
+        self.assertNotIn('"key"', source)
+
+    def test_keyless_optical_previews_run_before_esri_and_offline_fallback(self):
         source = self._function_source("show_google_map")
+        earthsearch = source.index("sentinel2_earthsearch_preview(")
         nasa = source.index("nasa_gibs_preview(")
         esri_imagery = source.index('esri_export(rs,"World_Imagery"')
         offline = source.index("offline_brazil_preview(")
+        self.assertLess(earthsearch, nasa)
         self.assertLess(nasa, esri_imagery)
         self.assertLess(esri_imagery, offline)
 
