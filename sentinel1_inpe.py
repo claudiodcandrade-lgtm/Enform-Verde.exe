@@ -47,8 +47,11 @@ def _asset_for(assets, polarization):
     for key,asset in (assets or {}).items():
         label=" ".join(str(x or "") for x in
                        (key,asset.get("title"),asset.get("description"),asset.get("common_name"))).casefold()
-        if any(term in label for term in terms) and asset.get("href"):
-            return {"href":asset["href"],"title":asset.get("title"),"type":asset.get("type")}
+        href=asset.get("href")
+        parts=urlsplit(str(href or ""))
+        if (any(term in label for term in terms) and parts.scheme=="https"
+                and parts.hostname in ALLOWED_HOSTS):
+            return {"href":href,"title":asset.get("title"),"type":asset.get("type")}
     return None
 
 
