@@ -37,10 +37,13 @@ def _select_orbit_series(candidates,ref):
     groups={}
     for dt,scene in candidates:
         orbit=(scene.get("orbit_state"),scene.get("relative_orbit"))
+        provider=scene.get("provider","MPC")
         if orbit[0] is not None and orbit[1] is not None:
-            groups.setdefault(orbit,[]).append((dt,scene))
+            groups.setdefault((provider,orbit[0],orbit[1]),[]).append((dt,scene))
     eligible=[]
-    for orbit,rows in groups.items():
+    for provider,orbit_state,relative_orbit in groups:
+        orbit=(provider,orbit_state,relative_orbit)
+        rows=groups[orbit]
         picked=[]
         for dt,scene in sorted(rows,key=lambda item:item[0],reverse=True):
             if all(abs((dt-other).total_seconds())>5*86400 for other,_ in picked):
@@ -217,7 +220,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
              "scene_ids":[r[1] for r in data],"scene_count":len(data),
              "acquisitions_utc":[r[0].isoformat() for r in data],
              "latest_acquisition_utc":data[0][0].isoformat(),
-             "orbit_state":orbit[0],"relative_orbit":orbit[1],
+             "orbit_state":orbit[1],"relative_orbit":orbit[2],
              "areas_ha":{names[k]:round(areas[k],2) for k in names},
              "qa":qa,"method":"unsupervised VH temporal stability/variation; not a current native/crop classifier"})
     except (UnicodeError,OSError,RuntimeError,ValueError,ImportError) as exc:
