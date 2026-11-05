@@ -3736,12 +3736,22 @@ Gate: build Windows e testes de interface no SHA final; confirmar mapa Google co
 Referências oficiais: https://developers.google.com/maps/documentation/maps-static/start ; https://developers.google.com/maps/documentation/maps-static/usage-and-billing ; https://developers.google.com/maps/documentation/maps-static/get-api-key .
 
 
-### REVISÃO V87.5 — CAMADA SATÉLITE AUTOMÁTICA SEM TOKEN — 05/11/2026
+### REVISÃO V87.5 — CAMADAS ÓPTICAS AUTOMÁTICAS SEM CREDENCIAL DO USUÁRIO — 05/11/2026
 
-A versão candidata passa a usar NASA GIBS WMS como rota pública de visualização sem API key/token do usuário: camada `VIIRS_SNPP_CorrectedReflectance_TrueColor`, imagem colorida VIIRS para contexto regional. Tentar datas UTC recentes dentro da janela de 1–7 dias para tolerar atrasos de publicação e mostrar provedor/data. A imagem tem resolução espacial mais grossa que Sentinel-2; não prometer detalhe de alta resolução.
+A API oficial do Google Maps Static exige chave nas requisições e billing habilitado; não há rota API oficial Google sem chave. Não contornar isso por endpoints não documentados. Google segue opcional se o usuário inserir uma chave válida.
 
-Prioridade: Google Static Maps somente se chave configurada; Sentinel-2 L2A sem credencial de usuário; NASA GIBS sem chave; Esri World Imagery; Esri Street Map; IBGE offline por último. Falhas devem avançar para próxima fonte sem bloquear UI. O fallback IBGE segue empacotado. A camada visual e a geometria desenhada não são entrada de classificação, processamento SAR, uso da terra, biomassa ou carbono.
+Para a janela de entorno, usar exclusivamente imagens ópticas, nessa ordem:
+1. Google Maps Static quando chave válida configurada.
+2. Sentinel-2 L2A via Microsoft Planetary Computer; STAC anônimo e URL SAS de ativo assinado automaticamente, sem credencial do usuário.
+3. Sentinel-2 L2A via Earth Search / AWS Open Data; STAC anônimo e COGs públicos sem chave.
+4. NASA GIBS WMS VIIRS SNPP true color, sem chave, tentando dias UTC 1–7 anteriores e mostrando data; resolução mais grossa, somente contexto regional.
+5. Esri World Imagery e Street Map públicos se acessíveis.
+6. IBGE offline somente quando as rotas online falharem.
 
-Implementação: `desktop_app.py::nasa_gibs_preview`, versão `3.26.2-PRECAMPO-EXPERIMENTAL`; novo contrato `tests/test_nasa_gibs_keyless.py`. Confirmar em CI sintaxe, suíte completa, retorno real de imagem GIBS em probe de rede e build Windows exatamente no SHA liberado. Não tratar build/contrato de fonte como comprovação de chamada live; manter erro de provedor e fallback verificáveis. Google continua necessitando sua chave/billing; alternativa NASA não exige autenticação do usuário, mas requer internet e depende de disponibilidade do serviço público.
+Nova função `sentinel2_earthsearch_preview` lê bandas ópticas RGB de COGs Sentinel-2 L2A em worker. `nasa_gibs_preview` é fallback óptico regional. Nenhuma imagem dessa janela entra nas análises: classificação SAR, identificação agrícola, biomassa e carbono usam seus próprios dados. Imagens radar/SAR são reservadas aos módulos analíticos. Preservar atribuição do provedor/data e continuar para o próximo provedor diante de falha sem bloquear a interface.
 
-Especificação acumulativa: `docs/spec_updates/2026-11-05_v87_5_keyless_satellite_fallback.md`. Estado científico pré-campo/experimental permanece; esta mudança é exclusivamente cartográfica.
+Versão candidata `3.26.2-PRECAMPO-EXPERIMENTAL`; testes de contrato em `tests/test_nasa_gibs_keyless.py`. Exigir suíte, probe de imagem em rede quando viável, build Windows e artefato no mesmo SHA. Não afirmar chamada live validada só por compilação. Checkpoint completo: `docs/spec_updates/2026-11-05_v87_5_keyless_satellite_fallback.md`.
+
+Fontes: Google chave/billing: https://developers.google.com/maps/documentation/maps-static/get-api-key ; NASA GIBS: https://nasa-gibs.github.io/gibs-api-docs/access-basics/ ; Earth Search public COGs: https://registry.opendata.aws/sentinel-2-l2a-cogs/ ; Planetary Computer: https://planetarycomputer.microsoft.com/docs/concepts/sas/ .
+
+O estado científico pré-campo permanece experimental; esta revisão altera apenas a visualização óptica.
