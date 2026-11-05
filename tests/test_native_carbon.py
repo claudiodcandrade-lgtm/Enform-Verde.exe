@@ -186,8 +186,8 @@ class NativeCarbonTests(unittest.TestCase):
     def test_two_native_classes_are_weighted_and_other_uses_not_estimated(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
         classes=gpd.GeoDataFrame([
-            dict(class_name='FOD',source='IBGE+MAPBIOMAS',geometry=box(0,0,60,100)),
-            dict(class_name='Savana',source='IBGE+MAPBIOMAS',geometry=box(60,0,80,100)),
+            dict(class_name='FOD',source='SAR_VALIDADO+IBGE',geometry=box(0,0,60,100)),
+            dict(class_name='Savana',source='SAR_VALIDADO+IBGE',geometry=box(60,0,80,100)),
             dict(class_name='Pastagem',source='MAPBIOMAS',geometry=box(80,0,100,100))],crs=6933)
         calls=[]
         def estimator(frame,label):
@@ -202,7 +202,7 @@ class NativeCarbonTests(unittest.TestCase):
 
     def test_missing_class_is_not_replaced_by_dominant_class(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
-        classes=gpd.GeoDataFrame([dict(class_name=n,source='IBGE+MAPBIOMAS',geometry=g) for n,g in [('FOD',box(0,0,50,100)),('Campo',box(50,0,100,100))]],crs=6933)
+        classes=gpd.GeoDataFrame([dict(class_name=n,source='SAR_VALIDADO+IBGE',geometry=g) for n,g in [('FOD',box(0,0,50,100)),('Campo',box(50,0,100,100))]],crs=6933)
         def estimator(frame,label):return {'components':[{'parametro':'Biomassa aérea','tc':100}]} if label=='FOD' else {'components':[]}
         r=summarize_native_carbon(aoi,classes,estimator)
         self.assertAlmostEqual(r['known_total_tc'],50,places=5)
@@ -420,10 +420,10 @@ class NativeCarbonTests(unittest.TestCase):
 
     def test_native_carbon_clips_external_class_geometry_and_rejects_overlap(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
-        classes=gpd.GeoDataFrame([dict(class_name='FOD',source='IBGE+MAPBIOMAS',geometry=box(0,0,200,100))],crs=6933)
+        classes=gpd.GeoDataFrame([dict(class_name='FOD',source='SAR_VALIDADO+IBGE',geometry=box(0,0,200,100))],crs=6933)
         r=summarize_native_carbon(aoi,classes,lambda f,p:{'components':[{'parametro':'Biomassa aérea','tc':10}]})
         self.assertAlmostEqual(r['known_total_tc'],10,places=5)
-        doubled=gpd.GeoDataFrame([dict(class_name=n,source='IBGE+MAPBIOMAS',geometry=box(0,0,100,100)) for n in ['FOD','Savana']],crs=6933)
+        doubled=gpd.GeoDataFrame([dict(class_name=n,source='SAR_VALIDADO+IBGE',geometry=box(0,0,100,100)) for n in ['FOD','Savana']],crs=6933)
         with self.assertRaisesRegex(ValueError,'sobrepostas'):
             summarize_native_carbon(aoi,doubled,lambda f,p:{'components':[]})
 
@@ -440,7 +440,7 @@ class NativeCarbonTests(unittest.TestCase):
         from openpyxl import load_workbook
         from desktop_app import App
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
-        classes=gpd.GeoDataFrame([dict(class_name=n,source=source,geometry=g) for n,source,g in [('FOD','IBGE+MAPBIOMAS',box(0,0,60,100)),('Savana','IBGE+MAPBIOMAS',box(60,0,80,100)),('Pastagem','MAPBIOMAS',box(80,0,100,100))]],crs=6933)
+        classes=gpd.GeoDataFrame([dict(class_name=n,source=source,geometry=g) for n,source,g in [('FOD','SAR_VALIDADO+IBGE',box(0,0,60,100)),('Savana','SAR_VALIDADO+IBGE',box(60,0,80,100)),('Pastagem','MAPBIOMAS',box(80,0,100,100))]],crs=6933)
         native=summarize_native_carbon(aoi,classes,lambda g,p:{'components':[{'parametro':n,'tc':100 if p=='FOD' else 10} for n in COMPARTMENTS]})
         with tempfile.TemporaryDirectory() as d:
             land={'vector_path':str(Path(d)/'classes.geojson'),'classes':[],'priority':'SAR; fallback IBGE/MapBiomas','method':'interseção','area_uncertainty':'não quantificada','warnings':[],'validation':None}
@@ -483,8 +483,8 @@ class WaterExclusionAndOrderingRegression(unittest.TestCase):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,300,100)],crs='EPSG:6933')
         classes=gpd.GeoDataFrame([
             {"class_name":"Corpo d'água continental",'source':'IBGE+MAPBIOMAS','geometry':box(0,0,100,100)},
-            {'class_name':'Floresta Ombrófila Aberta','source':'IBGE+MAPBIOMAS','geometry':box(100,0,200,100)},
-            {'class_name':'Floresta Ombrófila Densa','source':'IBGE+MAPBIOMAS','geometry':box(200,0,300,100)},
+            {'class_name':'Floresta Ombrófila Aberta','source':'SAR_VALIDADO+IBGE','geometry':box(100,0,200,100)},
+            {'class_name':'Floresta Ombrófila Densa','source':'SAR_VALIDADO+IBGE','geometry':box(200,0,300,100)},
         ],crs='EPSG:6933')
         calls=[]
         def estimator(frame,phys):
