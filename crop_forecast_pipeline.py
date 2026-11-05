@@ -106,7 +106,14 @@ def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fe
             report["fields"][rid] = {"status": "N/D", "reason": "cultura não identificada por identificador utilizável"}
             continue
         vig = f.get("vigor") or {}
-        vig_ok = vig.get("status") in ("experimental", "validated")
+        vig_ok = (vig.get("status") in ("experimental", "validated")
+                  and isinstance(vig.get("probabilities"), dict)
+                  and (bool(vig.get("scene_id") and vig.get("acquisition_utc"))
+                       or bool(vig.get("accepted_scenes"))))
+        if not vig_ok:
+            report["fields"][rid] = {"status": "N/D",
+                "reason": "vigor SAR atual indisponível ou sem cena datada; previsão de talhão bloqueada"}
+            continue
         micro_all = microregion_of(f["gdf"]); micro = micro_all["dominant"]
         yields = load_microregion_yields(crop, micro["code"])
         c = f["gdf"].to_crs(4326).geometry.union_all().centroid
