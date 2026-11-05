@@ -12,10 +12,10 @@ import check_docs_updated as c  # noqa: E402
 class DocsRuleTests(unittest.TestCase):
     def test_code_change_without_docs_fails(self):
         _, missing = c.check({"crop_vigor.py"})
-        self.assertEqual(set(missing), {c.SPEC, c.PROMPT})
+        self.assertEqual(set(missing), {c.SPEC, c.PROMPT, c.HISTORICAL_PROMPT, c.SOIL_SPEC})
 
     def test_code_change_with_both_docs_passes(self):
-        self.assertEqual(c.check({"crop_vigor.py", c.SPEC, c.PROMPT})[1], [])
+        self.assertEqual(c.check({"crop_vigor.py", c.SPEC, c.PROMPT, c.HISTORICAL_PROMPT, c.SOIL_SPEC})[1], [])
 
     def test_docs_only_change_passes(self):
         self.assertEqual(c.check({"docs/x.md"})[1], [])
