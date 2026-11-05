@@ -28,20 +28,12 @@ def aoi_to_wgs84(aoi):
     return frame.to_crs("EPSG:4326")
 
 def northern_mato_grosso_fesv_litter_component(biome, physiognomy, aoi):
-    """Experimental standing-litter stock transfer for north-MT FESV only.
-
-    Volpato (2024), UFRRJ PhD, Table 8, FESV: 8.70 (+/- 1.93) Mg/ha
-    standing dry material. The +/- statistic is not identified in that table
-    as a prediction interval or site-transfer uncertainty, and no independent
-    local validation exists. This is NOT a SAR-derived litter prediction.
-    The loose geographical screen identifies the transition region only;
-    it is not a verified study-plot geofence.
-    """
+    """Reference-only FESV litter record; no AOI stock without defined variance."""
     from native_carbon import normalize
     if normalize(biome) != "amazonia" or aoi is None:
         return None
     p = normalize(physiognomy)
-    if not ("floresta estacional sempre verde" in p or "floresta estacional sempre-verde" in p):
+    if "floresta estacional sempre verde" not in p:
         return None
     try:
         west, south, east, north = map(float, aoi_to_wgs84(aoi).total_bounds)
@@ -49,26 +41,26 @@ def northern_mato_grosso_fesv_litter_component(biome, physiognomy, aoi):
             return None
     except (ValueError, TypeError):
         return None
-    mean_dry, spread = 8.70, 1.93
-    # Illustrative envelope combines published descriptive +/- and an
-    # assumed 0.42-0.50 dry-mass carbon fraction: NOT an IC or PI.
     return {
-        "mean_tc_ha": mean_dry * 0.47,
-        "range_tc_ha": [max(0.0, mean_dry - spread) * 0.42,
-                        (mean_dry + spread) * 0.50],
-        "mean_dry_mg_ha": mean_dry,
-        "published_spread_dry_mg_ha": spread,
-        "assumed_carbon_fraction_range": [0.42, 0.50],
-        "method": "Transferência EXPERIMENTAL por fitofisionomia: estoque seco observado 8,70 (+/-1,93) Mg/ha, tabela 8, Floresta Estacional Sempre Verde Submontana; tC/ha=Mg seco/ha x 0,47. Envelope ilustrativo (8,70-1,93)x0,42 até (8,70+1,93)x0,50, sem probabilidade de cobertura. NÃO é inventário local nem medição SAR.",
+        "mean_tc_ha": None,
+        "range_tc_ha": None,
+        "mean_dry_mg_ha": None,
+        "published_reference_mean_dry_mg_ha": 8.70,
+        "published_reference_spread_dry_mg_ha": 1.93,
+        "published_sample_plots": 24,
+        "method": ("Volpato (2024), Tabela 8, Floresta Estacional Sempre Verde Submontana: "
+                   "8,70 ± 1,93 Mg/ha e 24 parcelas independentes. A tese não define se ± é DP, "
+                   "EP ou intervalo, nem fornece erro de transferência para a AOI; a regressão "
+                   "Sentinel-2 para estoque teve R² negativo. Portanto é contexto bibliográfico, "
+                   "sem densidade de carbono, IC/intervalo ou estoque transferido."),
         "source": "Volpato (2024), UFRRJ, tese de doutorado, Tabela 8 — FESV",
         "url": "https://rima.ufrrj.br/jspui/bitstream/20.500.14407/19957/1/2024%20-%20Maristela%20Volpato.Pdf",
-        "status": "CENÁRIO EXPERIMENTAL DE TRANSFERÊNCIA — NÃO HOMOLOGADO",
-        "origin": "EXPERIMENTAL_FISICO",
-        "uncertainty_kind": "Envelope ilustrativo sem IC95%; dispersão publicada sem definição como SE/SD; erro de transferência espacial não quantificado",
+        "status": "NÃO ESTIMADO — dispersão estatística e transferência não identificáveis",
+        "origin": "NAO_ESTIMADO",
+        "uncertainty_kind": "N/D — natureza de ± não publicada; variância, fração C e erro de transferência indisponíveis",
         "evidence_type": "standing_litter_dry_mass",
         "include_in_total": False,
     }
-
 
 def tapajos_litter_stock_component(biome, physiognomy, aoi):
     """Closest direct standing-stock inventory for the matching Tapajos physiognomy.
