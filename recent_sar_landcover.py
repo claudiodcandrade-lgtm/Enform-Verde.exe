@@ -87,9 +87,17 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                     candidates.append((dt.astimezone(timezone.utc),scene))
             except (KeyError,ValueError,TypeError):pass
         candidates.sort(key=lambda v:v[0],reverse=True)
+        if not candidates:
+            result.update({"status":"N/D_DADOS", "reason":"CATALOGO_SEM_CENAS_COMPATIVEIS_VV_VH_NA_JANELA_150D",
+                           "catalog_scene_count":int(found.get("scene_count",0)), "selected_scene_count":0,
+                           "readable_scene_count":0})
+            return result
         selected,orbit=_select_orbit_series(candidates,ref)
         if not selected:
-            raise ValueError("No complete recent same-orbit SAR series spanning 35 days")
+            result.update({"status":"N/D_DADOS", "reason":"SEM_SERIE_COMPLETA_MESMA_ORBITA_COM_3_CENAS_E_35_DIAS_DE_EXTENSAO",
+                           "catalog_scene_count":len(candidates), "selected_scene_count":0,
+                           "readable_scene_count":0})
+            return result
         token=(token_fn or get_runtime_sas_token)()
         grid=None;data=[];errors=[]
         for dt,scene in selected:
@@ -142,7 +150,9 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         result["selected_scene_count"]=len(selected)
         result["readable_scene_count"]=len(data)
         if len(data)<3 or (data[0][0]-data[-1][0]).days<35:
-            raise ValueError("Cenas SAR catalogadas, mas menos de 3 pares VV/VH reais legíveis no mesmo órbita; consultar failed_scene_reads no JSON (falhas do acesso COG/SAS).")
+            result.update({"status":"ERRO_TECNICO", "reason":"CENAS_CATALOGADAS_MAS_LEITURA_COG_SAS_INCOMPLETA",
+                           "diagnostic":"menos de 3 pares VV/VH legíveis na série selecionada; consultar failed_scene_reads"})
+            return result
         crs,tr,size,local=grid
         inside=geometry_mask([mapping(local)],out_shape=size,transform=tr,invert=True)
         codes,qa=classify_temporal(np.stack([r[2][0] for r in data]),
@@ -187,5 +197,6 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
              "areas_ha":{names[k]:round(areas[k],2) for k in names},
              "qa":qa,"method":"unsupervised VH temporal stability/variation; not a current native/crop classifier"})
     except (UnicodeError,OSError,RuntimeError,ValueError,ImportError) as exc:
+        result["status"]="ERRO_TECNICO"
         result["reason"]=type(exc).__name__+": "+_safe_reason(exc)
     return result
