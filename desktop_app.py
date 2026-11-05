@@ -1266,17 +1266,17 @@ class App(tk.Tk):
                     return
                 except Exception as e:errors.append("Google: "+str(e))
             try:
-                p=sentinel2_preview(g,extent_factor=extent_factor)
-                copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
-                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
-                return
-            except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
-            try:
                 p=sentinel2_earthsearch_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
                 copyright=f"Sentinel-2 L2A • Earth Search/AWS • {(p.get('datetime') or '')[:10]} • nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
+            try:
+                p=sentinel2_preview(g,extent_factor=extent_factor)
+                copyright=f"Sentinel-2 L2A • Planetary Computer • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
+                return
+            except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
             try:
                 p=nasa_gibs_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
                 self._map_queue.put((generation,p["image"],[],p["provider"],None,f"NASA GIBS • VIIRS SNPP • {(p.get('datetime') or '')}",None))
