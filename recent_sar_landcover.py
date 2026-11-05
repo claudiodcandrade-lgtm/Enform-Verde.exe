@@ -106,6 +106,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         errors=[]
         selected=[]
         orbit=None
+        provider_used=None
         providers=["MPC","INPE"]
         if search is not None:
             providers=sorted({row[1].get("provider","MPC") for row in candidates})
@@ -189,6 +190,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                 selected=provider_selected
                 orbit=provider_orbit
                 grid=provider_grid
+                provider_used=provider
                 break
             if provider_data:
                 errors.append({"provider":provider,"error_type":"INSUFFICIENT_READABLE_SERIES",
@@ -240,7 +242,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         result.update({"status":"SAR_REAL_EXPERIMENTAL_CANDIDATES",
              "raster_path":str(raster),"vector_path":str(vec) if len(features)<4000 else None,
              "provider_diagnostics":found.get("providers",[]),
-             "providers_used":sorted({row[2].get("provider","MPC") for row in data}),
+             "providers_used":[provider_used] if provider_used else [],
              "scene_ids":[r[1] for r in data],"scene_count":len(data),
              "acquisitions_utc":[r[0].isoformat() for r in data],
              "latest_acquisition_utc":data[0][0].isoformat(),
