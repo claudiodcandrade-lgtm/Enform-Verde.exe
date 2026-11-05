@@ -101,11 +101,19 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
             cov=coverage_ids[(side,d)]
             dest=root/f"{side}_{d.replace('-','_')}.tif"
             reuse=False
-            if dest.is_file():
+            manifest=dest.with_suffix(".provenance.json")
+            if dest.is_file() and manifest.is_file():
                 try:
-                    validate_tile(dest);reuse=True
-                except Exception:dest.unlink(missing_ok=True)
+                    meta=json.loads(manifest.read_text(encoding="utf-8"))
+                    validate_tile(dest)
+                    reuse=(meta.get("coverage_id")==cov and
+                           meta.get("source")==SOURCE and
+                           meta.get("sha256")==_sha256(dest))
+                except (OSError,TypeError,ValueError,json.JSONDecodeError):
+                    reuse=False
             if not reuse:
+                dest.unlink(missing_ok=True)
+                manifest.unlink(missing_ok=True)
                 tpaths=[]
                 for i,tile in enumerate(tiles):
                     p=root/f"{side}_{lid}_tile{i}.tif"
@@ -124,6 +132,11 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
                         width=arr.shape[2],nodata=NODATA,compress="deflate")
                     with rasterio.open(dest,"w",**profile) as ds:ds.write(arr)
                     for p in tpaths:p.unlink(missing_ok=True)
+                manifest.write_text(json.dumps({
+                    "coverage_id":cov,"source":SOURCE,
+                    "sha256":_sha256(dest),
+                    "interval_meaning":"published marginal predictive bound"
+                },ensure_ascii=False,indent=2),encoding="utf-8")
             paths[side][lid]=dest
             provenance["layers"][f"{side}_{d}"]={
                 "coverage_id":cov,"sha256":_sha256(dest),"path":str(dest)}
