@@ -32,3 +32,24 @@ Não afirmar percentual de aceleração sem benchmark controlado e repetível. P
 A revisão é uma otimização localizada do agrupamento zonal MapBiomas. Outras otimizações devem ser guiadas por perfilamento do fluxo completo e manter chaves/invalidação corretas de cache por AOI, fonte, versão e parâmetros. O SHA `ccbb2498f4d0ada11d48ec04989812e6b0bf8d77` tem workflows Windows e suíte integral disparados; a liberação depende dos resultados no commit final, incluindo os documentos desta revisão.
 
 Estado científico: candidato operacional `3.26.1-PRECAMPO-EXPERIMENTAL`; a homologação científica independente continua pendente de observações reais e não é substituída por regressões ou build.
+
+
+## Revisão V87.4 — Google Satélite online e mapa offline sob demanda
+
+Data: 05/11/2026. Código: commits `791a3d91a4bba8585761c740228489ddcca8080f` e `c49535ce025b2e0ad0c47cad97d4bdfa3e64f30b`. Prompt canônico atualizado no commit `9ba244196f7509503911a476bcfc914d13ae76f2`; PR #50.
+
+### Fluxo da visualização
+
+Ao carregar uma AOI, a interface desenha inicialmente somente o contorno da geometria e inicia as fontes online em worker. Quando há chave, a primeira tentativa é Google Maps Static API com `maptype=satellite`. Sem chave ou diante de falha do Google, o fluxo tenta Sentinel-2 e serviços Esri. A rasterização do mapa vetorial IBGE fica para o caso em que todas as fontes online falhem. O mapa IBGE continua empacotado como fallback offline; não é removido.
+
+O satélite do Google é apenas fundo visual: não pode alimentar classificação de vegetação/cultura, análise SAR, biomassa, carbono, solo ou produtividade. A chave deve vir de `GOOGLE_MAPS_API_KEY` ou da entrada local do programa, nunca de um valor fixo no repositório. API Static Maps requer API key e billing ativo, tem cobrança por carregamento conforme uso e recomenda restrição da chave à API habilitada. Não persistir imagens fora das regras aplicáveis.
+
+### Viewport e proporção
+
+Altura do canvas ampliada de 420 para 560 px. A solicitação calcula dimensões dentro do limite de 640×640 mantendo a proporção do viewport, e a imagem usa scale 2 para preservar resolução. O pedido online fica fora da thread da interface. A visualização normal deixa de rasterizar o mapa offline antes da resposta online; isso reduz trabalho de abertura do mapa, mas não altera nem acelera os cálculos científicos SAR, biomassa, solo ou uso da terra.
+
+### Verificações de liberação
+
+No SHA final, verificar build Windows, suíte de interface, Google com chave válida, ausência de chave, falha Google com fallback online, falha de todas as fontes com fallback IBGE, aspect ratio/viewport e isolamento entre fundo visual e motores analíticos. Não declarar esta revisão como aceleradora do processamento numérico sem benchmark independente. A otimização V87.3 MapBiomas permanece isolada e exige sua própria regressão de equivalência. A homologação científica independente continua separada.
+
+Referências oficiais Google Maps Platform: Maps Static API start, usage and billing e API key setup, links mantidos no prompt canônico V87.4.
