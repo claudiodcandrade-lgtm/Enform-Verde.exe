@@ -69,6 +69,10 @@ def _choose_interval(component, value):
                 result = _bounds([v * 0.47 for v in converted], value)
                 if result:
                     return result, "FAIXA_AGB_PUBLICADA_CONVERTIDA_C0_47_SEM_CALIBRACAO_AOI"
+    if component.get("parametro") == "Biomassa subterrânea":
+        conditional = _bounds(component.get("root_prediction_interval_tc_ha"), value)
+        if conditional:
+            return conditional, "INTERVALO_ALOMETRICO_CONDICIONAL_NAO_VALIDADO_NA_AOI"
     if component.get("parametro") == "Solo 0–100 cm":
         official = component.get("official_uncertainty") or {}
         if official.get("status") == "ENVELOPE_MARGINAL_OFICIAL":
