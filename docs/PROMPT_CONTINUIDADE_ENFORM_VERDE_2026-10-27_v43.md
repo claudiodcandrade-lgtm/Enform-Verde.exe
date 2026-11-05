@@ -3706,3 +3706,16 @@ A suíte completa Windows no SHA `132512d68ecf99e7424cb6cd43c7d2212e9c501f` exec
 **Correções incorporadas aos testes, sem relaxar os gates:** `tests/test_docs_sync_checkpoint.py` usa `PROMPT`, `HISTORICAL_PROMPT`, `SOIL_SPEC`, `SPEC` e checkpoint ativo; testa tanto sucesso documental completo (Word direto ou revisão em bot) quanto recusa de cada documento ausente, checkpoint ausente e Word indisponível. `tests/test_v82_national_ci_contract.py` exige checkout pelo SHA do PR/push, verificação `git rev-parse HEAD`, agrupamento do mesmo PR/branch e `cancel-in-progress:true` para jobs obsoletos. O cancelamento nunca autoriza reutilizar EXE de SHA diferente. V87.2 preserva todos os resultados experimentais, SOC e sua semântica V87.1, pedologia, fertilidade e interface; muda apenas os contratos de CI e documentos associados.
 
 **Condição de saída:** repetir a suíte completa e compilar `3.26.1-PRECAMPO-EXPERIMENTAL` em Windows sobre o mesmo SHA final, verificar testes reais de exe, arquivo ZIP, manifesto SHA256 e link de artefato; não declarar homologação científica independente enquanto faltarem observações e evidências verificáveis. A publicação de versão experimental poderá ocorrer com avisos claros de modelos condicionais e N/D, sem falsificar acurácia.
+
+
+### REVISÃO V87.3 — OTIMIZAÇÃO DO PROCESSAMENTO DE ANÁLISES — 05/11/2026
+
+Código: commit `ccbb2498f4d0ada11d48ec04989812e6b0bf8d77`, branch `feature/agricultural-identification-native-carbon`, PR #50.
+
+Em `mapbiomas_zonal.py::summarize_class_grid`, substituída a agregação que chamava `numpy.unique` para cada linha do raster por agregação vetorizada em blocos de 64 linhas. Os blocos limitam a memória temporária e reduzem trabalho repetido em Python. Permanecem inalterados: máscara espacial, exclusão de NoData e classes não positivas, áreas geodésicas por linha, legenda, área válida e denominador dos percentuais. A soma usa acumulação vetorizada; diferenças de ponto flutuante podem ocorrer apenas na última precisão numérica.
+
+Não declarar ganho percentual de velocidade sem benchmark controlado. Exigir regressão de equivalência numérica para grade com classes múltiplas, NoData, pixels fora da AOI e áreas distintas por linha, além da suíte completa e do build Windows no SHA final. A otimização deve permanecer isolada e removível se gerar divergência material, aumento excessivo de memória ou piora em AOIs pequenas. Não alterar fontes, limiares, classificadores, unidades, incerteza, geometria ou interpretação científica.
+
+Preservar processamento SAR, identificação de uso, carbono por fitofisionomia, solos 0–100 cm, auditoria e rotas offline. Investigar novas otimizações somente com perfilamento do fluxo completo e comparações de saída; qualquer cache deve ter chave por fonte/versão, AOI, parâmetros e validade, sem reusar resultados de análises diferentes.
+
+Estado desta revisão: alteração incorporada no código; testes/build do SHA final ainda pendentes. O status experimental pré-campo permanece; homologação científica independente não é inferida de testes de software.
