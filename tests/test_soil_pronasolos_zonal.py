@@ -58,6 +58,17 @@ class SoilPolygonZonalTests(unittest.TestCase):
         self.assertAlmostEqual(out["_diagnostic"]["coverage_fraction"],1)
         self.assertEqual(out["_diagnostic"]["valid_complete_pixels"],4)
 
+    def test_partial_coverage_is_not_available_for_full_property_stock(self):
+        with rasterio.open(self.paths[6], "r+") as ds:
+            ds.write(np.array([[6., -9999.], [6., 6.]], dtype="float32"), 1)
+        out = mapped_soil_0_100_on_polygon(self.gdf(box(0, 0, 20, 20)), self.paths)
+        self.assertAlmostEqual(out["_diagnostic"]["coverage_fraction"], .75)
+        self.assertEqual(out["_diagnostic"]["target_status"], "PARCIAL_SEM_EXTRAPOLACAO")
+        self.assertFalse(out["_diagnostic"]["target_0_100_available"])
+        self.assertFalse(out["_diagnostic"]["full_raster_0_100"])
+        self.assertTrue(out["0–100 cm"]["partial_coverage"])
+        self.assertAlmostEqual(out["0–100 cm"]["area_covered_ha"], .03)
+
     def test_missing_deep_horizon_is_nd_not_extrapolated(self):
         partial={i:p for i,p in self.paths.items() if i!=6}
         self.assertNotIn("0–100 cm",mapped_soil_0_100_on_polygon(self.gdf(box(0,0,20,20)),partial))
