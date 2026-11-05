@@ -27,12 +27,21 @@ def _bounds(component):
         if isinstance(agb, (list, tuple)) and len(agb) == 2:
             bounds = [_number(agb[0]) * 0.47 if _number(agb[0]) is not None else None,
                       _number(agb[1]) * 0.47 if _number(agb[1]) is not None else None]
+    # Soil official 0–100 cm limits represent a source envelope only.
+    # Do not convert descriptive pixel SD to model uncertainty.
+    if bounds is None and component.get("parametro") == "Solo 0–100 cm":
+        official = component.get("official_uncertainty") or {}
+        bounds = official.get("sum_bounds_envelope_tc_ha")
     if not isinstance(bounds, (list, tuple)) or len(bounds) != 2:
         return None
     low, high = (_number(v) for v in bounds)
     if low is None or high is None or not low <= central <= high:
         return None
-    return low, high
+    # Display the central estimate at the exact midpoint of the source-derived
+    # sensitivity envelope, using a symmetric absolute deviation. A lower
+    # bound below zero is impossible for a nonnegative carbon stock.
+    delta = min(central, max(central-low, high-central))
+    return central-delta, central+delta
 
 
 def scenario_envelope(native):
@@ -93,7 +102,7 @@ def scenario_envelope(native):
         "missing_bounds":missing_bounds,
         "missing_stocks":missing_stocks,
         "complete":bool(native.get("complete")) and all_known_bounded and not missing_stocks,
-        "interpretation":"Soma aritmética de limites de fonte; NÃO é IC95% conjunto. "
+        "interpretation":"Faixas simétricas centradas na estimativa mais provável, a partir de limites de fonte e limitadas a estoques não negativos. Soma aritmética; NÃO é IC95% conjunto. "
                          "Se qualquer limite do estoque conhecido faltar, mínimo/máximo = N/D; "
                          "se qualquer compartimento faltar, total da propriedade = PARCIAL."
     }
