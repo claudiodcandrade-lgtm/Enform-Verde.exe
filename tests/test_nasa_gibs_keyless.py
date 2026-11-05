@@ -32,6 +32,10 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         self.assertIn('"sentinel-2-l2a"', source)
         self.assertIn('("red","green","blue")', source)
         self.assertIn("public COGs", source)
+        self.assertIn("GDAL_HTTP_MULTIRANGE", source)
+        self.assertIn("window=win", source)
+        self.assertIn("out_shape=(out_height,out_width)", source)
+        self.assertIn("never load a complete Sentinel-2 scene", source)
         self.assertNotIn("Authorization", source)
         self.assertNotIn('"key"', source)
 
