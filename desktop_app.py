@@ -881,6 +881,8 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             target_ratio=max(0.1,float(out_w))/max(1.0,float(out_h))
             out_width=max(320,min(1600,int(out_w))); out_height=max(240,min(1200,int(out_h)))
             rgb=[]
+            # COG HTTP range reads are cropped to the requested viewport extent and
+            # resampled directly to canvas size; never load a complete Sentinel-2 scene.
             for band in ("red","green","blue"):
                 with rasterio.open(assets[band]["href"]) as src:
                     if src.crs!=crs:raise RuntimeError("Bandas Sentinel-2 Earth Search com CRS incompatível.")
