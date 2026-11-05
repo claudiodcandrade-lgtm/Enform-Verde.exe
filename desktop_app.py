@@ -2133,9 +2133,16 @@ class App(tk.Tk):
                          "inventory_evidence_manifest":inventory_manifest}
                 native=native_carbon_analysis(gdf,land,biome,options)
                 from soil_pedology_embrapa import analyze_embrapa_pedology
-                pedology=analyze_embrapa_pedology(gdf)
+                pedology,zones=analyze_embrapa_pedology(gdf,with_zones=True)
+                try:
+                    from soil_fertility_zonal import analyze_fertility
+                    fertility=analyze_fertility(gdf,units=zones)
+                except Exception as exc:
+                    fertility={"status":"N/D","reason":"Falha controlada: "+type(exc).__name__,
+                               "units":{},"layers":[]}
                 self._analysis_queue.put((run_id,"ok",{"sar":{},"soil":{},"land_use":land,
-                                                      "native_carbon":native,"pedology":pedology}))
+                                                      "native_carbon":native,"pedology":pedology,
+                                                      "fertility":fertility}))
             except Exception:self._analysis_queue.put((run_id,"error",traceback.format_exc()))
         threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
         self.after(120,self._poll_analysis)
@@ -2154,13 +2161,13 @@ class App(tk.Tk):
             self.status.set("Falha controlada — programa permanece responsivo.")
             return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
         self.status.set("SAR consultado; calculando carbono…")
-        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology")) if rid==self._analysis_generation else None)
+        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility")) if rid==self._analysis_generation else None)
 
-    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None):
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         self.project["analysis_run_id"]=uuid.uuid4().hex[:12].upper()
         self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
-        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology"):
+        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility"):
             self.project.pop(k,None)
         current_car=self.car.get().strip().upper()
         current_ccir=re.sub(r"\D","",self.ccir.get())
@@ -2196,16 +2203,24 @@ class App(tk.Tk):
                         sar_paths=self.sar_paths))
             if precomputed_pedology is not None:
                 pedology=precomputed_pedology
+                fertility=precomputed_fertility
             else:
                 from soil_pedology_embrapa import analyze_embrapa_pedology
-                pedology=analyze_embrapa_pedology(self.gdf)
+                pedology,zones=analyze_embrapa_pedology(self.gdf,with_zones=True)
+                try:
+                    from soil_fertility_zonal import analyze_fertility
+                    fertility=analyze_fertility(self.gdf,units=zones)
+                except Exception as exc:
+                    fertility={"status":"N/D","reason":"Falha controlada: "+type(exc).__name__,
+                               "units":{},"layers":[]}
             self.project["soil_pedology"]=pedology
-            self._present_native_carbon(native,land,pedology=pedology)
+            self.project["soil_fertility"]=fertility or {"status":"N/D","reason":"sem consulta"}
+            self._present_native_carbon(native,land,pedology=pedology,fertility=fertility)
             self._present_cultivated_monitoring(land)
             return
         except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
 
-    def _present_native_carbon(self,native,land,pedology=None):
+    def _present_native_carbon(self,native,land,pedology=None,fertility=None):
         self.project["native_carbon"]=native
         self.project["area_ha"]=native["area_aoi_ha"]
         if hasattr(self,"aoi_area_display"):
@@ -2244,7 +2259,10 @@ class App(tk.Tk):
                native["method"],""]
         from executive_carbon_report import executive_carbon_lines
         from soil_pedology_embrapa import pedology_report_lines
-        lines = executive_carbon_lines(native,format_ptbr) + pedology_report_lines(pedology or {},format_ptbr) + lines
+        from soil_fertility_zonal import fertility_report_lines
+        lines = (executive_carbon_lines(native,format_ptbr) +
+                 pedology_report_lines(pedology or {},format_ptbr) +
+                 fertility_report_lines(fertility or {},format_ptbr) + lines)
         for st in native["strata"]:
             lines.append(st["class_name"]+": "+format_ptbr(st["area_ha"],2)+" ha ("+format_ptbr(st["area_pct"],2)+"% da AOI) — "+st["source"])
             lines.append("  FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: "+st["physiognomy"]+" — "+st["physiognomy_resolution"])
@@ -2300,6 +2318,8 @@ class App(tk.Tk):
         # Separate pedology from carbon stocks in exported calculation evidence.
         pedo_audit=Path(land["vector_path"]).parent/"pedologia_embrapa_auditoria.json"
         pedo_audit.write_text(json.dumps(pedology or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        fert_audit=Path(land["vector_path"]).parent/"fertilidade_embrapa_auditoria.json"
+        fert_audit.write_text(json.dumps(fertility or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
 
     def export_excel(self):
         if not self.project.get("analysis_rows") and not self.project.get("land_use"):
