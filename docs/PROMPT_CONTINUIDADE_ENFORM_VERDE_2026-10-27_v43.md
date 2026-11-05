@@ -3782,3 +3782,7 @@ Fonte oficial resolução: https://sentinels.copernicus.eu/documents/d/sentinel/
 ### COMPLEMENTO V87.8 — LEITURA CONCORRENTE RGB LIMITADA
 
 Para acelerar o preview Sentinel-2 sem carregar cenas inteiras: ler as três bandas RGB de COG em paralelo com limite fixo de três workers; cada worker abre sua própria URL COG e lê somente window AOI/viewport via HTTP range, reamostrando diretamente ao canvas. Não usar concorrência sem limite. A geometria, ordem de banda RGB e dimensões do mapa permanecem. A mudança afeta apenas visualização óptica, não os motores SAR/biomassa/carbono. O mapa segue fora da thread da interface. Testar contrato e regressão; não publicar velocidade alegada sem benchmark. Incluído em docs/spec_updates/2026-11-05_v87_7_sentinel2_windowed_preview.md.
+
+
+## CHECKPOINT 05/11/2026 — V87.11 CAR/KML, ERRO REDRAW
+Ao abrir CAR ou vetor KML/KMZ, a AOI era carregada mas a análise não iniciava devido a `NameError: name 'redraw' is not defined` em `desktop_app.py::_schedule_offline_map_fit`. Removida chamada incorreta `self.after(420,redraw)` no commit `d99634cf29cb6f6b7d4fb951b5654890dcd1e456`; o desenho do polígono e a consulta de imagem já ocorrem antes dessa instrução. A correção permite prosseguir com diagnóstico IBGE e preparação da execução analítica. Testar ambos fluxos com AOI real e testar GUI em Windows; regressão `tests/test_car_kml_map_setup_regression.py`. Não declarar nova versão executável disponível sem build e smoke test de SHA final. Atualizar Word via checkpoint V87.11 mantendo histórico e gates científicos.
