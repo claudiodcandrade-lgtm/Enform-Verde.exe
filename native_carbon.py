@@ -17,6 +17,11 @@ def normalize(value):
 def native_class(name, source, class_metadata=None):
     """IBGE phytoregion alone is potential vegetation, not current native cover."""
     text=normalize(name)
+    # Annual MapBiomas and its IBGE overlay are reference maps, not current
+    # orbital evidence. Never use them to confirm native cover or estimate
+    # current native-carbon area.
+    if str(source or "").startswith(("MAPBIOMAS", "IBGE+MAPBIOMAS")):
+        return None
     # Corpos hídricos não são formações vegetais nativas, ainda que um overlay
     # IBGE+MapBiomas lhes atribua indevidamente esse status.
     aquatic_terms=('corpo d agua','corpo dagua','rio, lago','rio e lago',
