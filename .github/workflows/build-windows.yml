@@ -6,8 +6,9 @@ on:
     branches: [main]
   workflow_dispatch:
 concurrency:
-  group: enform-windows-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Keep the tested source SHA stable across documentation auto-commits.
+  group: enform-windows-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
 permissions:
   contents: read
   actions: read
@@ -589,7 +590,7 @@ jobs:
           assert 0 < classes[0]["percent"] <= 100 and classes[0]["area_ha"] > 0
           assert region==classes[0]["name"], "display/model phytophysiognomy must equal dominant official legenda_1 class"
           src=open("desktop_app.py",encoding="utf-8").read()
-          assert "self.ibge_phys_display.set" in src and "código IBGE" in src, "IBGE class/code is not wired to visible UI"
+          assert "self.ibge_phys_display.set" in src and "Código(s) das regiões fitoecológicas" in src and "code_txt" in src and "ibge_area_summary_lines(d)" in src and "Fitofisionomia presente na propriedade:" in src, "IBGE POTENTIAL code must remain in diagnostic; actual native property label must not claim IBGE potential as present"
           print("IBGE_VISIBLE_PHYTO_CONTRACT_OK",region,classes[0]["code"])
           print("OFFICIAL_IBGE_TAPAJOS_CLASSIFICATION_OK "+json.dumps({"region":region,"classes":classes,"source":d.get("fonte_vegetacao")},ensure_ascii=True))
           '@ | Set-Content ibge_acceptance_test.py -Encoding UTF8

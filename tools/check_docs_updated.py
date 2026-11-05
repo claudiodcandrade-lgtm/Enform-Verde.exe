@@ -33,7 +33,7 @@ def check(changed, *, workflow_text=None, word_exists=None):
             ("- "+p) in workflow_text and ("--entry "+p) in workflow_text
             for p in checkpoints))
         if not active:
-            missing.append(SPEC+" or reviewed checkpoint with active Word sync")
+            missing.append(SPEC)  # stable return contract; diagnostics explain checkpoint alternative
     return eff,missing
 
 def main(base,head):

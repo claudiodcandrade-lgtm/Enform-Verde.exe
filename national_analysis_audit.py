@@ -34,8 +34,11 @@ def audit_national_coverage(aoi,land,*,biome=None,at_utc=None):
     bounds=geo.bounds
     # WGS84 geographic envelope is a plausibility flag, never a Brazil biome
     # classifier or a pretext to invent land-cover pixels.
-    within_brazil_bbox=(bounds[0]>=-74.5 and bounds[2]<=-33.5
-                        and bounds[1]>=-34.5 and bounds[3]<=6.5)
+    # Includes Fernando de Noronha, Trindade/Martim Vaz, São Pedro e São
+    # Paulo and the Brazilian continental extent. This is a plausibility
+    # envelope, not a substitute for official territorial intersection.
+    within_brazil_bbox=(bounds[0]>=-75.0 and bounds[2]<=-27.0
+                        and bounds[1]>=-35.0 and bounds[3]<=7.0)
     strata=[]
     area_by_group={"nativa_mapeada_ha":0.0,"outros_usos_mapeados_ha":0.0,
                    "nao_classificada_ha":0.0}

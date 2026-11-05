@@ -5,8 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 concurrency:
-  group: enform-dashboard-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Keep the tested source SHA stable across documentation auto-commits.
+  group: enform-dashboard-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
 jobs:
   dashboard:
     runs-on: windows-latest
