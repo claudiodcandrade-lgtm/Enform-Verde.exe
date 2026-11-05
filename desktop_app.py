@@ -2378,6 +2378,34 @@ class App(tk.Tk):
                 use=("Somado (só área mapeada)" if profile.get("partial_coverage") else "Somado") if depth=="0–100 cm" else "Informativo; não somado novamente"
                 return [st["physiognomy"],st["area_ha"],st["area_pct"],depth,profile.get("tc_ha"),profile.get("spatial_sd_tc_ha"),"Embrapa/PronaSolos",use,info["method"],info["mapped_area_ha"],info["coverage_pct"],info["pixels"]]
             put(sh,[_soil_row(st,depth,profile) for st in native["strata"] for depth,profile in (st.get("soil_profiles") or {}).items() if isinstance(profile,dict) and profile.get("tc_ha") is not None])
+            sh=wb.create_sheet("Incerteza Oficial do Solo")
+            setup(sh,"Enform Verde — limites marginais oficiais SOC (não IC95% conjunto)")
+            for j,h in enumerate(["Fitofisionomia","Horizonte (cm)","Limite inferior (tC/ha)",
+                                   "Limite superior (tC/ha)","Estado dos limites",
+                                   "Envelope somado 0–100 (tC/ha)","Envelope estoque (tC)",
+                                   "Fonte","Interpretação"],1):
+                sh.cell(3,j,h).value=h
+            soil_unc_rows=[]
+            for st in native["strata"]:
+                top=(st.get("soil_profiles") or {}).get("0–100 cm") or {}
+                official=top.get("official_uncertainty") or {}
+                horizons=official.get("marginal_horizon_bounds") or {}
+                lohi=official.get("sum_bounds_envelope_tc_ha") or []
+                stock=official.get("sum_bounds_envelope_stock_tC") or []
+                if not horizons:
+                    soil_unc_rows.append([st["physiognomy"],"0–100",None,None,
+                        "N/D — "+str(official.get("reason") or "raster de limite indisponível")[:180],
+                        None,None,None,"DP espacial não substitui incerteza oficial"])
+                else:
+                    for depth,bounds in horizons.items():
+                        soil_unc_rows.append([st["physiognomy"],depth,
+                            bounds.get("lower_tc_ha"),bounds.get("upper_tc_ha"),
+                            official.get("status"),
+                            (str(lohi) if lohi else None),(str(stock) if stock else None),
+                            (official.get("provenance") or {}).get("source"),
+                            "Envelope somado de limites marginais; NÃO é IC95% conjunto"])
+            put(sh,soil_unc_rows or [["N/D","0–100",None,None,"N/D",None,None,None,
+                                       "Nenhuma área nativa com mapa de solo"]])
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
         for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
