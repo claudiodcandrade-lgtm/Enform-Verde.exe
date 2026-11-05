@@ -226,10 +226,10 @@ def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=12_000_000,
             "source": "raw_aligned_pronasolos_geotiff",
             "method": "area_weighted_raw_raster_polygon_intersection",
             "raster_crs": str(first.crs), "pixel_size": [abs(first.transform.a), abs(first.transform.e)],
-            "target_depth_cm": 100, "target_0_100_available": True,
+            "target_depth_cm": 100, "target_0_100_available": not partial,
             "target_status": ("PARCIAL_SEM_EXTRAPOLACAO" if partial
                               else "COMPLETO_POR_INTERSECAO_RASTER"),
-            "full_raster_0_100": True,
+            "full_raster_0_100": not partial,
             "uncertainty": "Spatial SD is descriptive only; no AOI CI95 or transfer error",
         }
         # Published per-horizon marginal bounds do not provide a calibrated
