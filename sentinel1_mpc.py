@@ -76,7 +76,7 @@ def search_sentinel1_rtc(aoi_geojson, *, start_utc, end_utc,
                 "polarizations": props.get("sar:polarizations"),
                 "incidence_angle": props.get("view:incidence_angle"),
                 "collection": item.get("collection", "sentinel-1-rtc"),
-                "assets": item.get("assets", {}), "source": STAC_SEARCH})
+                "assets": item.get("assets", {}), "source": STAC_SEARCH, "provider": "MPC"})
         link = next((link for link in page.get("links", []) if link.get("rel") == "next"), None)
         if not link:
             url = None
