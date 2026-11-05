@@ -19,3 +19,7 @@ No mesmo SHA `b4055ebbbfc9394616658c2c215603087dd5a60e`:
 
 ## Limites científicos
 Este marco libera uma compilação técnica experimental para testes. Não representa homologação científica independente. O gate científico permanece não aprovado por ausência de evidências observacionais suficientes; estimativas experimentais devem permanecer identificadas e com incerteza/limitações explícitas.
+
+
+## REVISÃO V87.11 — CORREÇÃO OPERACIONAL CAR/KML — 05/11/2026
+Identificador da aplicação: `3.26.2-PRECAMPO-EXPERIMENTAL`. O erro reportado em propriedade real foi `name 'redraw' is not defined`: ao importar KML testado ou consultar CAR, o perímetro abria, mas `_show_geom` não completava seu fluxo. A rotina `desktop_app.py::_schedule_offline_map_fit` chamava uma variável global inexistente em `self.after(420,redraw)`. Essa linha foi removida no commit `d99634cf29cb6f6b7d4fb951b5654890dcd1e456`; desenho imediato da AOI, busca online e fallback offline já ocorriam sem ela. Com isso, a preparação passa a alcançar inicialização do diagnóstico IBGE e o caminho posterior de análise, sujeito a disponibilidade das fontes. Regressão automática `tests/test_car_kml_map_setup_regression.py` verifica a inexistência do callback solto e o fluxo comum de CAR/vetor. Manter o histórico, as funções de Sentinel-2 e SAR, os seis biomas, carbono 0–100 cm, fertilidade, agricultura e modelos pré-campo. Nova distribuição só pode ser declarada corrigida após testes de integração reais e build Windows verificado no mesmo SHA; não confundir correção de NameError com homologação científica.
