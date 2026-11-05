@@ -13,7 +13,7 @@ class ExperimentalCarbonSeparationTests(unittest.TestCase):
         area=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs="EPSG:6933")
         classes=gpd.GeoDataFrame([{
             "class_name":"Floresta Ombrófila Densa",
-            "source":"IBGE+MAPBIOMAS",
+            "source":"SAR_VALIDADO+IBGE",
             "geometry":box(0,0,100,100),
         }],crs="EPSG:6933")
 
