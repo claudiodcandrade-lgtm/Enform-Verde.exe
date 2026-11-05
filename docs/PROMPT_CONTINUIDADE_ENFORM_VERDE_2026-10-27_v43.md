@@ -3764,3 +3764,16 @@ Correção solicitada pelo usuário: priorizar Earth Search / AWS Open Data como
 O mapa do entorno é estritamente óptico. Sentinel-2 L2A é a opção de maior resolução da rota sem chave; VIIRS serve como contexto regional mais grosso. Radar/SAR somente para análises. Nenhuma imagem do mapa pode alimentar classificação, uso da terra, carbono ou estimativas SAR.
 
 O código `desktop_app.py::show_google_map` já foi reordenado para tentar `sentinel2_earthsearch_preview` antes do Planetary Computer. O teste de contrato deve confirmar Earth Search → Planetary Computer → NASA GIBS → Esri → offline. Checkpoint: `docs/spec_updates/2026-11-05_v87_6_open_sentinel2_priority.md`. Build/regressões ainda dependem do SHA final; homologação científica experimental permanece separada.
+
+
+### REVISÃO V87.7 — RESOLUÇÃO ESPACIAL E COG POR JANELA — 05/11/2026
+
+A visualização óptica RGB Sentinel-2 L2A usa B02 azul, B03 verde e B04 vermelho, cada uma nominalmente em 10 m. A resolução aparente no canvas depende de nuvens, qualidade atmosférica, georreferenciamento, escala e reamostragem. A imagem de preview é apenas cartográfica.
+
+Para desempenho, priorizar Earth Search/AWS Sentinel-2 e ler os COGs por janela AOI/viewport com HTTP range, reamostrando diretamente para as dimensões do canvas. Não baixar a cena inteira e não fragmentar AOIs comuns em quadrantes arbitrários: para uma imagem final única isso costuma acrescentar chamadas e custo de montagem sem reduzir pixels necessários. O código atual limita a leitura a `window=win` e `out_shape=(out_height,out_width)`, com GDAL HTTP multirange.
+
+Só usar blocos/telhas adaptativos quando o recorte cruzar múltiplos MGRS ou limites práticos de transferência/memória: buscar apenas as telhas que interceptam o recorte visível, concorrência limitada, mosaico no tamanho do viewport e cache por item/ativo/recorte/tamanho. Não cobrir o país inteiro nem prejudicar análise. Medir bytes, latência, memória, cobertura e completude antes de alegar melhoria numérica. Testar AOIs pequenas, grandes e multi-telha; manter fallback óptico e preservar radar exclusivamente nos módulos analíticos.
+
+Checkpoint: `docs/spec_updates/2026-11-05_v87_7_sentinel2_windowed_preview.md`. Build e regressões no SHA do pacote seguem obrigatórios.
+
+Fonte oficial resolução: https://sentinels.copernicus.eu/documents/d/sentinel/sentinel-2-products-specification-document-15_1 .
