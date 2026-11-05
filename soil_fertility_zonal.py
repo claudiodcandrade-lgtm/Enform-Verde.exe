@@ -62,7 +62,8 @@ def discover_coverages(xml_bytes):
         if not cov or not ("90m" in words.replace(" ", "") or "90 m" in words):
             continue
         for name, (_label, _unit, _first, aliases) in ATTRS.items():
-            if not any(_norm(a) in words for a in aliases):
+            if not any(re.search(r"(?<![a-z0-9])" + re.escape(_norm(a)) +
+                                 r"(?![a-z0-9])", words) for a in aliases):
                 continue
             for index, depth in enumerate(DEPTHS):
                 low, high = depth.split("-")
