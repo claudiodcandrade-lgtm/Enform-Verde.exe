@@ -1,6 +1,6 @@
-# Especificação técnica V87.20 de acesso a Sentinel-1 e contingência multissensor
+# Especificação técnica V87.21 de acesso a Sentinel-1 e contingência multissensor
 
-Data: 05/11/2026. Escopo: tornar a aquisição de dados atuais auditável e repetível, priorizar Sentinel-1 e usar fontes alternativas sem confundir sensores ou transformar falhas técnicas em ausência de dados.
+Data: 05/11/2026. Escopo: tornar a aquisição de dados atuais auditável e repetível, priorizar Sentinel-1 e usar fontes alternativas sem confundir sensores ou transformar falhas técnicas em ausência de dados. Esta revisão também corrige a contabilização de cobertura não mapeada e de classes explicitamente não nativas.
 
 ## Fluxo Sentinel-1 prioritário
 
@@ -51,3 +51,13 @@ Cada provedor deve registrar estado próprio. Falhar uma rota não encerra a bus
 ## Evidência de aceite
 
 A conclusão requer ao menos três cenas atuais da mesma órbita com pares VV/VH lidos na AOI e espaçamento temporal conforme a análise; registros de cobertura e ausência de falhas não recuperadas na série usada; fallback testado em falha forçada sem confusão com dados ausentes; testes e build Windows aprovados no mesmo SHA final; hash de artefato. Contratos sintéticos provam comportamento de código, não acesso orbital real nem homologação científica independente. Até comprovar pixel real na AOI, manter versão como candidata e não declarar a falha de campo definitivamente resolvida.
+
+## Revisão V87.21 — leitura real e semântica de áreas desconhecidas
+
+O Sentinel-1 prioritário tem regressão Windows de leitura efetiva das bandas VV e VH em COG sobre a AOI: a checagem requer valores de pixels válidos e não considera resposta HTTP parcial ou descoberta STAC como leitura concluída. A falha de uma cena provoca renovação do SAS e tentativa das cenas candidatas restantes; MPC e INPE RTC são consultados separadamente. Somente rotas e séries que completarem as verificações radiométricas, geométricas e de cobertura podem seguir para análise.
+
+Na máscara de carbono nativo, fonte cartográfica histórica pode apoiar a exclusão de classe inequivocamente antrópica, como pastagem, soja ou área urbana, mas não pode confirmar vegetação nativa atual. Uma lacuna espacial sem classe permanece em unknown_cover_area_ha; pastagem explicitamente mapeada deixa de ser contada como lacuna; classes nativas oriundas apenas de MapBiomas continuam sem confirmação orbital. A área total deve reconciliar nativo + excluído + desconhecido, sem declarar cobertura completa quando há lacunas.
+
+O bloqueio de regressão no SHA anterior expôs duas situações distintas: a fixture de uma classe nativa usava a fonte IBGE+MAPBIOMAS, contrariando a regra de exigir confirmação SAR; ela foi alterada para SAR_VALIDADO+IBGE e recebeu um teste explícito de que MapBiomas sozinho deixa a área desconhecida. Havia também um erro real em native_carbon.native_class: o retorno antecipado convertia uma classe cartográfica inequivocamente antrópica, como pastagem, em desconhecida. A decisão foi reordenada para permitir exclusão de rótulos antrópicos, mantendo MapBiomas incapaz de confirmar vegetação nativa. O novo SHA precisa passar a suíte completa do dashboard, a leitura real VV/VH e o build Windows; testes sintéticos não substituem o resultado de pixel real.
+
+O painel agrícola mantém PAM como referência regional para a matriz de modelos, combinada com vigor observado e fatores climáticos. A série PAM não é produtividade medida da propriedade: sem cultura atual, vigor datado e modelo temporal/espacial aplicável, a previsão da propriedade continua bloqueada e a projeção regional permanece identificada como cenário de referência.

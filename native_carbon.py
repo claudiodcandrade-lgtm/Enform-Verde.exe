@@ -17,11 +17,6 @@ def normalize(value):
 def native_class(name, source, class_metadata=None):
     """IBGE phytoregion alone is potential vegetation, not current native cover."""
     text=normalize(name)
-    # Annual MapBiomas and its IBGE overlay are reference maps, not current
-    # orbital evidence. Never use them to confirm native cover or estimate
-    # current native-carbon area.
-    if str(source or "").startswith(("MAPBIOMAS", "IBGE+MAPBIOMAS")):
-        return None
     # Corpos hídricos não são formações vegetais nativas, ainda que um overlay
     # IBGE+MapBiomas lhes atribua indevidamente esse status.
     aquatic_terms=('corpo d agua','corpo dagua','rio, lago','rio e lago',
@@ -49,18 +44,19 @@ def native_class(name, source, class_metadata=None):
     if any(word in text for word in ('areas cultivadas','area cultivada','soja','milho','sorgo','cafe','citr','cacau','cocoa','banana','silvicultura','plantad','eucalipt','pinus','agroflorest','lavoura','agricultura','antropic','urbaniz','mineracao')):
         return False
     if 'pastagem' in text and 'nativ' not in text:return False
+    # MapBiomas labels may exclude a known anthropic class above (e.g. pasture,
+    # soybean), but cannot confirm current native cover. Keep that decision
+    # after label-based exclusions so a historical map does not turn explicit
+    # non-native area into an unknown gap.
+    if str(source or "").startswith(("MAPBIOMAS", "IBGE+MAPBIOMAS")):
+        return None
     if source=='SEM_COBERTURA':return None
     if source=='SAR_VALIDADO':
         if text.startswith('grupo: '):return text=='grupo: vegetacao natural'
         meta=(class_metadata or {}).get(name,{})
         return meta.get('parent')=='vegetação natural' if meta else None
-    if source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE','SAR_VALIDADO+IBGE_PROXIMIDADE'):return True
+    if source in ('SAR_VALIDADO+IBGE','SAR_VALIDADO+IBGE_PROXIMIDADE'):return True
     if source=='IBGE':return None
-    if source=='MAPBIOMAS':
-        from mapbiomas_zonal import LEGEND
-        native_codes={3,4,5,6,7,11,12,49,50}
-        for code,(label,_) in LEGEND.items():
-            if name==label:return code in native_codes
     return None
 
 

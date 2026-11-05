@@ -10,7 +10,7 @@ class NativeAoiCoverageGapTests(unittest.TestCase):
     def setUp(self):
         self.aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs="EPSG:6933")
         self.native=dict(class_name="Floresta Ombrófila Densa",
-                         source="IBGE+MAPBIOMAS",geometry=box(0,0,40,100))
+                         source="SAR_VALIDADO+IBGE",geometry=box(0,0,40,100))
     def estimate(self,frame,phys):
         return {"components":[{"parametro":name,"tc":10., "fonte":"SYNTHETIC"}
                               for name in COMPARTMENTS]}
@@ -25,6 +25,16 @@ class NativeAoiCoverageGapTests(unittest.TestCase):
         self.assertEqual(result["cover_completeness"],"PARTIAL_OR_UNKNOWN")
         self.assertFalse(result["complete"])
         self.assertIsNone(result["total_uncertainty"])
+
+    def test_mapbiomas_native_reference_does_not_confirm_current_native_cover(self):
+        classes=gpd.GeoDataFrame([{
+            "class_name":"Floresta Ombrófila Densa",
+            "source":"IBGE+MAPBIOMAS",
+            "geometry":box(0,0,40,100)}],crs="EPSG:6933")
+        result=summarize_native_carbon(self.aoi,classes,self.estimate)
+        self.assertAlmostEqual(result["native_area_ha"],0.)
+        self.assertAlmostEqual(result["unknown_cover_area_ha"],1.)
+        self.assertEqual(result["cover_completeness"],"PARTIAL_OR_UNKNOWN")
 
     def test_explicit_pasture_class_removes_false_unknown_gap(self):
         classes=gpd.GeoDataFrame([self.native,{
