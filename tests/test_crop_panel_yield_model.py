@@ -94,7 +94,7 @@ class ArtifactTests(unittest.TestCase):
         self.assertGreater(art["crops"]["Milho"]["Centro-Norte"]["loyo"]["skill_vs_trend"], 0.10)
         self.assertEqual(len(art["provenance"]["pam_file_sha256"]), 64)
 
-    def test_pipeline_uses_calibrated_model_offline(self):
+    def test_pipeline_blocks_property_yield_without_observed_vigor(self):
         g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
         fake_wx = lambda lat, lon, s, e: {"daily": weather(range(2000, 2027), lambda d: 7.0), "source_url": "synthetic"}
         fake_awc = lambda lat, lon: {"awc_mm_cm": 1.1, "source": "teste"}
