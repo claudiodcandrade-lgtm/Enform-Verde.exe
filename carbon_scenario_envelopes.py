@@ -53,6 +53,7 @@ def scenario_envelope(native):
     area = _number(native.get("native_area_ha")) or 0.0
     results = []
     known = 0.0
+    has_known = False
     low_sum = 0.0
     high_sum = 0.0
     missing_bounds = []
@@ -66,6 +67,7 @@ def scenario_envelope(native):
                 missing_stocks.append(label + ": " + name)
                 continue
             known += stock
+            has_known = True
             basis = _number(component.get("quantified_area_ha"))
             if basis is None:
                 missing_bounds.append(label + ": " + name + " — área não determinada")
@@ -86,17 +88,17 @@ def scenario_envelope(native):
                             "status":"ENVELOPE DE FONTE", "uncertainty_kind":component.get("obs")})
     # If any stocked pool lacks bounds, even the known subtotal cannot have
     # a defensible aggregate minimum/maximum. Unknown pools remain separate.
-    all_known_bounded = bool(results) and not missing_bounds
+    all_known_bounded = has_known and not missing_bounds
     return {
         "rows":results,
-        "known_total_tc":known if results or missing_stocks else None,
+        "known_total_tc":known if has_known else None,
         "minimum_known_tc":low_sum if all_known_bounded else None,
         "maximum_known_tc":high_sum if all_known_bounded else None,
         "minimum_known_tco2e":low_sum * CO2_FACTOR if all_known_bounded else None,
-        "central_known_tco2e":known * CO2_FACTOR if results or missing_stocks else None,
+        "central_known_tco2e":known * CO2_FACTOR if has_known else None,
         "maximum_known_tco2e":high_sum * CO2_FACTOR if all_known_bounded else None,
         "minimum_known_tco2e_ha":low_sum * CO2_FACTOR / area if all_known_bounded and area else None,
-        "central_known_tco2e_ha":known * CO2_FACTOR / area if (results or missing_stocks) and area else None,
+        "central_known_tco2e_ha":known * CO2_FACTOR / area if has_known and area else None,
         "maximum_known_tco2e_ha":high_sum * CO2_FACTOR / area if all_known_bounded and area else None,
         "native_area_ha":area,
         "missing_bounds":missing_bounds,
