@@ -508,3 +508,7 @@ A versão `3.26.2-PRECAMPO-EXPERIMENTAL` foi compilada e aprovada no SHA `b4055e
 - Regressão adicionada: `tests/test_car_kml_map_setup_regression.py`, verificando que CAR e KML usam a mesma preparação e que não existe referência a callback global `redraw`.
 - Aceite obrigatório: testes completos e build Windows no mesmo SHA final; abrir CAR real e KML válido no executável limpo; verificar que o polígono é desenhado, IBGE conclui ou reporta falha tratada, e `Executar análise` gera os relatórios/erros auditáveis sem interrupção por NameError. Teste de contrato não prova disponibilidade online do SICAR.
 - Atualizar especificação DOCX e checkpoint; não oferecer a versão Windows anterior como corrigida. Preservar Sentinel-2, SAR, pedologia, fertilidade, carbono nativo e previsões experimentais. Homologação científica independente permanece separada.
+
+
+## V87.12 — Saneamento CI da regressão CAR/KML
+O Dashboard dual run 42042610110 reprovou no byte-compile porque o teste novo tests/test_car_kml_map_setup_regression.py continha caracteres literais `\\n` entre instruções Python. Corrigido no commit 7367eb1db282485e42b8af900df691e223aeccd8. A correção de código já preserva a análise quando o mapa falha (commit 41429e6193356f455cd2707f41a6b4916fcb80fd). Exigir reexecução da suíte e build Windows em SHA final antes de liberar EXE. Não atribuir erro ao KML validado, nem considerar o simples carregamento de polígono conclusão da análise.
