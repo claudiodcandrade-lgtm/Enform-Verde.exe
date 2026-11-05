@@ -189,3 +189,7 @@ A suíte completa Windows no SHA `132512d68ecf99e7424cb6cd43c7d2212e9c501f` exec
 
 ## NOTA DE INTEGRAÇÃO V87.11 — 05/11/2026
 Correção em `desktop_app.py::_schedule_offline_map_fit`: remoção de callback indefinido `redraw` que interrompia o fluxo CAR/KML antes do diagnóstico IBGE e, consequentemente, da análise. Não alterar a matemática do carbono de solo 0–100 cm, os cinco horizontes, as interseções por área equivalente, as unidades ou a incerteza. Verificar que após a entrada CAR/KML a execução alcança a consulta de solos, reportando valores oficiais quando efetivamente disponíveis ou N/D com motivo auditável. A liberação Windows corrigida exige novo SHA e smoke test.
+
+
+## INTEGRAÇÃO V87.12 — ISOLAMENTO CARTOGRÁFICO E ACEITE
+A falha de visualização corrigida em desktop_app.py não deve bloquear consultas de SOC nas cinco camadas 0–100 cm de uma AOI válida. A regressão específica passou por ajuste de sintaxe no commit 7367eb1d e necessita CI pós-correção. Não modificar equações, profundidades, controle NoData ou incerteza; em falha real de serviço, publicar N/D justificado, mantendo a geometria carregada.
