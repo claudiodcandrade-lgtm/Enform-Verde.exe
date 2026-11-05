@@ -20,3 +20,8 @@ Operacionalizar resultados modelados oriundos de dados reais para futura compara
 ## Testes e limitações
 
 Testes unitários de contratos experimentais e geoespaciais passaram em SHA anterior da V86. Os novos testes da V87, GUI Windows, aceitação real, disponibilização dos dados SAR, licenças oficiais, acurácia em cinco biomas e compilação final aguardam execução e evidência do **SHA final**. Os intervalos declarados são de fonte/cenário ou condicionais; não constituem cobertura calibrada da AOI. Não permitir certificação científica por este candidato experimental.
+
+
+### CORREÇÃO CIENTÍFICA V87.1 — 05/11/2026 — ENVELOPE MARGINAL DE SOC NÃO É INCERTEZA PREDITIVA VALIDADA
+
+Em `soil_pronasolos_zonal.py`, quando houver os dez rasters oficiais de limites (`lower`/`upper` por cinco horizontes), o resultado deve manter `status=ENVELOPE_MARGINAL_OFICIAL` e `sum_bounds_envelope_tc_ha=[soma(L), soma(U)]`, mas **`predictive_uncertainty_quantified=False`** tanto em `official_uncertainty` quanto no compartimento `0–100 cm`. A nova chave `marginal_envelope_available=True` identifica a existência dos limites informativos sem inferir erro de previsão calibrado da AOI. Os testes `test_marginal_bounds_envelope_not_joint_ci` passam a verificar as duas semânticas. Não retirar limites, transformar DP espacial em intervalo ou atribuir IC95% da propriedade. Esta correção é parte do candidato experimental **3.26.1-PRECAMPO-EXPERIMENTAL**, não constitui nova homologação científica. O build Windows, contratos no HEAD e artefato assinado SHA256 continuam obrigatórios para liberação.

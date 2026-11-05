@@ -273,7 +273,8 @@ def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=12_000_000,
                     "sum_bounds_envelope_tc_ha": [lo, hi],
                     "sum_bounds_envelope_stock_tC": [lo*covered/10000, hi*covered/10000],
                     "mapped_stock_area_ha": covered/10000,
-                    "predictive_uncertainty_quantified": True,
+                    "predictive_uncertainty_quantified": False,
+                    "marginal_envelope_available": True,
                     "interpretation": ("Soma dos limites marginais publicados por horizonte. "
                        "NÃO é IC95% conjunto validado para 0–100 cm ou para o estoque da propriedade.")}
             except Exception as exc:

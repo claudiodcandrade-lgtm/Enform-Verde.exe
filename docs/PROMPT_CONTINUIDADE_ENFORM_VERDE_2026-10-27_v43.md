@@ -3692,3 +3692,8 @@ Base auditada: SHA `2afd26257d122a96b6167dc2b36ecdb29765dc53`. Corrigida a sinal
 3. Manifesto SHA256 do EXE e do ZIP e link real para artefato de build aprovado. Workflow `queued`, `pending`, `action_required` ou `failure` NÃO libera pacote.
 4. Homologação independente depende de dados de campo reais; `validation/release_evidence.json` ausente não impede execução de modelo **experimental** mas impede certificá-lo como validado.
 5. Manter Word integral, prompts e especificação de solo atualizados a partir do checkpoint V87: `docs/spec_updates/2026-11-05_v87_release_hardening_and_prefield_validation.md`. Não substituir conteúdo V86 ou anterior.
+
+
+### CORREÇÃO CIENTÍFICA V87.1 — 05/11/2026 — ENVELOPE MARGINAL DE SOC NÃO É INCERTEZA PREDITIVA VALIDADA
+
+Em `soil_pronasolos_zonal.py`, quando houver os dez rasters oficiais de limites (`lower`/`upper` por cinco horizontes), o resultado deve manter `status=ENVELOPE_MARGINAL_OFICIAL` e `sum_bounds_envelope_tc_ha=[soma(L), soma(U)]`, mas **`predictive_uncertainty_quantified=False`** tanto em `official_uncertainty` quanto no compartimento `0–100 cm`. A nova chave `marginal_envelope_available=True` identifica a existência dos limites informativos sem inferir erro de previsão calibrado da AOI. Os testes `test_marginal_bounds_envelope_not_joint_ci` passam a verificar as duas semânticas. Não retirar limites, transformar DP espacial em intervalo ou atribuir IC95% da propriedade. Esta correção é parte do candidato experimental **3.26.1-PRECAMPO-EXPERIMENTAL**, não constitui nova homologação científica. O build Windows, contratos no HEAD e artefato assinado SHA256 continuam obrigatórios para liberação.

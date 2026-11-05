@@ -159,6 +159,9 @@ class SoilMappedAttributesContractTests(unittest.TestCase):
         official=stock["official_uncertainty"]
         self.assertEqual(official["status"],"ENVELOPE_MARGINAL_OFICIAL")
         self.assertEqual(official["sum_bounds_envelope_tc_ha"],[15.0,25.0])
+        self.assertTrue(official["marginal_envelope_available"])
+        self.assertFalse(official["predictive_uncertainty_quantified"])
+        self.assertFalse(stock["predictive_uncertainty_quantified"])
         self.assertAlmostEqual(official["sum_bounds_envelope_stock_tC"][0],0.6)
         rendered=" ".join(soil_intersection_lines(result))
         self.assertIn("NÃO é IC95%",rendered)
