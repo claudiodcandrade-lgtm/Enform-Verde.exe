@@ -1990,7 +1990,9 @@ class App(tk.Tk):
 
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
-        if hasattr(self,"aoi_area_display"):self.aoi_area_display.set(f"{format_ptbr(m['area_ha'],2)} ha")
+        if hasattr(self,"aoi_area_display"):
+            from property_physiognomy_display import equal_area_aoi_ha
+            self.aoi_area_display.set(f"{format_ptbr(equal_area_aoi_ha(self.gdf),2)} ha (EPSG:6933; base dos percentuais)")
         if hasattr(self,"ibge_phys_display"):
             self.ibge_phys_display.set("Aguardando mapeamento da vegetação nativa; mapa potencial IBGE não confirma presença atual.")
         self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {format_ptbr(m['area_ha'],2)} ha\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
@@ -2163,6 +2165,8 @@ class App(tk.Tk):
     def _present_native_carbon(self,native,land):
         self.project["native_carbon"]=native
         self.project["area_ha"]=native["area_aoi_ha"]
+        if hasattr(self,"aoi_area_display"):
+            self.aoi_area_display.set(f"{format_ptbr(native['area_aoi_ha'],2)} ha (EPSG:6933; base dos percentuais)")
         if hasattr(self,"ibge_biome_display"):
             self.ibge_biome_display.set(self.biome.get() or "Não determinado")
         if hasattr(self,"ibge_phys_display"):

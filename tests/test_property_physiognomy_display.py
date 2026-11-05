@@ -19,4 +19,13 @@ class NativeFitoAreaTests(unittest.TestCase):
     def test_without_cover_no_guess(self):
         self.assertIn("Não determinada",format_property_physiognomies(
            {"area_aoi_ha":1459.91,"strata":[]},fmt))
+    def test_equal_area_matches_native_denominator(self):
+        import geopandas as gpd
+        from shapely.geometry import box
+        from property_physiognomy_display import equal_area_aoi_ha
+        aoi=gpd.GeoDataFrame(geometry=[box(-55.88,-12.57,-55.87,-12.56)],crs=4326)
+        expected=float(aoi.to_crs(6933).geometry.union_all().area)/10000
+        self.assertAlmostEqual(equal_area_aoi_ha(aoi),expected,places=8)
+        with self.assertRaises(ValueError):
+            equal_area_aoi_ha(None)
 if __name__=="__main__":unittest.main()

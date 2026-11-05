@@ -32,3 +32,13 @@ def format_property_physiognomies(native, fmt):
                  "IBGE fornece o nome; limites dependem da máscara de cobertura "
                  "e da validação SAR/observacional.")
     return "\n".join(lines)
+
+def equal_area_aoi_ha(frame):
+    """Match the native land-cover intersection area denominator exactly."""
+    if frame is None or frame.crs is None:
+        raise ValueError("AOI missing georeferencing")
+    projected=frame.to_crs("EPSG:6933")
+    geom=projected.geometry.union_all()
+    if geom.is_empty:
+        raise ValueError("AOI empty")
+    return float(geom.area)/10000.0
