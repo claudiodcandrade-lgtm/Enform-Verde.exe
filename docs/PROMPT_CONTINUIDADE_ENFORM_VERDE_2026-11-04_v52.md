@@ -1,5 +1,5 @@
-# PROMPT DE CONTINUIDADE — ENFORM VERDE 3.26.0-SOLO-SAFRA
-**Revisão v51 — 04/11/2026 (UTC−3)**  
+# PROMPT DE CONTINUIDADE — ENFORM VERDE 3.26.2-PRECAMPO-EXPERIMENTAL
+**Revisão v52 — 05/11/2026 (UTC)**  
 **Missão principal:** concluir o desenvolvimento, publicar o código e o executável Windows para **testes de acurácia em propriedades reais posteriormente**, sem exigir previamente a homologação científica final.  
 **Situação confirmada na verificação:** HEAD `3ff63d1bcfbfbc1d0bd00d08b7042c6574336f3f`; testes de dashboard aprovados nesse HEAD; workflow Windows ainda em execução na consulta; gate científico independente reprovado por ausência de evidências observacionais exigidas. Não declarar EXE 3.26.0 pronto sem conferir artefato, SHA, instalação e execução.  
 **Repositório:** https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe  
@@ -480,3 +480,13 @@ A suíte completa Windows no SHA `132512d68ecf99e7424cb6cd43c7d2212e9c501f` exec
 **Correções incorporadas aos testes, sem relaxar os gates:** `tests/test_docs_sync_checkpoint.py` usa `PROMPT`, `HISTORICAL_PROMPT`, `SOIL_SPEC`, `SPEC` e checkpoint ativo; testa tanto sucesso documental completo (Word direto ou revisão em bot) quanto recusa de cada documento ausente, checkpoint ausente e Word indisponível. `tests/test_v82_national_ci_contract.py` exige checkout pelo SHA do PR/push, verificação `git rev-parse HEAD`, agrupamento do mesmo PR/branch e `cancel-in-progress:true` para jobs obsoletos. O cancelamento nunca autoriza reutilizar EXE de SHA diferente. V87.2 preserva todos os resultados experimentais, SOC e sua semântica V87.1, pedologia, fertilidade e interface; muda apenas os contratos de CI e documentos associados.
 
 **Condição de saída:** repetir a suíte completa e compilar `3.26.1-PRECAMPO-EXPERIMENTAL` em Windows sobre o mesmo SHA final, verificar testes reais de exe, arquivo ZIP, manifesto SHA256 e link de artefato; não declarar homologação científica independente enquanto faltarem observações e evidências verificáveis. A publicação de versão experimental poderá ocorrer com avisos claros de modelos condicionais e N/D, sem falsificar acurácia.
+
+
+## 10. Revisão V87.9 — mapa óptico e candidato 3.26.2
+
+- O mapa de entorno deve apresentar imagem óptica. Radar SAR permanece reservado aos módulos de análise e não alimenta a imagem de fundo.
+- Rota sem credencial do usuário: Earth Search STAC/AWS Sentinel-2 L2A prioritário, RGB B04/B03/B02 nominalmente a 10 m; depois Microsoft Planetary Computer, NASA GIBS VIIRS True Color, Esri World Imagery, Esri Street Map e IBGE offline. Google Maps continua opcional apenas com chave válida e configuração do usuário; não criar nem gerar chave automaticamente.
+- Para reduzir transferência e custo de processamento, usar COG via HTTP range, janela somente do recorte visível/AOI, reamostragem ao canvas e concorrência limitada a três bandas. Não baixar cena completa nem quadrantes desnecessários. O fallback deve continuar automático e a interface não pode bloquear durante requisição de rede.
+- Versão candidata: `3.26.2-PRECAMPO-EXPERIMENTAL`. Status de build/regressões deve ser confirmado no SHA da distribuição antes de liberar link. Não afirmar ganho percentual sem benchmark.
+- A última suíte reportou 924 testes aprovados e uma falha de contrato documental: `docs/ESPECIFICACAO_TECNICA_COMPLETA.docx` não continha o identificador de versão esperado. A especificação Word deve ser regenerada a partir deste checkpoint e validar o arquivo DOCX no próximo run.
+- A homologação científica segue separada e não aprovada até haver evidências independentes reais; manter todos os resultados experimentais rotulados e N/D onde não houver suporte.
