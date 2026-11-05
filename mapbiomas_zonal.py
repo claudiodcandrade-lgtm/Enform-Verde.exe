@@ -61,18 +61,28 @@ def summarize_class_grid(values, inside, row_pixel_areas_m2, nodata=None):
         raise ValueError("grade, máscara e áreas por linha incompatíveis")
     areas = defaultdict(float)
     valid_area = 0.0
-    for row in range(arr.shape[0]):
-        selected = mask[row]
+    # Aggregate bounded row blocks with NumPy instead of calling unique once
+    # per raster row. The block size caps temporary memory for large AOIs.
+    block_rows = 64
+    row_areas = np.asarray(row_pixel_areas_m2, dtype=float)
+    for start in range(0, arr.shape[0], block_rows):
+        stop = min(start + block_rows, arr.shape[0])
+        block = arr[start:stop]
+        selected = mask[start:stop].copy()
         if nodata is not None:
-            selected = selected & (arr[row] != nodata)
-        selected = selected & (arr[row] > 0)
+            selected &= block != nodata
+        selected &= block > 0
         if not selected.any():
             continue
-        classes, counts = np.unique(arr[row][selected], return_counts=True)
-        px_area = float(row_pixel_areas_m2[row])
-        for code, count in zip(classes, counts):
-            areas[int(code)] += int(count) * px_area
-            valid_area += int(count) * px_area
+        codes, inverse = np.unique(block[selected], return_inverse=True)
+        pixel_areas = np.broadcast_to(
+            row_areas[start:stop, None], block.shape
+        )[selected]
+        summed_areas = np.bincount(inverse, weights=pixel_areas, minlength=len(codes))
+        for code, area in zip(codes, summed_areas):
+            area = float(area)
+            areas[int(code)] += area
+            valid_area += area
     rows = []
     for code in sorted(areas):
         name, crosswalk = LEGEND.get(code, (f"Classe MapBiomas {code}", "classe sem correspondência cadastrada"))
