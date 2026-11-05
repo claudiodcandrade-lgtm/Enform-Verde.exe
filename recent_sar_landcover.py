@@ -109,17 +109,40 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                     raise ValueError("SAR AOI exceeds memory-bounded raster window")
                                 grid=(src.crs,src.window_transform(win),(int(win.height),int(win.width)),aoig)
                             crs,tr,size,_=grid
+                            # Read only the source raster window intersecting
+                            # the AOI. Reprojecting rasterio.band(src,1) may
+                            # trigger huge remote reads of a national COG
+                            # despite a small destination grid on Windows.
+                            local_aoi=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
+                            window=from_bounds(*local_aoi.bounds,transform=src.transform)
+                            from math import floor,ceil
+                            c0,r0=floor(window.col_off),floor(window.row_off)
+                            c1,r1=ceil(window.col_off+window.width),ceil(window.row_off+window.height)
+                            window=Window(c0,r0,max(0,c1-c0),max(0,r1-r0)).intersection(
+                                Window(0,0,src.width,src.height))
+                            if window.width<1 or window.height<1:
+                                raise ValueError("SAR asset does not intersect AOI")
+                            if window.width*window.height>1800000:
+                                raise ValueError("SAR source window exceeds bounded pixel limit")
+                            with np.errstate(all="ignore"):
+                                window_values=src.read(1,window=window,masked=True)
+                                src_values=np.ma.filled(
+                                    window_values.astype(np.float32),np.nan)
                             arr=np.full(size,np.nan,dtype=np.float32)
-                            reproject(source=rasterio.band(src,1),destination=arr,
-                                      src_nodata=src.nodata,dst_nodata=np.nan,
+                            reproject(source=src_values,destination=arr,
+                                      src_transform=src.window_transform(window),
+                                      src_crs=src.crs,
+                                      src_nodata=np.nan,dst_nodata=np.nan,
                                       dst_crs=crs,dst_transform=tr,resampling=Resampling.nearest)
                             pair.append(arr)
                 data.append((dt,str(scene.get("id","")),pair))
             except (UnicodeError,OSError,RuntimeError,ValueError) as exc:
                 errors.append({"scene_id":str(scene.get("id","")),"error_type":type(exc).__name__})
         result["failed_scene_reads"]=errors
+        result["selected_scene_count"]=len(selected)
+        result["readable_scene_count"]=len(data)
         if len(data)<3 or (data[0][0]-data[-1][0]).days<35:
-            raise ValueError("Not enough actual VV/VH raster pixels were accessible")
+            raise ValueError("Cenas SAR catalogadas, mas menos de 3 pares VV/VH reais legíveis no mesmo órbita; consultar failed_scene_reads no JSON (falhas do acesso COG/SAS).")
         crs,tr,size,local=grid
         inside=geometry_mask([mapping(local)],out_shape=size,transform=tr,invert=True)
         codes,qa=classify_temporal(np.stack([r[2][0] for r in data]),
