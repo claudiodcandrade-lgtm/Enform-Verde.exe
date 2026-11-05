@@ -3734,3 +3734,14 @@ O viewport do mapa passou de 420 para 560 pixels de altura. A solicitação à A
 Gate: build Windows e testes de interface no SHA final; confirmar mapa Google com chave válida, ausência de chave, falha Google com fallback online, falha de todas as fontes com fallback IBGE, proporção e viewport ampliado. Confirmar que o mapa online não é consumido por qualquer motor analítico e que o mapa offline continua carregando quando necessário. Estado científico continua experimental, sem alegação de homologação científica nacional.
 
 Referências oficiais: https://developers.google.com/maps/documentation/maps-static/start ; https://developers.google.com/maps/documentation/maps-static/usage-and-billing ; https://developers.google.com/maps/documentation/maps-static/get-api-key .
+
+
+### REVISÃO V87.5 — CAMADA SATÉLITE AUTOMÁTICA SEM TOKEN — 05/11/2026
+
+A versão candidata passa a usar NASA GIBS WMS como rota pública de visualização sem API key/token do usuário: camada `VIIRS_SNPP_CorrectedReflectance_TrueColor`, imagem colorida VIIRS para contexto regional. Tentar datas UTC recentes dentro da janela de 1–7 dias para tolerar atrasos de publicação e mostrar provedor/data. A imagem tem resolução espacial mais grossa que Sentinel-2; não prometer detalhe de alta resolução.
+
+Prioridade: Google Static Maps somente se chave configurada; Sentinel-2 L2A sem credencial de usuário; NASA GIBS sem chave; Esri World Imagery; Esri Street Map; IBGE offline por último. Falhas devem avançar para próxima fonte sem bloquear UI. O fallback IBGE segue empacotado. A camada visual e a geometria desenhada não são entrada de classificação, processamento SAR, uso da terra, biomassa ou carbono.
+
+Implementação: `desktop_app.py::nasa_gibs_preview`, versão `3.26.2-PRECAMPO-EXPERIMENTAL`; novo contrato `tests/test_nasa_gibs_keyless.py`. Confirmar em CI sintaxe, suíte completa, retorno real de imagem GIBS em probe de rede e build Windows exatamente no SHA liberado. Não tratar build/contrato de fonte como comprovação de chamada live; manter erro de provedor e fallback verificáveis. Google continua necessitando sua chave/billing; alternativa NASA não exige autenticação do usuário, mas requer internet e depende de disponibilidade do serviço público.
+
+Especificação acumulativa: `docs/spec_updates/2026-11-05_v87_5_keyless_satellite_fallback.md`. Estado científico pré-campo/experimental permanece; esta mudança é exclusivamente cartográfica.
