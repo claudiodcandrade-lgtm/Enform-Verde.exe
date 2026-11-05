@@ -229,7 +229,8 @@ def pedology_report_lines(result,fmt):
     if result["unmapped_area_ha"]>0:
         lines.append("  Sem classe mapeada: "+fmt(result["unmapped_area_ha"],2)+" ha.")
     lines+=["Incerteza espacial: N/D — limites de unidades não validados localmente; sem IC95% da área.",
-            "Fertilidade 90 m: CTC, pH, CE, textura e carbono mapeados em camadas próprias; valores NÃO calculados nesta consulta.",
-            "Saturação de bases V%, P, K, Ca, Mg e soma de bases: N/D; não inferidos pela classe pedológica.",
+            "Áreas por símbolo/unidade cartográfica: interseção espacial em ha e % da AOI; componentes associados não recebem rateio individual.",
+            "Fertilidade 90 m é calculada separadamente por interseção de rasters numéricos oficiais; não inferida da classe pedológica.",
+            "V%, P, K, Ca, Mg e soma de bases permanecem N/D se não houver cobertura numérica oficial compatível.",
             "Fonte: "+str(result["source"]),"Licença: "+str(result["license"])]
     return lines
