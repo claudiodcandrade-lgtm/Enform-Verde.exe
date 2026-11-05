@@ -197,3 +197,7 @@ A falha de visualização corrigida em desktop_app.py não deve bloquear consult
 
 ## SINCRONIZAÇÃO V87.13 — 05/11/2026
 A revisão do gate de documentos em tools/check_docs_updated.py não modifica fórmulas ou fontes oficiais do estoque de solo 0–100 cm. Uma atualização funcional posterior deve obrigatoriamente sincronizar esta especificação e os demais documentos no mesmo commit ou mais tarde, antes do aceite. A correção CAR/KML e os testes de mapa independentes seguem sem impacto sobre os cinco horizontes 0–5, 5–15, 15–30, 30–60, 60–100 cm, as interseções EPSG:6933 e as incertezas publicáveis.
+
+
+## REVISÃO V87.14 — RECUPERAÇÃO PEDOLÓGICA, FERTILIDADE E EXCEL
+A classificação pedológica oficial Embrapa 1:5 milhões consulta primeiramente a rota FeatureServer e, em caso de erro/resultado vazio, a rota MapServer do MESMO conjunto cartográfico; aplicar interseção em EPSG:6933 e registrar fonte e cobertura. Unidade de mapeamento não equivale a classe pura, e seus componentes NÃO recebem área individual sem mapeamento desagregado. Não inferir classe do mapa de carbono. Fertilidade digital 90 m exige GetCoverage numérico WCS verificável, identificador real, hash e interseção pixel×AOI; CTC, pH e textura podem ser mostrados se obtidos; V%, soma de bases, P/K/Ca/Mg não podem ser inferidos do SiBCS. Solo carbono 0–100 cm permanece compartimento separado: cinco profundidades sem dupla contagem, incerteza/área de cobertura e N/D em lacunas. A planilha executiva deve incluir unidade pedológica, área e dados médios de fertilidade apenas com proveniência auditável.
