@@ -45,7 +45,7 @@ def _select_orbit_series(candidates,ref):
         for dt,scene in sorted(rows,key=lambda item:item[0],reverse=True):
             if all(abs((dt-other).total_seconds())>5*86400 for other,_ in picked):
                 picked.append((dt,scene))
-            if len(picked)>=7:break
+            if len(picked)>=12:break
         if (len(picked)>=3 and 0<=(ref-picked[0][0]).total_seconds()<=30*86400
                 and (picked[0][0]-picked[-1][0]).total_seconds()>=35*86400):
             eligible.append((picked[0][0],len(picked),orbit,picked))
@@ -86,6 +86,8 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                 if dt.tzinfo and dt<=ref and {"vv","vh"}<=set(scene.get("assets") or {}):
                     candidates.append((dt.astimezone(timezone.utc),scene))
             except (KeyError,ValueError,TypeError):pass
+        if not found.get("pagination_complete", True):
+            raise RuntimeError("STAC Sentinel-1 search pagination incomplete; cannot assert data absence")
         candidates.sort(key=lambda v:v[0],reverse=True)
         if not candidates:
             result.update({"status":"N/D_DADOS", "reason":"CATALOGO_SEM_CENAS_COMPATIVEIS_VV_VH_NA_JANELA_150D",
@@ -101,51 +103,62 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         token=(token_fn or get_runtime_sas_token)()
         grid=None;data=[];errors=[]
         for dt,scene in selected:
-            try:
-                pair=[]
-                for pol in ("vv","vh"):
-                    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
-                                      GDAL_HTTP_TIMEOUT="35",GDAL_HTTP_MAX_RETRY="2",
-                                      GDAL_HTTP_UNSAFESSL="NO"):
-                        with rasterio.open(_signed_href(scene["assets"][pol]["href"],token)) as src:
-                            if not src.crs:raise ValueError("Missing georeferencing in SAR source")
-                            if grid is None:
-                                aoig=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
-                                win=from_bounds(*aoig.bounds,transform=src.transform).round_offsets().round_lengths()
-                                win=win.intersection(Window(0,0,src.width,src.height))
-                                if win.width*win.height>1800000 or min(win.width,win.height)<=0:
-                                    raise ValueError("SAR AOI exceeds memory-bounded raster window")
-                                grid=(src.crs,src.window_transform(win),(int(win.height),int(win.width)),aoig)
-                            crs,tr,size,_=grid
-                            # Read only the source raster window intersecting
-                            # the AOI. Reprojecting rasterio.band(src,1) may
-                            # trigger huge remote reads of a national COG
-                            # despite a small destination grid on Windows.
-                            local_aoi=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
-                            window=from_bounds(*local_aoi.bounds,transform=src.transform)
-                            from math import floor,ceil
-                            c0,r0=floor(window.col_off),floor(window.row_off)
-                            c1,r1=ceil(window.col_off+window.width),ceil(window.row_off+window.height)
-                            window=Window(c0,r0,max(0,c1-c0),max(0,r1-r0)).intersection(
-                                Window(0,0,src.width,src.height))
-                            if window.width<1 or window.height<1:
-                                raise ValueError("SAR asset does not intersect AOI")
-                            if window.width*window.height>1800000:
-                                raise ValueError("SAR source window exceeds bounded pixel limit")
-                            with np.errstate(all="ignore"):
-                                window_values=src.read(1,window=window,masked=True)
-                                src_values=np.ma.filled(
-                                    window_values.astype(np.float32),np.nan)
-                            arr=np.full(size,np.nan,dtype=np.float32)
-                            reproject(source=src_values,destination=arr,
-                                      src_transform=src.window_transform(window),
-                                      src_crs=src.crs,
-                                      src_nodata=np.nan,dst_nodata=np.nan,
-                                      dst_crs=crs,dst_transform=tr,resampling=Resampling.nearest)
-                            pair.append(arr)
-                data.append((dt,str(scene.get("id","")),pair))
-            except (UnicodeError,OSError,RuntimeError,ValueError) as exc:
-                errors.append({"scene_id":str(scene.get("id","")),"error_type":type(exc).__name__})
+            scene_ok = False
+            for attempt in range(2):
+                try:
+                    pair=[]
+                    for pol in ("vv","vh"):
+                        with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+                                          GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
+                                          GDAL_HTTP_RETRY_DELAY="1",GDAL_HTTP_UNSAFESSL="NO"):
+                            with rasterio.open(_signed_href(scene["assets"][pol]["href"],token)) as src:
+                                if not src.crs:raise ValueError("Missing georeferencing in SAR source")
+                                if grid is None:
+                                    aoig=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
+                                    win=from_bounds(*aoig.bounds,transform=src.transform).round_offsets().round_lengths()
+                                    win=win.intersection(Window(0,0,src.width,src.height))
+                                    if win.width*win.height>1800000 or min(win.width,win.height)<=0:
+                                        raise ValueError("SAR AOI exceeds memory-bounded raster window")
+                                    grid=(src.crs,src.window_transform(win),(int(win.height),int(win.width)),aoig)
+                                crs,tr,size,_=grid
+                                local_aoi=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
+                                window=from_bounds(*local_aoi.bounds,transform=src.transform)
+                                from math import floor,ceil
+                                c0,r0=floor(window.col_off),floor(window.row_off)
+                                c1,r1=ceil(window.col_off+window.width),ceil(window.row_off+window.height)
+                                window=Window(c0,r0,max(0,c1-c0),max(0,r1-r0)).intersection(
+                                    Window(0,0,src.width,src.height))
+                                if window.width<1 or window.height<1:
+                                    raise ValueError("SAR asset does not intersect AOI")
+                                if window.width*window.height>1800000:
+                                    raise ValueError("SAR source window exceeds bounded pixel limit")
+                                with np.errstate(all="ignore"):
+                                    window_values=src.read(1,window=window,masked=True)
+                                    src_values=np.ma.filled(window_values.astype(np.float32),np.nan)
+                                arr=np.full(size,np.nan,dtype=np.float32)
+                                reproject(source=src_values,destination=arr,
+                                          src_transform=src.window_transform(window),src_crs=src.crs,
+                                          src_nodata=np.nan,dst_nodata=np.nan,dst_crs=crs,
+                                          dst_transform=tr,resampling=Resampling.nearest)
+                                pair.append(arr)
+                    data.append((dt,str(scene.get("id","")),pair))
+                    scene_ok = True
+                    break
+                except (UnicodeError,OSError,RuntimeError,ValueError) as exc:
+                    errors.append({"scene_id":str(scene.get("id","")),
+                                   "error_type":type(exc).__name__,
+                                   "error":_safe_reason(exc),"attempt":attempt+1,
+                                   "recovered":False})
+                    if attempt == 0:
+                        try:
+                            token=(token_fn or get_runtime_sas_token)()
+                        except Exception as token_exc:
+                            errors.append({"scene_id":str(scene.get("id","")),
+                                           "error_type":"TOKEN_REFRESH_"+type(token_exc).__name__,
+                                           "error":_safe_reason(token_exc),"attempt":attempt+1,
+                                           "recovered":False})
+            if scene_ok and errors and errors[-1].get("scene_id")==str(scene.get("id","")):
+                errors[-1]["recovered"]=True
         result["failed_scene_reads"]=errors
         result["selected_scene_count"]=len(selected)
         result["readable_scene_count"]=len(data)
