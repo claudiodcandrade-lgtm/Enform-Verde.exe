@@ -2539,7 +2539,7 @@ class App(tk.Tk):
                     if isinstance(v,(int,float)) and not isinstance(v,bool):
                         c.number_format='[$-416]#.##0' if float(v).is_integer() else '[$-416]#.##0,00'
                 sh.cell(i,2).font=Font(bold=True,color=green)
-        area=self.project["area_ha"]; total=self.project.get("total_tc_ha",0.0); totalco2=self.project.get("total_tco2_ha",0.0); ar=self.project.get("analysis_rows",[]); is_partial=bool(self.project.get("total_is_partial")) or not bool(ar)
+        area=self.project.get("area_ha"); total=self.project.get("total_tc_ha"); totalco2=self.project.get("total_tco2_ha"); ar=self.project.get("analysis_rows",[]); is_partial=bool(self.project.get("total_is_partial")) or not bool(ar)
         ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
         put(ws,[["Entrada","Projeto",None,None,"Informado","cadastro",None,self.name.get()],
                 ["Diagnóstico IBGE","Bioma dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Biomas 2025",self.biome.get()],
@@ -2547,7 +2547,55 @@ class App(tk.Tk):
                 ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{format_ptbr(area,2)} ha"],
                 ["Entrada","Sensor/produto selecionado",None,None,"Informado","SAR/multissensor","ESA/fornecedor",self.sensor.get()],
                 ["Resultado","Soma parcial por hectare" if is_partial else "Carbono total por hectare",total,totalco2,"PARCIAL" if is_partial else "CONSOLIDADO","soma dos compartimentos elegíveis","Enform","inclui somente compartimentos calculados e elegíveis"],
-                ["Resultado","Soma parcial da propriedade" if is_partial else "Carbono total da propriedade",None,None,"PARCIAL" if is_partial else "CONSOLIDADO","tC/ha × área","Enform",f"{format_ptbr(total*area,0)} tC | {format_ptbr(totalco2*area,0)} tCO₂e"]])
+                ["Resultado","Soma parcial da propriedade" if is_partial else "Carbono total da propriedade",None,None,"PARCIAL" if is_partial else "CONSOLIDADO","tC/ha × área","Enform",f"{format_ptbr(self.project.get('total_tc'),2)} tC | {format_ptbr(self.project.get('total_tco2e'),2)} tCO₂e; não extrapolar da área nativa para toda a AOI"]])
+        # Carbon totals are stored as tonnes over the actually quantified native
+        # intersections. Never multiply a native-area density by the entire AOI,
+        # and never disguise missing pools as zeros or a complete total.
+        sh_total=wb.create_sheet("Totais tCO2e")
+        setup(sh_total,"Enform Verde — estoques quantificados (tCO₂e)")
+        for j,h in enumerate(["Compartimento","Área quantificada (ha)",
+                              "Densidade sobre área nativa (tC/ha)",
+                              "Densidade sobre área nativa (tCO₂e/ha)",
+                              "Estoque quantificado (tC)",
+                              "Estoque quantificado (tCO₂e)",
+                              "Situação","Nota de auditoria"],1):
+            sh_total.cell(3,j,h).value=h
+        source_native=self.project.get("native_carbon") or {}
+        native_area=float(source_native.get("native_area_ha") or 0)
+        rows_total=[]
+        for component in source_native.get("components") or []:
+            stock=component.get("known_total_tc")
+            stock=float(stock) if stock is not None else None
+            quantified=float(component.get("quantified_area_ha") or 0)
+            rows_total.append([
+                component.get("parametro"),quantified,
+                stock/native_area if stock is not None and native_area>0 else None,
+                (stock/native_area)*(44/12) if stock is not None and native_area>0 else None,
+                stock,stock*(44/12) if stock is not None else None,
+                "PARCIAL" if float(component.get("missing_native_area_ha") or 0)>0 else (
+                    "QUANTIFICADO" if stock is not None else "N/D"),
+                "Densidade distribuída sobre a área nativa total; parcelas não quantificadas não valem zero."])
+        known=source_native.get("known_total_tc")
+        known=float(known) if known is not None else None
+        rows_total.append([
+            "TOTAL CONHECIDO (não extrapolado)",native_area,
+            known/native_area if known is not None and native_area>0 else None,
+            (known/native_area)*(44/12) if known is not None and native_area>0 else None,
+            known,known*(44/12) if known is not None else None,
+            "PARCIAL — faltam compartimentos" if source_native and not source_native.get("complete") else (
+                "CONSOLIDADO" if source_native and known is not None else "N/D"),
+            "Soma apenas dos estoques elegíveis calculados. tCO₂e = tC × 44/12; não implica validação em campo."])
+        put(sh_total,rows_total)
+        sh_total.column_dimensions["A"].width=40
+        sh_total.column_dimensions["B"].width=23
+        sh_total.column_dimensions["C"].width=34
+        sh_total.column_dimensions["D"].width=35
+        sh_total.column_dimensions["E"].width=29
+        sh_total.column_dimensions["F"].width=31
+        sh_total.column_dimensions["G"].width=34
+        sh_total.column_dimensions["H"].width=95
+        sh_total.freeze_panes="C4"
+        sh_total.auto_filter.ref=f"A3:H{3+len(rows_total)}"
         if not ar:
             for row_number,label in [(9,"Carbono por hectare"),(10,"Carbono da propriedade")]:
                 ws.cell(row_number,2).value=label
