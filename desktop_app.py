@@ -1096,7 +1096,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Sem chave: Sentinel-2 público + NASA GIBS; IBGE offline se serviços online falharem.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Sem chave: Earth Search Sentinel-2 prioritário; NASA/Esri e IBGE como alternativas.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
