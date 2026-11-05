@@ -71,6 +71,69 @@ class SoilMappedAttributesContractTests(unittest.TestCase):
         self.assertEqual(len(data["layers"]), len(ATTRS)*6)
         self.assertIn("Saturação por bases (V%)", data["unavailable_attributes"])
 
+    def test_wcs_cache_requires_matching_coverage_and_checksum(self):
+        from unittest.mock import Mock
+        from soil_fertility_zonal import _download_coverage
+        source=self.write("fixture.tif",[[5,8],[5,8]])
+        destination=self.root/"cache_ph.tif"
+        downloaded=[]
+        def fake_download(url, dest, session, timeout, attempts=2):
+            downloaded.append(url)
+            shutil.copyfile(source,dest)
+        bounds=(-0.01,-0.01,0.01,0.01)
+        with patch("pronasolos_wcs._window_bounds",return_value=bounds), \
+             patch("pronasolos_wcs._tiles",return_value=[bounds]), \
+             patch("pronasolos_wcs._download",side_effect=fake_download), \
+             patch("pronasolos_wcs.validate_tile"):
+            _download_coverage(Mock(),"geonode__br_90m_ph_0_5cm_v2",
+                               box(-0.01,-0.01,0.01,0.01),destination)
+            _download_coverage(Mock(),"geonode__br_90m_ph_0_5cm_v2",
+                               box(-0.01,-0.01,0.01,0.01),destination)
+            self.assertEqual(len(downloaded),1)
+            _download_coverage(Mock(),"geonode__br_90m_ph_0_5cm_v3",
+                               box(-0.01,-0.01,0.01,0.01),destination)
+            self.assertEqual(len(downloaded),2)
+            destination.write_bytes(b"cache altered without metadata update")
+            _download_coverage(Mock(),"geonode__br_90m_ph_0_5cm_v3",
+                               box(-0.01,-0.01,0.01,0.01),destination)
+            self.assertEqual(len(downloaded),3)
+
+    def test_bound_cache_rejects_stale_coverage_identifier(self):
+        from unittest.mock import Mock
+        from soil_soc_official_uncertainty import fetch_official_bounds
+        geom=box(-55,-10,-54.999,-9.999)
+        def xml(version):
+            elements=[]
+            for depth in ("0_5","5_15","15_30","30_60","60_100"):
+                for side in ("lower","upper"):
+                    suffix=version if depth=="0_5" and side=="lower" else "v2"
+                    ident="geonode__br_90m_carbon_stock_"+depth+"cm_uncertainty_"+side+"_"+suffix
+                    elements.append("<CoverageSummary><CoverageId>"+ident+"</CoverageId></CoverageSummary>")
+            return ("<Capabilities><Contents>"+"".join(elements)+
+                    "</Contents></Capabilities>").encode()
+        response=Mock()
+        response.raise_for_status.return_value=None
+        response.content=xml("v2")
+        sess=Mock()
+        sess.get.return_value=response
+        calls=[]
+        def save(url,dest,session,timeout,attempts=2):
+            calls.append(url)
+            Path(dest).write_bytes(("mock WCS "+url).encode())
+        bounds=(-55.01,-10.01,-54.99,-9.99)
+        with patch("pronasolos_wcs._window_bounds",return_value=bounds), \
+             patch("pronasolos_wcs._tiles",return_value=[bounds]), \
+             patch("pronasolos_wcs._download",side_effect=save), \
+             patch("pronasolos_wcs.validate_tile"):
+            out=fetch_official_bounds(geom,session=sess,cache_root=self.root/"bounds")
+            self.assertEqual(len(out["provenance"]["layers"]),10)
+            self.assertEqual(len(calls),10)
+            fetch_official_bounds(geom,session=sess,cache_root=self.root/"bounds")
+            self.assertEqual(len(calls),10)
+            response.content=xml("v3")
+            fetch_official_bounds(geom,session=sess,cache_root=self.root/"bounds")
+            self.assertEqual(len(calls),11)
+
     def test_official_bound_discovery_requires_depth_and_side(self):
         ids = []
         for depth in ("0_5", "5_15", "15_30", "30_60", "60_100"):
