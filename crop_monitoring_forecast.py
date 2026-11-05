@@ -129,13 +129,13 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                         "; NÃO identifica cultura nem comprova a área da safra.")
                     lines.append("  Identificador SAR atual por cultura: N/D — modelo calibrado/validado não instalado.")
                 else:
-                    lines.append("  SAR ATUAL: N/D — "+
-                                 str(live_probe.get("reason") or "consulta indisponível")[:180])
+                    prefix = "  SAR ATUAL: ERRO TÉCNICO — " if live_probe.get("status") == "ERRO_TECNICO" else "  SAR ATUAL: N/D — "
+                lines.append(prefix + str(live_probe.get("reason") or "consulta indisponível")[:180])
             except Exception as exc:
                 audit["live_sar_probe"] = {
-                    "status": "SAR_NAO_VERIFICADO",
+                    "status": "ERRO_TECNICO",
                     "reason": type(exc).__name__ + ": " + str(exc)[:180]}
-                lines.append("  SAR ATUAL: N/D — "+
+                lines.append("  SAR ATUAL: ERRO TÉCNICO — "+
                              audit["live_sar_probe"]["reason"])
         if crop in art.get("crops", {}):
             code = NAME_TO_CODE.get(crop)
@@ -157,10 +157,12 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 else:
                     vig = scene_vigor(crop_gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
             except Exception as exc:
-                vig = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
+                vig = {"status": "ERRO_TECNICO", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
             entry["vigor"] = dict(vig)  # preserve numerical metrics, uncertainty and traceability
-            if vig.get("status") == "N/D":
-                lines.append("  Vigor automático: N/D — " + str(vig.get("reason")))
+            if vig.get("status") == "ERRO_TECNICO":
+                lines.append("  Vigor automático: ERRO TÉCNICO — " + str(vig.get("reason")))
+            elif vig.get("status") == "N/D":
+                lines.append("  Vigor automático: N/D — " + str(vig.get("reason")) )
             else:
                 p = ", ".join(f"{k} {100*v:.0f}%" for k, v in vig["probabilities"].items())
                 stamp = str(vig.get("acquisition_utc") or "")[:10]
@@ -209,9 +211,11 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                             crop_gdf is not None)
             if not vigor_usable:
                 reason = str(vig.get("reason") or "sem vigor SAR atual com cena datada sobre máscara SAR validada")
-                entry["forecast_status"] = "N/D"
-                entry["forecast"] = {"status": "N/D", "reason": reason}
-                lines.append("  Produtividade e produção da propriedade: N/D — vigor SAR atual indisponível ou sem máscara/cena verificável; o painel PAM/FAO regional não substitui essas entradas.")
+                error = vig.get("status") == "ERRO_TECNICO"
+                entry["forecast_status"] = "BLOQUEADA_ERRO_TECNICO" if error else "N/D"
+                entry["forecast"] = {"status": entry["forecast_status"], "reason": reason}
+                prefix = "ERRO TÉCNICO" if error else "N/D"
+                lines.append("  Produtividade e produção da propriedade: " + prefix + " — bloqueadas; " + reason + ".")
                 audit["crops"][crop] = entry
                 continue
             try:
