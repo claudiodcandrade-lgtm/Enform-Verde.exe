@@ -36,6 +36,8 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         self.assertIn("window=win", source)
         self.assertIn("out_shape=(out_height,out_width)", source)
         self.assertIn("never load a complete Sentinel-2 scene", source)
+        self.assertIn("ThreadPoolExecutor(max_workers=3", source)
+        self.assertIn("pool.map(read_rgb_band", source)
         self.assertNotIn("Authorization", source)
         self.assertNotIn('"key"', source)
 
