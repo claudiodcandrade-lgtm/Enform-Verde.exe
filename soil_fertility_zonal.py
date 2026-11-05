@@ -288,3 +288,32 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
     except Exception as exc:
         result["reason"]=type(exc).__name__+": "+str(exc).split("https://")[0][:180]
     return result
+
+
+def fertility_report_lines(result, fmt):
+    """Human-readable raster-derived means, with explicit numerical N/D."""
+    lines = ["", "FERTILIDADE DO SOLO — ESTIMATIVAS CARTOGRÁFICAS EMBRAPA 90 m"]
+    lines.append("Previsões regionais de mapas digitais, NÃO são análises laboratoriais da propriedade.")
+    lines.append("Serviço numérico consultado: " + str(result.get("source") or WCS))
+    lines.append("Estatística: interseção exata pixel × AOI e unidade cartográfica; áreas EPSG:6933.")
+    if result.get("status") != "MAPEAMENTO_PREDITIVO_PARCIAL":
+        lines.append("Valores numéricos: N/D — " + str(result.get("reason") or "raster oficial indisponível")[:230])
+    for area_label, records in (result.get("units") or {}).items():
+        lines.append("  ZONA: " + str(area_label))
+        for item in records:
+            if item.get("mean") is None:
+                continue
+            value=fmt(item["mean"], 3)
+            sd=("N/D" if item.get("spatial_sd") is None else fmt(item["spatial_sd"], 3))
+            lines.append("    " + str(item.get("label")) + " [" + str(item.get("depth_cm")) + " cm]: "
+                         + value + " " + str(item.get("unit") or "") +
+                         "; cobertura " + fmt(item.get("coverage_pct") or 0, 2) +
+                         "%; pixels " + str(item.get("valid_pixels") or 0) +
+                         "; DP espacial descritivo " + sd + ".")
+            lines.append("      Layer WCS " + str(item.get("wcs_coverage_id")) +
+                         "; SHA256 " + str(item.get("raster_sha256")) +
+                         "; incerteza preditiva N/D.")
+    lines.append("P, K, Ca, Mg, Al, V%, soma de bases e atributos não disponíveis: N/D sem interpolação.")
+    lines.append("DP espacial não equivale a erro do modelo ou IC95%. Licença: " +
+                 str(result.get("license") or LICENSE))
+    return lines
