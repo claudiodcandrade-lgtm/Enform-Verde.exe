@@ -22,6 +22,22 @@ class PedologyUnitTests(unittest.TestCase):
         self.assertIsNone(result["area_by_soil_component_ha"])
         self.assertIsNone(result["classification_uncertainty_ha"])
         self.assertIn("SEM divisão individual de área"," ".join(pedology_report_lines(result,lambda v,n:f"{v:.{n}f}")))
+    def test_exclusive_unit_zones_have_same_area_without_overlap(self):
+        from soil_pedology_embrapa import exclusive_soil_unit_zones
+        a=aoi_rect()
+        data={"type":"FeatureCollection","features":[
+            {"geometry":mapping(box(-55.1,-11.1,-55.05,-11)),
+             "properties":{"leg_desc":"LVd — Latossolos + Argissolos","simbolos":"LVd"}},
+            {"geometry":mapping(box(-55.075,-11.1,-55,-11)),
+             "properties":{"leg_desc":"CX — Cambissolos","simbolos":"CX"}}]}
+        report,zones=analyze_embrapa_pedology(a,fetcher=lambda *_:data,with_zones=True)
+        self.assertEqual(report["status"],"MAPEAMENTO_REGIONAL")
+        self.assertEqual(len(zones),2)
+        areas=[float(gdf.to_crs(6933).geometry.union_all().area)/10000 for _,gdf in zones]
+        self.assertAlmostEqual(sum(areas),report["covered_area_ha"],places=4)
+        self.assertAlmostEqual(zones[0][1].geometry.union_all().intersection(
+            zones[1][1].geometry.union_all()).area,0,places=2)
+        self.assertIn("Latossolos + Argissolos",zones[0][0])
     def test_absent_data_or_fetch_failure_remains_nd(self):
         a=aoi_rect()
         self.assertEqual(analyze_embrapa_pedology(a,fetcher=lambda *_:{"features":[]})["status"],"N/D")
