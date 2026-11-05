@@ -961,10 +961,10 @@ class App(tk.Tk):
         ttk.Button(row,text="AJUSTAR AOI",command=self.map_zoom_fit).pack(side="left",padx=(2,8))
         ttk.Label(row,text="Zoom: botões ± ou roda do mouse",foreground="#666").pack(side="left",padx=(6,0))
         keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
-        ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
+        ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Camada online preferencial; mapa IBGE offline usado somente se as fontes online falharem.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Mapa online (Google pode gerar cobrança); IBGE offline só se as fontes online falharem.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -996,7 +996,7 @@ class App(tk.Tk):
         ibgebox.columnconfigure(1,weight=1)
 
         map_frame=ttk.Frame(f); map_frame.pack(fill="both",expand=True,pady=(2,6))
-        self.map_canvas=tk.Canvas(map_frame,height=420,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
+        self.map_canvas=tk.Canvas(map_frame,height=560,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
                                   xscrollincrement=20,yscrollincrement=20)
         self.map_hscroll=ttk.Scrollbar(map_frame,orient="horizontal",command=self.map_canvas.xview)
         self.map_vscroll=ttk.Scrollbar(map_frame,orient="vertical",command=self.map_canvas.yview)
@@ -1086,7 +1086,14 @@ class App(tk.Tk):
 
         def google_image(rs):
             if not key:return None
-            params=[("size",f"{min(req_w,640)}x{min(req_h,640)}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
+            target_ratio=w/max(h,1)
+            if target_ratio >= 1:
+                api_w=640
+                api_h=max(1,round(api_w/target_ratio))
+            else:
+                api_h=640
+                api_w=max(1,round(api_h*target_ratio))
+            params=[("size",f"{api_w}x{api_h}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
             for coords in rs:
                 pts="|".join(f"{lat:.6f},{lon:.6f}" for lon,lat in coords)
                 params.append(("path","color:0xff8a00ff|weight:4|fillcolor:0xff8a0033|"+pts))
