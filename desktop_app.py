@@ -2875,6 +2875,46 @@ class App(tk.Tk):
         for item in (dl.get("classes") or []):
             drow("USO DO SOLO",item.get("class_name") or "Classe",status="MAPEADO",
                  note=format_ptbr(item.get("area_ha"),2)+" ha; "+str(item.get("source") or ""))
+        # Source-grounded minimum/most-probable/maximum: the central stock is
+        # displayed at the midpoint. Unknown uncertainties remain N/D; their
+        # omission must not be misrepresented as a property-wide interval.
+        from carbon_scenario_envelopes import scenario_envelope
+        envelope=scenario_envelope(dn)
+        dash.extend([
+            ["CENÁRIOS","ESTOQUE MÍNIMO — fontes quantificadas",None,
+             envelope["minimum_known_tco2e_ha"],envelope["minimum_known_tc"],
+             envelope["minimum_known_tco2e"],"ENVELOPE / N/D",
+             "Limites somente quando todas as fontes quantificadas fornecem faixa defensável."],
+            ["CENÁRIOS","ESTOQUE MAIS PROVÁVEL — soma conhecida",None,
+             envelope["central_known_tco2e_ha"],envelope["known_total_tc"],
+             envelope["central_known_tco2e"],"PARCIAL" if not dn.get("complete") else "ESTIMATIVA CENTRAL",
+             "Soma conhecida. Não pressupõe estoque nulo nos compartimentos N/D."],
+            ["CENÁRIOS","ESTOQUE MÁXIMO — fontes quantificadas",None,
+             envelope["maximum_known_tco2e_ha"],envelope["maximum_known_tc"],
+             envelope["maximum_known_tco2e"],"ENVELOPE / N/D",
+             "Não é IC95% conjunto; desvios da fonte espelhados em torno da estimativa central."],
+        ])
+        scenario=wb.create_sheet("Cenários e Incertezas")
+        setup(scenario,"Enform Verde — Cenários por estrato e compartimento")
+        for j,h in enumerate(["Fitofisionomia","Compartimento","Área (ha)",
+                              "Mínimo (tCO₂e)","Mais provável (tCO₂e)",
+                              "Máximo (tCO₂e)","Status","Tipo de incerteza"],1):
+            scenario.cell(3,j,h).value=h
+        scenario_rows=[
+            [part["physiognomy"],part["compartment"],part["area_ha"],
+             part["low_tc"]*44/12 if part["low_tc"] is not None else None,
+             part["central_tc"]*44/12,
+             part["high_tc"]*44/12 if part["high_tc"] is not None else None,
+             part["status"],str(part.get("uncertainty_kind") or "N/D")]
+            for part in envelope["rows"]]
+        if not scenario_rows:
+            scenario_rows=[["N/D","Sem estoque quantificado",None,None,None,None,
+                            "N/D","Não inventar limites"]]
+        put(scenario,scenario_rows)
+        scenario["A2"]="Cenários aritméticos simétricos de limites de fonte; não equivalem a intervalo estatístico conjunto de confiança."
+        scenario.merge_cells("A2:H2")
+        scenario["A2"].alignment=Alignment(wrap_text=True)
+        scenario.auto_filter.ref=f"A3:H{3+len(scenario_rows)}"
         put(dashboard,dash)
         dashboard.auto_filter.ref=f"A3:H{3+len(dash)}"
         dashboard.freeze_panes="C4"
