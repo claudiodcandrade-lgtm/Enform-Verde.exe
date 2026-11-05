@@ -368,8 +368,10 @@ def fertility_report_lines(result, fmt):
     lines.append("Previsões regionais de mapas digitais, NÃO são análises laboratoriais da propriedade.")
     lines.append("Serviço numérico consultado: " + str(result.get("source") or WCS))
     if result.get("status")=="ERRO_TECNICO":
-        lines.append("FALHA TÉCNICA — valores não calculados. Corrigir a rota WCS/Identify; isso não comprova ausência de dados.")
+        lines.append("FALHA TÉCNICA — valores não calculados. Isso não comprova ausência de dados; a consulta deve ser repetida/corrigida.")
         lines.append("Diagnóstico: "+str(result.get("reason") or "erro sem detalhe")[:240])
+        lines.append("Não apresentar esta falha como N/D por indisponibilidade científica.")
+        return lines
     if result.get("status")=="MAPA_PREDITIVO_AMOSTRAL":
         lines.append("AMOSTRAGEM NUMÉRICA OFICIAL — MapServer Identify; não é média zonal de toda a AOI.")
         lines.append("Pontos amostrados: "+str(result.get("sampled_points"))+
