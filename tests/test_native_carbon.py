@@ -454,7 +454,9 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertIn('372',wb['Resumo Executivo']['H10'].value)
             self.assertNotIn('465',wb['Resumo Executivo']['H10'].value)
             self.assertEqual(wb['Carbono por Formação']['A4'].value,'FOD')
-            self.assertAlmostEqual(wb['Carbono por Formação']['F4'].value,60,places=4)
+            self.assertAlmostEqual(wb['Carbono por Formação']['G4'].value,60,places=4)
+            self.assertAlmostEqual(wb['Carbono por Formação']['H4'].value,60*44/12,places=4)
+            self.assertEqual(wb['Carbono por Formação']['H3'].value,'Estoque tCO₂e')
 
     def test_soil_provider_receives_native_stratum_not_whole_property(self):
         frame=gpd.GeoDataFrame(geometry=[box(-50,-10,-49.999,-9.999)],crs=4326)
