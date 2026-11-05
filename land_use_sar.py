@@ -878,8 +878,14 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                          'MapBiomas anual apenas REFERÊNCIA HISTÓRICA para lacunas, '
                          'não prova uso atual; IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível; '
                          'sem evidência SAR atual manter cultura atual N/D.')
-    has_validated_sar = any(str(layer.get("source") or "").startswith("SAR_VALIDADO")
-                            for layer in layers)
+    def _layer_sources(layer):
+        if isinstance(layer, dict):
+            return [str(layer.get("source") or "")]
+        if hasattr(layer, "columns") and "source" in layer.columns:
+            return [str(v) for v in layer["source"].dropna().unique()]
+        return []
+    has_validated_sar = any(source.startswith("SAR_VALIDADO")
+                            for layer in layers for source in _layer_sources(layer))
     summary['current_sar_crop_identification'] = (
         'CLASSIFICACAO_SAR_VALIDADA' if has_validated_sar else
         'N/D_SEM_MODELO_EXECUTAVEL_VALIDADO')
