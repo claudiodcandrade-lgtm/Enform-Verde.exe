@@ -10,7 +10,7 @@ class DeclaredNativeTotalUncertaintyTests(unittest.TestCase):
         self.aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs="EPSG:6933")
         self.classes=gpd.GeoDataFrame(
             [{"class_name":"Floresta Ombrófila Densa",
-              "source":"IBGE+MAPBIOMAS","geometry":box(0,0,100,100)}],
+              "source":"SAR_VALIDADO+IBGE","geometry":box(0,0,100,100)}],
             crs="EPSG:6933")
         self.covariance=[[1.0 if i==j else 0.0 for j in range(6)] for i in range(6)]
     def estimate(self,frame,phys):
