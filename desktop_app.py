@@ -2927,9 +2927,17 @@ class App(tk.Tk):
         scenario.merge_cells("A2:H2")
         scenario["A2"].alignment=Alignment(wrap_text=True)
         scenario.auto_filter.ref=f"A3:H{3+len(scenario_rows)}"
+        # Display the three carbon-stock scenarios at the TOP of the
+        # executive sheet, immediately after AOI area; they must not be hidden
+        # below potentially dozens of fertility and land-cover rows.
+        dash=dash[:1]+dash[-3:]+dash[1:-3]
         put(dashboard,dash)
         dashboard.auto_filter.ref=f"A3:H{3+len(dash)}"
-        dashboard.freeze_panes="C4"
+        dashboard.freeze_panes="C8"
+        dashboard.sheet_view.zoomScale=85
+        for scenario_row in (5,6,7):
+            for cell in dashboard[scenario_row]:
+                cell.font=Font(bold=True,color=green)
 
         # Brazilian number formatting and readable dimensions on ALL worksheets.
         # Wrapped long text is sized by its displayed line count, not clipped
