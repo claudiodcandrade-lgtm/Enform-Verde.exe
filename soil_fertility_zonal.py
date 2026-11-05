@@ -97,8 +97,6 @@ def _weights(gdf, ds, max_cells=MAX_CELLS):
     x0, y0, x1, y1 = geom.bounds
     if x1 <= left or x0 >= right or y1 <= bottom or y0 >= top:
         raise ValueError("sem cobertura no raster oficial")
-    win = from_bounds(max(x0, left), max(y0, bottom), min(x1, right),
-                      min(y1, top), transform=ds.transform).round_offsets(op="floor").round_lengths(op="ceil")
     # Enclosing integer pixel window: preserve cells partially touched by AOI.
     from math import floor
     fw = from_bounds(max(x0, left), max(y0, bottom), min(x1, right),
