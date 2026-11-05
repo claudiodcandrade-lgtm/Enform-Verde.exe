@@ -490,3 +490,8 @@ A suíte completa Windows no SHA `132512d68ecf99e7424cb6cd43c7d2212e9c501f` exec
 - Versão candidata: `3.26.2-PRECAMPO-EXPERIMENTAL`. Status de build/regressões deve ser confirmado no SHA da distribuição antes de liberar link. Não afirmar ganho percentual sem benchmark.
 - A última suíte reportou 924 testes aprovados e uma falha de contrato documental: `docs/ESPECIFICACAO_TECNICA_COMPLETA.docx` não continha o identificador de versão esperado. A especificação Word deve ser regenerada a partir deste checkpoint e validar o arquivo DOCX no próximo run.
 - A homologação científica segue separada e não aprovada até haver evidências independentes reais; manter todos os resultados experimentais rotulados e N/D onde não houver suporte.
+
+
+### Registro complementar V87.9 — Word sincronizado
+
+O workflow de sincronização gerou o documento técnico Word atualizado no commit `0843784f525c5a324f2616d692339fcdf81bc083` a partir do checkpoint V87.9, preservando o histórico e incluindo `3.26.2-PRECAMPO-EXPERIMENTAL`. A conclusão da nova execução Windows e da suíte integral ainda precisa ser confirmada no mesmo SHA; não compartilhar como compilação validada até isso ocorrer. O gate científico independente continua separado.
