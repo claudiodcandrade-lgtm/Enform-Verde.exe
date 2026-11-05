@@ -11,3 +11,24 @@ Referência: execução Windows `41967733301` no SHA `132512d68ecf99e7424cb6cd43
 
 ## Status e trilha de auditoria
 A revisão e as alterações de contrato constituem um checkpoint versionado, não uma aprovação retroativa dos 920 testes nem uma alegação de compilação já concluída. Os últimos testes, build e artefatos devem ser aferidos pela execução do SHA novo.
+
+
+## Revisão V87.3 — otimização do processamento de análises
+
+Data: 05/11/2026. Commit de implementação: `ccbb2498f4d0ada11d48ec04989812e6b0bf8d77`. Prompt canônico V43 atualizado no commit anterior desta revisão.
+
+### Alteração no algoritmo
+
+Em `mapbiomas_zonal.py::summarize_class_grid`, agregação de classes foi reestruturada para operar em blocos de 64 linhas. Em cada bloco, uma única seleção NumPy reúne os códigos válidos e `numpy.bincount` soma suas áreas ponderadas por linha. Isso elimina a chamada a `numpy.unique` e a iteração Python em cada linha, mantendo memória temporária limitada pelo tamanho do bloco.
+
+### Contrato funcional preservado
+
+A máscara espacial, NoData, exclusão de classes não positivas, áreas geodésicas por linha, legenda, área mapeada e cálculo dos percentuais continuam com as mesmas definições. Apenas a ordem da acumulação de números de ponto flutuante pode mudar arredondamentos nas últimas casas. Não há mudança na classificação, nos dados, no carbono, na incerteza ou nos critérios científicos.
+
+### Gate de desempenho e qualidade
+
+Não afirmar percentual de aceleração sem benchmark controlado e repetível. Para o SHA final, exigir regressão numérica em casos com múltiplas classes, NoData, pixels externos à AOI e áreas distintas por linha, suíte completa, build Windows e autoaceitação do executável em diretório limpo. Comparar valores com tolerância numérica explícita e verificar memória em AOIs pequenas e grandes. Se surgir divergência material ou regressão, reverter a alteração antes da liberação.
+
+A revisão é uma otimização localizada do agrupamento zonal MapBiomas. Outras otimizações devem ser guiadas por perfilamento do fluxo completo e manter chaves/invalidação corretas de cache por AOI, fonte, versão e parâmetros. O SHA `ccbb2498f4d0ada11d48ec04989812e6b0bf8d77` tem workflows Windows e suíte integral disparados; a liberação depende dos resultados no commit final, incluindo os documentos desta revisão.
+
+Estado científico: candidato operacional `3.26.1-PRECAMPO-EXPERIMENTAL`; a homologação científica independente continua pendente de observações reais e não é substituída por regressões ou build.
