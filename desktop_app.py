@@ -883,12 +883,16 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             rgb=[]
             # COG HTTP range reads are cropped to the requested viewport extent and
             # resampled directly to canvas size; never load a complete Sentinel-2 scene.
-            for band in ("red","green","blue"):
-                with rasterio.open(assets[band]["href"]) as src:
-                    if src.crs!=crs:raise RuntimeError("Bandas Sentinel-2 Earth Search com CRS incompatível.")
-                    arr=src.read(1,window=win,out_shape=(out_height,out_width),
-                                 resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
-                    rgb.append(arr)
+            # Read only the three RGB bands concurrently, with a strict worker bound.
+            from concurrent.futures import ThreadPoolExecutor
+            def read_rgb_band(band):
+                with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+                    with rasterio.open(assets[band]["href"]) as src:
+                        if src.crs!=crs:raise RuntimeError("Bandas Sentinel-2 Earth Search com CRS incompatível.")
+                        return src.read(1,window=win,out_shape=(out_height,out_width),
+                                        resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
+            with ThreadPoolExecutor(max_workers=3,thread_name_prefix="S2RGB") as pool:
+                rgb=list(pool.map(read_rgb_band,("red","green","blue")))
             stack=np.stack(rgb,axis=2).astype(np.float32)
             valid=stack[np.isfinite(stack)&(stack>0)]
             hi=float(np.percentile(valid,99)) if valid.size else 1.0
