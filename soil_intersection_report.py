@@ -48,6 +48,7 @@ def soil_intersection_summary(soil_profiles):
         "license": prov.get("license"),
         "source_title": prov.get("title"),
         "reason": diag.get("reason"),
+        "official_uncertainty": top.get("official_uncertainty") or diag.get("official_uncertainty") or {},
     }
 
 
@@ -74,4 +75,21 @@ def soil_intersection_lines(soil_profiles, fmt=None):
         if s["retrieved_at_utc"]:
             lines.append("      Fonte: " + str(s["source_title"]) + " — obtida via WCS em "
                          + s["retrieved_at_utc"] + " UTC; licença " + str(s["license"]) + ".")
+    official=s["official_uncertainty"]
+    interval=official.get("sum_bounds_envelope_tc_ha")
+    if official.get("status")=="ENVELOPE_MARGINAL_OFICIAL" and interval:
+        lines.append("      LIMITES OFICIAIS MARGINAIS — envelope somado 0–100 cm: "
+                     + _fmt(interval[0],2,fmt)+" a "+_fmt(interval[1],2,fmt)+" tC/ha.")
+        stock=official.get("sum_bounds_envelope_stock_tC")
+        if stock:
+            lines.append("      Estoque na ÁREA MAPEADA — envelope: "
+                         + _fmt(stock[0],2,fmt)+" a "+_fmt(stock[1],2,fmt)+" tC.")
+        for depth,bounds in (official.get("marginal_horizon_bounds") or {}).items():
+            lines.append("      "+depth+" cm — limites marginais oficiais: "
+                         +_fmt(bounds["lower_tc_ha"],2,fmt)+" a "
+                         +_fmt(bounds["upper_tc_ha"],2,fmt)+" tC/ha.")
+        lines.append("      ATENÇÃO: soma de limites marginais NÃO é IC95% conjunto calibrado do estoque.")
+    else:
+        lines.append("      Incerteza preditiva oficial do estoque 0–100 cm: N/D — "
+                     +str(official.get("reason") or "produto oficial não acessível")[:180])
     return lines
