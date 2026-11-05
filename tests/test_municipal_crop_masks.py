@@ -30,16 +30,17 @@ class MunicipalCropMaskTests(unittest.TestCase):
 
     def test_crop_geometry_contains_no_native_polygon(self):
         c=crop_geometry(self.land,"Soja",canonical_fn=lambda x: {"soja":"Soja"}.get(x.casefold(),x))
-        self.assertIsNotNone(c)
-        self.assertAlmostEqual(c.to_crs(6933).geometry.area.sum()/10000,1600,places=2)
-        patches=sample_crop_patches(c)
-        self.assertGreater(len(patches),0)
-        native=box(504000,1000000,508000,1004000)
-        for p in patches:
-            self.assertLess(p.to_crs(6933).geometry.iloc[0].intersection(native).area,1.)
+        self.assertIsNone(c, "MapBiomas annual class cannot establish a current field mask")
 
     def test_sample_based_vigor_with_audit(self):
-        c=crop_geometry(self.land,"Soja",canonical_fn=lambda x: {"soja":"Soja"}.get(x.casefold(),x))
+        # Synthetic SAR_VALIDADO polygon tests the sampler itself; it does not
+        # promote the MapBiomas annual mask used by the production fixture.
+        sar=self.full.copy()
+        sar["class_name"]="Lavoura de soja";sar["source"]="SAR_VALIDADO"
+        sar_path=str(Path(self.tmp.name)/"sar.geojson")
+        sar.to_file(sar_path,driver="GeoJSON")
+        c=crop_geometry({"vector_path":sar_path},"Soja",canonical_fn=lambda x: {"soja":"Soja"}.get(x.casefold(),x))
+        self.assertIsNotNone(c)
         seen=[]
         def fake(patch,day,code):
             seen.append((patch.to_crs(6933).geometry.area.sum()/10000,code))
@@ -55,7 +56,7 @@ class MunicipalCropMaskTests(unittest.TestCase):
     def test_missing_crop_vector_does_not_treat_municipality_as_field(self):
         self.assertIsNone(crop_geometry({"vector_path":"missing.geojson"},"Soja",
                                        canonical_fn=lambda x:x))
-        self.assertEqual(crops_in_land_result(self.land),{"Soja":1600.0})
+        self.assertEqual(crops_in_land_result(self.land),{})
 
 
 if __name__=="__main__":

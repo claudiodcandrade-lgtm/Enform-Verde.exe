@@ -32,7 +32,7 @@ def northern_mato_grosso_fesv_litter_component(biome, physiognomy, aoi):
     from native_carbon import normalize
     if normalize(biome) != "amazonia" or aoi is None:
         return None
-    p = normalize(physiognomy)
+    p = normalize(physiognomy).replace("-", " ")
     if "floresta estacional sempre verde" not in p:
         return None
     try:

@@ -97,7 +97,7 @@ class NativeCarbonAreaBasisTests(unittest.TestCase):
     def test_partial_soil_stock_uses_mapped_area_only(self):
         aoi = gpd.GeoDataFrame(geometry=[box(0, 0, 1000, 1000)], crs="EPSG:6933")   # 100 ha
         classes = gpd.GeoDataFrame([{"class_name": "Floresta Ombrófila Densa",
-                                     "source": "IBGE+MAPBIOMAS", "geometry": box(0, 0, 1000, 1000)}],
+                                     "source": "SAR_VALIDADO+IBGE", "geometry": box(0, 0, 1000, 1000)}],
                                    crs="EPSG:6933")
 
         def soil(_frame):

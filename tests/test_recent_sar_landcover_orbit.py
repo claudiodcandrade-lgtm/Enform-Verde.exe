@@ -9,7 +9,7 @@ class OrbitSelectionTests(unittest.TestCase):
         records.extend((t-timedelta(days=d),{"orbit_state":"descending","relative_orbit":80})
                        for d in (5,20,45,70))
         selected,orbit=_select_orbit_series(records,t)
-        self.assertEqual(orbit,("descending",80))
+        self.assertEqual(orbit,("MPC","descending",80))
         self.assertGreaterEqual(len(selected),3)
     def test_unknown_orbit_must_not_be_mixed(self):
         t=datetime(2026,11,4,tzinfo=timezone.utc)

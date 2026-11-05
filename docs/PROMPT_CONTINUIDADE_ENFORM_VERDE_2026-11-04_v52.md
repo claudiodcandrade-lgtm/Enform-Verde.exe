@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 31257)
+Total output lines: 589
+
 # PROMPT DE CONTINUIDADE — ENFORM VERDE 3.26.2-PRECAMPO-EXPERIMENTAL
 **Revisão v52 — 05/11/2026 (UTC)**  
 **Missão principal:** concluir o desenvolvimento, publicar o código e o executável Windows para **testes de acurácia em propriedades reais posteriormente**, sem exigir previamente a homologação científica final.  
@@ -289,38 +292,7 @@ Documentação local completa distribuída: `PROMPT_CONTINUIDADE_ENFORM_VERDE_20
 ## Próximas verificações e versões
 - Manter triagem SAR orbital experimental recente e alertas do classificador; não usar pixels candidatos para afirmar lavoura ou vegetação nativa sem modelo apropriado.
 - Reexecutar toda a suíte e novo EXE em Windows no SHA final; build anterior do SHA 8839435 não contém estas mudanças.
-- Gate científico independente continua reprovado até evidência observacional real. Modelos biomassa P/X/L continuam com hierarquia e limites originais.
-
-
-# REVISÃO v78 — Teste de rótulo IBGE potencial coerente com v77 (04/11/2026)
-- A rotina ibge_area_summary_lines foi corrigida no v77 para rotular a região fitoecológica IBGE como POTENCIAL e não como cobertura atual; o teste legado tests/test_ibge_area_summary.py ainda exigia a cadeia antiga. Agora valida o texto novo, sem reduzir a conferência de ha, porcentagens e erro de fonte.
-- Permanecem inalterados: nome por IBGE, área nativa estratificada pela interseção da máscara de cobertura, percentual com base na AOI total, exibição do bioma e apresentação N/D para cobertura ausente.
-- Exigir suíte completa, teste Windows de interface, processamento de uma AOI real e build de mesmo SHA; a homologação científica permanece separada e reprovada.
-- Não declarar o erro UnicodeDecodeError/GDAL resolvido antes de um teste de aquisição de dados VV/VH real em Windows. Os candidatos SAR S1 são experimentais e não substituem classificadores treinados para lavouras/nativa.
-
-
-# REVISÃO v79 — denominador espacial único da AOI na interface (04/11/2026)
-- Na imagem do usuário, a área informada no quadro Mapas e limites (1.460,13 ha) diferia da área do relatório de uso e carbono (1.459,91 ha). As projeções/estratégias de área usadas nas rotinas explicam a discrepância; evitar bases numéricas diferentes.
-- Introduzido equal_area_aoi_ha em property_physiognomy_display.py, com união de geometrias em CRS equivalente EPSG:6933. O campo "Área do polígono" em Mapas e limites usa essa área desde o carregamento, em vez do cálculo geodésico/UTM anterior. Após conclusão do carbono, o campo é sincronizado diretamente com native_carbon.area_aoi_ha.
-- O valor é rotulado "EPSG:6933; base dos percentuais". Percentual de cada fitofisionomia = 100 × área de interseção nativa da classe / área total da AOI no mesmo CRS equivalente. Áreas agrícolas são excluídas da nativa, e N/D não vira zero.
-- Novo teste funcional de área equivalente e geometrias de referência, além dos testes da v77 de 917,81/1.459,91 = 62,87%.
-- Mantidos Bioma e Fitofisionomia presente na propriedade, com fonte cartográfica ou SAR e aviso de não validação da cobertura real. Status do SAR orbital e dos identificadores permanecem experimentais, com testes independentes necessários.
-- Reexecutar suite completa e build Windows no SHA atualizado. Não atribuir ao programa antigo de SHA 8839435 estas alterações. Gate científico segue fail-closed.
-
-
-# REVISÃO V80 — Aplicabilidade nacional, incerteza e auditoria científica (04/11/2026)
-## Abrangência para qualquer AOI brasileira
-- Todos os seis biomas brasileiros devem receber tentativas de processamento: Amazônia, Cerrado, Caatinga, Mata Atlântica, Pantanal e Pampa. Restrições de cobertura, período, sensor, autenticação, domínio de modelos e qualidade de evidência são registradas por AOI, sem alegar homogeneidade de disponibilidade nacional.
-- Sempre retornar resultados fundamentados quando houver fonte aplicável; se uma classe, biomassa, solo ou cultura não puder ser inferida de maneira defensável, retornar N/D com razão, em vez de inventar números ou IC95%.
-- Separar ESTOQUE/TAXA ESTIMADA, DISTRIBUIÇÃO CARTOGRÁFICA HISTÓRICA, OBSERVAÇÃO ORBITAL ATUAL e IDENTIFICAÇÃO SAR VALIDADA como estados não intercambiáveis.
-## Auditoria geoespacial e incerteza
-- Módulo national_analysis_audit.py: geometria auditável por SHA256 do WKB WGS84; área da AOI em EPSG:6933, area_ha=area_m2/10000, participação percentual 100 x area_classe_ha/area_AOI_ha; fechamento espacial e tolerância registrados.
-- Salvar por classe fontes, estado cartográfico ou SAR atual, estatísticas de área, data UTC de execução, IDs de cenas efetivamente lidas, caminho de GeoTIFF/GeoJSON quando existente, limitações e incerteza de classificação local = N/D sem referência independente.
-- Nunca somar áreas de triagem SAR aos polígonos MapBiomas; nunca declarar que SAR experimental comprova vegetação nativa, agricultura, vigor, acurácia ou previsão de produtividade. Evitar conversão da variação do radar em intervalos estatísticos calibrados.
-- A incerteza de carbono (tC/ha, tC, tCO2e), dos componentes e da área de cobertura deve ser exibida e auditada separadamente. IC95% somente com matriz ou parâmetros estatísticos defensáveis. Solo 0–100 cm apenas em interseções com camadas reais, sem conversão de 0–30 cm por multiplicador arbitrário.
-## Falhas de engenharia descobertas e reparos de v80
-- A compilação Windows de v79 falhou no teste GUI, pois o contrato exigia a cadeia obsoleta «Fitofisionomia IBGE». Agora a verificação exige «Fitofisionomia presente na propriedade» e uso de native_carbon.strata.
-- O gate documental falhou ao exigir atualização binária Word no MESMO commit, embora o sincronizador Word gere o DOCX em commit posterior. Agora exige prompt + checkpoint técnico revisado no commit de código + workflow de sincronização Word verificável; também aceita Word no mesmo commit.
+- Gate científico independente continua reprovado até evidência observacional real. Modelos biomas…1257 tokens truncated… + workflow de sincronização Word verificável; também aceita Word no mesmo commit.
 - Registro explícito dos módulos dinâmicos national_analysis_audit, recent_sar_landcover e property_physiognomy_display no PyInstaller.
 - Radar SAR: escolher série de órbita compatível com cobertura temporal suficiente, não apenas a órbita da cena mais recente; manter pixels sem observação como nodata=0 após filtragem, não convertê-los em classe 3; remover URLs com SAS da mensagem de erro.
 ## Integração e validação
@@ -581,3 +553,9 @@ Código: 50b2841d7abc5c3411582c70a6ef270afff24bb1; regressão estrutural: c5ca36
 
 ## CHECKPOINT V87.19.1 — REGRESSÕES CORRIGIDAS APÓS FALHAS REAIS DO CI
 A execução GitHub Actions 42086181455 (945 testes) apresentou três falhas: teste antigo da planilha esperava estoque tC na coluna F (agora colunas E tC/ha, F tCO₂e/ha, G estoque tC, H estoque tCO₂e), teste antigo da Earth Search exigia ThreadPoolExecutor/multirange da implementação substituída e teste novo inspecionava incorretamente reproject() como chamada atributo em vez de função. O build 42086181415 também falhou na mesma expectativa da coluna F. Atualizados exclusivamente os contratos de teste, mantendo a semântica atual e adicionando comprovação de 44/12: tests/test_native_carbon.py (b35f2627), tests/test_nasa_gibs_keyless.py (5138d930), tests/test_sentinel2_scene_failover_contract.py (df6ef9f8). Reexecutar CI integral no SHA atualizado e comparar testes versus pacote ZIP. O acesso real às imagens da AOI de Sinop/MT ainda requer teste de campo; não declarar carregamento Sentinel-2 comprovado apenas por testes sintéticos. Preservar gate científico independente e registro N/D quando sensores ausentes.
+
+## Checkpoint de correção V87.22 / 3.26.3 (05/11/2026)
+
+A revisão da suíte completa no SHA `f82ef5b17004fee56a6f80de1d19b36cd9e17103` encontrou 4 erros e 15 falhas. Foram identificados um `NameError` em `sentinel1_sources.py` (contagem usava variável inexistente), uma normalização que rejeitava o hífen de “Sempre-Verde”, fixtures antigos que aceitavam MapBiomas como cobertura nativa atual, expectativa desatualizada de safra regional mesmo sem vigor observado, e contratos de estado Sentinel-1 divergentes. Corrigir código e fixtures sem relaxar os gates científicos.
+
+Antes de fechar a versão 3.26.3-PRECAMPO-EXPERIMENTAL, executar a suíte completa, o build Windows e o processamento real de pixels VV/VH em AOI de referência. Cada verificação precisa identificar o mesmo SHA final. Os resultados conhecidos do SHA acima são: contrato pré-campo aprovado; testes focados aprovados; suíte completa reprovada; build Windows interrompido nos testes de estratificação; homologação científica independente reprovada (`accepted_count: 0`). Nenhum desses estados pode ser descrito como aprovação final. MapBiomas continua referência anual e não confirma cobertura nativa ou lavoura atuais. A ausência de vigor observado bloqueia a previsão de produtividade da fazenda; PAM só baliza o modelo regional/condicional.

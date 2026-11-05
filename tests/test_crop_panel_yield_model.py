@@ -103,8 +103,9 @@ class ArtifactTests(unittest.TestCase):
                               weather_fetcher=fake_wx, awc_fetcher=fake_awc, n_mc=200)
         self.assertEqual(rep["model"], "panel")
         txt = "\n".join(forecast_lines(rep))
-        self.assertIn("calibrado no histórico PAM", txt); self.assertIn("Alto Teles Pires", txt)
-        self.assertIn("Vigor: N/D", txt)
+        self.assertIn("calibrado no histórico PAM", txt)
+        self.assertIn("vigor SAR atual indisponível", txt)
+        self.assertNotIn("Alto Teles Pires", txt)
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ def search_sentinel1_sources(aoi_geojson, *, start_utc, end_utc):
                             "error_type":type(exc).__name__,"pagination_complete":False})
     all_scenes.sort(key=lambda s:str(s.get("acquisition_utc","")),reverse=True)
     return {"status":"discovery_only","providers":results,"scenes":all_scenes,
-            "scene_count":len(scenes),
+            "scene_count":len(all_scenes),
             "pagination_complete":all(r.get("pagination_complete") for r in results),
             "queried_at_utc":datetime.now(timezone.utc).isoformat(),
             "warning":"MPC Sentinel-1 RTC is primary; INPE RTC is automatic fallback. Catalog scene counts are not pixel-read evidence."}

@@ -16,7 +16,7 @@ class CurrentRadarScreenTests(unittest.TestCase):
         from shapely.geometry import box
         a=gpd.GeoDataFrame(geometry=[box(-55.8,-12.6,-55.7,-12.5)],crs=4326)
         r=run_recent_sar_screen(a,"unused",search=lambda *a,**k:{"scenes":[]})
-        self.assertEqual(r["status"],"N/D")
+        self.assertEqual(r["status"],"N/D_DADOS")
         self.assertFalse(r["native_confirmed"]);self.assertFalse(r["crop_confirmed"])
     def test_missing_observations_are_not_valid_land_cover(self):
         a=np.ones((1,12,12))
