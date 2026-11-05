@@ -6,9 +6,9 @@ on:
     branches: [main]
   workflow_dispatch:
 concurrency:
-  # Keep the tested source SHA stable across documentation auto-commits.
-  group: enform-windows-${{ github.event.pull_request.head.sha || github.sha }}
-  cancel-in-progress: false
+  # Cancel superseded PR jobs; every surviving job still checks out and verifies its exact source SHA.
+  group: enform-windows-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
   actions: read
