@@ -2803,6 +2803,122 @@ class App(tk.Tk):
             sh.column_dimensions["E"].width=30
             sh.column_dimensions["F"].width=37
             sh.column_dimensions["G"].width=76
+        # Single-screen executive index. Numeric stocks remain numeric so the
+        # operator can audit or reuse them; no missing pool is treated as zero.
+        dashboard=wb.create_sheet("PAINEL EXECUTIVO",0)
+        setup(dashboard,"ENFORM VERDE — PAINEL EXECUTIVO DA PROPRIEDADE")
+        dash_headers=["Seção","Indicador","tC/ha","tCO₂e/ha","Estoque tC",
+                      "Estoque tCO₂e","Situação","Área / fonte / observação"]
+        for col,label in enumerate(dash_headers,1):
+            dashboard.cell(3,col,label)
+        dash=[]
+        dn=self.project.get("native_carbon") or {}
+        dl=self.project.get("land_use") or {}
+        d_ha=dn.get("area_aoi_ha") or self.project.get("area_ha")
+        d_native=dn.get("native_area_ha")
+        d_known=dn.get("known_total_tc")
+        d_litter=next((x for x in dn.get("components") or []
+                       if "serapilheira" in str(x.get("parametro") or "").casefold()
+                       or "serrapilheira" in str(x.get("parametro") or "").casefold()),None)
+        def drow(section,label,tc=None,tco2=None,stock=None,status="INFORMATIVO",note=""):
+            dash.append([section,label,tc,tco2,stock,
+                         (stock*44/12 if stock is not None else None),status,note])
+        drow("IMÓVEL","Área da AOI",status="GEOMETRIA",note=(format_ptbr(d_ha,2)+" ha | EPSG:6933") if d_ha is not None else "N/D")
+        drow("IMÓVEL","Bioma IBGE",status="CARTOGRÁFICO",note=self.biome.get())
+        drow("VEGETAÇÃO","Região fitoecológica IBGE",status="POTENCIAL IBGE",note=self.phys.get())
+        drow("VEGETAÇÃO","Cobertura nativa mapeada",status="MAPA, NÃO CAMPO",
+             note=(format_ptbr(d_native,2)+" ha") if d_native is not None else "N/D")
+        drow("VEGETAÇÃO","Outros usos",status="CARTOGRÁFICO",note=
+             format_ptbr(dn.get("excluded_other_uses_ha"),2)+" ha" if dn.get("excluded_other_uses_ha") is not None else "N/D")
+        drow("VEGETAÇÃO","Cobertura não determinada",status="N/D / MAPA",note=
+             format_ptbr(dn.get("unknown_cover_area_ha"),2)+" ha" if dn.get("unknown_cover_area_ha") is not None else "N/D")
+        for part in dn.get("components") or []:
+            stock=part.get("known_total_tc")
+            drow("CARBONO",part.get("parametro") or "Compartimento",
+                 (stock/d_native if stock is not None and d_native else None),
+                 (stock/d_native*44/12 if stock is not None and d_native else None),
+                 stock,"PARCIAL" if part.get("missing_native_area_ha") else
+                 ("QUANTIFICADO" if stock is not None else "N/D"),
+                 "Área quantificada: "+format_ptbr(part.get("quantified_area_ha"),2)+" ha; "
+                 "não somar sem evidência independente")
+        drow("CARBONO","TOTAL CONHECIDO",
+             d_known/d_native if d_known is not None and d_native else None,
+             d_known/d_native*44/12 if d_known is not None and d_native else None,
+             d_known,"PARCIAL" if not dn.get("complete") else "CONSOLIDADO",
+             "Somente estoques elegíveis; densidade sobre área NATIVA; não extrapolado.")
+        if d_litter is None or d_litter.get("known_total_tc") is None:
+            drow("CARBONO","Serapilheira",status="N/D — NÃO SOMADA",
+                 note="Exige estoque seco observacional ou transferência regional auditável; sem substituir por zero.")
+        dp=self.project.get("soil_pedology") or {}
+        soil_units=dp.get("soil_mapping_units") or []
+        if soil_units:
+            for unit in soil_units:
+                drow("PEDOLOGIA",unit.get("mapping_unit") or "Unidade de solo",
+                     status="MAPA REGIONAL",note=format_ptbr(unit.get("area_ha"),2)+
+                     " ha; associação: "+", ".join(unit.get("components") or []))
+        else:
+            drow("PEDOLOGIA","Classificação de solos",status="N/D",
+                 note=dp.get("reason") or "Sem interseção oficial disponível")
+        df=self.project.get("soil_fertility") or {}
+        fertile=[(unit,x) for unit,recs in (df.get("units") or {}).items()
+                 for x in recs if x.get("mean") is not None]
+        if fertile:
+            for zone,measurement in fertile:
+                drow("FERTILIDADE",str(measurement.get("label") or "")+" ["+
+                     str(measurement.get("depth_cm") or "?")+" cm]",status="MAPA PREDITIVO",
+                     note=str(zone)+": "+format_ptbr(measurement["mean"],2)+" "+
+                     str(measurement.get("unit") or "")+"; cobertura "+
+                     format_ptbr(measurement.get("coverage_pct"),2)+"%")
+        else:
+            drow("FERTILIDADE","CTC, pH, CE e textura",status="N/D",
+                 note=df.get("reason") or "Sem dados numéricos oficiais processados")
+        for item in (dl.get("classes") or []):
+            drow("USO DO SOLO",item.get("class_name") or "Classe",status="MAPEADO",
+                 note=format_ptbr(item.get("area_ha"),2)+" ha; "+str(item.get("source") or ""))
+        put(dashboard,dash)
+        dashboard.auto_filter.ref=f"A3:H{3+len(dash)}"
+        dashboard.freeze_panes="C4"
+
+        # Brazilian number formatting and readable dimensions on ALL worksheets.
+        # Wrapped long text is sized by its displayed line count, not clipped
+        # into a fixed-height row. Excel column letters may extend beyond H.
+        from openpyxl.utils import get_column_letter
+        import math as _math
+        for sheet in wb.worksheets:
+            sheet.sheet_view.showGridLines=False
+            col_widths={}
+            for record in sheet.iter_rows():
+                for cell in record:
+                    if cell.value is None:continue
+                    if isinstance(cell.value,(int,float)) and not isinstance(cell.value,bool):
+                        cell.number_format='#,##0.00'
+                        needed=max(14,len(f"{cell.value:,.2f}")+3)
+                    else:
+                        content=str(cell.value)
+                        needed=min(104,max(13,min(62,len(content)+3)))
+                    col_widths[cell.column]=max(col_widths.get(cell.column,13),needed)
+            for col,width in col_widths.items():
+                letter=get_column_letter(col)
+                if col>8 and sheet.title in ("Fertilidade do Solo","Modelo Para Campo"):
+                    width=max(width,24)
+                sheet.column_dimensions[letter].width=min(106,max(14,width+2))
+            for record in sheet.iter_rows():
+                if record[0].row<=3:continue
+                max_lines=1
+                for cell in record:
+                    if cell.value is None:continue
+                    width=sheet.column_dimensions[get_column_letter(cell.column)].width or 18
+                    body=str(cell.value)
+                    if isinstance(cell.value,(int,float)) and not isinstance(cell.value,bool):
+                        body=f"{cell.value:,.2f}"
+                    lines=sum(max(1,_math.ceil(len(piece)/max(8,int(width)-4)))
+                              for piece in body.split("\n"))
+                    max_lines=max(max_lines,lines)
+                    cell.alignment=Alignment(vertical="top",wrap_text=True)
+                sheet.row_dimensions[record[0].row].height=min(405,max(30,16*max_lines+10))
+            sheet.sheet_properties.pageSetUpPr.fitToPage=True
+            sheet.page_setup.fitToWidth=1
+            sheet.sheet_view.zoomScale=85
         wb.save(p); self.status.set("Excel exportado com sucesso.")
 
     def save_report(self):
