@@ -495,3 +495,8 @@ A suíte completa Windows no SHA `132512d68ecf99e7424cb6cd43c7d2212e9c501f` exec
 ### Registro complementar V87.9 — Word sincronizado
 
 O workflow de sincronização gerou o documento técnico Word atualizado no commit `0843784f525c5a324f2616d692339fcdf81bc083` a partir do checkpoint V87.9, preservando o histórico e incluindo `3.26.2-PRECAMPO-EXPERIMENTAL`. A conclusão da nova execução Windows e da suíte integral ainda precisa ser confirmada no mesmo SHA; não compartilhar como compilação validada até isso ocorrer. O gate científico independente continua separado.
+
+
+## Registro final V87.10 — liberação técnica verificada
+
+A versão `3.26.2-PRECAMPO-EXPERIMENTAL` foi compilada e aprovada no SHA `b4055ebbbfc9394616658c2c215603087dd5a60e`. No mesmo SHA, o dashboard aprovou a suíte completa (925 testes); o Windows build aprovou verificações, teste do preview Sentinel‑2 real e smoke test do EXE em pasta limpa. SHA-256 do executável: `8af9e7445b77cad603f94877befb510359f7b5564df60a451b57a4f86aa8c1a4`. Digest SHA-256 do ZIP: `6aa511d6b5e864d23bec6bcf088f922ca07850a6bc0e3066a97f529492640ab5`. A especificação Word foi sincronizada com checkpoint V87.10. O gate científico independente continua não aprovado; tratar a entrega como build técnico experimental para testes, sem alegar homologação de acurácia.
