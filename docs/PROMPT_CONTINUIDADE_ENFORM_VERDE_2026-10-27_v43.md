@@ -3755,3 +3755,12 @@ Versão candidata `3.26.2-PRECAMPO-EXPERIMENTAL`; testes de contrato em `tests/t
 Fontes: Google chave/billing: https://developers.google.com/maps/documentation/maps-static/get-api-key ; NASA GIBS: https://nasa-gibs.github.io/gibs-api-docs/access-basics/ ; Earth Search public COGs: https://registry.opendata.aws/sentinel-2-l2a-cogs/ ; Planetary Computer: https://planetarycomputer.microsoft.com/docs/concepts/sas/ .
 
 O estado científico pré-campo permanece experimental; esta revisão altera apenas a visualização óptica.
+
+
+### REVISÃO V87.6 — PRIORIDADE DO CATÁLOGO ABERTO SENTINEL-2 — 05/11/2026
+
+Correção solicitada pelo usuário: priorizar Earth Search / AWS Open Data como primeira rota óptica automática sem chave, com STAC anônimo e COGs Sentinel-2 L2A públicos. A ordem efetiva sem usuário-token passa a ser Earth Search Sentinel-2 → Planetary Computer Sentinel-2 → NASA GIBS VIIRS → Esri público → IBGE offline. Google continua no topo apenas se uma chave Google oficial for configurada; a API oficial não suporta acesso sem chave. Não usar endpoints Google não documentados para contornar autenticação.
+
+O mapa do entorno é estritamente óptico. Sentinel-2 L2A é a opção de maior resolução da rota sem chave; VIIRS serve como contexto regional mais grosso. Radar/SAR somente para análises. Nenhuma imagem do mapa pode alimentar classificação, uso da terra, carbono ou estimativas SAR.
+
+O código `desktop_app.py::show_google_map` já foi reordenado para tentar `sentinel2_earthsearch_preview` antes do Planetary Computer. O teste de contrato deve confirmar Earth Search → Planetary Computer → NASA GIBS → Esri → offline. Checkpoint: `docs/spec_updates/2026-11-05_v87_6_open_sentinel2_priority.md`. Build/regressões ainda dependem do SHA final; homologação científica experimental permanece separada.
