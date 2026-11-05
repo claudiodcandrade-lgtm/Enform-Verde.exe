@@ -11,6 +11,8 @@ from pathlib import Path
 
 SPEC = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 PROMPT = "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md"
+HISTORICAL_PROMPT = "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md"
+SOIL_SPEC = "docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md"
 SYNC = ".github/workflows/sync-full-spec-word.yml"
 
 def effective(path):
@@ -23,6 +25,8 @@ def check(changed, *, workflow_text=None, word_exists=None):
     if not eff:return eff,[]
     missing=[]
     if PROMPT not in changed:missing.append(PROMPT)
+    if HISTORICAL_PROMPT not in changed:missing.append(HISTORICAL_PROMPT)
+    if SOIL_SPEC not in changed:missing.append(SOIL_SPEC)
     if SPEC not in changed:
         if workflow_text is None:
             workflow_text=Path(SYNC).read_text(encoding="utf-8") if Path(SYNC).exists() else ""
