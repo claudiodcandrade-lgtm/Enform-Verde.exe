@@ -2610,8 +2610,20 @@ class App(tk.Tk):
             ws.cell(10,2).value="Carbono nas formações nativas";ws.cell(10,3).value=None;ws.cell(10,4).value=None
             ws.cell(10,8).value=(format_ptbr(native["known_total_tc"],2)+" tC; "+format_ptbr(native["known_total_tco2"],2)+" tCO₂e; "+("total" if native["complete"] else "soma parcial") if native.get("known_total_tc") is not None else "NÃO ESTIMADO")
             sh=wb.create_sheet("Carbono por Formação");setup(sh,"Enform Verde — carbono apenas nas interseções nativas")
-            for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Compartimento","tC/ha","tC na interseção","Fonte","Limitação / incerteza"],1):sh.cell(3,j,h).value=h
-            put(sh,[[st["physiognomy"],st["area_ha"],st["area_pct"],r["parametro"],r.get("tc"),r.get("total_tc"),r.get("fonte"),st["physiognomy_resolution"]+"; classe reconhecida: "+st["class_name"]+"; "+str(r.get("obs"))] for st in native["strata"] for r in st["components"]])
+            for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Compartimento",
+                                   "tC/ha","tCO₂e/ha","Estoque tC","Estoque tCO₂e",
+                                   "Fonte","Limitação / incerteza"],1):sh.cell(3,j,h).value=h
+            put(sh,[[st["physiognomy"],st["area_ha"],st["area_pct"],r["parametro"],
+                     r.get("tc"),
+                     r["tc"]*44/12 if r.get("tc") is not None else None,
+                     r.get("total_tc"),
+                     r["total_tc"]*44/12 if r.get("total_tc") is not None else None,
+                     r.get("fonte"),st["physiognomy_resolution"]+
+                     "; classe reconhecida: "+st["class_name"]+"; "+str(r.get("obs"))]
+                     for st in native["strata"] for r in st["components"]])
+            sh.column_dimensions["I"].width=42
+            sh.column_dimensions["J"].width=92
+            sh.auto_filter.ref=f"A3:J{3+sum(len(st['components']) for st in native['strata'])}"
             sh=wb.create_sheet("Solo por Formação");setup(sh,"Enform Verde — perfis de solo nas interseções nativas")
             from soil_intersection_report import soil_intersection_summary
             for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Profundidade","tC/ha","DP espacial","Fonte","Uso no total","Método","Área mapeada (ha)","Cobertura do mapa (%)","Pixels"],1):sh.cell(3,j,h).value=h
