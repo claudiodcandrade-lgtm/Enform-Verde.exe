@@ -3790,3 +3790,7 @@ Ao abrir CAR ou vetor KML/KMZ, a AOI era carregada mas a análise não iniciava 
 
 ## CHECKPOINT V87.12 — 05/11/2026
 Dashboard dual 42042610110 detectou SyntaxError no teste de proteção CAR/KML; literais de escape indevidos foram corrigidos em 7367eb1db282485e42b8af900df691e223aeccd8. Manter a proteção de mapa independente do cálculo em desktop_app.py e exigir aprovação pós-correção de CI e do EXE no mesmo SHA. Não liberar o build anterior, que ainda contém falha redraw.
+
+
+## CHECKPOINT V87.13 — 05/11/2026 — GATE DOCUMENTAL CRONOLÓGICO
+O piloto Windows 3.26.2-PRECAMPO-EXPERIMENTAL do SHA 34134031 passou pelo build e autoteste em pasta limpa no run 42047129950. O dashboard do mesmo SHA só reprovou no controle documental porque a atualização do teste veio após os documentos. Corrigido o verificador para comparar a ordem de commits desde o merge-base: toda alteração efetiva recente precisa ser acompanhada por prompt atual, histórico, solo e DOCX ou checkpoint ativo, no mesmo commit ou depois. Não permitir que documentação anterior satisfaça modificação posterior. Esta atualização não altera SAR, biomassa, solos, agricultura, nem os limites científicos. Manter regressão CAR/KML e exigir CI verde e ZIP no SHA final.
