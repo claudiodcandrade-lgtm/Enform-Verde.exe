@@ -320,6 +320,7 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                              (' | COBERTURA PARCIAL DO MAPA: %.1f%% da interseção com os cinco horizontes; estoque calculado só na área mapeada, sem extrapolação.'
                               % (100*float(top.get('coverage_fraction') or 0))) if top.get('partial_coverage') else ''),
                          'spatial_sd_tc_ha':top.get('spatial_sd_tc_ha'),
+                         'official_uncertainty':top.get('official_uncertainty'),
                          'soil_coverage_fraction':top.get('coverage_fraction'),
                          'soil_area_covered_ha':top.get('area_covered_ha'),
                          # Partial map coverage (water, urban, rock, gaps): the
