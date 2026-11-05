@@ -101,82 +101,106 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                            "catalog_scene_count":int(found.get("scene_count",0)), "selected_scene_count":0,
                            "readable_scene_count":0})
             return result
-        selected,orbit=_select_orbit_series(candidates,ref)
-        if not selected:
-            result.update({"status":"N/D_DADOS", "reason":"SEM_SERIE_COMPLETA_MESMA_ORBITA_COM_3_CENAS_E_35_DIAS_DE_EXTENSAO",
-                           "catalog_scene_count":len(candidates), "selected_scene_count":0,
-                           "readable_scene_count":0})
-            return result
-        mpc_candidates=[row for row in selected if row[1].get("provider","MPC")=="MPC"]
-        token=(token_fn or get_runtime_sas_token)() if mpc_candidates else ""
-        grid=None;data=[];errors=[]
-        for dt,scene in selected:
-            scene_ok = False
-            for attempt in range(2):
-                try:
-                    pair=[]
-                    for pol in ("vv","vh"):
-                        with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
-                                          GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
-                                          GDAL_HTTP_RETRY_DELAY="1",GDAL_HTTP_UNSAFESSL="NO"):
-                            asset_href=scene["assets"][pol]["href"]
-                            read_href=(_signed_href(asset_href,token)
-                                       if scene.get("provider","MPC")=="MPC" else asset_href)
-                            with rasterio.open(read_href) as src:
-                                if not src.crs:raise ValueError("Missing georeferencing in SAR source")
-                                if grid is None:
-                                    aoig=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
-                                    win=from_bounds(*aoig.bounds,transform=src.transform).round_offsets().round_lengths()
-                                    win=win.intersection(Window(0,0,src.width,src.height))
-                                    if win.width*win.height>1800000 or min(win.width,win.height)<=0:
-                                        raise ValueError("SAR AOI exceeds memory-bounded raster window")
-                                    grid=(src.crs,src.window_transform(win),(int(win.height),int(win.width)),aoig)
-                                crs,tr,size,_=grid
-                                local_aoi=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
-                                window=from_bounds(*local_aoi.bounds,transform=src.transform)
-                                from math import floor,ceil
-                                c0,r0=floor(window.col_off),floor(window.row_off)
-                                c1,r1=ceil(window.col_off+window.width),ceil(window.row_off+window.height)
-                                window=Window(c0,r0,max(0,c1-c0),max(0,r1-r0)).intersection(
-                                    Window(0,0,src.width,src.height))
-                                if window.width<1 or window.height<1:
-                                    raise ValueError("SAR asset does not intersect AOI")
-                                if window.width*window.height>1800000:
-                                    raise ValueError("SAR source window exceeds bounded pixel limit")
-                                with np.errstate(all="ignore"):
-                                    window_values=src.read(1,window=window,masked=True)
-                                    src_values=np.ma.filled(window_values.astype(np.float32),np.nan)
-                                arr=np.full(size,np.nan,dtype=np.float32)
-                                reproject(source=src_values,destination=arr,
-                                          src_transform=src.window_transform(window),src_crs=src.crs,
-                                          src_nodata=np.nan,dst_nodata=np.nan,dst_crs=crs,
-                                          dst_transform=tr,resampling=Resampling.nearest)
-                                pair.append(arr)
-                    data.append((dt,str(scene.get("id","")),pair))
-                    scene_ok = True
-                    break
-                except (UnicodeError,OSError,RuntimeError,ValueError) as exc:
-                    errors.append({"scene_id":str(scene.get("id","")),
-                                   "error_type":type(exc).__name__,
-                                   "error":_safe_reason(exc),"attempt":attempt+1,
-                                   "recovered":False})
-                    if attempt == 0:
-                        try:
-                            if scene.get("provider","MPC")=="MPC":
-                                token=(token_fn or get_runtime_sas_token)()
-                        except Exception as token_exc:
-                            errors.append({"scene_id":str(scene.get("id","")),
-                                           "error_type":"TOKEN_REFRESH_"+type(token_exc).__name__,
-                                           "error":_safe_reason(token_exc),"attempt":attempt+1,
-                                           "recovered":False})
-            if scene_ok and errors and errors[-1].get("scene_id")==str(scene.get("id","")):
-                errors[-1]["recovered"]=True
+        grid=None
+        data=[]
+        errors=[]
+        selected=[]
+        orbit=None
+        providers=["MPC","INPE"]
+        if search is not None:
+            providers=sorted({row[1].get("provider","MPC") for row in candidates})
+        provider_diagnostics=found.get("providers",[])
+        for provider in providers:
+            provider_rows=[row for row in candidates if row[1].get("provider","MPC")==provider]
+            provider_selected,provider_orbit=_select_orbit_series(provider_rows,ref)
+            if not provider_selected:
+                continue
+            provider_grid=None
+            provider_data=[]
+            provider_errors=[]
+            try:
+                provider_token=(token_fn or get_runtime_sas_token)() if provider=="MPC" else ""
+            except Exception as exc:
+                errors.append({"provider":provider,"error_type":"TOKEN_"+type(exc).__name__,
+                               "error":_safe_reason(exc),"recovered":False})
+                continue
+            for dt,scene in provider_selected:
+                scene_ok=False
+                for attempt in range(2):
+                    try:
+                        pair=[]
+                        for pol in ("vv","vh"):
+                            with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+                                              GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
+                                              GDAL_HTTP_RETRY_DELAY="1",GDAL_HTTP_UNSAFESSL="NO"):
+                                asset_href=scene["assets"][pol]["href"]
+                                read_href=_signed_href(asset_href,provider_token) if provider=="MPC" else asset_href
+                                with rasterio.open(read_href) as src:
+                                    if not src.crs:raise ValueError("Missing georeferencing in SAR source")
+                                    if provider_grid is None:
+                                        aoig=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
+                                        win=from_bounds(*aoig.bounds,transform=src.transform).round_offsets().round_lengths()
+                                        win=win.intersection(Window(0,0,src.width,src.height))
+                                        if win.width*win.height>1800000 or min(win.width,win.height)<=0:
+                                            raise ValueError("SAR AOI exceeds memory-bounded raster window")
+                                        provider_grid=(src.crs,src.window_transform(win),
+                                                       (int(win.height),int(win.width)),aoig)
+                                    crs,tr,size,_=provider_grid
+                                    local_aoi=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
+                                    window=from_bounds(*local_aoi.bounds,transform=src.transform)
+                                    from math import floor,ceil
+                                    c0,r0=floor(window.col_off),floor(window.row_off)
+                                    c1,r1=ceil(window.col_off+window.width),ceil(window.row_off+window.height)
+                                    window=Window(c0,r0,max(0,c1-c0),max(0,r1-r0)).intersection(
+                                        Window(0,0,src.width,src.height))
+                                    if window.width<1 or window.height<1:
+                                        raise ValueError("SAR asset does not intersect AOI")
+                                    if window.width*window.height>1800000:
+                                        raise ValueError("SAR source window exceeds bounded pixel limit")
+                                    with np.errstate(all="ignore"):
+                                        window_values=src.read(1,window=window,masked=True)
+                                        src_values=np.ma.filled(window_values.astype(np.float32),np.nan)
+                                    arr=np.full(size,np.nan,dtype=np.float32)
+                                    reproject(source=src_values,destination=arr,
+                                              src_transform=src.window_transform(window),src_crs=src.crs,
+                                              src_nodata=np.nan,dst_nodata=np.nan,dst_crs=crs,
+                                              dst_transform=tr,resampling=Resampling.nearest)
+                                    pair.append(arr)
+                        provider_data.append((dt,str(scene.get("id","")),pair))
+                        scene_ok=True
+                        break
+                    except (UnicodeError,OSError,RuntimeError,ValueError) as exc:
+                        row={"provider":provider,"scene_id":str(scene.get("id","")),
+                             "error_type":type(exc).__name__,"error":_safe_reason(exc),
+                             "attempt":attempt+1,"recovered":False}
+                        provider_errors.append(row)
+                        if attempt==0 and provider=="MPC":
+                            try:
+                                provider_token=(token_fn or get_runtime_sas_token)()
+                            except Exception as token_exc:
+                                provider_errors.append({"provider":provider,"scene_id":str(scene.get("id","")),
+                                    "error_type":"TOKEN_REFRESH_"+type(token_exc).__name__,
+                                    "error":_safe_reason(token_exc),"attempt":attempt+1,"recovered":False})
+                if scene_ok and provider_errors and provider_errors[-1].get("scene_id")==str(scene.get("id","")):
+                    provider_errors[-1]["recovered"]=True
+            errors.extend(provider_errors)
+            if len(provider_data)>=3 and (provider_data[0][0]-provider_data[-1][0]).days>=35:
+                data=provider_data
+                selected=provider_selected
+                orbit=provider_orbit
+                grid=provider_grid
+                break
+            if provider_data:
+                errors.append({"provider":provider,"error_type":"INSUFFICIENT_READABLE_SERIES",
+                               "readable_scene_count":len(provider_data),"recovered":False})
+        result["provider_diagnostics"]=provider_diagnostics
         result["failed_scene_reads"]=errors
-        result["selected_scene_count"]=len(selected)
+        result["selected_scene_count"]=len(selected) if selected else sum(
+            1 for p in providers for row in candidates if row[1].get("provider","MPC")==p)
         result["readable_scene_count"]=len(data)
         if len(data)<3 or (data[0][0]-data[-1][0]).days<35:
-            result.update({"status":"ERRO_TECNICO", "reason":"CENAS_CATALOGADAS_MAS_LEITURA_COG_SAS_INCOMPLETA",
-                           "diagnostic":"menos de 3 pares VV/VH legíveis na série selecionada; consultar failed_scene_reads"})
+            result.update({"status":"ERRO_TECNICO","reason":"ALL_CONFIGURED_RTC_PROVIDERS_FAILED_PIXEL_READ_OR_TEMPORAL_QA",
+                           "diagnostic":"MPC e INPE foram tentados; consultar provider_diagnostics e failed_scene_reads"})
             return result
         crs,tr,size,local=grid
         inside=geometry_mask([mapping(local)],out_shape=size,transform=tr,invert=True)
