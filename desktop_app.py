@@ -2178,7 +2178,17 @@ class App(tk.Tk):
         if hasattr(self,"ibge_phys_display"):
             self.ibge_phys_display.set("Aguardando mapeamento da vegetação nativa; mapa potencial IBGE não confirma presença atual.")
         self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {format_ptbr(m['area_ha'],2)} ha\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
-        self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
+        # The basemap is a visualization only. An offline renderer, satellite
+        # provider or Tk canvas failure must never prevent the scientific AOI
+        # setup from launching the independent IBGE diagnostic worker.
+        try:
+            self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
+        except Exception as exc:
+            self.project["map_preview_error"] = f"{type(exc).__name__}: {exc}"
+            try:
+                self._draw_aoi_outline("Perímetro carregado — prévia cartográfica indisponível")
+            except Exception:
+                pass
         self.status.set(f"Perímetro carregado: {src}; diagnóstico IBGE em segundo plano."); self.update_idletasks()
         self._ibge_generation+=1; generation=self._ibge_generation; geometry=self.gdf.copy(); self._ibge_pending=True
         def worker():
