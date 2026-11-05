@@ -14,10 +14,10 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         fn=funcs[0]
         calls=[n.func.attr for n in ast.walk(fn) if isinstance(n,ast.Call)
                and isinstance(n.func,ast.Attribute)]
-        self.assertIn("reproject",calls)
+        self.assertTrue(any(isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=="reproject" for n in ast.walk(fn)))
         self.assertIn("read",calls)
         self.assertIn("resize",calls)
-        self.assertIn("transform",calls)
+        self.assertTrue(any(isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=="transform" for n in ast.walk(fn)))
         self.assertIn("isfinite",calls)
         literals=[n.value for n in ast.walk(fn) if isinstance(n,ast.Constant)
                   and isinstance(n.value,str)]
