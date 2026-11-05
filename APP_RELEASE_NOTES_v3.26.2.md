@@ -8,3 +8,8 @@ Esta versão candidata adiciona uma rota de visualização de satélite automát
 - Sentinel-2 fornece a alternativa óptica pública de maior resolução; NASA VIIRS é contexto regional de resolução mais grossa, com provedor/data. Nenhuma imagem de visualização alimenta análises quantitativas.
 
 Build e suíte de regressão para este SHA ainda devem concluir antes de distribuir pacote atualizado. Estado científico experimental pré-campo, sem alegação de homologação de campo.
+
+
+- Para preview Sentinel-2, Earth Search/AWS é a primeira rota sem credenciais do usuário.
+- COGs são lidos por janelas HTTP range e reamostrados ao viewport; bandas RGB são lidas com concorrência fixa de três workers.
+- Sem quadrantes arbitrários para AOIs comuns; processamento multi-telha adaptativo só quando necessário. Sem alegações de ganho de velocidade sem benchmark.
