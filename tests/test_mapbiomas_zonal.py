@@ -56,5 +56,39 @@ class MapBiomasZonalTests(unittest.TestCase):
             self.assertTrue(LEGEND[code][1])
 
 
+    def test_blocked_aggregation_matches_row_reference(self):
+        # A deterministic raster wider and taller than one aggregation block
+        # checks masks, NoData, per-row areas, and all observed class codes.
+        rng = np.random.default_rng(20261105)
+        values = rng.choice([0, 3, 4, 6, 11, 62], size=(193, 127)).astype(np.int16)
+        inside = rng.random(values.shape) > 0.23
+        row_areas = np.linspace(720.125, 910.875, values.shape[0])
+        nodata = 0
+
+        expected = {}
+        valid_area = 0.0
+        for row in range(values.shape[0]):
+            selected = inside[row] & (values[row] != nodata) & (values[row] > 0)
+            if not selected.any():
+                continue
+            codes, counts = np.unique(values[row][selected], return_counts=True)
+            for code, count in zip(codes, counts):
+                area = int(count) * float(row_areas[row])
+                expected[int(code)] = expected.get(int(code), 0.0) + area
+                valid_area += area
+
+        actual = summarize_class_grid(values, inside, row_areas, nodata=nodata)
+        actual_by_code = {row["class_code"]: row for row in actual["classes"]}
+        self.assertEqual(set(actual_by_code), set(expected))
+        self.assertAlmostEqual(actual["mapped_area_ha"], valid_area / 10000.0, places=11)
+        for code, area_m2 in expected.items():
+            self.assertAlmostEqual(actual_by_code[code]["area_ha"], area_m2 / 10000.0, places=11)
+            self.assertAlmostEqual(
+                actual_by_code[code]["area_pct"],
+                100.0 * area_m2 / valid_area,
+                places=11,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
