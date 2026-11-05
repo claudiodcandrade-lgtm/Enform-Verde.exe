@@ -74,7 +74,8 @@ def verified_local_horizons(root=None):
 
 
 def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=12_000_000,
-                                 full_coverage=0.995, block_rows=256, source_label=None):
+                                 full_coverage=0.995, block_rows=256, source_label=None,
+                                  official_bound_paths=None, official_provenance=None):
     """Area-weighted raw raster 0-100 cm on the EXACT polygon intersection.
 
     ``gdf`` is the native fitophysiognomy intersection passed by the carbon
@@ -231,4 +232,56 @@ def mapped_soil_0_100_on_polygon(gdf, horizon_paths, *, max_cells=12_000_000,
             "full_raster_0_100": True,
             "uncertainty": "Spatial SD is descriptive only; no AOI CI95 or transfer error",
         }
+        # Published per-horizon marginal bounds do not provide a calibrated
+        # joint 95% confidence interval for the 0–100 cm property stock.
+        official = {"status": "N/D", "reason": "limites oficiais não recuperados",
+                    "predictive_uncertainty_quantified": False}
+        if official_bound_paths is not None:
+            try:
+                if any(set(official_bound_paths.get(side, {})) != {2, 3, 4, 5, 6}
+                       for side in ("lower", "upper")):
+                    raise ValueError("dez limites oficiais por horizonte obrigatórios")
+                raw_bounds = {}
+                for side in ("lower", "upper"):
+                    raw_bounds[side] = []
+                    for layer_id in range(2, 7):
+                        ds = stack.enter_context(rasterio.open(official_bound_paths[side][layer_id]))
+                        if (ds.count != 1 or ds.dtypes[0] not in ("float32", "float64")
+                                or ds.crs != first.crs or ds.transform != first.transform
+                                or ds.width != first.width or ds.height != first.height):
+                            raise ValueError("raster de limite oficial incompatível com grade de estoque")
+                        arr = ds.read(1, window=window, masked=True)[rr, cc]
+                        if np.ma.getmaskarray(arr).any():
+                            raise ValueError("pixels oficiais de limites faltantes sobre o estoque")
+                        vals = np.asarray(np.ma.filled(arr, np.nan), dtype="float64")
+                        if not np.isfinite(vals).all() or (vals < 0).any():
+                            raise ValueError("limites oficiais inválidos")
+                        raw_bounds[side].append(vals)
+                lower, upper = np.stack(raw_bounds["lower"]), np.stack(raw_bounds["upper"])
+                if not (np.all(lower <= upper) and
+                        np.all(lower <= per_layer + 1e-7) and np.all(per_layer <= upper + 1e-7)):
+                    raise ValueError("limites oficiais não abrangem previsão original por horizonte")
+                lo = float(np.average(np.sum(lower, axis=0), weights=weights))
+                hi = float(np.average(np.sum(upper, axis=0), weights=weights))
+                per_horizon = {names[i]: {
+                    "lower_tc_ha": float(np.average(lower[i], weights=weights)),
+                    "upper_tc_ha": float(np.average(upper[i], weights=weights))}
+                    for i in range(5)}
+                official = {"status": "ENVELOPE_MARGINAL_OFICIAL",
+                    "provenance": official_provenance or {},
+                    "marginal_horizon_bounds": per_horizon,
+                    "sum_bounds_envelope_tc_ha": [lo, hi],
+                    "sum_bounds_envelope_stock_tC": [lo*covered/10000, hi*covered/10000],
+                    "mapped_stock_area_ha": covered/10000,
+                    "predictive_uncertainty_quantified": True,
+                    "interpretation": ("Soma dos limites marginais publicados por horizonte. "
+                       "NÃO é IC95% conjunto validado para 0–100 cm ou para o estoque da propriedade.")}
+            except Exception as exc:
+                official = {"status": "N/D",
+                            "reason": type(exc).__name__ + ": " + str(exc)[:180],
+                            "predictive_uncertainty_quantified": False}
+        out["0–100 cm"]["official_uncertainty"] = official
+        out["0–100 cm"]["predictive_uncertainty_quantified"] = (
+            official["predictive_uncertainty_quantified"])
+        out["_diagnostic"]["official_uncertainty"] = official
         return out
