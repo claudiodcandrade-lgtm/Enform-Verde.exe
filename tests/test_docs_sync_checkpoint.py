@@ -1,7 +1,7 @@
 """Document gate contract: each substantive code change must keep three living specs in sync."""
 import unittest
 from tools.check_docs_updated import (
-    check, SPEC, PROMPT, HISTORICAL_PROMPT, SOIL_SPEC,
+    check, latest_change_window, SPEC, PROMPT, HISTORICAL_PROMPT, SOIL_SPEC,
 )
 
 class WordSyncGateTests(unittest.TestCase):
@@ -28,6 +28,34 @@ class WordSyncGateTests(unittest.TestCase):
             workflow_text="", word_exists=True)[1])
         self.assertIn(SPEC, check({"desktop_app.py", self.P} | self.REQUIRED_DOCS,
             workflow_text=self.WORKFLOW, word_exists=False)[1])
+
+    def test_later_documentation_satisfies_latest_code_change(self):
+        commits = [
+            {"desktop_app.py"},
+            {PROMPT, HISTORICAL_PROMPT, SOIL_SPEC, self.P},
+        ]
+        changed = latest_change_window(commits)
+        self.assertEqual(check(changed, workflow_text=self.WORKFLOW, word_exists=True)[1], [])
+
+    def test_older_documents_do_not_certify_new_code(self):
+        commits = [
+            {PROMPT, HISTORICAL_PROMPT, SOIL_SPEC, self.P, SPEC},
+            {"desktop_app.py"},
+        ]
+        changed = latest_change_window(commits)
+        self.assertIn(PROMPT, check(changed, workflow_text=self.WORKFLOW, word_exists=True)[1])
+        self.assertIn(SPEC, check(changed, workflow_text=self.WORKFLOW, word_exists=True)[1])
+
+    def test_documentation_only_or_word_bot_commit_needs_no_rebuild(self):
+        self.assertEqual(latest_change_window([{SPEC}, {PROMPT}]), set())
+
+    def test_another_code_change_requires_newer_documentation(self):
+        changed = latest_change_window([
+            {"desktop_app.py"},
+            {PROMPT, HISTORICAL_PROMPT, SOIL_SPEC, self.P},
+            {"tests/test_car_kml_map_setup_regression.py"},
+        ])
+        self.assertIn(SOIL_SPEC, check(changed, workflow_text=self.WORKFLOW, word_exists=True)[1])
 
     def test_same_commit_word_still_valid(self):
         changed = {"desktop_app.py", SPEC} | self.REQUIRED_DOCS
