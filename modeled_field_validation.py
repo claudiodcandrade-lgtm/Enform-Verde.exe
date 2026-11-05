@@ -91,7 +91,15 @@ def _component_prediction(stratum, component, index, analysis_id):
     origin = str(component.get("origem") or "N/D")
     source = str(component.get("fonte") or "N/D")
     interval, interval_kind = _choose_interval(component, value)
-    fitted = value is not None and area is not None and bool(method.strip()) and source not in ("N/D", "Sem dado compatível")
+    invalid_labels = {"", "n/d", "nao estimado", "não estimado", "sem dado compatível",
+                      "desconhecido", "none", "null", "indisponível", "indisponivel"}
+    fitted = (
+        value is not None and area is not None and area > 0
+        and method.strip().casefold() not in invalid_labels
+        and source.strip().casefold() not in invalid_labels
+        and origin.strip().casefold() not in invalid_labels
+        and bool(str(component.get("parametro") or "").strip())
+    )
     density = value if fitted else None
     stock = value * area if fitted else None
     row = {
