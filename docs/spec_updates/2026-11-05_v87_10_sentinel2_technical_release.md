@@ -63,3 +63,13 @@ Excel: painel inicial com cenários mínimo/central/máximo em tCO₂e/ha e tCO�
 
 ## ADENDO V87.17 — CORREÇÃO DE FIXTURE ESPACIAL CAR/KML
 O Dashboard run 42066584298 chegou a 941 testes e falhou apenas no test_basemap_failure_does_not_block_ibge_setup porque o objeto simulado do geom_metrics não incluía area_utm_ha após a migração do relatório para EPSG:6933 como área de referência. Corrigida a fixture no commit 6e62355e08f9a5745ec48bf9da52f1fa2cfa0735, preservando o aplicativo. O recurso EPSG:6933 permanece como base para estoque e percentuais; a área UTM é estritamente informativa. Nova distribuição requer novamente workflow completo de regressão e EXE empacotado e testado no SHA correspondente. A aprovação científica independente não decorre do ajuste da fixture.
+
+
+## ADENDO V87.18 — TESTE AOI SINOP, SAR REAL E EXCEL
+Teste reportado: 1.459,91 ha; vegetação nativa MapBiomas 917,81 ha; soja anual MapBiomas 535,73 ha; cultivadas sem cultura 4,98 ha; pasto 1,39 ha; SAR atual falhou com "Not enough actual VV/VH raster pixels were accessible"; vigor falhou com UnicodeDecodeError ao acessar dado binário remoto. Portanto não declarar culturas nem floresta atuais identificadas VIA SAR. Código da nova revisão implementa leitura limitada de janelas de COG reais nas rotas recent_sar_landcover e crop_vigor_auto, rastreio de número de pares e erros por cena, TLS habilitado. Essas alterações NÃO significam que pixels reais serão acessíveis em toda AOI; testar efetivamente na propriedade depois da compilação.
+
+Rota WCS Embrapa para fertilidade permanece preferencial. Nova alternativa ArcGIS MapServer Identify aceita estritamente valores numéricos oficiais por ponto, com status MAPA_PREDITIVO_AMOSTRAL, recusando pixels RGB e sem permitir cobertura/IC95% inventados. Somente CTC/pH/CE/textura/carbono teor quando camada publicada; ausência V%, nutrientes. Carbono SOC 0–100 permanece inalterado.
+
+Aba Carbono por Formação acrescenta tCO₂e/ha e estoque tCO₂e sobre área quantificada. Três cenários de carbono mínimo, mais provável e máximo passam às linhas superiores do Painel Executivo e preservam situação N/D quando qualquer fonte conhecida não tiver erro fundamentado. Outras células devem autoajustar altura e largura, com ponto de milhar e vírgula decimal no Excel pt-BR e duas casas. Estoque de serrapilheira só entra na soma após massa seca gravimétrica e extrapolação compatível; IFN espessura somente não basta; necromassa IFN incompatível permanece fora.
+
+A revisão V87.18 exige regressões completas e ZIP do SHA do código; gate científico independente ainda não homologado.
