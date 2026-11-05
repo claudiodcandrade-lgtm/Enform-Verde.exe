@@ -497,7 +497,7 @@ def ibge_area_summary_lines(diagnosis):
     groups={str(x.get("campo","")).casefold():x.get("classes") or []
             for x in (diagnosis or {}).get("vegetacao",[])}
     lines=[]
-    labels=(("legenda_1","Fitofisionomia/região fitoecológica IBGE (legenda_1)"),
+    labels=(("legenda_1","Região fitoecológica POTENCIAL IBGE (não comprova cobertura atual)"),
             ("legenda_2","Tipo de cobertura vegetal IBGE (legenda_2)"))
     for field,label in labels:
         rows=groups.get(field) or []
@@ -513,9 +513,9 @@ def ibge_area_summary_lines(diagnosis):
                              f"({format_ptbr(float(percent),2)}% da AOI)")
             except (TypeError,ValueError):
                 continue
-    if not any(line.startswith("Fitofisionomia/região") for line in lines):
+    if not any(line.startswith("Região fitoecológica POTENCIAL") for line in lines):
         error=(diagnosis or {}).get("vegetacao_error")
-        lines.append("Fitofisionomia/região fitoecológica IBGE (legenda_1): "
+        lines.append("Região fitoecológica POTENCIAL IBGE (legenda_1, não cobertura atual): 
                      +("não disponível — "+str(error) if error else "sem classe intersectada"))
     return lines
 
@@ -1494,7 +1494,7 @@ class App(tk.Tk):
                         " ha; não equivale a confirmação de campo." if native_area>0 else
                         "Ocorrência de vegetação nativa: não detectada nas classes mapeadas." if complete_coverage else
                         "Ocorrência de vegetação nativa: não verificável na área sem classificação.")
-        if not has_cultivated_area(classes) and complete_coverage and land.get("status") not in ("error","erro","indisponivel"):
+        if not has_cultivated_area(classes) and complete_coverage and land.get("status")=="SAR_ELEGIVEL":
             self._crop_monitoring_base_report="sem cultivos detectados\n"+native_summary
             self._crop_monitoring_audit_base="Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n"+native_summary+"\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
             self._set(self.crop_res,self._crop_monitoring_base_report)
@@ -1535,6 +1535,17 @@ class App(tk.Tk):
         else:
             executive.append("• Não determinado")
         executive.append(native_summary)
+        orbital=land.get("recent_sar_cover") or {}
+        executive.append("TRIAGEM ORBITAL SAR ATUAL — "+str(orbital.get("status","N/D")))
+        if orbital.get("status")=="SAR_REAL_EXPERIMENTAL_CANDIDATES":
+            executive.append("Cenas VV/VH realmente lidas: "+str(orbital.get("scene_count"))+
+                             "; aquisição mais recente UTC: "+str(orbital.get("latest_acquisition_utc")))
+            for name,ha in (orbital.get("areas_ha") or {}).items():
+                executive.append("  "+name+": "+format_ptbr(ha,2)+" ha — candidato SAR experimental")
+            executive.append("Mapa de radar atual: "+str(orbital.get("raster_path")))
+            executive.append("ATENÇÃO: candidatos SAR não são áreas de soja/nativa confirmadas; não somar ao mapa anual.")
+        else:
+            executive.append("SAR atual N/D — "+str(orbital.get("reason","cenas/pixels indisponíveis"))[:190])
         # A mostly urban classification in an operator-supplied agricultural AOI
         # is a QA anomaly, not permission to erase real class-24 pixels or
         # relabel them as crops from the filename or historical location.
@@ -2018,7 +2029,7 @@ class App(tk.Tk):
             groups=d.get("vegetacao") or []
             l1=next((x.get("classes",[]) for x in groups if str(x.get("campo","")).casefold()=="legenda_1"),[])
             coverage=" | ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in l1)
-            mix=("Composição IBGE: "+coverage) if coverage else "Composição IBGE indisponível"
+            mix=("Composição IBGE POTENCIAL (percentuais NÃO são vegetação atual): "+coverage) if coverage else "Composição IBGE indisponível"
             self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else "")+"\\n"+mix)
         btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d.get("biomas",[]))
         code_txt="\\n".join(f"  código {x.get('code') or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))

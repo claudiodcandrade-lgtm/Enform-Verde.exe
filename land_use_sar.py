@@ -920,6 +920,13 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         summary['native_sar_experimental']={
             'status':'ERROR','reason':type(exc).__name__+': '+str(exc)[:400],
             'native_presence_confirmed':False,'probability':None,'accuracy':None}
+    # Current Sentinel-1 time-series candidates are produced separately from
+    # accepted land-cover totals and from annual MapBiomas reference polygons.
+    try:
+        from recent_sar_landcover import run_recent_sar_screen
+        summary['recent_sar_cover']=run_recent_sar_screen(aoi,outdir)
+    except Exception as exc:
+        summary['recent_sar_cover']={'status':'N/D','reason':type(exc).__name__+': '+str(exc)[:200]}
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
     summary.update({'warnings':warnings,'validation':validation,'vector_path':str(vector_path),
@@ -952,6 +959,17 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
         lines.append('Triagem SAR experimental indisponível: '+str(exp.get('reason') or exp.get('status')))
     elif exp.get('status')=='N/D':
         lines.append('Triagem SAR experimental indisponível: '+str(exp.get('reason')))
+    orbital=summary.get('recent_sar_cover') or {}
+    lines.append('SAR ATUAL ORBITAL (NÃO SOMAR COM MAPBIOMAS): '+str(orbital.get('status','N/D')))
+    if orbital.get('status')=='SAR_REAL_EXPERIMENTAL_CANDIDATES':
+        lines.append('  Cenas reais VV/VH: '+str(orbital.get('scene_count'))+'; mais recente UTC: '+str(orbital.get('latest_acquisition_utc')))
+        for n,a in (orbital.get('areas_ha') or {}).items():
+            lines.append('  '+n+': '+fmt(a)+' ha — candidato não validado')
+        lines.append('  GeoTIFF SAR: '+str(orbital.get('raster_path')))
+        lines.append('  GeoJSON SAR: '+str(orbital.get('vector_path')))
+        lines.append('  NÃO confirmar vegetação nativa nem lavouras a partir de limiares heurísticos.')
+    else:
+        lines.append('  Não houve pixels orbitais suficientes: '+str(orbital.get('reason','N/D')))
     validation=summary.get('validation') or {}
     for level,report in [('classe',validation),('grupo',validation.get('parent_validation',{}))]:
         for label,gate in report.get('gates',{}).items():
