@@ -591,6 +591,35 @@ def zonal_soil(gdf,raster_path):
     if len(vals)==0: raise ValueError("O raster de solo não possui pixels válidos na área.")
     return float(np.mean(vals)),float(np.std(vals)),len(vals)
 
+def _attach_embrapa_official_soc_bounds(gdf, stock_result, stock_paths):
+    """Attach official marginal prediction bounds without erasing valid SOC."""
+    top = stock_result.get("0–100 cm") or {}
+    if top.get("tc_ha") is None:
+        return stock_result
+    try:
+        from soil_soc_official_uncertainty import fetch_official_bounds
+        from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
+        bounds = fetch_official_bounds(gdf.to_crs(4326).geometry.union_all())
+        measured = mapped_soil_0_100_on_polygon(
+            gdf, stock_paths, official_bound_paths=bounds["paths"],
+            official_provenance=bounds["provenance"])
+        verified = measured.get("0–100 cm") or {}
+        if verified.get("tc_ha") is None or abs(verified["tc_ha"]-top["tc_ha"])>1e-5:
+            raise ValueError("Estoque divergiu ao validar os limites oficiais")
+        status = verified.get("official_uncertainty") or {}
+        if status.get("status") != "ENVELOPE_MARGINAL_OFICIAL":
+            raise ValueError(status.get("reason") or "Limites oficiais incompletos")
+    except Exception as exc:
+        status = {"status":"N/D",
+                  "reason":type(exc).__name__+": "+str(exc).split("https://")[0][:180],
+                  "predictive_uncertainty_quantified":False}
+    top["official_uncertainty"] = status
+    top["predictive_uncertainty_quantified"] = bool(
+        status.get("predictive_uncertainty_quantified"))
+    stock_result.setdefault("_diagnostic",{})["official_uncertainty"] = status
+    return stock_result
+
+
 def pronasolos_soc_profiles(gdf,max_points=36):
     """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha).
     Cumulative 0–30 cm, 0–60 cm and 0–100 cm profiles are computed
@@ -606,7 +635,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     if local_paths:
         local_result=mapped_soil_0_100_on_polygon(gdf,local_paths)
         if local_result.get("0–100 cm",{}).get("tc_ha") is not None:
-            return local_result
+            return _attach_embrapa_official_soc_bounds(gdf,local_result,local_paths)
         local_audit=local_result.get("_diagnostic")
     # Primary online route: download ONLY the polygon window of the five raw
     # official 90 m horizons (Embrapa GeoInfo WCS) and intersect exactly.
@@ -620,7 +649,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
             source_label="Embrapa Solos/PronaSolos 90 m v2021 — rasters brutos via WCS GeoInfo")
         wcs_result.setdefault("_diagnostic",{})["wcs_provenance"]=acquired["provenance"]
         if wcs_result.get("0–100 cm",{}).get("tc_ha") is not None:
-            return wcs_result
+            return _attach_embrapa_official_soc_bounds(gdf,wcs_result,acquired["paths"])
         wcs_audit=wcs_result.get("_diagnostic")
     except Exception as exc:
         wcs_audit={"target_status":"WCS_INDISPONIVEL","reason":type(exc).__name__+": "+str(exc)[:300]}
