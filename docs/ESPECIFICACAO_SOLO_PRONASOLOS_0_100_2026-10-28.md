@@ -193,3 +193,7 @@ Correção em `desktop_app.py::_schedule_offline_map_fit`: remoção de callback
 
 ## INTEGRAÇÃO V87.12 — ISOLAMENTO CARTOGRÁFICO E ACEITE
 A falha de visualização corrigida em desktop_app.py não deve bloquear consultas de SOC nas cinco camadas 0–100 cm de uma AOI válida. A regressão específica passou por ajuste de sintaxe no commit 7367eb1d e necessita CI pós-correção. Não modificar equações, profundidades, controle NoData ou incerteza; em falha real de serviço, publicar N/D justificado, mantendo a geometria carregada.
+
+
+## SINCRONIZAÇÃO V87.13 — 05/11/2026
+A revisão do gate de documentos em tools/check_docs_updated.py não modifica fórmulas ou fontes oficiais do estoque de solo 0–100 cm. Uma atualização funcional posterior deve obrigatoriamente sincronizar esta especificação e os demais documentos no mesmo commit ou mais tarde, antes do aceite. A correção CAR/KML e os testes de mapa independentes seguem sem impacto sobre os cinco horizontes 0–5, 5–15, 15–30, 30–60, 60–100 cm, as interseções EPSG:6933 e as incertezas publicáveis.
