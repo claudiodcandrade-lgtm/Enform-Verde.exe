@@ -4,7 +4,7 @@ on:
     branches:
       - feature/agricultural-identification-native-carbon
     paths:
-      - docs/spec_updates/2026-11-05_v86_pre_field_model_estimates.md
+      - docs/spec_updates/2026-11-05_v87_release_hardening_and_prefield_validation.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -27,11 +27,11 @@ jobs:
         run: |
           python tools/update_spec_docx.py \
             --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-            --entry docs/spec_updates/2026-11-05_v86_pre_field_model_estimates.md \
-            --baseline "Enform Verde 3.26.0-SOLO-SAFRA (v86 estimativas modeladas para verificacao em campo)" \
+            --entry docs/spec_updates/2026-11-05_v87_release_hardening_and_prefield_validation.md \
+            --baseline "Enform Verde 3.26.1-PRECAMPO-EXPERIMENTAL (v87 modelo pre-campo e blindagem de liberacao experimental)" \
             --head-sha "${{ github.sha }}" \
             --code-sha "${{ github.sha }}" \
-            --date "4 de novembro de 2026"
+            --date "5 de novembro de 2026"
       - name: Verify DOCX archive and preserve previous content
         run: |
           python - <<'PY'
@@ -42,7 +42,7 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert 'PREVISÃO REGIONAL DE SOJA' in xml
-              assert 'REVISÃO V86' in xml
+              assert 'REVISÃO V87' in xml
               assert 'ESPECIFICACAO' not in xml[:0]
           print('Word specification updated with Sinop checkpoint and archive validated')
           PY
@@ -51,5 +51,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: synchronize Word with v86 pre-field model predictions"
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with v87 pre-field experimental release controls"
           git push origin HEAD:feature/agricultural-identification-native-carbon
