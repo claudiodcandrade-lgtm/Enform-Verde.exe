@@ -52,7 +52,7 @@ def discover_official_bounds(data):
         if not side:continue
         for d in DEPTHS:
             a,b=d.split("-")
-            if re.search(r"(?<!\\d)0*"+a+r"\\s+(?:to\\s+|a\\s+)?0*"+b+r"(?:\\s*cm)?\\b",text):
+            if re.search(r"(?<!\d)0*"+a+r"\s+(?:to\s+|a\s+)?0*"+b+r"(?:\s*cm)?\b",text):
                 key=(side,d)
                 if key in candidates and candidates[key] != ident:candidates[key]=None
                 else:candidates.setdefault(key,ident)
