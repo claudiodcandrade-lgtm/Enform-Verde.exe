@@ -26,3 +26,10 @@ Quadrantes arbitrários acrescentariam várias chamadas e montagens para proprie
 - ESA Sentinel-2 Product Specification (B2/B3/B4 a 10 m): https://sentinels.copernicus.eu/documents/d/sentinel/sentinel-2-products-specification-document-15_1
 - Sentinel-2 COGs públicos AWS: https://registry.opendata.aws/sentinel-2-l2a-cogs/
 - Earth Search STAC: https://github.com/Element84/earth-search
+
+
+## Complemento V87.8 — leitura RGB concorrente limitada
+
+As bandas RGB dos COGs ópticos Sentinel-2 têm leituras remotas independentes. O cliente lê vermelho, verde e azul simultaneamente com no máximo três workers, usando janela COG por HTTP range e reamostragem direta para a dimensão do canvas. O limite fixo evita concorrência irrestrita; a saída e a semântica de cor continuam com a mesma ordem de bandas. O restante do app não espera a rede, pois o mapa roda em worker separado.
+
+Teste de contrato exige limite de três workers, leitura pelo window=win e out_shape igual ao canvas. Não alegar aceleração numérica sem benchmark. A otimização afeta somente carregamento da visualização óptica e não altera SAR, resultados analíticos ou interpretação.
