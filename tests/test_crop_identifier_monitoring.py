@@ -41,39 +41,44 @@ class MonitoringTests(unittest.TestCase):
         {"class_name": "Lavoura de Café", "source": "MAPBIOMAS", "area_ha": 5.0},
         {"class_name": "Formação Florestal", "source": "MAPBIOMAS", "area_ha": 50.0}]}
 
-    def test_land_result_parsing(self):
-        self.assertEqual(crops_in_land_result(self.land), {"Soja": 120.0, "__temporarias__": 30.0, "Café": 5.0})
+    def test_mapbiomas_is_historical_not_current_crop_identification(self):
+        self.assertEqual(crops_in_land_result(self.land), {})
+        sar = {"classes": [
+            {"class_name": "Lavoura de Soja", "source": "SAR_VALIDADO", "area_ha": 12.0},
+            {"class_name": "Lavoura de Café", "source": "MAPBIOMAS", "area_ha": 5.0}]}
+        self.assertEqual(crops_in_land_result(sar), {"Soja": 12.0})
 
-    def test_monitoring_lines_use_vigor_and_forecast_and_attribution(self):
+    def test_mapbiomas_reference_cannot_trigger_vigor_or_yield(self):
         g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
-        vig = lambda gdf, as_of, code: {"status": "experimental", "class": "alto vigor", "acquisition_utc": "2026-10-31T09:16:48Z",
-                                         "probabilities": {"baixo vigor": .0, "vigor adequado": .2, "alto vigor": .8}}
-        seen = {}
-        def fake_forecast(fields, as_of):
-            seen["vigor"] = fields[0]["vigor"]; seen["area"] = fields[0]["area_ha"]
-            return {"status": "ok", "model": "panel", "model_label": "TESTE", "fields": {}}
-        lines, audit = monitoring_forecast(g, self.land, as_of=date(2026, 10, 31), vigor_fn=vig, forecast_fn=fake_forecast)
-        txt = "\n".join(lines)
-        # Even an injected vigor function must not receive a mixed AOI
-        # merely because its annual map contains a soybean class: without
-        # an actual crop polygon this is not a verified soybean field.
-        self.assertIn("Vigor automático: N/D", txt)
-        self.assertIn("sem máscara vetorial da cultura", txt)
-        self.assertIn("cultura NÃO identificada", txt)
-        self.assertIn("sem modelo calibrado", txt)                 # café has no calibrated model
-        self.assertEqual(seen["area"], 120.0)
-        self.assertEqual(seen["vigor"]["status"], "N/D")
-
-    def test_vigor_failure_does_not_stop_forecast(self):
-        g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
-        def bad(*a): raise RuntimeError("offline")
         called = {}
         def fake_forecast(fields, as_of):
-            called["v"] = fields[0]["vigor"]; return {"status": "N/D", "fields": {}}
-        lines, _ = monitoring_forecast(g, {"classes": [self.land["classes"][0]]}, as_of=date(2026, 10, 31),
-                                       vigor_fn=bad, forecast_fn=fake_forecast)
-        self.assertIn("Vigor automático: N/D", "\n".join(lines)); self.assertEqual(called["v"]["status"], "N/D")
-
+            called["forecast"] = True
+            return {"status": "ok", "model": "panel", "production": {}}
+        lines, audit = monitoring_forecast(
+            g, self.land, as_of=date(2026, 10, 31), forecast_fn=fake_forecast)
+        txt = "\n".join(lines)
+        self.assertIn("Cultura atual: N/D", txt)
+        self.assertIn("referência histórica", txt)
+        self.assertIn("Vigor: N/D", txt)
+        self.assertIn("Produtividade e produção da propriedade: N/D", txt)
+        self.assertNotIn("Produtividade provável:", txt)
+        self.assertNotIn("Soja (120", txt)
+        self.assertNotIn("forecast", called)
+        self.assertEqual(audit["current_crop_identification"], "N/D")
+    def test_vigor_failure_blocks_forecast_even_with_mapbiomas_area(self):
+        g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
+        called = {}
+        def bad(*a): raise RuntimeError("offline")
+        def fake_forecast(fields, as_of):
+            called["forecast"] = True
+            return {"status": "ok"}
+        lines, audit = monitoring_forecast(
+            g, {"classes": [self.land["classes"][0]]},
+            as_of=date(2026, 10, 31), vigor_fn=bad, forecast_fn=fake_forecast)
+        text = "\n".join(lines)
+        self.assertIn("Cultura atual: N/D", text)
+        self.assertNotIn("forecast", called)
+        self.assertEqual(audit["current_crop_identification"], "N/D")
 
 class AutomaticVigorGuardTests(unittest.TestCase):
     def test_no_scene_is_nd(self):
