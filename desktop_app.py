@@ -837,6 +837,62 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
     return {"image":view,"polygons":polygons,"scene_id":it.get("id"),"datetime":dt,"cloud_cover":cloud,
             "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual"}
 
+
+def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """Keyless public NASA GIBS VIIRS true-color preview; visual context only."""
+    from datetime import timedelta
+    from PIL import ImageDraw
+    g=gdf.to_crs(4326).copy()
+    minx,miny,maxx,maxy=map(float,g.total_bounds)
+    dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8)
+    cx=(minx+maxx)/2; cy=(miny+maxy)/2
+    factor=max(0.30,min(8.0,float(extent_factor)))
+    west,east=cx-dx*factor/2,cx+dx*factor/2
+    south,north=cy-dy*factor/2,cy+dy*factor/2
+    # Keep the requested image proportions while accounting for longitude scale.
+    ratio=max(0.1,float(out_w))/max(1.0,float(out_h))
+    coslat=max(0.25,math.cos(math.radians(cy)))
+    lon_span=max(east-west,1e-8); lat_span=max(north-south,1e-8)
+    if lon_span*coslat/lat_span < ratio:
+        lon_span=lat_span*ratio/coslat
+        west,east=cx-lon_span/2,cx+lon_span/2
+    else:
+        lat_span=lon_span*coslat/ratio
+        south,north=cy-lat_span/2,cy+lat_span/2
+    width=max(320,min(1600,int(out_w))); height=max(240,min(1200,int(out_h)))
+    endpoint="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
+    today=datetime.now(timezone.utc).date()
+    errors=[]
+    for days_back in range(1,8):
+        day=(today-timedelta(days=days_back)).isoformat()
+        params={"SERVICE":"WMS","VERSION":"1.1.1","REQUEST":"GetMap",
+                "LAYERS":"VIIRS_SNPP_CorrectedReflectance_TrueColor","STYLES":"",
+                "FORMAT":"image/jpeg","TRANSPARENT":"FALSE","SRS":"EPSG:4326",
+                "BBOX":f"{west:.8f},{south:.8f},{east:.8f},{north:.8f}",
+                "WIDTH":str(width),"HEIGHT":str(height),"TIME":day}
+        try:
+            rr=requests.get(endpoint,params=params,timeout=(8,30))
+            rr.raise_for_status()
+            if "image" not in (rr.headers.get("Content-Type") or "").lower():
+                raise RuntimeError("NASA GIBS não retornou imagem")
+            im=Image.open(io.BytesIO(rr.content)).convert("RGB")
+            d=ImageDraw.Draw(im,"RGBA"); iw,ih=im.size
+            def px(lon,lat):
+                return ((float(lon)-west)/max(east-west,1e-12)*iw,
+                        (north-float(lat))/max(north-south,1e-12)*ih)
+            for geom in g.geometry:
+                geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    pts=[px(lon,lat) for lon,lat in poly.exterior.coords]
+                    if len(pts)>=4:
+                        d.polygon(pts,fill=(255,138,0,32),outline=(255,138,0,255))
+                        d.line(pts,width=max(2,round(iw/500)),fill=(255,138,0,255),joint="curve")
+            return {"image":im.resize((int(out_w),int(out_h),),Image.Resampling.LANCZOS),
+                    "datetime":day,"provider":"NASA GIBS / VIIRS SNPP true color"}
+        except Exception as exc:
+            errors.append(f"{day}: {type(exc).__name__}: {exc}")
+    raise RuntimeError("NASA GIBS sem imagem disponível nos últimos 7 dias: "+" | ".join(errors[-2:]))
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
@@ -964,7 +1020,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Mapa online (Google pode gerar cobrança); IBGE offline só se as fontes online falharem.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Sem chave: Sentinel-2 / NASA GIBS públicos; IBGE offline se as fontes online falharem.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1145,6 +1201,11 @@ class App(tk.Tk):
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2: "+str(e))
+            try:
+                p=nasa_gibs_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                self._map_queue.put((generation,p["image"],[],p["provider"],None,f"NASA GIBS • VIIRS SNPP • {(p.get('datetime') or '')}",None))
+                return
+            except Exception as e:errors.append("NASA GIBS: "+str(e))
             try:
                 view=esri_export(rs,"World_Imagery","Esri World Imagery")
                 self._map_queue.put((generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None))
