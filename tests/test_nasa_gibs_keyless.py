@@ -38,10 +38,12 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
     def test_keyless_optical_previews_run_before_esri_and_offline_fallback(self):
         source = self._function_source("show_google_map")
         earthsearch = source.index("sentinel2_earthsearch_preview(")
+        planetary = source.index("sentinel2_preview(")
         nasa = source.index("nasa_gibs_preview(")
         esri_imagery = source.index('esri_export(rs,"World_Imagery"')
         offline = source.index("offline_brazil_preview(")
-        self.assertLess(earthsearch, nasa)
+        self.assertLess(earthsearch, planetary)
+        self.assertLess(planetary, nasa)
         self.assertLess(nasa, esri_imagery)
         self.assertLess(esri_imagery, offline)
 
