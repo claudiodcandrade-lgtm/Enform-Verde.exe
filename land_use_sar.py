@@ -878,13 +878,15 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                          'MapBiomas anual apenas REFERÊNCIA HISTÓRICA para lacunas, '
                          'não prova uso atual; IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível; '
                          'sem evidência SAR atual manter cultura atual N/D.')
+    has_validated_sar = any(str(layer.get("source") or "").startswith("SAR_VALIDADO")
+                            for layer in layers)
     summary['current_sar_crop_identification'] = (
-        'CLASSIFICACAO_SAR_VALIDADA' if layers else
+        'CLASSIFICACAO_SAR_VALIDADA' if has_validated_sar else
         'N/D_SEM_MODELO_EXECUTAVEL_VALIDADO')
     summary['worldwide_candidate_sources'] = (
         ['ESA WorldCereal/Presto', 'agroimpacts LSTM/CNN',
          'WorldCereal RDM', 'Radiant MLHub', 'EuroCropsML optico']
-        if not layers else [])
+        if not has_validated_sar else [])
     metadata=(validation or {}).get('class_metadata',{})
     polygons['native_status']=[native_class(r.class_name,r.source,metadata) for r in polygons.itertuples()]
     for row in summary['classes']:
@@ -897,15 +899,18 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                       "Uso agropecuário/cultivado" if value is False else "Não classificado")
     native_rows=[row for row in summary['classes'] if row['native_status'] is True]
     native_area=sum(float(row['area_ha']) for row in native_rows)
+    sar_native_rows=[row for row in native_rows
+                     if str(row.get('source') or '').startswith('SAR_VALIDADO')]
+    sar_native_area=sum(float(row['area_ha']) for row in sar_native_rows)
     summary['native_occurrence']={
-        "status":"detected_cartographically" if native_area>0 else ("not_detected_in_mapped_classes" if not mapbiomas_failure else "not_verifiable"),
-        "label":"Vegetação nativa — ocorrência cartográfica genérica",
-        "area_ha":native_area,
-        "area_pct_aoi":(100.0*native_area/summary['area_aoi_ha'] if summary['area_aoi_ha'] else None),
-        "source":"MapBiomas C11 / classes de vegetação natural, complementado por SAR elegível quando aplicável",
+        "status":"detected_by_validated_SAR" if sar_native_area>0 else "N/D_NOT_VERIFIABLE_WITHOUT_VALIDATED_SAR",
+        "label":"Vegetação nativa — somente máscara de classificador SAR validado",
+        "area_ha":sar_native_area if sar_native_area>0 else None,
+        "area_pct_aoi":(100.0*sar_native_area/summary['area_aoi_ha'] if sar_native_area>0 and summary['area_aoi_ha'] else None),
+        "source":"classificador SAR com validação independente" if sar_native_area>0 else "N/D — MapBiomas é somente referência anual e IBGE somente nomeia fitofisionomia por proximidade",
         "field_confirmed":False,
-        "native_class_breakdown":[{"class_name":row["class_name"],"area_ha":row["area_ha"],"source":row["source"]} for row in native_rows],
-        "diversified_property_with_native_and_other_use":bool(native_area>0 and any(row['native_status'] is False for row in summary['classes']))
+        "native_class_breakdown":[{"class_name":row["class_name"],"area_ha":row["area_ha"],"source":row["source"]} for row in sar_native_rows],
+        "diversified_property_with_native_and_other_use":bool(sar_native_area>0 and any(row['native_status'] is False for row in summary['classes']))
     }
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r['native_status'] is None)
     outdir=Path(output_dir);outdir.mkdir(parents=True,exist_ok=True)
