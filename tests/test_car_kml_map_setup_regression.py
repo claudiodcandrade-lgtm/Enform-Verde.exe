@@ -105,7 +105,7 @@ class TestCarKmlMapSetup(unittest.TestCase):
             calls = [n.func.attr for n in ast.walk(funcs[name]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)]
             self.assertIn("_show_geom",calls)
         self.assertIn("_schedule_offline_map_fit", [n.func.attr for n in ast.walk(funcs["_show_geom"]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)])
-        self.assertIn("_poll_ibge",[n.func.attr for n in ast.walk(funcs["_show_geom"]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)])
+        self.assertTrue(any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "after" and any(isinstance(arg, ast.Attribute) and arg.attr == "_poll_ibge" for arg in n.args) for n in ast.walk(funcs["_show_geom"])))
 
 if __name__ == "__main__":
     unittest.main()
