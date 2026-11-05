@@ -2442,6 +2442,24 @@ class App(tk.Tk):
                    for r in pedo.get("soil_mapping_units") or []]
         put(sh,pedo_rows or [["N/D",None,None,None,None,pedo.get("source"),
                              None,pedo.get("reason") or "Cartografia não recuperada"]])
+        fertility=self.project.get("soil_fertility") or {}
+        sh=wb.create_sheet("Fertilidade do Solo")
+        setup(sh,"Enform Verde — estimativas cartográficas Embrapa 90 m (não são análises de laboratório)")
+        for j,h in enumerate(["Unidade cartográfica","Atributo","Profundidade cm","Média predita",
+                              "Unidade","DP espacial (não IC95%)","Pixels","Área mapeada ha",
+                              "Cobertura %","Erro preditivo","Cobertura WCS","SHA256 raster"],1):
+            sh.cell(3,j,h).value=h
+        rows_fert=[]
+        for unit_name,measurements in (fertility.get("units") or {}).items():
+            for measure in measurements:
+                if measure.get("mean") is not None:
+                    rows_fert.append([unit_name,measure.get("label"),measure.get("depth_cm"),
+                                     measure.get("mean"),measure.get("unit"),measure.get("spatial_sd"),
+                                     measure.get("valid_pixels"),measure.get("mapped_area_ha"),
+                                     measure.get("coverage_pct"),measure.get("uncertainty"),
+                                     measure.get("wcs_coverage_id"),measure.get("raster_sha256")])
+        put(sh,rows_fert or [["N/D",fertility.get("reason") or "sem pixels numéricos oficiais",
+                             None,None,None,None,None,None,None,"N/D",None,None]])
         land=self.project.get("land_use")
         if land:
             sh=wb.create_sheet("Uso do Solo"); setup(sh,"Enform Verde — classes de uso e cobertura")
