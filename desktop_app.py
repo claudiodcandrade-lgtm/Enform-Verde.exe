@@ -838,6 +838,76 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
             "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual"}
 
 
+
+def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """Keyless Sentinel-2 L2A RGB preview from anonymous Earth Search/AWS COG assets."""
+    import rasterio
+    from rasterio.warp import transform_bounds, transform
+    from rasterio.windows import from_bounds
+    from PIL import ImageDraw
+    g=gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
+    body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    rr=requests.post("https://earth-search.aws.element84.com/v1/search",
+                     json=body,timeout=(8,25))
+    rr.raise_for_status()
+    items=rr.json().get("features",[])
+    choices=[]
+    for item in items:
+        assets=item.get("assets") or {}
+        if not all((assets.get(k) or {}).get("href") for k in ("red","green","blue")):continue
+        props=item.get("properties") or {}
+        cloud=float(props.get("eo:cloud_cover",100.0) if props.get("eo:cloud_cover") is not None else 100.0)
+        dt=str(props.get("datetime") or "")
+        choices.append((cloud,dt,item,assets))
+    if not choices:raise RuntimeError("Earth Search não retornou cena Sentinel-2 L2A RGB pública para a AOI.")
+    low=[x for x in choices if x[0]<=20.0]
+    cloud,dt,item,assets=(sorted(low,key=lambda x:x[1],reverse=True)[0] if low
+                          else sorted(choices,key=lambda x:(x[0],x[1]))[0])
+    bounds=tuple(map(float,g.total_bounds))
+    bx=transform_bounds("EPSG:4326",assets["red"].get("proj:epsg") and f"EPSG:{assets['red']['proj:epsg']}" or "EPSG:4326",*bounds,densify_pts=21)
+    # The authoritative COG grid CRS and transform are read from the red band.
+    with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+        with rasterio.open(assets["red"]["href"]) as red_src:
+            crs=red_src.crs
+            if crs is None:raise RuntimeError("COG Sentinel-2 Earth Search sem CRS.")
+            minx,miny,maxx,maxy=transform_bounds("EPSG:4326",crs,*bounds,densify_pts=21)
+            dx=max(maxx-minx,1.0); dy=max(maxy-miny,1.0); factor=max(0.30,min(8.0,float(extent_factor)))
+            cx=(minx+maxx)/2; cy=(miny+maxy)/2
+            wb=(cx-dx*factor/2,cy-dy*factor/2,cx+dx*factor/2,cy+dy*factor/2)
+            win=from_bounds(*wb,transform=red_src.transform).round_offsets().round_lengths()
+            win=win.intersection(rasterio.windows.Window(0,0,red_src.width,red_src.height))
+            if win.width<1 or win.height<1:raise RuntimeError("Cena Sentinel-2 não cobre a AOI.")
+            target_ratio=max(0.1,float(out_w))/max(1.0,float(out_h))
+            out_width=max(320,min(1600,int(out_w))); out_height=max(240,min(1200,int(out_h)))
+            rgb=[]
+            for band in ("red","green","blue"):
+                with rasterio.open(assets[band]["href"]) as src:
+                    if src.crs!=crs:raise RuntimeError("Bandas Sentinel-2 Earth Search com CRS incompatível.")
+                    arr=src.read(1,window=win,out_shape=(out_height,out_width),
+                                 resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
+                    rgb.append(arr)
+            stack=np.stack(rgb,axis=2).astype(np.float32)
+            valid=stack[np.isfinite(stack)&(stack>0)]
+            hi=float(np.percentile(valid,99)) if valid.size else 1.0
+            image=Image.fromarray(np.clip(stack/max(hi,1e-9)*255,0,255).astype(np.uint8),"RGB")
+            from rasterio.windows import transform as window_transform
+            wt=window_transform(win,red_src.transform)
+            polygons=[]
+            for geom0 in g.geometry:
+                geoms=list(geom0.geoms) if geom0.geom_type=="MultiPolygon" else ([geom0] if geom0.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    coords=list(poly.exterior.coords); lon=[p[0] for p in coords]; lat=[p[1] for p in coords]
+                    xx,yy=transform("EPSG:4326",crs,lon,lat); pts=[]
+                    for x,y in zip(xx,yy):
+                        col,row=(~wt)*(x,y)
+                        pts.extend([float(col)*out_width/max(float(win.width),1.0),
+                                    float(row)*out_height/max(float(win.height),1.0)])
+                    if len(pts)>=6:polygons.append(pts)
+    return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
+            "polygons":polygons,"datetime":dt,"cloud_cover":cloud,
+            "provider":"Sentinel-2 L2A / Earth Search AWS public COGs"}
+
 def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     """Keyless public NASA GIBS VIIRS true-color preview; visual context only."""
     from datetime import timedelta
@@ -1020,7 +1090,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Sem chave: Sentinel-2 / NASA GIBS públicos; IBGE offline se as fontes online falharem.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Sem chave: Sentinel-2 público + NASA GIBS; IBGE offline se serviços online falharem.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1200,7 +1270,13 @@ class App(tk.Tk):
                 copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
-            except Exception as e:errors.append("Sentinel-2: "+str(e))
+            except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
+            try:
+                p=sentinel2_earthsearch_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                copyright=f"Sentinel-2 L2A • Earth Search/AWS • {(p.get('datetime') or '')[:10]} • nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
+                return
+            except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
             try:
                 p=nasa_gibs_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
                 self._map_queue.put((generation,p["image"],[],p["provider"],None,f"NASA GIBS • VIIRS SNPP • {(p.get('datetime') or '')}",None))
