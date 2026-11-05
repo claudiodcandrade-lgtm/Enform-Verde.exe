@@ -3719,3 +3719,18 @@ Não declarar ganho percentual de velocidade sem benchmark controlado. Exigir re
 Preservar processamento SAR, identificação de uso, carbono por fitofisionomia, solos 0–100 cm, auditoria e rotas offline. Investigar novas otimizações somente com perfilamento do fluxo completo e comparações de saída; qualquer cache deve ter chave por fonte/versão, AOI, parâmetros e validade, sem reusar resultados de análises diferentes.
 
 Estado desta revisão: alteração incorporada no código; testes/build do SHA final ainda pendentes. O status experimental pré-campo permanece; homologação científica independente não é inferida de testes de software.
+
+
+### REVISÃO V87.4 — GOOGLE SATÉLITE ONLINE E MAPA OFFLINE SOB DEMANDA — 05/11/2026
+
+Código no PR #50, branch `feature/agricultural-identification-native-carbon`: commit `791a3d91a4bba8585761c740228489ddcca8080f` (prioridade de fontes online) e `c49535ce025b2e0ad0c47cad97d4bdfa3e64f30b` (viewport ampliado e proporção preservada). A agregação MapBiomas em blocos permanece no histórico V87.3.
+
+Ao carregar uma AOI, mostrar primeiro o contorno leve e iniciar a visualização online em segundo plano. Com chave, consultar primeiro Google Maps Static API em `maptype=satellite`; se não houver chave ou o pedido falhar, tentar Sentinel-2 e serviços Esri. Rasterizar o mapa vetorial IBGE offline somente quando todas as fontes online falharem. Manter o pacote IBGE offline como fallback para ausência de rede/serviço; não removê-lo.
+
+A imagem Google é exclusivamente cartográfica e não entra na identificação de cultura/nativa, classificação, SAR, cálculo de biomassa ou carbono. Não armazenar nem reutilizar conteúdo de imagem fora das regras da API. A chave deve ser fornecida por variável `GOOGLE_MAPS_API_KEY` ou pela configuração local do aplicativo, nunca gravada no código. Informar que o uso requer API Maps Static habilitada e faturamento ativo, pode gerar cobrança por carregamento, e recomenda-se restringir a chave à API utilizada.
+
+O viewport do mapa passou de 420 para 560 pixels de altura. A solicitação à API calcula largura/altura até o limite 640×640 mantendo a proporção do viewport; a imagem retornada é redimensionada para a área visível sem esticar. Solicitações online seguem em worker para não bloquear a interface. A abertura/visualização pode ficar mais rápida por deixar de rasterizar o mapa offline no caminho normal; não afirmar que isto acelera cálculos SAR/biomassa/solo.
+
+Gate: build Windows e testes de interface no SHA final; confirmar mapa Google com chave válida, ausência de chave, falha Google com fallback online, falha de todas as fontes com fallback IBGE, proporção e viewport ampliado. Confirmar que o mapa online não é consumido por qualquer motor analítico e que o mapa offline continua carregando quando necessário. Estado científico continua experimental, sem alegação de homologação científica nacional.
+
+Referências oficiais: https://developers.google.com/maps/documentation/maps-static/start ; https://developers.google.com/maps/documentation/maps-static/usage-and-billing ; https://developers.google.com/maps/documentation/maps-static/get-api-key .
