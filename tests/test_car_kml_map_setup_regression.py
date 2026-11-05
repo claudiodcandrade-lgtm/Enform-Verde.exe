@@ -64,7 +64,9 @@ class TestCarKmlMapSetup(unittest.TestCase):
                 raise RuntimeError("canvas unavailable")
             def update_idletasks(self):
                 pass
-            def _poll_ibge(self):\n                pass\n            def after(self, delay, callback):
+            def _poll_ibge(self):
+                pass
+            def after(self, delay, callback):
                 self.after_calls.append((delay, callback))
 
         ns = {
