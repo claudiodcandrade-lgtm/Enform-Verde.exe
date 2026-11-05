@@ -3666,3 +3666,29 @@ Base auditada: SHA `2afd26257d122a96b6167dc2b36ecdb29765dc53`. Corrigida a sinal
 - Verificar acesso, metadados, licenças e resolução do WCS oficial e SAR; retornar N/D onde não houver produto e explicar limites; não mascarar ausência de bandas oficiais ou indisponibilidade do mapa.
 - Manter as regras V85 anteriores em vigor para pedologia SiBCS, fertilidade 90 m, SOC 0–100 cm, classificação SAR/IBGE, cultivo/vigor/safra e auditabilidade.
 - **Documentação sincronizada:** `docs/spec_updates/2026-11-05_v86_pre_field_model_estimates.md`, este prompt, prompt histórico V43, especificação do solo 0–100 e Word integral via workflow de sincronização.
+
+
+## REVISÃO V87 — 05/11/2026 — NOVA VERSÃO 3.26.1-PRECAMPO-EXPERIMENTAL, RASTREABILIDADE E TESTES
+
+**Estado da liberação:** candidato à compilação; NÃO declarar executável validado, homologação, certificação de carbono ou acurácia em campo até conclusão dos gates. O produto agora tem identificador de versão `3.26.1-PRECAMPO-EXPERIMENTAL` e `APP_RELEASE_NOTES_v3.26.1.md`. O histórico completo até V86 é preservado.
+
+### Alterações já incorporadas no código
+- `modeled_field_validation.py`: manifesto de previsões de campo por fitofisionomia e compartimento, com origem, método, fórmula, intervalo e `trace_sha256`. Filtro obrigatório para não publicar previsões quando fonte, método ou origem forem `N/D`, `não estimado`, `desconhecido`, `None`, vazios, ou quando a área de aplicação for zero. Valores indisponíveis permanecem N/D; a homologação e cobertura IC95% permanecem falsas até aferição independente.
+- Retenção do intervalo **condicional** de biomassa subterrânea calculado pela equação de Cairns et al. (1997), sem chamá-lo IC95% validado para a AOI. Links/SHAs disponíveis acompanham AGB, inventários regionais, raízes e SOC Embrapa. DOI de Cairns: https://doi.org/10.1007/s004420050201. Ausência de checksum não deve ser descrita como fonte verificada.
+- Excel `Modelo Para Campo` corrigido: onze colunas formatadas, autofiltro A:K e última coluna `Valor medido em campo (EM BRANCO)` mantida vazia. Exportação JSON/CSV continua separada por AOI e o conteúdo é experimental, não medição real.
+- Compilação Windows: SHA exato do commit embutido em `enform_build_source.py`, PyInstaller empacota o modelo, os módulos e suas dependências. O `--module-check` do executável compilado rejeita pacote sem SHA verificável. Workflows de build e dashboard agora cancelam jobs obsoletos do PR; apenas o artefato aprovado no SHA final pode ser distribuído.
+- Cache raster Embrapa WCS mantém verificação por Coverage ID e SHA256; a fertilidade só exibe estatística numericamente observada em pixels dentro da propriedade. SOC Embrapa 0–100 cm permanece por cinco horizontes, sem extrapolar rasters ausentes. Incerteza oficial N/D é diferente de erro zero; envelope de limites marginais não é IC95% conjunto.
+
+### Cálculo e validação futura
+- Carbono por formação natural: `tC = densidade_tC_ha × area_ha_de_intersecao`; `tCO2e = tC × 44/12`. Separar estoque conhecido parcial e cenários experimentais sem dupla contagem.
+- Sempre trabalhar com dados SAR efetivamente processados (banda P prioritária; complementar X, fallback L quando necessário), fitofisionomia IBGE para nomear classes e culturas por identificadores SAR reais onde houver dados. MapBiomas anual e estimativa bibliográfica são caminhos rotulados, não prova de identificação SAR atual.
+- Solo 0–100 cm e fertilidade nacional: médias espaciais por interseção real, fontes e licenças claras, incerteza apropriada disponível e N/D sem fonte. As unidades de mapeamento da Embrapa Solos indicam associações cartográficas, não áreas individuais de cada classe associada.
+- Estimativas de raízes, serapilheira, necromassa e safra podem ser experimentais **quando fundamentadas em dados e modelos aplicáveis**, preservando limitações e intervalos condicionais. Não criar estatística de acurácia onde não houve observação independente.
+- Amostragem posterior em parcelas independentes para verificar MAE, RMSE, viés, R², cobertura de intervalo e estratos de bioma/fitofisionomia. Meta de desenho 95%/5% somente após dimensionamento com CV real. Nenhum campo medido preenchido automaticamente.
+
+### Gates de conclusão obrigatórios
+1. Testes unitários e de regressão no último SHA; validação do Excel e do manifesto pré-campo sem falsificação de observações.
+2. Build Windows 3.26.1; `--self-test`, `--ui-smoke`, `--module-check`, `--visual-check`, teste de aceitação em AOI e dados empacotados; SHA do compilado = SHA testado.
+3. Manifesto SHA256 do EXE e do ZIP e link real para artefato de build aprovado. Workflow `queued`, `pending`, `action_required` ou `failure` NÃO libera pacote.
+4. Homologação independente depende de dados de campo reais; `validation/release_evidence.json` ausente não impede execução de modelo **experimental** mas impede certificá-lo como validado.
+5. Manter Word integral, prompts e especificação de solo atualizados a partir do checkpoint V87: `docs/spec_updates/2026-11-05_v87_release_hardening_and_prefield_validation.md`. Não substituir conteúdo V86 ou anterior.
