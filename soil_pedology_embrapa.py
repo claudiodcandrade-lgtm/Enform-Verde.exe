@@ -154,13 +154,56 @@ def intersect_soil_units(aoi,features,*,service=SERVICE):
         "not_available":["V%","P disponível","K trocável","Ca trocável","Mg trocável","SB"],
         "method":"Área = área de interseção AOI × unidade cartográfica, projetada em EPSG:6933 / 10000"}
 
-def analyze_embrapa_pedology(aoi,*,fetcher=None):
+def exclusive_soil_unit_zones(aoi, features):
+    """Return exclusive AOI-clipped map-unit geometries for independent 90 m zonal stats.
+
+    Map-unit labels may contain associations; individual component areas are
+    NEVER inferred. This function preserves the exact order used for the
+    pedological area accounting in intersect_soil_units.
+    """
+    import geopandas as gpd
+    from shapely.geometry import shape
+    from shapely.ops import unary_union
+    _, metric = _validate_geo(aoi)
+    items = []
+    for feature in features.get("features", []):
+        try:
+            geom = shape(feature.get("geometry"))
+            attrs = feature.get("properties") or {}
+            label = str(attrs.get("leg_desc") or attrs.get("simbolos") or "").strip()
+            symbol = str(attrs.get("simbolos") or "").strip()
+            if geom.is_empty or not label:
+                continue
+            items.append((geom, label, symbol))
+        except (TypeError, ValueError, KeyError):
+            raise ValueError("Geometria pedológica inválida para estatística por unidade")
+    if not items:
+        return []
+    projected = gpd.GeoSeries([item[0] for item in items],crs=4326).to_crs(6933)
+    remaining = metric.buffer(0)
+    grouped = {}
+    for (_,label,symbol),geom in zip(items,projected):
+        cut = remaining.intersection(geom)
+        if cut.is_empty or cut.area <= 1e-4:
+            continue
+        remaining = remaining.difference(cut)
+        grouped.setdefault((label,symbol),[]).append(cut)
+    return [(label+" ["+symbol+"]" if symbol else label,
+             gpd.GeoDataFrame(geometry=[unary_union(polys)],crs=6933))
+            for (label,symbol),polys in grouped.items()]
+
+
+def analyze_embrapa_pedology(aoi,*,fetcher=None,with_zones=False):
     try:
         features=(fetcher or fetch_embrapa_units)(aoi)
-        return intersect_soil_units(aoi,features)
+        result=intersect_soil_units(aoi,features)
+        if with_zones:
+            return result,(exclusive_soil_unit_zones(aoi,features) if result.get("status")=="MAPEAMENTO_REGIONAL" else [])
+        return result
     except Exception as exc:
         # URLs from remote requests are not included in user-facing diagnostics.
-        return unavailable(type(exc).__name__+": "+str(exc).split("https://")[0])
+        failure=unavailable(type(exc).__name__+": "+str(exc).split("https://")[0])
+        return (failure,[]) if with_zones else failure
 
 def pedology_report_lines(result,fmt):
     lines=["","CLASSIFICAÇÃO PEDOLÓGICA — EMBRAPA SOLOS / PRONASOLOS (NÃO É ESTOQUE DE CARBONO)"]
