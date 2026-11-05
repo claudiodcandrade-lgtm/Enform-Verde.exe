@@ -844,79 +844,133 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
 
 
 def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
-    """Keyless Sentinel-2 L2A RGB preview from anonymous Earth Search/AWS COG assets."""
+    """Real Sentinel-2 RGB COG pixels, scene fallback and pixel-aligned AOI overlay.
+
+    Search results are only candidates: an actual three-band raster read with
+    nonblank pixels is required before declaring any image loaded.
+    """
+    import time
     import rasterio
-    from rasterio.warp import transform_bounds, transform
-    from rasterio.windows import from_bounds
-    from PIL import ImageDraw
-    g=gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
-    body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
+    from rasterio.warp import transform_bounds, transform, reproject, Resampling
+    from rasterio.windows import from_bounds, Window
+    g=gdf.to_crs(4326).copy()
+    geom=g.geometry.union_all().__geo_interface__
+    body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":60,
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
-    rr=requests.post("https://earth-search.aws.element84.com/v1/search",
-                     json=body,timeout=(8,25))
-    rr.raise_for_status()
-    items=rr.json().get("features",[])
+    errors=[]
+    response=None
+    for attempt in range(3):
+        try:
+            response=requests.post("https://earth-search.aws.element84.com/v1/search",
+                                   json=body,timeout=(8,35))
+            response.raise_for_status()
+            break
+        except requests.exceptions.RequestException as exc:
+            if attempt==2:raise RuntimeError("Earth Search STAC indisponível: "+type(exc).__name__) from None
+            time.sleep(1.2*(attempt+1))
+    items=response.json().get("features",[])
     choices=[]
     for item in items:
         assets=item.get("assets") or {}
         if not all((assets.get(k) or {}).get("href") for k in ("red","green","blue")):continue
         props=item.get("properties") or {}
-        cloud=float(props.get("eo:cloud_cover",100.0) if props.get("eo:cloud_cover") is not None else 100.0)
         dt=str(props.get("datetime") or "")
+        try:cloud=float(props.get("eo:cloud_cover",100.0))
+        except (ValueError,TypeError):cloud=100.0
         choices.append((cloud,dt,item,assets))
-    if not choices:raise RuntimeError("Earth Search não retornou cena Sentinel-2 L2A RGB pública para a AOI.")
-    low=[x for x in choices if x[0]<=20.0]
-    cloud,dt,item,assets=(sorted(low,key=lambda x:x[1],reverse=True)[0] if low
-                          else sorted(choices,key=lambda x:(x[0],x[1]))[0])
+    if not choices:raise RuntimeError("Catálogo Earth Search sem cenas L2A RGB na AOI")
+    # Prefer recent clear scenes, but NEVER fail just because the first COG
+    # is inaccessible or its viewport contains no actual data.
+    clear=sorted((x for x in choices if x[0]<=20),key=lambda x:x[1],reverse=True)
+    other=sorted((x for x in choices if x[0]>20),key=lambda x:(x[0],x[1]))
+    pool=(clear+other)[:8]
     bounds=tuple(map(float,g.total_bounds))
-    bx=transform_bounds("EPSG:4326",assets["red"].get("proj:epsg") and f"EPSG:{assets['red']['proj:epsg']}" or "EPSG:4326",*bounds,densify_pts=21)
-    # The authoritative COG grid CRS and transform are read from the red band.
-    with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
-        with rasterio.open(assets["red"]["href"]) as red_src:
-            crs=red_src.crs
-            if crs is None:raise RuntimeError("COG Sentinel-2 Earth Search sem CRS.")
-            minx,miny,maxx,maxy=transform_bounds("EPSG:4326",crs,*bounds,densify_pts=21)
-            dx=max(maxx-minx,1.0); dy=max(maxy-miny,1.0); factor=max(0.30,min(8.0,float(extent_factor)))
-            cx=(minx+maxx)/2; cy=(miny+maxy)/2
-            wb=(cx-dx*factor/2,cy-dy*factor/2,cx+dx*factor/2,cy+dy*factor/2)
-            win=from_bounds(*wb,transform=red_src.transform).round_offsets().round_lengths()
-            win=win.intersection(rasterio.windows.Window(0,0,red_src.width,red_src.height))
-            if win.width<1 or win.height<1:raise RuntimeError("Cena Sentinel-2 não cobre a AOI.")
-            target_ratio=max(0.1,float(out_w))/max(1.0,float(out_h))
-            out_width=max(320,min(1600,int(out_w))); out_height=max(240,min(1200,int(out_h)))
-            rgb=[]
-            # COG HTTP range reads are cropped to the requested viewport extent and
-            # resampled directly to canvas size; never load a complete Sentinel-2 scene.
-            # Read only the three RGB bands concurrently, with a strict worker bound.
-            from concurrent.futures import ThreadPoolExecutor
-            def read_rgb_band(band):
-                with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
-                    with rasterio.open(assets[band]["href"]) as src:
-                        if src.crs!=crs:raise RuntimeError("Bandas Sentinel-2 Earth Search com CRS incompatível.")
-                        return src.read(1,window=win,out_shape=(out_height,out_width),
-                                        resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
-            with ThreadPoolExecutor(max_workers=3,thread_name_prefix="S2RGB") as pool:
-                rgb=list(pool.map(read_rgb_band,("red","green","blue")))
-            stack=np.stack(rgb,axis=2).astype(np.float32)
-            valid=stack[np.isfinite(stack)&(stack>0)]
-            hi=float(np.percentile(valid,99)) if valid.size else 1.0
-            image=Image.fromarray(np.clip(stack/max(hi,1e-9)*255,0,255).astype(np.uint8),"RGB")
-            from rasterio.windows import transform as window_transform
-            wt=window_transform(win,red_src.transform)
-            polygons=[]
-            for geom0 in g.geometry:
-                geoms=list(geom0.geoms) if geom0.geom_type=="MultiPolygon" else ([geom0] if geom0.geom_type=="Polygon" else [])
-                for poly in geoms:
-                    coords=list(poly.exterior.coords); lon=[p[0] for p in coords]; lat=[p[1] for p in coords]
-                    xx,yy=transform("EPSG:4326",crs,lon,lat); pts=[]
-                    for x,y in zip(xx,yy):
-                        col,row=(~wt)*(x,y)
-                        pts.extend([float(col)*out_width/max(float(win.width),1.0),
-                                    float(row)*out_height/max(float(win.height),1.0)])
-                    if len(pts)>=6:polygons.append(pts)
-    return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
-            "polygons":polygons,"datetime":dt,"cloud_cover":cloud,
-            "provider":"Sentinel-2 L2A / Earth Search AWS public COGs"}
+    out_width=max(320,min(1600,int(out_w)))
+    out_height=max(240,min(1200,int(out_h)))
+    import ssl
+    ca=ssl.get_default_verify_paths().cafile
+    if not ca:
+        try:
+            import certifi
+            ca=certifi.where()
+        except ImportError:
+            ca=None
+    env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"35",
+         "GDAL_HTTP_MAX_RETRY":"2","GDAL_HTTP_UNSAFESSL":"NO"}
+    if ca:
+        env.update({"GDAL_CURL_CA_BUNDLE":ca,"CURL_CA_BUNDLE":ca})
+    for cloud,dt,item,assets in pool:
+        try:
+            with rasterio.Env(**env):
+                with rasterio.open(assets["red"]["href"]) as red_src:
+                    crs=red_src.crs
+                    if not crs:raise RuntimeError("red band sem CRS")
+                    minx,miny,maxx,maxy=transform_bounds("EPSG:4326",crs,*bounds,densify_pts=21)
+                    dx=max(maxx-minx,1.0);dy=max(maxy-miny,1.0)
+                    factor=max(0.30,min(8.0,float(extent_factor)))
+                    cx=(minx+maxx)/2;cy=(miny+maxy)/2
+                    viewport=(cx-dx*factor/2,cy-dy*factor/2,cx+dx*factor/2,cy+dy*factor/2)
+                    window=from_bounds(*viewport,transform=red_src.transform).round_offsets().round_lengths()
+                    window=window.intersection(Window(0,0,red_src.width,red_src.height))
+                    if window.width<2 or window.height<2:raise RuntimeError("red band não cobre a AOI")
+                    tr=red_src.window_transform(window)
+                    rgb=[]
+                    for band in ("red","green","blue"):
+                        with rasterio.open(assets[band]["href"]) as src:
+                            if not src.crs:raise RuntimeError(band+" sem CRS")
+                            native_bounds=transform_bounds(crs,src.crs,*rasterio.windows.bounds(window,red_src.transform),densify_pts=21)
+                            win=from_bounds(*native_bounds,transform=src.transform)
+                            win=win.round_offsets().round_lengths()
+                            try:win=win.intersection(Window(0,0,src.width,src.height))
+                            except rasterio.errors.WindowError:raise RuntimeError(band+" sem interseção") from None
+                            if win.width<2 or win.height<2:raise RuntimeError(band+" fora da cena")
+                            source=src.read(1,window=win,out_shape=(min(1200,max(100,int(win.height))),
+                                                               min(1600,max(100,int(win.width)))),
+                                            masked=True,resampling=Resampling.bilinear)
+                            data=np.ma.filled(source.astype(np.float32),np.nan)
+                            dest=np.full((out_height,out_width),np.nan,dtype=np.float32)
+                            # Rasterio window transform must account for out_shape
+                            scaled_transform=src.window_transform(win)*rasterio.Affine.scale(
+                                float(win.width)/data.shape[1],float(win.height)/data.shape[0])
+                            target_transform=tr*rasterio.Affine.scale(
+                                float(window.width)/out_width,float(window.height)/out_height)
+                            reproject(data,dest,src_transform=scaled_transform,src_crs=src.crs,
+                                      src_nodata=np.nan,dst_transform=target_transform,dst_crs=crs,
+                                      dst_nodata=np.nan,resampling=Resampling.bilinear)
+                            rgb.append(dest)
+                    stack=np.stack(rgb,axis=2)
+                    valid=np.isfinite(stack).all(axis=2)&(stack>0).any(axis=2)
+                    if valid.sum()<max(80,stack.shape[0]*stack.shape[1]//200):
+                        raise RuntimeError("cena sem pixels RGB válidos suficientes")
+                    pixels=stack[valid]
+                    hi=float(np.percentile(pixels,99))
+                    if hi<=0 or not np.isfinite(hi):raise RuntimeError("radiometria RGB inválida")
+                    final=np.clip(np.nan_to_num(stack,nan=0.0)/hi*255,0,255).astype(np.uint8)
+                    image=Image.fromarray(final,"RGB")
+                    polygons=[]
+                    for shape0 in g.geometry:
+                        polys=list(shape0.geoms) if shape0.geom_type=="MultiPolygon" else ([shape0] if shape0.geom_type=="Polygon" else [])
+                        for poly in polys:
+                            coordinates=list(poly.exterior.coords)
+                            xx,yy=transform("EPSG:4326",crs,[v[0] for v in coordinates],[v[1] for v in coordinates])
+                            pts=[]
+                            for px,py in zip(xx,yy):
+                                col,row=(~tr)*(px,py)
+                                pts.extend([float(col)*out_width/window.width,float(row)*out_height/window.height])
+                            if len(pts)>=6:polygons.append(pts)
+                    # RGB and polygon must be scaled by the same factor.
+                    fx=float(out_w)/out_width;fy=float(out_h)/out_height
+                    scaled_polygons=[[p*(fx if k%2==0 else fy) for k,p in enumerate(poly)] for poly in polygons]
+                    return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
+                            "polygons":scaled_polygons,"scene_id":item.get("id"),
+                            "datetime":dt,"cloud_cover":cloud,
+                            "provider":"Sentinel-2 L2A / Earth Search AWS public COGs",
+                            "attempted_scenes":len(errors)+1}
+        except (UnicodeError,OSError,RuntimeError,ValueError,rasterio.errors.RasterioError) as exc:
+            errors.append(str(item.get("id",""))+": "+type(exc).__name__+": "+str(exc)[:100])
+    raise RuntimeError("Nenhuma das "+str(len(pool))+" cenas Sentinel-2 forneceu RGB real. "+
+                       "Erros: "+"; ".join(errors)[:480])
+
 
 def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     """Keyless public NASA GIBS VIIRS true-color preview; visual context only."""
