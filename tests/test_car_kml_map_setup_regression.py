@@ -70,7 +70,7 @@ class TestCarKmlMapSetup(unittest.TestCase):
                 self.after_calls.append((delay, callback))
 
         ns = {
-            "geom_metrics": lambda geometry: {"area_ha": 1, "centroid": (0, 0), "utm_epsg": 32721},
+            "geom_metrics": lambda geometry: {"area_ha": 1, "area_utm_ha": 1.0002, "area_crs": "EPSG:6933", "centroid": (0, 0), "utm_epsg": 32721},
             "format_ptbr": lambda x, places: str(x),
             "diagnose_ibge": lambda geometry: {"biomas": []},
             "threading": types.SimpleNamespace(Thread=ImmediateThread),
