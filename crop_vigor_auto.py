@@ -79,18 +79,46 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
                 "scene_id": scene["id"], "acquisition_utc": scene["acquisition_utc"],
                 "scene_age_days": age_days}
     token = token_fn()
-    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", GDAL_HTTP_MAX_RETRY="3"):
+    import ssl
+    ca=ssl.get_default_verify_paths().cafile
+    if not ca:
+        try:
+            import certifi
+            ca=certifi.where()
+        except ImportError:
+            ca=None
+    env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_MAX_RETRY":"3",
+         "GDAL_HTTP_TIMEOUT":"35","GDAL_HTTP_UNSAFESSL":"NO"}
+    if ca:
+        env["GDAL_CURL_CA_BUNDLE"]=ca
+        env["CURL_CA_BUNDLE"]=ca
+    with rasterio.Env(**env):
         with rasterio.open(_signed_href(scene["assets"]["vh"]["href"], token)) as vh_src, \
              rasterio.open(_signed_href(scene["assets"]["vv"]["href"], token)) as vv_src:
             crs = vh_src.crs
+            if not crs or not vv_src.crs:
+                return {"status":"N/D","reason":"cenas SAR sem CRS válido"}
             gf = shape(transform_geom("EPSG:4326", crs, mapping(g)))
             ring = gf.buffer(ring_km * 1000.0)
             win = from_bounds(*ring.bounds, transform=vh_src.transform).round_offsets().round_lengths()
             win = win.intersection(rasterio.windows.Window(0, 0, vh_src.width, vh_src.height))
-            if win.width > max_px or win.height > max_px:
-                return {"status": "N/D", "reason": "janela SAR excede o limite; reduzir ring_km"}
-            vh = vh_src.read(1, window=win).astype(float); vv = vv_src.read(1, window=win).astype(float)
+            if win.width<1 or win.height<1 or win.width>max_px or win.height>max_px:
+                return {"status": "N/D", "reason": "janela SAR vazia ou excede o limite; reduzir ring_km"}
             tr = vh_src.window_transform(win)
+            vh = np.ma.filled(vh_src.read(1,window=win,masked=True).astype(np.float32),np.nan)
+            # VV may have a different transform/extent from VH. Read only its
+            # cropped COG window, then align to the VH grid before ratios.
+            vv_ring=shape(transform_geom("EPSG:4326",vv_src.crs,mapping(g))).buffer(ring_km*1000)
+            vwin=from_bounds(*vv_ring.bounds,transform=vv_src.transform).round_offsets().round_lengths()
+            vwin=vwin.intersection(rasterio.windows.Window(0,0,vv_src.width,vv_src.height))
+            if vwin.width<1 or vwin.height<1 or vwin.width>max_px or vwin.height>max_px:
+                return {"status":"N/D","reason":"janela VV não intercepta o campo ou excede o limite"}
+            vv_source=np.ma.filled(vv_src.read(1,window=vwin,masked=True).astype(np.float32),np.nan)
+            vv=np.full(vh.shape,np.nan,dtype=np.float32)
+            reproject(vv_source,vv,src_transform=vv_src.window_transform(vwin),
+                      src_crs=vv_src.crs,src_nodata=np.nan,
+                      dst_transform=tr,dst_crs=crs,dst_nodata=np.nan,
+                      resampling=Resampling.nearest)
     for a in (vh, vv):
         a[(a <= 0) | ~np.isfinite(a)] = np.nan
     vh_db, vv_db = 10 * np.log10(vh), 10 * np.log10(vv)
