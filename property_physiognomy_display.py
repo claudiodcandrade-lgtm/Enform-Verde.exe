@@ -16,7 +16,12 @@ def format_property_physiognomies(native, fmt):
     if not groups:
         return ("Não determinada — nenhuma interseção de vegetação nativa com "
                 "fitofisionomia foi mapeada; IBGE potencial não comprova ocorrência.")
-    lines=[]
+    lines=[
+        "COBERTURA NATIVA MAPEADA (máscara anual × região fitoecológica IBGE).",
+        "A região fitoecológica é a classe ampla; a formação IBGE detalhada "
+        "(legenda_2: por exemplo, Terras Baixas ou Aluvial) é um nível subordinado. "
+        "As áreas potenciais IBGE não são somadas novamente à cobertura atual."
+    ]
     for name,v in sorted(groups.items(),key=lambda item:-item[1]["area"]):
         ha=v["area"]; sources=v["sources"]
         origin=("SAR com referência IBGE" if sources and all(
@@ -28,6 +33,10 @@ def format_property_physiognomies(native, fmt):
     unknown=float(native.get("unknown_cover_area_ha") or 0)
     if isfinite(unknown) and unknown>0:
         lines.append(f"Área com cobertura indeterminada: {fmt(unknown,2)} ha ({fmt(100*unknown/total,2)}%).")
+    excluded=float(native.get("excluded_other_uses_ha") or 0)
+    if isfinite(excluded) and excluded>0:
+        lines.append(f"Outras coberturas mapeadas, sem estoque nativo: {fmt(excluded,2)} ha "
+                     f"({fmt(100*excluded/total,2)}% da AOI).")
     lines.append("Área MAPEADA, não presença atual comprovada em campo. "
                  "IBGE fornece o nome; limites dependem da máscara de cobertura "
                  "e da validação SAR/observacional.")
