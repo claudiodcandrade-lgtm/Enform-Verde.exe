@@ -41,12 +41,30 @@ def _norm(value):
     return re.sub(r"[^a-z0-9]+", " ", value).strip()
 
 
+def _xml10_clean(payload):
+    """Remove XML 1.0 forbidden code points/entities emitted by broken WCS metadata."""
+    raw = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+    def valid(code):
+        return code in (0x9, 0xA, 0xD) or 0x20 <= code <= 0xD7FF or 0xE000 <= code <= 0xFFFD or 0x10000 <= code <= 0x10FFFF
+    def entity(match):
+        token = match.group(1) or match.group(2)
+        try:
+            code = int(token, 16 if match.group(1) else 10)
+        except ValueError:
+            return ""
+        return match.group(0) if valid(code) else ""
+    raw = re.sub(r"&#(?:x([0-9a-fA-F]+)|([0-9]+));", entity, raw)
+    return "".join(ch for ch in raw if valid(ord(ch)))
+
+
 def discover_coverages(xml_bytes):
     """Match only advertised, depth-specific national WCS coverages.
 
     A guessed coverage identifier is never sent as if its existence were verified.
+    Broken XML 1.0 control references from the WCS are stripped without guessing
+    coverage IDs; malformed structural XML remains a technical error.
     """
-    root = ET.fromstring(xml_bytes)
+    root = ET.fromstring(_xml10_clean(xml_bytes))
     selected = {}
     for node in root.iter():
         if node.tag.split("}")[-1] != "CoverageSummary":
@@ -264,6 +282,7 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
             if alternate.get("status")=="MAPA_PREDITIVO_AMOSTRAL":
                 alternate["wcs_diagnostic"]=result["reason"]
                 return alternate
+            result["fallback_status"]=alternate.get("status")
             result["reason"]+="; MapServer Identify: "+str(alternate.get("reason") or "N/D")
             return result
         from shapely.geometry import mapping
@@ -311,8 +330,15 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
                 except Exception as exc:
                     layer["reason"]=type(exc).__name__+": "+str(exc).split("https://")[0][:180]
                 result["layers"].append(layer)
-        result["status"]="MAPEAMENTO_PREDITIVO_PARCIAL" if success else "N/D"
-        result["reason"]=f"{success} de {len(ATTRS)*len(DEPTHS)} camadas processadas; sem validação local de acurácia"
+        attempted=[x for x in result["layers"] if x.get("wcs_coverage_id")]
+        technical_failures=[x for x in attempted if x.get("reason") and x.get("mean") is None]
+        result["status"]=("MAPEAMENTO_PREDITIVO_PARCIAL" if success else
+                          "ERRO_TECNICO" if technical_failures else "N/D")
+        result["reason"]=(f"{success} de {len(ATTRS)*len(DEPTHS)} camadas processadas; "
+                          "sem validação local de acurácia" if success else
+                          f"Falha técnica em {len(technical_failures)} camadas WCS com cobertura anunciada"
+                          if technical_failures else
+                          "Catálogo oficial sem pixels/coberturas compatíveis na AOI")
         if not success:
             from soil_fertility_arcgis_identify import sample_official_fertility
             alternate=sample_official_fertility(aoi,session=session)
@@ -322,6 +348,7 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
             result["reason"]+="; MapServer Identify: "+str(alternate.get("reason") or "N/D")
         result["uncertainty_note"]="Médias de mapas digitais, não ensaios da propriedade. DP entre pixels não fornece IC95%; variância do modelo indisponível."
     except Exception as exc:
+        result["status"]="ERRO_TECNICO"
         result["reason"]=type(exc).__name__+": "+str(exc).split("https://")[0][:180]
         try:
             from soil_fertility_arcgis_identify import sample_official_fertility
@@ -340,6 +367,9 @@ def fertility_report_lines(result, fmt):
     lines = ["", "FERTILIDADE DO SOLO — ESTIMATIVAS CARTOGRÁFICAS EMBRAPA 90 m"]
     lines.append("Previsões regionais de mapas digitais, NÃO são análises laboratoriais da propriedade.")
     lines.append("Serviço numérico consultado: " + str(result.get("source") or WCS))
+    if result.get("status")=="ERRO_TECNICO":
+        lines.append("FALHA TÉCNICA — valores não calculados. Corrigir a rota WCS/Identify; isso não comprova ausência de dados.")
+        lines.append("Diagnóstico: "+str(result.get("reason") or "erro sem detalhe")[:240])
     if result.get("status")=="MAPA_PREDITIVO_AMOSTRAL":
         lines.append("AMOSTRAGEM NUMÉRICA OFICIAL — MapServer Identify; não é média zonal de toda a AOI.")
         lines.append("Pontos amostrados: "+str(result.get("sampled_points"))+
