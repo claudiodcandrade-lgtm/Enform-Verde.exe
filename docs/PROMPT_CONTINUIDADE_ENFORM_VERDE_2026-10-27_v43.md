@@ -3786,3 +3786,7 @@ Para acelerar o preview Sentinel-2 sem carregar cenas inteiras: ler as três ban
 
 ## CHECKPOINT 05/11/2026 — V87.11 CAR/KML, ERRO REDRAW
 Ao abrir CAR ou vetor KML/KMZ, a AOI era carregada mas a análise não iniciava devido a `NameError: name 'redraw' is not defined` em `desktop_app.py::_schedule_offline_map_fit`. Removida chamada incorreta `self.after(420,redraw)` no commit `d99634cf29cb6f6b7d4fb951b5654890dcd1e456`; o desenho do polígono e a consulta de imagem já ocorrem antes dessa instrução. A correção permite prosseguir com diagnóstico IBGE e preparação da execução analítica. Testar ambos fluxos com AOI real e testar GUI em Windows; regressão `tests/test_car_kml_map_setup_regression.py`. Não declarar nova versão executável disponível sem build e smoke test de SHA final. Atualizar Word via checkpoint V87.11 mantendo histórico e gates científicos.
+
+
+## CHECKPOINT V87.12 — 05/11/2026
+Dashboard dual 42042610110 detectou SyntaxError no teste de proteção CAR/KML; literais de escape indevidos foram corrigidos em 7367eb1db282485e42b8af900df691e223aeccd8. Manter a proteção de mapa independente do cálculo em desktop_app.py e exigir aprovação pós-correção de CI e do EXE no mesmo SHA. Não liberar o build anterior, que ainda contém falha redraw.
