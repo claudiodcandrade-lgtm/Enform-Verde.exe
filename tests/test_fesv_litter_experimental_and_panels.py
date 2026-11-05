@@ -11,16 +11,16 @@ class NorthMatoGrossoLitterTest(unittest.TestCase):
     def setUp(self):
         self.aoi = box(-55.75, -11.92, -55.74, -11.91)
 
-    def test_litter_exact_formation_only_with_exploratory_range(self):
+    def test_litter_source_without_defined_dispersion_is_reference_only(self):
         x = northern_mato_grosso_fesv_litter_component(
             "Amazônia", "Floresta Estacional Sempre-Verde Submontana", self.aoi)
         self.assertIsNotNone(x)
-        self.assertAlmostEqual(x["mean_tc_ha"], 4.089, places=6)
-        self.assertAlmostEqual(x["range_tc_ha"][0], 6.77*.42, places=6)
-        self.assertAlmostEqual(x["range_tc_ha"][1], 10.63*.50, places=6)
-        self.assertEqual(x["origin"], "EXPERIMENTAL_FISICO")
+        self.assertIsNone(x["mean_tc_ha"])
+        self.assertIsNone(x["range_tc_ha"])
+        self.assertEqual(x["published_sample_plots"], 24)
+        self.assertEqual(x["origin"], "NAO_ESTIMADO")
         self.assertFalse(x["include_in_total"])
-        self.assertIn("sem IC95%", x["uncertainty_kind"])
+        self.assertIn("natureza de ± não publicada", x["uncertainty_kind"])
 
     def test_wrong_formation_biome_and_region_not_transferred(self):
         self.assertIsNone(northern_mato_grosso_fesv_litter_component(
@@ -31,7 +31,7 @@ class NorthMatoGrossoLitterTest(unittest.TestCase):
             "Amazônia", "Floresta Estacional Sempre-Verde Submontana",
             box(-45, -8, -44.9, -7.9)))
 
-    def test_litter_is_reported_as_experimental_but_not_known_carbon(self):
+    def test_litter_without_variance_is_not_reported_as_numeric_stock(self):
         def sar(*args):
             return {"agb_mg_ha": 50.0, "data_origin": "SAR_DERIVED_CCI",
                     "source": "fixture", "regional_components": {}}
@@ -42,10 +42,10 @@ class NorthMatoGrossoLitterTest(unittest.TestCase):
             "Amazônia",sar,soil)
         rows = {r["parametro"]:r for r in result["components"]}
         x = rows["Serapilheira"]
-        self.assertAlmostEqual(x["tc"], 4.089, places=6)
-        self.assertEqual(x["origem"], "EXPERIMENTAL_FISICO")
+        self.assertIsNone(x["tc"])
+        self.assertEqual(x["origem"], "NAO_ESTIMADO")
         self.assertFalse(x["include_in_total"])
-        self.assertEqual(len(x["range_tc_ha"]), 2)
+        self.assertIsNone(x["range_tc_ha"])
 
     def test_executive_land_use_is_not_entirely_forest(self):
         x = executive_carbon_lines({
