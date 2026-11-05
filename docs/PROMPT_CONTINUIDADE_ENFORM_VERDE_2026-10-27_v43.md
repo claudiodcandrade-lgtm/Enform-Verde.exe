@@ -3742,8 +3742,8 @@ A API oficial do Google Maps Static exige chave nas requisições e billing habi
 
 Para a janela de entorno, usar exclusivamente imagens ópticas, nessa ordem:
 1. Google Maps Static quando chave válida configurada.
-2. Sentinel-2 L2A via Microsoft Planetary Computer; STAC anônimo e URL SAS de ativo assinado automaticamente, sem credencial do usuário.
-3. Sentinel-2 L2A via Earth Search / AWS Open Data; STAC anônimo e COGs públicos sem chave.
+2. Sentinel-2 L2A via Earth Search / AWS Open Data, prioridade entre as rotas sem chave: STAC anônimo e COGs públicos RGB sem credenciais do usuário.
+3. Sentinel-2 L2A via Microsoft Planetary Computer como alternativa, com URL SAS assinada automaticamente pelo serviço, sem credencial do usuário.
 4. NASA GIBS WMS VIIRS SNPP true color, sem chave, tentando dias UTC 1–7 anteriores e mostrando data; resolução mais grossa, somente contexto regional.
 5. Esri World Imagery e Street Map públicos se acessíveis.
 6. IBGE offline somente quando as rotas online falharem.
