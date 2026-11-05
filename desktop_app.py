@@ -2518,11 +2518,20 @@ class App(tk.Tk):
         model_manifest=self.project.get("modeled_field_predictions") or {}
         sh=wb.create_sheet("Modelo Para Campo")
         setup(sh,"Enform Verde — resultados experimentais, NÃO medições de campo")
+        sh.column_dimensions["I"].width=48
+        sh.column_dimensions["J"].width=80
+        sh.column_dimensions["K"].width=34
+        sh.row_dimensions[3].height=58
+        sh.freeze_panes="D4"
         for j,h in enumerate(["ID previsão","Fitofisionomia","Compartimento/cultura",
                               "Status","Estimativa (tC/ha ou t/ha)","Área (ha)",
                               "Faixa condicional","Tipo de incerteza","Origem",
                               "Protocolo de campo","Valor medido em campo (EM BRANCO)"],1):
-            sh.cell(3,j,h).value=h
+            cell=sh.cell(3,j,h)
+            cell.font=Font(bold=True,color=white)
+            cell.fill=PatternFill("solid",fgColor=orange)
+            cell.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+            cell.border=Border(top=thin,bottom=thin,left=thin,right=thin)
         model_rows=[]
         for prediction in model_manifest.get("predictions") or []:
             model_rows.append([prediction.get("prediction_id"),
@@ -2537,6 +2546,10 @@ class App(tk.Tk):
                 prediction.get("field_protocol"),None])
         put(sh,model_rows or [["N/D",None,None,"SEM RESULTADOS MODELADOS",None,None,
                               "N/D","N/D","N/D","Executar análise",None]])
+        sh.auto_filter.ref=f"A3:K{max(4,3+len(model_rows))}"
+        # Field observations must be inserted by the operator after real sampling.
+        for row_i in range(4,4+max(1,len(model_rows))):
+            sh.cell(row_i,11).value=None
         land=self.project.get("land_use")
         if land:
             sh=wb.create_sheet("Uso do Solo"); setup(sh,"Enform Verde — classes de uso e cobertura")
