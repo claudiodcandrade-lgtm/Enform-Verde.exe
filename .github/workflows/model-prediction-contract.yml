@@ -29,5 +29,24 @@ jobs:
           python -m unittest discover -s tests -p 'test_soil_fertility_official_uncertainty.py' -v
           python -m unittest discover -s tests -p 'test_soil_pronasolos_zonal.py' -v
           python -m unittest discover -s tests -p 'test_soil_pedology_embrapa.py' -v
+      - name: Verify V87.1 scientific documentation synchronized with the source
+        run: |
+          python - <<'PY'
+          from zipfile import ZipFile
+          from pathlib import Path
+          path = Path("docs/ESPECIFICACAO_TECNICA_COMPLETA.docx")
+          assert path.is_file(), "Full Word specification is missing"
+          with ZipFile(path) as archive:
+              assert archive.testzip() is None
+              body = archive.read("word/document.xml").decode("utf-8")
+              assert "REVISÃO V87.1" in body, "Word specification not synchronized to V87.1"
+          for name in (
+              "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
+              "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
+              "docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md",
+          ):
+              assert "CORREÇÃO CIENTÍFICA V87.1" in Path(name).read_text(encoding="utf-8"), name
+          print("V87_1_WORD_PROMPTS_SOIL_SPEC_SYNC_OK")
+          PY
       - name: Show tested source SHA
         run: git rev-parse HEAD
