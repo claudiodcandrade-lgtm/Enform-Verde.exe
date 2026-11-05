@@ -79,6 +79,19 @@ class PreFieldTests(unittest.TestCase):
             self.assertIsNone(p["stock_predicted_tC"])
             self.assertNotEqual(p["status"],"PROJECAO_EXPERIMENTAL_PARA_VALIDACAO")
 
+    def test_no_fake_model_from_nd_method_origin_or_zero_area(self):
+        for field, invalid in (("metodo","N/D"),("origem","N/D"),
+                               ("fonte","desconhecido")):
+            a=fixture()
+            a["strata"][0]["components"][0][field]=invalid
+            p=build_pre_field_manifest(a,analysis_id="FALSE-POSITIVE")["predictions"][0]
+            self.assertEqual(p["status"],"N/D")
+            self.assertIsNone(p["stock_predicted_tC"])
+        a=fixture()
+        a["strata"][0]["components"][0]["area_basis_ha"]=0
+        p=build_pre_field_manifest(a,analysis_id="ZERO")["predictions"][0]
+        self.assertEqual(p["status"],"N/D")
+
     def test_csv_field_values_are_always_blank(self):
         result=build_pre_field_manifest(fixture(),analysis_id="TEST")
         with tempfile.TemporaryDirectory() as folder:
