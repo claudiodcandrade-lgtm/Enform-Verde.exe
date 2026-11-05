@@ -267,9 +267,13 @@ def geom_metrics(gdf):
     g=gdf.to_crs(4326); union=g.geometry.union_all()
     c=union.centroid; lon,lat=float(c.x),float(c.y)
     zone=max(1,min(60,int((lon+180)//6)+1)); epsg=(32700 if lat<0 else 32600)+zone
-    gm=gdf.to_crs(epsg); area=float(gm.geometry.area.sum()/10000)
+    gm=gdf.to_crs(epsg)
+    area_utm=float(gm.geometry.union_all().area/10000)
+    area_equal=float(gdf.to_crs("EPSG:6933").geometry.union_all().area/10000)
     b=union.bounds
-    return {"area_ha":area,"centroid":[lon,lat],"bbox":[float(x) for x in b],"utm_epsg":epsg}
+    return {"area_ha":area_equal,"area_utm_ha":area_utm,
+            "area_crs":"EPSG:6933","centroid":[lon,lat],
+            "bbox":[float(x) for x in b],"utm_epsg":epsg}
 
 def _sicar_session():
     import requests, ssl
@@ -1314,6 +1318,11 @@ class App(tk.Tk):
             if self.winfo_exists():self.after(100,self._poll_map_queue)
             return
         generation,view,polygons,provider,zoom,copyright,error=item
+        if generation!=self._map_generation:
+            # A prior satellite request can finish after a new AOI/zoom request.
+            # Discard its image but KEEP polling for the current request.
+            if self.gdf is not None:self.after(100,self._poll_map_queue)
+            return
         self._finish_satellite_map(generation,view,polygons,provider,zoom,copyright,error)
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
@@ -2177,7 +2186,7 @@ class App(tk.Tk):
             self.aoi_area_display.set(f"{format_ptbr(equal_area_aoi_ha(self.gdf),2)} ha (EPSG:6933; base dos percentuais)")
         if hasattr(self,"ibge_phys_display"):
             self.ibge_phys_display.set("Aguardando mapeamento da vegetação nativa; mapa potencial IBGE não confirma presença atual.")
-        self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {format_ptbr(m['area_ha'],2)} ha\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
+        self._set(self.spatial_text,f"Perímetro: {src}\nÁrea de referência (EPSG:6933): {format_ptbr(m['area_ha'],2)} ha\nÁrea UTM (apenas diagnóstico): {format_ptbr(m['area_utm_ha'],2)} ha — EPSG:{m['utm_epsg']}\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nPercentuais e estoques da AOI utilizam a área equivalente EPSG:6933.\n\nPerímetro válido para recorte espacial.")
         # The basemap is a visualization only. An offline renderer, satellite
         # provider or Tk canvas failure must never prevent the scientific AOI
         # setup from launching the independent IBGE diagnostic worker.
@@ -2208,7 +2217,7 @@ class App(tk.Tk):
             if hasattr(self,"ibge_phys_display"):
                 self.ibge_phys_display.set("Não determinada — falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
             self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
-            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\\n\\nDiagnóstico IBGE pendente: "+str(value))
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nDiagnóstico IBGE pendente: "+str(value))
             if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
             return
         d=value; self.project["ibge_diagnosis"]=d
@@ -2224,11 +2233,11 @@ class App(tk.Tk):
                 "Aguardando interseção da cobertura nativa mapeada com a "
                 "região fitoecológica IBGE; nenhuma área atual confirmada.")
         btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d.get("biomas",[]))
-        code_txt="\\n".join(f"  código {x.get('code') or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
+        code_txt="\n".join(f"  código {x.get('code') or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
         ibge_lines=["Bioma(s) IBGE: "+(btxt or "não determinado")]+ibge_area_summary_lines(d)
-        if code_txt:ibge_lines.append("Código(s) das regiões fitoecológicas (IBGE):\\n"+code_txt)
+        if code_txt:ibge_lines.append("Código(s) das regiões fitoecológicas (IBGE):\n"+code_txt)
         current=self.spatial_text.get("1.0","end").strip()
-        self._set(self.spatial_text,current+"\\n\\n"+"\\n".join(ibge_lines))
+        self._set(self.spatial_text,current+"\n\n"+"\n".join(ibge_lines))
         self.status.set("Perímetro e diagnóstico IBGE concluídos." if not d.get("vegetacao_error") else "Bioma IBGE concluído; fitofisionomia não classificada — modelos que exigem classe IBGE ficam bloqueados; apenas rotas independentes da classe podem prosseguir.")
         if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
     def pick_soil(self):
