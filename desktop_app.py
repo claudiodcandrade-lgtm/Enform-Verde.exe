@@ -964,7 +964,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Fundo padrão: mapa IBGE 2025/BC250 offline; imagens online são opcionais.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Camada online preferencial; mapa IBGE offline usado somente se as fontes online falharem.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1125,7 +1125,8 @@ class App(tk.Tk):
             if not rs:
                 self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"))
                 return
-            if key and not prefer_public:
+            if key:
+                # Google Static Maps is a visual basemap only; analysis rasters and vectors remain independent.
                 try:
                     view=google_image(rs)
                     self._map_queue.put((generation,view,[],"Google Maps Static API",None,"Google",None))
@@ -2009,17 +2010,14 @@ class App(tk.Tk):
         except Exception as e:
             self.gdf=None; self.vector_status.set(f"Upload não concluído — {Path(p).name}: {e}"); self.status.set("Falha ao carregar vetor."); messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {Path(p).name}\n\nMotivo: {e}")
     def _schedule_offline_map_fit(self,label):
-        """Guarantee a usable map without network: draw now, then redraw after Tk settles."""
+        """Try online imagery first; draw the packaged IBGE map only after online failure."""
+        self._map_extent_factor=1.36
         self._satellite_map_visible=False
-        if not self._draw_offline_brazil_basemap(label):
-            self._draw_aoi_outline(label)
-        gen=self._map_generation
-        def redraw():
-            if self.gdf is None or gen!=self._map_generation:return
-            if not self._draw_offline_brazil_basemap(label):
-                self._draw_aoi_outline(label)
-        self.after_idle(redraw)
-        self.after(180,redraw)
+        self._draw_aoi_outline(label + " — carregando camada online")
+        self._map_provider="ONLINE_PENDING"
+        # Network requests run in a worker. _finish_satellite_map uses IBGE only
+        # as the fallback if Google/Sentinel-2/Esri sources all fail.
+        self.show_google_map(refresh=False,prefer_public=False)
         self.after(420,redraw)
 
     def _show_geom(self,src):
