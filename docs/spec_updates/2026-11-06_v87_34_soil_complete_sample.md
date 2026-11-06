@@ -3,7 +3,7 @@ A contingência de estoque de carbono orgânico do solo por Identify foi restrin
 
 ## Relato e incerteza
 - O diagnóstico registra número de pontos, serviço escolhido e tentativas por serviço.
-- A amostra descreve a distribuição do produto cartográfico dentro da formação; não quantifica erro do mapa, viés de transferência, validação de campo ou intervalo preditivo.
+- A amostra descreve a distribuição do produto cartográfico dentro da formação; não quantifica erro do mapa, viés de transferência, validação de campo ou intervalo preditivo. O relatório expõe o tamanho amostral e a origem do dado para auditoria.
 - Fertilidade do solo segue em painel próprio e não é confundida com o compartimento de carbono do solo.
 - A sondagem do serviço em pontos de controle confirma respostas dos cinco horizontes nesses pontos, não acurácia nacional nem validação observacional independente.
 
