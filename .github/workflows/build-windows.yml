@@ -519,6 +519,19 @@ jobs:
           '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
           python live_sentinel2_preview.py
 
+      - name: Live optical background smoke — Brazilian biomes and geographic extremes
+        shell: pwsh
+        timeout-minutes: 45
+        run: python tools/live_optical_coverage_brazil.py
+      - name: Upload Brazilian optical coverage smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: optical-background-brazil-sample-${{ github.run_number }}
+          path: optical_coverage_brazil_smoke.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
         shell: pwsh
         run: |

@@ -40,6 +40,19 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         self.assertNotIn("nasa_gibs_preview",calls)
         self.assertNotIn("esri_export",calls)
         self.assertNotIn("offline_brazil_preview",calls)
+
+    def test_each_optical_route_requires_real_pixels_over_the_aoi(self):
+        src=SOURCE.read_text(encoding="utf-8")
+        tree=ast.parse(src)
+        names={"sentinel2_earthsearch_preview","sentinel2_preview","cbers4a_wfi_preview"}
+        bodies={n.name:ast.get_source_segment(src,n) for n in ast.walk(tree)
+                if isinstance(n,ast.FunctionDef) and n.name in names}
+        self.assertEqual(set(bodies),names)
+        for name,body in bodies.items():
+            self.assertIn("aoi_coverage<0.95",body,name+" must reject partial-AOI imagery")
+        cbers=bodies["cbers4a_wfi_preview"]
+        self.assertIn("aoi_coverage_fraction",cbers)
+        self.assertIn("_fetch_stac_features_paged",src)
         self.assertNotIn("_draw_offline_brazil_basemap",body)
 
     def test_cbers_4a_uses_official_rgb_cogs_and_clear_mask(self):

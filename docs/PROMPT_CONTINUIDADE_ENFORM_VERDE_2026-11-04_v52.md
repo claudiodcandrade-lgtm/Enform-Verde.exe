@@ -1,3 +1,34 @@
+# CHECKPOINT V87.34 — modelos pré-campo e cobertura óptica (06/11/2026)
+
+O branch remoto avançou para `1cd0dc492ede7f2bfaf896822abf2e1a05a4e6a0` enquanto as alterações V87.33 eram preparadas localmente. Nesse SHA, o build Windows terminou com sucesso, a regressão do painel duplo passou e o contrato rápido pré-campo passou; o gate científico independente terminou reprovado por ausência de evidências reais/manifesto, sem falsificação de dados. As alterações adicionais V87.33 estão agora sendo sincronizadas com esse avanço remoto e ainda precisam da CI no novo SHA.
+
+No checkout local, passaram compilação sintática dos módulos alterados, JSON válido do registro de 14 rotas, `git diff --check` e 32 testes focados. Um teste SAR adicional não pôde executar porque `geopandas` não está instalado neste ambiente; isso é limitação de dependência local, não aprovação ou reprovação do código. A cobertura live dos dez pontos brasileiros e a build/autoteste Windows com as alterações adicionais ainda devem ser confirmados no mesmo SHA publicado.
+
+A imagem de fundo permanece apenas visual: Sentinel-2 (Earth Search/Planetary Computer), com contingência CBERS-4A/WFI oficial INPE; busca STAC paginada e rejeição de cobertura inferior a 95% da AOI em cada rota. Imagens ópticas não alimentam estimativas. Identificação de vegetação/culturas e estimativas usam SAR. Dez pontos representam uma amostragem e não provam cobertura de todos os pixels brasileiros; qualquer falha live deve ser relatada e não mascarada por raster IBGE.
+
+O manifesto pré-campo de 14 módulos e o protocolo prospectivo tornam estimativas experimentais executáveis apenas nas rotas com método, unidades, domínio e incerteza explícitos. A classificação específica de cultura deve se abster/N/D_VALIDACAO sem pesos e calibração independente. Nenhum desses contratos demonstra acurácia de campo ou homologação. Estimativas não sustentadas ficam N/D, e intervalos de cenário não são rotulados como IC95%.
+
+A versão operacional experimental só pode ser distribuída quando regressão completa, teste óptico live, build Windows, autoteste em pasta limpa, hashes e SHA exato estiverem aprovados no mesmo commit. A homologação científica independente permanece bloqueada até evidência observacional real e avaliação independente.
+
+# CHECKPOINT V87.33 — modelos pré-campo e imagem óptica nacional (06/11/2026)
+
+Este checkpoint prevalece sobre os estados anteriores. As mudanças estão incorporadas localmente no branch `feature/agricultural-identification-native-carbon`, mas ainda precisam ser commitadas/publicadas e passar pela CI no mesmo SHA. Nenhuma nova versão Windows está liberada.
+
+## Fundo óptico e cobertura por AOI
+A imagem de fundo usa exclusivamente pixels reais Sentinel-2 (Earth Search e Planetary Computer) e, em contingência, CBERS-4A/WFI do catálogo oficial do INPE. Os catálogos agora são paginados até 20 páginas, e a prévia só é aceita se pixels válidos cobrirem ao menos 95% da AOI; uma cena parcial não conta como imagem concluída. A cadeia consulta todas as rotas, tenta mosaico CBERS com cenas disponíveis, reutiliza apenas cache da mesma geometria/viewport e não apresenta o raster cartográfico IBGE, NASA GIBS ou Esri como satélite. Em indisponibilidade simultânea, mantém o perímetro e expõe o erro. Essa limitação de primeira abertura sem rede é inevitável para fontes remotas.
+
+Foi adicionado teste live para dez pontos representativos em seis biomas e extremos norte, sul, leste e oeste do Brasil. O teste ainda não foi executado no novo SHA e a amostragem não prova cada pixel do território. Para a liberação, conferir o relatório live; qualquer AOI sem cobertura mínima deve bloquear a afirmação de cobertura nacional. A imagem óptica é apenas visual. Identificação de vegetação nativa, agropecuária/culturas e estimativas de carbono continuam usando dados SAR e modelos correspondentes.
+
+## Modelos experimentais e incerteza
+Foi criado um registro pré-campo de 14 rotas para carbono e compartimentos, raízes, SOC 0–100 cm, pedologia/fertilidade cartográfica, triagem temporal SAR, salvaguarda para identificação específica de culturas, vigor, clima, safra, painel executivo e verificações Windows/regressão. O novo gate confirma que módulos, funções, fontes de método e regras de abstenção existem no SHA testado. Ele não mede acurácia, não substitui parcelas e não declara homologação científica.
+
+As saídas experimentais devem manter a semântica correta: intervalo preditivo apenas quando parametrizado, faixa de cenário quando determinística, dispersão cartográfica como descritiva, e N/D quando faltarem pixels, domínio, licença, unidade ou incerteza defensável. A triagem SAR temporal produz candidatos amplos; os classificadores por cultura permanecem em ABSTENÇÃO/N/D_VALIDACAO enquanto não houver pesos/modelos específicos e calibração independente real. Rótulos cartográficos podem apoiar treino exploratório, nunca ser apresentados como verdade de campo. A validação prospectiva deve congelar previsões antes da coleta, separar parcelas/fazendas e safras inteiras, e relatar RMSE, MAE, viés e cobertura de intervalos sem converter teste sintético em evidência real.
+
+## Estado verificável
+No SHA remoto `443aa5dfb5cf3ef782c8ab4b86f7279b044ac2c2`, a suíte completa dos painéis passou; a build Windows falhou no contrato GUI antigo que ainda esperava Esri/IBGE e não chegou ao teste live, empacotamento ou autoteste. A homologação científica independente reprovou por falta de dados e manifestos de evidência real. Após as mudanças locais, 20 testes focados, compilação sintática e o registro experimental passaram localmente. A nova CI, incluindo a matriz óptica brasileira e o build Windows, ainda precisa rodar no SHA publicado.
+
+A liberação científica permanece bloqueada até observações reais independentes. O marco pré-campo pode ser avaliado separadamente, mas só distribuir o EXE/ZIP experimental após regressão completa, leitura óptica live, build, autoteste em cópia limpa, hashes e SHA exato passarem no mesmo commit. Não declarar a cobertura nacional completa com base nos dez pontos amostrais.
+
 # CHECKPOINT V87.32 — rótulo e teste live da interface (06/11/2026)
 
 A build Windows do SHA `443aa5dfb5cf3ef782c8ab4b86f7279b044ac2c2` passou pelas verificações de fonte e avançou até o contrato GUI. A execução falhou porque o workflow ainda exigia o texto antigo “Esri World Imagery”; o fluxo atual rotula Sentinel-2 e CBERS-4A/WFI, e o contrato agora verifica esses rótulos e a saída live do fallback. Também atualizei a mensagem do teste para refletir CBERS-4A. Os sete contratos focados da camada óptica passaram no SHA anterior, mas a build e a suíte completa precisam ser repetidas no novo SHA.

@@ -770,8 +770,9 @@ def ui_smoke_test():
 def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
     """Recent low-cloud Sentinel-2 L2A RGB preview and AOI pixel coordinates; no user API key."""
     import rasterio
-    from rasterio.warp import transform_bounds, transform
+    from rasterio.warp import transform_bounds, transform, transform_geom
     from rasterio.windows import from_bounds
+    from rasterio.features import geometry_mask
     g=gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
     body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
@@ -823,6 +824,15 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
             arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
                          resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
             rgb=np.moveaxis(arr,0,2)
+            valid=np.isfinite(rgb).all(axis=2)&(rgb>0).any(axis=2)
+            target_transform=src.window_transform(win)*rasterio.Affine.scale(
+                float(win.width)/out_w,float(win.height)/out_h)
+            aoi_geometry=transform_geom("EPSG:4326",src.crs,geom)
+            aoi_mask=geometry_mask([aoi_geometry],out_shape=(out_h,out_w),
+                                   transform=target_transform,invert=True)
+            aoi_coverage=float((valid&aoi_mask).sum()/max(1,int(aoi_mask.sum())))
+            if aoi_coverage<0.95:
+                raise RuntimeError("Sentinel-2 Planetary Computer não cobre 95% dos pixels da AOI")
             if rgb.dtype!=np.uint8:
                 valid=rgb[np.isfinite(rgb)&(rgb>0)]
                 hi=float(np.percentile(valid,99)) if valid.size else 1.0
@@ -839,8 +849,29 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
                         pts.extend([float(col)*out_w/max(float(win.width),1.0),float(row)*out_h/max(float(win.height),1.0)])
                     if len(pts)>=6:polygons.append(pts)
     return {"image":view,"polygons":polygons,"scene_id":it.get("id"),"datetime":dt,"cloud_cover":cloud,
-            "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual"}
+            "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual",
+            "aoi_coverage_fraction":aoi_coverage}
 
+
+
+def _fetch_stac_features_paged(url,body,*,timeout=(8,45),max_pages=20):
+    """Fetch paged STAC results so a first-page limit cannot hide AOI scenes."""
+    response=requests.post(url,json=body,timeout=timeout)
+    response.raise_for_status();payload=response.json()
+    features=list(payload.get("features") or []);pages=1
+    while pages<max_pages:
+        link=next((x for x in payload.get("links",[]) if x.get("rel")=="next" and x.get("href")),None)
+        if not link:break
+        if str(link.get("method","GET")).upper()=="POST":
+            response=requests.post(link["href"],json=link.get("body") or body,
+                                   headers=link.get("headers") or {},timeout=timeout)
+        else:
+            response=requests.get(link["href"],timeout=timeout)
+        response.raise_for_status();payload=response.json()
+        page=payload.get("features") or []
+        if not page:break
+        features.extend(page);pages+=1
+    return features
 
 
 def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
@@ -851,24 +882,23 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     """
     import time
     import rasterio
-    from rasterio.warp import transform_bounds, transform, reproject, Resampling
+    from rasterio.warp import transform_bounds, transform, transform_geom, reproject, Resampling
+    from rasterio.features import geometry_mask
     from rasterio.windows import from_bounds, Window
     g=gdf.to_crs(4326).copy()
     geom=g.geometry.union_all().__geo_interface__
     body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":60,
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
     errors=[]
-    response=None
+    items=[]
     for attempt in range(3):
         try:
-            response=requests.post("https://earth-search.aws.element84.com/v1/search",
-                                   json=body,timeout=(8,35))
-            response.raise_for_status()
+            items=_fetch_stac_features_paged("https://earth-search.aws.element84.com/v1/search",
+                                              body,timeout=(8,35),max_pages=20)
             break
         except requests.exceptions.RequestException as exc:
             if attempt==2:raise RuntimeError("Earth Search STAC indisponível: "+type(exc).__name__) from None
             time.sleep(1.2*(attempt+1))
-    items=response.json().get("features",[])
     choices=[]
     for item in items:
         assets=item.get("assets") or {}
@@ -883,7 +913,7 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     # is inaccessible or its viewport contains no actual data.
     clear=sorted((x for x in choices if x[0]<=20),key=lambda x:x[1],reverse=True)
     other=sorted((x for x in choices if x[0]>20),key=lambda x:(x[0],x[1]))
-    pool=(clear+other)[:8]
+    pool=(clear+other)[:80]
     bounds=tuple(map(float,g.total_bounds))
     out_width=max(320,min(1600,int(out_w)))
     out_height=max(240,min(1200,int(out_h)))
@@ -942,6 +972,15 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                     valid=np.isfinite(stack).all(axis=2)&(stack>0).any(axis=2)
                     if valid.sum()<max(80,stack.shape[0]*stack.shape[1]//200):
                         raise RuntimeError("cena sem pixels RGB válidos suficientes")
+                    target_transform=tr*__import__("rasterio").Affine.scale(
+                        float(window.width)/out_width,float(window.height)/out_height)
+                    aoi_geom=transform_geom("EPSG:4326",crs,geom)
+                    aoi_mask=geometry_mask([aoi_geom],out_shape=(out_height,out_width),
+                                           transform=target_transform,invert=True)
+                    aoi_pixel_count=max(1,int(aoi_mask.sum()))
+                    aoi_coverage=float((valid&aoi_mask).sum()/aoi_pixel_count)
+                    if aoi_coverage<0.95:
+                        raise RuntimeError("cena não cobre 95% dos pixels da AOI")
                     pixels=stack[valid]
                     hi=float(np.percentile(pixels,99))
                     if hi<=0 or not np.isfinite(hi):raise RuntimeError("radiometria RGB inválida")
@@ -965,7 +1004,8 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                             "polygons":scaled_polygons,"scene_id":item.get("id"),
                             "datetime":dt,"cloud_cover":cloud,
                             "provider":"Sentinel-2 L2A / Earth Search AWS public COGs",
-                            "attempted_scenes":len(errors)+1}
+                            "attempted_scenes":len(errors)+1,
+                            "aoi_coverage_fraction":aoi_coverage}
         except (UnicodeError,OSError,RuntimeError,ValueError,rasterio.errors.RasterioError) as exc:
             errors.append(str(item.get("id",""))+": "+type(exc).__name__+": "+str(exc)[:100])
     raise RuntimeError("Nenhuma das "+str(len(pool))+" cenas Sentinel-2 forneceu RGB real. "+
@@ -1015,8 +1055,9 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     response=None;search_error=None
     for attempt in range(4):
         try:
-            response=requests.post("https://data.inpe.br/bdc/stac/v1/search",json=body,timeout=(8,45))
-            response.raise_for_status();break
+            items=_fetch_stac_features_paged("https://data.inpe.br/bdc/stac/v1/search",
+                                             body,timeout=(8,45),max_pages=20)
+            break
         except requests.exceptions.RequestException as exc:
             search_error=exc
             status=getattr(getattr(exc,"response",None),"status_code",None)
@@ -1025,8 +1066,6 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             if not retryable or attempt>=3:raise RuntimeError(
                 "Busca STAC CBERS-4A/WFI indisponível após tentativas: "+type(exc).__name__) from None
             time.sleep(1.5*(attempt+1))
-    if response is None:raise RuntimeError("Busca STAC CBERS-4A/WFI falhou: "+str(search_error))
-    items=response.json().get("features",[])
     if not items:raise RuntimeError("Catálogo INPE não retornou cenas CBERS-4A/WFI para a AOI")
     # Sort by acquisition date; newest clear pixels win. Older archived scenes
     # may fill geographic gaps, and the date range is reported to the user.
@@ -1064,7 +1103,7 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                       dst_crs="EPSG:4326",dst_nodata=(0 if categorical else np.nan),resampling=method)
         return destination
 
-    for dt,item in scenes[:60]:
+    for dt,item in scenes[:1200]:
         assets=item.get("assets") or {}
         keys=("BAND15","BAND14","BAND13")
         if not all((assets.get(k) or {}).get("href") for k in keys) or not (assets.get("CMASK") or {}).get("href"):
@@ -1106,6 +1145,10 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     valid=np.isfinite(rgb).all(axis=2)&(rgb>0).any(axis=2)
     if valid.sum()<max(80,height*width//200):
         raise RuntimeError("CBERS-4A/WFI sem pixels reais RGB suficientes na AOI. "+"; ".join(errors[:3]))
+    aoi_coverage=float((valid&aoi_mask).sum()/aoi_pixels)
+    if aoi_coverage<0.95:
+        raise RuntimeError("CBERS-4A/WFI não cobre 95% dos pixels da AOI; cobertura="+
+                           format(aoi_coverage,".3f")+". "+"; ".join(errors[:3]))
     hi=float(np.percentile(rgb[valid],99))
     if not np.isfinite(hi) or hi<=0:raise RuntimeError("Reflectância CBERS-4A inválida")
     image=Image.fromarray(np.clip(np.nan_to_num(rgb,nan=0.0)/hi*255,0,255).astype(np.uint8),"RGB")
@@ -1119,7 +1162,8 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
             "datetime":max(source_dates),"date_range":[min(source_dates),max(source_dates)],"scene_ids":scene_ids,
             "provider":"CBERS-4A/WFI L4-SR / INPE STAC (COG, composição RGB de pixels claros)",
-            "resolution_m":55,"pixel_count":int(valid.sum()),"cloud_pixels_included":cloud_fallback_used,"polygons":[]}
+            "resolution_m":55,"pixel_count":int(valid.sum()),"aoi_coverage_fraction":aoi_coverage,
+            "cloud_pixels_included":cloud_fallback_used,"polygons":[]}
 
 
 def _satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h):
@@ -1425,7 +1469,7 @@ class App(tk.Tk):
         self._apply_map_zoom()
 
     def show_google_map(self,refresh=False,prefer_public=False):
-        """Satellite visualization: Sentinel-2, official CBERS-4A, then live imagery services."""
+        """Visual-only Sentinel-2/CBERS-4A backdrop; never an analytical input."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()

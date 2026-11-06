@@ -240,3 +240,11 @@ A suíte GUI continha expectativas obsoletas para Google, NASA GIBS e Esri. O co
 
 ## V87.32 — rótulo da imagem de fundo (06/11/2026)
 O contrato de GUI do Windows passou a validar os rótulos Sentinel-2 e CBERS-4A/WFI e o teste live do fallback, substituindo expectativas obsoletas de Esri. A camada de fundo é exclusivamente visual e não altera o cálculo do carbono do solo. A matriz nacional VV/VH e a homologação científica independente seguem pendentes.
+
+
+## V87.33 — modelos pré-campo e separação óptico/SAR (06/11/2026)
+O fundo visual usa pixels reais Sentinel-2 ou CBERS-4A/WFI, com busca STAC paginada e cobertura mínima de 95% dos pixels da AOI. A rotina não usa o mapa cartográfico IBGE como fundo óptico. A imagem permanece exclusivamente visual; a classificação de cobertura/culturas e as estimativas de biomassa/carbono continuam dependentes de SAR.
+
+O inventário pré-campo agora registra 14 rotas de modelos e software com domínio, método, incerteza, regra de abstenção e validação de campo pendente. SOC 0–100 cm mantém cinco horizontes completos e unidades/área/cobertura auditáveis. Uma faixa física determinística é envelope de cenário, não IC95%; sem fonte, camada, licença ou parâmetros completos, publicar N/D. A fertilidade permanece separada do estoque de SOC e só pode usar rasters numéricos oficiais com unidade e profundidade identificadas.
+
+O registro de prontidão pré-campo não é homologação científica. A classificação específica de culturas deve abster-se quando faltarem pesos SAR e calibração real independente. O teste óptico live em dez pontos brasileiros ainda aguarda CI no novo SHA e não prova cobertura de cada pixel. O gate independente de evidência de campo permanece pendente.
