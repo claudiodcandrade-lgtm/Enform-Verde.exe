@@ -231,3 +231,6 @@ Se a área nativa confirmada é zero ou inexistente por ausência de evidência 
 
 ## Separação entre fundo visual e fonte de solo — V87.29
 A imagem óptica Sentinel-2 ou CBERS-4A/WFI usada como fundo do polígono é exclusivamente visual e não substitui nem calibra a fonte de carbono do solo. O estoque permanece calculado a partir dos cinco horizontes oficiais Embrapa/PronaSolos de 0–100 cm, com interseção espacial, cobertura, licença, unidade e proveniência verificadas; raster IBGE cartográfico não participa do cálculo nem serve como fundo de satélite.
+
+## V87.30 — estado de CI da prévia óptica (06/11/2026)
+A CI encontrou no workflow Windows uma asserção GUI desatualizada que exigia Google/Esri, contrariando o fluxo Sentinel-2 → CBERS-4A já especificado. O contrato do workflow foi atualizado para verificar as rotas reais de pixels dos dois provedores. O resultado deve ser revalidado em novo SHA; a falha antiga impediu os testes live e a build final, logo não comprova que o EXE dessa alteração esteja validado. A imagem de fundo não participa das estimativas ou validação de carbono do solo 0–100 cm.

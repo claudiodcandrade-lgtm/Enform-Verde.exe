@@ -1,3 +1,11 @@
+## CHECKPOINT V87.30 — correção do contrato de GUI e andamento da build (06/11/2026)
+
+No commit `269fe77067f94d193ec327d6e840fa3e5666fe04`, a CI detectou uma asserção obsoleta no teste GUI do workflow Windows: ela exigia Google Maps e Esri, embora o requisito atualizado seja Sentinel-2 seguido de CBERS-4A, sem IBGE como imagem de fundo. A alteração no workflow agora verifica as rotas reais `sentinel2_earthsearch_preview`, `sentinel2_preview` e `cbers4a_wfi_preview`. A falha reportada foi do contrato de teste desatualizado; não comprova falha da nova prévia, mas o resultado de live/build no SHA ainda deve ser repetido.
+
+A CI do SHA `269fe77067f94d193ec327d6e840fa3e5666fe04` aprovou o contrato experimental, a validação de sintaxe/compilação de todos os módulos e a preparação da base IBGE empacotada. O job de regressão completa ainda estava em execução. A build Windows falhou no contrato GUI obsoleto antes dos testes live, do empacotamento e do autoteste do EXE; portanto, ainda não existe artefato validado nesse SHA. O workflow científico independente continua reprovado porque `validation/modular_capabilities.json` está ausente.
+
+O catálogo nacional SAR e seu self-test passaram na CI, mas isso não constitui avaliação nacional de pixels Sentinel-1 VV/VH cobrindo seis biomas, extremos, órbitas, bordas de cenas e lacunas temporais. Manter ambas as pendências separadas. Reexecutar regressões e build Windows no SHA após a correção do teste GUI; só registrar pacote experimental se EXE, ZIP, manifesto/hash e identidade do SHA forem confirmados. A homologação científica não pode ser declarada.
+
 Warning: truncated output (original token count: 31455)
 Total output lines: 592
 
