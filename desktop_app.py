@@ -686,7 +686,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
             break
     if observations is None:
         return {"_diagnostic":{"target_status":"SERVICO_SEM_AMOSTRA_COMPLETA",
-                "reason":"Nenhum serviço retornou os cinco horizontes em todos os pontos amostrais; estoque 0–100 cm mantido como N/D.",
+                "reason":"Nenhum serviço retornou os cinco horizontes em todos os pontos amostrais; estoque 0–100 cm mantido como N/D. "+ " | ".join(error for attempt in attempts for error in attempt["errors"])[:300],
                 "services_checked":attempts,"samples_requested":len(points),
                 "query_points_inside_stratum":len(points),"target_0_100_available":False,
                 "no_partial_sample_extrapolation":True,
@@ -697,6 +697,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         "valid_by_layer":{"0–5":len(points),"5–15":len(points),"15–30":len(points),
                           "30–60":len(points),"60–100":len(points)},
         "service":selected_service,"services_checked":attempts,
+        "selected_points_by_service":{endpoint:(len(points) if endpoint==selected_service else 0) for endpoint in SERVICE_CANDIDATES},
         "no_cross_service_horizon_combination":True,"single_service_for_entire_stratum":True,
         "query_points_inside_stratum":len(points),"target_depth_cm":100,
         "target_0_100_available":"0–100 cm" in out,

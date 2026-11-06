@@ -65,9 +65,10 @@ class SoilEndpointFallbackTests(unittest.TestCase):
         session.get.side_effect=lambda url,**kwargs: alt if url==ALTERNATE_SERVICE else primary
         with patch("requests.Session",return_value=session):
             result=pronasolos_soc_profiles(self.aoi,max_points=1)
-        self.assertEqual(result["0–30 cm"]["tc_ha"],60)
+        self.assertNotIn("0–30 cm",result)
         self.assertNotIn("0–100 cm",result)
-        self.assertEqual(result["_diagnostic"]["target_status"],"INCOMPLETO_NAO_EXTRAPOLAR")
+        self.assertTrue(result["_diagnostic"]["no_partial_sample_extrapolation"])
+        self.assertEqual(result["_diagnostic"]["target_status"],"SERVICO_SEM_AMOSTRA_COMPLETA")
 
     def test_local_verified_exact_pixel_intersection_precedes_http(self):
         result={"0–100 cm":{"tc_ha":107.5,"spatial_sd_tc_ha":3.2},
@@ -86,7 +87,7 @@ class SoilEndpointFallbackTests(unittest.TestCase):
             result=pronasolos_soc_profiles(self.aoi,max_points=1)
         self.assertNotIn("0–100 cm",result)
         self.assertEqual(result["_diagnostic"]["target_status"],
-                         "SERVICO_SEM_VALORES_BRUTOS_VALIDOS")
+                         "SERVICO_SEM_AMOSTRA_COMPLETA")
         self.assertIn("Synthetic offline endpoint",result["_diagnostic"]["reason"])
 
     def test_probe_records_each_attempt_without_blending(self):
