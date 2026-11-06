@@ -654,6 +654,7 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
     minx,miny,maxx,maxy=geom.bounds
     from pronasolos_identify import SERVICE_CANDIDATES, build_identify_params, extract_paired_horizons
+    layer_ids=[2,3,4,5,6]
     from pronasolos_identify import sample_points_in_stratum
     points=sample_points_in_stratum(geom,max_points)
     if not points:
@@ -669,11 +670,11 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         current=[]
         errors=[]
         for point in points:
-            params=build_identify_params(point.x,point.y,(minx,miny,maxx,maxy))
+            params=build_identify_params(point.x,point.y,(minx,miny,maxx,maxy),layer_ids)
             try:
                 response=session.get(endpoint,params=params,timeout=(5,12))
                 response.raise_for_status()
-                current.append(extract_paired_horizons(response.json()))
+                current.append(extract_paired_horizons(response.json(),layer_ids))
             except Exception as exc:
                 current.append({})
                 errors.append(type(exc).__name__+": "+str(exc)[:160])
