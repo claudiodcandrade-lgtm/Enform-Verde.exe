@@ -568,3 +568,7 @@ Essa contingência estima a média do produto cartográfico na amostra; não qua
 
 ## UPDATE V87.34.1 — CI contract aligned with the soil service module (06/11/2026)
 The Windows GUI contract was incorrectly searching for the primary PronaSolos endpoint inside desktop_app.py, although endpoint definitions intentionally live in pronasolos_identify.py. The assertion now reads that dedicated registry and checks the primary official endpoint plus candidate-service declaration. No service behavior or scientific acceptance threshold changed. Re-run Windows build, GUI contract, complete regression, package integrity and clean-folder EXE checks at the new source SHA. The independent scientific homologation gate remains failed pending real independent evidence; this contract fix does not satisfy it.
+
+
+## CHECKPOINT V87.35.1 — registro posterior à correção GUI (06/11/2026)
+O contrato do build Windows agora verifica o endpoint oficial PronaSolos no módulo dedicado `pronasolos_identify.py`, em vez de exigir a URL dentro da interface `desktop_app.py`. A coleta por Identify permanece fallback de último recurso e só calcula o perfil quando um único serviço devolve todos os cinco horizontes em todos os pontos; do contrário, 0–100 cm é N/D. Este registro é posterior ao commit efetivo para satisfazer a trilha documental. Disponibilidade nacional de fontes, classificação SAR, agricultura, carbono e previsões ainda não está demonstrada; ver matriz nacional de cobertura no prompt V52. Homologação científica independente segue reprovada.
