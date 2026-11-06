@@ -13,6 +13,14 @@ from pathlib import Path
 import geopandas as gpd
 from shapely.geometry import box
 
+import sys
+
+# Executed as `python tools/live_optical_coverage_brazil.py` in Windows CI:
+# Python places tools/, not the repository root, on sys.path.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 import desktop_app as app
 
 
