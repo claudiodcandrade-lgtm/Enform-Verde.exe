@@ -409,7 +409,7 @@ jobs:
           assert "sar_agb_blocker" in sar_src and "missing_predictors" in sar_src, "exact SAR AGB blocker diagnostics missing"
           assert "_jaxa_mosaic_gamma0_db" in sar_src and "np.square(a)" in sar_src, "JAXA mosaic gamma0 calibration regression"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
-          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Esri World Imagery" in src, "satellite polygon visualization/fallback missing"
+          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Imagem de fundo: Sentinel-2" in src and "CBERS-4A/WFI (55 m)" in src and "não será usado como fundo" in src, "Sentinel-2/CBERS-4A backdrop label missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
           assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
@@ -458,14 +458,14 @@ jobs:
           ui.update_idletasks()
           assert "Upload concluído" in ui.vector_status.get() and kmz.name in ui.vector_status.get(), "AOI filename/upload confirmation missing"
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
-          # Real satellite fallback: no Google key -> Sentinel-2 first, Esri only if Sentinel-2 fails.
+          # Real optical fallback: Sentinel-2 first, official INPE CBERS-4A if Sentinel-2 fails.
           import time
           ui.google_maps_key.set("")
           ui.show_google_map()
           deadline=time.time()+45
           while time.time()<deadline and not ui._satellite_map_visible:
               ui.update(); time.sleep(.08)
-          assert ui._satellite_map_visible, "Sentinel-2/Esri fallback did not render in the UI"
+          assert ui._satellite_map_visible, "Sentinel-2/CBERS-4A fallback did not render in the UI"
           assert hasattr(ui,"google_map_photo"), "satellite image object missing after fallback"
           print("SATELLITE_FALLBACK_UI_OK")
           import tempfile
@@ -476,18 +476,12 @@ jobs:
               ui.pick_vector(); ui.update_idletasks()
               assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
-              # Simulate total basemap/network failure: the core map must remain usable.
+              # Total image failure leaves the AOI outline; IBGE is not a satellite-image fallback.
               current_gen=ui._map_generation
-              ui._finish_satellite_map(current_gen,None,[],"Esri World Imagery",None,None,"offline test")
+              ui._finish_satellite_map(current_gen,None,[],"Sentinel-2/CBERS-4A",None,None,"offline test")
               ui.update_idletasks()
-              assert ui._satellite_map_visible and any(ui.map_canvas.type(i)=="image" for i in ui.map_canvas.find_all()), "online map failure must leave packaged offline IBGE map with AOI visible"
-              ui._satellite_map_visible=False
-              ui.map_canvas.configure(width=960,height=420)
-              ui.update_idletasks(); ui._on_map_resize(); ui.update_idletasks(); ui._redraw_map_after_resize(); ui.update_idletasks()
-              aoi_images=[i for i in ui.map_canvas.find_withtag("aoi_visible") if ui.map_canvas.type(i)=="image"]
-              assert aoi_images, "raster IBGE basemap with translucent AOI disappeared after map resize"
-              bb=ui.map_canvas.bbox(aoi_images[0]); cw=max(1,ui.map_canvas.winfo_width()); ch=max(1,ui.map_canvas.winfo_height())
-              assert bb and ((bb[2]-bb[0])/cw > .45 or (bb[3]-bb[1])/ch > .45), "IBGE raster with AOI is not fitted to resized map canvas: "+repr((bb,cw,ch))
+              assert not ui._satellite_map_visible and not any(ui.map_canvas.type(i)=="image" for i in ui.map_canvas.find_all()), "IBGE raster must not be substituted for unavailable Sentinel-2/CBERS-4A pixels"
+              assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "AOI outline must remain visible when imagery is unavailable"
               old_generation=ui._map_generation
               ui._reset_analysis_state()
               assert ui._map_generation>old_generation and not ui._satellite_map_visible, "new input must invalidate stale satellite map responses"

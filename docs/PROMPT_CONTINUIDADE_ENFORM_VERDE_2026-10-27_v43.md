@@ -1,3 +1,9 @@
+# CHECKPOINT V87.32 — rótulo e teste live da interface (06/11/2026)
+
+A build Windows do SHA `443aa5dfb5cf3ef782c8ab4b86f7279b044ac2c2` passou pelas verificações de fonte e avançou até o contrato GUI. A execução falhou porque o workflow ainda exigia o texto antigo “Esri World Imagery”; o fluxo atual rotula Sentinel-2 e CBERS-4A/WFI, e o contrato agora verifica esses rótulos e a saída live do fallback. Também atualizei a mensagem do teste para refletir CBERS-4A. Os sete contratos focados da camada óptica passaram no SHA anterior, mas a build e a suíte completa precisam ser repetidas no novo SHA.
+
+O gate científico independente segue reprovado por falta de manifesto modular, e a matriz territorial de pixels Sentinel-1 VV/VH permanece pendente. Não existe EXE/ZIP validado. O teste live do KMZ de Tapajós não prova cobertura nacional óptica nem SAR. Só disponibilizar pacote experimental após regressões, teste live, compilação, autoteste em pasta limpa, hashes e identidade de SHA passarem no mesmo commit; não declarar homologação científica.
+
 # CHECKPOINT V87.31 — contratos de fallback óptico atualizados (06/11/2026)
 
 A CI da PR #50 detectou dois contratos GUI obsoletos em sequência: o workflow Windows exigia Google/Esri, e a suíte completa ainda ordenava NASA GIBS/Esri/IBGE após Sentinel-2. O código de visualização foi atualizado para usar Sentinel-2 seguido de CBERS-4A; os contratos foram corrigidos para conferir essa hierarquia e excluir NASA, Esri e raster IBGE do fundo. Sete testes focados passaram localmente.

@@ -237,3 +237,6 @@ A CI encontrou no workflow Windows uma asserção GUI desatualizada que exigia G
 
 ## V87.31 — contratos de fallback óptico (06/11/2026)
 A suíte GUI continha expectativas obsoletas para Google, NASA GIBS e Esri. O contrato passa a exigir Sentinel-2 seguido de CBERS-4A; estes são provedores de imagem visual, sem participação nos cálculos de carbono do solo. Sete testes focados passaram localmente; é necessário repetir a CI completa. A homologação científica e a matriz nacional de pixels SAR permanecem independentes e pendentes.
+
+## V87.32 — rótulo da imagem de fundo (06/11/2026)
+O contrato de GUI do Windows passou a validar os rótulos Sentinel-2 e CBERS-4A/WFI e o teste live do fallback, substituindo expectativas obsoletas de Esri. A camada de fundo é exclusivamente visual e não altera o cálculo do carbono do solo. A matriz nacional VV/VH e a homologação científica independente seguem pendentes.
