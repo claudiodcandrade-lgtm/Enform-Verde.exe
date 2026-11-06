@@ -21,7 +21,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.3-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.4-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -626,13 +626,9 @@ def _attach_embrapa_official_soc_bounds(gdf, stock_result, stock_paths):
 
 def pronasolos_soc_profiles(gdf,max_points=36):
     """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha).
-    Cumulative 0–30 cm, 0–60 cm and 0–100 cm profiles are computed
-    from collocated horizons only, using the official MapServer.
-    Spatial SD is descriptive, not an AOI predictive confidence interval."""
-    # First use a locally cached, SHA256-verified set of the five official
-    # raw 90m Embrapa SOC rasters, when present. The native stratum passed
-    # here is the EXACT AOI × fitophysiognomy intersection; do not sample its
-    # bbox or read colour-stretched TIFFs from the map renderer.
+    Exact polygon × raw-raster intersection is preferred. Identify-point
+    sampling is a last resort and only accepted as a complete, single-service
+    sample over the whole AOI × physiognomy stratum."""
     from soil_pronasolos_zonal import verified_local_horizons, mapped_soil_0_100_on_polygon
     local_paths=verified_local_horizons()
     local_audit=None
@@ -641,12 +637,9 @@ def pronasolos_soc_profiles(gdf,max_points=36):
         if local_result.get("0–100 cm",{}).get("tc_ha") is not None:
             return _attach_embrapa_official_soc_bounds(gdf,local_result,local_paths)
         local_audit=local_result.get("_diagnostic")
-    # Primary online route: download ONLY the polygon window of the five raw
-    # official 90 m horizons (Embrapa GeoInfo WCS) and intersect exactly.
-    # Identify-point sampling below is a last resort and is labelled as such.
     wcs_audit=None
     try:
-        from pronasolos_wcs import fetch_horizons, WcsAcquisitionError
+        from pronasolos_wcs import fetch_horizons
         acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
         wcs_result=mapped_soil_0_100_on_polygon(
             gdf,acquired["paths"],
@@ -658,79 +651,60 @@ def pronasolos_soc_profiles(gdf,max_points=36):
     except Exception as exc:
         wcs_audit={"target_status":"WCS_INDISPONIVEL","reason":type(exc).__name__+": "+str(exc)[:300]}
     import requests
-    from shapely.geometry import Point
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
     minx,miny,maxx,maxy=geom.bounds
-    # Patch 0003: every subpolygon contributes an interior point; refine grid
-    # adaptively for fragmented/narrow IBGE strata, never invent soil values.
+    from pronasolos_identify import SERVICE_CANDIDATES, build_identify_params, extract_paired_horizons
     from pronasolos_identify import sample_points_in_stratum
-    pts=sample_points_in_stratum(geom,max_points)
-    service="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
-    layer_ids=[2,3,4,5,6]
-    names=["0–5","5–15","15–30","30–60","60–100"]
-    vals={k:[] for k in layer_ids}; errors={k:[] for k in layer_ids}
-    observations=[]  # one geolocated vector of horizon values per query point
-    sess=requests.Session()
-    extent=f"{minx},{miny},{maxx},{maxy}"
-    from pronasolos_identify import SERVICE, SERVICE_CANDIDATES, build_identify_params, extract_paired_horizons
-    service=SERVICE
-    service_used_counts={key:0 for key in SERVICE_CANDIDATES}
-    # The alternative official stock service is queried only if the primary
-    # response is incomplete or unavailable. A profile ALWAYS comes from one
-    # response to one service at one coordinate; never merge horizons.
-    for p in pts:
-        params=build_identify_params(p.x,p.y,(minx,miny,maxx,maxy),layer_ids)
-        sample={}; best_service=None
-        for endpoint in SERVICE_CANDIDATES:
+    points=sample_points_in_stratum(geom,max_points)
+    if not points:
+        return {"_diagnostic":{"target_status":"SEM_PONTOS_AMOSTRAIS","target_0_100_available":False,
+                "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit}}
+    session=requests.Session()
+    attempts=[]
+    observations=None
+    selected_service=None
+    # Do not mix products in a profile OR within the same stratum. A service
+    # must return all five horizons at every reproducible area-uniform point.
+    for endpoint in SERVICE_CANDIDATES:
+        current=[]
+        errors=[]
+        for point in points:
+            params=build_identify_params(point.x,point.y,(minx,miny,maxx,maxy))
             try:
-                response=sess.get(endpoint,params=params,timeout=(5,12))
+                response=session.get(endpoint,params=params,timeout=(5,12))
                 response.raise_for_status()
-                candidate=extract_paired_horizons(response.json(),layer_ids)
-                if len(candidate)>len(sample):
-                    sample=candidate
-                    best_service=endpoint
-                if len(sample)==len(layer_ids):
-                    break
+                current.append(extract_paired_horizons(response.json()))
             except Exception as exc:
-                for lid in layer_ids:
-                    errors[lid].append(endpoint+": "+type(exc).__name__+": "+str(exc)[:120])
-        if best_service:
-            service_used_counts[best_service]+=1
-        for lid in layer_ids:
-            if lid in sample:
-                vals[lid].append(sample[lid])
-            else:
-                errors[lid].append("sem valor numérico bruto na resposta do mesmo serviço/ponto")
-        observations.append(sample)
-    # Only co-located horizons enter the same 0–100 cm profile.
-    # Incomplete depth at one location remains missing, never a numeric zero.
+                current.append({})
+                errors.append(type(exc).__name__+": "+str(exc)[:160])
+        valid=sum(all(layer in profile for layer in (2,3,4,5,6)) for profile in current)
+        attempts.append({"service":endpoint,"complete_points":valid,
+                         "requested_points":len(points),"errors":errors[:3]})
+        if valid==len(points):
+            observations=current
+            selected_service=endpoint
+            break
+    if observations is None:
+        return {"_diagnostic":{"target_status":"SERVICO_SEM_AMOSTRA_COMPLETA",
+                "reason":"Nenhum serviço retornou os cinco horizontes em todos os pontos amostrais; estoque 0–100 cm mantido como N/D.",
+                "services_checked":attempts,"samples_requested":len(points),
+                "query_points_inside_stratum":len(points),"target_0_100_available":False,
+                "no_partial_sample_extrapolation":True,
+                "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit}}
     from soil_profile_stats import summarize_paired_soil_profiles
     out=summarize_paired_soil_profiles(observations)
-    if "0–30 cm" not in out:
-        detail=[]
-        for i,k in enumerate(layer_ids[:3]):
-            detail.append(f"{names[i]} cm: n={len(vals[k])}; "+(("; ".join(errors[k][:2])) if errors[k] else "sem retorno"))
-        # Preserve the failure instead of silently suppressing it upstream.
-        # N/D is NOT zero carbon; no 0-30 model is extended to 0-100.
-        out["_diagnostic"]={"target_status":"SERVICO_SEM_VALORES_BRUTOS_VALIDOS",
-                             "reason":" | ".join(detail),"local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit,
-                             "services_checked":list(SERVICE_CANDIDATES),
-                             "samples_requested":len(pts),"query_points_inside_stratum":len(pts),
-                             "target_0_100_available":False}
-        return out
-    out["_diagnostic"]={"samples_requested":len(pts),"valid_by_layer":{names[i]:len(vals[k]) for i,k in enumerate(layer_ids)},
-                        "service":service,"services_checked":list(SERVICE_CANDIDATES),
-                        "selected_points_by_service":service_used_counts,
-                        "no_cross_service_horizon_combination":True,
-                        "mixed_service_products_in_stratum":sum(1 for v in service_used_counts.values() if v)>1,
-                        "query_points_inside_stratum":len(pts),
-                        "target_depth_cm":100,
-                        "target_0_100_available":"0–100 cm" in out,
-                        "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit,
-                        "method":"identify_point_sampling_fallback",
-                        "target_status":"COMPLETO_POR_PONTO" if "0–100 cm" in out else "INCOMPLETO_NAO_EXTRAPOLAR"}
+    out["_diagnostic"]={"samples_requested":len(points),
+        "valid_by_layer":{"0–5":len(points),"5–15":len(points),"15–30":len(points),
+                          "30–60":len(points),"60–100":len(points)},
+        "service":selected_service,"services_checked":attempts,
+        "no_cross_service_horizon_combination":True,"single_service_for_entire_stratum":True,
+        "query_points_inside_stratum":len(points),"target_depth_cm":100,
+        "target_0_100_available":"0–100 cm" in out,
+        "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit,
+        "method":"identify_point_sampling_fallback",
+        "target_status":"AMOSTRA_COMPLETA_SERVICO_UNICO",
+        "spatial_sampling_note":"Amostra espacial reprodutível dentro do polígono; sem intervalo preditivo nem erro do mapa."}
     return out
-
 
 def self_test():
     assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8

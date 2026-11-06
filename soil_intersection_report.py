@@ -43,6 +43,7 @@ def soil_intersection_summary(soil_profiles):
         "coverage_pct": (100.0 * diag["coverage_fraction"]
                          if diag.get("coverage_fraction") is not None else None),
         "pixels": diag.get("valid_complete_pixels"),
+        "samples": diag.get("samples_requested"),
         "partial": bool(top.get("partial_coverage")),
         "retrieved_at_utc": prov.get("retrieved_at_utc"),
         "license": prov.get("license"),
@@ -60,6 +61,10 @@ def soil_intersection_lines(soil_profiles, fmt=None):
             out.append("      Motivo: " + str(s["reason"])[:300])
         return out
     lines = ["    Solo 0–100 cm — método: " + s["method"]]
+    if s["method_code"] == "identify_point_sampling_fallback":
+        lines.append("      Amostra completa de pontos (serviço único): n="
+                     + str(s["samples"] or "N/D")
+                     + "; resultado representa o mapa amostrado, sem erro do mapa ou intervalo preditivo.")
     if s["method_code"] == "area_weighted_raw_raster_polygon_intersection":
         lines.append("      Área da interseção: " + _fmt(s["intersected_area_ha"], 2, fmt)
                      + " ha; área com os cinco horizontes mapeados: " + _fmt(s["mapped_area_ha"], 2, fmt)
