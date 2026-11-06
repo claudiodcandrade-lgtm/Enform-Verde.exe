@@ -1,0 +1,115 @@
+name: Dashboard dual - tests
+on:
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  # Cancel superseded PR jobs; every surviving job still checks out and verifies its exact source SHA.
+  group: enform-dashboard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  dashboard:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # PR merge refs are synthetic; tests must run on the same exact SHA
+          # as scientific gate, Windows EXE and any future release ZIP.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify dashboard tests use exact branch source SHA
+        shell: pwsh
+        run: |
+          $expectedSha = '${{ github.event.pull_request.head.sha || github.sha }}'
+          $sourceSha = (git rev-parse HEAD).Trim()
+          if ($sourceSha -ne $expectedSha) {
+            throw "Dashboard checkout SHA mismatch: $sourceSha vs $expectedSha"
+          }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax check
+        shell: pwsh
+        run: python -m py_compile soil_pronasolos_zonal.py crop_model_registry.py experimental_soil_scenarios.py native_carbon.py executive_carbon_report.py experimental_transfer.py secondary_carbon_adapter.py evidence_hierarchy.py tools/ifn_state_identity.py tools/harvest_ifn_field_data.py tools/prepare_ifn_agb_candidates.py tools/audit_ifn_selected_ua.py desktop_app.py carbon_dashboard_html.py dual_executive_dashboard.py carbon_report_clarity.py crop_health_yield_quality.py sar_pipeline.py sar_acquisition_time.py agricultural_diagnostic_quality.py agricultural_external_models.py land_use_sar.py sar_model_discovery.py pronasolos_identify.py soil_profile_stats.py tools/probe_pronasolos_100cm.py agricultural_weather_sources.py agricultural_weather.py cptec_forecast_client.py
+      - name: Install geospatial regression dependencies
+        shell: pwsh
+        run: python -m pip install "geopandas>=1.0" "rasterio>=1.3" "scikit-learn>=1.4,<2" "requests>=2.31" "openpyxl>=3.1" "Pillow>=10"
+      - name: Unit and regression tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # PowerShell does not necessarily fail a multi-command CI step when an
+          # earlier native command exits nonzero. Enforce EACH test result.
+          $patterns = @(
+            'test_dual_dashboard.py',
+            'test_agricultural_weather.py',
+            'test_enform_uncertainty_core.py',
+            'test_soil_profile_stats.py',
+            'test_pronasolos_identify.py',
+            'test_root_allometry_uncertainty.py',
+            'test_agricultural_external_models.py',
+            'test_sar_model_discovery.py',
+            'test_native_cover_and_farm_strata.py',
+            'test_carbon_compartments.py',
+            'test_measurable_agricultural_accuracy.py',
+            'test_scientific_release_gate.py',
+            'test_workflow_provenance.py',
+            'test_five_biome_sar_routes.py',
+            'test_ibge_equal_area.py',
+            'test_ibge_official_zip.py',
+            'test_sar_acquisition_time.py',
+            'test_sar_recency_routes.py',
+            'test_pronasolos_service_fallback.py',
+            'test_soil_stratum_sampling.py',
+            'test_soil_pronasolos_zonal.py',
+            'test_crop_model_registry.py',
+            'test_crop_fusion_inference.py',
+            'test_planetary_sign_retry.py',
+            'test_evidence_hierarchy.py',
+            'test_ifn_2026_panel_harvest.py',
+            'test_prepare_ifn_agb_candidates.py',
+            'test_audit_ifn_selected_ua.py',
+            'test_sicar_wfs_integrity.py',
+            'test_experimental_transfer.py',
+            'test_experimental_soil_scenarios.py',
+            'test_experimental_audit.py',
+            'test_experimental_carbon_separation.py',
+            'test_executive_carbon_report.py',
+            'test_sar_height_preservation.py'
+          )
+          foreach ($pattern in $patterns) {
+            & python -m unittest discover -s tests -p $pattern -v
+            if ($LASTEXITCODE -ne 0) {
+              throw "Regression test failed: $pattern (exit code $LASTEXITCODE)"
+            }
+          }
+      - name: Install full desktop requirements for complete regression run
+        shell: pwsh
+        run: python -m pip install -r requirements_desktop.txt
+      - name: Byte-compile every Python module (not only a hand-picked list)
+        shell: pwsh
+        run: python -m compileall -q -x "(\\.git|build|dist)" .
+      - name: Guard - every tests/test_*.py must contribute unittest cases
+        shell: pwsh
+        run: python tools/check_test_collection.py
+      - name: Complete regression suite (all tests/test_*.py in one discovery)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw "Complete regression suite failed (exit code $LASTEXITCODE)" }
+          python -m unittest test_enform_uncertainty_core -v
+          if ($LASTEXITCODE -ne 0) { throw "Root uncertainty-core tests failed (exit code $LASTEXITCODE)" }
+      - name: Rule - every effective change updates the Word specification and the continuity prompt
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        run: |
+          # Audit the entire PR history in commit order. A Word-bot commit
+          # after the latest code change is valid; older documentation is not.
+          $base = (git merge-base '${{ github.event.pull_request.base.sha }}' HEAD).Trim()
+          if (-not $base) { throw 'Cannot resolve merge-base for documentation audit' }
+          $global:LASTEXITCODE = 0
+          python tools/check_docs_updated.py $base HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Specification (.docx) and continuity prompt must be updated with every effective change' }

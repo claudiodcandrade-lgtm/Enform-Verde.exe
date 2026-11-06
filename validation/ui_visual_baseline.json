@@ -1,0 +1,165 @@
+{
+  "static": {
+    "palette": {
+      "ORANGE": "#EF9B06",
+      "FOREST": "#0B3D2E",
+      "GREEN": "#155D43",
+      "PALE": "#F4F6F5",
+      "TEXT": "#34413E"
+    },
+    "excel_palette": [
+      "F29A00",
+      "0B3D2E",
+      "FFFFFF",
+      "F4F6F5",
+      "D5DDD9"
+    ],
+    "map_aoi_colours": [
+      "#E87500",
+      "#F8B44C",
+      "#FF8A00"
+    ],
+    "header_png_sha256": "c2189e35e96946a80d42921ba52c7de1e15985cfefa065a067982af848aaaf61",
+    "icon": {
+      "background": "(22,92,58,255)",
+      "monogram": "EV"
+    },
+    "window_title": "Enform Verde"
+  },
+  "shell": {
+    "header": {
+      "bg": "#063D26",
+      "height": "210",
+      "highlightthickness": "0",
+      "text_overlays": 0,
+      "image_items": 1
+    },
+    "action_bar": [
+      [
+        "TLabel",
+        {
+          "text": "Análise de carbono",
+          "style": "Title.TLabel"
+        }
+      ],
+      [
+        "TButton",
+        {
+          "text": "Salvar relatório",
+          "style": ""
+        }
+      ],
+      [
+        "TButton",
+        {
+          "text": "Exportar Excel",
+          "style": ""
+        }
+      ],
+      [
+        "TButton",
+        {
+          "text": "APAGAR PESQUISA",
+          "style": ""
+        }
+      ],
+      [
+        "TButton",
+        {
+          "text": "EXECUTAR ANÁLISE",
+          "style": "Run.TButton"
+        }
+      ]
+    ],
+    "nav": {
+      "width": "288",
+      "bg": "#F6F8F8",
+      "highlightbackground": "#D8E0E0",
+      "highlightthickness": "1",
+      "labels": [
+        "⌂   Início",
+        "▣   Propriedade (CAR)",
+        "◫   Mapas e limites",
+        "◈   Fitofisionomia (IBGE)",
+        "◆   Carregar produtos\n     SAR / AGB",
+        "◉   Biomassa Aérea (AGB)",
+        "♨   Carbono no Solo",
+        "●   Carbono Total",
+        "▤   Resultados e Relatório",
+        "🌱   Monitoramento de\n     áreas cultivadas",
+        "⚙   Configurações",
+        "▥   Base Científica e\n     Modelos",
+        "ⓘ   Sobre"
+      ],
+      "targets": [
+        0,
+        0,
+        1,
+        1,
+        2,
+        3,
+        3,
+        3,
+        3,
+        5,
+        2,
+        4,
+        4
+      ],
+      "button": {
+        "relief": "flat",
+        "anchor": "w",
+        "padx": "20",
+        "pady": "11",
+        "activebackground": "#E5F0EB"
+      },
+      "selected": {
+        "bg": "#08733F",
+        "fg": "white",
+        "font": "{Segoe UI} 10 bold"
+      },
+      "unselected": {
+        "bg": "#F6F8F8",
+        "fg": "#233B49",
+        "font": "{Segoe UI} 10"
+      }
+    },
+    "tabs": [
+      "Propriedade (CAR)",
+      "Mapas e limites",
+      "Carregar produtos SAR / AGB",
+      "Carbono — formações nativas",
+      "Base Científica e Modelos",
+      "Monitoramento — áreas cultivadas"
+    ],
+    "footer": [
+      {
+        "text": "v<APP_VERSION>"
+      },
+      {
+        "text": "Sistema de Estimativa de Estoques de Carbono em Vegetação Nativa"
+      }
+    ],
+    "styles": {
+      ".": {
+        "font": "{Segoe UI} 10",
+        "foreground": "#34413E"
+      },
+      "Title.TLabel": {
+        "font": "{Segoe UI} 20 bold",
+        "foreground": "#EF9B06"
+      },
+      "H.TLabel": {
+        "font": "{Segoe UI} 12 bold",
+        "foreground": "#0B3D2E"
+      },
+      "Run.TButton": {
+        "font": "{Segoe UI} 10 bold",
+        "padding": "10"
+      },
+      "TButton": {
+        "padding": "7"
+      }
+    }
+  }
+}

@@ -1,0 +1,411 @@
+import io
+import zipfile
+import tempfile
+import unittest
+from pathlib import Path
+from tools.acquire_ifn_independent_data import fetch_sources
+
+URL = "https://dados.florestal.gov.br/dataset/ifn.csv"
+
+class IFNAcquisitionTests(unittest.TestCase):
+    def test_raw_download_has_hash_but_is_not_validation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            def fake_open(request, timeout):
+                return io.BytesIO(b"parcela,serapilheira\n1,2.4\n")
+            registry = {"sources": [{"id": "ifn_pa", "url": URL, "license": "CC BY", "role": "litter"}]}
+            result = fetch_sources(registry, temp, opener=fake_open)
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(len(item["sha256"]), 64)
+            self.assertEqual(item["csv_data_rows"], 1)
+            self.assertEqual(item["csv_header"], ["parcela", "serapilheira"])
+            self.assertFalse(result["scientific_validation"])
+            self.assertTrue((Path(temp) / "ifn_pa.csv").exists())
+
+    def test_realistic_cp1252_observations_preserve_biome_names(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_cp1252", "url": URL,
+                       "license": "CC BY", "role": "litter",
+                       "expected_columns": ["bioma", "uf", "ua", "Profundidade"]}]}
+            data = 'bioma;uf;ua;Profundidade\\nAmazônia;Pará;PA_1;2,7\\n'.replace('\\n', '\n').encode("cp1252")
+            result = fetch_sources(registry, temp, opener=lambda request, timeout: io.BytesIO(data))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["csv_encoding"], "cp1252")
+            self.assertEqual(item["biome_rows"], {"Amazônia": 1})
+            self.assertEqual(item["state_rows"], {"Pará": 1})
+            self.assertEqual(item["unique_ua"], 1)
+            self.assertFalse(item["carbon_stock_ready"])
+
+    def test_missing_biome_or_state_is_counted_but_not_an_independent_ua(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_missing", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            raw = ("bioma;uf;ua;equacoes\n"
+                   "Cerrado;GO;UA_1;AGB_Chave\n"
+                   "Cerrado;;UA_2;AGB_Chave\n"
+                   ";GO;UA_3;AGB_Chave\n"
+                   "Cerrado;GO;;AGB_Chave\n").encode("utf-8")
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["csv_data_rows"], 4)
+            self.assertEqual(item["missing_state_rows"], 1)
+            self.assertEqual(item["missing_biome_rows"], 1)
+            self.assertEqual(item["unresolved_ua_identity_rows"], 2)
+            self.assertEqual(item["unique_ua"], 1)
+            self.assertEqual(item["state_rows"], {"GO": 3})
+            self.assertFalse(result["scientific_validation"])
+
+    def test_multiple_equations_do_not_inflate_primary_sampling_units(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_models", "url": URL,
+                       "license": "CC BY", "role": "biomass"}]}
+            raw = ("bioma;uf;ua;tipologia_da_vegetacao;equacoes;agb_media_kg_por_ha\n"
+                   "Cerrado;Goiás;GO_1;Savana;Eq.1;1000\n"
+                   "Cerrado;Goiás;GO_1;Savana;Eq.2;1200\n"
+                   "Cerrado;Goiás;GO_2;Savana;Eq.1;1400\n").encode("utf-8")
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            item = result["resources"][0]
+            self.assertEqual(item["csv_data_rows"], 3)
+            self.assertEqual(item["unique_ua"], 2)
+            self.assertEqual(item["unique_ua_by_biome"], {"Cerrado": 2})
+            self.assertEqual(item["strata_ua_counts"][0]["unique_ua"], 2)
+            self.assertEqual(item["max_equations_per_ua"], 2)
+            self.assertTrue(item["equation_rows_not_independent_sampling_units"])
+            self.assertFalse(item["strata_are_independently_validated"])
+
+    def test_official_mislabeled_csv_url_with_xlsx_bytes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml",
+                    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+                    '<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                    '<c r="B1" t="inlineStr"><is><t>equivalente</t></is></c></row>'
+                    '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                    '<c r="B2" t="inlineStr"><is><t>Sim</t></is></c></row></sheetData></worksheet>')
+            registry = {"sources": [{"id": "ifn_equivalence", "url": URL,
+                       "license": "CC BY", "role": "equivalence",
+                       "expected_columns": ["bioma", "equivalente"]}]}
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(buffer.getvalue()))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["validated_file_extension"], ".xlsx")
+            self.assertEqual(item["source_url_extension"], ".csv")
+            self.assertEqual(item["xlsx_data_rows"], 1)
+            self.assertEqual(item["biome_rows"], {"Cerrado": 1})
+            self.assertTrue((Path(temp) / "ifn_equivalence.xlsx").exists())
+            self.assertFalse((Path(temp) / "ifn_equivalence.csv").exists())
+
+    def test_mislabeled_xlsx_override_with_real_csv_is_profiled_as_csv(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_actual_csv", "url": URL,
+                       "license": "CC BY", "role": "equivalence",
+                       "format_override": "xlsx",
+                       "expected_columns": ["bioma", "equivalente"]}]}
+            raw = b"bioma,equivalente\nCerrado,Sim\n"
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["declared_file_extension"], ".xlsx")
+            self.assertEqual(item["validated_file_extension"], ".csv")
+            self.assertEqual(item["csv_data_rows"], 1)
+            self.assertTrue((Path(temp) / "ifn_actual_csv.csv").exists())
+            self.assertFalse((Path(temp) / "ifn_actual_csv.xlsx").exists())
+
+    def test_corrupt_xlsx_signature_is_not_silently_parsed_as_csv(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_corrupt", "url": URL,
+                       "license": "CC BY", "role": "equivalence"}]}
+            raw = b"PK\x03\x04not-a-valid-workbook"
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+            self.assertFalse((Path(temp) / "ifn_corrupt.xlsx").exists())
+            self.assertFalse((Path(temp) / "ifn_corrupt.csv").exists())
+
+    def test_xlsx_ua_identity_is_biome_state_and_unit_not_id_alone(self):
+        # IFN panels can reuse an UA identifier across UF/biomes, while
+        # multiple equation rows within one UA are not independent plots.
+        with tempfile.TemporaryDirectory() as temp:
+            buffer = io.BytesIO()
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            values = [
+                ("bioma", "uf", "ua"),
+                ("Cerrado", "GO", "UA_01"),
+                ("Cerrado", "GO", "UA_01"),  # second equation, same UA
+                ("Amazônia", "PA", "UA_01"),
+                ("Cerrado", "MG", "UA_01"),
+                ("Cerrado", "", "UA_02"),
+                ("", "GO", "UA_03"),
+            ]
+            rows = []
+            for i, values_row in enumerate(values, 1):
+                cells = "".join(
+                    f'<c r="{col}{i}" t="inlineStr"><is><t>{value}</t></is></c>'
+                    for col, value in zip("ABC", values_row)
+                )
+                rows.append(f'<row r="{i}">{cells}</row>')
+            xml = f'<worksheet xmlns="{ns}"><sheetData>{"".join(rows)}</sheetData></worksheet>'
+            with zipfile.ZipFile(buffer, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_units", "url": URL,
+                       "license": "CC BY", "role": "biomass",
+                       "format_override": "xlsx",
+                       "expected_columns": ["bioma", "uf", "ua"]}]}
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(buffer.getvalue()))
+            item = result["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["xlsx_data_rows"], 6)
+            self.assertEqual(item["missing_biome_rows"], 1)
+            self.assertEqual(item["missing_state_rows"], 1)
+            self.assertEqual(item["unresolved_ua_identity_rows"], 2)
+            self.assertEqual(item["unique_ua"], 3)
+            self.assertEqual(item["unique_ua_by_biome"],
+                             {"Amazônia": 1, "Cerrado": 2})
+            self.assertFalse(item["carbon_stock_ready"])
+
+    def test_unicode_equivalent_and_blank_csv_headers_are_rejected(self):
+        for header in ("bioma;uf;ｕｆ", "bioma;;uf"):
+            with self.subTest(header=header), tempfile.TemporaryDirectory() as temp:
+                raw = (header + "\\nCerrado;GO;GO\\n").replace("\\n", "\n").encode("utf-8")
+                registry = {"sources": [{"id": "ifn_bad_schema", "url": URL,
+                            "license": "CC BY", "role": "biomass"}]}
+                item = fetch_sources(registry, temp,
+                    opener=lambda request, timeout: io.BytesIO(raw))["resources"][0]
+                self.assertEqual(item["status"], "download_failed")
+                self.assertIn("duplicate or blank", item["reason"])
+                self.assertFalse((Path(temp) / "ifn_bad_schema.csv").exists())
+
+    def test_late_csv_extra_column_is_not_silently_counted(self):
+        with tempfile.TemporaryDirectory() as temp:
+            # The sniffer samples only the first 8192 characters; a corrupt
+            # later row must still invalidate the entire raw source profile.
+            raw = ("parcela,serapilheira\\n" + "1,2.4\\n" * 1500 +
+                   "2,3.5,unreported_field\\n").replace("\\n", "\n").encode("utf-8")
+            registry = {"sources": [{"id": "ifn_extra", "url": URL,
+                        "license": "CC BY", "role": "litter"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(raw))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("unexpected extra columns", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_extra.csv").exists())
+
+    def test_unicode_equivalent_xlsx_headers_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c>'
+                   '<c r="C1" t="inlineStr"><is><t>ｕｆ</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_xlsx_alias", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("duplicate or blank", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_xlsx_alias.xlsx").exists())
+
+    def test_xlsx_duplicate_xml_cell_column_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="A2" t="inlineStr"><is><t>Amazônia</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_duplicate_cell", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("duplicate cell column", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_duplicate_cell.xlsx").exists())
+
+    def test_xlsx_undeclared_populated_column_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c>'
+                   '<c r="C2" t="inlineStr"><is><t>unreported</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_extra_xlsx", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("unexpected columns", item["reason"])
+            self.assertFalse((Path(temp) / "ifn_extra_xlsx.xlsx").exists())
+
+    def test_xlsx_cross_row_reference_is_not_an_observation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A3" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2" t="inlineStr"><is><t>GO</t></is></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_wrong_row", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("mismatched cell reference", item["reason"])
+
+    def test_xlsx_formula_cached_value_is_not_primary_observation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+            xml = (f'<worksheet xmlns="{ns}"><sheetData>'
+                   '<row r="1"><c r="A1" t="inlineStr"><is><t>bioma</t></is></c>'
+                   '<c r="B1" t="inlineStr"><is><t>uf</t></is></c></row>'
+                   '<row r="2"><c r="A2" t="inlineStr"><is><t>Cerrado</t></is></c>'
+                   '<c r="B2"><f>CONCAT("G","O")</f><v>GO</v></c></row>'
+                   '</sheetData></worksheet>')
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                archive.writestr("xl/workbook.xml", "<workbook/>")
+                archive.writestr("xl/worksheets/sheet1.xml", xml)
+            registry = {"sources": [{"id": "ifn_formula", "url": URL,
+                        "license": "CC BY", "role": "biomass"}]}
+            item = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(data.getvalue()))["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertIn("formula cell", item["reason"])
+
+    def test_expected_columns_required(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "ifn_bad_header", "url": URL,
+                       "license": "CC BY", "role": "litter",
+                       "expected_columns": ["Profundidade"]}]}
+            result = fetch_sources(registry, temp,
+                opener=lambda request, timeout: io.BytesIO(b"parcela,valor\\n1,2\\n".replace(b"\\n", b"\n")))
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+
+    def test_html_error_response_not_saved_as_csv(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "bad_csv", "url": URL, "license": "CC BY", "role": "litter"}]}
+            def fake_open(request, timeout):
+                return io.BytesIO(b"<!doctype html><html>maintenance</html>")
+            result = fetch_sources(registry, temp, opener=fake_open)
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+            self.assertFalse((Path(temp) / "bad_csv.csv").exists())
+
+    def test_truncated_panel_csv_is_retried_and_replaced_atomically(self):
+        with tempfile.TemporaryDirectory() as temp:
+            calls = []
+            complete = (b"bioma;uf;ua;equacoes\nCerrado;GO;GO_1;Eq.1\n"
+                        b"Cerrado;GO;GO_2;Eq.2\n")
+            truncated = complete[:-7]
+            def fake_open(request, timeout):
+                calls.append(1)
+                return io.BytesIO(truncated if len(calls) == 1 else complete)
+            registry = {"sources": [{"id": "ifn_panel", "url": URL,
+                        "license": "CC BY", "role": "panel"}]}
+            item = fetch_sources(registry, temp, opener=fake_open)["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["download_attempts"], 2)
+            self.assertEqual(item["csv_data_rows"], 2)
+            self.assertEqual((Path(temp) / "ifn_panel.csv").read_bytes(), complete)
+            self.assertFalse((Path(temp) / "ifn_panel.partial").exists())
+
+    def test_persistently_truncated_csv_never_published(self):
+        with tempfile.TemporaryDirectory() as temp:
+            truncated = b"bioma;uf;ua;equacoes\nCerrado;GO;GO_1;Eq.1\nCerrado;GO;GO"
+            calls = []
+            def fake_open(request, timeout):
+                calls.append(1)
+                return io.BytesIO(truncated)
+            registry = {"sources": [{"id": "ifn_panel", "url": URL,
+                        "license": "CC BY", "role": "panel"}]}
+            item = fetch_sources(registry, temp, opener=fake_open)["resources"][0]
+            self.assertEqual(item["status"], "download_failed")
+            self.assertEqual(item["download_attempts"], 2)
+            self.assertIn("truncated CSV", item["reason"])
+            self.assertEqual(len(calls), 2)
+            self.assertFalse((Path(temp) / "ifn_panel.csv").exists())
+            self.assertFalse((Path(temp) / "ifn_panel.partial").exists())
+
+    def test_http_declared_length_mismatch_retried(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = b"parcela,serapilheira\n1,2.4\n"
+            calls = []
+            class ShortBody(io.BytesIO):
+                headers = {"Content-Length": str(len(data) + 5)}
+            def fake_open(request, timeout):
+                calls.append(1)
+                return ShortBody(data) if len(calls) == 1 else io.BytesIO(data)
+            registry = {"sources": [{"id": "ifn_length", "url": URL,
+                        "license": "CC BY", "role": "litter"}]}
+            item = fetch_sources(registry, temp, opener=fake_open)["resources"][0]
+            self.assertEqual(item["status"], "downloaded_unvalidated")
+            self.assertEqual(item["download_attempts"], 2)
+            self.assertEqual(item["csv_data_rows"], 1)
+
+    def test_header_only_csv_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "empty_csv", "url": URL, "license": "CC BY", "role": "litter"}]}
+            def fake_open(request, timeout):
+                return io.BytesIO(b"parcela,serapilheira\\n")
+            result = fetch_sources(registry, temp, opener=fake_open)
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+
+    def test_redirect_outside_official_host_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "redirected", "url": URL, "license": "CC BY", "role": "litter"}]}
+            class RedirectedResponse(io.BytesIO):
+                def geturl(self):
+                    return "https://example.org/ifn.csv"
+            def fake_open(request, timeout):
+                return RedirectedResponse(b"parcela,serapilheira\\n1,2.4\\n")
+            result = fetch_sources(registry, temp, opener=fake_open)
+            self.assertEqual(result["resources"][0]["status"], "download_failed")
+
+    def test_invalid_resource_id_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "../escape", "url": URL, "license": "CC BY", "role": "litter"}]}
+            result = fetch_sources(registry, temp)
+            self.assertEqual(result["resources"][0]["status"], "blocked")
+
+    def test_unapproved_host_is_blocked(self):
+        with tempfile.TemporaryDirectory() as temp:
+            registry = {"sources": [{"id": "bad", "url": "https://example.org/data.csv",
+                                     "license": "unknown", "role": "unknown"}]}
+            result = fetch_sources(registry, temp)
+            self.assertEqual(result["resources"][0]["status"], "blocked")
+            self.assertEqual(list(Path(temp).iterdir()), [])
+
+if __name__ == "__main__":
+    unittest.main()

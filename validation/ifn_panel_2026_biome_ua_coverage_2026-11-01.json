@@ -1,0 +1,835 @@
+{
+  "report_type": "licensed_IFN_panel_2026_biome_UA_coverage_screening_only",
+  "source_workflow_run_id": 41363359480,
+  "source_commit_sha": "e132e60bb3087abae080ea832259727efa93b9a9",
+  "source_artifact_id": 13105568962,
+  "source_artifact_zip_sha256": "85aa4efc0cd5dd33c90a14089f3ad7afc9218c6501dcd385474ea56a512f3d19",
+  "source_sha256": {
+    "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+    "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+  },
+  "source_license": "Creative Commons Attribution (official SFB portal)",
+  "source_license_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+  "living_tree_panel": {
+    "rows": 439970,
+    "unique_physical_ua": 7466,
+    "ua_with_multiple_equation_labels": 7466,
+    "ua_with_multiple_typology_labels": 684,
+    "ua_with_conflicting_biome_labels": 0,
+    "rows_by_biome": {
+      "Amazônia": 119536,
+      "Caatinga": 78754,
+      "Cerrado": 170627,
+      "Mata Atlântica": 61836,
+      "Pampa": 9217,
+      "Pantanal": 0
+    },
+    "unique_physical_ua_by_biome": {
+      "Amazônia": 1937,
+      "Caatinga": 1744,
+      "Cerrado": 2537,
+      "Mata Atlântica": 1078,
+      "Pampa": 170,
+      "Pantanal": 0
+    }
+  },
+  "standing_dead_tree_panel": {
+    "rows": 341071,
+    "unique_physical_ua": 6014,
+    "ua_with_multiple_equation_labels": 6014,
+    "ua_with_multiple_typology_labels": 277,
+    "ua_with_conflicting_biome_labels": 0,
+    "rows_by_biome": {
+      "Amazônia": 103185,
+      "Caatinga": 54733,
+      "Cerrado": 130884,
+      "Mata Atlântica": 46708,
+      "Pampa": 5561,
+      "Pantanal": 0
+    },
+    "unique_physical_ua_by_biome": {
+      "Amazônia": 1709,
+      "Caatinga": 1245,
+      "Cerrado": 2093,
+      "Mata Atlântica": 843,
+      "Pampa": 124,
+      "Pantanal": 0
+    }
+  },
+  "same_physical_ua_in_both_panels_by_biome": {
+    "Amazônia": 1705,
+    "Caatinga": 1227,
+    "Cerrado": 2083,
+    "Mata Atlântica": 841,
+    "Pantanal": 0
+  },
+  "ibge_fitophysiognomy_verified": false,
+  "current_cover_verified": false,
+  "field_acquisition_date_per_record_verified": false,
+  "independent_sar_plot_pixel_validation": false,
+  "sampling_design_variance_and_transfer_error_validated": false,
+  "carbon_stock_tC_ha": null,
+  "confidence_interval_95": null,
+  "scientific_validation": false,
+  "warning": "Observational SFB/IFN-derived model outputs, not 781041 independent plots. Repeated equations/subunits must not be pseudoreplicated. Pantanal absent in both 2026 panel CSVs (N/D, not zero). No fitophysiognomy IBGE spatial crosswalk, current-cover check, field/SAR temporal pairing, sampling-design CI95 or transfer error established.",
+  "cross_panel_reported_centroid_screening_2026_11_01": {
+    "source_workflow_run_id": 41376189999,
+    "source_commit_sha": "1165fdc107434c4da7006acde65191756b932106",
+    "source_artifact_id": 13110944276,
+    "artifact_upload_zip_sha256_reported_by_github_actions": "3a530d9353e7d696c871cdbb9a8b568c6bfbf8f90707f94d487479085914e5c3",
+    "official_source_resources_downloaded": 11,
+    "official_source_resources_failed_or_blocked": 0,
+    "physical_ua_overlap_with_identical_reported_centroid_by_biome": {
+      "Amazônia": 1705,
+      "Caatinga": 1227,
+      "Cerrado": 2083,
+      "Mata Atlântica": 841,
+      "Pantanal": 0
+    },
+    "physical_ua_overlap_with_missing_or_discordant_reported_centroid_by_biome": {
+      "Amazônia": 0,
+      "Caatinga": 0,
+      "Cerrado": 0,
+      "Mata Atlântica": 0,
+      "Pantanal": 0
+    },
+    "total_identical_reported_centroid_ua_in_target_biomes": 5856,
+    "independent_plot_pixel_sar_validation": false,
+    "positional_accuracy_verified": false,
+    "ibge_fitophysiognomy_crosswalk_verified": false,
+    "independent_sampling_design_and_transfer_error_verified": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "note": "Derived from official SFB/IFN CSVs in GitHub Actions acquisition run. Identical reported centroid coordinates for the same physical UA across two model-output panels do not establish ground-truth geolocation, positional accuracy, temporal SAR coincidence, or independent observations. Artifact upload checksum is the Actions-reported digest, not an independently downloaded ZIP digest."
+  },
+  "cross_panel_biome_conflict_screening_2026_11_02": {
+    "report_type": "official_IFN_2026_panel_cross_biome_identity_screening_not_validation",
+    "source_workflow_run_id": 41387248098,
+    "source_commit_sha": "dfe4472f854e4f03e32a0b6ccb451caffc205997",
+    "source_artifact_id": 13115623602,
+    "independently_verified_artifact_zip_sha256": "9441375c6c5ad22b6de3bab49e798feb88c2da8115f9bf82431d20c39d5d87c0",
+    "source_resources_downloaded": 11,
+    "source_resources_failed_or_blocked": 0,
+    "living_panel": {
+      "source_sha256": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "byte_size": 53145536,
+      "rows": 439970,
+      "download_attempts": 1,
+      "complete_terminal_newline": true
+    },
+    "standing_dead_panel": {
+      "source_sha256": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346",
+      "byte_size": 41294521,
+      "rows": 341071,
+      "download_attempts": 1,
+      "complete_terminal_newline": true
+    },
+    "physical_ua_quarantined_for_conflicting_biome_labels": 0,
+    "physical_ua_overlap_by_biome_after_quarantine": {
+      "Amazônia": 1705,
+      "Cerrado": 2083,
+      "Caatinga": 1227,
+      "Mata Atlântica": 841,
+      "Pantanal": 0
+    },
+    "observed_pantanal_panel_coverage": "N/D — no Pantanal records in these panel files",
+    "independent_validation": false,
+    "ibge_fitophysiognomy_spatial_crosswalk_verified": false,
+    "sar_plot_pixel_validation": false,
+    "sampling_design_and_transfer_error_validated": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "note": "Counts and hashes verified from downloaded GitHub Actions artifact and official SFB CSV bytes. No conflicting biome labels were observed across the two panels in this acquisition; synthetic conflict tests remain active. Identical reported centroids are descriptive, not geolocation accuracy or independent validation. A prior acquisition artifact 13115448380 contained a demonstrably truncated 53,066,954-byte living panel and was rejected; no rows from that incomplete response were promoted."
+  },
+  "zero_zero_centroid_screening_2026_11_02": {
+    "report_type": "independent_real_bytes_zero_zero_coordinate_screening_not_validation",
+    "source_workflow_run_id": 41387248098,
+    "source_artifact_id": 13115623602,
+    "independently_verified_artifact_zip_sha256": "9441375c6c5ad22b6de3bab49e798feb88c2da8115f9bf82431d20c39d5d87c0",
+    "source_csv_sha256": {
+      "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+    },
+    "independent_scan_method": "Python csv.DictReader strict=True; all rows; raw UF+UA grouped; decimal comma parsed as float; zero-zero requires both lon_pc and lat_pc numerically zero; blank coordinates screened separately",
+    "panels": {
+      "ifn_painel_biomassa_2026": {
+        "rows_scanned": 439970,
+        "zero_zero_rows": 0,
+        "zero_zero_distinct_raw_uf_ua": 0,
+        "blank_coordinate_distinct_raw_uf_ua": 0,
+        "invalid_coordinate_rows": 0
+      },
+      "ifn_painel_arvores_mortas_2026": {
+        "rows_scanned": 341071,
+        "zero_zero_rows": 0,
+        "zero_zero_distinct_raw_uf_ua": 0,
+        "blank_coordinate_distinct_raw_uf_ua": 0,
+        "invalid_coordinate_rows": 0
+      }
+    },
+    "interpretation": "The code fix is a prospective fail-closed safeguard. No (0,0) or blank coordinate was observed in these two particular complete source CSVs; previously published overlap counts are not changed. A matching published centroid does not establish independent SAR geolocation or IBGE fitophysiognomy.",
+    "scientific_validation": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null
+  },
+  "brazil_broad_envelope_screening_2026_11_02": {
+    "report_type": "independent_real_bytes_IFN_2026_centroid_plausibility_screen_not_validation",
+    "source_workflow_run_id": 41387248098,
+    "source_artifact_id": 13115623602,
+    "independently_verified_artifact_zip_sha256": "9441375c6c5ad22b6de3bab49e798feb88c2da8115f9bf82431d20c39d5d87c0",
+    "source_csv_sha256": {
+      "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+    },
+    "broad_envelope_degrees": {
+      "longitude_min": -75,
+      "longitude_max": -32,
+      "latitude_min": -35,
+      "latitude_max": 7
+    },
+    "method": "Independent full scan of both SHA-verified official CSVs from ZIP; csv.DictReader delimiter semicolon strict=True; Decimal coordinates with decimal comma normalized; outside when longitude or latitude is beyond inclusive broad screen; counted rows and distinct raw (UF,UA). This is not an IBGE polygon, spatial verification, positional accuracy or source CRS validation.",
+    "panels": {
+      "ifn_painel_biomassa_2026": {
+        "rows_scanned": 439970,
+        "rows_outside_broad_envelope": 0,
+        "distinct_raw_uf_ua_outside_broad_envelope": 0,
+        "observed_longitude_min": -73.08,
+        "observed_longitude_max": -32.43375,
+        "observed_latitude_min": -32.22,
+        "observed_latitude_max": 4.14
+      },
+      "ifn_painel_arvores_mortas_2026": {
+        "rows_scanned": 341071,
+        "rows_outside_broad_envelope": 0,
+        "distinct_raw_uf_ua_outside_broad_envelope": 0,
+        "observed_longitude_min": -73.08,
+        "observed_longitude_max": -32.43375,
+        "observed_latitude_min": -32.22,
+        "observed_latitude_max": 3.96
+      }
+    },
+    "interpretation": "All published panel coordinates in these two complete source files fall inside the generous screen; code correction is prospective and does not alter observed panel centroid-overlap counts. Inside-envelope coordinates are not validated geolocations, fitophysiognomies or SAR plot-pixel pairs.",
+    "scientific_validation": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null
+  },
+  "cross_panel_source_native_land_class_screening_2026_11_02": {
+    "report_type": "licensed_IFN_SFB_panel_source_land_class_consistency_screening_not_IBGE_or_current_cover",
+    "source_workflow_run_id": 41413230135,
+    "source_code_and_test_sha": "41b844dda0dfb770869ae48f519faeeba1fb2843",
+    "source_artifact_id": 13126077964,
+    "artifact_upload_sha256_reported_by_github_actions": "8fe6b3ea8aca4a09499bf9787484e0bebf886ba31224a795cc01dcfe836f2ba9",
+    "artifact_zip_sha256_independently_verified": false,
+    "source_license_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "official_resources_downloaded": 11,
+    "official_resources_failed_or_blocked": 0,
+    "method": "Source CSV SHA256 validated against acquisition manifest by tools.audit_ifn_panel_biome_coverage; physical (UF,UA) must have exactly one identical NFKC/casefold source native land-use class in all rows of each panel and across both panels; conflicting biomes quarantined. Source class is neither current cover nor IBGE fitophysiognomy. Output reproduced in GitHub Actions job 125170836862.",
+    "by_biome": {
+      "Amazônia": {
+        "overlapping_physical_ua": 1705,
+        "single_matching_native_source_land_class_provisional": 1597,
+        "not_single_matching_native_source_land_class": 108,
+        "independently_validated": false
+      },
+      "Cerrado": {
+        "overlapping_physical_ua": 2083,
+        "single_matching_native_source_land_class_provisional": 1662,
+        "not_single_matching_native_source_land_class": 421,
+        "independently_validated": false
+      },
+      "Caatinga": {
+        "overlapping_physical_ua": 1227,
+        "single_matching_native_source_land_class_provisional": 1160,
+        "not_single_matching_native_source_land_class": 67,
+        "independently_validated": false
+      },
+      "Mata Atlântica": {
+        "overlapping_physical_ua": 841,
+        "single_matching_native_source_land_class_provisional": 768,
+        "not_single_matching_native_source_land_class": 73,
+        "independently_validated": false
+      },
+      "Pantanal": {
+        "overlapping_physical_ua": 0,
+        "single_matching_native_source_land_class_provisional": 0,
+        "not_single_matching_native_source_land_class": 0,
+        "independently_validated": false
+      }
+    },
+    "total_overlapping_physical_ua": 5856,
+    "total_provisional_native_source_class_ua": 5187,
+    "total_excluded_or_unresolved_source_class_ua": 669,
+    "pantanal_panel_data": "N/D — no Pantanal rows in these two panel resources",
+    "current_cover_verified": false,
+    "ibge_fitophysiognomy_crosswalk_verified": false,
+    "geolocation_accuracy_verified": false,
+    "independent_sar_plot_pixel_validation": false,
+    "transfer_error_validated": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "note": "Conservative reduction of candidate source labels only, not independent observational validation or native land cover. No model or carbon stock was promoted. The artifact ZIP SHA-256 above is the Actions upload-reported digest, not an independently downloaded digest."
+  },
+  "cross_panel_source_native_typology_centroid_screening_2026_11_02": {
+    "report_type": "licensed_IFN_SFB_source_typology_centroid_pre_IBGE_screening_not_validation",
+    "source_code_and_tests_sha": "c69d09b81493a0926a749f07c60e2b601c45f680",
+    "source_workflow_run_id": 41423008016,
+    "source_job_id": 125202831650,
+    "source_artifact_id": 13130238723,
+    "artifact_upload_zip_sha256_reported_by_github_actions": "ae4b306a142156bb97f8101545d90e46d82bd6497052554bf814c98d4a76bbdd",
+    "artifact_zip_sha256_independently_verified": false,
+    "source_license_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "source_sha256": {
+      "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+    },
+    "official_resources_downloaded": 11,
+    "official_resources_failed_or_blocked": 0,
+    "method": "Source CSV bytes verified by SHA256 against acquisition manifest. Deduplicate physical UF+UA and quarantine conflicting biomes. Single source vegetation typology must match across all equation/subunit rows in both panels after NFKC/casefold; strict native subset additionally requires identical single native source land-use class and valid identical reported centroids. This is not IBGE legenda_1 intersection, verified GPS accuracy, contemporary cover, independent SAR plot-pixel calibration, or independent observations.",
+    "by_biome": {
+      "Amazônia": {
+        "physical_ua_overlap": 1705,
+        "single_matching_source_native_land_class_provisional": 1597,
+        "single_matching_source_typology_provisional": 1649,
+        "source_typology_unresolved_or_conflicting": 56,
+        "native_source_class_typology_and_centroid_coherent_provisional": 1597,
+        "independently_validated": false
+      },
+      "Cerrado": {
+        "physical_ua_overlap": 2083,
+        "single_matching_source_native_land_class_provisional": 1662,
+        "single_matching_source_typology_provisional": 1715,
+        "source_typology_unresolved_or_conflicting": 368,
+        "native_source_class_typology_and_centroid_coherent_provisional": 1662,
+        "independently_validated": false
+      },
+      "Caatinga": {
+        "physical_ua_overlap": 1227,
+        "single_matching_source_native_land_class_provisional": 1160,
+        "single_matching_source_typology_provisional": 1181,
+        "source_typology_unresolved_or_conflicting": 46,
+        "native_source_class_typology_and_centroid_coherent_provisional": 1160,
+        "independently_validated": false
+      },
+      "Mata Atlântica": {
+        "physical_ua_overlap": 841,
+        "single_matching_source_native_land_class_provisional": 768,
+        "single_matching_source_typology_provisional": 771,
+        "source_typology_unresolved_or_conflicting": 70,
+        "native_source_class_typology_and_centroid_coherent_provisional": 768,
+        "independently_validated": false
+      },
+      "Pantanal": {
+        "physical_ua_overlap": 0,
+        "single_matching_source_native_land_class_provisional": 0,
+        "single_matching_source_typology_provisional": 0,
+        "source_typology_unresolved_or_conflicting": 0,
+        "native_source_class_typology_and_centroid_coherent_provisional": 0,
+        "independently_validated": false
+      }
+    },
+    "total_physical_ua_overlap": 5856,
+    "total_matching_source_typology_provisional": 5316,
+    "total_typology_unresolved_or_conflicting": 540,
+    "total_native_source_class_typology_and_centroid_coherent_provisional": 5187,
+    "additional_excluded_from_previous_native_source_class_screen": 0,
+    "pantanal_panel_data": "N/D (no Pantanal records in the two official panels)",
+    "ibge_fitophysiognomy_spatial_crosswalk_verified": false,
+    "source_coordinates_independently_verified": false,
+    "independent_sar_plot_pixel_validation": false,
+    "transfer_error_validated": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false
+  },
+  "source_centroid_0_02_degree_grid_diagnostic_2026_11_02": {
+    "status": "real_licensed_source_csv_arithmetic_diagnostic_only_not_spatial_validation",
+    "source_workflow_run_id": 41435750887,
+    "source_commit_sha": "adb61a870808c6c26e9eb9579898762e1fd997b5",
+    "source_artifact_id": 13135359664,
+    "artifact_zip_sha256_independently_verified": "64174b56034930c32624975e31d7c804fed2ba6c0410b6a7bbd161e6e6dd7392",
+    "candidate_csv_file": "ifn_panel_native_ua_pre_ibge_unvalidated.csv",
+    "candidate_csv_sha256_independently_verified": "829a73aa39e2f7bf6fba17a5a730b76d3492b8bfe951a5c698973782356900b5",
+    "raw_panel_source_sha256_verified": {
+      "ifn_painel_biomassa_2026": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
+      "ifn_painel_arvores_mortas_2026": "ded7bc739c80c86f029b936a23f70fd479bca7e9b0ba1165e330525c012b4346"
+    },
+    "candidate_physical_ua_count": 5187,
+    "candidate_ua_both_published_decimal_coordinates_on_exact_0_02_degree_grid": 4555,
+    "candidate_ua_grid_fraction": 0.8781569307885098,
+    "candidate_ua_grid_by_biome": {
+      "Amazônia": 1407,
+      "Cerrado": 1618,
+      "Caatinga": 972,
+      "Mata Atlântica": 558,
+      "Pantanal": 0
+    },
+    "candidate_ua_total_by_biome": {
+      "Amazônia": 1597,
+      "Cerrado": 1662,
+      "Caatinga": 1160,
+      "Mata Atlântica": 768,
+      "Pantanal": 0
+    },
+    "candidate_ua_not_on_grid_count": 632,
+    "reconciliation": "all 5187 CSV flags recomputed independently from exact Decimal coordinates; report count, per-biome counts, source SHA256 and ZIP CRC matched",
+    "published_coordinates_positional_accuracy_m": null,
+    "source_crs_independently_verified": false,
+    "ibge_legenda_1_intersection_verified": false,
+    "independent_plot_pixel_sar_validation": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "restricted_georeferenced_ua_dataset_not_used": "https://dados.florestal.gov.br/ar/dataset/ifn-coordenadas-georreferenciadas-das-unidades-amostrais",
+    "warning": "Arithmetic coincidence of published longitude and latitude with 0.02-degree grid is NOT evidence of rounding mechanism, coordinate positional accuracy, true field GPS position, IBGE fitophysiognomy or independent SAR pairing. Dedicated 2026 IFN georeferenced-UA dataset is classified Other (Not Open); do not treat it as licensed source or use inaccessible coordinates. Pantanal panel candidate count is N/D, not measured zero carbon."
+  },
+  "source_published_centroid_aliasing_diagnostic_2026_11_02": {
+    "report_type": "independent_real_IFN_panel_published_centroid_aliasing_screen_not_validation",
+    "source_workflow_run_id": 41435750887,
+    "source_artifact_id": 13135359664,
+    "independently_verified_artifact_zip_sha256": "64174b56034930c32624975e31d7c804fed2ba6c0410b6a7bbd161e6e6dd7392",
+    "candidate_csv_sha256": "829a73aa39e2f7bf6fba17a5a730b76d3492b8bfe951a5c698973782356900b5",
+    "method": "Full independent scan of all candidate CSV rows from CRC-valid, SHA256-verified official IFN acquisition ZIP; csv.DictReader; published coordinates parsed as Decimal; group by numeric (lon_pc_publicado, lat_pc_publicado), count distinct (UF,UA) per coordinate and declared biomes. Counts apply ONLY to the provisional native candidate subset, not all source units.",
+    "candidate_physical_ua_count": 5187,
+    "distinct_numeric_published_centroid_count": 5187,
+    "distinct_centroids_shared_by_multiple_physical_ua": 0,
+    "physical_ua_at_shared_published_centroids": 0,
+    "distinct_centroids_with_multiple_declared_biomes": 0,
+    "candidate_physical_ua_at_shared_published_centroids_by_biome": {
+      "Amazônia": 0,
+      "Cerrado": 0,
+      "Caatinga": 0,
+      "Mata Atlântica": 0,
+      "Pantanal": 0
+    },
+    "source_coordinate_accuracy_m": null,
+    "source_crs_independently_verified": false,
+    "ibge_legenda_1_spatial_crosswalk_verified": false,
+    "independent_sar_plot_pixel_validation": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "interpretation": "No exact published-centroid collision was found among 5,187 provisional physical UAs in this acquired CSV. This does NOT establish true positional uniqueness or geolocation accuracy, particularly with 4,555 points coincident with a 0.02-degree arithmetic grid. Synthetic anti-aliasing regressions remain important for other source versions. No carbon or SAR validation.",
+    "code_integration_acquisition_run_id": 41445496752,
+    "code_integration_acquisition_artifact_id": 13141427853,
+    "code_integration_zip_sha256_independently_verified": "a4d0efb9e40e3f6cb66d3eae7bd67cc4591200df149f8a49262017a12a7ac81b",
+    "code_integration_candidate_csv_sha256": "8225e772e057f8ee4bfead1b29d97433ba828185348524a380ad9cd5fb300942",
+    "code_integration_crc_valid": true,
+    "code_integration_ua_count": 5187,
+    "code_integration_shared_centroids": 0
+  },
+  "official_sfb_panel_source_crs_metadata_2026_11_02": {
+    "report_type": "official_source_specific_metadata_documentation_not_field_geolocation_validation",
+    "official_dataset_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "official_metadata_pdf_url": "https://dados.florestal.gov.br/dataset/2d579a3b-29f7-41af-b35c-8fb8f51ef819/resource/dcd83340-a57b-4a2f-bd08-4cf2a84edb78/download/metadados_painelbiomassacarbono_snif_fonte_ifn_sfb.pdf",
+    "metadata_publication_month": "2026-03",
+    "portal_dataset_version": "2025",
+    "field_data_years": "2011-2024",
+    "declared_crs": "EPSG:4326",
+    "declared_crs_text": "lon_pc and lat_pc: geographic coordinates WGS 84 (metadata PDF p. 8)",
+    "source_crs_documented": true,
+    "field_geolocation_accuracy_m": null,
+    "field_geolocation_accuracy_independently_verified": false,
+    "field_plot_gps_primary_coordinates_open_and_authorized": false,
+    "vegetation_typology_direct_field_observation": false,
+    "vegetation_typology_secondary_inference": true,
+    "land_use_class_assigned_by_field_teams": true,
+    "field_tree_dap_min_cm": 10,
+    "sampling_design": "systematic two-stage clusters, approximately 20 km first-stage spacing",
+    "license": "Creative Commons Attribution (official SFB dataset and metadata resource)",
+    "note": "Official panel metadata establishes the declared WGS84 coordinate reference, not measured geolocation accuracy or SAR parcel-pixel validation. Panel typology is inferred from secondary evidence, not independently observed as IBGE legenda_1. Field year varies across 2011-2024; date per UA not verified. No new carbon, root, necromass, litter or soil 0-100 cm estimates can be inferred.",
+    "scientific_validation": false,
+    "independent_sar_plot_pixel_validation": false,
+    "ibge_fitophysiognomy_crosswalk_verified": false,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "code_integration_acquisition_run_id": 41445902475,
+    "code_integration_source_sha": "c5d619c20658062de69c049b5604b66c7823c789",
+    "code_integration_artifact_id": 13141683125,
+    "code_integration_zip_sha256_independently_verified": "df4a0ae8b19633eb547719a4efeae21f8215026d9e84d321312a9fa62da06918",
+    "code_integration_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "code_integration_zip_crc_valid": true,
+    "code_integration_candidate_ua_count": 5187,
+    "code_integration_candidate_ua_with_official_documented_epsg4326": 5187,
+    "code_integration_candidate_ua_with_field_positional_accuracy_verified": 0,
+    "code_integration_candidate_ua_with_positional_accuracy_ND": 5187,
+    "code_integration_published_centroid_collisions": 0,
+    "code_integration_scientific_validation": false,
+    "final_warning_consistency_acquisition_run_id": 41446038887,
+    "final_warning_consistency_source_sha": "9162ba86ecc22574b72a58916c09d4b7374e4e3a",
+    "final_warning_consistency_artifact_id": 13141868821,
+    "final_warning_consistency_zip_sha256_independently_verified": "11b7857ec96eabc1bd0154b9e36f5561e00b93c9847f8573c4de8ec92431af7f",
+    "final_warning_consistency_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "final_warning_consistency_crc_valid": true,
+    "final_warning_consistency_ua_count": 5187,
+    "final_warning_consistency_collision_count": 0,
+    "final_warning_consistency_wgs84_documented": true,
+    "final_warning_consistency_accuracy_still_ND": true,
+    "final_warning_consistency_scientific_ci_run_id": 41446046277,
+    "final_warning_consistency_scientific_contract_tests_passed": 261,
+    "final_warning_consistency_scientific_gate_accepted_count": 0
+  },
+  "ifn_ibge_published_centroid_sensitivity_2026_11_02": {
+    "report_type": "real_official_IFN_IBGE_spatial_sensitivity_DESCRIPTIVE_NOT_VALIDATION",
+    "acquisition_workflow_run_id": 41449569849,
+    "code_source_sha": "11073a82ce40fdf86f8e544a88a70d0079b539b1",
+    "source_artifact_id": 13144022719,
+    "source_artifact_zip_sha256_independently_verified": "245561377ce0196257ba15898e42a8e15e28a9259f0d09c695658c3a1d2ffb89",
+    "source_artifact_zip_crc_valid": true,
+    "ifn_candidate_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "ibge_2026_vector_zip_sha256": "bcacc74011c86ba11ef4f4826bed38836340191208c9e98e821d52f0d68a5fb7",
+    "output_unvalidated_csv_sha256": "16fbae642d80f3f084c76a0cbdf7d7395f72703711f04eba7073aebaac977eea",
+    "ifn_source": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "ifn_source_license": "Creative Commons Attribution (official SFB portal)",
+    "ibge_source": "https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip",
+    "ibge_reuse_terms_independently_verified": false,
+    "ibge_vector_crs_original": "EPSG:4674",
+    "ibge_vector_reprojected_for_screening": "EPSG:4326",
+    "ibge_invalid_polygon_geometries_quarantined_as_unknown": 30,
+    "ibge_source_geometry_completeness_independently_verified": false,
+    "ifn_unique_physical_ua_screened": 5187,
+    "ibge_published_centroid_single_label_present": 5168,
+    "ibge_published_centroid_label_nd": 19,
+    "stable_in_geometric_scenario_0m": 5168,
+    "stable_in_geometric_scenario_250m": 4765,
+    "stable_in_geometric_scenario_1000m": 3910,
+    "scenarios_are_positional_accuracy_or_confidence_intervals": false,
+    "descriptive_by_declared_biome": {
+      "Amazônia": {
+        "ua": 1597,
+        "published_centroid_label_present": 1584,
+        "stable_250m": 1495,
+        "stable_1000m": 1277
+      },
+      "Cerrado": {
+        "ua": 1662,
+        "published_centroid_label_present": 1657,
+        "stable_250m": 1470,
+        "stable_1000m": 1141
+      },
+      "Caatinga": {
+        "ua": 1160,
+        "published_centroid_label_present": 1160,
+        "stable_250m": 1093,
+        "stable_1000m": 910
+      },
+      "Mata Atlântica": {
+        "ua": 768,
+        "published_centroid_label_present": 767,
+        "stable_250m": 707,
+        "stable_1000m": 582
+      },
+      "Pantanal": {
+        "ua": 0,
+        "published_centroid_label_present": null,
+        "stable_250m": null,
+        "stable_1000m": null
+      }
+    },
+    "field_coordinate_positional_accuracy_m": null,
+    "field_ibge_fitophysiognomy_independently_verified": false,
+    "source_typology_field_observed_verified": false,
+    "sar_plot_pixel_validation": false,
+    "transfer_error": null,
+    "carbon_pool_estimates_homologated": 0,
+    "scientific_release_homologated": false,
+    "scientific_ci_run_id": 41449569415,
+    "scientific_contract_tests_passed": 272,
+    "scientific_gate_accepted_count": 0,
+    "dashboard_ci_run_id": 41449569479,
+    "dashboard_ci_success": true,
+    "warning": "The published IFN centroids have unknown field positional accuracy. The IBGE legenda_1 overlay and arbitrary 250/1000 m displacement sensitivity are descriptive ONLY; neither independent field location nor fitophysiognomy, current native cover, SAR plot-pixel pairs, transfer error, IC95 or carbon stocks are validated. Pantanal remains N/D. Quarantined invalid IBGE polygons never supply verified class."
+  },
+  "ifn_ibge_source_typology_cross_tab_real_2026_11_02": {
+    "report_type": "REAL_LICENSED_SFB_IFN_IBGE_PUBLISHED_CENTROID_CROSS_TAB_DESCRIPTIVE_NOT_VALIDATION",
+    "source_code_sha": "c90347dc4c1c11a809c680863d55d10c8c586574",
+    "ci_spatial_run_id": 41461739238,
+    "ci_spatial_conclusion": "success",
+    "artifact_id": 13149701254,
+    "artifact_zip_sha256_independently_verified": "f036d767c16dcd48eefde7222edc3f45105ad38dd07ab2c490603c9f74550b3a",
+    "artifact_zip_crc_valid": true,
+    "cross_tab_json_sha256_independently_verified": "464aaef3367d7041264b61fd11df935b081474faab469bec4e712f271351fcd0",
+    "output_csv_sha256_independently_verified": "16fbae642d80f3f084c76a0cbdf7d7395f72703711f04eba7073aebaac977eea",
+    "physical_ua_count": 5187,
+    "distinct_biome_typology_ibge_pairs": 151,
+    "published_centroid_ibge_label_present": 5168,
+    "published_centroid_ibge_label_ND": 19,
+    "ibge_invalid_geometries_quarantined": 30,
+    "by_declared_biome": {
+      "Amazônia": {
+        "physical_ua": 1597,
+        "published_centroid_ibge_label_present": 1584,
+        "published_centroid_ibge_label_ND": 13,
+        "source_typologies_with_multiple_published_ibge_legends": 7
+      },
+      "Caatinga": {
+        "physical_ua": 1160,
+        "published_centroid_ibge_label_present": 1160,
+        "published_centroid_ibge_label_ND": 0,
+        "source_typologies_with_multiple_published_ibge_legends": 6
+      },
+      "Cerrado": {
+        "physical_ua": 1662,
+        "published_centroid_ibge_label_present": 1657,
+        "published_centroid_ibge_label_ND": 5,
+        "source_typologies_with_multiple_published_ibge_legends": 8
+      },
+      "Mata Atlântica": {
+        "physical_ua": 768,
+        "published_centroid_ibge_label_present": 767,
+        "published_centroid_ibge_label_ND": 1,
+        "source_typologies_with_multiple_published_ibge_legends": 10
+      },
+      "Pantanal": {
+        "physical_ua": 0,
+        "published_centroid_ibge_label_present": null,
+        "published_centroid_ibge_label_ND": null,
+        "source_typologies_with_multiple_published_ibge_legends": null
+      }
+    },
+    "selected_descriptive_pairs_NOT_accuracy": [
+      {
+        "biome": "Amazônia",
+        "source_typology": "floresta ombrófila densa",
+        "published_ibge_legend": "Floresta Ombrófila Densa",
+        "physical_ua": 823
+      },
+      {
+        "biome": "Cerrado",
+        "source_typology": "savana",
+        "published_ibge_legend": "Savana",
+        "physical_ua": 733
+      },
+      {
+        "biome": "Caatinga",
+        "source_typology": "savana-estépica",
+        "published_ibge_legend": "Savana-Estépica",
+        "physical_ua": 715
+      },
+      {
+        "biome": "Cerrado",
+        "source_typology": "savana",
+        "published_ibge_legend": "Contato (Ecótono e Encrave)",
+        "physical_ua": 278
+      }
+    ],
+    "source_sfb_license": "Creative Commons Attribution (official SFB portal)",
+    "source_sfb_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
+    "ibge_source": "https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip",
+    "ibge_reuse_terms_independently_verified": false,
+    "full_151_pair_cross_tab_retained_in_artifact": true,
+    "field_plot_geolocation_independently_verified": false,
+    "source_typology_direct_field_observation_verified": false,
+    "ibge_fitophysiognomy_independently_validated": false,
+    "source_ibge_agreement_is_accuracy": false,
+    "transfer_error": null,
+    "confidence_interval_95": null,
+    "sar_plot_pixel_validation": false,
+    "carbon_homologation": false,
+    "warning": "Physical UA counts are descriptive only. Source typology is secondary-data inference; IBGE legend is joined to published centroids with unknown field positional accuracy. Even exact text agreement does not establish field fitophysiognomy, SAR calibration, transfer error, IC95 or any carbon stock. Pantanal N/D. Do not promote this evidence to validated capability."
+  },
+  "ifn_2025_field_subplots_cross_panel_2026_2026_11_02": {
+    "report_type": "official_IFN_2025_field_subparcel_vs_2026_model_panel_physical_UA_cross_source_screening_NOT_validation",
+    "source_workflow_run_id": 41481587964,
+    "source_commit_sha": "a5fc65f367206379884b37aaa36346e120a1b016",
+    "source_artifact_id": 13160485804,
+    "independently_verified_artifact_zip_sha256": "42d8a9983ac5cffcfcaf2abefef3b67ebc31f50fcc225b90ecdb20c9e85982a5",
+    "artifact_zip_crc_verified": true,
+    "field_crosscheck_json_sha256": "2d220e4d8535627227517ac68ec6c4d50e9cbe40e93f1d502c226397c3b2987c",
+    "field_download_audit_json_sha256": "a9ce962c3537ab03959c02e94a5ea3af6a012c09512181fbe487691ec639bb85",
+    "source_dataset": "https://dados.florestal.gov.br/dataset/ifn-uso-da-terra-por-uf_disp-set2025",
+    "source_license": "Creative Commons Attribution (SFB 2025 official dataset)",
+    "field_source_xlsx_sha256": {
+      "MT": "99ba15aad654d9fd69e9fbc342f9efb25f3a78b5fea0fecc9ef8d93ca649676b",
+      "MS": "7c4e7b0ae48aa3047b617761e3ebd8c09472b73da91d3b92f4383411412b964a",
+      "PA": "214aa0091e9aec6ddfbd13bd1c6b093280d7430c95a465981eb7d0c4311b1e67"
+    },
+    "field_subplot_rows_by_state": {
+      "MT": 46016,
+      "MS": 21270,
+      "PA": 47751
+    },
+    "field_unique_physical_ua": 2226,
+    "panel_candidate_physical_ua": 5187,
+    "matched_unique_physical_ua": 973,
+    "by_declared_biome": {
+      "Amazônia": {
+        "candidate": 1597,
+        "matched": 525,
+        "forest_S_only": 364,
+        "forest_N_only": 12,
+        "mixed_S_N": 135,
+        "uninterpretable_flag": 8,
+        "identity_or_biome_unresolved": 6,
+        "no_match": 1072
+      },
+      "Cerrado": {
+        "candidate": 1662,
+        "matched": 447,
+        "forest_S_only": 231,
+        "forest_N_only": 44,
+        "mixed_S_N": 154,
+        "uninterpretable_flag": 1,
+        "identity_or_biome_unresolved": 17,
+        "no_match": 1215
+      },
+      "Caatinga": {
+        "candidate": 1160,
+        "matched": 0,
+        "no_match": 1160
+      },
+      "Mata Atlântica": {
+        "candidate": 768,
+        "matched": 1,
+        "mixed_S_N": 1,
+        "no_match": 767
+      },
+      "Pantanal": {
+        "candidate": 0,
+        "matched": 0,
+        "interpretation": "N/D — no 2026 panel candidate; not zero Pantanal forest cover"
+      }
+    },
+    "official_panel_candidate_csv_sha256": "93967b2fbd8e61e9c787cede71c1c130e15c6717329a0594ec6c5adac908e148",
+    "field_collection_years": "2011-2024 (source metadata), per-record dates N/D",
+    "per_subplot_flags_not_independent_UA": true,
+    "forest_flag_not_native_vegetation_validation": true,
+    "temporal_alignment_validated": false,
+    "field_geolocation_independently_validated": false,
+    "ibge_fitophysiognomy_validation": false,
+    "sar_plot_pixel_validation": false,
+    "transfer_error": null,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "note": "Real licensed 2025 field subparcel observations joined by canonical UF+UA to 2026 modeled panel candidate physical UAs. Flags S/N describe forest coverage in observed subplots, not whether vegetation is native; natural grasslands and savannas may be nonforest. No independent geolocation, date pairing, native-cover confirmation, transfer error, IC95 or SAR calibration. Only 3 states (MT/MS/PA) acquired; unmatched units and Pantanal are N/D, never zero.",
+    "field_source_physical_ua_by_declared_biome": {
+      "MT": {
+        "Amazônia": 352,
+        "Cerrado": 659,
+        "Pantanal": 5
+      },
+      "MS": {
+        "Cerrado": 541,
+        "Mata Atlântica": 5,
+        "Pantanal": 9
+      },
+      "PA": {
+        "Amazônia": 635,
+        "Cerrado": 20
+      }
+    },
+    "pantanal_field_unique_physical_ua_in_MT_MS": 14,
+    "pantanal_field_subplot_rows_in_MT_MS": 482,
+    "pantanal_field_data_not_carbon_or_2026_panel_overlap": true,
+    "pantanal_field_observation_note": "2025 official field-subplot XLSX profiling records 5 physical UAs (200 subplot rows) in MT and 9 UAs (282 rows) in MS labelled Pantanal. No 2026 panel candidate UAs labelled Pantanal; do not equate missing panel coverage with no Pantanal observations or infer stock."
+  },
+  "ifn_pantanal_field_subplots_litter_depth_physical_ua_overlap_2026_11_02": {
+    "report_type": "official_IFN_2025_field_subplots_x_corrected_litter_depth_same_physical_UA_NOT_validation",
+    "source_workflow_run_id": 41494734652,
+    "source_commit_sha": "a5911fef4520d30aa52dcce9a91b9ba23fbbdf4d",
+    "source_artifact_id": 13165717561,
+    "artifact_zip_sha256_independently_verified": "66bb580a0b80505ff103b23d484b3e20f514756140e85705469c15be699040c2",
+    "artifact_zip_crc_verified": true,
+    "overlap_json_sha256_independently_verified": "4cff28e4a5d3a3d0db299bada9ab024f3ab86774d7d026e1c906fd4c697a03c2",
+    "field_acquisition_json_sha256_independently_verified": "7b8302e1c85cd26ebbb739a868f524a4339b7a25f9cbb76e52c2307b5e98d716",
+    "litter_acquisition_json_sha256_independently_verified": "1c2b41ce974b35ed01a21e4cec7d7a1e15ff3e01eb3918a0bb6222e41d208b7c",
+    "source_sha256": {
+      "ifn_uso_terra_mato_grosso_2025": "99ba15aad654d9fd69e9fbc342f9efb25f3a78b5fea0fecc9ef8d93ca649676b",
+      "ifn_uso_terra_mato_grosso_do_sul_2025": "7c4e7b0ae48aa3047b617761e3ebd8c09472b73da91d3b92f4383411412b964a",
+      "ifn_uso_terra_para_2025": "214aa0091e9aec6ddfbd13bd1c6b093280d7430c95a465981eb7d0c4311b1e67",
+      "ifn_serapilheira_mato_grosso_retificada_2025": "dc88e80c5f9d1f8be05eb25afdb277d8f76759f4c960ac0f95e4fb1773945aa1",
+      "ifn_serapilheira_mato_grosso_do_sul_retificada_2025": "02b08e2a5a8b42e6ebb487e6a33ab0f508cd78feb1e1808135919fde4ce0b403"
+    },
+    "field_rows_by_state": {
+      "MT": 46016,
+      "MS": 21270,
+      "PA": 47751
+    },
+    "field_pantanal_unique_physical_ua": 14,
+    "litter_pantanal_unique_physical_ua": 12,
+    "same_physical_ua": 12,
+    "field_only_ua": 2,
+    "litter_only_ua": 0,
+    "field_biome_conflict_quarantined_ua": 0,
+    "by_uf": {
+      "MT": {
+        "field_ua": 5,
+        "litter_ua": 5,
+        "overlap_ua": 5,
+        "single_land_code_equal": 3,
+        "mixed_or_missing_field_code": 2,
+        "all_subplots_forest_S": 1,
+        "all_subplots_forest_N": 2,
+        "mixed_S_N": 2
+      },
+      "MS": {
+        "field_ua": 9,
+        "litter_ua": 7,
+        "overlap_ua": 7,
+        "single_land_code_equal": 7,
+        "mixed_or_missing_field_code": 0,
+        "all_subplots_forest_S": 1,
+        "all_subplots_forest_N": 5,
+        "mixed_S_N": 1
+      }
+    },
+    "regression_tests": 6,
+    "regression_tests_ci_success": true,
+    "official_sources_downloaded": 5,
+    "official_sources_failed": 0,
+    "field_and_litter_same_calendar_day_verified": false,
+    "field_position_independently_verified": false,
+    "ibge_fitophysiognomy_verified": false,
+    "sar_plot_pixel_pairs_verified": false,
+    "dry_litter_mass_measured": false,
+    "land_code_dictionary_2025_equivalence_verified": false,
+    "carbon_stock_tC_ha": null,
+    "transfer_error": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "warning": "12 physical UF+UA matches among 14 Pantanal field UAs and 12 corrected litter-depth UAs. Cross-source identity is not independent geolocation, same-day evidence, native-cover/IBGE validation, sampling-design variance, dry litter mass or SAR calibration. Forest flags S/N are subplot observations; land-code equality is descriptive, not temporal/dictionary equivalence. No Pantanal carbon or IC95 inferred."
+  },
+  "ifn_pantanal_field_litter_reported_centroid_screening_2026_11_02": {
+    "report_type": "licensed_IFN_Pantanal_field_and_litter_reported_centroid_agreement_NOT_field_accuracy",
+    "source_workflow_run_id": 41495161233,
+    "source_commit_sha": "79ffebff9f856264eaffe3b6ac43c4f79707aadc",
+    "artifact_id": 13167055080,
+    "artifact_zip_sha256_independently_verified": "f58e2b849af2e99cba774c787176202f2e3678af40bacc5ce074c4e2d674a073",
+    "artifact_zip_crc_verified": true,
+    "audit_json_sha256_independently_verified": "7e5c2da2361d7700b6c8f2bd86468d9cb0dd70fffc716ea9e015678f69188358",
+    "field_acquisition_json_sha256": "817c6c8afd144455b618c11fea1c4a870b0205d1ca0810b70f516fd449ebe64b",
+    "litter_acquisition_json_sha256": "f3671e9dff025abcf54303445ee9e42f73f0830321976406faa48ceb64f68a98",
+    "regression_tests": 8,
+    "regression_tests_passed": true,
+    "official_resources_downloaded": 5,
+    "official_resources_failed": 0,
+    "field_pantanal_physical_ua": 14,
+    "litter_pantanal_physical_ua": 12,
+    "overlap_physical_ua": 12,
+    "reported_centroid_equal_ua": 12,
+    "reported_centroid_disagree_ua": 0,
+    "reported_centroid_ND_or_conflicting_ua": 0,
+    "by_uf": {
+      "MT": {
+        "overlap_ua": 5,
+        "reported_centroid_equal_ua": 5
+      },
+      "MS": {
+        "overlap_ua": 7,
+        "reported_centroid_equal_ua": 7
+      }
+    },
+    "reported_centroid_independently_measured": false,
+    "field_geolocation_accuracy_independently_validated": false,
+    "same_day_field_collection_verified": false,
+    "ibge_fitophysiognomy_verified": false,
+    "SAR_plot_pixel_pairs_verified": false,
+    "transfer_error": null,
+    "carbon_stock_tC_ha": null,
+    "confidence_interval_95": null,
+    "scientific_validation": false,
+    "warning": "The same published centroid in both IFN field-subplot and litter-depth sources for all 12 matching UAs is a source-consistency result only, not an independent field positional accuracy estimate. Published locations may share rounding or origin. No IBGE, SAR, carbon, IC95 or transfer error is established."
+  }
+}

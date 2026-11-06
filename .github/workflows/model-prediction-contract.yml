@@ -1,0 +1,52 @@
+name: Pre-field model predictions - fast contract
+on:
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prefield-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install minimal numerical and geospatial test dependencies
+        run: python -m pip install "geopandas>=1.0" "rasterio>=1.3" "requests>=2.31"
+      - name: Verify contract and source syntax without external data
+        run: |
+          python -m py_compile modeled_field_validation.py experimental_audit.py
+          python -m py_compile soil_fertility_zonal.py soil_soc_official_uncertainty.py soil_pronasolos_zonal.py soil_pedology_embrapa.py soil_intersection_report.py desktop_app.py native_carbon.py
+          python -m unittest discover -s tests -p 'test_modeled_field_validation.py' -v
+          python -m unittest discover -s tests -p 'test_soil_fertility_official_uncertainty.py' -v
+          python -m unittest discover -s tests -p 'test_soil_pronasolos_zonal.py' -v
+          python -m unittest discover -s tests -p 'test_soil_pedology_embrapa.py' -v
+      - name: Verify V87.1 scientific documentation synchronized with the source
+        run: |
+          python - <<'PY'
+          from zipfile import ZipFile
+          from pathlib import Path
+          path = Path("docs/ESPECIFICACAO_TECNICA_COMPLETA.docx")
+          assert path.is_file(), "Full Word specification is missing"
+          with ZipFile(path) as archive:
+              assert archive.testzip() is None
+              body = archive.read("word/document.xml").decode("utf-8")
+              assert "REVISÃO V87.1" in body, "Word specification not synchronized to V87.1"
+          for name in (
+              "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
+              "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
+              "docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md",
+          ):
+              assert "CORREÇÃO CIENTÍFICA V87.1" in Path(name).read_text(encoding="utf-8"), name
+          print("V87_1_WORD_PROMPTS_SOIL_SPEC_SYNC_OK")
+          PY
+      - name: Show tested source SHA
+        run: git rev-parse HEAD

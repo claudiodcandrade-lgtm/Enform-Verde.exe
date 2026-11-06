@@ -1,0 +1,92 @@
+name: IFN x IBGE 2026 published-centroid sensitivity (NOT homologation)
+on:
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+    paths:
+      - 'tools/ifn_ibge_spatial_sensitivity.py'
+      - 'tools/audit_ifn_necromass_ibge_crosswalk.py'
+      - 'tests/test_audit_ifn_necromass_ibge_crosswalk.py'
+      - 'tests/test_ifn_ibge_spatial_sensitivity.py'
+      - '.github/workflows/ifn-ibge-spatial-sensitivity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  spatial-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install spatial and official IFN ingestion dependencies
+        run: python -m pip install "geopandas>=1.0,<2" "shapely>=2,<3" "pyproj>=3.6,<4" "requests>=2.31,<3" "openpyxl>=3.1,<4"
+      - name: Verify exact checked-out source SHA
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Run fail-closed synthetic spatial regression tests
+        run: python -m unittest tests.test_ifn_ibge_spatial_sensitivity tests.test_audit_ifn_necromass_ibge_crosswalk -v
+      - name: Select ONLY the three official panel resources required by this spatial audit
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path("validation/ifn_sources.json").read_text(encoding="utf-8"))
+          required = {"ifn_painel_biomassa_2026", "ifn_painel_arvores_mortas_2026", "ifn_painel_necromassa_t_ha_2026"}
+          selected = [row for row in registry["sources"] if row["id"] in required]
+          if {row["id"] for row in selected} != required:
+              raise SystemExit("Required official IFN panel source missing from registry")
+          Path("ifn_panel_sources.json").write_text(
+              json.dumps({"description": "Required official IFN panels only; NOT homologation",
+                          "sources": selected}, ensure_ascii=False, indent=2),
+              encoding="utf-8")
+          PY
+      - name: Acquire THREE required licensed SFB/IFN panels with integrity audit
+        run: |
+          python -m tools.acquire_ifn_independent_data --registry ifn_panel_sources.json --out ifn_raw --report ifn_download_audit.json
+      - name: Export deduplicated provisional IFN physical UAs
+        run: |
+          python -m tools.audit_ifn_panel_biome_coverage --raw-dir ifn_raw --download-audit ifn_download_audit.json --report ifn_panel_biome_coverage.json --candidate-csv ifn_panel_native_ua_pre_ibge_unvalidated.csv
+      - name: Prepare licensed IFN necromass physical-UA candidates (NOT carbon)
+        run: |
+          python -m tools.prepare_ifn_necromass_candidates \
+            --download-audit ifn_download_audit.json --raw-dir ifn_raw \
+            --audit ifn_necromass_join_audit.json \
+            --candidates ifn_necromass_candidates.json
+      - name: Download official IBGE 2026 vector with ZIP CRC and SHA256
+        run: |
+          python - <<'PY'
+          from tools.ibge_official_zip import download_ibge_zip
+          url = "https://geoftp.ibge.gov.br/informacoes_ambientais/vegetacao/vetores/escala_250_mil/versao_2026/vege_area.zip"
+          print(download_ibge_zip(url, "ibge_2026", "vege_area_2026", "3.25-scientific-screen"))
+          PY
+      - name: Evaluate published-centroid overlay and 250/1000 m sensitivity
+        run: |
+          python -m tools.ifn_ibge_spatial_sensitivity --ifn-csv ifn_panel_native_ua_pre_ibge_unvalidated.csv --ibge-vector ibge_2026/vege_area_2026.zip --output-csv ifn_ibge_sensitivity_NOT_VALIDATED.csv --report ifn_ibge_sensitivity_NOT_VALIDATED.json
+      - name: Cross-audit necromass physical UAs against IBGE at published centroids (NOT validation)
+        run: |
+          python -m tools.audit_ifn_necromass_ibge_crosswalk \
+            --candidates ifn_necromass_candidates.json \
+            --spatial-csv ifn_ibge_sensitivity_NOT_VALIDATED.csv \
+            --necro-audit ifn_necromass_join_audit.json \
+            --panel-audit ifn_panel_biome_coverage.json \
+            --spatial-report ifn_ibge_sensitivity_NOT_VALIDATED.json \
+            --report ifn_necromass_ibge_crosswalk_NOT_VALIDATED.json \
+            --output-csv ifn_necromass_ibge_crosswalk_NOT_VALIDATED.csv
+      - name: Upload descriptive evidence ONLY, never a release manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifn-ibge-sensitivity-unvalidated
+          path: |
+            ifn_download_audit.json
+            ifn_panel_biome_coverage.json
+            ifn_ibge_sensitivity_NOT_VALIDATED.json
+            ifn_ibge_sensitivity_NOT_VALIDATED.csv
+            ifn_necromass_join_audit.json
+            ifn_necromass_ibge_crosswalk_NOT_VALIDATED.json
+            ifn_necromass_ibge_crosswalk_NOT_VALIDATED.csv
+          if-no-files-found: warn
+          retention-days: 30

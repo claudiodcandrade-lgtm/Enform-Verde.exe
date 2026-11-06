@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Teste SAR alta biomassa — FLONA Tapajós</name>
+    <description>AOI de aceitação de alta biomassa na Floresta Nacional do Tapajós, Pará. Fitofisionomia de referência: Floresta Ombrófila Densa de Terras Baixas, com dossel emergente (Dbe), conforme mapa/diagnóstico do Plano de Manejo da FLONA com base no sistema IBGE; a classe espacial dominante da AOI deve ser confirmada ao carregá-la no diagnóstico IBGE do aplicativo. Inventários publicados reportam biomassa seca acima do solo média de 313 Mg/ha para Dbe na FLONA (Plano de Manejo 2019, dados secundários organizados a partir do mapa IBGE). Essa média serve só como contexto, não como observação de parcela coincidente nem validação SAR local. Esta região já teve pixels SAR reais processados pelo teste Tapajós; a execução anterior não produziu AGB quantitativa a partir do SAR por falta de modelo com preditores e suporte compatíveis. Usar FP_AGB_L2B P-band oficial se disponível ou modelo brasileiro SAR recalibrado/validado antes de interpretar AGB como estimativa quantitativa.</description>
+    <ExtendedData>
+      <Data name="bioma"><value>Amazônia</value></Data>
+      <Data name="fitofisionomia_referencia"><value>Floresta Ombrófila Densa de Terras Baixas, dossel emergente (Dbe)</value></Data>
+      <Data name="identificacao"><value>IBGE (classificação de referência; confirmar interseção dominante no aplicativo)</value></Data>
+      <Data name="biomassa_publicada_contexto_Mg_ha"><value>313</value></Data>
+      <Data name="limite_cientifico"><value>Não há par parcela–pixel coincidente validado nesta AOI; biomassa publicada é contexto, não saída SAR.</value></Data>
+    </ExtendedData>
+    <Placemark>
+      <name>Alta biomassa — FLONA Tapajós — classe de referência Dbe</name>
+      <Polygon><outerBoundaryIs><LinearRing><coordinates>
+        -54.965000,-3.020000,0
+        -54.930000,-3.020000,0
+        -54.930000,-3.050000,0
+        -54.965000,-3.050000,0
+        -54.965000,-3.020000,0
+      </coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+  </Document>
+</kml>

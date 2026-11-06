@@ -1,0 +1,55 @@
+{
+  "description": "Licensed SFB/IFN 2025 field land-use subplots for independent-source screening only; not carbon, IBGE or SAR validation",
+  "source_dataset": "https://dados.florestal.gov.br/dataset/ifn-uso-da-terra-por-uf_disp-set2025",
+  "metadata": "https://dados.florestal.gov.br/pt_BR/dataset/8b8e2ad3-eb97-485b-aa68-842c82602f47/resource/0f4ff89c-30cf-4dfd-9b19-3bc77327c917/download/metadados_ifn_uso-da-terra_disp-set2025.pdf",
+  "sources": [
+    {
+      "id": "ifn_uso_terra_mato_grosso_2025",
+      "url": "https://dados.florestal.gov.br/ne/dataset/8b8e2ad3-eb97-485b-aa68-842c82602f47/resource/6febb20e-2e59-4843-9bc0-227de8957b47/download/ifn_uso-da-terra_mato_grosso_disp-set2025.xlsx",
+      "license": "Creative Commons Attribution (SFB dataset and resource)",
+      "role": "observed 2011-2024 field subplot forest-cover flag and coded land use; no current-cover inference",
+      "observed_measurement": "subplot_land_use_and_forest_flag_not_carbon",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "sub",
+        "subp",
+        "cobertura_florestal",
+        "uso_da_terra"
+      ]
+    },
+    {
+      "id": "ifn_uso_terra_mato_grosso_do_sul_2025",
+      "url": "https://dados.florestal.gov.br/ne/dataset/8b8e2ad3-eb97-485b-aa68-842c82602f47/resource/988b55df-d79e-4a13-9d73-80db4fab3054/download/ifn_uso-da-terra_mato_grosso_do_sul_disp-set2025.xlsx",
+      "license": "Creative Commons Attribution (SFB dataset and resource)",
+      "role": "observed 2011-2024 field subplot forest-cover flag and coded land use; no current-cover inference",
+      "observed_measurement": "subplot_land_use_and_forest_flag_not_carbon",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "sub",
+        "subp",
+        "cobertura_florestal",
+        "uso_da_terra"
+      ]
+    },
+    {
+      "id": "ifn_uso_terra_para_2025",
+      "url": "https://dados.florestal.gov.br/ne/dataset/8b8e2ad3-eb97-485b-aa68-842c82602f47/resource/1cba5f16-4553-41ae-9b35-1f6cf9c0e975/download/ifn_uso-da-terra_para_disp-set2025.xlsx",
+      "license": "Creative Commons Attribution (SFB dataset and resource)",
+      "role": "observed 2011-2024 field subplot forest-cover flag and coded land use; no current-cover inference",
+      "observed_measurement": "subplot_land_use_and_forest_flag_not_carbon",
+      "expected_columns": [
+        "bioma",
+        "uf",
+        "ua",
+        "sub",
+        "subp",
+        "cobertura_florestal",
+        "uso_da_terra"
+      ]
+    }
+  ]
+}

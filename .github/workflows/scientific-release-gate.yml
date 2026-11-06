@@ -1,0 +1,81 @@
+name: Homologação científica - bloqueio independente
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+  workflow_dispatch:
+concurrency:
+  group: enform-science-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  scientific-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install IFN primary-data audit dependencies
+        run: python -m pip install "requests>=2.31,<3" "openpyxl>=3.1,<4" "shapely>=2,<3" "pyproj>=3.6,<4"
+      - name: Validate fail-closed scientific evidence contract
+        run: python -m unittest tests.test_scientific_release_gate tests.test_materialize_release_evidence tests.test_modular_scientific_gate tests.test_experimental_pilot_gate tests.test_experimental_soil_scenarios tests.test_executive_carbon_report tests.test_acquire_ifn_independent_data tests.test_promote_independent_evidence tests.test_independent_spatial_validation tests.test_audit_ifn_tost_pairs tests.test_audit_ifn_selected_ua tests.test_prepare_ifn_agb_candidates tests.test_ifn_agb_cross_state_diagnostics tests.test_prepare_ifn_necromass_candidates tests.test_audit_ifn_pantanal_litter_necromass tests.test_audit_ifn_pantanal_fallen_wood tests.test_audit_ifn_necromass_ibge_crosswalk tests.test_audit_ifn_pantanal_field_litter_overlap tests.test_ifn_2026_panel_harvest tests.test_audit_ifn_panel_biome_coverage tests.test_ibge_official_zip tests.test_ifn_ibge_spatial_sensitivity tests.test_workflow_provenance -v
+      - name: Materialize exact-SHA real-evidence manifest when an audited template exists
+        shell: bash
+        run: |
+          if test -f validation/release_evidence.template.json; then
+            python -m tools.materialize_release_evidence \
+              --template validation/release_evidence.template.json \
+              --source-sha "$(git rev-parse HEAD)" \
+              --output validation/release_evidence.json
+          else
+            echo "No committed independently evidenced template; scientific gate must fail closed."
+          fi
+      - name: Audit real scientific data and exact Windows artifact SHA
+        # Deliberately NOT continue-on-error: missing independent evidence blocks release.
+        run: |
+          python tools/scientific_release_gate.py \
+            --source-sha "$(git rev-parse HEAD)" \
+            --evidence validation/release_evidence.json \
+            --report release_gate_report.json
+      - name: Promote independently verified real evidence into modular manifest
+        if: always()
+        run: |
+          python tools/promote_independent_evidence.py \
+            --source-sha "$(git rev-parse HEAD)" \
+            --root validation \
+            --candidates validation/evidence_candidates \
+            --manifest validation/modular_capabilities.json \
+            --audit modular_promotion_audit.json
+      - name: Audit modular scientific capabilities independently
+        if: always()
+        run: |
+          python tools/modular_scientific_gate.py \
+            --source-sha "$(git rev-parse HEAD)" \
+            --manifest validation/modular_capabilities.json \
+            --report modular_gate_report.json
+      - name: Assess operational pre-field model readiness
+        if: always()
+        run: |
+          python tools/experimental_pilot_gate.py \
+            --source-sha "$(git rev-parse HEAD)" \
+            --manifest validation/experimental_models.json \
+            --report experimental_pilot_gate_report.json
+      - name: Retain blockers for scientific review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scientific-release-blockers-${{ github.run_id }}
+          path: |
+            release_gate_report.json
+            modular_gate_report.json
+            modular_promotion_audit.json
+            experimental_pilot_gate_report.json
+          if-no-files-found: warn
+          retention-days: 90
