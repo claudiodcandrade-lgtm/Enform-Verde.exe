@@ -224,3 +224,6 @@ O cálculo de estoque de carbono do solo continua em 0–100 cm com cinco profun
 
 ## Regra de versão V87.22
 A cobertura do polígono e os estoques do solo são independentes da confirmação de cobertura nativa. O relatório de carbono só integra estoque do solo à formação nativa quando a interseção da formação foi confirmada por fonte atual aceita; a classe anual MapBiomas ou legenda potencial IBGE não comprova vegetação atual. A área pedológica e a fertilidade continuam reportadas por interseção cartográfica, com fonte, profundidade, cobertura e incerteza próprios. Falha técnica de consulta deve permanecer distinta de ausência real de cobertura.
+
+## Preservação de N/D na integração (06/11/2026)
+Se a área nativa confirmada é zero ou inexistente por ausência de evidência atual, o carbono do solo associado à vegetação nativa não é zero: deve aparecer como N/D, sem somar uma classe MapBiomas potencial ou preencher a lacuna. A área pedológica e os atributos de fertilidade, por sua vez, continuam podendo ser apresentados por interseção da AOI com o mapa, com hectares, percentual, camada e cobertura próprios.

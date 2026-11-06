@@ -68,3 +68,6 @@ O diagnóstico do SHA `f82ef5b17004fee56a6f80de1d19b36cd9e17103` identificou err
 A máscara MapBiomas anual não pode confirmar uso atual. A área sem confirmação permanece desconhecida; pastagem e outras classes explicitamente antrópicas podem ser excluídas. A previsão de propriedade permanece bloqueada quando não houver vigor datado e aceito. PAM permanece referência de calibração regional e pode alimentar cenário condicional, sem ser apresentada como produtividade estimada da fazenda.
 
 Para fechar 3.26.3-PRECAMPO-EXPERIMENTAL, regressões completas, pixels VV/VH reais legíveis, compilação e teste do EXE Windows devem passar e referenciar o mesmo SHA. O estado reprovado da homologação científica independente deve ser mantido até evidência primária independente suficiente.
+
+## Correção de regressão em fixtures (06/11/2026)
+A execução Windows reprovou três casos de teste antes do processamento orbital: duas fixtures esperavam confirmação nativa a partir de MapBiomas anual e uma esperava zero para estoque indisponível. A implementação deve manter cobertura desconhecida sem SAR_VALIDADO; quando não há estrato nativo aceito, estoque conhecido é N/D, nunca zero observado. Com esses testes bloqueando o build, as etapas Sentinel-2, Sentinel-1 com pixels reais e empacotamento ainda não foram executadas.

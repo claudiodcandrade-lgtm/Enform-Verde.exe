@@ -148,9 +148,9 @@ class RootBiomassSourcePriorityTests(unittest.TestCase):
 
 
 class NativeCarbonTests(unittest.TestCase):
-    def test_full_native_carbon_pipeline_all_pools_and_anthropic_exclusion(self):
-        # Complete synthetic integration gate: land-cover pixels, native
-        # intersection, per-pool aggregation, units and exclusion of pasture.
+    def test_mapbiomas_only_forest_does_not_enter_native_carbon(self):
+        # Annual map pixels may exclude explicit pasture, but do not establish
+        # current native cover or permit a native-carbon estimate.
         with tempfile.TemporaryDirectory() as d:
             tif=Path(d)/'mapbiomas_local.tif'
             with rasterio.open(tif,'w',driver='GTiff',width=20,height=10,
@@ -161,33 +161,20 @@ class NativeCarbonTests(unittest.TestCase):
                 dst.write(values,1)
             aoi=gpd.GeoDataFrame(geometry=[box(0,0,200,100)],crs=6933)
             ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
-            current_forest=gpd.GeoDataFrame([{
-                'class_name':'Floresta Ombrófila Densa','source':'SAR_VALIDADO',
-                'taxonomy':'fixture SAR com validação independente',
-                'geometry':box(0,0,100,100)}],crs=6933)
-            contract={'class_metadata':{'Floresta Ombrófila Densa':{'parent':'vegetação natural'}}}
-            with patch('land_use_sar.classify_config',return_value=(current_forest,contract)):
-                land=run_land_use(aoi,Path(d)/'out',config_path='SYNTHETIC_VALIDATED',mapbiomas_path=str(tif),ibge=ibge)
+            land=run_land_use(aoi,Path(d)/'out',mapbiomas_path=str(tif),ibge=ibge)
             self.assertIsNone(land['mapbiomas_failure'])
-            self.assertAlmostEqual(land['unknown_cover_ha'],0,places=5)
+            self.assertAlmostEqual(land['unknown_cover_ha'],1.0,places=5)
             calls=[]
-            pool_values=[60.0,12.0,3.0,1.0,4.0,70.0]
             def estimator(frame,phys):
                 calls.append(phys)
-                return {'components':[{'parametro':name,'tc':value,
-                                        'fonte':'REF_SINTETICA_TESTE'}
-                                       for name,value in zip(COMPARTMENTS,pool_values)]}
+                return {'components':[{'parametro':name,'tc':10.0,
+                                        'fonte':'REF_SINTETICA_TESTE'} for name in COMPARTMENTS]}
             result=summarize_native_carbon(aoi,gpd.read_file(land['vector_path']),estimator)
-            self.assertEqual(len(calls),1)
-            self.assertAlmostEqual(result['native_area_ha'],1.0,places=4)
+            self.assertEqual(calls,[])
+            self.assertAlmostEqual(result['native_area_ha'],0.0,places=4)
             self.assertAlmostEqual(result['excluded_other_uses_ha'],1.0,places=4)
-            self.assertAlmostEqual(result['known_total_tc'],150,places=4)
-            self.assertAlmostEqual(result['known_total_tco2'],550,places=4)
-            self.assertTrue(result['complete'])
-            self.assertIsNone(result['total_uncertainty'])
-            self.assertEqual(len(result['components']),len(COMPARTMENTS))
-            self.assertTrue(all(c['known_total_tc'] is not None
-                                for c in result['components']))
+            self.assertAlmostEqual(result['unknown_cover_area_ha'],1.0,places=4)
+            self.assertFalse(result['complete'])
 
     def test_two_native_classes_are_weighted_and_other_uses_not_estimated(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
@@ -390,7 +377,7 @@ class NativeCarbonTests(unittest.TestCase):
                 called.append(phys)
                 return {'components':[{'parametro':'Biomassa aérea','tc':10}]}
             result=summarize_native_carbon(aoi,gpd.read_file(report['vector_path']),estimator)
-            self.assertAlmostEqual(result['known_total_tc'],0.0,places=4)
+            self.assertIsNone(result['known_total_tc'])
             self.assertEqual(called,[])
 
     def test_current_agricultural_mask_does_not_become_forest_by_ibge_region(self):
@@ -403,7 +390,7 @@ class NativeCarbonTests(unittest.TestCase):
             rows=land['classes'];self.assertEqual(len(rows),2)
             natural=next(r for r in rows if r['native_status'] is None)
             pasture=next(r for r in rows if r['native_status'] is False)
-            self.assertEqual(natural['source'],'IBGE+MAPBIOMAS')
+            self.assertEqual(natural['source'],'MAPBIOMAS')
             self.assertEqual(pasture['class_name'],'Pastagem')
             self.assertAlmostEqual(natural['area_pct'],50,places=4)
 

@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 31257)
-Total output lines: 589
+Warning: truncated output (original token count: 31455)
+Total output lines: 592
 
 # PROMPT DE CONTINUIDADE — ENFORM VERDE 3.26.2-PRECAMPO-EXPERIMENTAL
 **Revisão v52 — 05/11/2026 (UTC)**  
@@ -292,12 +292,7 @@ Documentação local completa distribuída: `PROMPT_CONTINUIDADE_ENFORM_VERDE_20
 ## Próximas verificações e versões
 - Manter triagem SAR orbital experimental recente e alertas do classificador; não usar pixels candidatos para afirmar lavoura ou vegetação nativa sem modelo apropriado.
 - Reexecutar toda a suíte e novo EXE em Windows no SHA final; build anterior do SHA 8839435 não contém estas mudanças.
-- Gate científico independente continua reprovado até evidência observacional real. Modelos biomas…1257 tokens truncated… + workflow de sincronização Word verificável; também aceita Word no mesmo commit.
-- Registro explícito dos módulos dinâmicos national_analysis_audit, recent_sar_landcover e property_physiognomy_display no PyInstaller.
-- Radar SAR: escolher série de órbita compatível com cobertura temporal suficiente, não apenas a órbita da cena mais recente; manter pixels sem observação como nodata=0 após filtragem, não convertê-los em classe 3; remover URLs com SAS da mensagem de erro.
-## Integração e validação
-- Revisões implementadas no código, sujeitas a novo CI e build no SHA definitivo; não atribuir essas correções ao ZIP do SHA 8839435427a3f3a4e0370de5082d666b406df50a.
-- Casos de controle: seis biomas com dados sintéticos apenas de teste de contrato, AOI sem CRS, fechamento cartográfico, cenas em órbitas alternativas, dados SAR faltantes, sigilo dos tokens e identificação coerente de áreas/fitofisionomias.
+- Gate científico independente continua reprovado até evidência observacional real. Modelos biomas…1455 tokens truncated…fechamento cartográfico, cenas em órbitas alternativas, dados SAR faltantes, sigilo dos tokens e identificação coerente de áreas/fitofisionomias.
 - Na ausência de comprovação independente de modelo, campo e medição orbital na AOI, o gate científico permanece reprovado. A avaliação experimental nacional é uma funcionalidade operacional distinta de homologação científica.
 
 
@@ -559,3 +554,6 @@ A execução GitHub Actions 42086181455 (945 testes) apresentou três falhas: te
 A revisão da suíte completa no SHA `f82ef5b17004fee56a6f80de1d19b36cd9e17103` encontrou 4 erros e 15 falhas. Foram identificados um `NameError` em `sentinel1_sources.py` (contagem usava variável inexistente), uma normalização que rejeitava o hífen de “Sempre-Verde”, fixtures antigos que aceitavam MapBiomas como cobertura nativa atual, expectativa desatualizada de safra regional mesmo sem vigor observado, e contratos de estado Sentinel-1 divergentes. Corrigir código e fixtures sem relaxar os gates científicos.
 
 Antes de fechar a versão 3.26.3-PRECAMPO-EXPERIMENTAL, executar a suíte completa, o build Windows e o processamento real de pixels VV/VH em AOI de referência. Cada verificação precisa identificar o mesmo SHA final. Os resultados conhecidos do SHA acima são: contrato pré-campo aprovado; testes focados aprovados; suíte completa reprovada; build Windows interrompido nos testes de estratificação; homologação científica independente reprovada (`accepted_count: 0`). Nenhum desses estados pode ser descrito como aprovação final. MapBiomas continua referência anual e não confirma cobertura nativa ou lavoura atuais. A ausência de vigor observado bloqueia a previsão de produtividade da fazenda; PAM só baliza o modelo regional/condicional.
+
+## Correção após regressão Windows V87.22 (06/11/2026)
+No SHA `cb05078f11bfcc4906cab35dd8e7a58e5e1483bd`, os 165 testes do bloco de estratificação encontraram três inconsistências nas fixtures, não no gate de produção: cobertura anual MapBiomas continuava esperada como nativa em dois casos, e um teste interpretava `known_total_tc=None` como zero. As fixtures precisam exigir `SAR_VALIDADO` para área nativa e aceitar N/D numérico quando não há área nativa validada. O build foi bloqueado nessa etapa; Sentinel-2, pixels SAR reais e compilação não foram executados. A suíte completa do dashboard ainda está em execução. Após corrigir as fixtures, executar todos os gates no mesmo SHA; não liberar artefato anterior nem afirmar conclusão enquanto isso não passar.
