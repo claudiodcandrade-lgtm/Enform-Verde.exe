@@ -11,3 +11,7 @@ A contingência de estoque de carbono orgânico do solo por Identify foi restrin
 - Versão 3.26.4-PRECAMPO-EXPERIMENTAL: candidata técnica.
 - A homologação científica independente permanece reprovada enquanto faltarem evidências observacionais independentes exigidas para biomas, compartimentos e funcionalidades.
 - Resultados sem cobertura completa ou suporte científico permanecem N/D; não são preenchidos com dados sintéticos.
+
+
+## UPDATE V87.34.1 — CI contract aligned with the soil service module (06/11/2026)
+The Windows GUI contract was incorrectly searching for the primary PronaSolos endpoint inside desktop_app.py, although endpoint definitions intentionally live in pronasolos_identify.py. The assertion now reads that dedicated registry and checks the primary official endpoint plus candidate-service declaration. No service behavior or scientific acceptance threshold changed. Re-run Windows build, GUI contract, complete regression, package integrity and clean-folder EXE checks at the new source SHA. The independent scientific homologation gate remains failed pending real independent evidence; this contract fix does not satisfy it.
