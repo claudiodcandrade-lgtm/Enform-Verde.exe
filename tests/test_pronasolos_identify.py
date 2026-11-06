@@ -8,14 +8,13 @@ from soil_profile_stats import summarize_paired_soil_profiles
 
 class PronasolosIdentifyBatchTests(unittest.TestCase):
     def test_area_sample_is_reproducible_and_inside_polygon(self):
-        try:\n            from shapely.geometry import Polygon\n        except ImportError:\n            self.skipTest("Shapely is a packaged application dependency")
+        from shapely.geometry import Polygon
         geom=Polygon([(0,0),(10,0),(10,10),(0,10)], holes=[[(4,4),(6,4),(6,6),(4,6)]])
         a=sample_points_in_stratum(geom,12)
         b=sample_points_in_stratum(geom,12)
         self.assertEqual([p.wkt for p in a],[p.wkt for p in b])
         self.assertEqual(len(a),12)
         self.assertTrue(all(geom.contains(p) for p in a))
-
 
     def test_one_request_covers_only_0_to_100_cm(self):
         params=build_identify_params(-4800000,-1200000,(-4900000,-1300000,-4700000,-1100000))
