@@ -625,3 +625,16 @@ Base auditada: `f8ebf74f2f7dd0d738e9e8fd4df1bd8e1d504796`. Correção operaciona
 
 ## UPDATE V87.34.1 — contrato GUI do serviço PronaSolos (06/11/2026)
 O contrato do build Windows foi corrigido para verificar o endpoint oficial e o registro de serviços no módulo dedicado `pronasolos_identify.py`, onde as rotas são declaradas, em vez de procurar a URL em `desktop_app.py`. A implementação e o fallback de amostra completa seguem fail-closed, sem misturar horizontes ou serviços. A especificação técnica Word e a especificação de solo V87.34.1 já registram o comportamento e sua incerteza. No SHA de continuação, repetir regressão completa, GUI, prévias ópticas, build Windows, autoteste em pasta limpa e checksums. A homologação científica permanece reprovada até que evidências independentes reais sejam disponibilizadas.
+
+## UPDATE V87.35 — operação territorial nacional e critérios de cobertura (06/11/2026)
+A exigência do usuário é que o sistema opere em qualquer unidade da Federação e AOI brasileira, preservando todas as funções já existentes. Cada módulo deve tentar suas rotas disponíveis e terminar com saída sustentada ou estado explícito (N/D_DADOS, N/D_VALIDACAO ou ERRO_TECNICO); não se promete pixels de sensor, cadastro atualizado ou previsão validada onde a fonte não os oferece.
+
+### Critérios de operação nacional
+- Entrada, validação geométrica, cálculo de área/interseção, relatórios e mapa de limites devem aceitar AOIs em todo o território brasileiro, com CRS, geometria e área auditados.
+- Fundo óptico: Sentinel-2 com contingência CBERS-4A/WFI, somente pixels reais e cobertura mínima por AOI; informar fonte, data, resolução, cobertura/nuvens e erro. Dez locais de smoke são amostras, não prova wall-to-wall. Sem imagem acessível, manter contorno e informar erro, sem mapa cartográfico como satélite.
+- SAR/biomassa/culturas: procurar fontes elegíveis e respeitar sensor, polarização, época, resolução, licença e domínio. Testes em Tapajós/Cerrado não provam cobertura SAR nacional. Sem pixels/modelo aplicável, usar N/D e preservar proveniência; nunca substituir SAR por mapa óptico/cartográfico ou média genérica.
+- Carbono, pedologia/fertilidade, vigor e safra só exibem números nas condições observacionais e de domínio documentadas. Solo 0–100 cm exige cinco horizontes completos do mesmo serviço. Culturas/produtividade sem modelo calibrado e validação compatível permanecem em abstenção/N/D_VALIDACAO.
+- Gate de disponibilidade nacional deve avaliar amostragem espacial estratificada (seis biomas, UFs, extremos, bordas de cena e lacunas temporais), cobertura por AOI/módulo, falhas de rede/licença/autenticação, cobertura temporal e fallbacks. Publicar matriz de cobertura, denominadores, data e resultados de todos os casos. Dez pontos não autorizam afirmação nacional.
+
+### Estado deste checkpoint
+No HEAD 732957be2462b33a727b0211f9b089621f3ea666, contratos pré-campo rápidos passaram; regressão completa e build Windows estavam em execução; gate científico independente reprovou. A operação nacional integral ainda não está demonstrada. Não declarar que todas as funcionalidades operam em todo o Brasil nem liberar nova versão até matriz de disponibilidade, regressão, build, autoteste do EXE e hashes passarem no mesmo SHA. O gate científico é separado e permanece fail-closed.
