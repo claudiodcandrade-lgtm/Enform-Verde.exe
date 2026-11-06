@@ -28,11 +28,11 @@ jobs:
           python tools/update_spec_docx.py \
             --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
             --entry docs/spec_updates/2026-11-06_v87_34_soil_complete_sample.md \
-            --baseline "Enform Verde 3.26.4-PRECAMPO-EXPERIMENTAL (V87.34 amostra completa PronaSolos por serviço único)" \
+            --baseline "Enform Verde 3.26.4-PRECAMPO-EXPERIMENTAL (V87.35 critérios de operação nacional e amostra completa PronaSolos)" \
             --head-sha "${{ github.sha }}" \
             --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
             --date "6 de novembro de 2026" \
-            --footer-label "V87.34 · experimental 3.26.4 · gate científico pendente" \
+            --footer-label "V87.35 · experimental 3.26.4 · gate científico pendente" \
             --footer-date "06/11/2026"
       - name: Verify DOCX archive and current checkpoint
         run: |
@@ -45,7 +45,7 @@ jobs:
               xml=z.read('word/document.xml').decode()
               assert len(xml) > 10000
               assert 'V87.34' in xml and '3.26.4-PRECAMPO-EXPERIMENTAL' in xml
-          print('Word specification updated with v87.34 checkpoint and archive validated')
+          print('Word specification updated with v87.35 checkpoint and archive validated')
           PY
       - name: Commit DOCX to the same feature branch
         run: |
