@@ -234,3 +234,6 @@ A imagem óptica Sentinel-2 ou CBERS-4A/WFI usada como fundo do polígono é exc
 
 ## V87.30 — estado de CI da prévia óptica (06/11/2026)
 A CI encontrou no workflow Windows uma asserção GUI desatualizada que exigia Google/Esri, contrariando o fluxo Sentinel-2 → CBERS-4A já especificado. O contrato do workflow foi atualizado para verificar as rotas reais de pixels dos dois provedores. O resultado deve ser revalidado em novo SHA; a falha antiga impediu os testes live e a build final, logo não comprova que o EXE dessa alteração esteja validado. A imagem de fundo não participa das estimativas ou validação de carbono do solo 0–100 cm.
+
+## V87.31 — contratos de fallback óptico (06/11/2026)
+A suíte GUI continha expectativas obsoletas para Google, NASA GIBS e Esri. O contrato passa a exigir Sentinel-2 seguido de CBERS-4A; estes são provedores de imagem visual, sem participação nos cálculos de carbono do solo. Sete testes focados passaram localmente; é necessário repetir a CI completa. A homologação científica e a matriz nacional de pixels SAR permanecem independentes e pendentes.

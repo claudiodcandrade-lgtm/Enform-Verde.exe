@@ -1,3 +1,11 @@
+# CHECKPOINT V87.31 — contratos de fallback óptico atualizados (06/11/2026)
+
+A CI da PR #50 detectou dois contratos GUI obsoletos em sequência: o workflow Windows exigia Google/Esri, e a suíte completa ainda ordenava NASA GIBS/Esri/IBGE após Sentinel-2. O código de visualização foi atualizado para usar Sentinel-2 seguido de CBERS-4A; os contratos foram corrigidos para conferir essa hierarquia e excluir NASA, Esri e raster IBGE do fundo. Sete testes focados passaram localmente.
+
+No SHA `269fe77067f94d193ec327d6e840fa3e5666fe04`, a compilação sintática, o contrato experimental e o catálogo SAR passaram, mas a build Windows falhou antes dos testes live pelo primeiro contrato obsoleto. A suíte completa executou 961 testes e falhou em um contrato NASA antigo (`ValueError` porque `nasa_gibs_preview` já não é rota ativa). O SHA seguinte `7dc2d0f0d538c3aedc0e161596d7d19925f2fd77` tinha nova build e regressões em andamento no checkpoint. O gate científico segue reprovado por ausência do manifesto modular (`accepted_count: 0`).
+
+Reexecutar todos os testes, os testes live e a build Windows após publicar os contratos atualizados. Não existe EXE/ZIP validado nesta sequência. O teste de catálogo SAR não prova cobertura nacional de pixels VV/VH, e os dez pontos CBERS não demonstram cobertura wall-to-wall; ambas e a homologação independente continuam pendentes.
+
 ## CHECKPOINT V87.30 — correção do contrato de GUI e andamento da build (06/11/2026)
 
 No commit `269fe77067f94d193ec327d6e840fa3e5666fe04`, a CI detectou uma asserção obsoleta no teste GUI do workflow Windows: ela exigia Google Maps e Esri, embora o requisito atualizado seja Sentinel-2 seguido de CBERS-4A, sem IBGE como imagem de fundo. A alteração no workflow agora verifica as rotas reais `sentinel2_earthsearch_preview`, `sentinel2_preview` e `cbers4a_wfi_preview`. A falha reportada foi do contrato de teste desatualizado; não comprova falha da nova prévia, mas o resultado de live/build no SHA ainda deve ser repetido.

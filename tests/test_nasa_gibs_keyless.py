@@ -41,17 +41,18 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         self.assertNotIn("Authorization", source)
         self.assertNotIn('"key"', source)
 
-    def test_keyless_optical_previews_run_before_esri_and_offline_fallback(self):
+    def test_sentinel2_and_cbers4a_are_the_only_optical_backdrop_routes(self):
         source = self._function_source("show_google_map")
         earthsearch = source.index("sentinel2_earthsearch_preview(")
         planetary = source.index("sentinel2_preview(")
-        nasa = source.index("nasa_gibs_preview(")
-        esri_imagery = source.index('esri_export(rs,"World_Imagery"')
-        offline = source.index("offline_brazil_preview(")
+        cbers = source.index("cbers4a_wfi_preview(")
         self.assertLess(earthsearch, planetary)
-        self.assertLess(planetary, nasa)
-        self.assertLess(nasa, esri_imagery)
-        self.assertLess(esri_imagery, offline)
+        self.assertLess(planetary, cbers)
+        calls = [node.func.id for node in ast.walk(ast.parse(source))
+                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)]
+        self.assertNotIn("nasa_gibs_preview", calls)
+        self.assertNotIn("esri_export", calls)
+        self.assertNotIn("offline_brazil_preview", calls)
 
     def test_nasa_provider_is_marked_as_visual_context(self):
         source = self._function_source("nasa_gibs_preview")
