@@ -972,6 +972,190 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                        "Erros: "+"; ".join(errors)[:480])
 
 
+def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """True-color CBERS-4A/WFI background from official INPE surface-reflectance COGs.
+
+    The map is visual context only. RGB comes from BAND15/BAND14/BAND13 and
+    CMASK=127 is treated as clear; cloud/no-data pixels are left for a newer
+    intersecting scene to fill. We never substitute the IBGE cartographic raster.
+    """
+    import rasterio
+    from rasterio.warp import reproject, Resampling, transform_bounds
+    from rasterio.transform import from_bounds
+    from rasterio.windows import from_bounds as window_from_bounds, Window
+    from rasterio.features import geometry_mask
+    import ssl
+    ca=ssl.get_default_verify_paths().cafile
+    if not ca:
+        try:
+            import certifi
+            ca=certifi.where()
+        except ImportError:ca=None
+    from datetime import datetime, timezone
+    g=gdf.to_crs(4326).copy()
+    minx,miny,maxx,maxy=map(float,g.total_bounds)
+    dx=max(maxx-minx,1e-8);dy=max(maxy-miny,1e-8)
+    cx=(minx+maxx)/2;cy=(miny+maxy)/2
+    factor=max(0.30,min(8.0,float(extent_factor)))
+    west,east=cx-dx*factor/2,cx+dx*factor/2
+    south,north=cy-dy*factor/2,cy+dy*factor/2
+    ratio=max(1.0,float(out_w))/max(1.0,float(out_h)); coslat=max(.25,math.cos(math.radians(cy)))
+    if (east-west)*coslat/(north-south)<ratio:
+        span=(north-south)*ratio/coslat;west,east=cx-span/2,cx+span/2
+    else:
+        span=(east-west)*coslat/ratio;south,north=cy-span/2,cy+span/2
+    width=max(320,min(1600,int(out_w)));height=max(240,min(1200,int(out_h)))
+    target_transform=from_bounds(west,south,east,north,width,height)
+    aoi_mask=geometry_mask(list(g.geometry),out_shape=(height,width),transform=target_transform,invert=True)
+    aoi_pixels=max(1,int(aoi_mask.sum()))
+    geom=g.geometry.union_all().__geo_interface__
+    body={"collections":["CB4A-WFI-L4-SR-1"],"intersects":geom,"limit":60,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    import time
+    response=None;search_error=None
+    for attempt in range(4):
+        try:
+            response=requests.post("https://data.inpe.br/bdc/stac/v1/search",json=body,timeout=(8,45))
+            response.raise_for_status();break
+        except requests.exceptions.RequestException as exc:
+            search_error=exc
+            status=getattr(getattr(exc,"response",None),"status_code",None)
+            retryable=(status in (429,500,502,503,504) or isinstance(
+                exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError)))
+            if not retryable or attempt>=3:raise RuntimeError(
+                "Busca STAC CBERS-4A/WFI indisponível após tentativas: "+type(exc).__name__) from None
+            time.sleep(1.5*(attempt+1))
+    if response is None:raise RuntimeError("Busca STAC CBERS-4A/WFI falhou: "+str(search_error))
+    items=response.json().get("features",[])
+    if not items:raise RuntimeError("Catálogo INPE não retornou cenas CBERS-4A/WFI para a AOI")
+    # Sort by acquisition date; newest clear pixels win. Older archived scenes
+    # may fill geographic gaps, and the date range is reported to the user.
+    scenes=[]
+    for item in items:
+        props=item.get("properties") or {};stamp=str(props.get("datetime") or "")
+        try:
+            dt=datetime.fromisoformat(stamp.replace("Z","+00:00"))
+            scenes.append((dt,item))
+        except (ValueError,OverflowError):continue
+    if not scenes:raise RuntimeError("Catálogo INPE não forneceu datas de aquisição CBERS-4A/WFI válidas")
+    scenes.sort(key=lambda pair:pair[0],reverse=True)
+    rgb_clear=np.full((height,width,3),np.nan,dtype=np.float32)
+    rgb_observed=np.full((height,width,3),np.nan,dtype=np.float32)
+    source_dates=[];scene_ids=[];errors=[]
+
+    def read_cog_window(href,categorical=False):
+        """Read only the map viewport from a remote COG, never the full scene."""
+        destination=np.zeros((height,width),dtype=np.uint8) if categorical else np.full((height,width),np.nan,dtype=np.float32)
+        with rasterio.open(href) as src:
+            if not src.crs:raise RuntimeError("COG sem CRS")
+            bounds=transform_bounds("EPSG:4326",src.crs,west,south,east,north,densify_pts=21)
+            win=window_from_bounds(*bounds,transform=src.transform).round_offsets().round_lengths()
+            try:win=win.intersection(Window(0,0,src.width,src.height))
+            except rasterio.errors.WindowError:return destination
+            if win.width<2 or win.height<2:return destination
+            ow=min(1600,max(100,int(win.width)));oh=min(1200,max(100,int(win.height)))
+            method=Resampling.nearest if categorical else Resampling.bilinear
+            raw=src.read(1,window=win,out_shape=(oh,ow),masked=True,resampling=method)
+            if categorical:arr=raw.filled(0).astype(np.uint8,copy=False)
+            else:arr=raw.astype(np.float32).filled(np.nan)
+            src_transform=src.window_transform(win)*rasterio.Affine.scale(float(win.width)/ow,float(win.height)/oh)
+            reproject(arr,destination,src_transform=src_transform,src_crs=src.crs,
+                      src_nodata=(0 if categorical else np.nan),dst_transform=target_transform,
+                      dst_crs="EPSG:4326",dst_nodata=(0 if categorical else np.nan),resampling=method)
+        return destination
+
+    for dt,item in scenes[:60]:
+        assets=item.get("assets") or {}
+        keys=("BAND15","BAND14","BAND13")
+        if not all((assets.get(k) or {}).get("href") for k in keys) or not (assets.get("CMASK") or {}).get("href"):
+            errors.append(str(item.get("id",""))+" sem RGB/CMASK");continue
+        scene=np.full((height,width,3),np.nan,dtype=np.float32)
+        try:
+            env={"GDAL_HTTP_TIMEOUT":"40","GDAL_HTTP_MAX_RETRY":"2",
+                 "GDAL_HTTP_MULTIRANGE":"YES","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"YES",
+                 "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_UNSAFESSL":"NO"}
+            if ca:env.update({"GDAL_CURL_CA_BUNDLE":ca,"CURL_CA_BUNDLE":ca})
+            with rasterio.Env(**env):
+                mask=read_cog_window(assets["CMASK"]["href"],categorical=True)
+                # Current INPE catalogue collection defines CMASK: 127 clear,
+                # 255 cloud, 0 no data. Pixels outside clear are never blended.
+                clear=mask==127
+                for band_idx,key in enumerate(keys):
+                    band=read_cog_window(assets[key]["href"])
+                    scene[:,:,band_idx]=band
+            observed=np.isfinite(scene).all(axis=2) & (scene>0).any(axis=2) & (mask!=0)
+            valid=clear & observed
+            take_observed=observed & ~np.isfinite(rgb_observed).all(axis=2)
+            take_clear=valid & ~np.isfinite(rgb_clear).all(axis=2)
+            if take_observed.any():rgb_observed[take_observed]=scene[take_observed]
+            if take_clear.any():rgb_clear[take_clear]=scene[take_clear]
+            if take_observed.any() or take_clear.any():
+                scene_ids.append(str(item.get("id","")));source_dates.append(dt.date().isoformat())
+            covered=int((np.isfinite(rgb_clear).all(axis=2)&aoi_mask).sum())
+            observed_covered=int((np.isfinite(rgb_observed).all(axis=2)&aoi_mask).sum())
+            if covered/aoi_pixels>=0.98 or observed_covered/aoi_pixels>=0.98:break
+        except Exception as exc:
+            errors.append(str(item.get("id",""))+": "+type(exc).__name__+": "+str(exc)[:90])
+    rgb=rgb_clear.copy()
+    holes=~np.isfinite(rgb).all(axis=2)
+    observed=np.isfinite(rgb_observed).all(axis=2)&(rgb_observed>0).any(axis=2)
+    # Background imagery may include clouds if no clear pixel exists; keep it
+    # explicitly labelled instead of silently showing an unrelated cartographic map.
+    cloud_fallback_used=bool((holes&observed).any())
+    rgb[holes&observed]=rgb_observed[holes&observed]
+    valid=np.isfinite(rgb).all(axis=2)&(rgb>0).any(axis=2)
+    if valid.sum()<max(80,height*width//200):
+        raise RuntimeError("CBERS-4A/WFI sem pixels reais RGB suficientes na AOI. "+"; ".join(errors[:3]))
+    hi=float(np.percentile(rgb[valid],99))
+    if not np.isfinite(hi) or hi<=0:raise RuntimeError("Reflectância CBERS-4A inválida")
+    image=Image.fromarray(np.clip(np.nan_to_num(rgb,nan=0.0)/hi*255,0,255).astype(np.uint8),"RGB")
+    from PIL import ImageDraw
+    draw=ImageDraw.Draw(image,"RGBA")
+    for shape in g.geometry:
+        geoms=list(shape.geoms) if shape.geom_type=="MultiPolygon" else ([shape] if shape.geom_type=="Polygon" else [])
+        for poly in geoms:
+            pts=[((x-west)/(east-west)*width,(north-y)/(north-south)*height) for x,y in poly.exterior.coords]
+            if len(pts)>=4:draw.polygon(pts,fill=(255,138,0,32),outline=(255,138,0,255));draw.line(pts,width=3,fill=(255,138,0,255))
+    return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
+            "datetime":max(source_dates),"date_range":[min(source_dates),max(source_dates)],"scene_ids":scene_ids,
+            "provider":"CBERS-4A/WFI L4-SR / INPE STAC (COG, composição RGB de pixels claros)",
+            "resolution_m":55,"pixel_count":int(valid.sum()),"cloud_pixels_included":cloud_fallback_used,"polygons":[]}
+
+
+def _satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h):
+    """Stable per-AOI/viewport cache; never depends on the process CWD."""
+    import hashlib
+    geom=gdf.to_crs(4326).geometry.union_all()
+    token=hashlib.sha256(geom.wkb+f"|{float(extent_factor):.4f}|{int(out_w)}x{int(out_h)}".encode("ascii")).hexdigest()
+    root=Path(os.environ.get("LOCALAPPDATA",Path.home()))/"EnformVerde"/"SatelliteCache"
+    return root/(token+".png"),root/(token+".json")
+
+
+def _store_satellite_preview_cache(gdf,extent_factor,out_w,out_h,image,polygons,provider,credit):
+    try:
+        image_path,meta_path=_satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h)
+        image_path.parent.mkdir(parents=True,exist_ok=True)
+        image_tmp=image_path.with_suffix(".tmp.png");meta_tmp=meta_path.with_suffix(".tmp")
+        image.save(image_tmp,format="PNG")
+        meta={"provider":str(provider),"credit":str(credit),"stored_utc":datetime.now(timezone.utc).isoformat(),
+              "polygons":polygons,"width":int(out_w),"height":int(out_h)}
+        meta_tmp.write_text(json.dumps(meta,ensure_ascii=False),encoding="utf-8")
+        image_tmp.replace(image_path);meta_tmp.replace(meta_path)
+    except Exception:
+        # Cache is only a resilience aid; a write failure cannot block display.
+        return
+
+
+def _read_satellite_preview_cache(gdf,extent_factor,out_w,out_h):
+    try:
+        image_path,meta_path=_satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h)
+        meta=json.loads(meta_path.read_text(encoding="utf-8"))
+        with Image.open(image_path) as cached:image=cached.convert("RGB").copy()
+        return image,meta
+    except Exception:
+        return None
+
+
 def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     """Keyless public NASA GIBS VIIRS true-color preview; visual context only."""
     from datetime import timedelta
@@ -1154,7 +1338,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Sem chave: Earth Search Sentinel-2 prioritário; NASA/Esri e IBGE como alternativas.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Imagem de fundo: Sentinel-2; alternativa oficial INPE CBERS-4A/WFI (55 m). O raster cartográfico IBGE não será usado como fundo.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1193,7 +1377,7 @@ class App(tk.Tk):
         self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
         self.map_canvas.grid(row=0,column=0,sticky="nsew"); self.map_vscroll.grid(row=0,column=1,sticky="ns"); self.map_hscroll.grid(row=1,column=0,sticky="ew")
         map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
-        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36; self._map_provider="OFFLINE_IBGE"
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36; self._map_provider="SATELLITE_PENDING"
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
         self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
@@ -1223,10 +1407,7 @@ class App(tk.Tk):
 
     def _apply_map_zoom(self):
         if self.gdf is None:return
-        if getattr(self,"_map_provider","").startswith("OFFLINE"):
-            self._draw_offline_brazil_basemap("Mapa cartográfico IBGE 2025/BC250 — offline")
-        else:
-            self.show_google_map(refresh=True,prefer_public=True)
+        self.show_google_map(refresh=True,prefer_public=True)
 
     def map_zoom_in(self):
         if self.gdf is None:return
@@ -1244,7 +1425,7 @@ class App(tk.Tk):
         self._apply_map_zoom()
 
     def show_google_map(self,refresh=False,prefer_public=False):
-        """Satellite visualization: Google when keyed, then Sentinel-2, then Esri, then offline vector."""
+        """Satellite visualization: Sentinel-2, official CBERS-4A, then live imagery services."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()
@@ -1322,46 +1503,39 @@ class App(tk.Tk):
             if not rs:
                 self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"))
                 return
-            if key:
-                # Google Static Maps is a visual basemap only; analysis rasters and vectors remain independent.
-                try:
-                    view=google_image(rs)
-                    self._map_queue.put((generation,view,[],"Google Maps Static API",None,"Google",None))
-                    return
-                except Exception as e:errors.append("Google: "+str(e))
             try:
                 p=sentinel2_earthsearch_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
                 copyright=f"Sentinel-2 L2A • Earth Search/AWS • {(p.get('datetime') or '')[:10]} • nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
             try:
                 p=sentinel2_preview(g,extent_factor=extent_factor)
                 copyright=f"Sentinel-2 L2A • Planetary Computer • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
             try:
-                p=nasa_gibs_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
-                self._map_queue.put((generation,p["image"],[],p["provider"],None,f"NASA GIBS • VIIRS SNPP • {(p.get('datetime') or '')}",None))
+                p=cbers4a_wfi_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                dr=p.get("date_range") or [p.get("datetime") or "",p.get("datetime") or ""]
+                cloud_note=" • nuvens em lacunas" if p.get("cloud_pixels_included") else " • pixels claros"
+                copyright=f"CBERS-4A/WFI • INPE • 55 m • {dr[0]}–{dr[1]}{cloud_note}"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],[],p["provider"],copyright)
+                self._map_queue.put((generation,p["image"],[],p["provider"],None,copyright,None))
                 return
-            except Exception as e:errors.append("NASA GIBS: "+str(e))
-            try:
-                view=esri_export(rs,"World_Imagery","Esri World Imagery")
-                self._map_queue.put((generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None))
+            except Exception as e:errors.append("CBERS-4A/WFI INPE: "+str(e))
+            cached=_read_satellite_preview_cache(g,extent_factor,w,h)
+            if cached:
+                image,meta=cached
+                credit="Imagem em cache local • fonte original: "+str(meta.get("credit") or meta.get("provider") or "Sentinel-2/CBERS-4A")
+                self._map_queue.put((generation,image,meta.get("polygons") or [],
+                                     "CACHE • "+str(meta.get("provider") or "Sentinel-2/CBERS-4A"),None,credit,None))
                 return
-            except Exception as e:errors.append("Esri Imagery: "+str(e))
-            try:
-                view=esri_export(rs,"World_Street_Map","Esri World Street Map")
-                self._map_queue.put((generation,view,[],"Esri World Street Map",None,"Esri / World Street Map",None))
-                return
-            except Exception as e:errors.append("Esri Street: "+str(e))
-            try:
-                view,_=offline_brazil_preview(g,extent_factor,(w,h))
-                self._map_queue.put((generation,view,[],"IBGE offline",None,"IBGE 2025/BC250 — estados, municípios, hidrografia e infraestrutura; rasterização local",None))
-                return
-            except Exception as e:errors.append("Mapa IBGE offline: "+str(e))
-            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri/IBGE",None,None," | ".join(errors)))
+            # Do not silently present the IBGE cartographic raster as satellite
+            # imagery. It remains available for administrative analysis only.
+            self._map_queue.put((generation,None,[],"Sentinel-2/CBERS-4A",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
         self.after(80,self._poll_map_queue)
@@ -1383,10 +1557,9 @@ class App(tk.Tk):
         if generation!=self._map_generation or self.gdf is None:return
         if error:
             self._satellite_map_visible=False
-            if not self._draw_offline_brazil_basemap("Mapa cartográfico IBGE — offline"):
-                self._draw_aoi_outline("Perímetro carregado — visualização vetorial")
-            self.status.set("Fontes online indisponíveis; fundo nacional offline mantido.")
-            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
+            self._draw_aoi_outline("Imagem Sentinel-2/CBERS-4A indisponível — perímetro mantido")
+            self.status.set("Não foi possível obter imagem Sentinel-2 nem CBERS-4A nesta tentativa.")
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
@@ -1403,12 +1576,6 @@ class App(tk.Tk):
         if self.gdf is None:return
         size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
         if size==self._last_map_size:return
-        if self._map_provider=="OFFLINE_IBGE":
-            if self._map_redraw_job is not None:
-                try:self.after_cancel(self._map_redraw_job)
-                except Exception:pass
-            self._map_redraw_job=self.after(100,self._redraw_map_after_resize)
-            return
         if self._satellite_map_visible:
             if self._map_refresh_job is not None:
                 try:self.after_cancel(self._map_refresh_job)
@@ -1428,12 +1595,8 @@ class App(tk.Tk):
     def _redraw_map_after_resize(self):
         self._map_redraw_job=None
         if self.gdf is None:return
-        if self._map_provider=="OFFLINE_IBGE":
-            if not self._draw_offline_brazil_basemap():
-                self._draw_aoi_outline("Falha ao redesenhar base raster IBGE; verifique os dados locais")
-            return
         if not self._satellite_map_visible:
-            self._draw_aoi_outline("AOI — visualização vetorial; base satélite indisponível")
+            self.show_google_map(refresh=True,prefer_public=True)
 
     def _draw_offline_brazil_basemap(self,label="Mapa cartográfico IBGE — offline"):
         if self.gdf is None:return False
@@ -2223,13 +2386,13 @@ class App(tk.Tk):
         except Exception as e:
             self.gdf=None; self.vector_status.set(f"Upload não concluído — {Path(p).name}: {e}"); self.status.set("Falha ao carregar vetor."); messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {Path(p).name}\n\nMotivo: {e}")
     def _schedule_offline_map_fit(self,label):
-        """Try online imagery first; draw the packaged IBGE map only after online failure."""
+        """Load Sentinel-2/CBERS-4A imagery; keep only the AOI outline on failure."""
         self._map_extent_factor=1.36
         self._satellite_map_visible=False
         self._draw_aoi_outline(label + " — carregando camada online")
         self._map_provider="ONLINE_PENDING"
-        # Network requests run in a worker. _finish_satellite_map uses IBGE only
-        # as the fallback if Google/Sentinel-2/Esri sources all fail.
+        # Network requests run in a worker; the cartographic IBGE raster is not
+        # a satellite-background fallback.
         self.show_google_map(refresh=False,prefer_public=False)
         # The AOI outline has already been rendered; do not schedule an undefined callback.
 

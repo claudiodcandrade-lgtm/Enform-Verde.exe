@@ -227,3 +227,7 @@ A cobertura do polígono e os estoques do solo são independentes da confirmaç�
 
 ## Preservação de N/D na integração (06/11/2026)
 Se a área nativa confirmada é zero ou inexistente por ausência de evidência atual, o carbono do solo associado à vegetação nativa não é zero: deve aparecer como N/D, sem somar uma classe MapBiomas potencial ou preencher a lacuna. A área pedológica e os atributos de fertilidade, por sua vez, continuam podendo ser apresentados por interseção da AOI com o mapa, com hectares, percentual, camada e cobertura próprios.
+
+
+## Separação entre fundo visual e fonte de solo — V87.29
+A imagem óptica Sentinel-2 ou CBERS-4A/WFI usada como fundo do polígono é exclusivamente visual e não substitui nem calibra a fonte de carbono do solo. O estoque permanece calculado a partir dos cinco horizontes oficiais Embrapa/PronaSolos de 0–100 cm, com interseção espacial, cobertura, licença, unidade e proveniência verificadas; raster IBGE cartográfico não participa do cálculo nem serve como fundo de satélite.

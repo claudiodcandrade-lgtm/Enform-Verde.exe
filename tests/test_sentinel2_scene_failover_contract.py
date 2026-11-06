@@ -26,16 +26,34 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         # Distinct source band windows, not reusing red's exact pixel window.
         self.assertIn("win=from_bounds(",ast.get_source_segment(SOURCE.read_text(encoding="utf-8"),fn))
 
-    def test_satellite_render_keeps_fallback(self):
+    def test_satellite_background_uses_only_sentinel2_or_cbers4a(self):
         src=SOURCE.read_text(encoding="utf-8")
         tree=ast.parse(src)
         fn=next(n for n in ast.walk(tree) if isinstance(n,ast.FunctionDef)
                 and n.name=="show_google_map")
         body=ast.get_source_segment(src,fn)
-        self.assertIn("sentinel2_earthsearch_preview",body)
-        self.assertIn("sentinel2_preview",body)
-        self.assertIn("nasa_gibs_preview",body)
-        self.assertIn("offline_brazil_preview",body)
+        positions=[body.index(name) for name in ("sentinel2_earthsearch_preview",
+                                                  "sentinel2_preview","cbers4a_wfi_preview")]
+        self.assertEqual(positions,sorted(positions))
+        calls=[n.func.id for n in ast.walk(fn) if isinstance(n,ast.Call)
+               and isinstance(n.func,ast.Name)]
+        self.assertNotIn("nasa_gibs_preview",calls)
+        self.assertNotIn("esri_export",calls)
+        self.assertNotIn("offline_brazil_preview",calls)
+        self.assertNotIn("_draw_offline_brazil_basemap",body)
+
+    def test_cbers_4a_uses_official_rgb_cogs_and_clear_mask(self):
+        src=SOURCE.read_text(encoding="utf-8")
+        tree=ast.parse(src)
+        fn=next(n for n in ast.walk(tree) if isinstance(n,ast.FunctionDef)
+                and n.name=="cbers4a_wfi_preview")
+        body=ast.get_source_segment(src,fn)
+        for value in ("https://data.inpe.br/bdc/stac/v1/search","CB4A-WFI-L4-SR-1",
+                      "BAND15","BAND14","BAND13","CMASK","mask==127",
+                      "resolution_m\":55"):
+            self.assertIn(value,body)
+        self.assertIn("reproject",body)
+        self.assertIn("valid.sum()",body)
 
 if __name__=="__main__":
     unittest.main()
