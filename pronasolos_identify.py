@@ -19,8 +19,14 @@ THIRD_SERVICE="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/atri
 SERVICE_CANDIDATES=(SERVICE,ALTERNATE_SERVICE,THIRD_SERVICE)
 
 
-def build_identify_params(x,y,extent,layer_ids=LAYER_IDS):
-    """One ArcGIS query for all requested horizons at exactly one coordinate."""
+def build_identify_params(x,y,extent,layer_ids=LAYER_IDS,*,crs=3857):
+    """One ArcGIS query for all requested horizons at one EPSG:3857 coordinate.
+
+    Coordinates are NOT reprojected here. Reject other CRS rather than
+    silently labeling geographic degrees as Web Mercator metres.
+    """
+    if isinstance(crs,bool) or str(crs).upper().removeprefix("EPSG:") != "3857":
+        raise ValueError("PronaSolos identify requires projected EPSG:3857 coordinates")
     if not layer_ids or any(lid not in LAYER_IDS for lid in layer_ids):
         raise ValueError("Unknown PronaSolos soil carbon layer")
     coords=(x,y,*extent)
