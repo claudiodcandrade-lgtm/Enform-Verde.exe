@@ -89,5 +89,11 @@ class PronasolosIdentifyBatchTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_identify_params(0,0,(0,0,1,1),[99])
 
+    def test_identify_crs_must_be_explicitly_web_mercator(self):
+        for crs in (4326, "EPSG:4326", 4674, None, True):
+            with self.subTest(crs=crs), self.assertRaisesRegex(ValueError, "EPSG:3857"):
+                build_identify_params(-48.0,-1.0,(-49,-2,-47,0),crs=crs)
+        self.assertEqual(build_identify_params(0,0,(-1,-1,1,1),crs="EPSG:3857")["sr"],"3857")
+
 if __name__=="__main__":
     unittest.main()
