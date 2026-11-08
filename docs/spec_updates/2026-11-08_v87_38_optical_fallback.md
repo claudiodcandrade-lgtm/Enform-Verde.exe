@@ -22,3 +22,7 @@ MapBiomas permanece separado e não determina cobertura corrente, unidade de map
 
 ## Legenda cartográfica IBGE não representa cobertura atual
 Renomear a saída de legenda_2 para “Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual)”. A área não pode ser apresentada como ocorrência observada, nem compor unidades atuais, área de cultura ou carbono. Manter esse contexto separado da ocorrência nativa aceita por SAR semântico.
+
+
+## Registro de sincronização
+Este checkpoint é a entrada V87.38 configurada para atualização automática do documento Word completo `docs/ESPECIFICACAO_TECNICA_COMPLETA.docx`. O cabeçalho/rodapé da revisão deve registrar V87.38, candidata experimental 3.26.5, gate científico pendente.
