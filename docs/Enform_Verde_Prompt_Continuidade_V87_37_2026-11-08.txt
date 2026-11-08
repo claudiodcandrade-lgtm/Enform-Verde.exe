@@ -1129,3 +1129,12 @@ O patch candidato 3.26.5-PRECAMPO-EXPERIMENTAL remove o overlay MapBiomas das un
 - Nenhum cálculo de vigor/safra sem os dados e contratos descritos; nenhum `None` convertido em 0.
 - Testar tabela de carbono com compartimentos ausentes, incertezas dependentes, covariância válida e ausência de covariância.
 - Rodar regressões, suíte do repositório, UI Windows/EXE em pasta limpa, build e artefato no SHA final; verificar SHA256. Gate científico continua separado do gate técnico.
+
+
+# ADENDO PRIORITÁRIO V87.38 — fundo óptico com contingência cartográfica final
+
+Este adendo substitui regras históricas de fundo visual que impeçam alternativas. Ordem obrigatória: CBERS-4A/WFI INPE; Sentinel-2 L2A Earth Search/AWS; Sentinel-2 Planetary Computer; cache óptico compatível com origem/data identificadas; mapa cartográfico IBGE apenas se todas as imagens ópticas atuais e o cache óptico válido falharem. O cache sem proveniência óptica deve ser rejeitado. Sempre exibir a melhor alternativa disponível e manter a AOI visível.
+
+O mapa cartográfico de último recurso deve ser rotulado “MAPA CARTOGRÁFICO — SEM IMAGEM ÓPTICA”, não pode ser tratado como cena orbital nem alimentar classificação/cálculos, e deve preservar no diagnóstico os erros das tentativas ópticas. Se também falhar, manter perímetro e informar todos os estados. A aceitação de imagem não exige que o provedor final seja CBERS: Sentinel-2 ou cache óptico válido satisfazem o requisito de alternativa.
+
+Regressões: provar CBERS primeiro; falha CBERS com sucesso Sentinel-2; cache compatível; rejeição de cache desconhecido; falha de fontes ópticas com mapa IBGE claramente identificado; falha de todos com mensagem N/D sem imagem falsa. O smoke distribuído inclui o centro da Fazenda Maria Eduarda, Sinop (lon -55.190498, lat -11.872667), relata provedor/data/cobertura e não declara prova wall-to-wall nacional. MapBiomas continua fora das unidades atuais, máscaras de cultivo, vigor, previsão, validação e mapas correntes; referência histórica, se exibida, fica em camada isolada.
