@@ -18,3 +18,7 @@ A interface apresenta a melhor alternativa visual disponível, mantém o períme
 6. Smoke distribuído inclui o centro informado para Fazenda Maria Eduarda, Sinop (-55.190498, -11.872667). Registrar imagem, sensor, data e cobertura real. O teste amostral não prova cobertura contínua de cada pixel do Brasil.
 
 MapBiomas permanece separado e não determina cobertura corrente, unidade de mapeamento, cultura, máscara, vigor, previsão, validação ou carbono. O mapa cartográfico excepcional é somente um fundo de localização.
+
+
+## Legenda cartográfica IBGE não representa cobertura atual
+Renomear a saída de legenda_2 para “Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual)”. A área não pode ser apresentada como ocorrência observada, nem compor unidades atuais, área de cultura ou carbono. Manter esse contexto separado da ocorrência nativa aceita por SAR semântico.
