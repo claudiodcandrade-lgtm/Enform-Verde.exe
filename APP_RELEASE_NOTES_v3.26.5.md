@@ -6,7 +6,7 @@
 - Mantém somente classes SAR semânticas que passem a validação independente por classe. O gate exige pelo menos 30 unidades independentes e limite inferior Wilson de 95% da precisão ≥ 0,70; classes não elegíveis permanecem N/D.
 - Adiciona unidades experimentais de assinaturas SAR apenas quando VV/VH atuais foram lidos; as unidades não recebem nome de cultura ou formação sem classificador semântico validado.
 - Preserva estados desconhecidos como N/D, sem convertê-los em zero hectares nem uso não nativo.
-- Prioriza imagem CBERS-4A/WFI do INPE e usa Sentinel-2 apenas como contingência. Exige pixels reais, CMASK e cobertura suficiente da AOI.
+- Prioriza imagem CBERS-4A/WFI do INPE; se falhar, tenta Sentinel-2 Earth Search e Planetary Computer. Depois admite cache óptico apenas com origem identificável e compatibilidade da AOI/viewport. O mapa cartográfico IBGE só aparece como contingência excepcional, rotulada “MAPA CARTOGRÁFICO — SEM IMAGEM ÓPTICA”, após falha das rotas ópticas. Exige pixels e proveniência explícita para qualquer imagem orbital.
 - Remove MapBiomas da identificação e do vigor agrícola; vigor composto depende de altura válida em metros, uniformidade e textura/rugosidade comparáveis.
 - Acrescenta quadro delimitado de estoques por compartimento. Incerteza agregada exige independência explícita entre estratos ou covariância total; onde a evidência não sustenta o valor, exibe N/D.
 
