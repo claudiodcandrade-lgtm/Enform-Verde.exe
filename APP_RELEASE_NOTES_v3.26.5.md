@@ -8,6 +8,7 @@
 - Preserva estados desconhecidos como N/D, sem convertê-los em zero hectares nem uso não nativo.
 - Prioriza imagem CBERS-4A/WFI do INPE; se falhar, tenta Sentinel-2 Earth Search e Planetary Computer. Depois admite cache óptico apenas com origem identificável e compatibilidade da AOI/viewport. O mapa cartográfico IBGE só aparece como contingência excepcional, rotulada “MAPA CARTOGRÁFICO — SEM IMAGEM ÓPTICA”, após falha das rotas ópticas. Exige pixels e proveniência explícita para qualquer imagem orbital.
 - Remove MapBiomas da identificação e do vigor agrícola; vigor composto depende de altura válida em metros, uniformidade e textura/rugosidade comparáveis.
+- Renomeia legenda_2 do IBGE como referência cartográfica que não comprova cobertura vegetal atual, sem incorporá-la às classes SAR atuais.
 - Acrescenta quadro delimitado de estoques por compartimento. Incerteza agregada exige independência explícita entre estratos ou covariância total; onde a evidência não sustenta o valor, exibe N/D.
 
 ## Estado de verificação
