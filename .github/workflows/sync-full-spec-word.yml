@@ -1,0 +1,56 @@
+name: Sync full Word specification from reviewed checkpoint
+on:
+  push:
+    branches:
+      - feature/agricultural-identification-native-carbon
+    paths:
+      - docs/spec_updates/2026-11-08_v87_38_optical_fallback.md
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: enform-word-spec-sync
+  cancel-in-progress: false
+jobs:
+  update-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/agricultural-identification-native-carbon
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Append reviewed scientific checkpoint preserving full Word history
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/2026-11-08_v87_38_optical_fallback.md \
+            --baseline "Enform Verde 3.26.5-PRECAMPO-EXPERIMENTAL (V87.38 fallback óptico e rótulos cartográficos auditáveis)" \
+            --head-sha "${{ github.sha }}" \
+            --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
+            --date "6 de novembro de 2026" \
+            --footer-label "V87.38 · experimental 3.26.5 · gate científico pendente" \
+            --footer-date "08/11/2026"
+      - name: Verify DOCX archive and current checkpoint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          p=Path('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx')
+          with ZipFile(p) as z:
+              assert z.testzip() is None
+              xml=z.read('word/document.xml').decode()
+              assert len(xml) > 10000
+              assert 'V87.38' in xml and '3.26.5-PRECAMPO-EXPERIMENTAL' in xml
+          print('Word specification updated with v87.38 checkpoint and archive validated')
+          PY
+      - name: Commit DOCX to the same feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with v87.38 optical fallback checkpoint"
+          git push origin HEAD:feature/agricultural-identification-native-carbon
