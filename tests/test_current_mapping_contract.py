@@ -28,6 +28,9 @@ class CurrentMappingContract(unittest.TestCase):
         self.assertNotIn('source") == "MAPBIOMAS"', body)
         self.assertIn("PAM is a yield baseline", self.crops)
 
+    def test_ibge_legend2_is_labeled_as_cartographic_reference(self):
+        self.assertIn("Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual)", self.desktop)
+
     def test_unknown_is_neither_native_zero_nor_non_native(self):
         self.assertIn('item.get("native_status") is False', self.desktop)
         self.assertNotIn('item.get("native_status") is not True', self.desktop)
