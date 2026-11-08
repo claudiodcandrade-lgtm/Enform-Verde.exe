@@ -502,7 +502,7 @@ def ibge_area_summary_lines(diagnosis):
             for x in (diagnosis or {}).get("vegetacao",[])}
     lines=[]
     labels=(("legenda_1","Região fitoecológica POTENCIAL IBGE (não comprova cobertura atual)"),
-            ("legenda_2","Tipo de cobertura vegetal IBGE (legenda_2)"))
+            ("legenda_2","Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual)"))
     for field,label in labels:
         rows=groups.get(field) or []
         if not rows:
