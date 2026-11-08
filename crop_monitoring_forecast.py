@@ -213,4 +213,31 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 error = vig.get("status") == "ERRO_TECNICO"
                 entry["forecast_status"] = "BLOQUEADA_ERRO_TECNICO" if error else "N/D"
                 entry["forecast"] = {"status": entry["forecast_status"], "reason": reason}
-                pref
+                prefix = "ERRO TÉCNICO" if error else "N/D"
+                lines.append("  Produtividade e produção da propriedade: " + prefix + " — bloqueadas; " + reason + ".")
+                audit["crops"][crop] = entry
+                continue
+            try:
+                if municipal_scale:
+                    lines.append("  Escala: vigor amostral SAR; previsão permanece condicional ao domínio e às validações do modelo.")
+                # Diagnostic patches do not constitute an area-representative
+                # vigor sample. Use unconditioned historical residuals for the
+                # municipality-wide yield distribution until a spatially
+                # exhaustive or probability-calibrated vigor product exists.
+                forecast_vigor = ({"status": "N/D",
+                                   "reason": "vigor SAR amostral não extrapolável ao município"}
+                                  if municipal_scale and vig.get("patches_evaluated") else vig)
+                entry["vigor_usable_for_municipal_yield"] = forecast_vigor is vig
+                rep = forecast_fn([{"id": crop, "gdf": crop_gdf if crop_gdf is not None else gdf, "crop": crop,
+                                    "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
+                                  as_of=as_of)
+                lines += ["  " + l for l in forecast_lines(rep)]
+                entry["forecast_status"] = rep.get("status")
+                entry["forecast_model"] = rep.get("model")
+                entry["forecast"] = {k: v for k, v in rep.items() if k in ("production", "fields", "model_label", "status") }
+            except Exception as exc:
+                lines.append("  Previsão de safra: N/D — " + type(exc).__name__ + ": " + str(exc)[:160])
+        else:
+            lines.append("  Previsão de safra: sem modelo calibrado para esta cultura (apenas soja e milho calibrados).")
+        audit["crops"][crop] = entry
+    return lines, audit
