@@ -1549,13 +1549,25 @@ class App(tk.Tk):
             cached=_read_satellite_preview_cache(g,extent_factor,w,h)
             if cached:
                 image,meta=cached
-                credit="Imagem em cache local • fonte original: "+str(meta.get("credit") or meta.get("provider") or "Sentinel-2/CBERS-4A")
-                self._map_queue.put((generation,image,meta.get("polygons") or [],
-                                     "CACHE • "+str(meta.get("provider") or "Sentinel-2/CBERS-4A"),None,credit,None))
+                original=str(meta.get("provider") or meta.get("credit") or "")
+                optical=("CBERS" in original.upper() or "SENTINEL" in original.upper())
+                if optical:
+                    credit="Imagem óptica em cache local • fonte original: "+original
+                    self._map_queue.put((generation,image,meta.get("polygons") or [],
+                                         "CACHE ÓPTICO • "+original,None,credit,None))
+                    return
+                errors.append("Cache recusado: a origem não foi identificada como imagem óptica")
+            # Última contingência: mapa cartográfico claramente identificado.
+            # Nunca apresentá-lo como imagem orbital ou como observação da cobertura.
+            try:
+                image,_=offline_brazil_preview(g,extent_factor,(w,h))
+                label="MAPA CARTOGRÁFICO IBGE — contingência excepcional; CBERS-4A e Sentinel-2 indisponíveis"
+                self._map_queue.put((generation,image,[],"MAPA CARTOGRÁFICO IBGE (contingência sem imagem óptica)",
+                                     None,label+" • "+" | ".join(errors),None))
                 return
-            # Do not silently present the IBGE cartographic raster as satellite
-            # imagery. It remains available for administrative analysis only.
-            self._map_queue.put((generation,None,[],"Sentinel-2/CBERS-4A",None,None," | ".join(errors)))
+            except Exception as exc:
+                errors.append("Mapa cartográfico de contingência: "+type(exc).__name__+": "+str(exc)[:160])
+            self._map_queue.put((generation,None,[],"CBERS-4A/Sentinel-2",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
         self.after(80,self._poll_map_queue)
