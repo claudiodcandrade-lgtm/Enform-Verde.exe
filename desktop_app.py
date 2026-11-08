@@ -1358,7 +1358,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Imagem de fundo prioritária: CBERS-4A/WFI (55 m, INPE); Sentinel-2 é o fallback. O raster cartográfico IBGE não será usado como fundo.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Imagem óptica prioritária: CBERS-4A/WFI (55 m, INPE); Sentinel-2 e cache óptico são alternativas. Mapa cartográfico IBGE só aparece como contingência excepcional quando as fontes ópticas falham.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1590,7 +1590,7 @@ class App(tk.Tk):
         if error:
             self._satellite_map_visible=False
             self._draw_aoi_outline("Imagem Sentinel-2/CBERS-4A indisponível — perímetro mantido")
-            self.status.set("Não foi possível obter imagem Sentinel-2 nem CBERS-4A nesta tentativa.")
+            self.status.set("CBERS-4A e Sentinel-2 falharam; a contingência cartográfica também não pôde ser carregada.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
