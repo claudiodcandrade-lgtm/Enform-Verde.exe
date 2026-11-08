@@ -1138,3 +1138,7 @@ Este adendo substitui regras históricas de fundo visual que impeçam alternativ
 O mapa cartográfico de último recurso deve ser rotulado “MAPA CARTOGRÁFICO — SEM IMAGEM ÓPTICA”, não pode ser tratado como cena orbital nem alimentar classificação/cálculos, e deve preservar no diagnóstico os erros das tentativas ópticas. Se também falhar, manter perímetro e informar todos os estados. A aceitação de imagem não exige que o provedor final seja CBERS: Sentinel-2 ou cache óptico válido satisfazem o requisito de alternativa.
 
 Regressões: provar CBERS primeiro; falha CBERS com sucesso Sentinel-2; cache compatível; rejeição de cache desconhecido; falha de fontes ópticas com mapa IBGE claramente identificado; falha de todos com mensagem N/D sem imagem falsa. O smoke distribuído inclui o centro da Fazenda Maria Eduarda, Sinop (lon -55.190498, lat -11.872667), relata provedor/data/cobertura e não declara prova wall-to-wall nacional. MapBiomas continua fora das unidades atuais, máscaras de cultivo, vigor, previsão, validação e mapas correntes; referência histórica, se exibida, fica em camada isolada.
+
+
+### Rótulo da legenda_2 do IBGE
+A classe deve aparecer como “Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual)”. Sua área é somente referência cartográfica e permanece separada da ocorrência nativa confirmada por SAR semântico validado; não compõe classe, cultura ou carbono atual.
