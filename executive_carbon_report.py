@@ -59,6 +59,63 @@ def executive_carbon_lines(native, fmt):
     pct=(100*area/aoi_ha) if aoi_ha>0 else None
     others=float(native.get("excluded_other_uses_ha") or 0)
     cover_complete=(native.get("cover_completeness")=="COMPLETE")
+    # Compact, bounded stock table. Aggregate each pool by summed stock and
+    # only publish a per-area density when the pool covers the full native area.
+    table=["+-----------------------------------------------+",
+           "| COMPARTIMENTO / TOTAL | tC/ha | tCO2e/ha | INCERTEZA tCO2e/ha | INCERTEZA % |",
+           "+-----------------------------------------------+"]
+    all_components=[c for st in native.get("strata",[]) for c in st.get("components",[])]
+    for pool in ("Biomassa aérea","Biomassa subterrânea","Necromassa aérea",
+                 "Necromassa subterrânea","Serapilheira","Solo 0–100 cm"):
+        rows=[r for r in all_components if r.get("parametro")==pool]
+        quantified=[r for r in rows if isinstance(r.get("total_tc"),(int,float))
+                    and isinstance(r.get("tc"),(int,float))]
+        covered=sum(float(r.get("quantified_area_ha",r.get("area_ha") or 0)) for r in quantified)
+        stock=sum(float(r["total_tc"]) for r in quantified) if quantified else None
+        density=(stock/area if stock is not None and area>0 and
+                 abs(covered-area)<=max(1e-6,area*1e-8) else None)
+        row_unc=[]
+        for r in quantified:
+            u=uncertainty_for_pool(r)
+            if u.get("absolute_tc_ha") is not None and u.get("percent") is not None:
+                row_unc.append((float(u["absolute_tc_ha"]),float(u["percent"])))
+        if density is not None and row_unc and len(row_unc)==len(quantified):
+            # A single stratum needs no cross-stratum covariance. Multiple
+            # strata combine by area-weighted variance only when independence
+            # is explicitly documented; otherwise uncertainty stays N/D.
+            independent=(len(quantified)==1 or all(
+                r.get("uncertainty_independence")=="independent_strata" for r in quantified))
+            if independent and len(quantified)==1:
+                sigma=row_unc[0][0]
+            elif independent:
+                sigma=math.sqrt(sum((float(r.get("quantified_area_ha",r.get("area_ha")))*u[0])**2
+                                    for r,u in zip(quantified,row_unc)))/area
+            else:
+                sigma=None
+            unc_abs=(sigma*44/12 if sigma is not None else None)
+            unc_pct=(100*sigma/density if sigma is not None and density>0 else None)
+        else:
+            unc_abs=unc_pct=None
+        table.append("| "+pool+" | "+fmt(density) if density is not None else "| "+pool+" | N/D")
+        table[-1]+=" | "+fmt(density*44/12) if density is not None else " | N/D"
+        table[-1]+=" | "+fmt(unc_abs) if unc_abs is not None else " | N/D"
+        table[-1]+=" | "+fmt(unc_pct)+"% |" if unc_pct is not None else " | N/D |"
+    if complete and area>0 and known is not None:
+        total_density=known/area
+        joint=native.get("total_uncertainty") or {}
+        se_total=joint.get("se_tC")
+        total_unc_abs=(float(se_total)/area*44/12 if isinstance(se_total,(int,float)) else None)
+        total_unc_pct=(100*float(se_total)/known if isinstance(se_total,(int,float)) and known>0 else None)
+        total_label="TOTAL — soma dos compartimentos"
+    else:
+        total_density=total_unc_abs=total_unc_pct=None
+        total_label="TOTAL — parcial / incompleto"
+    table.append("+-----------------------------------------------+")
+    table.append("| "+total_label+" | "+(fmt(total_density) if total_density is not None else "N/D")+
+                 " | "+(fmt(total_density*44/12) if total_density is not None else "N/D")+
+                 " | "+(fmt(total_unc_abs) if total_unc_abs is not None else "N/D")+
+                 " | "+(fmt(total_unc_pct)+"%" if total_unc_pct is not None else "N/D")+" |")
+    table.append("+-----------------------------------------------+")
     lines=["PAINEL EXECUTIVO — ESTOQUES DE CARBONO",
            "ÁREA TOTAL ANALISADA: "+fmt(aoi_ha)+" ha (100%)",
            "VEGETAÇÃO NATIVA MAPEADA: "+fmt(area)+" ha"+
@@ -77,7 +134,9 @@ def executive_carbon_lines(native, fmt):
            "Densidade sobre a área NATIVA mapeada: "+
            (fmt(known/area)+" tC/ha | "+fmt(known/area*44/12)+" tCO₂e/ha"
             if known is not None and area else "N/D"),
-           "INCERTEZA POR COMPARTIMENTO — valor e amplitude apenas quando quantificados (tC/ha; %)"]
+           "INCERTEZA POR COMPARTIMENTO — quadro executivo (estoques em tC/ha e tCO₂e/ha; incertezas em tCO₂e/ha e %):",
+           *table,
+           "Incertezas entre estratos só são combinadas quando sua independência está explicitamente documentada; total exige matriz de covariância completa. Sem isso, N/D."]
     for st in native.get("strata",[]):
         if not st.get("area_ha"):
             continue

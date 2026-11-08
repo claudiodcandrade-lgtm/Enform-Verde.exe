@@ -181,6 +181,11 @@ def classify_vigor(vh_db, vv_db, reference_fields, *, height_m=None, weights=Non
     m = _metrics_from_blocks(blocks) if blocks else None
     if m is None or m["n_pixels"] < MIN_PIXELS:
         return {"status": "N/D", "reason": f"talhão com menos de {MIN_PIXELS} pixels válidos"}
+    if m.get("size_kind") != "altura_mediana_m":
+        return {"status":"N/D",
+                "reason":"altura de plantas em metros sem modelo SAR validado para cultura/região/fase; RVI é proxy de cobertura e não substitui altura",
+                "partial_metrics":m,
+                "uncertainty":"classe de vigor composta não calculada"}
     if any(r.get("size_kind", m["size_kind"]) != m["size_kind"] for r in ref):
         return {"status": "N/D", "reason": "referência e talhão usam medidas de tamanho diferentes"}
     stats = {k: _robust([r[k] for r in ref]) for k in weights}

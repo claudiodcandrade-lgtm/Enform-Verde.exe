@@ -7,15 +7,13 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from crop_identifier_consolidated import MAPBIOMAS_C11, REGISTRY, attribute_unseparated
-
-NAME_TO_CODE = {v: k for k, v in MAPBIOMAS_C11.items()}
-CANONICAL_CROPS = {name.casefold(): name for name in REGISTRY}
+from crop_identifier_consolidated import CROPS, REGISTRY, attribute_unseparated
+CANONICAL_CROPS = {name.casefold(): name for name in CROPS}
 CANONICAL_CROPS.update({"citrus": "Citros", "cana": "Cana-de-açúcar", "cana de açúcar": "Cana-de-açúcar"})
 
 
 def canonical_crop(label):
-    """Case-insensitive bridge between MapBiomas display labels and PAM/model keys."""
+    """Normalize SAR classifier labels to model/PAM crop names; no map-code lookup."""
     return CANONICAL_CROPS.get(str(label).strip().casefold(), str(label).strip())
 
 
@@ -24,7 +22,7 @@ def mapbiomas_historical_reference(land):
     """Return MapBiomas crop areas as an explicitly historical reference only."""
     out = {}
     for item in (land or {}).get("classes", []) or []:
-        if item.get("source") != "MAPBIOMAS":
+        if item.get("source") != "MAPBIOMAS_HISTORICO":
             continue
         name = str(item.get("class_name", ""))
         if name.startswith("Lavoura de "):
@@ -113,8 +111,8 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
             lines.append("  Variáveis climáticas específicas: " + "; ".join(spec["climate_features"]))
             lines.append("  Indicadores SAR a calibrar: " + "; ".join(spec["sar_features"]))
         reg = REGISTRY.get(crop, {})
-        lines.append(f"• {crop} ({area:.1f} ha) — {reg.get('product', 'rota não registrada')}; "
-                     "mapa do ano anterior, sem validação desta propriedade")
+        lines.append(f"• {crop} ({area:.1f} ha) — classe proveniente de máscara orbital SAR atual validada; "
+                     "ver domínio, métricas e período no relatório de auditoria")
         entry = {"area_ha": area, "identification": reg, "identification_source": "SAR_VALIDADO"}
         crop_gdf = crop_geometry(land, crop, canonical_fn=canonical_crop)
         entry["crop_polygon_available"] = crop_gdf is not None
@@ -126,13 +124,12 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 audit["live_sar_probe"] = live_probe
                 if live_probe.get("status") == "SAR_PIXELS_RECENTES_PROCESSADOS":
                     lines.append(
-                        "  SAR ATUAL — VV/VH realmente lidos em ponto agrícola: "+
+                        "  SAR ATUAL — VV/VH realmente lidos: "+
                         str(live_probe.get("latest_acquisition_utc"))+
-                        "; NÃO identifica cultura nem comprova a área da safra.")
-                    lines.append("  Identificador SAR atual por cultura: N/D — modelo calibrado/validado não instalado.")
+                        "; a classe de cultura vem apenas do classificador SAR aceito.")
                 else:
                     prefix = "  SAR ATUAL: ERRO TÉCNICO — " if live_probe.get("status") == "ERRO_TECNICO" else "  SAR ATUAL: N/D — "
-                lines.append(prefix + str(live_probe.get("reason") or "consulta indisponível")[:180])
+                    lines.append(prefix + str(live_probe.get("reason") or "consulta indisponível")[:180])
             except Exception as exc:
                 audit["live_sar_probe"] = {
                     "status": "ERRO_TECNICO",
@@ -140,15 +137,15 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 lines.append("  SAR ATUAL: ERRO TÉCNICO — "+
                              audit["live_sar_probe"]["reason"])
         if crop in art.get("crops", {}):
-            code = NAME_TO_CODE.get(crop)
-            # The field mask is an independently validated, contemporary SAR class.
-            # A historical MapBiomas raster must not select current crop pixels or
-            # provide pseudo-labels to the vigor assessment.
-            def scene_vigor(patch, day, class_code):
-                return vigor_fn(patch, day, class_code)
+            # Both target and peer masks must be current, accepted SAR crop labels.
+            # No annual map-code or cartographic class selects the peer fields.
+            def scene_vigor(patch, day, _crop_label):
+                if vigor_fn is automatic_vigor:
+                    return vigor_fn(patch, day, crop, reference_gdf=crop_gdf)
+                return vigor_fn(patch, day, crop)
             try:
-                if crop_gdf is not None and municipal_scale and code is not None:
-                    vig = sampled_sentinel_vigor(crop_gdf, as_of, code, scene_vigor, require_scene_evidence=(vigor_fn is automatic_vigor))
+                if crop_gdf is not None and municipal_scale:
+                    vig = sampled_sentinel_vigor(crop_gdf, as_of, crop, scene_vigor, require_scene_evidence=(vigor_fn is automatic_vigor))
                 elif municipal_scale:
                     vig = {"status": "N/D", "reason": "sem polígono de cultura disponível; proibido usar AOI municipal multiclasse para vigor"}
                 elif crop_gdf is None:
@@ -157,7 +154,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     # as a homogeneous soybean/corn field for radar vigor.
                     vig = {"status": "N/D", "reason": "sem máscara vetorial da cultura: polígono analisado não comprova talhão agrícola homogêneo"}
                 else:
-                    vig = scene_vigor(crop_gdf, as_of, code) if code else {"status": "N/D", "reason": "sem classe de referência"}
+                    vig = scene_vigor(crop_gdf, as_of, crop)
             except Exception as exc:
                 vig = {"status": "ERRO_TECNICO", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
             entry["vigor"] = dict(vig)  # preserve numerical metrics, uncertainty and traceability
@@ -216,31 +213,4 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 error = vig.get("status") == "ERRO_TECNICO"
                 entry["forecast_status"] = "BLOQUEADA_ERRO_TECNICO" if error else "N/D"
                 entry["forecast"] = {"status": entry["forecast_status"], "reason": reason}
-                prefix = "ERRO TÉCNICO" if error else "N/D"
-                lines.append("  Produtividade e produção da propriedade: " + prefix + " — bloqueadas; " + reason + ".")
-                audit["crops"][crop] = entry
-                continue
-            try:
-                if municipal_scale:
-                    lines.append("  Escala: vigor amostral SAR; previsão permanece condicional ao domínio e às validações do modelo.")
-                # Diagnostic patches do not constitute an area-representative
-                # vigor sample. Use unconditioned historical residuals for the
-                # municipality-wide yield distribution until a spatially
-                # exhaustive or probability-calibrated vigor product exists.
-                forecast_vigor = ({"status": "N/D",
-                                   "reason": "vigor SAR amostral não extrapolável ao município"}
-                                  if municipal_scale and vig.get("patches_evaluated") else vig)
-                entry["vigor_usable_for_municipal_yield"] = forecast_vigor is vig
-                rep = forecast_fn([{"id": crop, "gdf": crop_gdf if crop_gdf is not None else gdf, "crop": crop,
-                                    "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
-                                  as_of=as_of)
-                lines += ["  " + l for l in forecast_lines(rep)]
-                entry["forecast_status"] = rep.get("status")
-                entry["forecast_model"] = rep.get("model")
-                entry["forecast"] = {k: v for k, v in rep.items() if k in ("production", "fields", "model_label", "status") }
-            except Exception as exc:
-                lines.append("  Previsão de safra: N/D — " + type(exc).__name__ + ": " + str(exc)[:160])
-        else:
-            lines.append("  Previsão de safra: sem modelo calibrado para esta cultura (apenas soja e milho calibrados).")
-        audit["crops"][crop] = entry
-    return lines, audit
+                pref

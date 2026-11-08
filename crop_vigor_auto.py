@@ -1,12 +1,11 @@
 """Automatic three-class vigor for a field from the latest Sentinel-1 RTC scene.
 
-1. Latest Sentinel-1 RTC (Microsoft Planetary Computer, anonymous SAS) within
+1. Latest Sentinel-1 RTC (MPC or INPE fallback) within
    ``window_days`` that covers the field; VV/VH γ⁰ read only in a window of
    field + ``ring_km`` (COG range reads), converted to dB.
-2. Reference fields: square blocks (≈ field area) in the ring whose pixels are
-   ≥ 80 % of the SAME MapBiomas C11 class as the field (e.g. 39 soja), read
-   from the official public GeoTIFF and resampled (nearest) to the S1 grid.
-   Same scene, same date, same region → comparable phenology.
+2. Reference fields are separate polygons of the same crop emitted by the
+   accepted current SAR classifier, outside the target field, read in the same
+   Sentinel-1 scene. MapBiomas does not select references or pixels.
 3. crop_vigor.classify_vigor (robust z, terciles, spatial bootstrap).
 Status remains experimental (no field truth of vigor).
 """
@@ -20,22 +19,6 @@ import numpy as np
 MIN_REFERENCE_BLOCKS = 6
 
 
-def _local_mapbiomas():
-    """Same local sources accepted by land_use_sar (env var, ~/.enform_verde caches)."""
-    import os
-    from pathlib import Path
-    from mapbiomas_zonal import YEAR
-    env = os.environ.get("ENFORM_MAPBIOMAS_LOCAL_TIF", "").strip()
-    if env and Path(env).is_file():
-        return env
-    root = Path.home() / ".enform_verde"
-    for d in (root / "mapbiomas", root / "cache" / "mapbiomas", root / "uso_solo", root / "dados" / "mapbiomas"):
-        for name in (f"brazil_coverage-col11_{YEAR}.tif", f"mapbiomas_brazil_collection11_coverage_{YEAR}.tif"):
-            if (d / name).is_file():
-                return str(d / name)
-    return None
-
-
 def _scene(field_4326, as_of, window_days, search):
     from shapely.geometry import mapping
     end = datetime.combine(as_of, datetime.max.time()).replace(tzinfo=timezone.utc)
@@ -47,20 +30,21 @@ def _scene(field_4326, as_of, window_days, search):
     return None
 
 
-def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_days=24,
-                    search=None, token_fn=None, mapbiomas_url=None, max_px=2500):
+def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=8.0,
+                    window_days=24, search=None, token_fn=None, height_provider=None,
+                    max_px=2500):
     import rasterio
     from rasterio.enums import Resampling
     from rasterio.features import geometry_mask
     from rasterio.warp import reproject, transform_geom
     from rasterio.windows import from_bounds
-    from shapely.geometry import box, mapping, shape
+    from shapely.geometry import mapping, shape
 
     from crop_vigor import classify_vigor, field_metrics
-    from mapbiomas_zonal import RASTER_URL, YEAR
-    from sentinel1_mpc import _signed_href, get_runtime_sas_token, search_sentinel1_rtc
+    from sentinel1_mpc import _signed_href, get_runtime_sas_token
+    from sentinel1_sources import search_sentinel1_sources
 
-    search = search or search_sentinel1_rtc
+    search = search or search_sentinel1_sources
     token_fn = token_fn or get_runtime_sas_token
     g = field_gdf.to_crs(4326).geometry.union_all()
     scene = _scene(g, as_of, window_days, search)
@@ -78,7 +62,8 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
         return {"status": "N/D", "reason": f"cena fora da janela de atualidade de {window_days} dias",
                 "scene_id": scene["id"], "acquisition_utc": scene["acquisition_utc"],
                 "scene_age_days": age_days}
-    token = token_fn()
+    provider=scene.get("provider","MPC")
+    token = (token_fn or get_runtime_sas_token)() if provider=="MPC" else ""
     import ssl
     ca=ssl.get_default_verify_paths().cafile
     if not ca:
@@ -92,9 +77,12 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
     if ca:
         env["GDAL_CURL_CA_BUNDLE"]=ca
         env["CURL_CA_BUNDLE"]=ca
+    def scene_href(pol):
+        href=scene["assets"][pol]["href"]
+        return _signed_href(href,token) if provider=="MPC" else href
     with rasterio.Env(**env):
-        with rasterio.open(_signed_href(scene["assets"]["vh"]["href"], token)) as vh_src, \
-             rasterio.open(_signed_href(scene["assets"]["vv"]["href"], token)) as vv_src:
+        with rasterio.open(scene_href("vh")) as vh_src, \
+             rasterio.open(scene_href("vv")) as vv_src:
             crs = vh_src.crs
             if not crs or not vv_src.crs:
                 return {"status":"N/D","reason":"cenas SAR sem CRS válido"}
@@ -124,73 +112,69 @@ def automatic_vigor(field_gdf, as_of, mapbiomas_class, *, ring_km=8.0, window_da
     vh_db, vv_db = 10 * np.log10(vh), 10 * np.log10(vv)
     shp = vh.shape
     field_mask = geometry_mask([mapping(gf)], out_shape=shp, transform=tr, invert=True)
-    # MapBiomas class on the S1 grid. The land-use cache is a binary TIFF;
-    # GDAL remote error pages must never be decoded as raster text/UTF-8.
-    # A verified local TIFF may rescue a stale remote endpoint, but never
-    # replace a verified same-class mask with guessed pixels.
-    url = mapbiomas_url or _local_mapbiomas() or RASTER_URL.format(year=YEAR)
-    mb = np.zeros(shp, dtype="uint8")
-    tried, map_loaded = [], False
-    candidates = [url]
-    local_fallback = _local_mapbiomas()
-    if local_fallback and local_fallback not in candidates:
-        candidates.append(local_fallback)
-    for candidate in candidates:
-        try:
-            from pathlib import Path
-            local = Path(candidate).is_file()
-            if local:
-                # Reject HTML/JSON mistakenly cached with a .tif extension.
-                with open(candidate, "rb") as handle:
-                    magic = handle.read(4)
-                if magic not in (b"II*\x00", b"MM\x00*",
-                                 b"II+\x00", b"MM\x00+"):
-                    raise ValueError("arquivo local não possui assinatura TIFF")
-            source = candidate if local else ("/vsicurl/" + candidate if
-                     str(candidate).startswith("https://") else candidate)
-            with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
-                with rasterio.open(source) as src:
-                    if not src.crs or src.count < 1:
-                        raise ValueError("mapa MapBiomas sem CRS ou bandas")
-                    rb = rasterio.warp.transform_bounds(crs, src.crs, *ring.bounds)
-                    w = from_bounds(*rb, transform=src.transform).round_offsets().round_lengths()
-                    arr = src.read(1, window=w, boundless=True, fill_value=0)
-                    mb.fill(0)
-                    reproject(arr, mb, src_transform=src.window_transform(w), src_crs=src.crs,
-                              dst_transform=tr, dst_crs=crs, resampling=Resampling.nearest)
-                    map_loaded = True
-                    break
-        except (UnicodeError, OSError, ValueError, RuntimeError) as exc:
-            tried.append(type(exc).__name__ + ": " + str(exc)[:90])
-    if not map_loaded:
-        return {"status": "N/D", "scene_id": scene["id"],
-                "reason": "mapa de referência da mesma cultura indisponível: " +
-                          "; ".join(tried)[:190] + "; vigor SAR não calculável"}
     in_field = field_mask & np.isfinite(vh_db) & np.isfinite(vv_db)
     if in_field.sum() < 30:
         return {"status": "N/D", "reason": "talhão com menos de 30 pixels SAR válidos"}
-    fvh = np.where(field_mask, vh_db, np.nan); fvv = np.where(field_mask, vv_db, np.nan)
-    side = max(5, int(round(math.sqrt(in_field.sum()))))
-    refs, used = [], 0
-    for r in range(0, shp[0] - side + 1, side):
-        for c in range(0, shp[1] - side + 1, side):
-            sl = (slice(r, r + side), slice(c, c + side))
-            if field_mask[sl].any():
+    fvh=np.where(field_mask,vh_db,np.nan); fvv=np.where(field_mask,vv_db,np.nan)
+    refs=[]; used=0; peer_labels=[]
+    if reference_gdf is not None and not reference_gdf.empty and reference_gdf.crs:
+        peers=reference_gdf.to_crs(crs)
+        for row in peers.itertuples():
+            geom=row.geometry
+            if geom is None or geom.is_empty or geom.intersects(gf):
                 continue
-            same = (mb[sl] == mapbiomas_class) & np.isfinite(vh_db[sl])
-            if same.mean() < 0.8:
+            if not ring.intersects(geom):
                 continue
+            peer_mask=geometry_mask([mapping(geom)],out_shape=shp,transform=tr,invert=True)
+            peer_mask &= ~field_mask & np.isfinite(vh_db) & np.isfinite(vv_db)
+            if int(peer_mask.sum())<30:
+                continue
+            peer_height=None
+            if height_provider is not None:
+                try:
+                    peer_product=height_provider(reference_gdf,scene,crs,tr,shp,peer_mask)
+                    from crop_height_features import check_crop_height_observation
+                    peer_height_audit=check_crop_height_observation(
+                        peer_product.get("observation"),peer_product.get("contract"))
+                    candidate_height=np.asarray(peer_product.get("height_m"),dtype=float)
+                    if peer_height_audit.get("eligible") and candidate_height.shape==shp:
+                        peer_height=candidate_height
+                except Exception:
+                    peer_height=None
             try:
-                refs.append(field_metrics(np.where(same, vh_db[sl], np.nan), np.where(same, vv_db[sl], np.nan)))
-                used += 1
+                metric=field_metrics(np.where(peer_mask,vh_db,np.nan),
+                                     np.where(peer_mask,vv_db,np.nan),height_m=peer_height)
+                refs.append(metric); used+=1
+                peer_labels.append(str(getattr(row,"class_name",crop_name)))
             except ValueError:
                 continue
     if used < MIN_REFERENCE_BLOCKS:
-        return {"status": "N/D", "reason": f"só {used} talhões de referência da mesma classe MapBiomas no raio de {ring_km} km"}
-    out = classify_vigor(fvh, fvv, refs, n_boot=200)
-    out.update({"scene_id": scene["id"], "acquisition_utc": scene["acquisition_utc"],
-                "scene_age_days": round(age_days, 2), "search_window_days": window_days,
-                "reference_blocks": used, "reference_definition":
-                f"blocos de {side}×{side} px com ≥80% classe MapBiomas {mapbiomas_class} ({YEAR}) num raio de {ring_km} km, mesma cena",
-                "source": "Sentinel-1 RTC (Microsoft Planetary Computer) + MapBiomas C11"})
+        return {"status":"N/D",
+                "reason":f"só {used} talhões SAR independentes da mesma classe/cultura no raio de {ring_km} km; vigor relativo requer {MIN_REFERENCE_BLOCKS}",
+                "scene_id":scene["id"],"acquisition_utc":scene["acquisition_utc"],
+                "reference_fields":used,"reference_source":"classes atuais do classificador SAR validado"}
+    height_array=None; height_audit={"eligible":False,"reasons":["modelo de altura não configurado"]}
+    if height_provider is not None:
+        try:
+            product=height_provider(field_gdf,scene,crs,tr,shp,field_mask)
+            from crop_height_features import check_crop_height_observation
+            height_audit=check_crop_height_observation(product.get("observation"),product.get("contract"))
+            if height_audit.get("eligible"):
+                height_array=np.asarray(product.get("height_m"),dtype=float)
+                if height_array.shape!=shp:
+                    height_audit={"eligible":False,"reasons":["grade de altura difere da grade SAR"]}
+                    height_array=None
+        except Exception as exc:
+            height_audit={"eligible":False,"reasons":[type(exc).__name__+": "+str(exc)[:160]]}
+    partial_metrics=field_metrics(fvh,fvv,height_m=height_array)
+    out=classify_vigor(fvh,fvv,refs,height_m=height_array,n_boot=200)
+    out.update({"scene_id":scene["id"],"acquisition_utc":scene["acquisition_utc"],
+                "scene_age_days":round(age_days,2),"search_window_days":window_days,
+                "reference_fields":used,
+                "reference_definition":"talhões de cultura em geometrias independentes classificadas pelo mesmo modelo SAR aceito; pixels fora do talhão-alvo, mesma cena e janela",
+                "reference_labels":peer_labels,
+                "height_audit":height_audit,
+                "partial_metrics":partial_metrics,
+                "crop":crop_name,
+                "source":"Sentinel-1 RTC VV/VH atual + máscara SAR validada; MapBiomas não utilizado"})
     return out

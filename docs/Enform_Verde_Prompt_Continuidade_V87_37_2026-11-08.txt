@@ -1,0 +1,94 @@
+# CHECKPOINT ATUAL V87.32 — 06/11/2026 — 3.26.4-PRECAMPO-EXPERIMENTAL
+
+Este checkpoint substitui V87.31 quanto ao estado do build; preserva o histórico abaixo.
+
+## Build e versão confirmados
+- PR #50, branch `feature/agricultural-identification-native-carbon`, SHA `f204678e7b4ad8e3df1c398981408ec80040f887`; versão `3.26.4-PRECAMPO-EXPERIMENTAL`.
+- Workflow Windows `42229609170` concluiu sucesso no SHA exato. Testes de painéis `42229609232` e contrato pre-field `42229609202` também passaram. Etapas bem-sucedidas incluem testes nativos/estratificação, fallback Pantanal, contrato GUI, Sentinel-2 Tapajós, amostras ópticas nos biomas/extremos, processamento Sentinel-1 e fallback L-band no Tapajós, regressões de IBGE ZIP/cache e fitoregião, integridade SICAR, gate fora da Amazônia/Cerrado, pixels ALOS/PALSAR quantitativos no Cerrado, runtime empacotado e autoteste do EXE em pasta limpa.
+- Artefato Windows: `Enform-Verde-Windows-v3.26.4-PRECAMPO-EXPERIMENTAL`; ID `13508918148`; 526.583.238 bytes; digest ZIP SHA-256 `f60670b6beb5f311cc4e086299be064243cb81063e90dacbdd45e8cfd99a5b2c`. Fonte SHA: `f204678e7b4ad8e3df1c398981408ec80040f887`; SHA-256 do EXE `03166368f669b068c147f87e273fde54848ffec078012f45ccdb4e13eeae8c65`.
+- Download: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/42229609170/artifacts/13508918148. Extrair o ZIP completo antes de executar.
+- PR permanece aberta/draft. O gate científico independente (`42229609468`) falhou fail-closed; isto é separado do build técnico. Não alegar homologação científica nacional.
+
+## Prevenção de recorrência — contratos obrigatórios
+Manter e executar esses testes em todo SHA de distribuição. Corrigir a causa raiz; não suprimir o teste nem fazer fallback que mascare falha.
+1. `GUI contract test` e `Live Sentinel-2 polygon preview — actual Tapajos KMZ`: polígono preservado, preview com pixel real ou motivo N/D/erro, botão de análise e mapa sem bloquear funções independentes.
+2. `Live optical background smoke — Brazilian biomes and geographic extremes`: Sentinel-2/CBERS-4A com proveniência; nunca rotular raster IBGE como imagem de satélite. Amostras não comprovam cobertura wall-to-wall nem primeira abertura offline.
+3. `Official IBGE ZIP transport/cache regression` e `Official IBGE phytoregion classification — real Tapajos AOI`: transporte/cache válido e legenda IBGE nomeia fitofisionomias potenciais/intersectadas sem confirmar presença atual.
+4. `Offline SICAR exact-code integrity regression`: códigos/IDs sem perda ou normalização indevida.
+5. Contratos de interseção solo: polígono AOI, pedologia e carbono separados; SOC apenas de 0–100 cm com unidade, profundidade e fonte. Falha ou ausência não vira zero.
+6. `Native-only stratification and confidence regression tests`, `Pantanal fallback tests`, e processamento SAR live: área nativa/agro/indeterminada fecha sem chamar mapa anual de observação atual; sensor, data, máscara e pixels preservados; fallback regional não declara classe validada.
+7. Testar abertura do EXE copiado para pasta limpa e caminhos com cwd diferente; conferir versão/SHA e hashes. Em qualquer regressão recorrente, parar release, corrigir e reconstruir; não publicar pacote anterior como se contivesse o conserto.
+
+## Pendências que continuam verdadeiras
+A execução bem-sucedida destes contratos prova os cenários testados no SHA, não ausência de defeitos em todos os imóveis do Brasil. Falta manifesto de evidências independentes aceito para validação científica por bioma/compartimento e para classes agrícolas/nativas, vigor e safra. Dados SAR ou ópticos podem faltar por AOI/época; usar N/D com motivo e incerteza, não interpolação inventada. A homologação científica deve continuar bloqueada até evidências independentes reais e auditáveis.
+
+---
+
+# CHECKPOINT ATUAL V87.31 — 06/11/2026 — 3.26.4-PRECAMPO-EXPERIMENTAL
+
+Este checkpoint prevalece sobre os estados anteriores sem apagar o histórico.
+
+## Situação confirmada do repositório e da versão
+- PR #50, branch `feature/agricultural-identification-native-carbon`, HEAD `f204678e7b4ad8e3df1c398981408ec80040f887`.
+- `desktop_app.py` define `APP_VERSION="3.26.4-PRECAMPO-EXPERIMENTAL"` (blob `4c5753a3fda2b6acb79005329b695a02d513da04`). O pacote 3.26.3 do SHA `a16a3323...` é anterior e não representa este código.
+- No HEAD atual, Dashboard dual (`42229609232`) e contratos pre-field (`42229609202`) passaram; gate científico independente (`42229609468`) falhou em modo fail-closed; Build Windows (`42229609170`) está em execução. Não declarar a 3.26.4 concluída enquanto o build terminar e o artefato do mesmo SHA for verificado.
+- PR permanece aberta e draft. Não mesclar. A falha científica não invalida os testes de engenharia, mas impede qualquer alegação de homologação científica nacional.
+
+## Retomada após interrupção da conversa
+O usuário relata quedas de conexão e pede continuidade e entrega explícita de prompt/especificação. Sempre registrar um checkpoint conciso e autossuficiente após mudança material, incluindo versão, SHA, workflows, limitações e próxima ação; não depender de mensagens anteriores do chat.
+
+## Próximas ações operacionais
+1. Acompanhar o workflow Windows `42229609170` até conclusão e conferir todos os passos, SHA, versão, artefato, tamanho, digest ZIP e hash do EXE. Se falhar, obter o log do passo e corrigir a causa no branch; depois rodar CI novamente.
+2. Confirmar se o build 3.26.4 incorpora a leitura da prévia Sentinel-2/CBERS-4A descrita em V87.29; validar fonte/legenda e os casos determinísticos e live no SHA atual. O relato local de dez AOIs CBERS e o teste Tapajós não equivalem a cobertura contínua nacional.
+3. Usar artefato apenas se seu `head_sha` for exatamente `f204678e7b4ad8e3df1c398981408ec80040f887` (ou o novo SHA após correções) e se testes e autoteste Windows tiverem sucesso. Não reutilizar ZIP de SHA anterior.
+4. Atualizar este prompt e a especificação na mesma rodada, preservando o histórico, com o resultado final do build e identificadores verificáveis. Disponibilizar o link do artefato junto dos hashes.
+5. Manter bloqueio científico independente: sem evidência observacional aceita, pares campo–pixel e validação modular independente, status permanece experimental/pré-campo; sem dados, declarar N/D e incerteza não estimável.
+
+## Critério de comunicação
+Separar claramente: (a) build Windows experimental aprovado, (b) disponibilidade e execução das fontes por AOI, (c) validação operacional nacional por tiles, e (d) homologação científica independente. Aprovação em uma dessas dimensões não implica aprovação nas demais.
+
+---
+
+# ESTADO ATUAL V87.29 — IMAGEM DE FUNDO SENTINEL-2 OU CBERS-4A
+Atualizado em 06/11/2026. A imagem de fundo dos polígonos deve ser uma prévia óptica real Sentinel-2 ou CBERS-4A/WFI obtida por pixels. O raster cartográfico IBGE deixa de ser fallback visual.
+
+## Requisito implementado localmente, pendente de commit e CI
+- A ordem é Sentinel-2 L2A via Earth Search; Sentinel-2 via Planetary Computer; CBERS-4A/WFI L4-SR via catálogo STAC oficial do INPE. A terceira rota lê os COGs RGB BAND15/BAND14/BAND13 e CMASK, reprojeta os pixels para a tela, prioriza pixels claros (CMASK=127) e preenche lacunas com pixels observados, mantendo visível a proveniência e a faixa de datas. Resolução nativa CBERS-4A/WFI: 55 m.
+- A interface não substitui uma cena ausente por raster IBGE, NASA GIBS ou Esri. A última imagem real Sentinel-2/CBERS-4A obtida para a mesma AOI e viewport pode ser reutilizada de cache local. Na primeira abertura, sem rede e sem acesso às fontes, nenhuma solução remota pode garantir a existência de pixels; nesse caso o app mantém apenas o contorno e informa a falha, sem apresentar mapa cartográfico como satélite.
+- A prévia é apenas pano de fundo; não fornece pixels analíticos para identificação de culturas, SAR, biomassa ou carbono. Fonte, sensor, data/faixa temporal e resolução devem permanecer na legenda.
+- A leitura live dos COGs oficiais CBERS-4A/WFI passou em dez AOIs: Tapajós/Amazônia (2026-10-27), Brasília/Cerrado (2026-10-30), Petrolina/Caatinga (2026-10-29), Campinas/Mata Atlântica (2026-10-25), Corumbá/Pantanal (2026-10-22), Bagé/Pampa (2026-10-31), extremos leste (2026-10-28), oeste (2026-10-26), norte (composição 2026-10-13 a 2026-10-29) e sul (2026-10-31). São dez amostras e não uma prova de cada pixel do Brasil. O HTTP 502 temporário nos extremos norte/sul passou após a inclusão de retry com backoff. A imagem do Tapajós foi inspecionada: RGB real, máscara e contorno alinhado.
+- O teste encontrou e corrigiu duas falhas efetivas: GDAL precisava da cadeia de certificados CA para ler os COGs e Rasterio não aceitava `NaN` como fill de banda `int16`; as bandas agora são convertidas a float antes de preencher nodata. A leitura usa apenas a janela da AOI/viewport, para evitar baixar a cena inteira. A legenda informa quando pixels sob nuvens precisaram preencher lacunas. `py_compile` e os três contratos `test_sentinel2_scene_failover_contract.py` passaram localmente.
+- Ainda sem commit, novo SHA ou workflows para esta alteração. Não há nova versão liberada. PR #50 deve continuar sem promoção até regressões e build Windows no mesmo SHA; os gates nacionais Sentinel-1 e científicos continuam pendentes.
+
+---
+
+# ESTADO ATUAL V87.27 — FALLBACK SAR EM IMPLEMENTAÇÃO
+Atualizado em 06/11/2026. Este checkpoint acrescenta os commits de implementação e corrige qualquer leitura de que o fallback já esteja integrado ou a cobertura nacional comprovada.
+
+## Estado do código
+PR #50, branch feature/agricultural-identification-native-carbon, HEAD verificado 052e975d86fe99dae9e8ca601eb5a8daa4af41fc.
+- 32f795f0: adiciona radar_contingency.py, com descoberta ASF de NISAR L2 GCOV e ALOS L-band, janela de 30 dias, autenticação Earthdata para download, leitura por processadores existentes e manifesto em output_dir/alternative_sar/radar_alternative_manifest.json.
+- 052e975d: adiciona tests/test_radar_contingency.py; quatro contratos determinísticos foram executados localmente e passaram; os módulos alterados passaram em py_compile.
+- Limite atual: radar_contingency.py ainda não está chamado por recent_sar_landcover.py. Portanto, o fallback ainda não está operacional no fluxo de monitoramento. A conexão preparada localmente ainda não foi commitada nem validada e não deve ser descrita como integrada.
+- As rotas SAOCOM, NISAR S, RCM, NovaSAR, EOS-04, ALOS-4 e comerciais ainda não possuem adaptadores operacionais nesse fluxo. A busca ASF de NISAR/ALOS não é pesquisa mundial completa; sem rotas restantes, não declarar N/D_DADOS como ausência nacional.
+- Workflows no SHA atual: painéis 42146791703 e Windows 42146791710 em execução; contratos pré-campo 42146791701 sucesso; homologação científica independente 42146791700 reprovada. A execução local das regressões do monitoramento não pôde ser feita neste ambiente porque geopandas/rasterio não estão instalados. A verificação Windows é necessária para fechar isso.
+- Nenhum manifesto nacional foi produzido. O teste live de Sentinel-1 permanece limitado ao Tapajós. Sem cobertura nos seis biomas, extremos, limites de cena e lacunas temporais, não há validação nacional.
+- Nenhum novo ZIP foi liberado. A versão 3.26.3 permanece experimental; a homologação científica independente continua reprovada.
+
+Próximo passo: após o workflow Windows terminar, integrar o fallback com estados ACESSO_RESTRITO/ERRO_TECNICO/N/D_VALIDACAO sem esconder falhas, atualizar imports/empacotamento e testes de caminhos; depois executar a avaliação nacional e atualizar este prompt e a especificação a cada alteração material. Só liberar quando todos os gates no mesmo SHA forem comprovados.
+
+---
+# ESTADO ATUAL V87.26 — HIERARQUIA SAR NACIONAL E PESQUISA DE FONTES
+Atualizado em 06/11/2026. Este bloco é o estado atual e prevalece sobre status históricos abaixo.
+
+## Estado verificado do repositório
+PR #50, branch feature/agricultural-identification-native-carbon, HEAD verificado 45110ed0cd2d08f6683f530e8f5d2ae63b054d00. Workflows associados consultados: Windows 42136429276 sucesso; painéis 42136429200 sucesso; contratos pré-campo 42136429167 sucesso; homologação científica independente 42136429187 falha. O teste live Sentinel-1 VV/VH cobre somente a AOI do Tapajós. Isso não comprova cobertura operacional em todo o Brasil. Não houve alteração de código nesta atualização documental nem nova versão liberada. O artefato 3.26.3 continua pré-campo experimental, não é uma nova liberação.
+
+## Resultado da pesquisa mundial de fontes
+A hierarquia de sensores precisa ser integrada ao fluxo recent_sar_landcover.py. Hoje esse fluxo busca Sentinel-1 RTC em MPC e INPE; sar_pipeline.py já descobre NISAR/ALOS em ASF e processa NISAR GCOV em outro fluxo, mas o fluxo de monitoramento recente ainda não executa esse fallback. A existência desses módulos ou de um catálogo não prova pixels lidos na AOI.
+
+Ordem de busca recomendada por AOI/tile:
+1. Sentinel-1 federado: INPE RTC/GRD; MPC RTC; Copernicus Data Space; ASF/OPERA RTC; AWS Open Data GRD; Google Earth Engine COPERNICUS/S1_GRD quando conta, quota e termos permitirem. Provedores duplicados da mesma missão são rotas de resiliência, não sensores independentes.
+2. NISAR L-band no ASF DAAC/Earthdata e NISAR S-band no Bhoonidhi/ISRO. Consultar produto, data, banda, polarização e footprint. Integrar aquisição e leitura de pixels ao fluxo de monitoramento. Nunca renomear canais NISAR como VV/VH Sentinel-1.
+3. SAOCOM-1A/1B L-band via catálogo/plano de aquisição CONAE; cobertura global é informada pelo plano desde 2022, mas cada cena, data, modalidade, acesso e licença deve ser verificada.
+4. Outras fontes abertas ou acessíveis
