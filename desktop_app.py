@@ -1358,7 +1358,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Imagem de fundo: Sentinel-2; alternativa oficial INPE CBERS-4A/WFI (55 m). O raster cartográfico IBGE não será usado como fundo.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Imagem de fundo prioritária: CBERS-4A/WFI (55 m, INPE); Sentinel-2 é o fallback. O raster cartográfico IBGE não será usado como fundo.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1445,7 +1445,7 @@ class App(tk.Tk):
         self._apply_map_zoom()
 
     def show_google_map(self,refresh=False,prefer_public=False):
-        """Visual-only Sentinel-2/CBERS-4A backdrop; never an analytical input."""
+        """Visual-only CBERS-4A/WFI primary backdrop; Sentinel-2 fallback; never an analytical input."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()
