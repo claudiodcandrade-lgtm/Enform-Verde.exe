@@ -26,6 +26,7 @@ import desktop_app as app
 
 SITES = {
     "Tapajos_Amazonia": (-54.9, -3.7),
+    "Sinop_Fazenda_Maria_Eduarda": (-55.190498, -11.872667),
     "Brasilia_Cerrado": (-47.9, -15.8),
     "Petrolina_Caatinga": (-40.5, -9.4),
     "Campinas_Mata_Atlantica": (-47.1, -22.9),
@@ -39,15 +40,36 @@ SITES = {
 
 
 def main():
-    failures, results = {}, {}
+    failures, cbers_failures, results = {}, {}, {}
     for name, (lon, lat) in SITES.items():
-        geometry = box(lon - 0.08, lat - 0.08, lon + 0.08, lat + 0.08)
+        # The Sinop farm is represented by a small test window centered on the
+        # supplied AOI centroid. The private KML itself is not committed.
+        half = 0.015 if name == "Sinop_Fazenda_Maria_Eduarda" else 0.08
+        geometry = box(lon - half, lat - half, lon + half, lat + half)
         gdf = gpd.GeoDataFrame(geometry=[geometry], crs="EPSG:4326")
-        errors = []
+        cbers_error = None
+        try:
+            image = app.cbers4a_wfi_preview(gdf, out_w=420, out_h=280, extent_factor=1.36)
+            coverage = float(image.get("aoi_coverage_fraction", 0.0))
+            if image["image"].size[0] <= 0 or image["image"].size[1] <= 0 or coverage < 0.95:
+                raise RuntimeError(f"CBERS image/pixel coverage invalid: {coverage:.3f}")
+            results[name] = {
+                "status": "primary_cbers_pixels_loaded", "sensor": "CBERS-4A/WFI INPE",
+                "provider": image.get("provider"), "datetime": image.get("datetime"),
+                "date_range": image.get("date_range"), "aoi_coverage_fraction": coverage,
+                "pixel_count": image.get("pixel_count"), "resolution_m": image.get("resolution_m"),
+            }
+            continue
+        except Exception as exc:
+            cbers_error = f"CBERS-4A/WFI INPE: {type(exc).__name__}: {str(exc)[:180]}"
+            cbers_failures[name] = cbers_error
+
+        # Sentinel-2 is a real fallback and is tested only after CBERS fails.
+        errors = [cbers_error]
+        fallback_loaded = False
         for sensor, fn in (
             ("Sentinel-2 Earth Search", app.sentinel2_earthsearch_preview),
             ("Sentinel-2 Planetary Computer", app.sentinel2_preview),
-            ("CBERS-4A/WFI INPE", app.cbers4a_wfi_preview),
         ):
             try:
                 image = fn(gdf, out_w=420, out_h=280, extent_factor=1.36) if sensor != "Sentinel-2 Planetary Computer" else fn(gdf, out_h=280, extent_factor=1.36)
@@ -55,29 +77,38 @@ def main():
                 if image["image"].size[0] <= 0 or image["image"].size[1] <= 0 or coverage < 0.95:
                     raise RuntimeError(f"image/pixel coverage invalid: {coverage:.3f}")
                 results[name] = {
-                    "status": "real_pixels_loaded", "sensor": sensor,
+                    "status": "sentinel2_fallback_pixels_loaded", "sensor": sensor,
                     "provider": image.get("provider"), "datetime": image.get("datetime"),
-                    "date_range": image.get("date_range"),
-                    "aoi_coverage_fraction": coverage,
-                    "pixel_count": image.get("pixel_count"),
-                    "resolution_m": image.get("resolution_m"),
+                    "date_range": image.get("date_range"), "aoi_coverage_fraction": coverage,
+                    "pixel_count": image.get("pixel_count"), "resolution_m": image.get("resolution_m"),
+                    "cbers_primary_error": cbers_error,
                 }
+                fallback_loaded = True
                 break
             except Exception as exc:
                 errors.append(f"{sensor}: {type(exc).__name__}: {str(exc)[:160]}")
                 time.sleep(0.5)
-        else:
+        if not fallback_loaded:
             failures[name] = errors
             results[name] = {"status": "no_optical_pixels", "attempts": errors}
-    report = {"scope": "representative_biomes_and_geographic_extremes",
-              "sample_sites": len(SITES), "successful_sites": sum(v["status"] == "real_pixels_loaded" for v in results.values()),
-              "coverage_threshold": 0.95, "exhaustive_national_pixel_proof": False,
-              "results": results, "failures": failures}
+    report = {
+        "scope": "CBERS-4A primary, Sentinel-2 fallback; representative biomes, geographic extremes, and Sinop AOI centroid",
+        "sample_sites": len(SITES),
+        "primary_cbers_successful_sites": len(SITES) - len(cbers_failures),
+        "successful_optical_sites": len(SITES) - len(failures),
+        "coverage_threshold": 0.95,
+        "exhaustive_national_pixel_proof": False,
+        "cbers_primary_failures": cbers_failures,
+        "fallback_failures": failures,
+        "results": results,
+    }
     output = Path("optical_coverage_brazil_smoke.json")
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if failures:
-        raise SystemExit(f"Optical imagery was not resolved for {len(failures)} of {len(SITES)} Brazilian sample AOIs")
+        raise SystemExit(f"Neither CBERS-4A nor Sentinel-2 resolved optical imagery for {len(failures)} of {len(SITES)} sample AOIs")
+    if cbers_failures:
+        raise SystemExit(f"CBERS-4A primary imagery did not meet coverage at {len(cbers_failures)} of {len(SITES)} sample AOIs; Sentinel-2 successes are fallback only")
 
 
 if __name__ == "__main__":
