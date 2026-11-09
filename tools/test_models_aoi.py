@@ -40,7 +40,9 @@ def run(aoi, phytoregion, as_of, ring_km=8.0):
         return report
     inside = polys.clip(aoi_eq)
     inside["area_ha"] = inside.area / 1e4
-    report["aoi_classes_ha"] = {r.class_name: round(r.area_ha, 1) for r in inside.itertuples() if r.area_ha > 0.05}
+    report["aoi_classes_ha"] = (inside.loc[inside["area_ha"] > 0.05]
+                              .groupby("class_name")["area_ha"].sum()
+                              .round(1).to_dict())
     lines = ["TESTE EXPERIMENTAL DE MODELOS — " + msg,
              "Classificação SAR (safra " + str(res.get("season")) + ", " + str(res.get("scenes_used")) + " cenas):"]
     lines += [f"  {k}: {v:.1f} ha" for k, v in sorted(report["aoi_classes_ha"].items(), key=lambda kv: -kv[1])]
