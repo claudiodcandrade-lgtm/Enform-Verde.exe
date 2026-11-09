@@ -597,3 +597,8 @@ A versão vigente do prompt e da especificação está em V87.38. Aplicar a sequ
 ## CHECKPOINT V87.40 — 08/11/2026 — serapilheira entra no total com erro de transferência quantificado (3.26.6; NÃO homologação)
 - `regional_litter_hierarchy.py`: ln L* = média ln dos sítios locais da fitofisionomia + t·τ·√(1+1/k); τ = DP ln entre 10 sítios florestais brasileiros independentes (0,396); C = L*·U(0,42;0,50); Monte Carlo. FESV norte de MT: Silva et al. 2009 (Acta Amazonica, ~50 km de Sinop, 5,121 Mg/ha) + Volpato 2024 (8,70 Mg/ha) → 3,08 tC/ha, IP90% 1,27–7,48, `include_in_total=True`, origem `INVENTARIO_REGIONAL_HIERARQUICO`. Substitui o registro “NÃO ESTIMADO” como primeira opção para FESV; só em estrato nativo confirmado.
 - Pendente: ampliar sítios gravimétricos verificados por fitofisionomia; calibrar massa/espessura para usar o IFN.
+
+
+## CHECKPOINT V87.41 — 08/11/2026 — roteiro único de correções e regras para agentes (3.26.6)
+- `docs/ROTEIRO_CORRECOES_ENFORM_VERDE_2026-11-08.md` (A processo, B SAR/mapeamento, C óptico, D carbono, E agricultura, F validação; critérios de aceite) e `AGENTS.md`/`CLAUDE.md` com regras obrigatórias: um agente por branch; código e testes no mesmo commit com suíte completa verde antes do push; documentação a cada passo; MapBiomas só histórico; N/D nunca 0; limiares científicos só por decisão do proprietário; TLS nunca desligado; padrão visual; EXE só com build verde e checagens.
+- Próximo item técnico prioritário: E4 (séries PAM longas — SIDRA 5457 desde 1974, verificado) e B3/E1 (classificador SAR semântico validado). Decisão pendente do proprietário: B5 (critério de aceite do classificador).
