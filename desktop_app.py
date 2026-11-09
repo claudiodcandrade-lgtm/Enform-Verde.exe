@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.6-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.7-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1977,7 +1977,7 @@ class App(tk.Tk):
             executive.append("Cenas VV/VH realmente lidas: "+str(orbital.get("scene_count"))+
                              "; aquisição mais recente UTC: "+str(orbital.get("latest_acquisition_utc")))
             for name,ha in (orbital.get("areas_ha") or {}).items():
-                executive.append("  "+name+": "+format_ptbr(ha,2)+" ha — candidato SAR experimental")
+                executive.append("  "+name+": "+format_ptbr(ha,2)+" ha — sem acurácia calibrada")
             executive.append("Mapa de radar atual: "+str(orbital.get("raster_path")))
             executive.append("ATENÇÃO: candidatos SAR não são áreas de soja/nativa confirmadas; não somar ao mapa anual.")
         else:

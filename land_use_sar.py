@@ -735,13 +735,14 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             try:
                 radar_units=gpd.read_file(vector_path)
                 if not radar_units.empty and radar_units.crs and 'class_code' in radar_units:
-                    radar_units['class_name']=radar_units['class_code'].map(
-                        {1:'Unidade orbital SAR 1 — classe semântica N/D',
-                         2:'Unidade orbital SAR 2 — classe semântica N/D',
-                         3:'Unidade orbital SAR 3 — classe semântica N/D'}).fillna(
-                             'Unidade orbital SAR — classe semântica N/D')
+                    from recent_sar_landcover import candidate_class_name
+                    radar_units['class_name']=radar_units['class_code'].map(candidate_class_name)
                     radar_units['source']='SAR_CURRENT_EXPERIMENTAL'
-                    radar_units['taxonomy']='assinatura SAR temporal; classe de uso/cobertura não validada'
+                    radar_units['taxonomy']=radar_units['class_code'].map(
+                        {1:'retroespalhamento estável; interpretação semântica N/D',
+                         2:'variação sazonal VV/VH; candidato a área cultivada, cultura N/D; não calibrado',
+                         3:'assinatura ambígua; interpretação semântica N/D'}).fillna(
+                             'assinatura SAR; interpretação semântica N/D')
                     units=radar_units[['class_name','source','taxonomy','geometry']]
                     layers.append(units)
                     raw_layers.append(units.copy())

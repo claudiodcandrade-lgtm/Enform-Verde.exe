@@ -30,7 +30,7 @@ def has_cultivated_area(class_records) -> bool:
             area = float(item.get("area_ha", 0) or 0)
         except (TypeError, ValueError):
             continue
-        if key in crop_keys and area > 0:
+        if (key in crop_keys or key.startswith("area cultivada")) and area > 0:
             return True
     return False
 

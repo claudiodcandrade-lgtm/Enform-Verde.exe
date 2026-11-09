@@ -11,6 +11,13 @@ from shapely.geometry import box, Point, mapping
 from land_use_sar import validation_report, partition_land_use, raster_class_polygons, classify_config, run_land_use
 
 class LandUseTests(unittest.TestCase):
+    def test_experimental_cultivated_candidate_is_detected_without_becoming_a_crop_label(self):
+        from agricultural_native_policy import has_cultivated_area
+        candidate={"class_name":"Área cultivada — candidato SAR experimental; cultura N/D",
+                   "area_ha":12.5,"source":"SAR_CURRENT_EXPERIMENTAL"}
+        self.assertTrue(has_cultivated_area([candidate]))
+        self.assertNotIn("Lavoura de ",candidate["class_name"])
+
     def layer(self,rows):
         return gpd.GeoDataFrame([dict(class_name=n,source=s,taxonomy=s,geometry=g) for n,s,g in rows],crs=6933)
 

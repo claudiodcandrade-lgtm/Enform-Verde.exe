@@ -10,6 +10,16 @@ from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import numpy as np
 
+SAR_CANDIDATE_CLASSES = {
+    1: "Assinatura SAR estável — uso/cobertura N/D",
+    2: "Área cultivada — candidato SAR experimental; cultura N/D",
+    3: "Assinatura SAR ambígua — uso/cobertura N/D",
+}
+
+def candidate_class_name(code):
+    """Human-readable pilot label; class 2 is a candidate, not a confirmed crop."""
+    return SAR_CANDIDATE_CLASSES.get(int(code), "Assinatura SAR — uso/cobertura N/D")
+
 def classify_temporal(vv,vh,inside):
     vv=np.asarray(vv,dtype=float);vh=np.asarray(vh,dtype=float)
     inside=np.asarray(inside,dtype=bool)
@@ -245,12 +255,11 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                            count=1,crs=crs,transform=tr,nodata=0,dtype="uint8",compress="deflate") as out:
             out.write(codes,1)
             out.update_tags(source="Sentinel-1 RTC VV/VH actual pixels",status="EXPERIMENTAL_NAO_CALIBRADO",
-                            class_1="persistent structure candidate",class_2="seasonal change candidate",
-                            class_3="ambiguous")
+                            class_1="stable backscatter signature; semantic use unknown",
+                            class_2="cultivated-area candidate only; crop N/D; not calibrated",
+                            class_3="ambiguous backscatter signature; semantic use unknown")
         # V87.36: experimental radar-signature units carry NO crop/vegetation name.
-        names={1:"Unidade radar 1 — retroespalhamento estável (sem rótulo semântico)",
-               2:"Unidade radar 2 — variação sazonal VV/VH (sem rótulo semântico)",
-               3:"Unidade radar 3 — assinatura indeterminada"}
+        names={code:candidate_class_name(code) for code in (1,2,3)}
         areas={n:0.0 for n in names};features=[]
         for f,v in shapes(codes,mask=codes>0,transform=tr):
             k=int(v)
@@ -277,7 +286,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
              "latest_acquisition_utc":data[0][0].isoformat(),
              "orbit_state":orbit[1],"relative_orbit":orbit[2],
              "areas_ha":{names[k]:round(areas[k],2) for k in names},
-             "qa":qa,"method":"unsupervised VH temporal stability/variation; not a current native/crop classifier"})
+             "qa":qa,"method":"unsupervised Sentinel-1 temporal signature screen; class 2 is only a cultivated-area candidate; no crop/native confirmation or calibrated accuracy"})
     except (UnicodeError,OSError,RuntimeError,ValueError,ImportError) as exc:
         result["status"]="ERRO_TECNICO"
         result["reason"]=type(exc).__name__+": "+_safe_reason(exc)

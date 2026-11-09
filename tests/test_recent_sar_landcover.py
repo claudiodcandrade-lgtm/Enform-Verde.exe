@@ -1,8 +1,14 @@
 """Synthetic regression fixtures: NOT orbital or accuracy validation."""
 import unittest
 import numpy as np
-from recent_sar_landcover import classify_temporal,run_recent_sar_screen
+from recent_sar_landcover import classify_temporal,run_recent_sar_screen,candidate_class_name
 class CurrentRadarScreenTests(unittest.TestCase):
+    def test_class_two_is_a_cultivated_candidate_not_a_named_crop(self):
+        label=candidate_class_name(2)
+        self.assertEqual(label,"Área cultivada — candidato SAR experimental; cultura N/D")
+        self.assertNotIn("soja",label.casefold())
+        self.assertNotIn("vegetação nativa",label.casefold())
+
     def test_candidates_and_uncertainty(self):
         r=np.random.default_rng(2026)
         vv=np.clip(r.normal(.13,.02,(4,12,12)),.0001,None)
