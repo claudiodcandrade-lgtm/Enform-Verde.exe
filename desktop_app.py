@@ -1939,20 +1939,21 @@ class App(tk.Tk):
                     self.query_crop_weather()
             self.after(100,start_weather_if_current)
             return
-        crop_ha=sum(float(x.get("area_ha") or 0) for x in classes
-                    if str(x.get("class_name") or "").startswith("Lavoura de "))
-        generic_cultivated_ha=sum(float(x.get("area_ha") or 0) for x in classes
-                    if str(x.get("class_name") or "") in ("Áreas cultivadas","Lavoura Temporária","Outras Lavouras Temporárias"))
-        other_non_native_ha=sum(float(x.get("area_ha") or 0) for x in non_native)-crop_ha-generic_cultivated_ha
+        from crop_report_consistency import current_crop_area_by_semantic_sar
+        crop_ha,generic_cultivated_ha=current_crop_area_by_semantic_sar(land)
+        semantic_area_supported=crop_ha is not None
+        measured_crop_ha=crop_ha or 0.0
+        measured_generic_ha=generic_cultivated_ha or 0.0
+        other_non_native_ha=sum(float(x.get("area_ha") or 0) for x in non_native)-measured_crop_ha-measured_generic_ha
         executive=["PAINEL EXECUTIVO — MONITORAMENTO AGRÍCOLA",
                    "Estado da classificação SAR atual: "+str(land.get("status","N/D"))+
                    " — MapBiomas não determina classes, áreas, vigor ou safra atuais.",
                    "ÁREA TOTAL DA AOI: "+format_ptbr(aoi_ha,2)+" ha (100%)",
-                   "Classes cartográficas reportadas: "+format_ptbr(classified_ha,2)+" ha",
+                   "Área com classes semânticas SAR atuais: "+(format_ptbr(classified_ha,2)+" ha" if semantic_area_supported else "N/D — classificador SAR atual indisponível"),
                    "RESUMO EXCLUSIVO DE COBERTURA (os grupos não se sobrepõem):",
                    "  Vegetação nativa: "+(format_ptbr(native_area,2)+" ha ("+format_ptbr(100*native_area/aoi_ha if aoi_ha else 0,2)+"%)" if native_area is not None else "N/D — não converter ausência de máscara em 0 ha"),
-                   "  Lavouras identificadas por classificador SAR atual validado: "+format_ptbr(crop_ha,2)+" ha",
-                   "  Áreas agrícolas sem identificação de cultura: "+format_ptbr(generic_cultivated_ha,2)+" ha",
+                   "  Lavouras identificadas por classificador SAR atual validado: "+(format_ptbr(crop_ha,2)+" ha" if semantic_area_supported else "N/D — classificação atual indisponível; não equivale a 0 ha"),
+                   "  Áreas agrícolas sem identificação de cultura: "+(format_ptbr(generic_cultivated_ha,2)+" ha" if semantic_area_supported else "N/D — classificação atual indisponível"),
                    "  Outros usos não nativos: "+(format_ptbr(max(0,other_non_native_ha),2)+" ha" if land.get("status")=="SAR_ELEGIVEL" else "N/D — classe semântica SAR não validada"),
                    "ATENÇÃO: área da AOI NÃO é integralmente floresta nem integralmente lavoura.",
                    "Uso/cobertura não nativo — discriminação por classe:"]
@@ -2656,10 +2657,15 @@ class App(tk.Tk):
         self.project["analysis_rows"]=rows
         lines=[f"ENFORM VERDE {APP_VERSION} — CARBONO SOMENTE EM FORMAÇÕES NATIVAS",
                "Área do polígono: "+format_ptbr(native["area_aoi_ha"],2)+" ha",
-               "Formações nativas MAPEADAS: "+format_ptbr(area,2)+" ha (não confirmação de campo)",
+               "Formações nativas MAPEADAS: "+
+                   (format_ptbr(area,2)+" ha (área cartográfica, sem confirmação de campo)" if area>0 or native["unknown_cover_area_ha"]<=0
+                    else "N/D — não há área nativa atual confirmada"),
+               "Outros usos (somente ocorrência, sem carbono): "+
+                   (format_ptbr(native["excluded_other_uses_ha"],2)+" ha" if native["excluded_other_uses_ha"]>0 or native["unknown_cover_area_ha"]<=0
+                    else "N/D — uso não nativo não confirmado"),
                "Outros usos (somente ocorrência, sem carbono): "+format_ptbr(native["excluded_other_uses_ha"],2)+" ha",
                "Cobertura não confirmada (sem carbono): "+format_ptbr(native["unknown_cover_area_ha"],2)+" ha",
-               "Área sem qualquer classe de cobertura mapeada: "+format_ptbr(native.get("unmapped_aoi_area_ha",0),2)+" ha",
+               "Área sem classe cartográfica de referência: "+format_ptbr(native.get("unmapped_aoi_area_ha",0),2)+" ha",
                "Completude do MAPA de cobertura: "+native.get("cover_completeness","NÃO VERIFICADA")+
                    " — não indica completude dos compartimentos de carbono; o estoque segue PARCIAL enquanto houver compartimentos N/D.",
                native["method"],""]
