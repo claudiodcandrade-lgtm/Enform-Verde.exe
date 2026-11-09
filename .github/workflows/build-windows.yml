@@ -461,17 +461,26 @@ jobs:
           ui.update_idletasks()
           assert "Upload concluído" in ui.vector_status.get() and kmz.name in ui.vector_status.get(), "AOI filename/upload confirmation missing"
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
-          # Real optical source priority: official INPE CBERS-4A first; Sentinel-2 only if CBERS-4A fails.
+          # Deterministic UI plumbing test: live coverage/pixel validity is tested
+          # separately below and must not be hidden by a mocked provider here.
+          from PIL import Image
+          app._store_satellite_preview_cache=lambda *args,**kwargs: None
+          app.cbers4a_wfi_preview=lambda gdf,out_w=1000,out_h=560,extent_factor=1.36: {
+              "image":Image.new("RGB",(int(out_w),int(out_h)),(34,104,71)),
+              "datetime":"2026-11-09T00:00:00Z","date_range":["2026-11-09","2026-11-09"],
+              "scene_ids":["SYNTHETIC_UI_FIXTURE_ONLY"],"provider":"CBERS-4A/WFI SYNTHETIC UI FIXTURE ONLY",
+              "resolution_m":55,"pixel_count":int(out_w)*int(out_h),
+              "aoi_coverage_fraction":1.0,"cloud_pixels_included":False,"polygons":[]}
           import time
           ui.google_maps_key.set("")
           ui.show_google_map()
-          deadline=time.time()+45
+          deadline=time.time()+10
           while time.time()<deadline and not ui._satellite_map_visible:
               ui.update(); time.sleep(.08)
-          assert ui._satellite_map_visible, "CBERS-4A/Sentinel-2 optical map did not render in the UI"
-          assert ui._map_provider.startswith(("CBERS-4A/WFI","Sentinel-2","CACHE ÓPTICO","MAPA CARTOGRÁFICO IBGE")), f"no optical image or labeled cartographic contingency rendered: {ui._map_provider}"
-          assert hasattr(ui,"google_map_photo"), "satellite image object missing after fallback"
-          print("SATELLITE_FALLBACK_UI_OK")
+          assert ui._satellite_map_visible, "synthetic optical fixture did not render in the UI"
+          assert ui._map_provider.startswith("CBERS-4A/WFI SYNTHETIC UI FIXTURE ONLY"), f"UI provider provenance missing: {ui._map_provider}"
+          assert hasattr(ui,"google_map_photo"), "satellite image object missing after UI fixture"
+          print("SATELLITE_UI_PLUMBING_OK (synthetic fixture; live source tested separately)")
           import tempfile
           with tempfile.TemporaryDirectory() as td:
               geojson=Path(td)/"tapajos_acceptance.geojson"
