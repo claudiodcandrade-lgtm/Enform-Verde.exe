@@ -26,22 +26,22 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         # Distinct source band windows, not reusing red's exact pixel window.
         self.assertIn("win=from_bounds(",ast.get_source_segment(SOURCE.read_text(encoding="utf-8"),fn))
 
-    def test_satellite_background_uses_only_sentinel2_or_cbers4a(self):
+    def test_satellite_background_uses_verified_sources_then_nasa_visual_fallback(self):
         src=SOURCE.read_text(encoding="utf-8")
         tree=ast.parse(src)
         fn=next(n for n in ast.walk(tree) if isinstance(n,ast.FunctionDef)
                 and n.name=="show_google_map")
         body=ast.get_source_segment(src,fn)
-        # V87.36/V87.38: CBERS-first, then Sentinel-2 Earth Search, then Planetary Computer.
+        # CBERS-first, then Sentinel-2 Earth Search and Planetary Computer,
+        # then NASA VIIRS for visual context only.
         positions=[body.index(name) for name in ("cbers4a_wfi_preview(","sentinel2_earthsearch_preview(",
-                                                  "sentinel2_preview(")]
+                                                  "sentinel2_preview(","nasa_gibs_preview(")]
         self.assertEqual(positions,sorted(positions))
         calls=[n.func.id for n in ast.walk(fn) if isinstance(n,ast.Call)
                and isinstance(n.func,ast.Name)]
-        self.assertNotIn("nasa_gibs_preview",calls)
+        self.assertIn("nasa_gibs_preview",calls)
         self.assertNotIn("esri_export",calls)
-        # V87.38: labelled cartographic map allowed ONLY after every optical route.
-        self.assertLess(body.index("sentinel2_preview("),body.index("offline_brazil_preview("))
+        self.assertLess(body.index("nasa_gibs_preview("),body.index("offline_brazil_preview("))
         self.assertIn("contingência sem imagem óptica",body)
 
     def test_each_optical_route_requires_real_pixels_over_the_aoi(self):

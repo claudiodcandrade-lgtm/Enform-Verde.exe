@@ -50,9 +50,15 @@ class CurrentMappingContract(unittest.TestCase):
                         worker.index("sentinel2_earthsearch_preview(g,out_w=w"))
         self.assertLess(worker.index("sentinel2_earthsearch_preview(g,out_w=w"),
                         worker.index("sentinel2_preview(g,extent_factor=extent_factor)"))
+        self.assertLess(worker.index("sentinel2_preview(g,extent_factor=extent_factor)"),
+                        worker.index("nasa_gibs_preview(g,out_w=w"))
+        self.assertLess(worker.index("nasa_gibs_preview(g,out_w=w"),
+                        worker.index("_read_satellite_preview_cache"))
         self.assertLess(worker.index("_read_satellite_preview_cache"),
                         worker.index("offline_brazil_preview(g,extent_factor,(w,h))"))
         self.assertIn("CACHE ÓPTICO", worker)
+        self.assertIn("NASA GIBS", worker)
+        self.assertIn("strictly visual context", worker)
         self.assertIn("contingência excepcional", worker)
         self.assertIn("a origem não foi identificada como imagem óptica", worker)
         cbers = self.desktop[self.desktop.index("def cbers4a_wfi_preview"):self.desktop.index("\ndef ", self.desktop.index("def cbers4a_wfi_preview") + 8)]

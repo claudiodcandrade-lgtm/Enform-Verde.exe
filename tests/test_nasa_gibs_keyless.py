@@ -41,21 +41,25 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         self.assertNotIn("Authorization", source)
         self.assertNotIn('"key"', source)
 
-    def test_sentinel2_and_cbers4a_are_the_only_optical_backdrop_routes(self):
+    def test_optical_backdrop_prioritizes_cbers_and_sentinel_then_nasa(self):
         source = self._function_source("show_google_map")
         earthsearch = source.index("sentinel2_earthsearch_preview(")
         planetary = source.index("sentinel2_preview(")
         cbers = source.index("cbers4a_wfi_preview(")
-        # V87.36/V87.38: CBERS-4A/WFI (INPE) first; Sentinel-2 only as contingency.
+        # Official CBERS-4A and 10 m Sentinel-2 remain first. NASA VIIRS is a
+        # lower-resolution, visual-only route if those services are unavailable.
         self.assertLess(cbers, earthsearch)
         self.assertLess(earthsearch, planetary)
+        nasa = source.index("nasa_gibs_preview(")
+        self.assertLess(planetary, nasa)
         calls = [node.func.id for node in ast.walk(ast.parse(source))
                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)]
-        self.assertNotIn("nasa_gibs_preview", calls)
+        self.assertIn("nasa_gibs_preview", calls)
         self.assertNotIn("esri_export", calls)
-        # V87.38: labelled cartographic map allowed ONLY after every optical route.
-        self.assertLess(planetary, source.index("offline_brazil_preview("))
+        # Labelled cartographic map remains only after all real imagery routes.
+        self.assertLess(nasa, source.index("offline_brazil_preview("))
         self.assertIn("contingência sem imagem óptica", source)
+        self.assertIn("strictly visual context", source)
 
     def test_nasa_provider_is_marked_as_visual_context(self):
         source = self._function_source("nasa_gibs_preview")
