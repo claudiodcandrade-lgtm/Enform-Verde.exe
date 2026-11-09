@@ -21,7 +21,7 @@ from evidence_hierarchy import _norm
 
 DEPTH_BREAKS_CM = (0, 5, 15, 30, 60, 100)
 VALID_BIOMES = {"amazonia", "cerrado", "caatinga", "mata atlantica", "pantanal"}
-SOIL_SOURCE_PUBLISHERS = {"embrapa solos/pronasolos", "embrapa solos", "pronasolos"}
+SOIL_SOURCE_PUBLISHERS = {"embrapa solos pronasolos", "embrapa solos", "pronasolos"}
 SOIL_SOURCE_HOSTS = ("embrapa.br", "sgb.gov.br")
 
 
@@ -160,8 +160,8 @@ def soil_0_30_scenario_envelope(horizons, *, biome, physiognomy):
 
     Every horizon must use the same, precisely compatible biome and IBGE
     physiognomy. The bound vector [low, nominal, high] is *not* interpreted as
-    statistical quantiles. For SoilGrids Q05/Q95 the result is a sensitivity
-    envelope, NEVER a 90% or 95% joint predictive interval.
+    statistical quantiles. Inputs must be Brazilian Embrapa Solos/PronaSolos
+    data with explicit product provenance; foreign/global soil datasets are rejected.
     """
     def nd(reason):
         return {"available": False, "status": "not_available", "reason": reason,
