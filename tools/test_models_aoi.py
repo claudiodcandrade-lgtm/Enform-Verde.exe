@@ -21,6 +21,20 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
+def summarize_class_areas(rows, min_area_ha=0.05):
+    """Sum hectares across every polygon of each class; never overwrite duplicates."""
+    totals = {}
+    for class_name, area_ha in rows:
+        if area_ha > min_area_ha:
+            totals[str(class_name)] = totals.get(str(class_name), 0.0) + float(area_ha)
+    return {name: round(value, 1) for name, value in totals.items()}
+
+
+def crop_field_key(crop, field_number):
+    """One report entry per field, even for repeated crop labels."""
+    return f"{crop}__field_{field_number}"
+
+
 def run(aoi, phytoregion, as_of, ring_km=8.0):
     import geopandas as gpd
     from crop_forecast_pipeline import forecast_fields, forecast_lines
@@ -40,9 +54,9 @@ def run(aoi, phytoregion, as_of, ring_km=8.0):
         return report
     inside = polys.clip(aoi_eq)
     inside["area_ha"] = inside.area / 1e4
-    report["aoi_classes_ha"] = (inside.loc[inside["area_ha"] > 0.05]
-                              .groupby("class_name")["area_ha"].sum()
-                              .round(1).to_dict())
+    report["aoi_classes_ha"] = summarize_class_areas(
+        (r.class_name, r.area_ha) for r in inside.itertuples()
+    )
     lines = ["TESTE EXPERIMENTAL DE MODELOS — " + msg,
              "Classificação SAR (safra " + str(res.get("season")) + ", " + str(res.get("scenes_used")) + " cenas):"]
     lines += [f"  {k}: {v:.1f} ha" for k, v in sorted(report["aoi_classes_ha"].items(), key=lambda kv: -kv[1])]
@@ -74,7 +88,7 @@ def run(aoi, phytoregion, as_of, ring_km=8.0):
             entry["forecast"] = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:200]}
             lines.append("  Previsão: N/D — " + entry["forecast"]["reason"])
         # Preserve individual fields: the crop label alone is not a unique key.
-        report["crops"][f"{crop}__field_{field_number}"] = {"crop": crop, **entry}
+        report["crops"][crop_field_key(crop, field_number)] = {"crop": crop, **entry}
     report["text"] = lines
     return report
 
