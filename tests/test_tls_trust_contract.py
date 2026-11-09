@@ -40,6 +40,14 @@ class TlsTrustContract(unittest.TestCase):
         src = (ROOT / "recent_sar_landcover.py").read_text(encoding="utf-8")
         self.assertIn("gdal_env()", src)
         app = (ROOT / "desktop_app.py").read_text(encoding="utf-8")
+        sar = (ROOT / "sar_pipeline.py").read_text(encoding="utf-8")
+        mpc = (ROOT / "sentinel1_mpc.py").read_text(encoding="utf-8")
+        for name in ("cbers4a_wfi_preview", "sentinel2_earthsearch_preview", "sentinel2_preview"):
+            body = app[app.index("def " + name):]
+            body = body[:body.find("\ndef ", 1)]
+            self.assertIn("tls_setup.gdal_env()", body, name)
+        self.assertIn("tls_setup.gdal_env()", sar)
+        self.assertGreaterEqual(mpc.count("tls_setup.gdal_env(ca_bundle=ca_bundle)"), 2)
         self.assertLess(app.index("tls_setup.configure()"), app.index("from sar_pipeline import"))
         self.assertIn("--network-check", app)
         self.assertNotIn('GDAL_HTTP_UNSAFESSL="YES"', app + src)
