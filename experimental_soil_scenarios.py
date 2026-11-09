@@ -15,11 +15,32 @@ from __future__ import annotations
 
 import math
 import re
+from urllib.parse import urlparse
 
 from evidence_hierarchy import _norm
 
 DEPTH_BREAKS_CM = (0, 5, 15, 30, 60, 100)
 VALID_BIOMES = {"amazonia", "cerrado", "caatinga", "mata atlantica", "pantanal"}
+SOIL_SOURCE_PUBLISHERS = {"embrapa solos/pronasolos", "embrapa solos", "pronasolos"}
+SOIL_SOURCE_HOSTS = ("embrapa.br", "sgb.gov.br")
+
+
+def _official_brazilian_soil_source(row):
+    """Accept only explicitly identified Brazilian Embrapa/PronaSolos inputs."""
+    publisher = _norm(row.get("publisher") or row.get("source_program"))
+    product = str(row.get("source_product") or "").strip()
+    raw_url = row.get("source_url")
+    if publisher not in SOIL_SOURCE_PUBLISHERS or not product:
+        return False
+    try:
+        parsed = urlparse(raw_url if isinstance(raw_url, str) else "")
+        host = (parsed.hostname or "").lower().rstrip(".")
+        return (parsed.scheme == "https" and not parsed.username and not parsed.password
+                and parsed.port in (None, 443)
+                and any(host == domain or host.endswith("." + domain)
+                        for domain in SOIL_SOURCE_HOSTS))
+    except ValueError:
+        return False
 
 
 def _triple(value, field, *, minimum=0.0, maximum=None, exclude_max=False):
@@ -45,8 +66,8 @@ def soil_0_100_scenario_envelope(horizons, *, biome, physiognomy):
 
     Every horizon must use the same, precisely compatible biome and IBGE
     physiognomy. The bound vector [low, nominal, high] is *not* interpreted as
-    statistical quantiles. For SoilGrids Q05/Q95 the result is a sensitivity
-    envelope, NEVER a 90% or 95% joint predictive interval.
+    statistical quantiles. Inputs must be Brazilian Embrapa Solos/PronaSolos
+    data with explicit product provenance; foreign/global soil datasets are rejected.
     """
     def nd(reason):
         return {"available": False, "status": "not_available", "reason": reason,
@@ -68,9 +89,9 @@ def soil_0_100_scenario_envelope(horizons, *, biome, physiognomy):
             return nd(f"biome/IBGE physiognomy incompatible at horizon {i}")
         url, digest = row.get("source_url"), row.get("source_sha256")
         if (row.get("licensed_for_use") is not True
-                or not isinstance(url, str) or not url.startswith("https://")
+                or not _official_brazilian_soil_source(row)
                 or not isinstance(digest, str) or not re.fullmatch("[0-9a-fA-F]{64}", digest)):
-            return nd(f"unlicensed or untraceable source at horizon {i}")
+            return nd(f"source is not an identified Brazilian Embrapa/PronaSolos product, or is unlicensed/untraceable at horizon {i}")
         if row.get("bulk_density_basis") != "fine_earth_volume":
             return nd(f"bulk density basis not demonstrated at horizon {i}")
         try:
