@@ -327,3 +327,8 @@ A rotina SAR foi instrumentada no commit 7d4c4d070f128e1c13d59df4fe15e4012acbfc8
 O usuário informou que nem CBERS-4A nem Sentinel-2 apareceram no EXE para esta AOI. Os smoke tests de outras áreas não comprovam renderização nessa tela. Carbono nativo continua não estimado até existir cobertura atual suportada e dados/modelos/intervalos compatíveis; não transferir estimativas de outras fazendas. O relatório exibe atributos de fertilidade cartográfica Embrapa 90 m, mas registra incerteza preditiva N/D; isso não é medição laboratorial nem estoque de carbono do solo.
 
 BLOQUEIOS: testar o KML privado no executável Windows; capturar imagem CBERS-4A ou Sentinel-2 visível na GUI; diagnosticar cenas/provedores e concluir processamento SAR; instalar/treinar uma rota agrícola experimental com dados reais compatíveis, incerteza e independência; reexecutar a estimativa de carbono nos estratos que forem sustentados; conferir soma espacial, painéis e auditoria. PR #51 continua draft, PR #50 e main preservadas; nenhuma versão está liberada e o gate científico nacional continua separado.
+
+
+## Registro de integração do piloto SAR agrícola — 09/11/2026
+
+A atualização experimental de classificação SAR não altera a especificação de carbono do solo. O estoque continua restrito à faixa 0–100 cm com dados brasileiros Embrapa/PronaSolos e interseção espacial efetiva com a AOI; nenhuma classe candidata de cobertura SAR substitui horizonte, valor, cobertura ou incerteza do solo. O modelo agrícola experimental não participa do cálculo de carbono do solo.
