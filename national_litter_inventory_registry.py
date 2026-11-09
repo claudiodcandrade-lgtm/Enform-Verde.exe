@@ -103,6 +103,26 @@ def published_national_litter_component(biome, physiognomy, aoi):
     # Prefer the most specific compatible descriptor, never fuzzy nearest
     # physiognomy or national mean from an ecologically unrelated class.
     best=sorted(candidates,key=lambda r:(-len(r["terms"]),r["key"]))[0]
+    # Owner decision 08/11/2026 (question 6 = A): FOREST physiognomies with >=1
+    # verified gravimetric site use the hierarchical regional estimator, whose
+    # transfer error is the measured between-site heterogeneity of independent
+    # Brazilian forest sites. Non-forest classes keep the scenario envelope
+    # (fewer than 3 independent non-forest sites -> tau not estimable).
+    if any(w in " ".join(best["terms"]) for w in ("floresta","mata")):
+        from regional_litter_hierarchy import hierarchical_litter_estimate
+        same=[r for r in candidates if r["terms"]==best["terms"]]
+        est=hierarchical_litter_estimate([float(r["dry_mg_ha"]) for r in same])
+        return {"mean_tc_ha":est["mean_tc_ha"],"range_tc_ha":est["range_tc_ha"],"sd_tc_ha":est["sd_tc_ha"],
+                "mean_dry_mg_ha":est["geometric_mean_dry_mg_ha"],
+                "range_dry_mg_ha":[est["dry_p05_p50_p95"][0],est["dry_p05_p50_p95"][2]],
+                "origin":"INVENTARIO_REGIONAL_HIERARQUICO","include_in_total":True,
+                "evidence_type":"standing_litter_dry_mass",
+                "status":"ESTIMATIVA EXPERIMENTAL — erro de transferência quantificado por heterogeneidade entre sítios",
+                "source":" | ".join(r["study"] for r in same),"url":best["url"],"source_record_id":best["key"],
+                "method":("ln L* = média ln dos sítios da mesma fitofisionomia (k=%d) + t(%d)·τ·√(1+1/k); τ=%.3f entre %d sítios "
+                          "florestais brasileiros independentes; C = L*·U(0,42;0,50)"%(est["k_local_sites"],est["df"],est["tau_ln"],est["k_forest_sites"])),
+                "uncertainty_kind":"Intervalo PREDITIVO 90% para sítio novo (heterogeneidade entre sítios + fração de C); não é medição da AOI",
+                "hierarchy_audit":est,"ifn_context":ifn_litter_context()}
     mean=float(best["dry_mg_ha"])
     # .47 is documented only as an experimental default fraction; the
     # 0.42-.50 range is a sensitivity envelope, NOT sampling uncertainty.

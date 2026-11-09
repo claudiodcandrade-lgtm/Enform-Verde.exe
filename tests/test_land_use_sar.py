@@ -14,26 +14,27 @@ class LandUseTests(unittest.TestCase):
     def layer(self,rows):
         return gpd.GeoDataFrame([dict(class_name=n,source=s,taxonomy=s,geometry=g) for n,s,g in rows],crs=6933)
 
-    def test_any_measured_accuracy_is_reported_but_acceptance_needs_class_evidence(self):
-        # V87.37 policy (upstream): every class reports n, precision and Wilson
-        # CI95; semantic ACCEPTANCE requires >=30 independent holdouts and a
-        # Wilson lower bound >= 0.70. Low/zero accuracy is shown, never hidden.
+    def test_any_measured_accuracy_is_accepted_with_estimated_uncertainty(self):
+        # Owner decision 08/11/2026 (B): no minimum accuracy; n and Wilson CI95 mandatory.
         small=validation_report(['Soja']*3,['Soja']*3,[.52]*3)['gates']['Soja']
-        self.assertFalse(small['eligible']); self.assertTrue(small['sample_size_warning'])
+        self.assertTrue(small['eligible']); self.assertTrue(small['sample_size_warning'])
         self.assertEqual(small['n_independent'],3)
         self.assertLess(small['precision_wilson95_lower'],small['precision'])
         low=validation_report(['Soja']*25+['Outro']*25,['Soja']*50,[.54]*50)['gates']['Soja']
-        self.assertFalse(low['eligible']); self.assertAlmostEqual(low['precision'],.5)
-        good=validation_report(['Soja']*50,['Soja']*50,[.9]*50)['gates']['Soja']
-        self.assertTrue(good['eligible'])
+        self.assertTrue(low['eligible']); self.assertAlmostEqual(low['precision'],.5)
+        self.assertEqual(low['acceptance_status'],'experimental_measured')
 
     def test_zero_accuracy_is_measurable_and_explicit_not_falsely_high(self):
         report=validation_report(['Outro']*5,['Soja']*5,[.55]*5)
         gate=report['gates']['Soja']
-        self.assertFalse(gate['eligible'])
         self.assertEqual(gate['precision'],0.0)
         self.assertGreater(gate['precision_wilson95_upper'],0)
         self.assertEqual(gate['n_independent'],5)
+        self.assertIsNone(report['minimum_accuracy_required'])
+
+    def test_unmeasured_class_is_not_accepted(self):
+        report=validation_report(['Soja']*3,['Soja']*3,[0.0]*3)   # abstentions only
+        self.assertFalse(report['gates']['Soja']['eligible'])
 
     def test_priority_and_no_double_count(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)

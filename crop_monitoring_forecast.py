@@ -209,14 +209,18 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                             isinstance(vig.get("probabilities"), dict) and scene_evidence and
                             crop_gdf is not None)
             if not vigor_usable:
+                # Owner decision 08/11/2026 (5 = B): forecast continues WITHOUT
+                # vigor (climate + PAM history), clearly labelled; only a SAR
+                # crop mask (crop_gdf) is still mandatory for the field area.
                 reason = str(vig.get("reason") or "sem vigor SAR atual com cena datada sobre máscara SAR validada")
-                error = vig.get("status") == "ERRO_TECNICO"
-                entry["forecast_status"] = "BLOQUEADA_ERRO_TECNICO" if error else "N/D"
-                entry["forecast"] = {"status": entry["forecast_status"], "reason": reason}
-                prefix = "ERRO TÉCNICO" if error else "N/D"
-                lines.append("  Produtividade e produção da propriedade: " + prefix + " — bloqueadas; " + reason + ".")
-                audit["crops"][crop] = entry
-                continue
+                if crop_gdf is None:
+                    entry["forecast_status"] = "N/D"
+                    entry["forecast"] = {"status": "N/D", "reason": "sem máscara SAR da cultura; " + reason}
+                    lines.append("  Produtividade e produção da propriedade: N/D — sem máscara SAR da cultura.")
+                    audit["crops"][crop] = entry
+                    continue
+                lines.append("  Vigor N/D (" + reason + "): previsão SEM VIGOR, só clima + histórico PAM, intervalo mais largo.")
+                vig = {"status": "N/D", "reason": reason}
             try:
                 if municipal_scale:
                     lines.append("  Escala: vigor amostral SAR; previsão permanece condicional ao domínio e às validações do modelo.")

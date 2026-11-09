@@ -110,10 +110,10 @@ def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fe
                   and isinstance(vig.get("probabilities"), dict)
                   and (bool(vig.get("scene_id") and vig.get("acquisition_utc"))
                        or bool(vig.get("accepted_scenes"))))
-        if not vig_ok:
-            report["fields"][rid] = {"status": "N/D",
-                "reason": "vigor SAR atual indisponível ou sem cena datada; previsão de talhão bloqueada"}
-            continue
+        # Owner decision 08/11/2026 (question 5 = B): without a dated SAR vigor
+        # the forecast is still produced from climate + PAM history, labelled
+        # "sem vigor", with the wider interval of ALL historical errors.
+        no_vigor_reason = None if vig_ok else "vigor SAR atual indisponível ou sem cena datada"
         micro_all = microregion_of(f["gdf"]); micro = micro_all["dominant"]
         yields = load_microregion_yields(crop, micro["code"])
         c = f["gdf"].to_crs(4326).geometry.union_all().centroid
@@ -129,7 +129,9 @@ def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fe
             continue
         ready.append({"id": rid, "area_ha": f["area_ha"], "area_sd_ha": f.get("area_sd_ha"),
                       "group": (micro["code"], crop), "params": params})
-        report["fields"][rid] = {"status": "experimental_validated_out_of_sample", "microregion": micro,
+        report["fields"][rid] = {"status": ("experimental_validated_out_of_sample" if vig_ok else
+                                            "experimental_sem_vigor_clima_historico"),
+                                 "no_vigor_reason": no_vigor_reason, "microregion": micro,
                                  "harvest_year": hy, "awc": aw, "ry_median": float(sorted(ens)[len(ens) // 2]),
                                  "ry_p10_p90": [float(x) for x in __import__("numpy").quantile(ens, [.1, .9])],
                                  "n_analogs": len(ens), "region_group": params["region_group"],
@@ -205,7 +207,8 @@ def _panel_lines(report, fmt):
                 (f"    Rendimento relativo hídrico (RY): mediana {r['ry_median']:.2f} "
                  f"(p10–p90 {r['ry_p10_p90'][0]:.2f}–{r['ry_p10_p90'][1]:.2f}; {r['n_analogs']} anos análogos)").replace(".", ","),
                 ("    Vigor: " + r["vigor"]["class"] + " (posiciona o resultado no terço correspondente dos erros históricos)")
-                if r["vigor"] else "    Vigor: N/D — intervalo cobre todos os erros históricos",
+                if r["vigor"] else ("    Vigor: N/D (" + str(r.get("no_vigor_reason") or "sem vigor") + ") — PREVISÃO SEM VIGOR: "
+                                    "só clima + histórico PAM; intervalo cobre todos os erros históricos"),
                 productivity_display(rid, p, fmt),
                 f"    Validação do modelo no grupo: MAE {fmt(l['mae_kg_ha'])} kg/ha vs. {fmt(l['trend_only_mae_kg_ha'])} só tendência "
                 f"(ganho {100*l['skill_vs_trend']:.0f}%; {l['units_improved']}/{l['units']} microrregiões melhoram)"]

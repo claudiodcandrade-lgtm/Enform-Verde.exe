@@ -12,3 +12,6 @@ Leia antes de qualquer alteração: `docs/ROTEIRO_CORRECOES_ENFORM_VERDE_2026-11
 8. **Padrão visual congelado:** `python ui_visual_standard.py` deve imprimir PADRAO_VISUAL_OK.
 9. **Nova versão:** incrementar `APP_VERSION`, criar `APP_RELEASE_NOTES_vX.Y.Z.md`; EXE só é citado após build Windows verde com `--module-check`, `--visual-check` e `--network-check`.
 10. Não fazer merge em `main` sem pedido explícito do proprietário.
+
+## Decisões do proprietário (08/11/2026) — não alterar sem nova decisão
+1A modelo de safra calibrado (painel); 2B qualquer acurácia medida aceita como experimental com n e IC95% obrigatórios; 3C PAM 2015–2024; 4B altura SAR de modelo publicado como experimental com erro propagado; 5B previsão sem vigor rotulada; 6A serapilheira hierárquica para todas as florestais com ≥1 estudo; 7B incerteza total com correlação declarada (biomassa ρ=1; serapilheira e solo independentes); 8A unidades radar sem nome só no mapa/painel — e sempre buscar um classificador SAR.

@@ -1,5 +1,6 @@
 """Readable native-carbon executive summary with honest per-pool uncertainty units."""
 from __future__ import annotations
+import math
 
 def uncertainty_for_pool(row, carbon_fraction=0.47):
     value=row.get("tc")
@@ -65,6 +66,7 @@ def executive_carbon_lines(native, fmt):
            "| COMPARTIMENTO / TOTAL | tC/ha | tCO2e/ha | INCERTEZA tCO2e/ha | INCERTEZA % |",
            "+-----------------------------------------------+"]
     all_components=[c for st in native.get("strata",[]) for c in st.get("components",[])]
+    pool_results={}
     for pool in ("Biomassa aérea","Biomassa subterrânea","Necromassa aérea",
                  "Necromassa subterrânea","Serapilheira","Solo 0–100 cm"):
         rows=[r for r in all_components if r.get("parametro")==pool]
@@ -96,16 +98,32 @@ def executive_carbon_lines(native, fmt):
             unc_pct=(100*sigma/density if sigma is not None and density>0 else None)
         else:
             unc_abs=unc_pct=None
+        pool_results[pool]=(density,unc_abs)
         table.append("| "+pool+" | "+fmt(density) if density is not None else "| "+pool+" | N/D")
         table[-1]+=" | "+fmt(density*44/12) if density is not None else " | N/D"
         table[-1]+=" | "+fmt(unc_abs) if unc_abs is not None else " | N/D"
         table[-1]+=" | "+fmt(unc_pct)+"% |" if unc_pct is not None else " | N/D |"
+    total_uncertainty_rule=None
     if complete and area>0 and known is not None:
         total_density=known/area
         joint=native.get("total_uncertainty") or {}
         se_total=joint.get("se_tC")
         total_unc_abs=(float(se_total)/area*44/12 if isinstance(se_total,(int,float)) else None)
         total_unc_pct=(100*float(se_total)/known if isinstance(se_total,(int,float)) and known>0 else None)
+        if total_unc_abs is None:
+            # Owner decision 08/11/2026 (question 7 = B): declared correlation.
+            # Biomass-derived pools (aboveground, roots, necromass) are fully
+            # correlated (rho = 1, they share the biomass estimate); litter and
+            # soil are independent (rho = 0). Never a simple sum of all errors.
+            bio=("Biomassa aérea","Biomassa subterrânea","Necromassa aérea","Necromassa subterrânea")
+            present={k:v for k,v in pool_results.items() if v[0] is not None}
+            if present and all(v[1] is not None for v in present.values()):
+                corr_sum=sum(v[1] for k,v in present.items() if k in bio)
+                indep=sum(v[1]**2 for k,v in present.items() if k not in bio)
+                total_unc_abs=math.sqrt(corr_sum**2+indep)
+                total_unc_pct=100*total_unc_abs/(total_density*44/12) if total_density>0 else None
+                total_uncertainty_rule=("correlação declarada: biomassa aérea, raízes e necromassa ρ=1; "
+                                        "serapilheira e solo independentes (ρ=0)")
         total_label="TOTAL — soma dos compartimentos"
     else:
         total_density=total_unc_abs=total_unc_pct=None
@@ -136,7 +154,8 @@ def executive_carbon_lines(native, fmt):
             if known is not None and area else "N/D"),
            "INCERTEZA POR COMPARTIMENTO — quadro executivo (estoques em tC/ha e tCO₂e/ha; incertezas em tCO₂e/ha e %):",
            *table,
-           "Incertezas entre estratos só são combinadas quando sua independência está explicitamente documentada; total exige matriz de covariância completa. Sem isso, N/D."]
+           ("Incerteza do total: "+total_uncertainty_rule+"." if total_uncertainty_rule else
+            "Incertezas entre estratos só são combinadas quando sua independência está explicitamente documentada; total exige incerteza em todos os compartimentos. Sem isso, N/D.")]
     for st in native.get("strata",[]):
         if not st.get("area_ha"):
             continue

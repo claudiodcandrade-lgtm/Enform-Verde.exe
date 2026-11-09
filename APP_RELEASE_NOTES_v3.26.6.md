@@ -18,3 +18,10 @@ Status: build experimental pré-campo; não é homologação científica (gate i
 ## Serapilheira entra no total (V87.40)
 - Floresta Estacional Sempre-Verde do norte de Mato Grosso (ex.: Sinop): estimativa hierárquica regional com erro de transferência QUANTIFICADO. Dois inventários gravimétricos locais independentes (Silva et al. 2009, Acta Amazonica, ~50 km de Sinop: 5,12 Mg/ha; Volpato 2024, UFRRJ: 8,70 Mg/ha) definem a média; a heterogeneidade entre 10 sítios florestais brasileiros independentes (τ = 0,396 em ln) define a incerteza de transferência; fração de carbono U(0,42; 0,50).
 - Resultado para um sítio FESV novo: 3,08 tC/ha (intervalo preditivo 90%: 1,27–7,48 tC/ha); entra no total como experimental, só em estratos nativos confirmados.
+
+## Decisões do proprietário incorporadas (08/11/2026)
+- Classificador SAR: qualquer acurácia medida aceita como experimental, com n e IC95% obrigatórios (sem limiar mínimo).
+- Previsão de safra sem vigor: produzida só com clima + histórico PAM, rotulada “PREVISÃO SEM VIGOR”, intervalo mais largo.
+- Altura de plantas: modelo SAR publicado aceito como experimental com RMSE/n publicados e erro propagado.
+- Serapilheira: estimativa hierárquica estendida a todas as fitofisionomias florestais com estudo gravimétrico verificado (ex.: FOD ES 2,03 tC/ha, IP90% 0,73–5,66).
+- Incerteza total do carbono: correlação declarada (biomassa, raízes e necromassa ρ=1; serapilheira e solo independentes), nunca soma simples.

@@ -37,6 +37,41 @@ def crop_height_route(crop):
         "status": "no_crop_specific_SAR_height_retrieval_established_for_operational_use"}
 
 
+def _experimental_published_height(observation, contract):
+    """Owner decision 08/11/2026 (question 4 = B): radar height from a PUBLISHED
+    crop-specific model is usable as EXPERIMENTAL when its error (RMSE, n) is
+    published and propagated (height_uncertainty_m >= RMSE). Transfer error to
+    Brazil stays declared as not validated."""
+    reasons = []
+    for key in ("height_source", "retrieval_model", "height_source_url", "sensor", "date",
+                "rmse_m", "n_independent", "crop", "phase"):
+        if contract.get(key) in (None, ""):
+            reasons.append("metadado obrigatório ausente: " + key)
+    if contract.get("height_source") != "SAR_height_product":
+        reasons.append("altura não é um produto SAR")
+    observation = observation if isinstance(observation, dict) else {}
+    for key in HEIGHT_FEATURES:
+        if observation.get(key) is None:
+            reasons.append("atributo obrigatório ausente: " + key)
+    if observation.get("observation_date") != contract.get("date"):
+        reasons.append("datas da altura e da cena não coincidem")
+    try:
+        rmse = float(contract["rmse_m"]); unc = float(observation["height_uncertainty_m"])
+        h = float(observation["height_m"]); n = int(contract["n_independent"])
+        if not (math.isfinite(rmse) and rmse > 0 and math.isfinite(h) and h >= 0 and n >= 1):
+            reasons.append("altura, RMSE ou n inválidos")
+        elif unc + 1e-12 < rmse:
+            reasons.append("incerteza da altura menor que o RMSE publicado (erro não propagado)")
+    except (KeyError, ValueError, TypeError, OverflowError):
+        reasons.append("altura/RMSE/n não numéricos")
+    return {"eligible": not reasons, "reasons": reasons, "experimental": True,
+            "validation_tier": "experimental_published", "transfer_error_quantified": False,
+            "height_m": observation.get("height_m"),
+            "height_uncertainty_m": observation.get("height_uncertainty_m"),
+            "warning": ("Altura EXPERIMENTAL de modelo SAR publicado; erro publicado propagado; "
+                        "erro de transferência ao Brasil não validado.")}
+
+
 def check_crop_height_observation(observation, contract):
     """Audit one height observation before passing it to an agricultural classifier.
 
@@ -46,6 +81,8 @@ def check_crop_height_observation(observation, contract):
     reasons = []
     if not isinstance(contract, dict):
         return {"eligible": False, "reasons": ["contrato de altura ausente"]}
+    if contract.get("validation_tier") == "experimental_published":
+        return _experimental_published_height(observation, contract)
     for key in ("height_source", "retrieval_model", "height_source_url", "model_sha256",
                 "validation_reference", "sensor", "processing", "date", "uncertainty_method",
                 "rmse_m", "bias_m", "domain", "crop", "region", "phase",

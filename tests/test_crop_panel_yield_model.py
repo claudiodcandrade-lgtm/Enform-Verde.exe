@@ -94,7 +94,7 @@ class ArtifactTests(unittest.TestCase):
         self.assertGreater(art["crops"]["Milho"]["Centro-Norte"]["loyo"]["skill_vs_trend"], 0.10)
         self.assertEqual(len(art["provenance"]["pam_file_sha256"]), 64)
 
-    def test_pipeline_blocks_property_yield_without_observed_vigor(self):
+    def test_pipeline_forecasts_without_vigor_as_labelled_climate_history_only(self):
         g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
         fake_wx = lambda lat, lon, s, e: {"daily": weather(range(2000, 2027), lambda d: 7.0), "source_url": "synthetic"}
         fake_awc = lambda lat, lon: {"awc_mm_cm": 1.1, "source": "teste"}
@@ -104,8 +104,11 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(rep["model"], "panel")
         txt = "\n".join(forecast_lines(rep))
         self.assertIn("calibrado no histórico PAM", txt)
+        # Owner decision 08/11/2026 (5 = B): forecast still produced, labelled.
         self.assertIn("vigor SAR atual indisponível", txt)
-        self.assertNotIn("Alto Teles Pires", txt)
+        self.assertIn("PREVISÃO SEM VIGOR", txt)
+        self.assertIn("Alto Teles Pires", txt)
+        self.assertEqual(rep["fields"]["T"]["status"], "experimental_sem_vigor_clima_historico")
 
 
 if __name__ == "__main__":

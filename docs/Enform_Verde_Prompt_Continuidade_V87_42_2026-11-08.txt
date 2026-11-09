@@ -1,3 +1,8 @@
+# CHECKPOINT V87.42 — 08/11/2026 — decisões do proprietário incorporadas (3.26.6)
+- 1A painel calibrado; 2B qualquer acurácia medida aceita como experimental com n e IC95% (MIN_VALIDATION=1); 3C PAM 2015–2024; 4B altura SAR publicada experimental com erro propagado (`validation_tier=experimental_published`); 5B previsão sem vigor rotulada; 6A serapilheira hierárquica para todas as florestais com ≥1 estudo (ex. FOD ES 2,03 tC/ha, IP90% 0,73–5,66); 7B incerteza total σ² = (Σσ_biomassa)² + σ_serap² + σ_solo²; 8A unidades radar só no mapa/painel. Prioridade seguinte: classificador SAR semântico sempre disponível (roteiro B6) e coeficientes verificáveis de altura por cultura.
+
+---
+
 # CHECKPOINT V87.41 — 08/11/2026 — roteiro único de correções e regras para agentes (3.26.6)
 - `docs/ROTEIRO_CORRECOES_ENFORM_VERDE_2026-11-08.md` (A processo, B SAR/mapeamento, C óptico, D carbono, E agricultura, F validação; critérios de aceite) e `AGENTS.md`/`CLAUDE.md` com regras obrigatórias: um agente por branch; código e testes no mesmo commit com suíte completa verde antes do push; documentação a cada passo; MapBiomas só histórico; N/D nunca 0; limiares científicos só por decisão do proprietário; TLS nunca desligado; padrão visual; EXE só com build verde e checagens.
 - Próximo item técnico prioritário: E4 (séries PAM longas — SIDRA 5457 desde 1974, verificado) e B3/E1 (classificador SAR semântico validado). Decisão pendente do proprietário: B5 (critério de aceite do classificador).

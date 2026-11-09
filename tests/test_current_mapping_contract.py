@@ -68,9 +68,11 @@ class CurrentMappingContract(unittest.TestCase):
         self.assertIn('"status":"N/D"', self.vigor_math)
 
     def test_sar_classifier_has_class_level_evidence_gate(self):
-        self.assertIn("MIN_VALIDATION = 30", self.land)
-        self.assertIn("MIN_PRECISION_LOWER = 0.70", self.land)
-        self.assertIn("lower >= MIN_PRECISION_LOWER", self.land)
+        # Owner decision 08/11/2026: any measured accuracy accepted as
+        # experimental; uncertainty (n + Wilson CI95) is mandatory.
+        self.assertIn("MIN_VALIDATION = 1", self.land)
+        self.assertIn("'precision_wilson95_lower'", self.land)
+        self.assertIn("'n_independent'", self.land)
 
 
 if __name__ == "__main__":

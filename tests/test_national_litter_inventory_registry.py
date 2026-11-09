@@ -21,10 +21,15 @@ class NationalLitterRegistryTests(unittest.TestCase):
         b=published_national_litter_component("Cerrado","Cerrado Típico",geom)
         self.assertEqual(a["source_record_id"],"MATA_GALERIA_DF")
         self.assertEqual(b["source_record_id"],"CERRADO_TIPICO_DF")
-        self.assertAlmostEqual(a["mean_tc_ha"],9.36*.47,places=6)
+        # Owner decision 6 = A: forest class (mata de galeria) -> hierarchical
+        # estimate in the total; non-forest (cerrado típico) stays a scenario.
+        self.assertAlmostEqual(a["mean_dry_mg_ha"],9.36,places=6)
+        self.assertTrue(a["include_in_total"])
+        self.assertEqual(a["origin"],"INVENTARIO_REGIONAL_HIERARQUICO")
+        lo,hi=a["range_tc_ha"]; self.assertLess(lo,a["mean_tc_ha"]); self.assertLess(a["mean_tc_ha"],hi)
         self.assertAlmostEqual(b["mean_tc_ha"],6.08*.47,places=6)
-        self.assertFalse(a["include_in_total"])
-        self.assertEqual(a["origin"],"EXPERIMENTAL_FISICO")
+        self.assertFalse(b["include_in_total"])
+        self.assertEqual(b["origin"],"EXPERIMENTAL_FISICO")
 
     def test_state_and_physiognomy_transfer_are_rejected(self):
         geom=box(-55.5,-11.9,-55.4,-11.8)
@@ -55,8 +60,9 @@ class NationalLitterRegistryTests(unittest.TestCase):
         result=published_national_litter_component(
             "Mata Atlântica","Floresta Ombrófila Mista",box(-50.3,-29.5,-50.2,-29.4))
         self.assertAlmostEqual(result["mean_dry_mg_ha"],14.296)
-        self.assertIn("SEM",result["status"])
-        self.assertFalse(result["include_in_total"])
+        self.assertEqual(result["evidence_type"],"standing_litter_dry_mass")   # stock, never deposition
+        self.assertTrue(result["include_in_total"])                          # forest -> hierarchical (6 = A)
+        self.assertIn("PREDITIVO 90%",result["uncertainty_kind"])
 
 
 if __name__=="__main__":

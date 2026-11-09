@@ -17,8 +17,11 @@ AREA_CRS = 'EPSG:6933'  # equal-area; EPSG:5880 is polyconic, not equal-area
 SCORE_THRESHOLD = 0.0
 # Operational class acceptance: 30 independent spatial holdout units and
 # a conservative Wilson 95% precision lower bound of at least 0.70.
-MIN_VALIDATION = 30
-MIN_PRECISION_LOWER = 0.70
+# Owner decision 08/11/2026 (question 2 = B): any MEASURED accuracy is accepted as
+# experimental, provided its uncertainty is estimated (n independent + Wilson CI95).
+MIN_VALIDATION = 1
+MIN_PRECISION_LOWER = 0.0
+SMALL_SAMPLE_WARNING = 30
 MIN_DISTANCE_M = 1000.0
 
 def _executive_crop_label(name):
@@ -62,12 +65,14 @@ def validation_report(truth, predictions, scores):
         upper = 1.0 - wilson_lower(n-correct,n) if n else 1.0
         gates[label] = {'n_independent': n, 'correct': correct, 'precision': correct/n if n else None,
                         'precision_wilson95_lower': lower, 'precision_wilson95_upper': upper,
-                        'eligible': n >= MIN_VALIDATION and lower >= MIN_PRECISION_LOWER, 'sample_size_warning': n < MIN_VALIDATION,
+                        'eligible': n >= MIN_VALIDATION and lower >= MIN_PRECISION_LOWER, 'sample_size_warning': n < SMALL_SAMPLE_WARNING,
+                        'acceptance_status': ('experimental_measured' if n >= MIN_VALIDATION else 'not_measured'),
                         'accuracy_policy': 'any_measured_accuracy_with_explicit_sample_and_interval'}
     return {'labels': labels, 'confusion_matrix': confusion_matrix(truth, predictions, labels=labels).tolist(),
             'metrics': metrics, 'gates': gates, 'score_threshold': SCORE_THRESHOLD,
             'min_validation': MIN_VALIDATION, 'min_precision_lower': MIN_PRECISION_LOWER,
-            'minimum_accuracy_required': '30 holdouts independentes e limite inferior Wilson IC95% >= 0,70 por classe',
+            'minimum_accuracy_required': None,
+            'acceptance_policy': 'qualquer acurácia MEDIDA é aceita como experimental com n independente e IC95% Wilson obrigatórios (decisão do proprietário, 08/11/2026)',
             'validation_scope': 'measured on the supplied independent reference observations',
             'uncertainty': 'IC95% Wilson da precisão da classe aceita, condicionado à independência/representatividade dos pontos; não é erro de área nem garantia individual por pixel.'}
 
