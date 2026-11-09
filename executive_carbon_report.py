@@ -136,9 +136,11 @@ def executive_carbon_lines(native, fmt):
     table.append("+-----------------------------------------------+")
     lines=["PAINEL EXECUTIVO — ESTOQUES DE CARBONO",
            "ÁREA TOTAL ANALISADA: "+fmt(aoi_ha)+" ha (100%)",
-           "VEGETAÇÃO NATIVA MAPEADA: "+fmt(area)+" ha"+
-               (" ("+fmt(pct)+"% da AOI)" if pct is not None else ""),
-           "OUTROS USOS (não entram no estoque nativo): "+fmt(others)+" ha",
+           "VEGETAÇÃO NATIVA MAPEADA: "+
+               (fmt(area)+" ha"+(" ("+fmt(pct)+"% da AOI)" if pct is not None else "")
+                if area>0 or unknown<=0 else "N/D — nenhuma área nativa confirmada; área não confirmada: "+fmt(unknown)+" ha"),
+           "OUTROS USOS (não entram no estoque nativo): "+
+               (fmt(others)+" ha" if others>0 or unknown<=0 else "N/D — usos não nativos não confirmados"),
            "Cobertura não confirmada: "+fmt(unknown)+" ha — não equivale a zero de vegetação nativa; pode conter vegetação não mapeada",
            "A formação IBGE nomeia SOMENTE a interseção nativa; NÃO é cobertura de toda a AOI.",
            "Cobertura nativa: "+("N/D — cobertura não integralmente verificada" if unknown>0 else
