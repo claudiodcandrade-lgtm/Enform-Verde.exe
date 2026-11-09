@@ -332,3 +332,12 @@ BLOQUEIOS: testar o KML privado no executável Windows; capturar imagem CBERS-4A
 ## Registro de integração do piloto SAR agrícola — 09/11/2026
 
 A atualização experimental de classificação SAR não altera a especificação de carbono do solo. O estoque continua restrito à faixa 0–100 cm com dados brasileiros Embrapa/PronaSolos e interseção espacial efetiva com a AOI; nenhuma classe candidata de cobertura SAR substitui horizonte, valor, cobertura ou incerteza do solo. O modelo agrícola experimental não participa do cálculo de carbono do solo.
+
+
+## Checkpoint V87.54 — integração piloto e falhas CI (09/11/2026)
+
+O SHA auditado foi `07061b450c6ebc62e8bdf868da236b8c07799164`, com versão `3.26.7-PRECAMPO-EXPERIMENTAL`. O fallback temporal SAR VV/VH da classe sazonal é exibido como “Área cultivada — candidato SAR experimental; cultura N/D”; não identifica cultura nominal, não confirma vegetação nativa e não gera probabilidade, acurácia ou IC. CBERS-4A/WFI continua prioritário para fundo óptico, Sentinel-2 como alternativa. A renderização da geometria privada Fazenda Maria Eduarda dentro do EXE ainda não está demonstrada.
+
+No SHA auditado, contratos rápidos passaram. O dashboard falhou em dois contratos: versão ausente no DOCX e expressão textual de classe semântica N/D divergente. O build Windows falhou no job `42676730241`, antes de empacotar/publicar o EXE; o dashboard `42676730580` registrou 999 testes com duas falhas; contratos rápidos `42676730626` passaram. O gate científico `42676730154` segue reprovado (`accepted_count=0`). Corrigir a sincronização documental e a redação do contrato, depois executar novo CI no SHA final. Não declarar build, regressão privada, homologação ou liberação concluídos até as evidências correspondentes passarem.
+
+Prioridades do piloto: série temporal SAR observável com proveniência por cena; modelos executáveis por cultura e domínio com incerteza; vigor SAR + clima + PAM para safra; altura e estrutura nativa com inventário microrregional e alometria; serapilheira compatível por fitofisionomia; carbono do solo Embrapa/PronaSolos 0–100 cm por interseção. A geometria privada não pode entrar em commits nem em logs públicos.

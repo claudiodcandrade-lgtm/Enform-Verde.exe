@@ -769,7 +769,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     summary['mapbiomas_access_attempts']=mapbiomas_access_attempts
     summary['cover_verification']='COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL' if mapbiomas_failure else 'FONTES_PROCESSADAS'
     summary['unknown_cover_ha']=sum(float(r['area_ha']) for r in summary['classes'] if r.get('native_status') is None) if all('native_status' in r for r in summary['classes']) else None
-    summary['priority']=('Classificador semântico SAR validado é prioritário; na ausência, unidades de assinatura SAR atual ficam sem classe semântica (N/D). '
+    summary['priority']=('Classificador semântico SAR validado é prioritário; na ausência, unidades de assinatura SAR atual ficam sem classe semântica N/D. '
                          'MapBiomas desativado na classificação atual; IBGE legenda_1 apenas nomeia fitofisionomia após presença nativa SAR confirmada.')
     def _layer_sources(layer):
         if isinstance(layer, dict):
