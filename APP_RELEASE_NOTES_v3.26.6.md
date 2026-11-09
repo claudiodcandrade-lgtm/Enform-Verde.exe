@@ -8,12 +8,29 @@ Status: build experimental pré-campo; não é homologação científica (gate i
 - Correção: `tls_setup.py` cria um único pacote de confiança (certifi + raízes ROOT/CA do Windows + pacote do sistema) e o exporta para requests e GDAL no início do programa, com verificação TLS sempre ligada.
 - Evidência: em ambiente com proxy TLS, o código da 3.26.5 falhou com “self-signed certificate in certificate chain” e 0 cenas lidas; com a correção, 12 cenas Sentinel-1 reais de Sinop foram lidas (mais recente 31/10/2026), unidades radar produzidas, CBERS-4A lido (cena de 27/10/2026), sem desligar a verificação.
 
+## Checkpoint V87.50 — validação e sincronização documental
+- CI no SHA `0383178fed1d5cd16ce0b1bd0024dc3a153838d5`: regressão completa concluída com 994 testes aprovados; o contrato rápido pré-campo também passou.
+- O primeiro run do dashboard acusou ausência dos arquivos canônicos do prompt V52, histórico V43, especificação dedicada de solo e DOCX no conjunto de commits. Todos foram atualizados neste checkpoint; a reexecução documental segue necessária.
+- Os builds Windows push/PR avançaram pelos testes de pixels ópticos e SAR, mas ainda estavam em execução durante o registro. Não distribuir nem afirmar EXE/ZIP até confirmar `--network-check`, autoteste limpo, checksum e artefato no mesmo SHA.
+- A homologação científica nacional continua bloqueada por falta de evidência independente; 994 testes de software não são homologação.
+
+## Refinamento V87.49 — CA do GDAL no Windows
+- O Windows CI detectou que o bundle combinado de CA excedia o limite de 1 MiB do backend Schannel ao abrir COGs Sentinel-2.
+- No Windows, requests/Python usam a cadeia combinada e GDAL usa o repositório nativo do Schannel, sem receber o bundle PEM grande; em outros sistemas, GDAL/curl continua usando o bundle compartilhado. Bundles personalizados abaixo de 1 MiB podem ser preservados.
+- `GDAL_HTTP_UNSAFESSL=NO` permanece obrigatório. Nenhuma verificação TLS foi desativada. Os leitores CBERS, Sentinel-2, Sentinel-1/ALOS e vigor usam a configuração compartilhada.
+- Testes locais focados após o ajuste: 22 passaram. Sentinel-1 VV/VH real em Sinop e Sentinel-2 L2A real em Tapajós foram lidos. Os testes Windows live e build do SHA final continuam sendo o gate de distribuição.
+
+## Contingência visual V87.46
+- NASA GIBS/VIIRS SNPP entrou após CBERS-4A e Sentinel-2 como imagem pública exclusivamente visual. Tem resolução inferior; não entra em classificação, vigor, cultura, carbono ou validação.
+- Uma chamada local para Tapajós retornou pixels reais; esse caso isolado não demonstra disponibilidade nacional. O smoke geográfico live continua obrigatório.
+- A fixture de interface sintética valida apenas renderização/overlay e não conta como dado ou evidência científica.
+
 ## Outros
 - Unidades radar experimentais com nomes neutros (sem “candidata a vegetação/cultivo”), conforme V87.36.
 
 ## Prevenção de recorrência
 - Build Windows executa `Enform Verde.exe --network-check` na cópia limpa: exige pixels reais CBERS-4A e Sentinel-1 em Sinop com TLS verificado; falha reprova o build.
-- Teste `tests/test_tls_trust_contract.py`: pacote combinado inclui raízes do sistema e é usado pelo leitor SAR; verificação nunca desligada.
+- Teste `tests/test_tls_trust_contract.py`: bundle combinado de requests/Python; GDAL usa Schannel nativo no Windows e bundle compartilhado nos demais sistemas; verificação nunca desligada.
 
 ## Serapilheira entra no total (V87.40)
 - Floresta Estacional Sempre-Verde do norte de Mato Grosso (ex.: Sinop): estimativa hierárquica regional com erro de transferência QUANTIFICADO. Dois inventários gravimétricos locais independentes (Silva et al. 2009, Acta Amazonica, ~50 km de Sinop: 5,12 Mg/ha; Volpato 2024, UFRRJ: 8,70 Mg/ha) definem a média; a heterogeneidade entre 10 sítios florestais brasileiros independentes (τ = 0,396 em ln) define a incerteza de transferência; fração de carbono U(0,42; 0,50).

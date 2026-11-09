@@ -1,3 +1,8 @@
+## Registro de continuidade V87.50 (09/11/2026)
+O código 3.26.6 está publicado em `patches-3.26.6` (PR #51 permanece draft; `main` não foi alterada). SHA de código auditado `0383178fed1d5cd16ce0b1bd0024dc3a153838d5`: correção de Schannel/GDAL sem desativar TLS; leitura live de pixels S1 em Sinop e S2 em Tapajós; regressão completa do Actions executou 994 testes e passou. O build Windows ainda estava em execução no momento do registro; não anunciar EXE/ZIP antes do fim verde no mesmo SHA com autoteste limpo e hashes.
+
+A homologação científica nacional continua reprovada por falta de evidência independente (`accepted_count=0`). Rótulos PRODES/TerraClass só sustentam concordância cartográfica experimental, nunca validação de campo nem extrapolação nacional. Dados/modelos testados e homologados aplicáveis têm prioridade; experimental é contingência delimitada; sem base compatível, N/D com motivo. Carbono e fertilidade do solo ficam restritos a dados brasileiros compatíveis da Embrapa Solos/PronaSolos; fontes estrangeiras/globais, inclusive SoilGrids, não são utilizáveis nem para comparação ou sensibilidade. Histórico precedente preservado.
+
 # CHECKPOINT V87.32 — rótulo e teste live da interface (06/11/2026)
 
 A build Windows do SHA `443aa5dfb5cf3ef782c8ab4b86f7279b044ac2c2` passou pelas verificações de fonte e avançou até o contrato GUI. A execução falhou porque o workflow ainda exigia o texto antigo “Esri World Imagery”; o fluxo atual rotula Sentinel-2 e CBERS-4A/WFI, e o contrato agora verifica esses rótulos e a saída live do fallback. Também atualizei a mensagem do teste para refletir CBERS-4A. Os sete contratos focados da camada óptica passaram no SHA anterior, mas a build e a suíte completa precisam ser repetidas no novo SHA.

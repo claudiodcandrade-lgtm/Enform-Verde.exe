@@ -1,3 +1,8 @@
+## Sincronização V87.50 — 09/11/2026
+Esta atualização não relaxa os requisitos de fonte, profundidade, unidade ou cobertura. Carbono do solo (0–100 cm) e fertilidade devem usar exclusivamente dados brasileiros específicos da Embrapa Solos/PronaSolos, compatíveis com atributo, unidade, profundidade e interseção efetivamente coberta. Dados globais ou estrangeiros, inclusive SoilGrids, são inaplicáveis: não usar para preencher lacuna, substituir profundidade, calibrar, comparar, fazer análise de sensibilidade ou validar. Sem camada nacional adequada e proveniência/incerteza defensáveis, reportar N/D com motivo e lacuna exata; não transformar indisponibilidade em zero.
+
+O CI Windows confirmou que o probe de horizontes reais PronaSolos 0–100 cm e a produção/proveniência da série PAM completaram no SHA `0383178fed1d5cd16ce0b1bd0024dc3a153838d5`; isso testa disponibilidade de artefatos, não homologa acurácia nacional dos mapas de solo. A regressão geral executou 994 testes e passou. Build Windows seguia em execução; ausência de resultado final impede anunciar EXE/ZIP.
+
 # Enform Verde — Especificação técnica do carbono orgânico do solo até 100 cm
 Data: 28/10/2026 (UTC−3)
 
