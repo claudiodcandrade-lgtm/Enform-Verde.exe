@@ -306,3 +306,6 @@ A atualização de classificação e fundo visual não altera os contratos de so
 
 ## CHECKPOINT V87.42 — 08/11/2026 — decisões do proprietário incorporadas (3.26.6)
 - 1A painel calibrado; 2B qualquer acurácia medida aceita como experimental com n e IC95% (MIN_VALIDATION=1); 3C PAM 2015–2024; 4B altura SAR publicada experimental com erro propagado (`validation_tier=experimental_published`); 5B previsão sem vigor rotulada; 6A serapilheira hierárquica para todas as florestais com ≥1 estudo (ex. FOD ES 2,03 tC/ha, IP90% 0,73–5,66); 7B incerteza total σ² = (Σσ_biomassa)² + σ_serap² + σ_solo²; 8A unidades radar só no mapa/painel. Prioridade seguinte: classificador SAR semântico sempre disponível (roteiro B6) e coeficientes verificáveis de altura por cultura.
+
+## Sincronização V87.44 — estado da publicação do programa (08/11/2026)
+A branch 3.26.6 foi publicada no GitHub (commit remoto `d92a91371007b2adb7bf0c6839197f610298e33c`). Esta atualização registra somente o estado de publicação: não altera dados, camadas, métodos, profundidades ou critérios de aceitação de solo. O build Windows e o artefato executável seguem pendentes; os resultados de carbono do solo continuam sujeitos às fontes, interseções, cobertura e incerteza documentadas acima.

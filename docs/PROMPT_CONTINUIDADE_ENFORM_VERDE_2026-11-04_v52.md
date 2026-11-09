@@ -675,3 +675,10 @@ O proprietário autorizou PRODES/TerraClass como rótulos cartográficos somente
 
 Ordem de prioridade operacional (decisão 08/11/2026): primeiro modelos/dados testados e homologados compatíveis com AOI, data e sensor; experimental apenas como contingência explicitamente identificada, com métricas e limites; sem rota elegível, N/D com motivo. O modelo experimental não substitui nem sobrepõe uma rota homologada.
 Proveniência e incerteza: o relatório do treino cartográfico inclui SHA-256 do raster SAR, referência TerraClass e modelo, grade/CRS, e IC95% de precisão/recall por bootstrap de blocos espaciais. PRODES está registrado como contexto; não é usado como rótulo de classe agrícola (`prodes_used_as_label=false`). Esses intervalos medem concordância cartográfica, nunca acurácia de campo.
+
+## CHECKPOINT V87.44 — 08/11/2026 — branch 3.26.6 publicada (build pendente)
+A branch `patches-3.26.6` foi publicada no repositório `claudiodcandrade-lgtm/Enform-Verde.exe` pela integração GitHub; o HEAD da versão de código publicada antes desta sincronização documental era `d92a91371007b2adb7bf0c6839197f610298e33c`. A sequência contém seis commits com os conteúdos V87.39–V87.43 e a sincronização documental. Os SHAs remotos foram recriados pela API do GitHub e diferem dos SHAs da cópia local; os hashes dos arquivos do classificador e da especificação Word foram comparados e coincidem.
+
+O acesso de leitura/escrita pela integração GitHub está operacional. A autenticação de `git push` no shell desta sessão continua indisponível, mas não impediu a publicação. O commit não tem verificações de CI registradas (`statuses=[]`); o build Windows/EXE e o artefato ZIP não foram executados/gerados nesta etapa. Não declarar a versão como build validado nem homologado.
+
+O gate científico permanece fail-closed: modelos e dados testados/homologados aplicáveis têm prioridade; a rota PRODES/TerraClass é apenas experimental, opt-in e ainda sem treinamento real incorporado à inferência. Onde não existir rota sustentada, manter N/D com motivo.

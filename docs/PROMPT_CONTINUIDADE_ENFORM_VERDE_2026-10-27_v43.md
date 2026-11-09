@@ -610,3 +610,10 @@ A versão vigente do prompt e da especificação está em V87.38. Aplicar a sequ
 ## Histórico — V87.43 (08/11/2026)
 Decisão do proprietário: PRODES/TerraClass aceitos como rótulos cartográficos para treinamento experimental. O novo módulo `terraclass_sar_experiment.py` avalia concordância com mapas em blocos e não classifica como validação de campo. TerraClass 2024 fornece referência de Amazônia e Cerrado (não cobre todos os biomas e não distingue culturas individuais); PRODES registra supressão primária, não o uso posterior. Treino real, integração à inferência e validação independente permanecem pendentes. Outros biomas, altura e vigor ficam N/D com motivo onde não houver fonte/modelo compatível.
 Prioridade: modelos testados/homologados compatíveis primeiro; experimental somente como contingência claramente rotulada; N/D com motivo se nenhuma rota for aplicável.
+
+## CHECKPOINT V87.44 — 08/11/2026 — branch 3.26.6 publicada (build pendente)
+A branch `patches-3.26.6` foi publicada no repositório `claudiodcandrade-lgtm/Enform-Verde.exe` pela integração GitHub; o HEAD da versão de código publicada antes desta sincronização documental era `d92a91371007b2adb7bf0c6839197f610298e33c`. A sequência contém seis commits com os conteúdos V87.39–V87.43 e a sincronização documental. Os SHAs remotos foram recriados pela API do GitHub e diferem dos SHAs da cópia local; os hashes dos arquivos do classificador e da especificação Word foram comparados e coincidem.
+
+O acesso de leitura/escrita pela integração GitHub está operacional. A autenticação de `git push` no shell desta sessão continua indisponível, mas não impediu a publicação. O commit não tem verificações de CI registradas (`statuses=[]`); o build Windows/EXE e o artefato ZIP não foram executados/gerados nesta etapa. Não declarar a versão como build validado nem homologado.
+
+O gate científico permanece fail-closed: modelos e dados testados/homologados aplicáveis têm prioridade; a rota PRODES/TerraClass é apenas experimental, opt-in e ainda sem treinamento real incorporado à inferência. Onde não existir rota sustentada, manter N/D com motivo.

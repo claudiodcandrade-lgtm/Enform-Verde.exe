@@ -30,3 +30,8 @@ Status: build experimental pré-campo; não é homologação científica (gate i
 - Ferramenta separada para treino SAR com rótulos TerraClass 2024 em categorias amplas e validação espacial reportada somente como concordância com mapa.
 - Não instala pesos, não integra inferência padrão, não representa validação de campo e não altera áreas/estoques existentes.
 - Modelo homologado mantém prioridade; experimento só como contingência; demais áreas retornam N/D com motivo. TerraClass cobre Amazônia/Cerrado; coeficientes de altura por cultura ainda não instalados.
+
+## V87.44 — publicação da branch (08/11/2026)
+- Branch `patches-3.26.6` publicada no GitHub; HEAD de código publicado antes deste checkpoint documental `d92a91371007b2adb7bf0c6839197f610298e33c`.
+- Conteúdo remoto do classificador experimental e da especificação Word conferido contra os blobs locais.
+- Sem status de CI no commit; build Windows, autoteste do EXE e pacote ZIP não foram produzidos nesta etapa. Esta atualização não declara liberação final nem homologação científica.
