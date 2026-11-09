@@ -1,0 +1,363 @@
+Warning: truncated output (original token count: 53783)
+Total output lines: 1195
+
+# V87.44 — branch 3.26.6 publicada; build pendente (08/11/2026)
+
+A branch `patches-3.26.6` foi publicada em `https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/tree/patches-3.26.6`. HEAD da versão de código publicado antes desta sincronização documental: `d92a91371007b2adb7bf0c6839197f610298e33c`. A integração GitHub publicou seis commits; seus SHAs podem diferir da cópia local recriada via API. Os blobs do módulo `terraclass_sar_experiment.py` e da especificação Word foram comparados com os arquivos locais.
+
+O commit não possui verificações de CI registradas. Build Windows, teste `--network-check` no EXE e ZIP de distribuição não foram executados/gerados nesta etapa. Não anunciar a versão como build validado. O gate científico continua fail-closed; dados/modelos testados e homologados aplicáveis têm prioridade. PRODES/TerraClass permanece rota experimental opt-in, sem treinamento real/inferência padrão; sem evidência elegível, N/D com motivo.
+
+---
+
+# CHECKPOINT V87.42 — 08/11/2026 — decisões do proprietário incorporadas (3.26.6)
+- 1A painel calibrado; 2B qualquer acurácia medida aceita como experimental com n e IC95% (MIN_VALIDATION=1); 3C PAM 2015–2024; 4B altura SAR publicada experimental com erro propagado (`validation_tier=experimental_published`); 5B previsão sem vigor rotulada; 6A serapilheira hierárquica para todas as florestais com ≥1 estudo (ex. FOD ES 2,03 tC/ha, IP90% 0,73–5,66); 7B incerteza total σ² = (Σσ_biomassa)² + σ_serap² + σ_solo²; 8A unidades radar só no mapa/painel. Prioridade seguinte: classificador SAR semântico sempre disponível (roteiro B6) e coeficientes verificáveis de altura por cultura.
+
+---
+
+# CHECKPOINT V87.41 — 08/11/2026 — roteiro único de correções e regras para agentes (3.26.6)
+- `docs/ROTEIRO_CORRECOES_ENFORM_VERDE_2026-11-08.md` (A processo, B SAR/mapeamento, C óptico, D carbono, E agricultura, F validação; critérios de aceite) e `AGENTS.md`/`CLAUDE.md` com regras obrigatórias: um agente por branch; código e testes no mesmo commit com suíte completa verde antes do push; documentação a cada passo; MapBiomas só histórico; N/D nunca 0; limiares científicos só por decisão do proprietário; TLS nunca desligado; padrão visual; EXE só com build verde e checagens.
+- Próximo item técnico prioritário: E4 (séries PAM longas — SIDRA 5457 desde 1974, verificado) e B3/E1 (classificador SAR semântico validado). Decisão pendente do proprietário: B5 (critério de aceite do classificador).
+
+---
+
+# CHECKPOINT V87.40 — 08/11/2026 — serapilheira entra no total com erro de transferência quantificado (3.26.6; NÃO homologação)
+- `regional_litter_hierarchy.py`: ln L* = média ln dos sítios locais da fitofisionomia + t·τ·√(1+1/k); τ = DP ln entre 10 sítios florestais brasileiros independentes (0,396); C = L*·U(0,42;0,50); Monte Carlo. FESV norte de MT: Silva et al. 2009 (Acta Amazonica, ~50 km de Sinop, 5,121 Mg/ha) + Volpato 2024 (8,70 Mg/ha) → 3,08 tC/ha, IP90% 1,27–7,48, `include_in_total=True`, origem `INVENTARIO_REGIONAL_HIERARQUICO`. Substitui o registro “NÃO ESTIMADO” como primeira opção para FESV; só em estrato nativo confirmado.
+- Pendente: ampliar sítios gravimétricos verificados por fitofisionomia; calibrar massa/espessura para usar o IFN.
+
+---
+
+# CHECKPOINT V87.39 — 08/11/2026 — 3.26.6-PRECAMPO-EXPERIMENTAL — causa raiz das falhas de pixel SAR/CBERS no Windows (NÃO homologação)
+- Base `829a01d` (3.26.5/V87.38). Sintoma Sinop: SAR `ALL_CONFIGURED_RTC_PROVIDERS_FAILED_PIXEL_READ_OR_TEMPORAL_QA` e CBERS-4A sem imagem, com catálogos respondendo.
+- Causa: GDAL/libcurl (rasterio) não usa o repositório de certificados do Windows (raízes de antivírus/proxy com inspeção HTTPS); `recent_sar_landcover` não recebia CA. Correção: `tls_setup.py` (certifi + Windows ROOT/CA + sistema → REQUESTS_CA_BUNDLE, SSL_CERT_FILE, CURL_CA_BUNDLE, GDAL_CURL_CA_BUNDLE; `GDAL_HTTP_UNSAFESSL=NO`), chamado no início do `desktop_app`; leitor SAR usa `gdal_env()`.
+- Evidência com proxy TLS e verificação ligada: código 3.26.5 → 0 cenas (“self-signed certificate in certificate chain”); corrigido → 12 cenas Sentinel-1 de Sinop (31/10/2026), unidades radar 278,8/457,5/948,4 ha, CBERS-4A 27/10/2026, `--network-check` 170.820 pixels VV/VH.
+- Prevenção: build Windows roda `Enform Verde.exe --network-check` (pixels reais CBERS-4A e Sentinel-1 em Sinop, TLS verificado; falha reprova); `tests/test_tls_trust_contract.py`; unidades radar com nomes neutros.
+- Pendências inalteradas: classificador SAR semântico validado, altura validada para vigor combinado, serapilheira por inventários regionais/IFN/gravimetria, dados independentes para o gate.
+
+---
+
+# CHECKPOINT ATUAL V87.32 — 06/11/2026 — 3.26.4-PRECAMPO-EXPERIMENTAL
+
+Este checkpoint substitui V87.31 quanto ao estado do build; preserva o histórico abaixo.
+
+## Build e versão confirmados
+- PR #50, branch `feature/agricultural-identification-native-carbon`, SHA `f204678e7b4ad8e3df1c398981408ec80040f887`; versão `3.26.4-PRECAMPO-EXPERIMENTAL`.
+- Workflow Windows `42229609170` concluiu sucesso no SHA exato. Testes de painéis `42229609232` e contrato pre-field `42229609202` também passaram. Etapas bem-sucedidas incluem testes nativos/estratificação, fallback Pantanal, contrato GUI, Sentinel-2 Tapajós, amostras ópticas nos biomas/extremos, processamento Sentinel-1 e fallback L-band no Tapajós, regressões de IBGE ZIP/cache e fitoregião, integridade SICAR, gate fora da Amazônia/Cerrado, pixels ALOS/PALSAR quantitativos no Cerrado, runtime empacotado e autoteste do EXE em pasta limpa.
+- Artefato Windows: `Enform-Verde-Windows-v3.26.4-PRECAMPO-EXPERIMENTAL`; ID `13508918148`; 526.583.238 bytes; digest ZIP SHA-256 `f60670b6beb5f311cc4e086299be064243cb81063e90dacbdd45e8cfd99a5b2c`. Fonte SHA: `f204678e7b4ad8e3df1c398981408ec80040f887`; SHA-256 do EXE `03166368f669b068c147f87e273fde54848ffec078012f45ccdb4e13eeae8c65`.
+- Download: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/42229609170/artifacts/13508918148. Extrair o ZIP completo antes de executar.
+- PR permanece aberta/draft. O gate científico independente (`42229609468`) falhou fail-closed; isto é separado do build técnico. Não alegar homologação científica nacional.
+
+## Prevenção de recorrência — contratos obrigatórios
+Manter e executar esses testes em todo SHA de distribuição. Corrigir a causa raiz; não suprimir o teste nem fazer fallback que mascare falha.
+1. `GUI contract test` e `Live Sentinel-2 polygon preview — actual Tapajos KMZ`: polígono preservado, preview com pixel real ou motivo N/D/erro, botão de análise e mapa sem bloquear funções independentes.
+2. `Live optical background smoke — Brazilian biomes and geographic extremes`: Sentinel-2/CBERS-4A com proveniência; nunca rotular raster IBGE como imagem de satélite. Amostras não comprovam cobertura wall-to-wall nem primeira abertura offline.
+3. `Official IBGE ZIP transport/cache regression` e `Official IBGE phytoregion classification — real Tapajos AOI`: transporte/cache válido e legenda IBGE nomeia fitofisionomias potenciais/intersectadas sem confirmar presença atual.
+4. `Offline SICAR exact-code integrity regression`: códigos/IDs sem perda ou normalização indevida.
+5. Contratos de interseção solo: polígono AOI, pedologia e carbono separados; SOC apenas de 0–100 cm com unidade, profundidade e fonte. Falha ou ausência não vira zero.
+6. `Native-only stratification and confidence regression tests`, `Pantanal fallback tests`, e processamento SAR live: área nativa/agro/indeterminada fecha sem chamar mapa anual de observação atual; sensor, data, máscara e pixels preservados; fallback regional não declara classe validada.
+7. Testar abertura do EXE copiado para pasta limpa e caminhos com cwd diferente; conferir versão/SHA e hashes. Em qualquer regressão recorrente, parar release, corrigir e reconstruir; não publicar pacote anterior como se contivesse o conserto.
+
+## Pendências que continuam verdadeiras
+A execução bem-sucedida destes contratos prova os cenários testados no SHA, não ausência de defeitos em todos os imóveis do Brasil. Falta manifesto de evidências independentes aceito para validação científica por bioma/compartimento e para classes agrícolas/nativas, vigor e safra. Dados SAR ou ópticos podem faltar por AOI/época; usar N/D com motivo e incerteza, não interpolação inventada. A homologação científica deve continuar bloqueada até evidências independentes reais e auditáveis.
+
+---
+
+# CHECKPOINT ATUAL V87.31 — 06/11/2026 — 3.26.4-PRECAMPO-EXPERIMENTAL
+
+Este checkpoint prevalece sobre os estados anteriores sem apagar o histórico.
+
+## Situação confirmada do repositório e da versão
+- PR #50, branch `feature/agricultural-identification-native-carbon`, HEAD `f204678e7b4ad8e3df1c398981408ec80040f887`.
+- `desktop_app.py` define `APP_VERSION="3.26.4-PRECAMPO-EXPERIMENTAL"` (blob `4c5753a3fda2b6acb79005329b695a02d513da04`). O pacote 3.26.3 do SHA `a16a3323...` é anterior e não representa este código.
+- No HEAD atual, Dashboard dual (`42229609232`) e contratos pre-field (`42229609202`) passaram; gate científico independente (`42229609468`) falhou em modo fail-closed; Build Windows (`42229609170`) está em execução. Não declarar a 3.26.4 concluída enquanto o build terminar e o artefato do mesmo SHA for verificado.
+- PR permanece aberta e draft. Não mesclar. A falha científica não invalida os testes de engenharia, mas impede qualquer alegação de homologação científica nacional.
+
+## Retomada após interrupção da conversa
+O usuário relata quedas de conexão e pede continuidade e entrega explícita de prompt/especificação. Sempre registrar um checkpoint conciso e autossuficiente após mudança material, incluindo versão, SHA, workflows, limitações e próxima ação; não depender de mensagens anteriores do chat.
+
+## Próximas ações operacionais
+1. Acompanhar o workflow Windows `42229609170` até conclusão e conferir todos os passos, SHA, versão, artefato, tamanho, digest ZIP e hash do EXE. Se falhar, obter o log do passo e corrigir a causa no branch; depois rodar CI novamente.
+2. Confirmar se o build 3.26.4 incorpora a leitura da prévia Sentinel-2/CBERS-4A descrita em V87.29; validar fonte/legenda e os casos determinísticos e live no SHA atual. O relato local de dez AOIs CBERS e o teste Tapajós não equivalem a cobertura contínua nacional.
+3. Usar artefato apenas se seu `head_sha` for exatamente `f204678e7b4ad8e3df1c398981408ec80040f887` (ou o novo SHA após correções) e se testes e autoteste Windows tiverem sucesso. Não reutilizar ZIP de SHA anterior.
+4. Atualizar este prompt e a especificação na mesma rodada, preservando o histórico, com o resultado final do build e identificadores verificáveis. Disponibilizar o link do artefato junto dos hashes.
+5. Manter bloqueio científico independente: sem evidência observacional aceita, pares campo–pixel e validação modular independente, status permanece experimental/pré-campo; sem dados, declarar N/D e incerteza não estimável.
+
+## Critério de comunicação
+Separar claramente: (a) build Windows experimental aprovado, (b) disponibilidade e execução das fontes por AOI, (c) validação operacional nacional por tiles, e (d) homologação científica independente. Aprovação em uma dessas dimensões não implica aprovação nas demais.
+
+---
+
+# ESTADO ATUAL V87.29 — IMAGEM DE FUNDO SENTINEL-2 OU CBERS-4A
+Atualizado em 06/11/2026. A imagem de fundo dos polígonos deve ser uma prévia óptica real Sentinel-2 ou CBERS-4A/WFI obtida por pixels. O raster cartográfico IBGE deixa de ser fallback visual.
+
+## Requisito implementado localmente, pendente de commit e CI
+- A ordem é Sentinel-2 L2A via Earth Search; Sentinel-2 via Planetary Computer; CBERS-4A/WFI L4-SR via catálogo STAC oficial do INPE. A terceira rota lê os COGs RGB BAND15/BAND14/BAND13 e CMASK, reprojeta os pixels para a tela, prioriza pixels claros (CMASK=127) e preenche lacunas com pixels observados, mantendo visível a proveniência e a faixa de datas. Resolução nativa CBERS-4A/WFI: 55 m.
+- A interface não substitui uma cena ausente por raster IBGE, NASA GIBS ou Esri. A última imagem real Sentinel-2/CBERS-4A obtida para a mesma AOI e viewport pode ser reutilizada de cache local. Na primeira abertura, sem rede e sem acesso às fontes, nenhuma solução remota pode garantir a existência de pixels; nesse caso o app mantém apenas o contorno e informa a falha, sem apresentar mapa cartográfico como satélite.
+- A prévia é apenas pano de fundo; não fornece pixels analíticos para identificação de culturas, SAR, biomassa ou carbono. Fonte, sensor, data/faixa temporal e resolução devem permanecer na legenda.
+- A leitura live dos COGs oficiais CBERS-4A/WFI passou em dez AOIs: Tapajós/Amazônia (2026-10-27), Brasília/Cerrado (2026-10-30), Petrolina/Caatinga (2026-10-29), Campinas/Mata Atlântica (2026-10-25), Corumbá/Pantanal (2026-10-22), Bagé/Pampa (2026-10-31), extremos leste (2026-10-28), oeste (2026-10-26), norte (composição 2026-10-13 a 2026-10-29) e sul (2026-10-31). São dez amostras e não uma prova de cada pixel do Brasil. O HTTP 502 temporário nos extremos norte/sul passou após a inclusão de retry com backoff. A imagem do Tapajós foi inspecionada: RGB real, máscara e contorno alinhado.
+- O teste encontrou e corrigiu duas falhas efetivas: GDAL precisava da cadeia de certificados CA para ler os COGs e Rasterio não aceitava `NaN` como fill de banda `int16`; as bandas agora são convertidas a float antes de preencher nodata. A leitura usa apenas a janela da AOI/viewport, para evitar baixar a cena inteira. A legenda informa quando pixels sob nuvens precisaram preencher lacunas. `py_compile` e os três contratos `test_sentinel2_scene_failover_contract.py` passaram localmente.
+- Ainda sem commit, novo SHA ou workflows para esta alteração. Não há nova versão liberada. PR #50 deve continuar sem promoção até regressões e build Windows no mesmo SHA; os gates nacionais Sentinel-1 e científicos continuam pendentes.
+
+---
+
+# ESTADO ATUAL V87.27 — FALLBACK SAR EM IMPLEMENTAÇÃO
+Atualizado em 06/11/2026. Este checkpoint acrescenta os commits de implementação e corrige qualquer leitura de que o fallback já esteja integrado ou a cobertura nacional comprovada.
+
+## Estado do código
+PR #50, branch feature/agricultural-identification-native-carbon, HEAD verificado 052e975d86fe99dae9e8ca601eb5a8daa4af41fc.
+- 32f795f0: adiciona radar_contingency.py, com descoberta ASF de NISAR L2 GCOV e ALOS L-band, janela de 30 dias, autenticação Earthdata para download, leitura por processadores existentes e manifesto em output_dir/alternative_sar/radar_alternative_manifest.json.
+- 052e975d: adiciona tests/test_radar_contingency.py; quatro contratos determinísticos foram executados localmente e passaram; os módulos alterados passaram em py_compile.
+- Limite atual: radar_contingency.py ainda não está chamado por recent_sar_landcover.py. Portanto, o fallback ainda não está operacional no fluxo de monitoramento. A conexão preparada localmente ainda não foi commitada nem validada e não deve ser descrita como integrada.
+- As rotas SAOCOM, NISAR S, RCM, NovaSAR, EOS-04, ALOS-4 e comerciais ainda não possuem adaptadores operacionais nesse fluxo. A busca ASF de NISAR/ALOS não é pesquisa mundial completa; sem rotas restantes, não declarar N/D_DADOS como ausência nacional.
+- Workflows no SHA atual: painéis 42146791703 e Windows 42146791710 em execução; contratos pré-campo 42146791701 sucesso; homologação científica independente 42146791700 reprovada. A execução local das regressões do monitoramento não pôde ser feita neste ambiente porque geopandas/rasterio não estão instalados. A verificação Windows é necessária para fechar isso.
+- Nenhum manifesto nacional foi produzido. O teste live de Sentinel-1 permanece limitado ao Tapajós. Sem cobertura nos seis biomas, extremos, limites de cena e lacunas temporais, não há validação nacional.
+- Nenhum novo ZIP foi liberado. A versão 3.26.3 permanece experimental; a homologação científica independente continua reprovada.
+
+Próximo passo: após o workflow Windows terminar, integrar o fallback com estados ACESSO_RESTRITO/ERRO_TECNICO/N/D_VALIDACAO sem esconder falhas, atualizar imports/empacotamento e testes de caminhos; depois executar a avaliação nacional e atualizar este prompt e a especificação a cada alteração material. Só liberar quando todos os gates no mesmo SHA forem comprovados.
+
+---
+# ESTADO ATUAL V87.26 — HIERARQUIA SAR NACIONAL E PESQUISA DE FONTES
+Atualizado em 06/11/2026. Este bloco é o estado atual e prevalece sobre status históricos abaixo.
+
+## Estado verificado do repositório
+PR #50, branch feature/agricultural-identification-native-carbon, HEAD verificado 45110ed0cd2d08f6683f530e8f5d2ae63b054d00. Workflows associados consultados: Windows 42136429276 sucesso; painéis 42136429200 sucesso; contratos pré-campo 42136429167 sucesso; homologação científica independente 42136429187 falha. O teste live Sentinel-1 VV/VH cobre somente a AOI do Tapajós. Isso não comprova cobertura operacional em todo o Brasil. Não houve alteração de código nesta atualização documental nem nova versão liberada. O artefato 3.26.3 continua pré-campo experimental, não é uma nova liberação.
+
+## Resultado da pesquisa mundial de fontes
+A hierarquia de sensores precisa ser integrada ao fluxo recent_sar_landcover.py. Hoje esse fluxo busca Sentinel-1 RTC em MPC e INPE; sar_pipeline.py já descobre NISAR/ALOS em ASF e processa NISAR GCOV em outro fluxo, mas o fluxo de monitoramento recente ainda não executa esse fallback. A existência desses módulos ou de um catálogo não prova pixels lidos na AOI.
+
+Ordem de busca recomendada por AOI/tile:
+1. Sentinel-1 federado: INPE RTC/GRD; MPC RTC; Copernicus Data Space; ASF/OPERA RTC; AWS Open Data GRD; Google Earth Engine COPERNICUS/S1_GRD quando conta, quota e termos permitirem. Provedores duplicados da mesma missão são rotas de resiliência, não sensores independentes.
+2. NISAR L-band no ASF DAAC/Earthdata e NISAR S-band no Bhoonidhi/ISRO. Consultar produto, data, banda, polarização e footprint. Integrar aquisição e leitura de pixels ao fluxo de monitoramento. Nunca renomear canais NISAR como VV/VH Sentinel-1.
+3. SAOCOM-1A/1B L-band via catálogo/plano de aquisição CONAE; cobertura global é informada pelo plano desde 2022, mas cada cena, data, modalidade, acesso e licença deve ser verificada.
+4. Outras fontes abertas ou acessíveis mediante cadastro/ordem: RCM C-band via EODMS; NovaSAR-1 S-band e EOS-04/RISAT-1A via Bhoonidhi; ALOS-2/PALSAR-2 e ALOS-4/PALSAR-3 L-band via JAXA/AUIG4 e distribuidores. Não presumir acesso universal ou aquisição recente sem metadados específicos da AOI.
+5. Alternativas comerciais configuráveis: RADARSAT-2 C-band; TerraSAR-X/TanDEM-X/PAZ X-band; COSMO-SkyMed/CSG X-band; ICEYE, Capella, Umbra e Synspective StriX X-band. Usar arquivo ou tasking somente com conta, licença, credenciais e autorização de custo; nunca assumir compra automática. Registrar custo/termo antes de qualquer operação paga.
+6. ESA Biomass P-band é complementar para estrutura/biomassa florestal dentro do domínio do produto; não é substituto genérico da série VV/VH de monitoramento de culturas. ROSE-L e missões futuras não são fonte operacional até lançamento, dados publicados e acesso confirmados.
+
+## Contrato para implementação
+A busca deve ser por tile e permitir mosaico entre cenas/provedores, com reprojeção e máscara de AOI. Antes de usar pixels, verificar cobertura espacial, dados nodata, CRS, resolução, escala/unidade, data de aquisição (não publicação), órbita, polarização, incidência, calibração e QA. Reprojetar não é harmonizar sensores. Modelo/classificador tem que ser específico ou validado para sensor, produto, banda, polarização, resolução, domínio e alvo. Sem essa validação, retornar medição SAR experimental e N/D_VALIDACAO, sem identificar cultura/nativo nem estimar produtividade.
+
+Registrar por provider e tile: consulta concluída/incompleta, ID de cena, timestamp UTC, cobertura e contagem de pixels válidos, máscara, transformação, cenas rejeitadas, falhas técnicas, status de autenticação/licença e fonte alternativa usada. N/D_DADOS só depois de busca completa das fontes aplicáveis; ERRO_TECNICO para falha de API, credencial, download, decoder ou reprojeção; N/D_VALIDACAO quando há pixels mas não modelo válido; ACESSO_RESTRITO quando uma rota licenciada exige autorização.
+
+## Avaliação nacional e bloqueio de versão
+Criar manifesto de cobertura nacional com tiles do limite oficial do Brasil e interseções dos seis biomas, incluindo extremos norte/sul/leste/oeste, bordas de cena, órbitas ascendentes/descendentes, áreas com e sem aquisição recente e mosaicos multi-cena. Indexar footprints de todos os catálogos com janela temporal; para cada tile com candidato, fazer leitura real de pixels e registrar fração válida. A avaliação deve distinguir: consulta nacional operacional, pixels observados por fonte, tiles sem aquisição e tiles com falha técnica. Um conjunto de pontos não prova todos os tiles.
+
+Executar também testes determinísticos sem rede (ordem, datas, erros, mosaico, máscaras e paths) e compilação de todo o repositório. Validar imports, nomes de módulos, resolução de caminhos a partir de diretório diferente do cwd, cache/output gravável, Windows, ausência de token/URL assinada nos logs, regressões, EXE em pasta limpa, ZIP e hashes. Os arquivos de saída devem usar diretório do usuário/cache definido; não presumir cwd nem paths relativos ao script congelado.
+
+Porta: não liberar versão nacional enquanto o fluxo alternativo não estiver integrado e testado, o manifesto nacional não for produzido, a CI não passar no SHA final e o EXE não for testado em pasta limpa no mesmo SHA. Se algum tile não tiver observação em qualquer fonte aprovada, não preencher pixels artificialmente nem anunciar cobertura completa; registrar lacuna e manter bloqueio da alegação nacional. Gate científico permanece independente e reprovado até evidências observacionais independentes aceitas. Atualizar este prompt e a especificação após cada mudança material de código.
+
+## Fontes oficiais consultadas em 06/11/2026
+INPE Sentinel-1: https://data.inpe.br/dados/sentinel-1/
+Copernicus Data Space Sentinel-1: https://dataspace.copernicus.eu/data-collections/copernicus-sentinel-missions/sentinel-1
+ASF NISAR access: https://nisar-docs.asf.alaska.edu/access-overview/
+NASA/ASF NISAR public L-band: https://asf.alaska.edu/notices/nisar-l-band-data-now-publicly-available/
+ISRO NISAR S-band: https://www.isro.gov.in/NISARS_Band_SAR_Data_Products_Release.html
+CONAE SAOCOM catalog/acquisition plan: https://catalogos.conae.gov.ar/catalogo/catalogoSaocom.html
+CSA RCM data access: https://www.asc-csa.gc.ca/eng/satellites/radarsat/access-to-data/about.asp
+ISRO Bhoonidhi: https://bhoonidhi.nrsc.gov.in/bhoonidhi/home.html
+JAXA ALOS access: https://www.eorc.jaxa.jp/ALOS/en/alos-4/a4_data_e.htm
+Commercial/provider documentation: https://space-solutions.airbus.com/imagery/premium-access-satellite-imagery-data/ ; https://www.asi.it/en/earth-science/cosmo-skymed/ ; https://www.iceye.com/open-data-initiative ; https://docs.capellaspace.com/api/tasking/ ; https://umbra.space/open-data/ ; https://www.synspective.com/data/data-platform/
+
+---
+# ENFORM VERDE — PROMPT V87.21 — CONTINGÊNCIA DE SENSORES E GATES DE EVIDÊNCIA
+Data: 05/11/2026. Versão: 3.26.3-PRECAMPO-EXPERIMENTAL.
+Prioridade: garantir que um CAR ou KML/KMZ válido gere uma análise auditável mesmo quando o mapa online, fallback cartográfico ou diagnóstico territorial apresentem falha recuperável.
+
+CORREÇÕES EFETUADAS:
+- d99634cf: removida referência indefinida self.after(420,redraw) em desktop_app.py que interrompia _show_geom.
+- 41429e61: erro de _schedule_offline_map_fit isolado, map_preview_error registrado; diagnóstico IBGE continua.
+- e2a8a1d5: teste de regressão estrutural e cenário de exceção cartográfica criado.
+- 7367eb1d: corrigido SyntaxError do teste; Dashboard dual run 42042610110 falhou pelo erro anterior, e deve ser reexecutado com o teste corrigido.
+
+CHECKLIST OBRIGATÓRIO:
+1. Confirmar HEAD da branch, verificar byte-compile de TODO o repositório e teste tests/test_car_kml_map_setup_regression.py, CI completo e o log das falhas.
+2. Testar o mesmo KML e consulta CAR em Windows compilado, observar geometria persistente, diagnóstico IBGE e botão Executar análise funcional; não confundir perímetro carregado com análise executada.
+3. Validar que a falha de mapa não bloqueia carbono/solo/agricultura independente e que falhas de fonte são registradas como N/D com motivo, nunca zero.
+4. Conservar todos os requisitos anteriores de SAR, Sentinel-2 COG/RGB, solo 0–100 cm, pedologia/fertilidade, painel carbono e agricultura, estimativas pré-campo e trilha científica.
+5. Atualizar docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md, prompt histórico v43, especificação de solo e checkpoint do Word mantendo histórico.
+6. Compilar via PyInstaller, smoke test, SHA de fonte no executável, hashes ZIP/EXE e upload verificável; não anunciar versão concluída sem evidência no mesmo SHA.
+7. Separar aceitação técnica para testes em campo de homologação científica independente; sem medições fabricadas, sem IC95% falso, sem conversão de IBGE potencial em cobertura nativa comprovada.
+
+STATUS: correções de código publicadas; aprovação de todos os testes e novo EXE Windows ainda sujeitos a confirmação.
+
+---
+# HISTÓRICO DE CONTINUIDADE PRESERVADO
+
+# ENFORM VERDE — PROMPT CANÔNICO DE CONTINUIDADE V87.9 — 05/11/2026
+## Prioridade imediata: concluir 3.26.2-PRECAMPO-EXPERIMENTAL
+
+Este adendo é normativo e prevalece em caso de conflitos de estado sobre revisões históricas. Preservar integralmente o histórico abaixo.
+
+Repositório: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe
+PR #50; branch feature/agricultural-identification-native-carbon.
+HEAD observado em 05/11/2026 na consulta desta revisão: 0843784f525c5a324f2616d692339fcdf81bc083.
+
+ESTADO COMPROVADO: GitHub Actions associados ao HEAD retornaram action_required: Dashboard dual run 42032577431, fast contract run 42032577798, Windows build run 42032577602 e homologação científica run 42032577615. Isso NÃO é aprovação nem artefato pronto. Verificar se exige autorização de workflows ou outra intervenção de permissão; não substituir por testes sintéticos ou ocultar o impedimento.
+
+AÇÕES OBRIGATÓRIAS PARA FECHAMENTO:
+1. Verificar o HEAD do PR, os relatórios dos workflows e o motivo específico de cada action_required. Não presumir que a falha documental anteriormente narrada seja a falha vigente. Resolver o bloqueio conforme permissões disponíveis.
+2. Atualizar efetivamente docs/ESPECIFICACAO_TECNICA_COMPLETA.docx no GitHub para conter a string exata 3.26.2-PRECAMPO-EXPERIMENTAL. Manter em sincronia docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md, docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md e docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md; registrar checkpoint de revisão. Reaplicar verificação documental, não eliminar a asserção.
+3. Manter Sentinel-2 L2A RGB 10 m com prioridade Earth Search/AWS público, alternativa Planetary Computer e fallbacks NASA GIBS, Esri, IBGE offline. Google Maps Static exige chave configurada; não criar chave automaticamente. Registrar fonte e data.
+4. Priorizar leitura COG por janela HTTP range de AOI/viewport, reamostragem ao canvas e até três workers RGB, um para cada banda B02/B03/B04. Limitar memória, timeouts e paralelismo; validar CRS, nodata e fallback. Quadrantes só se superior em benchmarks.
+5. Preservar motor SAR científico em fluxo separado, prioridade BIOMASS P e X onde tecnicamente aplicáveis, alternativas L/C documentadas, sem derivar altura diretamente de retroespalhamento sem calibração. Manter IBGE para nomear fitofisionomias por interseção, não confirmar presença atual. Preservar carbono em AGB, raízes, necromassa, serapilheira e solo 0–100 cm, pedologia, fertilidade e monitoramento agrícola.
+6. Manter previsões experimentais pré-campo com fonte/modelo/incerteza/trace_sha256, medições em branco e N/D quando sem suporte; liberar software para aferição posterior, sem alegar homologação científica.
+7. Rodar regressão integral e byte-compile, smoke Windows e caso AOI real Tapajós no mesmo SHA, conferir build completo e manifesto SOURCE_SHA + SHA256 ZIP/EXE e disponibilidade de artifact. Somente então publicar novo link verificável.
+8. Não fazer commits concorrentes durante build final se a concorrência causar cancelamentos. Registrar evidências de aceitação técnica e separar gate científico.
+
+OBSERVAÇÃO: a conversa anterior relata 924 testes aprovados e um erro documental no DOCX; os números não foram reconfirmados para o HEAD atual. Até comprovação posterior, status da versão: CANDIDATA, NÃO LIBERADA.
+
+---
+# HISTÓRICO V87.7 PRESERVADO
+
+
+# REVISÃO V86 — 05/11/2026: PREVISÕES MODELADAS, VALIDAÇÃO FUTURA EM CAMPO E INTEGRIDADE DA LIBERAÇÃO
+
+**Repositório:** `claudiodcandrade-lgtm/Enform-Verde.exe`, PR #50, branch `feature/agricultural-identification-native-carbon`. **Versão-fonte:** 3.26.0-SOLO-SAFRA. Esta revisão preserva os requisitos das versões anteriores e descreve avanços de implementação, sem declarar o executável nem a acurácia de campo como validados.
+
+## Funcionalidade incorporada: estimativas modeladas para posterior afer…38783 tokens truncated…vo SHA. O workflow científico independente segue reprovado, `accepted_count: 0`, e não há validação SAR nacional em pixels.
+
+O processamento Sentinel-2 por prévia passou no teste live existente com o KMZ do Tapajós. Isso comprova apenas essa AOI e execução; a disponibilidade para cada imóvel depende de cenas recentes, cobertura, máscara de nuvem/sombra e leitura válida dos pixels. O relatório deve diferenciar prévia ausente por falta de cenas (N/D_DADOS) de falha de catálogo, acesso ou leitura (ERRO_TECNICO).
+
+Antes de qualquer nova liberação, executar no SHA final: compilação sintática de todos os módulos; suíte completa; testes de imports e caminhos a partir de CWD diferente; PyInstaller com import oculto; leitura real dos pixels alternativos onde Sentinel-1 falhar; autoteste do EXE numa cópia limpa; hashes e identidade do artefato. Em separado, executar avaliação nacional Sentinel-1 por tesselação que cubra os seis biomas, extremos norte/sul/leste/oeste, limites entre cenas, órbitas, mosaicos e lacunas temporais, lendo pixels VV/VH reais e publicando cobertura válida e lacunas por tile. O teste Tapajós, a validação do catálogo nacional e os testes contratuais não substituem essa matriz. A homologação científica independente permanece fail-closed e a nova versão não pode ser disponibilizada até a avaliação nacional solicitada passar.
+
+
+## CHECKPOINT V87.30 — BUILD WINDOWS EXPERIMENTAL NO SHA ATUAL (06/11/2026)
+
+### Estado conferido no repositório
+PR #50, branch `feature/agricultural-identification-native-carbon`, HEAD `a16a3323a81988e95db7ec7e6c84aaef429d2939`. O workflow Windows `42171224398` e o workflow de testes dos painéis `42171224460` concluíram com sucesso no mesmo SHA; os contratos pre-field `42171224433` também passaram. O build foi identificado como `3.26.3-PRECAMPO-EXPERIMENTAL`.
+
+O workflow Windows concluiu testes de regressão, leitura live da prévia óptica Sentinel-2 na AOI de Tapajós, amostra de fundo óptico em AOIs distribuídas por biomas e extremos brasileiros, processamento live de pixels Sentinel-1 VV/VH e ALOS/PALSAR HH/HV em Tapajós, leitura de pixels Sentinel-1 e ALOS/PALSAR no Cerrado, compilação PyInstaller, verificação do runtime empacotado e autoteste do EXE em pasta limpa. O teste Tapajós leu 128.484 pixels válidos em cada polarização Sentinel-1; o Cerrado leu 92.450 pixels Sentinel-1 e 16.200 pixels ALOS/PALSAR. Isso comprova essas execuções e áreas de teste, não cobertura contínua de todo imóvel ou território.
+
+Artefato Windows `Enform-Verde-Windows-v3.26.3-PRECAMPO-EXPERIMENTAL`, run `42171224398`, artifact ID `13482391784`, tamanho 526.583.425 bytes, digest ZIP SHA-256 `19345ad93fe65b02ab86c4aca1ebcc6b07bab502c68dee59d91124b3301aa1df`. SHA de origem: `a16a3323a81988e95db7ec7e6c84aaef429d2939`. SHA-256 do `Enform Verde.exe`: `19e44e5ae352da54d1c61687415994e59a52d9c04ce0e3d976f80f07972f39f6`. Baixar o artefato pelo run do GitHub Actions e extrair o ZIP inteiro antes de iniciar o executável.
+
+### Pendências para conclusão científica e operacional nacional
+O workflow independente `42171224396` continua reprovado fail-closed. Os testes técnicos e de processamento de pixels não substituem observações primárias licenciadas, pares campo–pixel, validação independente por bioma, compartimento, cultura, região, data e sensor, nem manifesto modular aceito. Permanecem por comprovar a transferência e incerteza dos modelos de AGB/altura, raízes, necromassa, serrapilheira e SOC 0–100 cm; classificadores atuais de culturas/nativa; vigor e previsão de safra operacional com validação temporal e espacial; e qualidade das rotas em AOIs fora das amostras. N/D permanece obrigatório quando o suporte não existe.
+
+A leitura de imagens em amostras nacionais não significa que qualquer imóvel terá cena disponível em qualquer data ou sem conexão. A disponibilidade depende de aquisição, nuvens, cobertura, catálogo, acesso e decodificação; o produto deve registrar fonte/data/cobertura e separar `N/D_DADOS`, `N/D_VALIDACAO` e `ERRO_TECNICO`. A matriz nacional de pixels SAR por tiles/órbitas/lacunas temporais e a garantia de resolução de imagem de fundo para qualquer AOI ainda não foram demonstradas integralmente.
+
+A PR #50 permanece aberta e em rascunho. O pacote pode ser disponibilizado como build técnico pré-campo experimental, associado estritamente ao SHA acima. Não declarar homologação científica nacional, não mesclar a PR enquanto seus critérios documentados de revisão e os gates científicos/operacionais não forem satisfeitos, e não reutilizar artefatos de outro SHA como equivalentes.
+
+### Próxima sequência
+1. Tratar o ZIP do SHA `a16a3323...` como versão experimental disponível, sem confundir os testes de engenharia com homologação.
+2. Publicar os relatórios de cobertura/pixels, manifestos de fontes e incertezas, matriz de lacunas por território, sensores, épocas e função.
+3. Obter, licenciar e auditar dados de referência independentes; desenvolver validação modular por domínio e executar novamente o gate fail-closed.
+4. Continuar correções em novo SHA; atualizar prompt e especificação a cada alteração de código, e repetir regressões, build, EXE e digest no mesmo SHA antes de substituir o pacote.
+
+
+## CHECKPOINT V87.36 — classificação SAR sem fallback MapBiomas e CBERS-4A prioritário (08/11/2026)
+
+### Causa identificada no caso Sinop — Fazenda Maria Eduarda
+O fluxo anterior informava que MapBiomas era referência anual, mas, quando não havia classificador SAR executável, ainda anexava os polígonos MapBiomas à lista de classes finais. Isso permitia que soja e formações florestais cartográficas determinassem as áreas atuais. No painel, a regra `native_status is not True` ainda agrupava `None` junto com uso não nativo, e ausência de máscara SAR podia ser convertida em 0 ha. Esses caminhos são proibidos. O texto do relatório da Fazenda Maria Eduarda mostra três conjuntos incompatíveis: fitofisionomia/legenda IBGE potencial, classes anuais MapBiomas e ocorrência atual sem máscara SAR validada. Eles não podem ser somados ou apresentados como a mesma observação.
+
+### Hierarquia obrigatória para unidades de mapeamento
+1. Tentar classificador orbital SAR por cultura e vegetação nativa, com pixels realmente lidos, datas, órbita, bandas/polarizações, máscara, CRS, resolução, proveniência e validação independente aplicável. O classificador SAR treinado e validado tem precedência sobre qualquer mapa temático histórico.
+2. Na ausência de classificador semântico aceito, buscar as séries SAR orbitais configuradas (Sentinel-1 RTC VV/VH; MPC e INPE em ordem, com paginação, tentativas e renovação de acesso) e formar unidades de assinatura radar atuais. As unidades 1/2/3 são explicitamente experimentais, sem chamar uma unidade de soja, cultivo, floresta nativa ou uso antropogênico. Relatar áreas por interseção, cenas e erros de leitura.
+3. Somente depois de esgotar os provedores configurados, manter os pixels sem observação/unidade como `N/D_DADOS` ou `ERRO_TECNICO`, conforme a causa. `N/D` nunca vira 0 ha. Não declarar ausência de vegetação/cultivo quando não há classificador semântico validado.
+4. MapBiomas pode ser consultado em canal paralelo e isolado exclusivamente para contexto histórico, sempre com coleção/ano e fonte identificados. Seus polígonos, rótulos e áreas não entram na máscara atual, no denominador de cobertura SAR, na estimativa de carbono, na ocorrência de cultura atual nem na validação do classificador. Uma falha da consulta histórica não altera nem bloqueia o resultado SAR. Não usar MapBiomas como rótulo de treino/validação.
+5. Fitofisionomia IBGE só nomeia polígonos em que a presença nativa foi confirmada por classificador SAR validado. Primeiro interseção espacial AOI/SAR/IBGE; se a geometria não coincidir, nomear por vizinho mais próximo com limite de distância declarado, registrar a distância e o nome como atribuição por proximidade. IBGE potencial não demonstra ocorrência atual. Unidades SAR experimentais não recebem nome fitofisionômico como se fossem nativas.
+
+### Fundo óptico e regra CBERS-first
+CBERS-4A/WFI L4-SR/INPE é a fonte óptica prioritária; Sentinel-2 L2A via Earth Search e Planetary Computer são contingências posteriores. A rota CBERS consulta o catálogo oficial INPE STAC, seleciona cenas que intersectam a AOI, abre pixels COG reais e forma RGB com BAND15 (vermelho), BAND14 (verde) e BAND13 (azul), usando CMASK para qualidade. Exibir fonte, data/período, resolução nominal e cobertura de pixels da AOI. O número de cenas percorridas deve ser limitado e auditável; erros de catálogo, COG, CRS e máscara aparecem no diagnóstico. Cache só pode ser reutilizado para geometria/viewport compatíveis e com fonte/data preservadas. Nunca rotular raster IBGE, thumbnail sem georreferência ou mapa cartográfico como imagem orbital. A contingência Sentinel-2 só é acionada depois de falha CBERS documentada.
+
+### Painel e trilha de auditoria
+O resumo executivo não pode classificar estados desconhecidos como não nativos. Exibir separadamente: (a) área nativa confirmada por SAR semântico validado; (b) unidades radar experimentais; (c) usos explicitamente não nativos; (d) lacunas/N/D; (e) referência histórica MapBiomas, fora dos totais. A soma das classes espaciais deve fechar a área da AOI sem duplicação, mas fechamento geométrico não equivale a completude semântica. JSON de auditoria guarda cada fonte, tentativa de aquisição, área, percentual, datas, validação, motivo de N/D/erro e hash da geometria.
+
+### Regressões obrigatórias para impedir recorrência
+- Com classificador SAR ausente e MapBiomas contendo floresta e soja, as classes finais nunca podem ter `source=MAPBIOMAS` ou `MAPBIOMAS_HISTORICO`; as áreas históricas aparecem apenas na seção histórica.
+- `native_status=None` não pode entrar em não nativo, e ausência de `native_occurrence.area_ha` deve aparecer como N/D, não `0 ha`.
+- A rota de pixels Sentinel-1 é chamada antes de qualquer decisão de indisponibilidade; testar sucesso MPC, falha MPC com sucesso INPE, paginação incompleta, erro de leitura e ausência real após busca completa.
+- A chamada CBERS-4A precede qualquer Sentinel-2; validar bandas RGB/CMASK, leitura de COG, cobertura da AOI, data e diagnóstico. Teste de prioridade deve confirmar que uma cena CBERS utilizável é a fonte renderizada. Testar contingência S2 após falha CBERS e garantir que erros de ambas as rotas sejam apresentados.
+- Testar Sinop KML (EPSG:6933, 1.459,91 ha), polígonos com lacunas, fronteiras de cena, diferentes órbitas e AOIs distribuídas no Brasil. O teste de um imóvel ou Tapajós não prova cobertura nacional de pixels.
+
+### Estado de liberação
+Código candidato: `3.26.5-PRECAMPO-EXPERIMENTAL`; PR #50 segue draft e sem merge. O patch altera a geração de classes atuais para remover o overlay MapBiomas, acrescenta unidades experimentais derivadas de pixels Sentinel-1 antes do particionamento, preserva MapBiomas em trilha histórica isolada, corrige o falso `0 ha` no painel e inverte a prioridade do fundo óptico para CBERS-4A. Isso não autoriza afirmar que um classificador semântico nativo/cultivo esteja validado para Sinop, que a imagem CBERS tenha sido lida nesta AOI, nem que a cobertura SAR funcione para cada imóvel do país. A versão só pode ser anunciada como build entregue após testes, leitura real do CBERS prioritário, build Windows e artefato verificados no mesmo SHA. O gate científico independente permanece fail-closed.
+
+### Itens científicos cumulativos que não podem ser dados como concluídos por esta alteração
+A tabela executiva de carbono continua exigindo os seis compartimentos e linha total com incerteza propagada por covariância/replicação espacial, sem soma de incertezas. Serapilheira precisa de adaptador de dados microrregionais/regionais por fitofisionomia, parcelas IFN e estudos gravimétricos: massa seca, fração C documentada, unidade amostral independente, estação, compatibilidade de formação/região e erro de transferência. Profundidade IFN não pode ser convertida diretamente em massa seca. Uma referência publicada sem semântica do ± não é IC/DP utilizável; apresentar como cenário separado ou N/D, nunca como estoque validado. Fertilidade dos solos já operacional deve permanecer intacta e separada do SOC 0–100 cm. A disponibilidade de CBERS, Sentinel-1 ou dados de inventário não substitui leitura real, compatibilidade, validação independente ou incerteza.
+
+
+## REQUISITO V87.36 — monitoramento agrícola experimental sem MapBiomas
+
+MapBiomas não pode determinar, inferir, validar, mascarar, medir ou preencher nenhuma variável do monitoramento atual: cultura, área plantada, máscara de talhão, vigor, altura, uniformidade, rugosidade, clima, produtividade ou produção. Se consultado, fica somente em referência histórica autônoma, sem entrar no treinamento, validação, seleção de referência, estatística ou previsão.
+
+### Identificação de cultivos por sensores orbitais
+A identificação atual deve priorizar classificadores temporais que incluam características SAR Sentinel-1 (VV/VH, ou polarizações disponíveis no modelo), com base em modelos publicados e/ou implementações abertas originadas no Brasil; se não houver rota executável adequada, considerar modelos de savanas africanas (prioridade CIRAD) e modelos internacionais de outras regiões. A hierarquia seleciona candidatos, não transfere automaticamente a acurácia publicada ao Brasil. Candidatos incluem sistemas globais como ESA WorldCereal e conjuntos/benchmarks como CropHarvest; verificar modalidade efetivamente usada, ano, classes, resolução, domínio, licença, executável/artefato, calibração e métrica por classe. Produto que use Sentinel-2 pode complementar SAR, mas não substitui o requisito radar.
+
+Cada resultado semanticamente identificado requer pixels SAR atuais e legíveis, compatibilidade de cultura/estação/região/resolução/sensor, probabilidades calibradas, matriz de confusão e precisão/recall por classe com IC95% e amostra independente. Validar espacial e temporalmente, sem vazamento entre talhões, propriedades, datas ou regiões. Publicação global ou peso aberto não basta: domínio Brasil/Sinop permanece `N/D_VALIDACAO` quando não coberto por validação independente. Sem modelo executável e compatível, exibir unidades de assinatura SAR semântica N/D; MapBiomas nunca preenche a lacuna.
+
+### Escala experimental de vigor
+O estado é uma comparação relativa entre talhões da mesma cultura, estádio fenológico, região e janela de aquisição; não é diagnóstico fitossanitário. A escala deve combinar, com direção interpretável e incerteza explícita: (1) altura de plantas em metros, medida por fonte estrutural ou recuperada por modelo SAR de altura específico e validado para cultura/região/estádio; (2) uniformidade intra-talhão, calculada com variabilidade robusta de pixels SAR multilook (por exemplo, CV do RVI dual-pol); (3) rugosidade/textura espacial do retroespalhamento SAR por GLCM/variograma, descrita como textura radar, não rugosidade física do solo/folha.
+
+Para cada atributo, publicar fórmula, grade, janela, máscara, polarização, limiar de QA e distribuição observada. Padronizar os três atributos contra referências independentes e comparáveis (mediana/MAD ou alternativa robusta pré-registrada). O escore composto usa pesos pré-definidos/calibrados por evidência de campo; três categorias podem ser definidas pelos tercis leave-one-field-out de referências compatíveis. Propagar incerteza por bootstrap espacial em blocos e reamostragem de talhões de referência. A classe combinada de vigor só pode ser publicada quando altura, uniformidade e textura estiverem presentes e compatíveis; altura ausente ou proxy não validado implica vigor combinado `N/D`, embora as métricas SAR individuais possam ser mostradas separadamente. Mínimo de 30 pixels internos e seis referências comparáveis é somente piso exploratório, não prova de suficiência estatística.
+
+### Previsão de safra com clima e PAM
+Só estimar previsão após máscara de cultura atual aceita por SAR e vigor datado. Integrar vigor com observações climáticas/grade e balanço hídrico/estresse térmico (NASA POWER histórico recente; CPTEC/INPE para previsão e INMET/BDMEP quando disponíveis; produtos e períodos não se misturam sem harmonização). Usar PAM/IBGE de produtividade microrregional em série longa como baliza, com modelo explícito de tendência tecnológica local e anomalia climática/agronômica; documentar microrregião, cultura, anos, dados ausentes, unidades, equação, estimação e intervalo preditivo. Fazer validação temporal com ano-safra completamente retido (rolling-origin ou leave-one-year-out) e validação espacial por microrregião/propriedade; comparar a baseline PAM/trend-only, publicar MAE/RMSE/viés/R²/skill e intervalo de previsão. Área multiplicada por rendimento só gera produção quando a máscara de cultura foi quantificada por SAR; caso contrário produção permanece N/D. Média PAM municipal sem máscara SAR, vigor e clima compatíveis é proibida como previsão da propriedade.
+
+### Bloqueios de segurança científica e testes de regressão
+- Alterar mapas MapBiomas sem mudar uma única classe/área, referência de vigor, escore ou produção atuais: teste negativo obrigatório.
+- Impedir MapBiomas em `crop_identifier_consolidated`, `crop_vigor_auto`, `crop_monitoring_forecast`, entrada de área de cultura e funções de previsão.
+- O teste confirma que rótulos SAR aceitos e pixels atuais são a única fonte de cultura; probabilidades PAM são apenas priori/benchmark histórico e jamais uma identificação.
+- Sem altura mensurada/modelada e validada, não produzir classe composta de vigor baseada somente em RVI/uniformidade/textura.
+- Sem máscara atual, janela climática, PAM longa e hindcast independente, produção e produtividade ficam N/D com motivo. Nenhum resultado usa classe anual histórica como se fosse safra atual.
+- Incerteza de classificação de área, de vigor e de previsão de rendimento/produção é discriminada e propagada; não somar percentuais de fontes incompatíveis.
+
+### Estado de implementação
+O código já contém componentes experimentais de vigor SAR (RVI, uniformidade, GLCM e bootstrap), modelo climático/fenológico e modelo de rendimento baseado em PAM, mas o caminho antigo `crop_identifier_consolidated` ainda registra MapBiomas como identificador e `crop_vigor_auto` seleciona referências por classe MapBiomas. Portanto esta solicitação identifica uma regressão bloqueante: remover esse caminho e testar o fluxo SAR-only antes de afirmar que o monitoramento atende ao requisito. A mudança documental não substitui execução do classificador, leitura live de pixels e validação do modelo de altura/vigor/safra.
+
+
+# ADENDO PRIORITÁRIO V87.37 — correção dos erros recorrentes (08/11/2026)
+
+Este adendo é a instrução vigente e prevalece sobre qualquer seção histórica anterior que conflite com ele. A auditoria do HEAD da branch `feature/agricultural-identification-native-carbon` confirmou que a versão ainda mantinha polígonos MapBiomas no mapa corrente e usava MapBiomas como máscara de referência do vigor, embora o texto declarasse uso histórico. Corrigir o código e validar o SHA final; não declarar liberação enquanto CI, leitura óptica real e build Windows não passarem no mesmo SHA.
+
+## Contratos que não podem regredir
+
+1. **Uso atual e unidades de mapeamento:** MapBiomas não é consultado nem participa de classe atual, área, treinamento, validação, referência de vigor ou previsão. A opção mais segura nesta versão é desativá-lo completamente. PAM é baliza de produtividade, não identificador de cultura. IBGE somente nomeia a formação nativa depois da interseção SAR semântica aceita; proximidade apenas transfere nome cartográfico com distância registrada.
+2. **SAR semântico:** classificador SAR com pixels atuais, domínio compatível, calibração separada, validação espacial independente, n mínimo 30 por classe e limite inferior Wilson IC95% da precisão ≥0,70. Classe fora do gate é rejeitada e vira N/D. Esses limites são um gate de implantação explícito, não prova de validade nacional. Modelo global/publicado sem pesos executáveis, domínio e validação brasileira independente não é classificador operacional.
+3. **Falha segura:** uma assinatura VV/VH pode virar unidade orbital experimental com fonte e data, mas não pode ser rotulada como floresta, fitofisionomia, soja ou outra cultura sem validação semântica. `None`/N/D nunca é uso não nativo, máscara vazia, 0 ha ou “não detectado”. Erro técnico, ausência de cena e falta de modelo são estados distintos.
+4. **Vigor e safra:** vigor composto depende de máscara SAR atual aceita, referências independentes de mesma cultura/fase/região/data, medidas de uniformidade e textura/rugosidade, e altura em metros de produto compatível e auditado. Sem altura, mostrar somente métricas parciais e vigor N/D. Previsão depende também de clima por fase e séries históricas PAM microrregionais, com hindcast por ano retido e incertezas; MapBiomas não fornece área para produção.
+5. **Imagem de fundo:** CBERS-4A/WFI INPE prioritário; RGB BAND15/BAND14/BAND13 e CMASK. Exigir pixels COG lidos, data e cobertura da AOI. Só após falha diagnosticada de CBERS chamar Sentinel-2 Earth Search/AWS e depois Planetary Computer. Não usar raster IBGE nem imagem de cache de outra geometria como se fosse cena atual.
+6. **Carbono:** quadro delimitado por compartimento com estoques tC/ha e tCO₂e/ha; incerteza por linha em tCO₂e/ha e %. Linha total soma estoques e só apresenta densidade/uncertainty quando cobertura dos compartimentos e área forem compatíveis. Incerteza total exige covariância completa ou desenho de replicação espacial com dependências explícitas; é proibido somar incertezas marginais. Se incompleto, o total é parcial e a densidade/incerteza final pode ser N/D.
+7. **Serrapilheira:** integrar massa seca observada em estudos gravimétricos/inventários microrregionais ou regionais da mesma formação/região, fração C, unidade amostral, estação, variância e erro de transferência. Parcelas IFN podem fornecer observações se o campo medido for massa seca compatível; espessura em cm não é massa seca. Sem compatibilidade, validação e dispersão rastreáveis, resultado N/D e excluído da soma — nunca zero ou valor inventado.
+8. **Solo:** preservar a rota funcional de fertilidade e a identificação pedológica por interseção, mantendo fertilidade separada do SOC 0–100 cm. Ausência de raster autêntico/profundidade/medida é N/D; não substituir 0–30 cm por 0–100 cm.
+
+## Estado do patch e da evidência
+
+O patch candidato 3.26.5-PRECAMPO-EXPERIMENTAL remove o overlay MapBiomas das unidades atuais, mantém unidades SAR experimentais sem semântica, separa desconhecido de uso não nativo, coloca CBERS antes de Sentinel-2, retira MapBiomas do identificador de culturas/vigor e inclui a tabela compacta de carbono. Os testes locais de regressão e compilação devem ser anexados ao SHA candidato. Ainda não declarar que a AOI de Sinop teve CBERS aberto, que classes de cultura/nativa estão semanticamente validadas em todo Brasil, que vigor/altura/produtividade estão calibrados, ou que há erro total de carbono quantificado, sem evidência executada correspondente.
+
+## Aceitação obrigatória antes da versão Windows
+
+- Teste negativo: mudar ou remover MapBiomas não altera classes, áreas atuais, vigor ou previsão.
+- Fixture de área com MapBiomas reportando 100% floresta e SAR sem modelo: nenhuma área histórica entra na unidade atual; nativo e cultura permanecem N/D.
+- Validar classe/área com máscara SAR, CRS, nodata, pixels de borda, sobreposição, lacuna e fechamento EPSG:6933; fechamento geométrico não significa cobertura temática completa.
+- CBERS disponível: teste precisa confirmar o provedor retornado como CBERS e imagem RGB real. CBERS indisponível: testar tentativas/documentação e fallback Sentinel-2; ambas falhando, mostrar os dois diagnósticos.
+- Nenhum cálculo de vigor/safra sem os dados e contratos descritos; nenhum `None` convertido em 0.
+- Testar tabela de carbono com compartimentos ausentes, incertezas dependentes, covariância válida e ausência de covariância.
+- Rodar regressões, suíte do repositório, UI Windows/EXE em pasta limpa, build e artefato no SHA final; verificar SHA256. Gate científico continua separado do gate técnico.
+
+
+# ADENDO PRIORITÁRIO V87.38 — fundo óptico com contingência cartográfica final
+
+Este adendo substitui regras históricas de fundo visual que impeçam alternativas. Ordem obrigatória: CBERS-4A/WFI INPE; Sentinel-2 L2A Earth Search/AWS; Sentinel-2 Planetary Computer; cache óptico compatível com origem/data identificadas; mapa cartográfico IBGE apenas se todas as imagens ópticas atuais e o cache óptico válido falharem. O cache sem proveniência óptica deve ser rejeitado. Sempre exibir a melhor alternativa disponível e manter a AOI visível.
+
+O mapa cartográfico de último recurso deve ser rotulado “MAPA CARTOGRÁFICO — SEM IMAGEM ÓPTICA”, não pode ser tratado como cena orbital nem alimentar classificação/cálculos, e deve preservar no diagnóstico os erros das tentativas ópticas. Se também falhar, manter perímetro e informar todos os estados. A aceitação de imagem não exige que o provedor final seja CBERS: Sentinel-2 ou cache óptico válido satisfazem o requisito de alternativa.
+
+Regressões: provar CBERS primeiro; falha CBERS com sucesso Sentinel-2; cache compatível; rejeição de cache desconhecido; falha de fontes ópticas com mapa IBGE claramente identificado; falha de todos com mensagem N/D sem imagem falsa. O smoke distribuído inclui o centro da Fazenda Maria Eduarda, Sinop (lon -55.190498, lat -11.872667), relata provedor/data/cobertura e não declara prova wall-to-wall nacional. MapBiomas continua fora das unidades atuais, máscaras de cultivo, vigor, previsão, validação e mapas correntes; referência histórica, se exibida, fica em camada isolada.
+
+
+### Rótulo da legenda_2 do IBGE
+A classe deve aparecer como “Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual)”. Sua área é somente referência cartográfica e permanece separada da ocorrência nativa confirmada por SAR semântico validado; não compõe classe, cultura ou carbono atual.
+
+
+CHECKPOINT V87.43 — 08/11/2026 — PRODES/TERRACLASS EXPERIMENTAL
+O proprietário autorizou PRODES/TerraClass como rótulos cartográficos de treinamento experimental. O comando `tools/train_terraclass_sar_experiment.py` usa raster de atributos SAR e polígonos TerraClass do mesmo ano, gera Random Forest de classes amplas e calcula validação espacial contra o próprio mapa, reportada exclusivamente como concordância cartográfica. Não é acurácia de campo e não habilita o modelo na inferência padrão. O TerraClass 2024 cobre Amazônia e Cerrado e não identifica soja versus milho; PRODES mapeia supressão primária, não a classe de uso pós-supressão. Outros biomas permanecem N/D com motivo até referências e dados SAR compatíveis. Não há modelo real treinado incluído nesta mudança. Altura/vigor continuam sem coeficientes verificáveis integrados. Ver checkpoint `docs/spec_updates/2026-11-08_v87_43_terraclass_prodes_experimental_classifier.md`.
+PRIORIDADE OPERACIONAL: selecionar primeiro modelo testado/homologado compatível com domínio, data e sensor. Usar o experimental apenas como contingência rotulada; se não houver rota compatível, manter N/D com motivo.
+PROVENIÊNCIA/MÉTRICAS V87.43: SHA-256 de SAR, referência e modelo; CRS/grade; IC95% precisão e recall por bootstrap de blocos. PRODES é contexto, não rótulo agrícola. IC95% representa concordância com o mapa, não acurácia de campo.
+
+---
+# CHECKPOINT V87.45 — 09/11/2026 — gates da branch patches-3.26.6
+
+A branch `patches-3.26.6` contém V87.39–V87.44 e recebeu correção de gatilhos dos workflows: `build-windows.yml` e `scientific-release-gate.yml` agora rodam também em `push` para `patches-3.26.6`. Commit remoto do ajuste: `e2aa95ad7d0e02d3043253cdce7a20099127fb4e`. A branch `main` não foi alterada.
+
+A consulta de CI feita imediatamente após o push ainda não retornou verificações. A suíte `python -m unittest discover -s tests -v` iniciou e avançou por centenas de casos, mas não terminou dentro da janela observada; foi interrompida durante um caso com dependência de rede. Não declarar todos os testes aprovados. A confirmação do build Windows, do autoteste `--network-check`, e do ZIP/sha256 no SHA final continua necessária para liberar o executável.
+
+O gate de homologação científica permanece independente e fail-closed. Evidência sintética, catálogo, literatura não pareada e concordância com PRODES/TerraClass não substituem observações independentes de campo. Priorizar modelos testados e homologados compatíveis; usar experimental somente como contingência rotulada; sem sustentação, emitir N/D com causa. Não afirmar operação científica homologada para todo o Brasil sem evidências por domínio.
+
+Ver registro técnico em `docs/spec_updates/2026-11-09_v87_45_release_branch_gates.md`. Após cada mudança material no código ou nos gates, sincronizar este prompt e `docs/ESPECIFICACAO_TECNICA_COMPLETA.docx`, preservando todo o histórico anterior.
