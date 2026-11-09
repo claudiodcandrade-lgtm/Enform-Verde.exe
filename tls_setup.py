@@ -1,4 +1,4 @@
-"""One place to make HTTPS work identically for requests AND GDAL/rasterio.
+"""One place to make HTTPS work safely for requests AND GDAL/rasterio.
 
 Root cause addressed (V87.37, case Sinop 08/11/2026): the Windows EXE could
 search catalogues but failed to read COG pixels (CBERS-4A, Sentinel-1 RTC)
@@ -9,10 +9,11 @@ Some modules passed a CA bundle per call, others (e.g. the SAR series reader)
 did not.
 
 Fix: build once a merged bundle = certifi + Windows ROOT/CA stores, write it
-to the user cache, and export it through the environment variables honoured
-by requests (REQUESTS_CA_BUNDLE), Python ssl (SSL_CERT_FILE) and GDAL/curl
-(CURL_CA_BUNDLE, GDAL_CURL_CA_BUNDLE). Certificate verification is never
-disabled. Values already set by the user are kept.
+to the user cache, and export it through requests (REQUESTS_CA_BUNDLE) and
+Python ssl (SSL_CERT_FILE). Windows GDAL uses Schannel and the native Windows
+trust store. Do not pass Schannel a merged PEM: it rejects CA files above 1 MB.
+On other platforms, GDAL/curl receives the merged bundle. Certificate
+verification is never disabled. User-provided small CA bundles are preserved.
 """
 from __future__ import annotations
 
@@ -22,7 +23,12 @@ import ssl
 from pathlib import Path
 
 ENV_KEYS = ("REQUESTS_CA_BUNDLE", "SSL_CERT_FILE", "CURL_CA_BUNDLE", "GDAL_CURL_CA_BUNDLE")
+WINDOWS_SCHANNEL_CA_LIMIT = 1_000_000
 _STATE = {}
+
+
+def _uses_windows_schannel():
+    return os.name == "nt" and getattr(ssl, "enum_certificates", None) is not None
 
 
 def _windows_store_pems():
@@ -79,6 +85,20 @@ def configure(cache_dir=None, force=False):
     applied = {}
     if bundle:
         for key in ENV_KEYS:
+            if _uses_windows_schannel() and key in ("CURL_CA_BUNDLE", "GDAL_CURL_CA_BUNDLE"):
+                # curl's Schannel backend uses the OS trust store. A PEM merged
+                # from Windows ROOT/CA stores can exceed Schannel's 1 MB limit.
+                # Drop only oversized inherited bundle values; keep user-set
+                # smaller CA files intact.
+                current = os.environ.get(key)
+                try:
+                    too_large = bool(current and Path(current).stat().st_size > WINDOWS_SCHANNEL_CA_LIMIT)
+                except OSError:
+                    too_large = False
+                if too_large:
+                    os.environ.pop(key, None)
+                    applied[key] = "removed oversized bundle; Windows Schannel trust store used"
+                continue
             if not os.environ.get(key) or force:
                 os.environ[key] = bundle
                 applied[key] = bundle
@@ -88,10 +108,20 @@ def configure(cache_dir=None, force=False):
     return dict(_STATE)
 
 
-def gdal_env():
+def gdal_env(ca_bundle=None):
     """Options to pass explicitly to rasterio.Env (belt and braces)."""
     state = configure()
     env = {"GDAL_HTTP_UNSAFESSL": "NO"}
-    if state.get("bundle"):
-        env.update({"CURL_CA_BUNDLE": state["bundle"], "GDAL_CURL_CA_BUNDLE": state["bundle"]})
+    if _uses_windows_schannel():
+        if ca_bundle:
+            try:
+                small_enough = Path(ca_bundle).stat().st_size <= WINDOWS_SCHANNEL_CA_LIMIT
+            except OSError:
+                small_enough = False
+            if small_enough:
+                env.update({"CURL_CA_BUNDLE": ca_bundle, "GDAL_CURL_CA_BUNDLE": ca_bundle})
+        return env
+    bundle = ca_bundle or state.get("bundle")
+    if bundle:
+        env.update({"CURL_CA_BUNDLE": bundle, "GDAL_CURL_CA_BUNDLE": bundle})
     return env

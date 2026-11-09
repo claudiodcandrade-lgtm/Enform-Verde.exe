@@ -64,19 +64,9 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
                 "scene_age_days": age_days}
     provider=scene.get("provider","MPC")
     token = (token_fn or get_runtime_sas_token)() if provider=="MPC" else ""
-    import ssl
-    ca=ssl.get_default_verify_paths().cafile
-    if not ca:
-        try:
-            import certifi
-            ca=certifi.where()
-        except ImportError:
-            ca=None
+    import tls_setup
     env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_MAX_RETRY":"3",
-         "GDAL_HTTP_TIMEOUT":"35","GDAL_HTTP_UNSAFESSL":"NO"}
-    if ca:
-        env["GDAL_CURL_CA_BUNDLE"]=ca
-        env["CURL_CA_BUNDLE"]=ca
+         "GDAL_HTTP_TIMEOUT":"35",**tls_setup.gdal_env()}
     def scene_href(pol):
         href=scene["assets"][pol]["href"]
         return _signed_href(href,token) if provider=="MPC" else href

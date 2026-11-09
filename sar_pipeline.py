@@ -1318,7 +1318,8 @@ def planetary_alos_palsar(gdf,cache,limit=12):
             if not a or not a.get("href"):continue
             try:
                 href=_planetary_sign_asset(a["href"])
-                with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+                import tls_setup
+                with rasterio.Env(**tls_setup.gdal_env(),GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
                     with rasterio.open(href) as src:
                         gj=transform_geom("EPSG:4326",src.crs,geom); ar,_=mask(src,[gj],crop=True,filled=False)
                         v=np.ma.array(ar[0]).compressed(); v=v[np.isfinite(v)&(v>0)]

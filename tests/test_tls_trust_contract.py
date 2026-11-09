@@ -44,6 +44,33 @@ class TlsTrustContract(unittest.TestCase):
         self.assertIn("--network-check", app)
         self.assertNotIn('GDAL_HTTP_UNSAFESSL="YES"', app + src)
 
+    def test_windows_schannel_never_receives_oversized_merged_ca_bundle(self):
+        import os, tempfile
+        from unittest.mock import patch
+        import tls_setup
+        with tempfile.TemporaryDirectory() as d:
+            bundle = Path(d) / "merged.pem"
+            bundle.write_bytes(b"X" * (tls_setup.WINDOWS_SCHANNEL_CA_LIMIT + 1))
+            old = {k: os.environ.pop(k, None) for k in tls_setup.ENV_KEYS}
+            try:
+                os.environ["CURL_CA_BUNDLE"] = str(bundle)
+                os.environ["GDAL_CURL_CA_BUNDLE"] = str(bundle)
+                tls_setup._STATE.clear()
+                with patch.object(tls_setup, "_uses_windows_schannel", return_value=True), \
+                     patch.object(tls_setup, "merged_ca_bundle", return_value=str(bundle)):
+                    state = tls_setup.configure(force=True)
+                    self.assertNotIn("CURL_CA_BUNDLE", os.environ)
+                    self.assertNotIn("GDAL_CURL_CA_BUNDLE", os.environ)
+                    self.assertIn("REQUESTS_CA_BUNDLE", os.environ)
+                    self.assertIn("GDAL_CURL_CA_BUNDLE", state["env_applied"])
+                    self.assertEqual(tls_setup.gdal_env(), {"GDAL_HTTP_UNSAFESSL": "NO"})
+            finally:
+                tls_setup._STATE.clear()
+                for k, v in old.items():
+                    os.environ.pop(k, None)
+                    if v is not None:
+                        os.environ[k] = v
+
 
 if __name__ == "__main__":
     unittest.main()

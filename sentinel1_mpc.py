@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import os
-import ssl
 from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -142,20 +141,11 @@ def extract_cog_point(asset_href, *, lon, lat, polarization, token=None, window_
     import rasterio
     from rasterio.windows import Window
     from rasterio.warp import transform
-    if ca_bundle is None:
-        ca_bundle = ssl.get_default_verify_paths().cafile
-    if not ca_bundle:
-        try:
-            import certifi
-            ca_bundle = certifi.where()
-        except ImportError:
-            ca_bundle = None
-    # Keep TLS certificate checks on. Set GDAL's CA bundle only; never enable
-    # GDAL_HTTP_UNSAFESSL or requests verify=False.
-    env = {"GDAL_HTTP_UNSAFESSL": "NO"}
-    if ca_bundle:
-        env["GDAL_CURL_CA_BUNDLE"] = ca_bundle
-        env["CURL_CA_BUNDLE"] = ca_bundle
+    # Windows GDAL uses Schannel's native root store; a merged PEM can exceed
+    # Schannel's 1 MB CA-file limit. Other platforms get the shared CA bundle.
+    import tls_setup
+    env = tls_setup.gdal_env(ca_bundle=ca_bundle)
+    env["GDAL_HTTP_UNSAFESSL"] = "NO"
     with rasterio.Env(**env):
         with rasterio.open(signed) as ds:
             x, y = transform("EPSG:4326", ds.crs, [float(lon)], [float(lat)])
@@ -200,18 +190,9 @@ def extract_cog_polygon(asset_href, *, polygon_geojson, polarization, token=None
     from rasterio.features import bounds as geometry_bounds
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
-    if ca_bundle is None:
-        ca_bundle = ssl.get_default_verify_paths().cafile
-    if not ca_bundle:
-        try:
-            import certifi
-            ca_bundle = certifi.where()
-        except ImportError:
-            ca_bundle = None
-    env = {"GDAL_HTTP_UNSAFESSL": "NO"}
-    if ca_bundle:
-        env["GDAL_CURL_CA_BUNDLE"] = ca_bundle
-        env["CURL_CA_BUNDLE"] = ca_bundle
+    import tls_setup
+    env = tls_setup.gdal_env(ca_bundle=ca_bundle)
+    env["GDAL_HTTP_UNSAFESSL"] = "NO"
     with rasterio.Env(**env):
         with rasterio.open(signed) as ds:
             if ds.crs is None:
