@@ -46,7 +46,7 @@ def run(aoi, phytoregion, as_of, ring_km=8.0):
     lines = ["TESTE EXPERIMENTAL DE MODELOS — " + msg,
              "Classificação SAR (safra " + str(res.get("season")) + ", " + str(res.get("scenes_used")) + " cenas):"]
     lines += [f"  {k}: {v:.1f} ha" for k, v in sorted(report["aoi_classes_ha"].items(), key=lambda kv: -kv[1])]
-    for r in inside.itertuples():
+    for field_number, r in enumerate(inside.itertuples(), start=1):
         if not str(r.class_name).startswith("Lavoura de ") or r.area_ha < 5:
             continue
         crop = r.class_name.replace("Lavoura de ", "")
@@ -73,7 +73,8 @@ def run(aoi, phytoregion, as_of, ring_km=8.0):
         except Exception as exc:
             entry["forecast"] = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:200]}
             lines.append("  Previsão: N/D — " + entry["forecast"]["reason"])
-        report["crops"][crop] = entry
+        # Preserve individual fields: the crop label alone is not a unique key.
+        report["crops"][f"{crop}__field_{field_number}"] = {"crop": crop, **entry}
     report["text"] = lines
     return report
 
@@ -82,7 +83,9 @@ def main():
     import geopandas as gpd
     from shapely.geometry import box
     ap = argparse.ArgumentParser()
-    ap.add_argument("--bbox", nargs=4, type=float); ap.add_argument("--vector")
+    source = ap.add_mutually_exclusive_group(required=True)
+    source.add_argument("--bbox", nargs=4, type=float)
+    source.add_argument("--vector")
     ap.add_argument("--phytoregion", required=True); ap.add_argument("--as-of")
     ap.add_argument("--out")
     a = ap.parse_args()
