@@ -6,7 +6,7 @@ from tools.test_models_aoi import summarize_class_areas, crop_field_key
 
 class AoiReportConsistencyTests(unittest.TestCase):
     def test_multiple_polygons_of_same_class_are_summed(self):
-        rows = [("Lavoura de Soja", 100.21), ("Floresta nativa", 20.0),
+        rows = [("Lavoura de Soja", 100.24), ("Floresta nativa", 20.0),
                 ("Lavoura de Soja", 39.94), ("Lavoura de Soja", 0.01)]
         self.assertEqual(summarize_class_areas(rows),
                          {"Lavoura de Soja": 140.2, "Floresta nativa": 20.0})
