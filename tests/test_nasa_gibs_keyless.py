@@ -46,13 +46,16 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         earthsearch = source.index("sentinel2_earthsearch_preview(")
         planetary = source.index("sentinel2_preview(")
         cbers = source.index("cbers4a_wfi_preview(")
+        # V87.36/V87.38: CBERS-4A/WFI (INPE) first; Sentinel-2 only as contingency.
+        self.assertLess(cbers, earthsearch)
         self.assertLess(earthsearch, planetary)
-        self.assertLess(planetary, cbers)
         calls = [node.func.id for node in ast.walk(ast.parse(source))
                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)]
         self.assertNotIn("nasa_gibs_preview", calls)
         self.assertNotIn("esri_export", calls)
-        self.assertNotIn("offline_brazil_preview", calls)
+        # V87.38: labelled cartographic map allowed ONLY after every optical route.
+        self.assertLess(planetary, source.index("offline_brazil_preview("))
+        self.assertIn("contingência sem imagem óptica", source)
 
     def test_nasa_provider_is_marked_as_visual_context(self):
         source = self._function_source("nasa_gibs_preview")

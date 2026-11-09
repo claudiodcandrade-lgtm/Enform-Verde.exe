@@ -148,33 +148,6 @@ class RootBiomassSourcePriorityTests(unittest.TestCase):
 
 
 class NativeCarbonTests(unittest.TestCase):
-    def test_mapbiomas_only_forest_does_not_enter_native_carbon(self):
-        # Annual map pixels may exclude explicit pasture, but do not establish
-        # current native cover or permit a native-carbon estimate.
-        with tempfile.TemporaryDirectory() as d:
-            tif=Path(d)/'mapbiomas_local.tif'
-            with rasterio.open(tif,'w',driver='GTiff',width=20,height=10,
-                               count=1,dtype='uint8',crs='EPSG:6933',
-                               transform=from_origin(0,100,10,10),nodata=0) as dst:
-                values=np.full((10,20),15,dtype='uint8')
-                values[:,:10]=3
-                dst.write(values,1)
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,200,100)],crs=6933)
-            ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
-            land=run_land_use(aoi,Path(d)/'out',mapbiomas_path=str(tif),ibge=ibge)
-            self.assertIsNone(land['mapbiomas_failure'])
-            self.assertAlmostEqual(land['unknown_cover_ha'],1.0,places=5)
-            calls=[]
-            def estimator(frame,phys):
-                calls.append(phys)
-                return {'components':[{'parametro':name,'tc':10.0,
-                                        'fonte':'REF_SINTETICA_TESTE'} for name in COMPARTMENTS]}
-            result=summarize_native_carbon(aoi,gpd.read_file(land['vector_path']),estimator)
-            self.assertEqual(calls,[])
-            self.assertAlmostEqual(result['native_area_ha'],0.0,places=4)
-            self.assertAlmostEqual(result['excluded_other_uses_ha'],1.0,places=4)
-            self.assertAlmostEqual(result['unknown_cover_area_ha'],1.0,places=4)
-            self.assertFalse(result['complete'])
 
     def test_two_native_classes_are_weighted_and_other_uses_not_estimated(self):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
@@ -220,17 +193,6 @@ class NativeCarbonTests(unittest.TestCase):
         self.assertFalse(native_class('Cacau','SAR_VALIDADO',{'Cacau':{'parent':'vegetação natural'}}))
         self.assertFalse(native_class('Cacau','SAR_VALIDADO',{'Cacau':{'parent':'uso agropecuário'}}))
 
-    def test_mapbiomas_failure_is_not_no_native_vegetation(self):
-        with tempfile.TemporaryDirectory() as d:
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
-            ibge=aoi.copy()
-            ibge['legenda_1']='Floresta Ombrófila Densa'
-            with patch('land_use_sar.raster_class_polygons', side_effect=UnicodeDecodeError('utf-8',b'\\xe3',0,1,'invalid start byte')):
-                result=run_land_use(aoi,Path(d)/'out',ibge=ibge)
-            self.assertEqual(result['cover_verification'],'COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL')
-            self.assertAlmostEqual(result['unknown_cover_ha'],1.0)
-            self.assertEqual(result['classes'][0]['native_status'],None)
-            self.assertTrue(any('Cobertura atual não verificada' in w for w in result['warnings']))
 
     def test_https_download_rejects_truncated_geotiff(self):
         import io
@@ -249,150 +211,12 @@ class NativeCarbonTests(unittest.TestCase):
             self.assertFalse(dest.exists())
             self.assertFalse(dest.with_suffix('.tif.part').exists())
 
-    def test_https_fallback_recovers_after_remote_timeout_message(self):
-        with tempfile.TemporaryDirectory() as d:
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
-            mapped=gpd.GeoDataFrame([dict(class_code=3,class_name='Formação Florestal',
-                                            source='MAPBIOMAS',taxonomy='MapBiomas',
-                                            geometry=box(0,0,100,100))],crs=6933)
-            failures=[rasterio.errors.RasterioIOError('HTTP timeout')] * 3
-            # Isolate Path.home so a MapBiomas cache from another CI test
-            # cannot bypass the remote-failure branch under test.
-            with patch('pathlib.Path.home',return_value=Path(d)):
-                with patch('land_use_sar.raster_class_polygons',side_effect=failures+[mapped]):
-                    with patch('land_use_sar._download_official_mapbiomas',return_value=Path(d)/'official.tif') as download:
-                        report=run_land_use(aoi,Path(d)/'output')
-            download.assert_called_once()
-            self.assertIsNone(report['mapbiomas_failure'])
-            self.assertAlmostEqual(report['unknown_cover_ha'],1.0,places=4)
 
-    def test_https_fallback_recovers_native_cover_after_vsicurl_failure(self):
-        with tempfile.TemporaryDirectory() as d:
-            local=Path(d)
-            raster=local/'source.tif'
-            with rasterio.open(raster,'w',driver='GTiff',height=20,width=20,count=1,
-                               dtype='uint8',crs='EPSG:6933',
-                               transform=from_origin(0,200,10,10)) as dst:
-                dst.write(np.full((20,20),3,dtype='uint8'),1)
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,200,200)],crs=6933)
-            real_open=__import__('land_use_sar').raster_class_polygons
-            attempts=[]
-            def mocked_open(frame,path,legend=None):
-                attempts.append(str(path))
-                if str(path).startswith('https://'):
-                    raise rasterio.errors.RasterioIOError(
-                        '/vsicurl/ official map does not exist in the file system')
-                return real_open(frame,str(path),legend)
-            import io
-            class Response:
-                headers={'Content-Type':'image/tiff'}
-                def __init__(self,contents):self.stream=io.BytesIO(contents)
-                def __enter__(self):return self
-                def __exit__(self,*args):self.stream.close()
-                def read(self,n):return self.stream.read(n)
-            with patch('pathlib.Path.home',return_value=local):
-                with patch('land_use_sar.raster_class_polygons',side_effect=mocked_open):
-                    with patch('urllib.request.urlopen',return_value=Response(raster.read_bytes())):
-                        report=run_land_use(aoi,local/'output')
-            self.assertIsNone(report['mapbiomas_failure'])
-            self.assertTrue(report['mapbiomas_source'].endswith('.tif'))
-            self.assertTrue(Path(report['mapbiomas_source']).exists())
-            self.assertAlmostEqual(report['unknown_cover_ha'],4.0,places=4)
-            self.assertGreaterEqual(len(attempts),4)
 
-    def test_previously_working_mapbiomas_route_remains_first_priority(self):
-        with tempfile.TemporaryDirectory() as d:
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
-            mapped=gpd.GeoDataFrame([dict(class_code=3,class_name='Formação Florestal',
-                                           source='MAPBIOMAS',taxonomy='MapBiomas',
-                                           geometry=box(0,0,100,100))],crs=6933)
-            with patch('land_use_sar.raster_class_polygons',return_value=mapped) as read:
-                with patch('land_use_sar._download_official_mapbiomas') as download:
-                    report=run_land_use(aoi,Path(d)/'out')
-            self.assertIsNone(report['mapbiomas_failure'])
-            self.assertEqual(read.call_count,1)
-            download.assert_not_called()
-            self.assertEqual(report['second_crop_status'],'not_applicable_no_primary_crop')
-            self.assertIsNone(report['second_crop_source'])
-            self.assertAlmostEqual(report['unknown_cover_ha'],1.0,places=4)
 
-    def test_mapbiomas_retry_restores_native_carbon(self):
-        with tempfile.TemporaryDirectory() as d:
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs=6933)
-            ibge=aoi.copy()
-            ibge['legenda_1']='Floresta Ombrófila Densa'
-            mapped=gpd.GeoDataFrame([dict(class_code=3,class_name='Formação Florestal',
-                                            source='MAPBIOMAS',taxonomy='MapBiomas',
-                                            geometry=box(0,0,100,100))],crs=6933)
-            transient=UnicodeDecodeError('utf-8',b'\\xe3',0,1,'invalid start byte')
-            with patch('land_use_sar.raster_class_polygons',side_effect=[transient,mapped]):
-                result=run_land_use(aoi,Path(d)/'out',ibge=ibge)
-            self.assertEqual(len(result['mapbiomas_access_attempts']),1)
-            self.assertIsNone(result['mapbiomas_failure'])
-            self.assertAlmostEqual(result['unknown_cover_ha'],1.0)
-            called=[]
-            def estimator(frame,phys):
-                called.append(phys)
-                return {'components':[{'parametro':'Biomassa aérea','tc':100}]}
-            carbon=summarize_native_carbon(aoi,gpd.read_file(result['vector_path']),estimator)
-            self.assertAlmostEqual(carbon['native_area_ha'],0.0)
-            self.assertAlmostEqual(carbon['unknown_cover_area_ha'],1.0)
-            self.assertEqual(called,[])
 
-    def test_auto_discover_cached_mapbiomas_raster(self):
-        with tempfile.TemporaryDirectory() as d:
-            home=Path(d)
-            cached=home/'.enform_verde'/'mapbiomas'
-            cached.mkdir(parents=True)
-            from mapbiomas_zonal import YEAR
-            path=cached/f'brazil_coverage-col11_{YEAR}.tif'
-            arr=np.full((40,40),3,dtype='uint8')
-            with rasterio.open(path,'w',driver='GTiff',height=40,width=40,
-                               count=1,dtype='uint8',crs='EPSG:6933',
-                               transform=from_origin(0,400,10,10)) as dst:
-                dst.write(arr,1)
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,400,400)],crs=6933)
-            with patch('pathlib.Path.home',return_value=home):
-                with patch.dict('os.environ',{'ENFORM_MAPBIOMAS_LOCAL_TIF':''}):
-                    report=run_land_use(aoi,home/'result')
-            self.assertEqual(report['mapbiomas_source'],str(path))
-            self.assertIsNone(report['mapbiomas_failure'])
-            self.assertAlmostEqual(report['unknown_cover_ha'],16.0,places=4)
 
-    def test_windows_local_mapbiomas_route_preserves_native_carbon(self):
-        with tempfile.TemporaryDirectory() as d:
-            raster=Path(d)/'official_mapbiomas_local.tif'
-            with rasterio.open(raster,'w',driver='GTiff',height=1,width=2,count=1,dtype='uint8',crs=6933,transform=from_origin(0,10,10,10),nodata=0) as dst:
-                dst.write(np.array([[3,15]],dtype='uint8'),1)
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,20,10)],crs=6933)
-            ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
-            with patch.dict('os.environ',{'ENFORM_MAPBIOMAS_LOCAL_TIF':str(raster)}):
-                report=run_land_use(aoi,Path(d)/'output',ibge=ibge)
-            self.assertEqual(report['mapbiomas_source'],str(raster))
-            self.assertIsNone(report['mapbiomas_failure'])
-            self.assertAlmostEqual(report['unknown_cover_ha'],0.01,places=4)
-            self.assertFalse(any(row['native_status'] is True for row in report['classes']))
-            called=[]
-            def estimator(frame,phys):
-                called.append(phys)
-                return {'components':[{'parametro':'Biomassa aérea','tc':10}]}
-            result=summarize_native_carbon(aoi,gpd.read_file(report['vector_path']),estimator)
-            self.assertIsNone(result['known_total_tc'])
-            self.assertEqual(called,[])
 
-    def test_current_agricultural_mask_does_not_become_forest_by_ibge_region(self):
-        with tempfile.TemporaryDirectory() as d:
-            raster=Path(d)/'map.tif'
-            with rasterio.open(raster,'w',driver='GTiff',height=1,width=2,count=1,dtype='uint8',crs=6933,transform=from_origin(0,10,10,10),nodata=0) as dst:dst.write(np.array([[3,15]],dtype='uint8'),1)
-            aoi=gpd.GeoDataFrame(geometry=[box(0,0,20,10)],crs=6933)
-            ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
-            land=run_land_use(aoi,Path(d)/'out',mapbiomas_path=str(raster),ibge=ibge)
-            rows=land['classes'];self.assertEqual(len(rows),2)
-            natural=next(r for r in rows if r['native_status'] is None)
-            pasture=next(r for r in rows if r['native_status'] is False)
-            self.assertEqual(natural['source'],'MAPBIOMAS')
-            self.assertEqual(pasture['class_name'],'Pastagem')
-            self.assertAlmostEqual(natural['area_pct'],50,places=4)
 
     def test_accepted_sar_use_overrides_both_maps_and_excludes_crop_carbon(self):
         with tempfile.TemporaryDirectory() as d:
@@ -488,3 +312,44 @@ class WaterExclusionAndOrderingRegression(unittest.TestCase):
         self.assertAlmostEqual(result['native_area_ha'],2.0)
         self.assertAlmostEqual(result['excluded_other_uses_ha'],1.0)
         self.assertAlmostEqual(result['known_total_tc'],200.0,places=5)  # allow sub-gram floating-point geometry rounding
+
+
+
+class MapBiomasExcludedFromCurrentCoverRegression(unittest.TestCase):
+    """V87.36–V87.39: MapBiomas is never queried for current cover/carbon.
+
+    Replaces former tests that required MapBiomas retrieval/fallback routes
+    (cache, HTTPS, retry, local file) to define native cover. Live Sentinel-1
+    screening is stubbed so the result is deterministic offline.
+    """
+    def _run(self, **kw):
+        nd={'status':'N/D_DADOS','reason':'teste offline'}
+        with tempfile.TemporaryDirectory() as d, \
+             patch('recent_sar_landcover.run_recent_sar_screen',return_value=nd), \
+             patch('land_use_sar._download_official_mapbiomas') as dl, \
+             patch('land_use_sar.raster_class_polygons') as rcp:
+            aoi=gpd.GeoDataFrame(geometry=[box(0,0,200,100)],crs=6933)
+            ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
+            land=run_land_use(aoi,Path(d)/'out',ibge=ibge,**kw)
+            calls=[]
+            def estimator(frame,phys):
+                calls.append(phys); return {'components':[{'parametro':'Biomassa aérea','tc':10}]}
+            native=summarize_native_carbon(aoi,gpd.read_file(land['vector_path']),estimator)
+            return land,native,calls,dl,rcp
+
+    def test_mapbiomas_is_not_queried_and_cannot_define_native_cover(self):
+        with patch.dict('os.environ',{'ENFORM_MAPBIOMAS_LOCAL_TIF':'/tmp/naoexiste.tif'}):
+            land,native,calls,dl,rcp=self._run(mapbiomas_path='/tmp/qualquer.tif')
+        dl.assert_not_called(); rcp.assert_not_called()
+        self.assertIsNone(land['mapbiomas_source'])
+        self.assertTrue(str(land['mapbiomas_failure']).startswith('DESATIVADO'))
+        self.assertFalse(any(str(r['source']).startswith('MAPBIOMAS') for r in land['classes']))
+        self.assertTrue(all(r['native_status'] is None for r in land['classes']))
+        self.assertAlmostEqual(land['unknown_cover_ha'],2.0,places=5)       # whole AOI N/D, not 0
+        self.assertEqual(calls,[])                                          # no native carbon
+        self.assertIsNone(native['known_total_tc'])
+        self.assertAlmostEqual(native['unknown_cover_area_ha'],2.0,places=4)
+
+    def test_ibge_forest_region_never_names_unclassified_area_as_forest(self):
+        land,_,_,_,_=self._run()
+        self.assertNotIn('Floresta Ombrófila Densa',[r['class_name'] for r in land['classes']])

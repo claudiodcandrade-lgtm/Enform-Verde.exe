@@ -131,9 +131,10 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                     try:
                         pair=[]
                         for pol in ("vv","vh"):
+                            from tls_setup import gdal_env
                             with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
                                               GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
-                                              GDAL_HTTP_RETRY_DELAY="1",GDAL_HTTP_UNSAFESSL="NO"):
+                                              GDAL_HTTP_RETRY_DELAY="1",**gdal_env()):
                                 asset_href=scene["assets"][pol]["href"]
                                 read_href=_signed_href(asset_href,provider_token) if provider=="MPC" else asset_href
                                 with rasterio.open(read_href) as src:
@@ -220,8 +221,10 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
             out.update_tags(source="Sentinel-1 RTC VV/VH actual pixels",status="EXPERIMENTAL_NAO_CALIBRADO",
                             class_1="persistent structure candidate",class_2="seasonal change candidate",
                             class_3="ambiguous")
-        names={1:"Estrutura persistente — candidata a vegetação lenhosa",
-               2:"Mudança SAR sazonal — candidata a cultivo ou outra mudança",3:"Indeterminada"}
+        # V87.36: experimental radar-signature units carry NO crop/vegetation name.
+        names={1:"Unidade radar 1 — retroespalhamento estável (sem rótulo semântico)",
+               2:"Unidade radar 2 — variação sazonal VV/VH (sem rótulo semântico)",
+               3:"Unidade radar 3 — assinatura indeterminada"}
         areas={n:0.0 for n in names};features=[]
         for f,v in shapes(codes,mask=codes>0,transform=tr):
             k=int(v)

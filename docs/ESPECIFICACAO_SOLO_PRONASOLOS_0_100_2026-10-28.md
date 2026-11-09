@@ -280,3 +280,11 @@ Código `pronasolos_identify.py` commit `a36f2ada335cb81dd5aa5d7b116f5a189aef7f3
 
 ## Sincronização V87.38
 A atualização de classificação e fundo visual não altera os contratos de solo desta especificação. Preservar dados de fertilidade e classes pedológicas por interseção, separados do SOC 0–100 cm; ausência, profundidade incompatível ou cobertura insuficiente permanece N/D e não vira zero. Ver também `docs/spec_updates/2026-11-08_v87_38_optical_fallback.md`.
+
+
+## CHECKPOINT V87.39 — 08/11/2026 — 3.26.6-PRECAMPO-EXPERIMENTAL — causa raiz das falhas de pixel SAR/CBERS no Windows (NÃO homologação)
+- Base `829a01d` (3.26.5/V87.38). Sintoma Sinop: SAR `ALL_CONFIGURED_RTC_PROVIDERS_FAILED_PIXEL_READ_OR_TEMPORAL_QA` e CBERS-4A sem imagem, com catálogos respondendo.
+- Causa: GDAL/libcurl (rasterio) não usa o repositório de certificados do Windows (raízes de antivírus/proxy com inspeção HTTPS); `recent_sar_landcover` não recebia CA. Correção: `tls_setup.py` (certifi + Windows ROOT/CA + sistema → REQUESTS_CA_BUNDLE, SSL_CERT_FILE, CURL_CA_BUNDLE, GDAL_CURL_CA_BUNDLE; `GDAL_HTTP_UNSAFESSL=NO`), chamado no início do `desktop_app`; leitor SAR usa `gdal_env()`.
+- Evidência com proxy TLS e verificação ligada: código 3.26.5 → 0 cenas (“self-signed certificate in certificate chain”); corrigido → 12 cenas Sentinel-1 de Sinop (31/10/2026), unidades radar 278,8/457,5/948,4 ha, CBERS-4A 27/10/2026, `--network-check` 170.820 pixels VV/VH.
+- Prevenção: build Windows roda `Enform Verde.exe --network-check` (pixels reais CBERS-4A e Sentinel-1 em Sinop, TLS verificado; falha reprova); `tests/test_tls_trust_contract.py`; unidades radar com nomes neutros.
+- Pendências inalteradas: classificador SAR semântico validado, altura validada para vigor combinado, serapilheira por inventários regionais/IFN/gravimetria, dados independentes para o gate.

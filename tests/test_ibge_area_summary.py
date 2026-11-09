@@ -18,7 +18,7 @@ class IbgeAreaSummaryTest(unittest.TestCase):
         text = "\n".join(ibge_area_summary_lines(diagnosis))
         self.assertIn("Região fitoecológica POTENCIAL IBGE (não comprova cobertura atual):", text)
         self.assertIn("Floresta Ombrófila Densa — 8.705,00 ha (23,47% da AOI)", text)
-        self.assertIn("Tipo de cobertura vegetal IBGE (legenda_2):", text)
+        self.assertIn("Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual):", text)
         self.assertIn("Floresta — 8.705,00 ha", text)
         self.assertIn("Formação Savânica — 1.200,00 ha", text)
 

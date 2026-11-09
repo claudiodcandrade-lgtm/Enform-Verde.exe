@@ -32,14 +32,17 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         fn=next(n for n in ast.walk(tree) if isinstance(n,ast.FunctionDef)
                 and n.name=="show_google_map")
         body=ast.get_source_segment(src,fn)
-        positions=[body.index(name) for name in ("sentinel2_earthsearch_preview",
-                                                  "sentinel2_preview","cbers4a_wfi_preview")]
+        # V87.36/V87.38: CBERS-first, then Sentinel-2 Earth Search, then Planetary Computer.
+        positions=[body.index(name) for name in ("cbers4a_wfi_preview(","sentinel2_earthsearch_preview(",
+                                                  "sentinel2_preview(")]
         self.assertEqual(positions,sorted(positions))
         calls=[n.func.id for n in ast.walk(fn) if isinstance(n,ast.Call)
                and isinstance(n.func,ast.Name)]
         self.assertNotIn("nasa_gibs_preview",calls)
         self.assertNotIn("esri_export",calls)
-        self.assertNotIn("offline_brazil_preview",calls)
+        # V87.38: labelled cartographic map allowed ONLY after every optical route.
+        self.assertLess(body.index("sentinel2_preview("),body.index("offline_brazil_preview("))
+        self.assertIn("contingência sem imagem óptica",body)
 
     def test_each_optical_route_requires_real_pixels_over_the_aoi(self):
         src=SOURCE.read_text(encoding="utf-8")

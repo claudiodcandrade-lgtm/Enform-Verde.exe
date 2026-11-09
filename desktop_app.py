@@ -1,4 +1,6 @@
 import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid
+import tls_setup  # V87.39: one TLS trust store for requests AND GDAL (Windows store + certifi + OS)
+tls_setup.configure()
 from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.5-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.6-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -3278,6 +3280,61 @@ def module_check():
     (Path(tempfile.gettempdir())/"enform_verde_module_check.json").write_text(json.dumps(out,ensure_ascii=False),encoding="utf-8")
     return out
 
+def network_check(attempts=3):
+    """Compiled-EXE LIVE check (V87.37): real CBERS-4A pixels and real Sentinel-1
+    RTC VV/VH pixels must be readable over a Brazilian AOI (Sinop) with TLS
+    verification ON. Writes enform_verde_network_check.json; raises on failure."""
+    import time
+    import geopandas as gpd
+    from shapely.geometry import box, mapping
+    out={"version":APP_VERSION,"tls":tls_setup.configure()}
+    aoi=gpd.GeoDataFrame(geometry=[box(-55.21,-11.89,-55.17,-11.855)],crs=4326)  # Sinop-MT
+    def retry(fn):
+        last=None
+        for k in range(attempts):
+            try:return fn()
+            except Exception as exc:
+                last=exc;time.sleep(3*(k+1))
+        raise last
+    try:
+        p=retry(lambda:cbers4a_wfi_preview(aoi,out_w=320,out_h=200))
+        out["cbers4a"]={"status":"OK","provider":p.get("provider"),"date_range":p.get("date_range") or p.get("datetime")}
+    except Exception as exc:
+        out["cbers4a"]={"status":"ERRO","reason":type(exc).__name__+": "+str(exc)[:300]}
+    try:
+        from datetime import timedelta
+        from sentinel1_sources import search_sentinel1_sources
+        from sentinel1_mpc import get_runtime_sas_token,_signed_href
+        import rasterio
+        from rasterio.windows import from_bounds
+        from rasterio.warp import transform_geom
+        from shapely.geometry import shape
+        now=datetime.now(timezone.utc)
+        found=retry(lambda:search_sentinel1_sources(mapping(aoi.geometry.iloc[0]),start_utc=now-timedelta(days=40),end_utc=now))
+        scenes=[s for s in found.get("scenes",[]) if {"vv","vh"}<=set(s.get("assets") or {})]
+        if not scenes:raise RuntimeError("catálogos sem cena VV/VH em 40 dias")
+        s=scenes[0];token=get_runtime_sas_token() if s.get("provider","MPC")=="MPC" else ""
+        def read():
+            vals={}
+            for pol in ("vv","vh"):
+                href=s["assets"][pol]["href"];href=_signed_href(href,token) if token else href
+                with rasterio.open(href) as src:
+                    g=shape(transform_geom("EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
+                    w=from_bounds(*g.bounds,transform=src.transform).round_offsets().round_lengths()
+                    a=src.read(1,window=w,masked=True)
+                    vals[pol]=int((~a.mask).sum()) if hasattr(a,"mask") else int(a.size)
+            return vals
+        px=retry(read)
+        if min(px.values())<100:raise RuntimeError("menos de 100 pixels SAR válidos: "+str(px))
+        out["sentinel1"]={"status":"OK","scene_id":s.get("id"),"acquisition_utc":s.get("acquisition_utc"),
+                          "provider":s.get("provider","MPC"),"valid_pixels":px}
+    except Exception as exc:
+        out["sentinel1"]={"status":"ERRO","reason":type(exc).__name__+": "+str(exc)[:300]}
+    (Path(tempfile.gettempdir())/"enform_verde_network_check.json").write_text(json.dumps(out,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+    bad=[k for k in ("cbers4a","sentinel1") if out[k]["status"]!="OK"]
+    if bad:raise RuntimeError("leitura real de pixels falhou: "+", ".join(bad))
+    return out
+
 def visual_check():
     """Compiled-EXE check: the approved shell (header, action bar, navigation,
     tabs, footer, styles) matches the packaged visual baseline."""
@@ -3293,7 +3350,12 @@ def visual_check():
     if d:raise RuntimeError("padrão visual alterado: "+"; ".join(d[:5]))
 
 if __name__=="__main__":
-    if "--visual-check" in sys.argv:
+    if "--network-check" in sys.argv:
+        try:network_check()
+        except Exception:
+            (Path(tempfile.gettempdir())/"enform_verde_network_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
+            sys.exit(1)
+    elif "--visual-check" in sys.argv:
         try:visual_check()
         except Exception:
             (Path(tempfile.gettempdir())/"enform_verde_visual_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")

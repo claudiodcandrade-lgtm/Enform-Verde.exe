@@ -8,8 +8,9 @@ class TestVigorUncertainty(unittest.TestCase):
         rng=np.random.default_rng(12)
         shape=(24,24)
         refs=[field_metrics(rng.normal(-17+k*.5,2,shape),
-                            rng.normal(-10-k*.2,1.5,shape)) for k in range(8)]
-        r=classify_vigor(rng.normal(-17,2,shape),rng.normal(-10,1.5,shape),refs,n_boot=80,seed=12)
+                            rng.normal(-10-k*.2,1.5,shape),height_m=np.full(shape,.5+.05*k)) for k in range(8)]
+        r=classify_vigor(rng.normal(-17,2,shape),rng.normal(-10,1.5,shape),refs,n_boot=80,seed=12,
+                         height_m=np.full(shape,.7))
         self.assertEqual(r["status"],"experimental")
         metrics={"size","uniformity","texture_homogeneity"}
         self.assertTrue(metrics.issubset(r["metrics"]))

@@ -15,23 +15,20 @@ LISTED = {"Soja", "Milho", "Sorgo", "Café", "Cana-de-açúcar", "Arroz", "Feij�
 
 class ConsolidatedIdentifierTests(unittest.TestCase):
     def test_all_listed_crops_have_a_route_and_stated_uncertainty(self):
+        # V87.36/V87.37: no thematic map names a current crop; every crop needs
+        # an independently validated SAR classifier (none installed → no label).
         rows = {r["crop"]: r for r in cic.consolidated_table()}
         self.assertEqual(set(rows), LISTED)
         for r in rows.values():
-            self.assertEqual(r["tier"], 1)                      # Brazilian sources first
-            self.assertTrue(r["uncertainty"])
-            self.assertFalse(r["sar_model_installed"])
-        for c in ("Milho", "Sorgo", "Feijão"):
-            self.assertFalse(rows[c]["label_allowed"])          # never named without a separating source
-        for c in ("Soja", "Café", "Citros", "Arroz", "Cana-de-açúcar"):
-            self.assertTrue(rows[c]["label_allowed"])
+            self.assertFalse(r["label_allowed"])
+            self.assertNotIn("MAPBIOMAS", repr(r).upper())
 
     def test_pam_attribution_is_probability_not_identification(self):
         att = cic.attribute_unseparated("51006", 100.0)       # Alto Teles Pires
-        self.assertEqual(att["status"], "atribuicao_probabilistica")
+        self.assertEqual(att["status"], "PAM_PRIOR_ONLY")
         self.assertAlmostEqual(sum(att["probabilities"].values()), 1.0, places=6)
         self.assertEqual(att["most_likely"], "Milho")
-        self.assertIn("Não identifica", att["note"])
+        self.assertIn("não identifica cultura", att["note"])
 
 
 class MonitoringTests(unittest.TestCase):
@@ -58,7 +55,8 @@ class MonitoringTests(unittest.TestCase):
             g, self.land, as_of=date(2026, 10, 31), forecast_fn=fake_forecast)
         txt = "\n".join(lines)
         self.assertIn("Cultura atual: N/D", txt)
-        self.assertIn("referência histórica", txt)
+        # V87.38: MapBiomas is not even shown in the current-crop section.
+        self.assertNotIn("MapBiomas", txt)
         self.assertIn("Vigor: N/D", txt)
         self.assertIn("Produtividade e produção da propriedade: N/D", txt)
         self.assertNotIn("Produtividade provável:", txt)

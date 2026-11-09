@@ -14,29 +14,23 @@ class LandUseTests(unittest.TestCase):
     def layer(self,rows):
         return gpd.GeoDataFrame([dict(class_name=n,source=s,taxonomy=s,geometry=g) for n,s,g in rows],crs=6933)
 
-    def test_any_measurable_accuracy_is_allowed_and_uncertainty_published(self):
-        # Sample size, precision and its Wilson interval are always reported;
-        # none of these values is compared to a universal minimum accuracy.
+    def test_any_measured_accuracy_is_reported_but_acceptance_needs_class_evidence(self):
+        # V87.37 policy (upstream): every class reports n, precision and Wilson
+        # CI95; semantic ACCEPTANCE requires >=30 independent holdouts and a
+        # Wilson lower bound >= 0.70. Low/zero accuracy is shown, never hidden.
         small=validation_report(['Soja']*3,['Soja']*3,[.52]*3)['gates']['Soja']
-        self.assertTrue(small['eligible'])
-        self.assertTrue(small['sample_size_warning'])
+        self.assertFalse(small['eligible']); self.assertTrue(small['sample_size_warning'])
         self.assertEqual(small['n_independent'],3)
         self.assertLess(small['precision_wilson95_lower'],small['precision'])
         low=validation_report(['Soja']*25+['Outro']*25,['Soja']*50,[.54]*50)['gates']['Soja']
-        self.assertTrue(low['eligible'])
-        self.assertAlmostEqual(low['precision'],.5)
-        self.assertLess(low['precision_wilson95_lower'],.5)
-        report=validation_report(['Soja']*50,['Soja']*50,[.51]*50)
-        self.assertTrue(report['gates']['Soja']['eligible'])
-        self.assertIsNone(report['minimum_accuracy_required'])
-        never_predicted=validation_report(['Soja']*3,['Outro']*3,[.7]*3)['gates']['Soja']
-        self.assertFalse(never_predicted['eligible'])
-        self.assertIsNone(never_predicted['precision'])
+        self.assertFalse(low['eligible']); self.assertAlmostEqual(low['precision'],.5)
+        good=validation_report(['Soja']*50,['Soja']*50,[.9]*50)['gates']['Soja']
+        self.assertTrue(good['eligible'])
 
     def test_zero_accuracy_is_measurable_and_explicit_not_falsely_high(self):
         report=validation_report(['Outro']*5,['Soja']*5,[.55]*5)
         gate=report['gates']['Soja']
-        self.assertTrue(gate['eligible'])
+        self.assertFalse(gate['eligible'])
         self.assertEqual(gate['precision'],0.0)
         self.assertGreater(gate['precision_wilson95_upper'],0)
         self.assertEqual(gate['n_independent'],5)
@@ -70,8 +64,11 @@ class LandUseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             aoi=gpd.GeoDataFrame(geometry=[box(-50,-10,-49.99,-9.99)],crs=4326)
             ibge=aoi.copy();ibge['legenda_1']='FOD'
-            r=run_land_use(aoi,d,mapbiomas_path=str(Path(d)/'absent.tif'),ibge=ibge)
-            self.assertEqual(r['status'],'FALLBACK_CARTOGRAFICO')
+            from unittest.mock import patch
+            with patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
+                r=run_land_use(aoi,d,mapbiomas_path=str(Path(d)/'absent.tif'),ibge=ibge)
+            # V87.37+: without SAR pixels and without classifier the cover is N/D (never MapBiomas)
+            self.assertEqual(r['status'],'N/D_SEM_COBERTURA_SAR')
             self.assertEqual(r['classes'][0]['source'],'SEM_COBERTURA')
             self.assertEqual(r['classes'][0]['class_name'],'Não classificado')
             self.assertIsNone(r['validation'])
@@ -156,14 +153,18 @@ class LandUseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, \
              patch('land_use_sar.classify_config',return_value=(sar,validation)), \
              patch('land_use_sar.raster_class_polygons',return_value=mb):
-            result=run_land_use(aoi,d,config_path='SAR_TEST',mapbiomas_path='TEST_ONLY')
+            with patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
+                result=run_land_use(aoi,d,config_path='SAR_TEST',mapbiomas_path='TEST_ONLY')
         rows=result['classes']
         sar_row=next(row for row in rows if row['source']=='SAR_VALIDADO')
-        map_row=next(row for row in rows if row['source']=='MAPBIOMAS')
+        # V87.37+: MapBiomas never fills the remaining 40 %; it stays N/D.
+        self.assertFalse(any(str(row['source']).startswith('MAPBIOMAS') for row in rows))
+        rest=[row for row in rows if row['source']!='SAR_VALIDADO']
+        self.assertTrue(all(row['native_status'] is None for row in rest))
+        self.assertAlmostEqual(sum(row['area_ha'] for row in rest),0.4,places=5)
         self.assertEqual(sar_row['class_name'],'Soja')
         self.assertAlmostEqual(sar_row['area_ha'],0.6,places=5)
-        self.assertAlmostEqual(map_row['area_ha'],0.4,places=5)
-        self.assertIn('IBGE legenda_1 apenas nomeia fitofisionomia em interseção natural compatível',result['priority'])
+        self.assertIn('IBGE legenda_1 apenas nomeia fitofisionomia',result['priority'])
 
 if __name__=='__main__':unittest.main()
 
@@ -202,10 +203,11 @@ class NativeNamingTests(unittest.TestCase):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,10,10)],crs=6933)
         mb=gpd.GeoDataFrame([dict(class_name='Soja',source='MAPBIOMAS',taxonomy='MapBiomas',geometry=box(0,0,10,10))],crs=6933)
         with tempfile.TemporaryDirectory() as d, patch('land_use_sar.raster_class_polygons',return_value=mb):
-            result=run_land_use(aoi,d)
-            self.assertEqual(result['classes'][0]['class_name'],'Áreas cultivadas')
-            self.assertIs(result['classes'][0]['native_status'],False)
-            self.assertEqual(result['original_source_distributions'][0]['classes'][0]['class_name'],'Soja')
+            with patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
+                result=run_land_use(aoi,d)
+            # V87.37+: an annual-map crop never becomes a current class.
+            self.assertFalse(any(str(r['source']).startswith('MAPBIOMAS') for r in result['classes']))
+            self.assertTrue(all(r['native_status'] is None for r in result['classes']))
 
 
 class EmptyMapBiomasCoverageRegression(unittest.TestCase):

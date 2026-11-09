@@ -70,10 +70,18 @@ def _field(rng, mu, spread, n=40):
     return vh, vh + 6 + rng.normal(0, .5, (n, n))
 
 
+def _h(mu, n=40):
+    """Synthetic plant height (m): V87.36 composite vigor requires height."""
+    return np.full((n, n), mu)
+
+
 class VigorTests(unittest.TestCase):
     def setUp(self):
         self.rng = np.random.default_rng(3)
-        self.ref = [cv.field_metrics(*_field(self.rng, -16 + self.rng.normal(0, .6), 2.0)) for _ in range(12)]
+        self.ref = []
+        for _ in range(12):
+            d = self.rng.normal(0, .6)
+            self.ref.append(cv.field_metrics(*_field(self.rng, -16 + d, 2.0), height_m=_h(0.8 + 0.1 * d)))
 
     def test_glcm_symmetric_counts(self):
         c = cv._glcm_counts(np.array([[0, 1], [1, 0]]))
@@ -81,8 +89,8 @@ class VigorTests(unittest.TestCase):
         self.assertTrue(np.allclose(c, c.T))
 
     def test_strong_and_weak_fields(self):
-        hi = cv.classify_vigor(*_field(self.rng, -13.5, 1.2), self.ref, n_boot=80)
-        lo = cv.classify_vigor(*_field(self.rng, -19.0, 4.0), self.ref, n_boot=80)
+        hi = cv.classify_vigor(*_field(self.rng, -13.5, 1.2), self.ref, n_boot=80, height_m=_h(1.2))
+        lo = cv.classify_vigor(*_field(self.rng, -19.0, 4.0), self.ref, n_boot=80, height_m=_h(0.4))
         self.assertEqual(hi["class"], "alto vigor"); self.assertGreater(hi["probabilities"]["alto vigor"], .9)
         self.assertEqual(lo["class"], "baixo vigor"); self.assertGreater(lo["probabilities"]["baixo vigor"], .9)
         self.assertAlmostEqual(sum(hi["probabilities"].values()), 1.0)
@@ -95,8 +103,11 @@ class VigorTests(unittest.TestCase):
 
     def test_height_and_rvi_size_are_not_mixed(self):
         vh, vv = _field(self.rng, -16, 2)
-        r = cv.classify_vigor(vh, vv, self.ref, height_m=np.full(vh.shape, 0.8))
+        rvi_refs = [cv.field_metrics(*_field(self.rng, -16, 2.0)) for _ in range(8)]   # RVI-size refs
+        r = cv.classify_vigor(vh, vv, rvi_refs, height_m=np.full(vh.shape, 0.8))
         self.assertEqual(r["status"], "N/D")
+        r = cv.classify_vigor(vh, vv, self.ref)          # field without height
+        self.assertEqual(r["status"], "N/D"); self.assertIn("altura", r["reason"])
 
 
 def _synthetic_weather(lat, years, dry_year=None, hot_year=None):

@@ -75,11 +75,12 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
             with patch.dict(os.environ,{"ENFORM_SAR_MODELS_DIR":str(registry),
                                         "ENFORM_LAND_USE_SAR_CONFIG":""}):
                 with patch("land_use_sar.raster_class_polygons",
-                           side_effect=RuntimeError("test offline map")),patch("time.sleep"):
+                           side_effect=RuntimeError("test offline map")),patch("time.sleep"), \
+                     patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}):
                     result=run_land_use(self.aoi,Path(d)/"out",mapbiomas_path="missing.tif")
             self.assertEqual(result["sar_selection"],"NO_EXECUTABLE_SAR_CLASSIFIER")
             self.assertIsNone(result["sar_model_config"])
-            self.assertEqual(result["status"],"FALLBACK_CARTOGRAFICO")
+            self.assertEqual(result["status"],"N/D_SEM_COBERTURA_SAR")  # V87.37+: never cartographic fallback
             self.assertIsNone(result["validation"])
             self.assertTrue(any("Nenhum identificador SAR" in w for w in result["warnings"]))
 
@@ -96,7 +97,8 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
                                         "ENFORM_LAND_USE_SAR_CONFIG":""}):
                 with patch("land_use_sar.classify_config",return_value=(sar,validation)) as trained, \
                      patch("land_use_sar.raster_class_polygons",side_effect=RuntimeError("offline")), \
-                     patch("time.sleep"):
+                     patch("time.sleep"), \
+                     patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}):
                     result=run_land_use(self.aoi,Path(d)/"output",mapbiomas_path="missing.tif")
             trained.assert_called_once()
             self.assertEqual(Path(result["sar_model_config"]),active.resolve())
@@ -118,7 +120,7 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
                      patch("land_use_sar.raster_class_polygons",side_effect=RuntimeError("offline")), \
                      patch("time.sleep"):
                     result=run_land_use(self.aoi,Path(d)/"out",mapbiomas_path="missing.tif",ibge=reference)
-            self.assertEqual(result["status"],"FALLBACK_CARTOGRAFICO")
+            self.assertEqual(result["status"],"N/D_SEM_COBERTURA_SAR")  # V87.37+: never cartographic fallback
             self.assertIsNone(result["validation"])
             self.assertTrue(any("synthetic failed validation" in w for w in result["warnings"]))
             self.assertTrue(all(c["source"]!="SAR_VALIDADO" for c in result["classes"]))
