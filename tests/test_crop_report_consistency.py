@@ -1,6 +1,6 @@
 """Executive report regression: regional forecast supersedes only blocked placeholders."""
 import unittest
-from crop_report_consistency import remove_superseded_yield_placeholders
+from crop_report_consistency import (remove_superseded_yield_placeholders, current_crop_area_by_semantic_sar)
 
 
 class SinopExecutiveConsistencyTest(unittest.TestCase):
@@ -21,6 +21,16 @@ class SinopExecutiveConsistencyTest(unittest.TestCase):
     def test_preserves_valid_yield_results(self):
         text = "Produtividade provável: ESTIMATIVA EXPERIMENTAL 3,82 t/ha\n"
         self.assertEqual(remove_superseded_yield_placeholders([text]), [text])
+
+
+class CurrentCropAreaEvidenceTests(unittest.TestCase):
+    def test_missing_sar_classifier_is_not_zero_crop_area(self):
+        self.assertEqual(current_crop_area_by_semantic_sar(
+            {"status":"N/D_SEM_COBERTURA_SAR","classes":[]}), (None,None))
+
+    def test_eligible_empty_crop_mask_is_measured_zero(self):
+        self.assertEqual(current_crop_area_by_semantic_sar(
+            {"status":"SAR_ELEGIVEL","classes":[]}), (0.0,0.0))
 
 
 if __name__ == "__main__":
