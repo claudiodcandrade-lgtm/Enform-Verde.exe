@@ -111,9 +111,16 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         if search is not None:
             providers=sorted({row[1].get("provider","MPC") for row in candidates})
         provider_diagnostics=found.get("providers",[])
+        selection_diagnostics=[]
         for provider in providers:
             provider_rows=[row for row in candidates if row[1].get("provider","MPC")==provider]
             provider_selected,provider_orbit=_select_orbit_series(provider_rows,ref)
+            provider_diag={"provider":provider,"candidate_scene_count":len(provider_rows),
+                           "eligible_series_found":bool(provider_selected),
+                           "selected_scene_count":len(provider_selected),
+                           "pixel_read_attempt_count":0,"readable_scene_count":0,
+                           "failed_scene_count":0,"token_error_count":0}
+            selection_diagnostics.append(provider_diag)
             if not provider_selected:
                 continue
             provider_grid=None
@@ -124,10 +131,12 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
             except Exception as exc:
                 errors.append({"provider":provider,"error_type":"TOKEN_"+type(exc).__name__,
                                "error":_safe_reason(exc),"recovered":False})
+                provider_diag["token_error_count"]+=1
                 continue
             for dt,scene in provider_selected:
                 scene_ok=False
                 for attempt in range(2):
+                    provider_diag["pixel_read_attempt_count"]+=1
                     try:
                         pair=[]
                         for pol in ("vv","vh"):
@@ -169,6 +178,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                               dst_transform=tr,resampling=Resampling.nearest)
                                     pair.append(arr)
                         provider_data.append((dt,str(scene.get("id","")),pair))
+                        provider_diag["readable_scene_count"]+=1
                         scene_ok=True
                         break
                     except (UnicodeError,OSError,RuntimeError,ValueError) as exc:
@@ -176,6 +186,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                              "error_type":type(exc).__name__,"error":_safe_reason(exc),
                              "attempt":attempt+1,"recovered":False}
                         provider_errors.append(row)
+                        provider_diag["failed_scene_count"]+=1
                         if attempt==0 and provider=="MPC":
                             try:
                                 provider_token=(token_fn or get_runtime_sas_token)()
@@ -196,14 +207,29 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
             if provider_data:
                 errors.append({"provider":provider,"error_type":"INSUFFICIENT_READABLE_SERIES",
                                "readable_scene_count":len(provider_data),"recovered":False})
-        result["provider_diagnostics"]=provider_diagnostics
+        result["catalog_provider_diagnostics"]=provider_diagnostics
+        result["provider_processing_diagnostics"]=selection_diagnostics
         result["failed_scene_reads"]=errors
-        result["selected_scene_count"]=len(selected) if selected else sum(
-            1 for p in providers for row in candidates if row[1].get("provider","MPC")==p)
-        result["readable_scene_count"]=len(data)
+        result["selected_scene_count"]=sum(x["selected_scene_count"] for x in selection_diagnostics)
+        result["pixel_read_attempt_count"]=sum(x["pixel_read_attempt_count"] for x in selection_diagnostics)
+        result["readable_scene_count"]=sum(x["readable_scene_count"] for x in selection_diagnostics)
+        eligible_count=sum(x["eligible_series_found"] for x in selection_diagnostics)
+        if eligible_count==0:
+            result.update({"status":"N/D_DADOS","reason":"NO_ELIGIBLE_TEMPORAL_SERIES",
+                           "diagnostic":"Cenas candidatas foram catalogadas, mas nenhuma série cumpriu órbita, recência e duração; nenhuma leitura de pixel foi tentada"})
+            return result
         if len(data)<3 or (data[0][0]-data[-1][0]).days<35:
-            result.update({"status":"ERRO_TECNICO","reason":"ALL_CONFIGURED_RTC_PROVIDERS_FAILED_PIXEL_READ_OR_TEMPORAL_QA",
-                           "diagnostic":"MPC e INPE foram tentados; consultar provider_diagnostics e failed_scene_reads"})
+            all_selected_reads=sum(x["readable_scene_count"] for x in selection_diagnostics)
+            any_read_attempt=sum(x["pixel_read_attempt_count"] for x in selection_diagnostics)
+            token_errors=sum(x["token_error_count"] for x in selection_diagnostics)
+            if token_errors and any_read_attempt==0:
+                status,reason="ERRO_TECNICO","PROVIDER_AUTHENTICATION_FAILED"
+            elif any_read_attempt and all_selected_reads==0:
+                status,reason="ERRO_TECNICO","SELECTED_SCENES_PIXEL_READ_FAILED"
+            else:
+                status,reason="N/D_DADOS","INSUFFICIENT_READABLE_TEMPORAL_SERIES"
+            result.update({"status":status,"reason":reason,
+                           "diagnostic":"Consultar provider_processing_diagnostics e failed_scene_reads; contadores distinguem seleção, tentativa e leitura"})
             return result
         crs,tr,size,local=grid
         inside=geometry_mask([mapping(local)],out_shape=size,transform=tr,invert=True)
