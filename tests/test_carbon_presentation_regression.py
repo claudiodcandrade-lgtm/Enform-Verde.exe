@@ -20,6 +20,9 @@ class CarbonPresentationRegression(unittest.TestCase):
         self.assertIn("Cobertura não confirmada: 1.290,69 ha", result)
         self.assertIn("N/D — cobertura não integralmente verificada", result)
         self.assertIn("não equivale a zero de vegetação nativa", result)
+        self.assertIn("VEGETAÇÃO NATIVA MAPEADA: N/D — nenhuma área nativa confirmada", result)
+        self.assertNotIn("VEGETAÇÃO NATIVA MAPEADA: 0,00 ha", result)
+        self.assertIn("OUTROS USOS (não entram no estoque nativo): N/D", result)
 
     def test_three_units_and_provenance_of_uncertainty_kind(self):
         report={"area_aoi_ha":1, "native_area_ha":1, "unknown_cover_area_ha":0,
