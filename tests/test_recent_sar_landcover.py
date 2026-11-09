@@ -21,4 +21,29 @@ class CurrentRadarScreenTests(unittest.TestCase):
     def test_missing_observations_are_not_valid_land_cover(self):
         a=np.ones((1,12,12))
         with self.assertRaises(ValueError):classify_temporal(a,a,np.ones((12,12),bool))
+
+    def test_ineligible_candidates_are_not_reported_as_pixel_read_failure(self):
+        import geopandas as gpd
+        from shapely.geometry import box
+        from datetime import datetime,timezone,timedelta
+        ref=datetime(2026,11,9,tzinfo=timezone.utc)
+        scenes=[]
+        for i,days_ago in enumerate((2,12,22)):
+            scenes.append({"id":f"candidate-{i}","provider":"MPC",
+                "acquisition_utc":(ref-timedelta(days=days_ago)).isoformat(),
+                "orbit_state":"ascending","relative_orbit":42,
+                "assets":{"vv":{"href":"https://invalid/vv.tif"},
+                          "vh":{"href":"https://invalid/vh.tif"}}})
+        a=gpd.GeoDataFrame(geometry=[box(-55.8,-12.6,-55.7,-12.5)],crs=4326)
+        r=run_recent_sar_screen(a,"unused",now=ref,
+            search=lambda *a,**k:{"scenes":scenes,"scene_count":len(scenes),
+                                  "pagination_complete":True,"providers":[]})
+        self.assertEqual(r["status"],"N/D_DADOS")
+        self.assertEqual(r["reason"],"NO_ELIGIBLE_TEMPORAL_SERIES")
+        self.assertEqual(r["selected_scene_count"],0)
+        self.assertEqual(r["pixel_read_attempt_count"],0)
+        diag=r["provider_processing_diagnostics"][0]
+        self.assertEqual(diag["candidate_scene_count"],3)
+        self.assertFalse(diag["eligible_series_found"])
+        self.assertEqual(diag["readable_scene_count"],0)
 if __name__=="__main__":unittest.main()
