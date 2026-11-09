@@ -106,8 +106,8 @@ class VigorTests(unittest.TestCase):
         rvi_refs = [cv.field_metrics(*_field(self.rng, -16, 2.0)) for _ in range(8)]   # RVI-size refs
         r = cv.classify_vigor(vh, vv, rvi_refs, height_m=np.full(vh.shape, 0.8))
         self.assertEqual(r["status"], "N/D")
-        r = cv.classify_vigor(vh, vv, self.ref)          # field without height
-        self.assertEqual(r["status"], "N/D"); self.assertIn("altura", r["reason"])
+        r = cv.classify_vigor(vh, vv, self.ref)          # field without height, refs with height
+        self.assertEqual(r["status"], "N/D")             # never mix height and RVI-proxy sizes
 
 
 def _synthetic_weather(lat, years, dry_year=None, hot_year=None):

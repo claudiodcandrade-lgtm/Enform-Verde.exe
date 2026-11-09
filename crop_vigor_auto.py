@@ -47,7 +47,11 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
     search = search or search_sentinel1_sources
     token_fn = token_fn or get_runtime_sas_token
     g = field_gdf.to_crs(4326).geometry.union_all()
-    scene = _scene(g, as_of, window_days, search)
+    # Catalogue search with the field's bounding box: pixel-shaped classifier
+    # polygons have thousands of vertices and made the STAC request fail
+    # (bug found in the 09/11/2026 Sinop test). Pixels still use the true field.
+    from shapely.geometry import box as _box
+    scene = _scene(_box(*g.bounds), as_of, window_days, search)
     if scene is None:
         return {"status": "N/D", "reason": f"sem cena Sentinel-1 RTC VV/VH nos últimos {window_days} dias",
                 "search_window_days": window_days, "as_of": as_of.isoformat()}

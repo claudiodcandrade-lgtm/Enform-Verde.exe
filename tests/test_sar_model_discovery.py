@@ -118,7 +118,8 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
                                         "ENFORM_LAND_USE_SAR_CONFIG":""}):
                 with patch("land_use_sar.classify_config",side_effect=ValueError("synthetic failed validation")), \
                      patch("land_use_sar.raster_class_polygons",side_effect=RuntimeError("offline")), \
-                     patch("time.sleep"):
+                     patch("time.sleep"), \
+                     patch("sar_landcover_lemplus.classify_aoi",return_value={"status":"N/D_SEM_PIXELS_SAR","reason":"teste offline"}):
                     result=run_land_use(self.aoi,Path(d)/"out",mapbiomas_path="missing.tif",ibge=reference)
             self.assertEqual(result["status"],"N/D_SEM_COBERTURA_SAR")  # V87.37+: never cartographic fallback
             self.assertIsNone(result["validation"])

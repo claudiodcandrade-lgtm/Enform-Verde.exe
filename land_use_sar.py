@@ -703,6 +703,35 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         raw_layers.append(reference)
     else:
         warnings.append('IBGE sem polígonos disponíveis; não há detalhamento fitofisionômico oficial.')
+    lemplus_audit=None
+    if not layers:
+        # Owner decision 8A: always attempt a SAR semantic classifier. The
+        # LEM+ model (INPE field labels, CC BY 4.0) is used ONLY inside its
+        # validated domain (savanna/Cerrado phytoregion); elsewhere its output
+        # stays a diagnostic and the AOI keeps radar units / N/D.
+        try:
+            from sar_landcover_lemplus import classify_aoi, in_validated_domain
+            domain_ok,domain_msg=in_validated_domain(ibge,ibge_field,aoi)
+            res=classify_aoi(aoi)
+            lemplus_audit={k:v for k,v in res.items() if k!='polygons_6933'}
+            lemplus_audit['domain']=domain_msg
+            polys=res.get('polygons_6933')
+            if domain_ok and res.get('status')=='SAR_CLASSIFICADOR_EXPERIMENTAL' and polys is not None and not polys.empty:
+                lay=polys.copy()
+                lay['class_name']=lay['class_name'].replace({'Vegetação nativa (assinatura SAR)':'Formação savânica',
+                                                             'Floresta nativa (assinatura SAR)':'Formação florestal'})
+                lay['source']='SAR_VALIDADO'; lay['taxonomy']='SAR LEM+ RF v1 ('+str(res.get('season'))+')'
+                layers.append(lay[['class_name','source','taxonomy','geometry']])
+                validation={'class_metadata':{'Formação savânica':{'parent':'vegetação natural'},
+                                              'Formação florestal':{'parent':'vegetação natural'}},'gates':{},
+                            'model_id':res.get('model_id'),'validation_scope':'blocos espaciais 0,1° (LEM+ BA 2019/20; INPE MT 2014-16; INPE RO 2022)'}
+                active_sar_config='sar_landcover_lemplus:'+str(res.get('model_id'))
+                warnings.append('Classificador SAR LEM+ (experimental medido) aplicado: '+domain_msg)
+            else:
+                warnings.append('Classificador SAR LEM+ não aplicado: '+domain_msg+'; status '+str(res.get('status')))
+        except Exception as exc:
+            lemplus_audit={'status':'ERRO_TECNICO','reason':type(exc).__name__+': '+str(exc)[:200]}
+            warnings.append('Classificador SAR LEM+ indisponível: '+lemplus_audit['reason'])
     if layers:
         # Use IBGE only to NAME SAR-confirmed native polygons.
         # Proximity is explicit and bounded to 3 km in a metric projection.
@@ -763,6 +792,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     summary['original_source_distributions']=source_distributions
     summary['mapbiomas_failure']=mapbiomas_failure
     summary['mapbiomas_historical_reference']=mapbiomas_reference
+    summary['sar_classifier_lemplus']=lemplus_audit
     summary['second_crop_detection']=second_crop_detection
     summary['second_crop_source']=second_crop_source
     summary['second_crop_status']=second_crop_status

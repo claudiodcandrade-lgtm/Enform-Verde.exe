@@ -126,6 +126,13 @@ def season_ry_ensemble(daily, crop, lat, season_year, awc_mm_cm, as_of, referenc
     from crop_climate_favorability import _by_date
     from crop_water_balance_yield import CROP, simulate, sowing_dates
     series = _by_date(daily)
+    # NASA POWER publishes with a few days of latency: days after the last
+    # complete observation are treated as not yet observed (analog-filled),
+    # instead of making the whole season N/D (bug found in the 09/11/2026 test).
+    complete = [d for d, r in series.items()
+                if r.get("T2M_MAX") is not None and r.get("T2M_MIN") is not None and r.get("PRECTOTCORR") is not None]
+    if complete:
+        as_of = min(as_of, max(complete))
     out = []
     for ry_year in reference_years:
         shift = date(ry_year, 1, 1) - date(season_year, 1, 1)

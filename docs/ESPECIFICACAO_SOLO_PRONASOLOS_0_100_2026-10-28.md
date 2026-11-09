@@ -341,3 +341,25 @@ O SHA auditado foi `07061b450c6ebc62e8bdf868da236b8c07799164`, com versão `3.26
 No SHA auditado, contratos rápidos passaram. O dashboard falhou em dois contratos: versão ausente no DOCX e expressão textual de classe semântica N/D divergente. O build Windows falhou no job `42676730241`, antes de empacotar/publicar o EXE; o dashboard `42676730580` registrou 999 testes com duas falhas; contratos rápidos `42676730626` passaram. O gate científico `42676730154` segue reprovado (`accepted_count=0`). Corrigir a sincronização documental e a redação do contrato, depois executar novo CI no SHA final. Não declarar build, regressão privada, homologação ou liberação concluídos até as evidências correspondentes passarem.
 
 Prioridades do piloto: série temporal SAR observável com proveniência por cena; modelos executáveis por cultura e domínio com incerteza; vigor SAR + clima + PAM para safra; altura e estrutura nativa com inventário microrregional e alometria; serapilheira compatível por fitofisionomia; carbono do solo Embrapa/PronaSolos 0–100 cm por interseção. A geometria privada não pode entrar em commits nem em logs públicos.
+
+## CHECKPOINT V87.55 — 09/11/2026 — 3.26.8: classificador SAR semântico integrado sobre a 3.26.7 (NÃO homologação)
+- Base `1ef8429` (PR #51). Integrado `sar_landcover_lemplus.py` + `data/models/sar_brasil_rf_v2.joblib` (SHA-256 f91ace8b…): OA 0,921 em 708 blocos; floresta nativa 0,93; Amazônia-RO 0,888; domínio savana/Cerrado ou floresta no envelope MT/RO/oeste-BA. Cultura sem maioria → “Área cultivada — cultura não identificada”. Fora do domínio mantém o candidato temporal da 3.26.7.
+- Sinop 2025/26: FESV 414,7 ha (nativa), soja 512,6 ha, área antrópica recente 745,8 ha.
+- Falha do build Windows da 3.26.7 (job 42676730241): log não acessível sem autenticação; suíte local da 1ef8429 = 999 testes OK; reexecutar CI no novo SHA e anexar o log do passo que falhar.
+
+
+## CHECKPOINT V87.56 — 09/11/2026 — cadeia experimental testada ponta a ponta (3.26.8)
+- Política do proprietário: modelos experimentais cientificamente defensáveis permitidos; acurácia aferida depois em campo; prioridade é testar.
+- Vigor com proxy RVI (EXPERIMENTAL_PROXY_RVI) quando não há altura; referência = talhões SAR vizinhos da mesma cultura (8 km). Corrigidos: busca de cena com bbox do talhão; defasagem do NASA POWER completada por análogos. Ferramenta `tools/test_models_aoi.py`.
+- Sinop 09/11/2026: soja 506,6 ha, vigor baixo (cena 31/10, início de safra), previsão 3,45 t/ha (2,59–3,71), 57,5 sc/ha, produção 1.749 t; floresta nativa 419,7 ha; área antrópica recente 748,9 ha.
+- Próximo: altura das formações nativas via SAR + inventários microrregionais (área basal, DAP médio) → biomassa acima/abaixo do solo.
+
+
+## CHECKPOINT V87.57 — 09/11/2026 — proxy de altura pelo artigo Nasirzadehdizaji et al. (2019) (3.26.8)
+- Artigo fornecido pelo proprietário (Appl. Sci. 9:655): Tabela 3 dá só R² — milho H<150 cm: VV+VH 0,82, VV 0,81, VH 0,80, RVI 0,53; saturação acima de 150 cm; girassol ≤ 0,31; sem coeficientes nem RMSE. Vigor passa a usar mediana de 10·log10(σ⁰VV+σ⁰VH) como tamanho relativo (`EXPERIMENTAL_PROXY_VV+VH`), nunca em metros; nota de evidência em cada resultado.
+- Sinop (rerodado 09/11/2026): soja 506,6 ha; vigor baixo 78% / adequado 22% (cena 31/10); previsão 3,53 t/ha (2,71–3,88), 58,9 sc/ha; produção 1.790 t (1.372–1.966 t).
+
+
+## CHECKPOINT V87.58 — 09/11/2026 — prioridade banda P ESA BIOMASS (3.26.8)
+- BIOMASS é só banda P; banda X é de outras missões. L2A Forest Height (FP_FH__L2A, 200 m) aberto desde 30/06/2026; L2B FH/AGB só em maio/2027. O código buscava só L2B → altura banda P nunca chegava. Agora L2B → L2A, só o GeoTIFF FH. Sinop tem L2A FH de 20/08 e 19/09/2026; download exige token ESA MAAP (EO Sign In, gratuito).
+- Hierarquia de altura nativa: P (BIOMASS) → L (PALSAR) → X (TanDEM-X, se fornecido) → C (auxiliar). Culturas: C e X; P não indicada.

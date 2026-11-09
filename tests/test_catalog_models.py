@@ -32,9 +32,11 @@ class CatalogModelExecutionTests(unittest.TestCase):
             return rows.get(product_type,[])
         with patch.object(sar,"maap_search",side_effect=fake_search):
             items=sar.biomass_l2b_search(object())
+        # V87.58: the open P-band Level-2A Forest Height is also searched.
         self.assertEqual(set(calls),{
             ("BiomassLevel2b","FP_AGB_L2B"),("BiomassLevel2b","FP_FH__L2B"),
-            ("BiomassLevel2bIOC","FP_AGB_L2B"),("BiomassLevel2bIOC","FP_FH__L2B")})
+            ("BiomassLevel2bIOC","FP_AGB_L2B"),("BiomassLevel2bIOC","FP_FH__L2B"),
+            ("BiomassLevel2a","FP_FH__L2A"),("BiomassLevel2aIOC","FP_FH__L2A")})
         self.assertEqual({x["_product_type"] for x in items},{"FP_AGB_L2B","FP_FH__L2B"})
         self.assertEqual(sar._biomass_product_assets(fh,"FP_AGB_L2B"),[])
         self.assertEqual(sar._biomass_product_assets(agb,"FP_AGB_L2B"),[("product","https://example.test/agb.zip")])

@@ -66,12 +66,13 @@ class CurrentMappingContract(unittest.TestCase):
         self.assertIn('"CMASK"', cbers)
         self.assertIn('"aoi_coverage_fraction":aoi_coverage', cbers)
 
-    def test_vigor_never_reads_mapbiomas_and_needs_height_for_composite(self):
+    def test_vigor_never_reads_mapbiomas_and_labels_rvi_proxy(self):
+        # Owner policy 09/11/2026: experimental RVI size proxy allowed when no
+        # height product exists, always labelled as such.
         self.assertNotIn("mapbiomas_zonal", self.vigor)
         self.assertNotIn("RASTER_URL", self.vigor)
         self.assertIn("height_provider", self.vigor)
-        self.assertIn("altura de plantas em metros", self.vigor_math)
-        self.assertIn('"status":"N/D"', self.vigor_math)
+        self.assertIn("EXPERIMENTAL_PROXY_RVI", self.vigor_math)
 
     def test_sar_classifier_has_class_level_evidence_gate(self):
         # Owner decision 08/11/2026: any measured accuracy accepted as

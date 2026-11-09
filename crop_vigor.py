@@ -37,6 +37,13 @@ VH_RANGE_DB = (-30.0, -5.0)
 OFFSETS = ((0, 1), (1, 0), (1, 1), (1, -1))
 DEFAULT_WEIGHTS = {"size": 1.0, "uniformity": 1.0, "texture_homogeneity": 1.0}
 MIN_PIXELS = 30
+HEIGHT_PROXY_EVIDENCE = (
+    "Nasirzadehdizaji et al. (2019), Applied Sciences 9:655, Tabela 3 (Sentinel-1, Konya/Turquia): "
+    "R² com a altura do milho no início do ciclo (H < 150 cm) — VV+VH 0,82; VV 0,81; VH 0,80; RVI 0,53; "
+    "acima de 150 cm a sensibilidade desaparece (saturação). Girassol (folha larga) R² ≤ 0,31; trigo com "
+    "correlações negativas. O artigo publica apenas R² — sem coeficientes nem RMSE —, por isso o proxy é "
+    "usado só como TAMANHO RELATIVO entre talhões da mesma cultura e fase, nunca convertido em metros. "
+    "Evidência forte para milho no início do ciclo; para soja e demais culturas não há evidência neste estudo.")
 MIN_REFERENCE_FIELDS = 6
 
 
@@ -88,6 +95,11 @@ def _blocks(vh_db, vv_db, height, block=5):
         vh = 10 ** (vh_db / 10.0); vv = 10 ** (vv_db / 10.0)
         rvi = 4 * vh / (vv + vh)
     rvi_ml = _boxcar3(rvi)
+    # Size proxy without a height product (Nasirzadehdizaji et al. 2019, Appl.
+    # Sci. 9:655, Table 3): σ⁰VV+σ⁰VH has the highest R² with maize height
+    # (0,82 for H < 150 cm; VV 0,81; VH 0,80; RVI only 0,53). 3×3 multilook.
+    with np.errstate(invalid="ignore", divide="ignore"):
+        vvvh_ml = 10 * np.log10(_boxcar3(vv + vh))
     q = _quantize(vh_db)
     out = []
     H, W = vh_db.shape
@@ -102,7 +114,8 @@ def _blocks(vh_db, vv_db, height, block=5):
             hts = None
             if height is not None:
                 hh = height[sl]; hts = hh[np.isfinite(hh)]
-            out.append({"rvi": vals, "glcm": _glcm_counts(qs), "height": hts})
+            vv_vals = vvvh_ml[sl][np.isfinite(vvvh_ml[sl])]
+            out.append({"rvi": vals, "vvvh": vv_vals, "glcm": _glcm_counts(qs), "height": hts})
     return out
 
 
@@ -110,10 +123,16 @@ def _metrics_from_blocks(blocks):
     rvi = np.concatenate([b["rvi"] for b in blocks])
     glcm = sum(b["glcm"] for b in blocks)
     heights = [b["height"] for b in blocks if b["height"] is not None and len(b["height"])]
-    size = float(np.median(np.concatenate(heights))) if heights else float(np.median(rvi))
+    vvvh = np.concatenate([b.get("vvvh", np.array([])) for b in blocks])
+    if heights:
+        size, kind = float(np.median(np.concatenate(heights))), "altura_mediana_m"
+    elif len(vvvh):
+        size, kind = float(np.median(vvvh)), "VVmaisVH_dB_mediano"
+    else:
+        size, kind = float(np.median(rvi)), "RVI_mediano"
     mean = float(np.mean(rvi))
     cv = float(np.std(rvi, ddof=1) / mean) if mean > 0 and len(rvi) > 1 else np.nan
-    return {"size": size, "size_kind": "altura_mediana_m" if heights else "RVI_mediano",
+    return {"size": size, "size_kind": kind,
             "uniformity": 1.0 / (1.0 + cv) if np.isfinite(cv) else np.nan,
             "texture_homogeneity": _homogeneity(glcm), "n_pixels": int(len(rvi))}
 
@@ -173,7 +192,7 @@ def classify_vigor(vh_db, vv_db, reference_fields, *, height_m=None, weights=Non
     if len(ref) < MIN_REFERENCE_FIELDS:
         return {"status": "N/D", "reason": f"menos de {MIN_REFERENCE_FIELDS} talhões de referência "
                 "da mesma cultura/fase/região — vigor relativo não definível"}
-    if any(r.get("size_kind") not in (None, "altura_mediana_m", "RVI_mediano") for r in ref):
+    if any(r.get("size_kind") not in (None, "altura_mediana_m", "VVmaisVH_dB_mediano", "RVI_mediano") for r in ref):
         raise ValueError("referência com tipo de tamanho desconhecido")
     vh_db = np.asarray(vh_db, float); vv_db = np.asarray(vv_db, float)
     h = None if height_m is None else np.asarray(height_m, float)
@@ -181,11 +200,13 @@ def classify_vigor(vh_db, vv_db, reference_fields, *, height_m=None, weights=Non
     m = _metrics_from_blocks(blocks) if blocks else None
     if m is None or m["n_pixels"] < MIN_PIXELS:
         return {"status": "N/D", "reason": f"talhão com menos de {MIN_PIXELS} pixels válidos"}
-    if m.get("size_kind") != "altura_mediana_m":
-        return {"status":"N/D",
-                "reason":"altura de plantas em metros sem modelo SAR validado para cultura/região/fase; RVI é proxy de cobertura e não substitui altura",
-                "partial_metrics":m,
-                "uncertainty":"classe de vigor composta não calculada"}
+    # Owner policy (09/11/2026): experimental, scientifically defensible models
+    # are allowed and will be checked against field results later. Without a
+    # height product, apparent plant size is represented by the dual-pol RVI
+    # (canopy biomass/cover proxy; C-band VV+VH are reported to track maize
+    # height, Nasirzadehdizaji et al. 2019, Appl. Sci. 9:655, R² ≈ 0.8). The
+    # class is then labelled EXPERIMENTAL_PROXY_RVI, never as measured height.
+    proxy = m.get("size_kind") != "altura_mediana_m"
     if any(r.get("size_kind", m["size_kind"]) != m["size_kind"] for r in ref):
         return {"status": "N/D", "reason": "referência e talhão usam medidas de tamanho diferentes"}
     stats = {k: _robust([r[k] for r in ref]) for k in weights}
@@ -214,7 +235,11 @@ def classify_vigor(vh_db, vv_db, reference_fields, *, height_m=None, weights=Non
     probs = counts / counts.sum()
     metric_intervals = {key: [float(np.quantile(values, .05)), float(np.quantile(values, .95))]
                         for key, values in metric_boot.items() if len(values) >= 10}
-    return {"status": "experimental", "class": CLASSES[_klass(V, t)],
+    basis = {"altura_mediana_m": "altura_mediana_m", "VVmaisVH_dB_mediano": "EXPERIMENTAL_PROXY_VV+VH",
+             "RVI_mediano": "EXPERIMENTAL_PROXY_RVI"}.get(m.get("size_kind"), "EXPERIMENTAL_PROXY")
+    return {"status": "experimental", "size_basis": basis,
+            "size_proxy_evidence": HEIGHT_PROXY_EVIDENCE if proxy else None,
+            "class": CLASSES[_klass(V, t)],
             "probabilities": dict(zip(CLASSES, map(float, probs))),
             "composite": float(V), "composite_boot_p05_p95": (
                 [float(np.quantile(boot, .05)), float(np.quantile(boot, .95))] if boot else None),

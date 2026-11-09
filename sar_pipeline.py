@@ -519,13 +519,18 @@ def _height_interpretation(path):
 
 MAAP_STAC="https://catalog.maap.eo.esa.int/catalogue/"
 BIOMASS_L2B_PRODUCT_TYPES=("FP_AGB_L2B","FP_FH__L2B")
+# ESA BIOMASS (P-band) Level-2A Forest Height: open release 30/06/2026, 200 m,
+# per image stack. L2B (merged FH/AGB) only from May 2027 (restricted before).
+# Owner priority (09/11/2026): P-band BIOMASS height first for native formations.
+BIOMASS_FH_L2A="FP_FH__L2A"
+BIOMASS_PRODUCT_TYPES=BIOMASS_L2B_PRODUCT_TYPES+(BIOMASS_FH_L2A,)
 def _biomass_item_product_types(item):
     """Return BIOMASS L2B product types evidenced by item/asset metadata."""
     props=item.get("properties") or {}; assets=item.get("assets") or {}
     evidence=" ".join([str(item.get("id") or ""),str(props)," ".join(
         str(k)+" "+str(v.get("title") or "")+" "+str(v.get("href") or "")
         for k,v in assets.items())]).upper()
-    return [product for product in BIOMASS_L2B_PRODUCT_TYPES if product in evidence]
+    return [product for product in BIOMASS_PRODUCT_TYPES if product in evidence]
 
 def _biomass_catalog_summary(item):
     props=item.get("properties") or {}
@@ -573,6 +578,13 @@ def biomass_l2b_search(gdf,limit=100):
             for it in items:
                 z=dict(it); z["_collection"]=collection; z["_stage"]=stage
                 z["_product_type"]=product_type; out.append(z)
+    # Open Level-2A Forest Height (P-band, per stack), after L2B in priority.
+    for collection,stage in (("BiomassLevel2a","OPERATIONAL_L2A"),("BiomassLevel2aIOC","IOC_L2A")):
+        try: items=maap_search(gdf,collection,limit=limit,product_type=BIOMASS_FH_L2A)
+        except Exception: continue
+        for it in items:
+            z=dict(it); z["_collection"]=collection; z["_stage"]=stage
+            z["_product_type"]=BIOMASS_FH_L2A; out.append(z)
     unique={}
     for item in out:
         unique[(item.get("_collection"),item.get("id"),item.get("_product_type"))]=item
@@ -580,7 +592,8 @@ def biomass_l2b_search(gdf,limit=100):
     out=_newest_first(out)
     # Scientific product role and operational quality precede recency.
     # Within each equivalent class: most recent *acquisition* first.
-    out.sort(key=lambda it:(0 if it.get("_stage")=="OPERATIONAL" else 1,
+    stage_rank={"OPERATIONAL":0,"IOC":1,"OPERATIONAL_L2A":2,"IOC_L2A":3}
+    out.sort(key=lambda it:(stage_rank.get(it.get("_stage"),9),
                             0 if it.get("_product_type")=="FP_AGB_L2B" else 1))
     return out
 
@@ -600,7 +613,13 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
         name=(k+" "+href+" "+str(a.get("title") or "")).lower()
         suffix=href.lower().split("?")[0]
         is_archive=suffix.endswith(".zip") or "zip" in typ
-        if product_type=="FP_FH__L2B":
+        if product_type==BIOMASS_FH_L2A:
+            # L2A: only the FH GeoTIFF (never quick-looks, KML, XML or quality).
+            if not suffix.endswith((".tif",".tiff")) and "tiff" not in typ:
+                continue
+            is_agb=False
+            is_fh=any(x in name for x in ("fh","height"))
+        elif product_type=="FP_FH__L2B":
             is_agb=False
             is_fh=any(x in name for x in ("fh","height","canopy","forest_height","fp_fh__l2b"))
         else:
@@ -613,7 +632,7 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
             continue
         if product_type=="FP_AGB_L2B" and (is_agb or generic):
             out.append((k,href))
-        elif product_type=="FP_FH__L2B" and (is_fh or generic):
+        elif product_type in ("FP_FH__L2B",BIOMASS_FH_L2A) and (is_fh or generic):
             out.append((k,href))
     return out
 
@@ -697,13 +716,13 @@ def download_maap_agb(gdf,offline_token,cache):
 def download_maap_height(gdf,offline_token,cache,items=None):
     """Download ESA BIOMASS FH height products without routing them through AGB."""
     items=items if items is not None else biomass_l2b_search(gdf,limit=100)
-    fh_items=[it for it in items if it.get("_product_type")=="FP_FH__L2B"]
+    fh_items=[it for it in items if it.get("_product_type") in ("FP_FH__L2B",BIOMASS_FH_L2A)]
     if not fh_items:
         return {"available":False,"paths":[],"items":len(items),"fh_items":0,
-                "reason":"nenhum produto FP_FH__L2B cobre a AOI; altura SAR não calculável nesta rota"}
+                "reason":"nenhum produto ESA BIOMASS FH (L2B ou L2A, banda P) cobre a AOI; altura SAR não calculável nesta rota"}
     Path(cache).mkdir(parents=True,exist_ok=True); paths=[]; errors=[]; token=None; token_loaded=False
     for it in fh_items:
-        for key,url in _biomass_product_assets(it,"FP_FH__L2B"):
+        for key,url in _biomass_product_assets(it,it.get("_product_type") or "FP_FH__L2B"):
             base=Path(url.split("?")[0]).name or (it.get("id","biomass")+"_FH_"+key)
             target=Path(cache)/(it.get("id","biomass")+"_"+base)
             try:
