@@ -25,3 +25,8 @@ Status: build experimental pré-campo; não é homologação científica (gate i
 - Altura de plantas: modelo SAR publicado aceito como experimental com RMSE/n publicados e erro propagado.
 - Serapilheira: estimativa hierárquica estendida a todas as fitofisionomias florestais com estudo gravimétrico verificado (ex.: FOD ES 2,03 tC/ha, IP90% 0,73–5,66).
 - Incerteza total do carbono: correlação declarada (biomassa, raízes e necromassa ρ=1; serapilheira e solo independentes), nunca soma simples.
+
+## V87.43 (08/11/2026) — experimento cartográfico opt-in
+- Ferramenta separada para treino SAR com rótulos TerraClass 2024 em categorias amplas e validação espacial reportada somente como concordância com mapa.
+- Não instala pesos, não integra inferência padrão, não representa validação de campo e não altera áreas/estoques existentes.
+- Modelo homologado mantém prioridade; experimento só como contingência; demais áreas retornam N/D com motivo. TerraClass cobre Amazônia/Cerrado; coeficientes de altura por cultura ainda não instalados.

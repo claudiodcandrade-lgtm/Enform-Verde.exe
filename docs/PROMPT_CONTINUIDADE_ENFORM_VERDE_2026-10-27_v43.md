@@ -606,3 +606,7 @@ A versão vigente do prompt e da especificação está em V87.38. Aplicar a sequ
 
 ## CHECKPOINT V87.42 — 08/11/2026 — decisões do proprietário incorporadas (3.26.6)
 - 1A painel calibrado; 2B qualquer acurácia medida aceita como experimental com n e IC95% (MIN_VALIDATION=1); 3C PAM 2015–2024; 4B altura SAR publicada experimental com erro propagado (`validation_tier=experimental_published`); 5B previsão sem vigor rotulada; 6A serapilheira hierárquica para todas as florestais com ≥1 estudo (ex. FOD ES 2,03 tC/ha, IP90% 0,73–5,66); 7B incerteza total σ² = (Σσ_biomassa)² + σ_serap² + σ_solo²; 8A unidades radar só no mapa/painel. Prioridade seguinte: classificador SAR semântico sempre disponível (roteiro B6) e coeficientes verificáveis de altura por cultura.
+
+## Histórico — V87.43 (08/11/2026)
+Decisão do proprietário: PRODES/TerraClass aceitos como rótulos cartográficos para treinamento experimental. O novo módulo `terraclass_sar_experiment.py` avalia concordância com mapas em blocos e não classifica como validação de campo. TerraClass 2024 fornece referência de Amazônia e Cerrado (não cobre todos os biomas e não distingue culturas individuais); PRODES registra supressão primária, não o uso posterior. Treino real, integração à inferência e validação independente permanecem pendentes. Outros biomas, altura e vigor ficam N/D com motivo onde não houver fonte/modelo compatível.
+Prioridade: modelos testados/homologados compatíveis primeiro; experimental somente como contingência claramente rotulada; N/D com motivo se nenhuma rota for aplicável.

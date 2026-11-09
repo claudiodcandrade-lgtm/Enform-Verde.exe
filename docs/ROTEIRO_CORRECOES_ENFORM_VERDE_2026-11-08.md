@@ -40,3 +40,11 @@ Objetivo: concluir as correções sem regressões. Cada item tem critério de ac
 
 ## F. Validação científica (gate)
 - Pedidos institucionais (SFB, Embrapa, MapBiomas) enviados; ferramenta de validação do solo pronta; nada promovido a `validated` sem dados independentes reais.
+
+## G. Decisão PRODES/TerraClass e ordem de uso (08/11/2026)
+- O proprietário autorizou rótulos cartográficos oficiais para treinamento experimental. Módulo: `terraclass_sar_experiment.py`; comando: `tools/train_terraclass_sar_experiment.py`.
+- A saída informa `EXPERIMENTAL_MAP_AGREEMENT_ONLY`, métricas por classe, n, blocos e hash. É concordância com TerraClass, nunca validação de campo. Treino exige raster SAR e mapa contemporâneos e apenas categorias amplas.
+- Ordem operacional: (1) modelo/dado testado e homologado compatível; (2) contingência experimental com rótulo, domínio e incerteza; (3) N/D com motivo. O experimental nunca substitui um modelo homologado.
+- TerraClass 2024 tem classes para Amazônia e Cerrado; não extrapolar para os demais biomas nem separar soja/milho. PRODES é camada de supressão primária, não classe de uso atual pós-supressão. Outros biomas permanecem N/D sem referência compatível.
+- Altura/vigor: coeficientes publicados não estão instalados; não usar valores transferidos nem inferir altura de retroespalhamento sem modelo/erro/estádio compatíveis.
+- A ferramenta é opt-in, não foi treinada em dados reais nesta alteração, não está integrada ao painel/inferência e não altera resultados padrão. Antes de promoção, executar em dados oficiais e SAR reais, revisar a matriz espacial e adicionar validação independente de campo.

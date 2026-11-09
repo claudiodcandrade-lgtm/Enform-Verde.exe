@@ -1,6 +1,10 @@
 # Enform Verde — Especificação técnica do carbono orgânico do solo até 100 cm
 Data: 28/10/2026 (UTC−3)
 
+## Nota de escopo V87.43 — experimento SAR (08/11/2026)
+
+A decisão PRODES/TerraClass não altera a estimativa de carbono do solo nem a interpretação de dados PronaSolos. A nova rota experimental SAR usa rótulos TerraClass 2024 para treino e reporta concordância cartográfica; ela não compõe o compartimento de carbono do solo. Pedologia, fertilidade e carbono 0–100 cm continuam independentes desse experimento. Ausência de dados observacionais válidos permanece N/D.
+
 ## Escopo obrigatório — faixa 0–100 cm
 
 **Concentrar todas as consultas ao serviço PronaSolos de estoque de carbono nas cinco camadas 0–5, 5–15, 15–30, 30–60 e 60–100 cm (IDs ArcGIS 2, 3, 4, 5 e 6).** Não consultar a camada de 100–200 cm (ID 7), não compor 0–200 cm e não somar novamente subtotais cumulativos ao estoque de 0–100 cm.
