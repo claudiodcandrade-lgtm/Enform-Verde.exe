@@ -625,3 +625,14 @@ O gate científico permanece fail-closed: modelos e dados testados/homologados a
 
 ## Checkpoint supersedente V87.45 (09/11/2026)
 A branch publicada `patches-3.26.6` agora dispara os workflows Windows e científico em push. Commit remoto do gatilho: `e2aa95ad7d0e02d3043253cdce7a20099127fb4e`. Build/artefato e aprovação científica devem ser confirmados separadamente; status científico segue bloqueado sem evidência independente. Consulte `docs/Enform_Verde_Prompt_Continuidade_V87_45_2026-11-09.txt` e o adendo de especificação V87.45 para o estado atual. Não declarar suite local completa: execução interrompida durante caso remoto após longa demora.
+
+
+# CHECKPOINT PRIORITÁRIO V87.51 — diagnóstico temporal SAR corrigido (09/11/2026)
+
+A branch `patches-3.26.6` / PR #51 foi atualizada para corrigir o diagnóstico de séries temporais Sentinel‑1. Commit de código: `7d4c4d070f128e1c13d59df4fe15e4012acbfc8a`; regressão adicionada em `0df5457b338ef731747925b9ada0b9725cb857d0`.
+
+`recent_sar_landcover.py` agora registra por provedor candidatos catalogados, existência de série elegível, cenas selecionadas, tentativas de leitura de pixels, cenas lidas e falhas de autenticação/leitura. Quando há cenas candidatas, mas nenhuma série compatível com órbita, recência e intervalo temporal, retorna `N/D_DADOS / NO_ELIGIBLE_TEMPORAL_SERIES`, com zero cenas selecionadas e zero tentativas de leitura. `selected_scene_count` deixou de contar candidatos. Falha de token ou de leitura de cenas efetivamente selecionadas mantém `ERRO_TECNICO` com motivo específico; uma série legível porém insuficiente retorna N/D com motivo.
+
+A regressão sintética cobre candidatos sem extensão temporal elegível e verifica status, motivo e contadores. Ela não substitui o KML privado de Sinop nem comprova pixels SAR reais, classificação agrícola, estimativa de carbono ou imagem CBERS na GUI. Os workflows da PR #51 foram disparados no SHA `0df5457b338ef731747925b9ada0b9725cb857d0`; não declarar aprovação até consultar seus resultados finais.
+
+PR #51 permanece draft; PR #50 e `main` não foram alteradas. Não liberar nova versão/EXE com base nesta correção isolada. Após CI, executar a regressão ponta a ponta na AOI Maria Eduarda, validar renderização óptica real no EXE e auditar carbono. Gate científico independente continua separado e pendente.
