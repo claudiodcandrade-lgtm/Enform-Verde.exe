@@ -27,3 +27,20 @@ def remove_superseded_yield_placeholders(chunks):
                 kept.append(line)
         out.append("".join(kept))
     return out
+
+
+def current_crop_area_by_semantic_sar(land):
+    """Return current crop areas only when this AOI has an executable SAR classification.
+
+    An unavailable classifier must not turn the empty class list into a measured
+    zero-hectare result.
+    """
+    if not isinstance(land, dict) or land.get("status") != "SAR_ELEGIVEL":
+        return None, None
+    classes=land.get("classes") or []
+    crop=sum(float(x.get("area_ha") or 0) for x in classes
+             if str(x.get("class_name") or "").startswith("Lavoura de "))
+    generic=sum(float(x.get("area_ha") or 0) for x in classes
+                if str(x.get("class_name") or "") in
+                ("Áreas cultivadas","Lavoura Temporária","Outras Lavouras Temporárias"))
+    return crop,generic
