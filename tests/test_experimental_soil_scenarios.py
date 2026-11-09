@@ -20,7 +20,9 @@ def example_horizons():
         "organic_carbon_mass_fraction": [.01, .02, .03],
         "coarse_fragment_volume_fraction": [0.0, .10, .20],
         "licensed_for_use": True,
-        "source_url": "https://example.org/synthetic-fixture-not-field-data",
+        "publisher": "Embrapa Solos/PronaSolos",
+        "source_product": "Synthetic fixture only, no field data",
+        "source_url": "https://geoinfo.dados.embrapa.br/synthetic-fixture-not-a-real-product",
         "source_sha256": "a" * 64,
     } for a, b in zip(DEPTHS[:-1], DEPTHS[1:])]
 
@@ -91,6 +93,22 @@ class ExperimentalSoilScenarioTests(unittest.TestCase):
             rows[3][field] = value
             with self.subTest(field=field):
                 self.assertFalse(self.evaluate(rows)["available"])
+
+    def test_foreign_soil_data_are_rejected(self):
+        for url, publisher in (
+            ("https://soilgrids.org/example", "Embrapa Solos/PronaSolos"),
+            ("https://geoinfo.dados.embrapa.br/example", "ISRIC SoilGrids"),
+        ):
+            rows = example_horizons()
+            rows[2]["source_url"] = url
+            rows[2]["publisher"] = publisher
+            with self.subTest(url=url, publisher=publisher):
+                self.assertFalse(self.evaluate(rows)["available"])
+
+    def test_embrapa_soil_source_requires_product_identity(self):
+        rows = example_horizons()
+        rows[1]["source_product"] = ""
+        self.assertFalse(self.evaluate(rows)["available"])
 
     def test_digest_and_source_are_not_assumed_verified(self):
         rows = example_horizons()
