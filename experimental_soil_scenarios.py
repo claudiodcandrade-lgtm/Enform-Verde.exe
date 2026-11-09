@@ -21,7 +21,7 @@ from evidence_hierarchy import _norm
 
 DEPTH_BREAKS_CM = (0, 5, 15, 30, 60, 100)
 VALID_BIOMES = {"amazonia", "cerrado", "caatinga", "mata atlantica", "pantanal"}
-SOIL_SOURCE_PUBLISHERS = {"embrapa solos pronasolos", "embrapa solos", "pronasolos"}
+SOIL_SOURCE_PUBLISHERS = {"embrapa solos/pronasolos", "embrapa solos", "pronasolos"}
 SOIL_SOURCE_HOSTS = ("embrapa.br", "sgb.gov.br")
 
 
