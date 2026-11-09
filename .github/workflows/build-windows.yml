@@ -374,6 +374,10 @@ jobs:
           assert "cbers4a_wfi_preview" in src and "sentinel2_earthsearch_preview" in src and "sentinel2_preview" in src, "CBERS-4A/Sentinel-2 real-pixel providers missing"
           map_worker=src[src.index("        def worker():",src.index("def show_google_map")):src.index("        threading.Thread(target=worker",src.index("def show_google_map"))]
           assert map_worker.index("cbers4a_wfi_preview(g,out_w=w") < map_worker.index("sentinel2_earthsearch_preview(g,out_w=w") < map_worker.index("sentinel2_preview(g,extent_factor=extent_factor)") < map_worker.index("nasa_gibs_preview(g,out_w=w") < map_worker.index("_read_satellite_preview_cache") < map_worker.index("offline_brazil_preview(g,extent_factor,(w,h))"), "optical priority regression: CBERS-4A > Sentinel-2 > NASA VIIRS > optical cache > cartographic contingency"
+          for optical_fn in ("cbers4a_wfi_preview","sentinel2_earthsearch_preview","sentinel2_preview"):
+              optical_body=src[src.index("def "+optical_fn):src.find("\ndef ",src.index("def "+optical_fn)+4)]
+              assert "GDAL_HTTP_CAINFO" in optical_body and "certifi.where()" in optical_body, f"{optical_fn} must use an explicit compact verified CA bundle on Windows"
+              assert "verify=False" not in optical_body and "GDAL_HTTP_UNSAFESSL=YES" not in optical_body, f"{optical_fn} must preserve TLS verification"
           assert "offline_brazil_preview" in src and "offline_ibge_map.json.gz" in src and Path("offline_ibge_map.json.gz").exists(), "packaged offline IBGE map missing"
           assert "Fitofisionomia presente na propriedade:" in src and "ibge_phys_display" in src and "ibge_biome_display" in src and "format_property_physiognomies" in src, "visible actual property physiognomy panel missing"
           assert "def pick_ibge_physiognomy" in src and "FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA" in src and "Carbono por Formação" in src and "AGB por Fitofisionomia" in src, "per-class IBGE SAR reporting/export missing"

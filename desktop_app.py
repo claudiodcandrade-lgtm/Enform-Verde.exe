@@ -906,18 +906,16 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     bounds=tuple(map(float,g.total_bounds))
     out_width=max(320,min(1600,int(out_w)))
     out_height=max(240,min(1200,int(out_h)))
-    import ssl
-    ca=ssl.get_default_verify_paths().cafile
-    if not ca:
-        try:
-            import certifi
-            ca=certifi.where()
-        except ImportError:
-            ca=None
+    # Prefer the compact certifi bundle over the oversized Windows system CA file.
+    try:
+        import certifi
+        ca=certifi.where()
+    except ImportError:
+        ca=None
     env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"35",
          "GDAL_HTTP_MAX_RETRY":"2","GDAL_HTTP_UNSAFESSL":"NO"}
     if ca:
-        env.update({"GDAL_CURL_CA_BUNDLE":ca,"CURL_CA_BUNDLE":ca})
+        env.update({"GDAL_HTTP_CAINFO":ca,"GDAL_CURL_CA_BUNDLE":ca,"CURL_CA_BUNDLE":ca})
     for cloud,dt,item,assets in pool:
         try:
             with rasterio.Env(**env):
@@ -1013,13 +1011,12 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     from rasterio.transform import from_bounds
     from rasterio.windows import from_bounds as window_from_bounds, Window
     from rasterio.features import geometry_mask
-    import ssl
-    ca=ssl.get_default_verify_paths().cafile
-    if not ca:
-        try:
-            import certifi
-            ca=certifi.where()
-        except ImportError:ca=None
+    # Use certifi's compact trusted CA bundle first. Windows system CA files can
+    # exceed libcurl's 1 MiB limit; certificate verification remains enabled.
+    try:
+        import certifi
+        ca=certifi.where()
+    except ImportError:ca=None
     from datetime import datetime, timezone
     g=gdf.to_crs(4326).copy()
     minx,miny,maxx,maxy=map(float,g.total_bounds)
@@ -1102,7 +1099,7 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             env={"GDAL_HTTP_TIMEOUT":"40","GDAL_HTTP_MAX_RETRY":"2",
                  "GDAL_HTTP_MULTIRANGE":"YES","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"YES",
                  "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_UNSAFESSL":"NO"}
-            if ca:env.update({"GDAL_CURL_CA_BUNDLE":ca,"CURL_CA_BUNDLE":ca})
+            if ca:env.update({"GDAL_HTTP_CAINFO":ca,"GDAL_CURL_CA_BUNDLE":ca,"CURL_CA_BUNDLE":ca})
             with rasterio.Env(**env):
                 mask=read_cog_window(assets["CMASK"]["href"],categorical=True)
                 # Current INPE catalogue collection defines CMASK: 127 clear,
