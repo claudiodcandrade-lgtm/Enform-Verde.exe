@@ -14,3 +14,7 @@ Status: build experimental pré-campo; não é homologação científica (gate i
 ## Prevenção de recorrência
 - Build Windows executa `Enform Verde.exe --network-check` na cópia limpa: exige pixels reais CBERS-4A e Sentinel-1 em Sinop com TLS verificado; falha reprova o build.
 - Teste `tests/test_tls_trust_contract.py`: pacote combinado inclui raízes do sistema e é usado pelo leitor SAR; verificação nunca desligada.
+
+## Serapilheira entra no total (V87.40)
+- Floresta Estacional Sempre-Verde do norte de Mato Grosso (ex.: Sinop): estimativa hierárquica regional com erro de transferência QUANTIFICADO. Dois inventários gravimétricos locais independentes (Silva et al. 2009, Acta Amazonica, ~50 km de Sinop: 5,12 Mg/ha; Volpato 2024, UFRRJ: 8,70 Mg/ha) definem a média; a heterogeneidade entre 10 sítios florestais brasileiros independentes (τ = 0,396 em ln) define a incerteza de transferência; fração de carbono U(0,42; 0,50).
+- Resultado para um sítio FESV novo: 3,08 tC/ha (intervalo preditivo 90%: 1,27–7,48 tC/ha); entra no total como experimental, só em estratos nativos confirmados.

@@ -288,3 +288,8 @@ A atualização de classificação e fundo visual não altera os contratos de so
 - Evidência com proxy TLS e verificação ligada: código 3.26.5 → 0 cenas (“self-signed certificate in certificate chain”); corrigido → 12 cenas Sentinel-1 de Sinop (31/10/2026), unidades radar 278,8/457,5/948,4 ha, CBERS-4A 27/10/2026, `--network-check` 170.820 pixels VV/VH.
 - Prevenção: build Windows roda `Enform Verde.exe --network-check` (pixels reais CBERS-4A e Sentinel-1 em Sinop, TLS verificado; falha reprova); `tests/test_tls_trust_contract.py`; unidades radar com nomes neutros.
 - Pendências inalteradas: classificador SAR semântico validado, altura validada para vigor combinado, serapilheira por inventários regionais/IFN/gravimetria, dados independentes para o gate.
+
+
+## CHECKPOINT V87.40 — 08/11/2026 — serapilheira entra no total com erro de transferência quantificado (3.26.6; NÃO homologação)
+- `regional_litter_hierarchy.py`: ln L* = média ln dos sítios locais da fitofisionomia + t·τ·√(1+1/k); τ = DP ln entre 10 sítios florestais brasileiros independentes (0,396); C = L*·U(0,42;0,50); Monte Carlo. FESV norte de MT: Silva et al. 2009 (Acta Amazonica, ~50 km de Sinop, 5,121 Mg/ha) + Volpato 2024 (8,70 Mg/ha) → 3,08 tC/ha, IP90% 1,27–7,48, `include_in_total=True`, origem `INVENTARIO_REGIONAL_HIERARQUICO`. Substitui o registro “NÃO ESTIMADO” como primeira opção para FESV; só em estrato nativo confirmado.
+- Pendente: ampliar sítios gravimétricos verificados por fitofisionomia; calibrar massa/espessura para usar o IFN.

@@ -31,7 +31,7 @@ class NorthMatoGrossoLitterTest(unittest.TestCase):
             "Amazônia", "Floresta Estacional Sempre-Verde Submontana",
             box(-45, -8, -44.9, -7.9)))
 
-    def test_litter_without_variance_is_not_reported_as_numeric_stock(self):
+    def test_fesv_litter_enters_with_quantified_transfer_uncertainty(self):
         def sar(*args):
             return {"agb_mg_ha": 50.0, "data_origin": "SAR_DERIVED_CCI",
                     "source": "fixture", "regional_components": {}}
@@ -42,10 +42,15 @@ class NorthMatoGrossoLitterTest(unittest.TestCase):
             "Amazônia",sar,soil)
         rows = {r["parametro"]:r for r in result["components"]}
         x = rows["Serapilheira"]
-        self.assertIsNone(x["tc"])
-        self.assertEqual(x["origem"], "NAO_ESTIMADO")
-        self.assertFalse(x["include_in_total"])
-        self.assertIsNone(x["range_tc_ha"])
+        # V87.40: variance is now quantified empirically (between-site
+        # heterogeneity of independent forest inventories + C fraction), so
+        # FESV litter enters as an experimental number with a 90 % predictive
+        # interval instead of N/D.
+        self.assertIsNotNone(x["tc"])
+        self.assertEqual(x["origem"], "INVENTARIO_REGIONAL_HIERARQUICO")
+        self.assertTrue(x["include_in_total"])
+        lo, hi = x["range_tc_ha"]
+        self.assertLess(lo, x["tc"]); self.assertLess(x["tc"], hi)
 
     def test_executive_land_use_is_not_entirely_forest(self):
         x = executive_carbon_lines({

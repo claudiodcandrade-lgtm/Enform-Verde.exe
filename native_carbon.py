@@ -203,9 +203,13 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
     # its predictive interval cannot quantify ecological transfer bias.
     # Retain only class-compatible microrregional/validated source components.
     if not any('serapilheira' in normalize(k) for k in regional):
+        from regional_litter_hierarchy import fesv_northern_mt_litter_component
+        # V87.40: FESV (northern MT) litter now enters with QUANTIFIED transfer
+        # error (between-site heterogeneity); the former reference-only record
+        # remains as last-resort context.
         for provider in (santo_ambrosio_litter_stock_component,tapajos_litter_stock_component,
-                         pantanal_nhecolandia_litter_carbon_component,northern_mato_grosso_fesv_litter_component,
-                         published_national_litter_component):
+                         pantanal_nhecolandia_litter_carbon_component,fesv_northern_mt_litter_component,
+                         northern_mato_grosso_fesv_litter_component,published_national_litter_component):
             component=(provider(biome,physiognomy,aoi,property_aoi=property_aoi)
                        if provider is santo_ambrosio_litter_stock_component else
                        provider(biome,physiognomy,aoi))
