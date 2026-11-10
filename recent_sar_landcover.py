@@ -148,6 +148,10 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                 for attempt in range(2):
                     provider_diag["pixel_read_attempt_count"]+=1
                     try:
+                        # A failed attempt must never poison the output grid for
+                        # the next scene or provider. Commit only after both
+                        # polarizations were actually read and reprojected.
+                        scene_grid=provider_grid
                         pair=[]
                         for pol in ("vv","vh"):
                             from tls_setup import gdal_env
@@ -158,15 +162,15 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                 read_href=_signed_href(asset_href,provider_token) if provider=="MPC" else asset_href
                                 with rasterio.open(read_href) as src:
                                     if not src.crs:raise ValueError("Missing georeferencing in SAR source")
-                                    if provider_grid is None:
+                                    if scene_grid is None:
                                         aoig=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
                                         win=from_bounds(*aoig.bounds,transform=src.transform).round_offsets().round_lengths()
                                         win=win.intersection(Window(0,0,src.width,src.height))
                                         if win.width*win.height>1800000 or min(win.width,win.height)<=0:
                                             raise ValueError("SAR AOI exceeds memory-bounded raster window")
-                                        provider_grid=(src.crs,src.window_transform(win),
-                                                       (int(win.height),int(win.width)),aoig)
-                                    crs,tr,size,_=provider_grid
+                                        scene_grid=(src.crs,src.window_transform(win),
+                                                    (int(win.height),int(win.width)),aoig)
+                                    crs,tr,size,_=scene_grid
                                     local_aoi=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
                                     window=from_bounds(*local_aoi.bounds,transform=src.transform)
                                     from math import floor,ceil
@@ -186,7 +190,12 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                               src_transform=src.window_transform(window),src_crs=src.crs,
                                               src_nodata=np.nan,dst_nodata=np.nan,dst_crs=crs,
                                               dst_transform=tr,resampling=Resampling.nearest)
+                                    if not np.isfinite(arr).any():
+                                        raise ValueError("SAR_SCENE_NO_VALID_PIXELS_IN_AOI")
                                     pair.append(arr)
+                        if len(pair)!=2:
+                            raise ValueError("SAR_SCENE_INCOMPLETE_VV_VH_PAIR")
+                        provider_grid=scene_grid
                         provider_data.append((dt,str(scene.get("id","")),pair))
                         provider_diag["readable_scene_count"]+=1
                         scene_ok=True
