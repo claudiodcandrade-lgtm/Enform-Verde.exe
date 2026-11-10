@@ -724,7 +724,8 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                 # The model was spatially evaluated in its training geography.
                 # It is NOT independently field-verified on this property.
                 # Explicitly distinguish it from locally validated SAR.
-                provisional='DOMINIO_GEOGRAFICO_PROVISORIO' in domain_msg
+                provisional=any(x in domain_msg for x in
+                    ('DOMINIO_GEOGRAFICO_PROVISORIO','EXTRAPOLACAO_NACIONAL_EXPERIMENTAL'))
                 model_source='SAR_EXPERIMENTAL_MODELO' if provisional else 'SAR_VALIDADO'
                 lay['source']=model_source
                 lay['taxonomy']='SAR RF experimental, ano agrícola '+str(res.get('season'))
