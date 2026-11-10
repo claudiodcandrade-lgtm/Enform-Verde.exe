@@ -1659,25 +1659,58 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # 1 — ESA BIOMASS P-band / official L2B AGB.
     try: l2items=biomass_l2b_search(gdf,limit=100)
     except Exception as e: l2items=[]; audit["warnings"].append("BIOMASS catálogo: "+str(e))
-    audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"products_discovered":{p:sum(1 for x in l2items if x.get("_product_type")==p) for p in BIOMASS_L2B_PRODUCT_TYPES},"items":[_biomass_catalog_summary(x) for x in l2items[:50]],"access_policy":"BiomassLevel2b e BiomassLevel2bIOC; FP_AGB_L2B e FP_FH__L2B descobertos separadamente; ativo público conforme publicação e configuração MAAP"}
-    # Height is an independent P-band product. Acquire it before any AGB early
-    # return so a direct AGB result can carry the measured SAR canopy-height
-    # statistic too. The FH product is never converted into AGB.
+    audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"products_discovered":{p:sum(1 for x in l2items if x.get("_product_type")==p) for p in BIOMASS_PRODUCT_TYPES},"items":[_biomass_catalog_summary(x) for x in l2items[:50]],"access_policy":"BiomassLevel2a/2b e IOC; FP_FH__L2A, FP_FH__L2B e FP_AGB_L2B separados; altura FH não implica AGB"}
+    # P-band FH is independent from AGB. In 2026 the operational height
+    # products are primarily FP_FH__L2A, NOT L2B. A successful live Sinop
+    # FH L2A pixel read must reach this automatic route.
     sar_height=None
-    if l2items and any(x.get("_product_type")=="FP_FH__L2B" for x in l2items):
+    fh_products=("FP_FH__L2B", BIOMASS_FH_L2A)
+    fh_items=[it for it in l2items if it.get("_product_type") in fh_products]
+    audit["biomass_height_catalog"]={
+        "fh_count":len(fh_items),
+        "product_types":sorted({it.get("_product_type") for it in fh_items})}
+    if fh_items:
         try:
-            hd=download_maap_height(gdf,offline_token,Path(cache)/"biomass_height",items=l2items)
-            audit["biomass_height_l2b"]=hd
-            if hd.get("paths"):
-                hz=process_real_sar(gdf,hd["paths"],biome,phys)
-                sar_height={k:hz[k] for k in ("height_mean_m","height_sd_m","height_n_valid_pixels","height_interpretation") if k in hz}
-                sar_height.update({"product":"FP_FH__L2B","sensor":"ESA BIOMASS","band":"P",
-                                   "source":"ESA BIOMASS FP_FH__L2B — altura superior do dossel (H100)",
-                                   "paths":hd["paths"]})
-                audit["biomass_height_l2b"]["zonal_height"]=sar_height
-        except Exception as e:
-            audit["biomass_height_l2b"]={"available":False,"reason":str(e)}
-    # ESA BIOMASS FP_FH__L2B is primary. If unavailable, use the
+            hd=download_maap_height(gdf,offline_token,Path(cache)/"biomass_height",items=fh_items)
+            audit["biomass_height"]=hd
+            # A FH-only product must not be passed through the AGB classifier
+            # just to extract height. Read true georeferenced zonal pixels.
+            for height_path in hd.get("paths") or []:
+                if role(height_path)!="HEIGHT":
+                    continue
+                try:
+                    z=_zonal(gdf,height_path)
+                    if not (z["n"]>0 and math.isfinite(z["mean"]) and z["mean"]>0):
+                        continue
+                    chosen=next((it for it in fh_items
+                                 if str(it.get("id") or "") in str(height_path)),fh_items[0])
+                    product_type=chosen.get("_product_type") or BIOMASS_FH_L2A
+                    sar_height={
+                        "height_mean_m":z["mean"],
+                        "height_sd_m":z["sd"],
+                        "height_n_valid_pixels":z["n"],
+                        "height_definition_compatible_with_H100":True,
+                        "height_metric":"ESA BIOMASS upper forest canopy height H100",
+                        "height_error_kind":"spatial standard deviation; not measurement uncertainty",
+                        "height_interpretation":{
+                            "observable":"altura superior do dossel H100",
+                            "band":"P",
+                            "meaning":"FH mede altura florestal, não biomassa aérea nem árvores individuais",
+                            "agb_inference_permitted":False},
+                        "product":product_type,"sensor":"ESA BIOMASS","band":"P",
+                        "source":"ESA BIOMASS "+product_type+" — altura superior do dossel (H100)",
+                        "paths":[str(height_path)],
+                        "scene_ids":[chosen.get("id")],
+                        "height_route_status":"ALTURA_SAR_PROCESSADA"}
+                    audit["biomass_height"]["zonal_height"]=sar_height
+                    break
+                except (OSError,ValueError,RuntimeError) as exc:
+                    audit["warnings"].append("BIOMASS FH raster: "+type(exc).__name__)
+            if hd.get("paths") and not sar_height:
+                audit["warnings"].append("BIOMASS FH rasters recovered, but no valid georeferenced height pixels in AOI")
+        except Exception as exc:
+            audit["biomass_height"]={"available":False,"reason":type(exc).__name__+": "+str(exc)[:180]}
+    # ESA BIOMASS FH L2A/L2B has priority. If unavailable, use the
     # official ORNL GEDI–TanDEM-X InSAR height+SE product over the Amazon.
     if not sar_height:
         try:
