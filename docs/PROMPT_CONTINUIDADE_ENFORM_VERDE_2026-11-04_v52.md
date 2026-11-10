@@ -1,3 +1,24 @@
+<!-- ENFORM_CHECKPOINT_V87_61_SINOP_REGRESSION -->
+## V87.61 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
+
+- V87.61 10/11/2026: teste real informado pelo proprietario na Fazenda Maria Eduarda, Sinop (1459,91 ha, EPSG:6933), reproduziu falha de imagem optica, falha SELECTED_SCENES_PIXEL_READ_FAILED para Sentinel-1 RTC, e ausencia de mascara nativa/cultivada; carbono, vigor e safra ficaram N/D. Build/CI verdes da V87.60 nao asseguraram abertura em Windows de usuario; tratar como REGRESSAO REAL bloqueante.
+- SAR atual: recent_sar_landcover.py agora faz rollback da grade de reprojecao de cena falha, so publicando provider_grid apos VV e VH efetivamente lidos, e rejeita arrays sem pixels positivos validos; teste sintetico tests/test_recent_sar_grid_recovery.py documenta o defeito. Essa correcao ainda exige teste Windows live em Sinop para comprovar recuperacao; nao marcar como resolvida por teste mock.
+- LIBERACAO: regressao de CI e autoteste Windows devem ser complementados por teste em AOI real Sinop com imagem otica visivel no aplicativo, VV/VH lidos em mais de uma data/orbita adequada, mascara e areas semanticas defensaveis, e quadros de carbono/agricultura/Excel consistentes. Sem amostras rotuladas independentes, manter informacao experimental, com N/D para dados sem suporte.
+- Nao confundir IBGE H potencial e legenda_2 cartografica com cobertura atual da propriedade. Nunca apresentar 99,41% de floresta como resultado SAR. Relatorio do proprietario aponta N/D completo, nao ausencia de vegetacao.
+- Diagnostico obrigatorio: registrar provider, scene id nao sigiloso, momento de aquisicao, contador de tentativas, tipo de erro, status de leitura VV/VH, pixels validos, scene failover e data/qualidade da imagem optica. Segredos e URLs assinadas ficam redigidos.
+- PR #51, branch patches-3.26.6: piloto pre-campo experimental; release Windows so pode ser anunciado apos build, autoteste e regresao completos no mesmo SHA.
+- ESA MAAP: teste live confirmou ACCESS_TOKEN_ISSUED em 10/11/2026, portanto a troca do offline token em access token funciona. A busca retornou NO_FH_PRODUCTS e exit code 5; isto NAO confirma ausencia de produtos ou pixels.
+- A busca atual por FP_FH__L2A e FP_FH__L2B precisa distinguir erro de catalogo, consulta/colecao, filtro, paginacao, restricao de acesso e verdadeira ausencia de cobertura; nunca converter erro em lista vazia sem diagnostico.
+- Implementados no PR: fallback para download ZIP de FH, sonda autenticada tools/verify_esa_maap_live.py, workflow manual verify-esa-maap-live.yml, diagnostico GET STAC por bbox em quatro colecoes e testes de contrato.
+- ACEITE MAAP: autenticacao bem sucedida + produto FH com intersecao espacial verificada + ativo HTTP legivel + download integro + pixels de altura validos dentro da AOI, com QA, data, resolucao, fonte e incerteza. Ate la, status N/D e nao afirmar produto processado.
+- Imagem de fundo optica CBERS-4A ou Sentinel-2 efetivamente aberta; IBGE para nomenclatura e classes pedologicas, nao como comprovacao de cobertura atual.
+- Identificacao de cobertura e agricultura por SAR observado, rotulando modelos experimentais e dominio. Vigor via observacoes SAR sem transformar proxy VV+VH em altura metrica; previsao apenas quando matriz clima-PAM-vigor estiver documentada.
+- Carbono nativo por formacao/compartimento com AGB, raizes, necromassa, serrapilheira, carbono de solo brasileiro 0-100 cm e respectivas incertezas. N/D quando nao sustentado; nunca evidencias sinteticas para homologacao.
+- Correcoes tecnicas de regressao: agregar poligonos da mesma classe e preservar talhoes repetidos; eliminar conflito de nomes do unittest. Teste rapido de modelos aprovado, homologacao cientifica independente bloqueada; CI completa deve ser verificada novamente apos commit de documentacao.
+- O token ESA MAAP e geometria privada nao devem aparecer em codigo, relatórios, logs ou artefatos. Usar exclusivamente segredo do Actions/entrada protegida.
+
+---
+
 <!-- V87_60_CI_REVALIDATION_TRIGGER: docs synchronized in a988288173cc8bdb7d0b9af7efed8f2a58029814 -->
 <!-- ENFORM_CHECKPOINT_V87_60_MAAP_DISCOVERY -->
 ## V87.60 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
