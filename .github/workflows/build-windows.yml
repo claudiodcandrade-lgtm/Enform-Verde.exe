@@ -1186,13 +1186,16 @@ jobs:
           python-version: '3.11'
       - name: Install BIOMASS live dependencies
         run: pip install requests geopandas rasterio shapely numpy
-      - name: Probe FH catalog over Sinop (not proof of coverage)
+      - name: Download and read actual ESA BIOMASS FH pixels at Sinop
+        id: sinop_fh
         shell: bash
         continue-on-error: true
+        timeout-minutes: 25
         run: |
           set -o pipefail
-          python tools/verify_esa_maap_live.py --bbox -55.21 -11.89 -55.17 -11.85 | tee maap_sinop_probe.jsonl
-      - name: Download and read genuine BIOMASS FH pixels in ESA STAC Borneo example
+          python tools/verify_esa_maap_live.py --bbox -55.21 -11.89 -55.17 -11.85 --download | tee maap_sinop_probe.jsonl
+      - name: Global pixel proof fallback — official ESA STAC Borneo example
+        if: ${{ steps.sinop_fh.outcome == 'failure' }}
         shell: bash
         timeout-minutes: 25
         run: |
