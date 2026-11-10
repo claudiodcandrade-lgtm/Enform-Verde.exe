@@ -214,7 +214,17 @@ def in_validated_domain(ibge=None, ibge_field="legenda_1", aoi=None):
     phytoregions inside the MT/RO/west-BA training envelope (labels: LEM+ BA,
     INPE MT field samples, INPE Rondônia 2022)."""
     if ibge is None or len(ibge) == 0 or ibge_field not in ibge:
-        return False, "fitorregião IBGE indisponível para verificar o domínio"
+        # IBGE is descriptive context, not the source of today's land cover.
+        # A missing external IBGE service must not prevent experimental SAR
+        # inference inside the documented training region. Mark transfer as
+        # provisional; field accuracy is NOT established by this check.
+        if aoi is not None:
+            centroid=aoi.to_crs(4326).geometry.union_all().centroid
+            w,s,e,n=DOMAIN_ENVELOPE
+            if w <= centroid.x <= e and s <= centroid.y <= n:
+                return True, ("DOMINIO_GEOGRAFICO_PROVISORIO; fita IBGE indisponível; "
+                              "classificação SAR EXPERIMENTAL sem validação local de fitofisionomia")
+        return False, "fitorregião IBGE indisponível e domínio geográfico de treino não comprovado"
     eq = ibge.to_crs(6933)
     names = eq[ibge_field].astype(str).str.casefold()
     share = eq.geometry.area.groupby(names).sum()
@@ -240,7 +250,8 @@ def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
     aoi4326 = aoi.to_crs(4326)
     data, info = _monthly_features(aoi4326, months, search_fn, token_fn)
     if data is None:
-        return {"status": "N/D_SEM_PIXELS_SAR", "reason": info["reason"], "season": season}
+        return {"status": "N/D_SEM_PIXELS_SAR", "reason": info["reason"],
+                "season": season, "acquisition_diagnostic": info}
     X, tr, (H, W) = data
     inside = geometry_mask([mapping(g) for g in aoi.to_crs(6933).geometry], out_shape=(H, W),
                            transform=tr, invert=True)
