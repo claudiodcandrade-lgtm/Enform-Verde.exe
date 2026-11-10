@@ -86,12 +86,15 @@ class LandUseIntegrationTests(unittest.TestCase):
         names = {c["class_name"]: c for c in r["classes"]}
         self.assertIn("Lavoura de Soja", names)
         self.assertIs(names["Lavoura de Soja"]["native_status"], False)
-        # Potential IBGE vegetation legend must NEVER overwrite a
-        # non-field-validated model-derived native class.
-        self.assertIn("Formação savânica", names)
-        self.assertIs(names["Formação savânica"]["native_status"], True)
-        self.assertEqual(names["Formação savânica"]["source"],
-                         "SAR_EXPERIMENTAL_MODELO")
+        # SAR establishes the native polygon; the EXACT IBGE intersection
+        # supplies a botanical name, never a new vegetation mask.
+        self.assertIn("Savana Arborizada", names)
+        self.assertIs(names["Savana Arborizada"]["native_status"], True)
+        self.assertEqual(names["Savana Arborizada"]["source"],
+                         "SAR_EXPERIMENTAL_MODELO+IBGE")
+        self.assertNotIn("Formação savânica", names)
+        self.assertAlmostEqual(sum(c["area_ha"] for c in r["classes"]),
+                               r["area_aoi_ha"], places=4)
         self.assertFalse(any(str(c["source"]).startswith("MAPBIOMAS") for c in r["classes"]))
 
     def test_out_of_domain_output_is_not_used(self):
