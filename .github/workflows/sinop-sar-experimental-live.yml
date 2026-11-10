@@ -1,0 +1,54 @@
+name: Sinop real Sentinel-1 semantic masks — experimental
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'sar_landcover_lemplus.py'
+      - 'land_use_sar.py'
+      - 'native_carbon.py'
+      - 'sentinel1_mpc.py'
+      - 'tools/live_sinop_semantic_sar.py'
+      - 'tests/test_sar_lemplus_windowed_real_raster.py'
+      - '.github/workflows/sinop-sar-experimental-live.yml'
+  push:
+    branches:
+      - patches-3.26.6
+    paths:
+      - 'sar_landcover_lemplus.py'
+      - 'land_use_sar.py'
+      - 'native_carbon.py'
+      - 'sentinel1_mpc.py'
+      - 'tools/live_sinop_semantic_sar.py'
+      - 'tests/test_sar_lemplus_windowed_real_raster.py'
+      - '.github/workflows/sinop-sar-experimental-live.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  real-sar-semantic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install geospatial model dependencies
+        run: python -m pip install -U numpy geopandas rasterio pyproj shapely requests certifi joblib scikit-learn pandas
+      - name: Reproduce bounded VV/VH window and provisional-domain contracts
+        run: python -m unittest tests.test_sar_lemplus_windowed_real_raster -v
+      - name: Run signed actual Sentinel-1 RTC and installed RF model on Sinop sample
+        timeout-minutes: 28
+        run: python tools/live_sinop_semantic_sar.py
+      - name: Upload real SAR experimental polygons or fail-closed diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sinop-real-sar-experimental-${{ github.run_number }}
+          path: sinop_sar_semantic_experimental/
+          retention-days: 30
+          if-no-files-found: warn
