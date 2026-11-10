@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.63"
+VERSION = "V87.64"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_63_GUI_OPTICAL_LIVE"
+MARKER = "ENFORM_CHECKPOINT_V87_64_SAR_PIXEL_DIAGNOSTICS"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,8 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.64: o relatorio de uso da terra agora imprime diagnostico por provedor Sentinel-1 (cenas candidatas, serie elegivel, tentativas, leituras reais, falhas) e ate seis erros de leitura VV/VH com URL/token redigidos. O motivo SELECTED_SCENES_PIXEL_READ_FAILED nao pode permanecer sozinho sem causa auditavel.",
+    "FALHA DE SINOP: distinguir indisponibilidade de rede, acesso SAS/TLS, erro de COG, falta de mascara semantica, baixa separabilidade SAR e ausencia de cenas. O texto do relatorio deve permitir diagnostico sem captura de credenciais.",
     "V87.63: inclusao do teste end-to-end tools/live_gui_optical_sinop.py em .github/workflows/build-windows.yml. O gate exige pixels reais CBERS-4A apresentados no canvas Tk, com foto, provedor e itens visiveis; nao basta receber cenas no catalogo ou ler COG em processo isolado.",
     "O gate de GUI usa pequena janela ao redor do centroide da Fazenda Maria Eduarda e NAO substitui teste do KML original no Windows do proprietario. Falha em GUI bloqueia build e gera evidencia optical_gui_sinop_live.json sem segredo.",
     "Reporte do GitHub Actions build anterior, 11 localidades, registra CBERS-4A/WFI com 100 por cento de pixels de preview em todas, inclusive Sinop em 2026-10-27. Isso demonstra disponibilidade no CI, mas nao exibe a imagem no computador do usuario.",
