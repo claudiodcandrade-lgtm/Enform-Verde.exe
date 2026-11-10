@@ -20,7 +20,10 @@ def crop_geometry(land, crop, *, canonical_fn):
     mask = (frame["class_name"].map(
         lambda name: canonical_fn(str(name)[len("Lavoura de "):])
         if str(name).casefold().startswith("lavoura de ") else None) == crop)
-    mask &= frame["source"].astype(str).str.startswith("SAR_VALIDADO")
+    # Experimental source is acceptable for pre-field scenarios, provided
+    # that the forecast records seasonal/staleness and transfer uncertainty.
+    mask &= frame["source"].astype(str).str.startswith(
+        ("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO"))
     selected = frame.loc[mask, ["geometry"]].copy()
     selected = selected[selected.geometry.notna() & ~selected.geometry.is_empty]
     return selected if not selected.empty else None
