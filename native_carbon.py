@@ -57,7 +57,13 @@ def native_class(name, source, class_metadata=None):
         if meta and meta.get('parent') in ('vegetação natural','uso não nativo'):
             return meta['parent']=='vegetação natural'
         return None
-    if source in ('SAR_VALIDADO+IBGE','SAR_VALIDADO+IBGE_PROXIMIDADE'):return True
+    # Only SAR-detected native structure can be named by a compatible IBGE
+    # polygon. The "experimental" provenance must survive to every report.
+    # IBGE alone or a historical map NEVER turns a pixel into native cover.
+    if source in ('SAR_VALIDADO+IBGE','SAR_VALIDADO+IBGE_PROXIMIDADE',
+                  'SAR_EXPERIMENTAL_MODELO+IBGE',
+                  'SAR_EXPERIMENTAL_MODELO+IBGE_PROXIMIDADE'):
+        return True
     if source=='IBGE':return None
     return None
 
@@ -102,7 +108,11 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
         native_area+=area
         meta=(class_metadata or {}).get(record.class_name,{})
         physiognomy=record.class_name if record.source.startswith(('SAR_VALIDADO','SAR_EXPERIMENTAL_MODELO')) else (meta.get('physiognomy') or record.class_name)
-        detail=('região/fitofisionomia identificada na legenda IBGE' if record.source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE') else ('fitofisionomia declarada no modelo SAR' if meta.get('physiognomy') else 'classe de cobertura; subtipo fitofisionômico não determinado'))
+        detail=('fitofisionomia nomeada por interseção SAR × IBGE legenda_1; origem '+record.source+
+                '; presença SAR experimental sem confirmação local' if record.source=='SAR_EXPERIMENTAL_MODELO+IBGE' else
+                'fitofisionomia nomeada por interseção SAR × IBGE legenda_1' if record.source=='SAR_VALIDADO+IBGE' else
+                'fitofisionomia declarada no modelo SAR' if meta.get('physiognomy') else
+                'classe de cobertura; subtipo fitofisionômico não determinado')
         try: estimated=estimator(frame,physiognomy)
         except Exception as exc:estimated={'components':[], 'error':str(exc)}
         supplied={item['parametro']:item for item in estimated.get('components',[])}
