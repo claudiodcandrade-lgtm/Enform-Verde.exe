@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.68"
+VERSION = "V87.69"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_68_FH_L2A_AUTOMATIC"
+MARKER = "ENFORM_CHECKPOINT_V87_69_PILOT_3_26_9"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,10 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.69 — nova versao experimental 3.26.9-PRECAMPO-EXPERIMENTAL, com APP_VERSION e APP_RELEASE_NOTES_v3.26.9.md. Nao reutilizar ZIP/EXE 3.26.8; release so permitido apos CI e build no mesmo SHA.",
+    "Integracao automatica de FP_FH__L2A em sar_pipeline.automatic_pipeline publicada com teste de roteamento de FH por produto, media e quantidade de pixels. O teste com 2304 pixels e altura 18,284244 m em bbox Sinop e comprovacao da cadeia MAAP, nao media do KML Fazenda Maria Eduarda.",
+    "Prioridade fixa: CBERS-4A ou Sentinel-2 efetivamente visiveis na interface, cobertura e lavouras SAR, vigor e carbono por classe em dados reais e auditoria de incerteza. Nao declarar sucesso nacional com fixtures ou um unico caso.",
+    "Homologacao cientifica nacional permanece bloqueada; o status do build tecnico precisa ser observado nas execucoes GitHub da revisao 3.26.9. Se a compilacao falhar, nao distribuir ZIP como corrigido.",
     "V87.68 — corrigido em sar_pipeline.automatic_pipeline o bloqueio que ignorava produtos ESA BIOMASS FP_FH__L2A. O pipeline agora seleciona FH L2A ou L2B, executa estatistica zonal georreferenciada real, registra quantidade de pixels, produto de origem e altura H100, sem converter FH diretamente em AGB.",
     "Teste de contrato tests/test_maap_fh_l2a_automatic.py criado: atesta roteamento L2A, produto, media, n pixels e separacao entre altura e biomassa. Seus dados sao sinteticos e NAO equivalem a comprovacao de campo ou cobertura da propriedade.",
     "Evidencia live valida independente: 2304 pixels FH reais e altura media 18,284244 m numa janela de teste Sinop (GitHub Actions run 42813753319); a media nao caracteriza o KML completo Fazenda Maria Eduarda.",
