@@ -29,7 +29,7 @@ jobs:
     timeout-minutes: 45
     env:
       ESA_MAAP_OFFLINE_TOKEN: ${{ secrets.ESA_MAAP_OFFLINE_TOKEN }}
-      MAAP_PROBE_BBOX: ${{ inputs.bbox }}
+      MAAP_PROBE_BBOX: ${{ inputs.bbox || '-55.21 -11.89 -55.17 -11.85' }}
       MAAP_PROBE_DOWNLOAD: ${{ inputs.download }}
     steps:
       - uses: actions/checkout@v4
