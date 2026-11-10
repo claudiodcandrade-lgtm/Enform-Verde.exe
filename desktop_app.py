@@ -2673,7 +2673,6 @@ class App(tk.Tk):
                "Outros usos (somente ocorrência, sem carbono): "+
                    (format_ptbr(native["excluded_other_uses_ha"],2)+" ha" if native["excluded_other_uses_ha"]>0 or native["unknown_cover_area_ha"]<=0
                     else "N/D — uso não nativo não confirmado"),
-               "Outros usos (somente ocorrência, sem carbono): "+format_ptbr(native["excluded_other_uses_ha"],2)+" ha",
                "Cobertura não confirmada (sem carbono): "+format_ptbr(native["unknown_cover_area_ha"],2)+" ha",
                "Área sem classe cartográfica de referência: "+format_ptbr(native.get("unmapped_aoi_area_ha",0),2)+" ha",
                "Completude do MAPA de cobertura: "+native.get("cover_completeness","NÃO VERIFICADA")+
