@@ -551,6 +551,20 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Live CBERS-4A worker-to-Tk-canvas smoke — Sinop
+        shell: pwsh
+        timeout-minutes: 7
+        run: python tools/live_gui_optical_sinop.py
+
+      - name: Upload live Sinop optical GUI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: optical-gui-sinop-live-${{ github.run_number }}
+          path: optical_gui_sinop_live.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
         shell: pwsh
         run: |
