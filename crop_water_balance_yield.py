@@ -102,13 +102,16 @@ def _stage(crop, day):
     return 3
 
 
-def simulate(series, crop, sow, lat, awc_mm_cm):
+def simulate(series, crop, sow, lat, awc_mm_cm, *, initial_fraction=1.0,
+             infiltration_fraction=1.0):
     """series: {date: record}. Returns RY (Doorenbos–Kassam) and ISNA, or None if data missing."""
     c = CROP[crop]
     total = sum(c["len"])
     taw = awc_mm_cm * c["zr"] * 100.0           # mm/cm × cm
     raw = c["p"] * taw
-    dr = 0.0                                     # start at field capacity (assumption)
+    if not (0 <= initial_fraction <= 1 and 0 <= infiltration_fraction <= 1):
+        raise ValueError("initial water and infiltration fractions must be within [0,1]")
+    dr = taw * (1 - initial_fraction)             # FAO-56 root-zone depletion at planting
     eta = np.zeros(4); etm = np.zeros(4)
     for k in range(total):
         d = sow + timedelta(days=k)
@@ -121,7 +124,8 @@ def simulate(series, crop, sow, lat, awc_mm_cm):
         a = ks * etc
         st = _stage(crop, k)
         eta[st] += a; etm[st] += etc
-        dr = min(taw, max(0.0, dr - r["PRECTOTCORR"] + a))   # deep percolation when Dr < 0
+        dr = min(taw, max(0.0, dr - infiltration_fraction * r["PRECTOTCORR"] + a))
+        # The infiltrated fraction is a sensitivity assumption, not measured runoff.
     ratio = np.where(etm > 0, eta / etm, 1.0)
     ry = float(np.prod([max(0.0, 1 - ky * (1 - x)) for ky, x in zip(c["ky"], ratio)]))
     return {"ry": ry, "isna": float(eta.sum() / etm.sum()), "eta_etm_by_stage": ratio.round(3).tolist()}
