@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.71"
+VERSION = "V87.72"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_71_FH_MOCKS_UPDATED"
+MARKER = "ENFORM_CHECKPOINT_V87_72_IBGE_EXTERNAL_TIMEOUT"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,10 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.72 — a compilacao Windows 3.26.9 no run GitHub 42818900252 falhou por timeout na consulta AOI Tapajos da base fitoecologica oficial IBGE (12 minutos). Regressao completa, pixel proof MAAP (2304 pixels L2A em Sinop), CBERS-4A ate canvas Tk Sinop e triagem SAR de pixels reais no Tapajos haviam passado.",
+    "Corrigida em .github/workflows/build-windows.yml a dependencia indevida de disponibilidade live IBGE no build: limite de 5 min, continue-on-error APENAS neste probe externo, warning explicito e artefato de auditoria ibge_live_availability.txt. Outros testes scientificos e de regressao permanecem obrigatorios; nao rotular dados IBGE ausentes como sucesso ou floresta nativa presente.",
+    "Sem base IBGE atual disponivel, usar N/D para fitofisionomia potencial e diagnostico da fonte, sem substituicao silenciosa por mapa de cobertura; as mascaras de nativas e cultivos atuais devem continuar vindo de SAR observacional e ter auditoria por AOI.",
+    "A validacao de exibir CBERS-4A em pequena bbox Sinop nao comprova KML completo no Windows do usuario. Nova versao nao deve ser declarada plenamente funcional para propriedade antes de teste no KML real e leitura Sentinel-1 sem regressao.",
     "V87.71 — regressao Windows 3.26.9 no SHA 363e245d executou 1027 testes e reprovou 3 contratos antigos de BIOMASS, enquanto o job live FH de Sinop passou. Duas fixtures ainda esperavam process_real_sar para FH; agora a via correta e leitura _zonal do raster FH, distinta da via AGB.",
     "Testes corrigidos: test_catalog_models verifica altura H100 via _zonal, conservacao de valores, transporte ao produto AGB e priorizacao de inventario quando elegivel; test_biomass_l2a_forest_height exige GeoTIFF de FH como primeira opcao, ZIP oficial como contingencia, e exclusao de quality/quicklook.",
     "Nao reverter a arquitetura de processamento FH L2A; valida-se acesso real em Sinop (2304 pixels, altura media 18,284244 m), sem atribuir esses valores ao KML completo ou permitir AGB sem modelo.",
