@@ -1,0 +1,55 @@
+name: Sync V87.79 full Word specification
+on:
+  push:
+    branches: [patches-3.26.6]
+    paths: [docs/spec_updates/2026-11-10_v87_79_windows_recovery.md]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: v87-79-word-doc-sync
+  cancel-in-progress: false
+jobs:
+  sync-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Update full Word spec retaining every historical section
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/2026-11-10_v87_79_windows_recovery.md \
+            --baseline "Enform Verde 3.26.11-PRECAMPO-EXPERIMENTAL - V87.79" \
+            --head-sha "$(git rev-parse HEAD)" \
+            --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
+            --date "10 de novembro de 2026" \
+            --footer-label "V87.79 - 3.26.11 experimental" \
+            --footer-date "10/11/2026"
+      - name: Verify full Word version, contents and ZIP integrity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          file=Path("docs/ESPECIFICACAO_TECNICA_COMPLETA.docx")
+          with ZipFile(file) as z:
+              assert z.testzip() is None
+              xml=z.read("word/document.xml").decode("utf-8")
+              assert len(xml)>10000
+              assert "3.26.11-PRECAMPO-EXPERIMENTAL" in xml
+              assert "V87.79" in xml
+              assert "SINOP_FAZENDA_MARIA_EDUARDA" in xml
+          PY
+      - name: Commit updated Word spec
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
+          git diff --cached --quiet || git commit -m "docs: sync full Word specification V87.79 for 3.26.11"
+          git push origin HEAD:patches-3.26.6
