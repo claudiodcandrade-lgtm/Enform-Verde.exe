@@ -554,20 +554,63 @@ def maap_access_token(offline_token):
     if not t:raise RuntimeError("A ESA MAAP não retornou access_token.")
     return t
 def maap_search(gdf,collection,limit=50,product_type=None):
-    geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
-    body={"collections":[collection],"intersects":geom,"limit":limit,
-          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
-    r=requests.post(MAAP_STAC+"search",json=body,timeout=(10,60))
-    if r.status_code in (400,422):
-        # Some STAC deployments do not accept sortby. Still sort locally by
-        # genuine acquisition metadata rather than trusting item order.
-        body.pop("sortby")
-        r=requests.post(MAAP_STAC+"search",json=body,timeout=(10,60))
-    r.raise_for_status()
-    fs=r.json().get("features",[])
+    """Search official MAAP STAC with pagination and a GET/bbox fallback.
+
+    STAC metadata search does not require passing the ESA offline token.
+    This routine never equates an HTTP failure or incomplete pagination with
+    true absence of products, and never logs private geometry or asset URLs.
+    """
+    from urllib.parse import urljoin, urlsplit
+    geom=gdf.to_crs(4326).geometry.union_all()
+    bbox=list(map(float,geom.bounds))
+    page_size=max(1,min(100,int(limit)))
+    base=MAAP_STAC+"search"
+    body={"collections":[collection],"intersects":geom.__geo_interface__,
+          "limit":page_size}
+    # The official MAAP STAC documentation explicitly supports GET with bbox.
+    # Avoid sortby initially because some deployments reject the extension.
+    try:
+        response=requests.post(base,json=body,timeout=(10,60))
+        if response.status_code in (400,404,405,415,422,500,501,502,503):
+            response=requests.get(base,params={
+                "collections":collection,"bbox":",".join(map(str,bbox)),
+                "limit":page_size},timeout=(10,60))
+        response.raise_for_status()
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError("MAAP_STAC_SEARCH_FAILED:"+type(exc).__name__) from None
+    payload=response.json()
+    items=[];seen=set();pages=0;next_link=None
+    while True:
+        pages+=1
+        for item in payload.get("features") or []:
+            ident=(str(item.get("collection") or collection),str(item.get("id")))
+            if ident in seen:continue
+            seen.add(ident);items.append(item)
+        next_link=next((l for l in payload.get("links") or []
+                        if l.get("rel")=="next" and l.get("href")),None)
+        if not next_link:break
+        if pages>=20:
+            raise RuntimeError("MAAP_STAC_PAGINATION_INCOMPLETE")
+        href=urljoin(base,next_link["href"])
+        if urlsplit(href).scheme!="https" or urlsplit(href).hostname!=urlsplit(base).hostname:
+            raise RuntimeError("MAAP_STAC_UNTRUSTED_NEXT_PAGE")
+        method=str(next_link.get("method") or "GET").upper()
+        try:
+            if method=="POST":
+                response=requests.post(href,json=next_link.get("body") or body,
+                                       timeout=(10,60))
+            elif method=="GET":
+                response=requests.get(href,timeout=(10,60))
+            else:
+                raise RuntimeError("MAAP_STAC_UNSUPPORTED_NEXT_METHOD")
+            response.raise_for_status()
+            payload=response.json()
+        except requests.exceptions.RequestException as exc:
+            raise RuntimeError("MAAP_STAC_PAGINATION_FAILED:"+type(exc).__name__) from None
     if product_type:
-        fs=[x for x in fs if product_type in (x.get("id","")+" "+str(x.get("properties",{}))+" "+str(x.get("assets",{})))]
-    return _newest_first(fs)
+        items=[item for item in items if product_type in _biomass_item_product_types(item)]
+    return _newest_first(items)
+
 def biomass_l2b_search(gdf,limit=100):
     """Discover both official AGB and forest-height L2B products; retain their distinct roles."""
     out=[]
