@@ -1390,7 +1390,7 @@ class App(tk.Tk):
         self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
         self.map_canvas.grid(row=0,column=0,sticky="nsew"); self.map_vscroll.grid(row=0,column=1,sticky="ns"); self.map_hscroll.grid(row=1,column=0,sticky="ew")
         map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
-        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36; self._map_provider="SATELLITE_PENDING"
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._last_canvas_size=None; self._map_extent_factor=1.36; self._map_provider="SATELLITE_PENDING"
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
         self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
@@ -1436,6 +1436,30 @@ class App(tk.Tk):
         if self.gdf is None:return
         self._map_extent_factor=1.36
         self._apply_map_zoom()
+
+    def _save_optical_diagnostic(self,generation,provider,failures):
+        """Persist source-by-source outcomes; redact remote URLs and secrets."""
+        try:
+            if generation!=self._map_generation:return
+            root=Path.home()/".enform_verde"
+            root.mkdir(parents=True,exist_ok=True)
+            rows=[]
+            for entry in failures:
+                message=re.sub(r"https?://[^\s]+","[URL_REDACTED]",str(entry))
+                message=re.sub(r"(?i)(sig|token|client_secret|password)=([^&\s]+)",
+                               r"\1=[REDACTED]",message)
+                rows.append(message[:350])
+            area=geom_metrics(self.gdf)["area_ha"] if self.gdf is not None else None
+            data={"diagnostic_version":1,"app_version":APP_VERSION,
+                  "area_ha":area,"provider_displayed":str(provider),
+                  "attempt_errors":rows,
+                  "note":"Display backdrop only; no use in SAR classifier or carbon."}
+            dest=root/"ultimo_diagnostico_imagem_otica.json"
+            tmp=dest.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding="utf-8")
+            tmp.replace(dest)
+        except Exception:
+            pass  # Never lose the image because the diagnostic could not be written.
 
     def show_google_map(self,refresh=False,prefer_public=False):
         """Visual-only CBERS-4A/WFI primary backdrop; Sentinel-2 fallback; never an analytical input."""
@@ -1522,6 +1546,7 @@ class App(tk.Tk):
                 cloud_note=" • nuvens em lacunas" if p.get("cloud_pixels_included") else " • pixels claros"
                 copyright=f"CBERS-4A/WFI • INPE • 55 m • {dr[0]}–{dr[1]}{cloud_note}"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],[],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
                 self._map_queue.put((generation,p["image"],[],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("CBERS-4A/WFI INPE: "+str(e))
@@ -1529,6 +1554,7 @@ class App(tk.Tk):
                 p=sentinel2_earthsearch_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
                 copyright=f"Sentinel-2 L2A • Earth Search/AWS • {(p.get('datetime') or '')[:10]} • nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
@@ -1546,6 +1572,7 @@ class App(tk.Tk):
                 p=nasa_gibs_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
                 copyright=f"NASA GIBS • VIIRS SNPP • imagem de {p.get('datetime','')} • contexto visual"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p.get("polygons") or [],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
                 self._map_queue.put((generation,p["image"],p.get("polygons") or [],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("NASA GIBS VIIRS: "+str(e))
@@ -1556,6 +1583,7 @@ class App(tk.Tk):
                 im=esri_export(rs,service="World_Imagery")
                 copyright="Esri World Imagery • mosaico óptico de referência • data e sensor N/D"
                 _store_satellite_preview_cache(g,extent_factor,w,h,im,[],"ESRI_WORLD_IMAGERY",copyright)
+                self._save_optical_diagnostic(generation,"ESRI_WORLD_IMAGERY",errors)
                 self._map_queue.put((generation,im,[],"ESRI_WORLD_IMAGERY",None,copyright,None))
                 return
             except Exception as e:errors.append("Esri World Imagery: "+type(e).__name__+": "+str(e)[:180])
@@ -1566,6 +1594,7 @@ class App(tk.Tk):
                 optical=("CBERS" in original.upper() or "SENTINEL" in original.upper())
                 if optical:
                     credit="Imagem óptica em cache local • fonte original: "+original
+                    self._save_optical_diagnostic(generation,"CACHE_OPTICAL",errors)
                     self._map_queue.put((generation,image,meta.get("polygons") or [],
                                          "CACHE ÓPTICO • "+original,None,credit,None))
                     return
@@ -1575,11 +1604,13 @@ class App(tk.Tk):
             try:
                 image,_=offline_brazil_preview(g,extent_factor,(w,h))
                 label="MAPA CARTOGRÁFICO IBGE — contingência excepcional; CBERS-4A e Sentinel-2 indisponíveis"
+                self._save_optical_diagnostic(generation,"IBGE_CARTOGRAFICO",errors)
                 self._map_queue.put((generation,image,[],"MAPA CARTOGRÁFICO IBGE (contingência sem imagem óptica)",
                                      None,label+" • "+" | ".join(errors),None))
                 return
             except Exception as exc:
                 errors.append("Mapa cartográfico de contingência: "+type(exc).__name__+": "+str(exc)[:160])
+            self._save_optical_diagnostic(generation,"NO_OPTICAL_IMAGE",errors)
             self._map_queue.put((generation,None,[],"CBERS-4A/Sentinel-2",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
@@ -1620,7 +1651,10 @@ class App(tk.Tk):
         """Keep the selected basemap fitted after a real canvas resize."""
         if self.gdf is None:return
         size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
-        if size==self._last_map_size:return
+        # Compare canvas to canvas, not the differently-sized image request.
+        # Otherwise a scrollbar/Configure cycle can perpetually restart the worker.
+        if size==self._last_canvas_size:return
+        self._last_canvas_size=size
         if self._satellite_map_visible:
             if self._map_refresh_job is not None:
                 try:self.after_cancel(self._map_refresh_job)
