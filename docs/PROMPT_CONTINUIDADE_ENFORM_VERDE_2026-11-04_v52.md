@@ -1,3 +1,4 @@
+<!-- V87_62_CI_REVALIDATION_AFTER_DOCSYNC -->
 <!-- ENFORM_CHECKPOINT_V87_62_SAR_GRID_ABSTENTION -->
 ## V87.62 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
