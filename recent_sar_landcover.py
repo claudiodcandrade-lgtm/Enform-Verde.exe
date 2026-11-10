@@ -163,8 +163,8 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                               GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
                                               GDAL_HTTP_RETRY_DELAY="1",**gdal_env()):
                                 asset_href=scene["assets"][pol]["href"]
-                                read_href=(_signed_href(asset_href,provider_token) if provider_token
-                                           else sign_asset_href(asset_href)) if provider=="MPC" else asset_href
+                                read_href=(sign_asset_href(asset_href) if (attempt > 0 or not provider_token)
+                                           else _signed_href(asset_href,provider_token)) if provider=="MPC" else asset_href
                                 with rasterio.open(read_href) as src:
                                     if not src.crs:raise ValueError("Missing georeferencing in SAR source")
                                     if scene_grid is None:
