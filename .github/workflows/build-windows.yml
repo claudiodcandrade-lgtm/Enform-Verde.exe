@@ -1172,7 +1172,7 @@ jobs:
 
   maap-real-fh-proof:
     name: ESA BIOMASS FH real-data proof (separate from Windows)
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
