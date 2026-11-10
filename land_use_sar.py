@@ -729,7 +729,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                 lay['source']=model_source
                 lay['taxonomy']='SAR RF experimental, ano agrícola '+str(res.get('season'))
                 layers.append(lay[['class_name','source','taxonomy','geometry']])
-                class_metadata={}
+                class_metadata={
+                    'Formação savânica':{'parent':'vegetação natural'},
+                    'Formação florestal':{'parent':'vegetação natural'}}
                 for item in res.get('classes') or []:
                     cls=rename.get(item['class_name'],item['class_name'])
                     native=item.get('native_status')
