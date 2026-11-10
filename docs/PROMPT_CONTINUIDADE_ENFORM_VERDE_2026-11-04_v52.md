@@ -1,3 +1,4 @@
+<!-- V87_69_BUILD_3_26_9_AFTER_DOCSYNC -->
 <!-- ENFORM_CHECKPOINT_V87_69_PILOT_3_26_9 -->
 ## V87.69 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
