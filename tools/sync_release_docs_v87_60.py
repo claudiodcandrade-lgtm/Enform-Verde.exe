@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.75"
+VERSION = "V87.76"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_75_CROP_HYDRIC_LITERATURE"
+MARKER = "ENFORM_CHECKPOINT_V87_76_RELEASE_3_26_10"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,13 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.76 — nova versão PILOTO 3.26.10-PRECAMPO-EXPERIMENTAL: APP_VERSION atualizado, APP_RELEASE_NOTES_v3.26.10.md criado, soil_water_balance_spatial incluso no PyInstaller. Nao disponibilizar arquivos 3.26.9 como 3.26.10; release exige regressao e build no mesmo commit.",
+    "SAR RF v2: classes do classificador sao sempre SAR_EXPERIMENTAL_MODELO e nunca SAR_VALIDADO na falta de afericao independente do imovel. Evitar que IBGE potencial sobrescreva mascara nativa modelada; preservar probabilidade, periodo 2025/26, modelo e risco de extrapolacao.",
+    "Previsao experimental condicional: crop_spatial_monitoring.crop_geometry e crop_monitoring_forecast.crops_in_land_result agora reconhecem poligonos SAR_EXPERIMENTAL_MODELO para uso em matriz PAM + clima + vigor. Rotulo obrigatorio SAR_EXPERIMENTAL_ANUAL_NAO_ATUAL e transfer_uncertainty=NAO_QUANTIFICADA quando a classe foi inferida da safra historica; nunca afirmar safra corrente observada.",
+    "Solo e produtividade: crop_forecast_pipeline._panel_lines apresenta armazenamento de agua no solo modelado em mm para seco, central e umido, deficit, tendencia 7d e rendimento kg/ha por sensibilidade dos parametros FAO-56/FAO-33 calibrados via PAM; sensibilidade NAO e IC95. Se fonte hidraulica for hipótese (fallback), relatar no painel.",
+    "Padrao de auditoria: somente cenas SAR atuais datadas comprovam observacao de vigor contemporaneo, com a definicao de atualidade <=30 dias; dados retrospectivos nao podem ser promovidos a mapa atual por simples extrapolacao. Mapas historicos sao base para classificacao condicional e afericao futura em campo.",
+    "Regressao: novo contrato tests/test_crop_forecast_experimental_sar_contract.py valida selecao de talhao a partir de SAR experimental, rejeicao de classes cartograficas e preservacao de geometria; tests/test_sar_landcover_lemplus.py atualizado para nao exigir que IBGE atualize formações experimentais. Nenhum desses testes sinteticos substitui avaliacao real de safra.",
+    "Faltam para homologacao geral: KML original de Fazenda Maria Eduarda com limites reais, prova SAR contemporanea dentro dele, validade de culturas e modelos nacionais/biomas, sensibilidade por unidade de solo Embrapa e validacao de campo. Compilacao tecnicamente aprovada nao significa avaliacao agronomica completa.",
     "V87.75 — DIRETRIZ URGENTE: executar SEMPRE estimativas EXPERIMENTAIS de produtividade para as culturas listadas quando existirem observacoes minimas e modelo aplicavel. Falta de calibracao LOCAL nao bloqueia automaticamente simulacao; registrar extrapolacao, cenario seco/central/umido, intervalo de sensibilidade e incerteza de transferencia NAO QUANTIFICADA se aplicavel. Nao apresentar cenarios deterministas como IC95.",
     "PESQUISA PRIORITARIA: revisar continuamente artigos, boletins tecnicos, dissertacoes e teses brasileiras, especialmente Embrapa (todas as unidades), UFV, ESALQ/USP, UFLA, UFRRJ, UNESP/FAPESP e institutos estaduais. Completar com estudos internacionais FAO-33, FAO-56, FAO-66, AquaCrop, DSSAT, APSIM, WOFOST e modelos de resposta por fase fenologica. Catalogar DOI/URL, local, data, cultivar, variedade, solo, textura, regime de agua, sazonalidade, metodos e limites de extrapolacao; verificar textos primarios antes de aplicar coeficientes.",
     "CULTURAS: soja, milho, sorgo, feijao, arroz (irrigado e terras altas separados), cana-de-acucar, cafe arabica e conilon separados, citros, algodao, e culturas adicionais somente com modelo/mecanismo identificado. Coeficientes Kc, Ky, profundidade radicular e limiar de estresse sao especificos por cultura, fase, cultivar, sistema de manejo e regiao; usar literatura como priors de transferencia explicitamente identificados.",
