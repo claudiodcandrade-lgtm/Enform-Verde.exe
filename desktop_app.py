@@ -3309,10 +3309,23 @@ def network_check(attempts=3):
         out["cbers4a"]={"status":"OK","provider":p.get("provider"),"date_range":p.get("date_range") or p.get("datetime")}
     except Exception as exc:
         out["cbers4a"]={"status":"ERRO","reason":type(exc).__name__+": "+str(exc)[:300]}
+    # A real Sentinel-2 image is sufficient if CBERS-4A is inaccessible.
+    out["optical"]={"status":"OK","provider":"CBERS-4A/WFI"} if out["cbers4a"]["status"]=="OK" else {"status":"ERRO"}
+    if out["optical"]["status"]!="OK":
+        for label,fn in (("Sentinel-2 Earth Search",lambda:sentinel2_earthsearch_preview(aoi,out_w=320,out_h=200)),
+                         ("Sentinel-2 MPC",lambda:sentinel2_preview(aoi))):
+            try:
+                optical=retry(fn)
+                out["optical"]={"status":"OK","provider":label,
+                                "acquisition_utc":optical.get("datetime")}
+                break
+            except Exception as exc:
+                out["optical"].setdefault("failed_providers",[]).append(
+                    label+": "+type(exc).__name__+": "+str(exc)[:180])
     try:
         from datetime import timedelta
         from sentinel1_sources import search_sentinel1_sources
-        from sentinel1_mpc import get_runtime_sas_token,_signed_href
+        from sentinel1_mpc import sign_asset_href
         import rasterio
         from rasterio.windows import from_bounds
         from rasterio.warp import transform_geom
@@ -3321,16 +3334,19 @@ def network_check(attempts=3):
         found=retry(lambda:search_sentinel1_sources(mapping(aoi.geometry.iloc[0]),start_utc=now-timedelta(days=40),end_utc=now))
         scenes=[s for s in found.get("scenes",[]) if {"vv","vh"}<=set(s.get("assets") or {})]
         if not scenes:raise RuntimeError("catálogos sem cena VV/VH em 40 dias")
-        s=scenes[0];token=get_runtime_sas_token() if s.get("provider","MPC")=="MPC" else ""
+        s=scenes[0]
         def read():
             vals={}
             for pol in ("vv","vh"):
-                href=s["assets"][pol]["href"];href=_signed_href(href,token) if token else href
-                with rasterio.open(href) as src:
-                    g=shape(transform_geom("EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
-                    w=from_bounds(*g.bounds,transform=src.transform).round_offsets().round_lengths()
-                    a=src.read(1,window=w,masked=True)
-                    vals[pol]=int((~a.mask).sum()) if hasattr(a,"mask") else int(a.size)
+                href=s["assets"][pol]["href"]
+                if s.get("provider","MPC")=="MPC":
+                    href=sign_asset_href(href)
+                with rasterio.Env(**tls_setup.gdal_env()):
+                    with rasterio.open(href) as src:
+                        g=shape(transform_geom("EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
+                        w=from_bounds(*g.bounds,transform=src.transform).round_offsets().round_lengths()
+                        a=src.read(1,window=w,masked=True)
+                        vals[pol]=int((~a.mask).sum()) if hasattr(a,"mask") else int(a.size)
             return vals
         px=retry(read)
         if min(px.values())<100:raise RuntimeError("menos de 100 pixels SAR válidos: "+str(px))
@@ -3339,7 +3355,7 @@ def network_check(attempts=3):
     except Exception as exc:
         out["sentinel1"]={"status":"ERRO","reason":type(exc).__name__+": "+str(exc)[:300]}
     (Path(tempfile.gettempdir())/"enform_verde_network_check.json").write_text(json.dumps(out,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
-    bad=[k for k in ("cbers4a","sentinel1") if out[k]["status"]!="OK"]
+    bad=[k for k in ("optical","sentinel1") if out[k]["status"]!="OK"]
     if bad:raise RuntimeError("leitura real de pixels falhou: "+", ".join(bad))
     return out
 
