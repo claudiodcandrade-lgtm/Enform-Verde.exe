@@ -37,7 +37,7 @@ def crops_in_land_result(land):
     """Current crop masks must come from the independently validated SAR classifier."""
     out = {}
     for item in (land or {}).get("classes", []) or []:
-        if not str(item.get("source") or "").startswith("SAR_VALIDADO"):
+        if not str(item.get("source") or "").startswith(("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO")):
             continue
         name = str(item.get("class_name", ""))
         if name.startswith("Lavoura de "):
@@ -60,10 +60,20 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     micro_fn = micro_fn or microregion_of
     crops = crops_in_land_result(land)
     historical = mapbiomas_historical_reference(land)
-    lines = ["", "IDENTIFICAÇÃO SAR ATUAL, VIGOR E PREVISÃO DE SAFRA"]
+    annual_experimental = any(str(x.get("source") or "").startswith("SAR_EXPERIMENTAL_MODELO")
+                              for x in (land or {}).get("classes",[]))
+    model_season=((land or {}).get("validation") or {}).get("observed_season")
+    lines = ["", "CLASSIFICAÇÃO SAR EXPERIMENTAL, VIGOR ATUAL E PREVISÃO CONDICIONAL DE SAFRA"]
+    if annual_experimental:
+        lines.append("• COBERTURA EXPERIMENTAL RETROSPECTIVA: máscaras de uso do solo obtidas no ano agrícola "+
+                     str(model_season or "sem período identificado")+
+                     "; NÃO comprovam cobertura atual da safra em curso, mesmo com SAR recente para vigor.")
     from sensor_contingency import fallback_plan
     audit = {"as_of": as_of.isoformat(), "crops": {},
-             "current_crop_identification": "SAR_VALIDADO" if crops else "N/D",
+             "current_crop_identification": ("SAR_EXPERIMENTAL_ANUAL_NAO_ATUAL" if annual_experimental
+                                              else "SAR_VALIDADO" if crops else "N/D"),
+             "crop_landcover_season":model_season,
+             "field_validation_status":"PENDENTE" if annual_experimental else "indefinido",
              "mapbiomas_historical_reference_only": historical,
              "sensor_contingency": fallback_plan(target="agricultura_area_vigor_safra")}
     if not crops:
@@ -111,9 +121,14 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
             lines.append("  Variáveis climáticas específicas: " + "; ".join(spec["climate_features"]))
             lines.append("  Indicadores SAR a calibrar: " + "; ".join(spec["sar_features"]))
         reg = REGISTRY.get(crop, {})
-        lines.append(f"• {crop} ({area:.1f} ha) — classe proveniente de máscara orbital SAR atual validada; "
-                     "ver domínio, métricas e período no relatório de auditoria")
-        entry = {"area_ha": area, "identification": reg, "identification_source": "SAR_VALIDADO"}
+        crop_source=("SAR_EXPERIMENTAL_ANUAL" if annual_experimental else "SAR_VALIDADO")
+        lines.append(f"• {crop} ({area:.1f} ha) — área de máscara SAR "+
+                     ("EXPERIMENTAL do ano agrícola; NÃO atual" if annual_experimental
+                      else "com evidência orbital de classificação")+
+                     "; ver data, domínio e incerteza no relatório de auditoria")
+        entry = {"area_ha": area, "identification": reg, "identification_source": crop_source,
+                 "experimental":annual_experimental,
+                 "coverage_age_status":"HISTORICO_SAFRA_COMPLETA" if annual_experimental else "a verificar"}
         crop_gdf = crop_geometry(land, crop, canonical_fn=canonical_crop)
         entry["crop_polygon_available"] = crop_gdf is not None
         if crop_gdf is not None and not sar_probe_done:
@@ -236,7 +251,12 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                                     "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
                                   as_of=as_of)
                 lines += ["  " + l for l in forecast_lines(rep)]
+                if annual_experimental:
+                    lines.append("  PREVISÃO CONDICIONAL: área e cultura da safra anterior; transferência para "
+                                 "a safra corrente NÃO quantificada; usar para aferição experimental, "
+                                 "não como produção confirmada da propriedade.")
                 entry["forecast_status"] = rep.get("status")
+                entry["transfer_uncertainty"]="NAO_QUANTIFICADA" if annual_experimental else None
                 entry["forecast_model"] = rep.get("model")
                 entry["forecast"] = {k: v for k, v in rep.items() if k in ("production", "fields", "model_label", "status") }
             except Exception as exc:
