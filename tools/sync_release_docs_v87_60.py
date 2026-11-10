@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.70"
+VERSION = "V87.71"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_70_MAAP_GET_RECENCY"
+MARKER = "ENFORM_CHECKPOINT_V87_71_FH_MOCKS_UPDATED"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,9 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.71 — regressao Windows 3.26.9 no SHA 363e245d executou 1027 testes e reprovou 3 contratos antigos de BIOMASS, enquanto o job live FH de Sinop passou. Duas fixtures ainda esperavam process_real_sar para FH; agora a via correta e leitura _zonal do raster FH, distinta da via AGB.",
+    "Testes corrigidos: test_catalog_models verifica altura H100 via _zonal, conservacao de valores, transporte ao produto AGB e priorizacao de inventario quando elegivel; test_biomass_l2a_forest_height exige GeoTIFF de FH como primeira opcao, ZIP oficial como contingencia, e exclusao de quality/quicklook.",
+    "Nao reverter a arquitetura de processamento FH L2A; valida-se acesso real em Sinop (2304 pixels, altura media 18,284244 m), sem atribuir esses valores ao KML completo ou permitir AGB sem modelo.",
     "V87.70 — corrigido teste test_sar_recency_routes: a consulta oficial MAAP GET bbox substitui a antiga exigencia de POST sortby; a ordenacao por data real de aquisicao continua realizada localmente. A prova live em Sinop continua PASSANDO: 2304 pixels FP_FH__L2A, 18,284244 m na janela de teste.",
     "Release 3.26.9 permanece condicionado a testes completos e a autoteste do EXE. O teste de regressao legado falhou pela antiga expectativa de POST no run 42816456251, ja atualizada. A falha nao significa erro da autenticacao ESA ou dos pixels de FH.",
     "V87.69 — nova versao experimental 3.26.9-PRECAMPO-EXPERIMENTAL, com APP_VERSION e APP_RELEASE_NOTES_v3.26.9.md. Nao reutilizar ZIP/EXE 3.26.8; release so permitido apos CI e build no mesmo SHA.",
