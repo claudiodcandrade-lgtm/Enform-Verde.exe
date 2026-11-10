@@ -1,0 +1,7 @@
+# V87.80 — Enform Verde 3.26.11-PRECAMPO-EXPERIMENTAL
+## SINOP_FAZENDA_MARIA_EDUARDA — correcoes de CI e processamento
+- Correcoes incorporadas apos V87.79: GUI contract alinhado ao titulo Fitofisionomias presentes na propriedade; quatro falhas da regressao completa identificadas: dois asserts impediam Esri World Imagery optico, um exigia titulo singular, outro nao encontrava no Word a versao 3.26.11.
+- A especificacao DOCX V87.79 anterior foi sincronizada automaticamente por GitHub Actions com historico integral. Esta entrada V87.80 adiciona as correcoes posteriores sem remover versoes anteriores.
+- network_check do EXE Windows foi alterado para provar pixel optico real CBERS-4A ou Sentinel-2, sem exigir exclusivamente CBERS. A leitura S1 RTC usa assinatura individual de ativo da MPC por HTTPS com TLS verificado; nao exigir token SAS de colecao global para a prova.
+- Toda prova de processamento SAR em pequena janela de Sinop e distinta da confirmacao operacional na fazenda completa 1459,91 ha. O executavel completo permanece experimental, com testes de campo pendentes; nenhuma inferencia historica de 2025/26 demonstra cultura de novembro de 2026.
+- Aceite final requer compile/teste do mesmo commit, leitura real de imagem otica e SAR no Windows, integridade das areas EPSG:6933, compartimentos de carbono apenas nas intersecoes nativas elegiveis, solos 0-100 cm sem proxy indevido e previsao condicional com incertezas documentadas.
