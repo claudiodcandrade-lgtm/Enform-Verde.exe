@@ -251,6 +251,9 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                            "diagnostic":"Consultar provider_processing_diagnostics e failed_scene_reads; contadores distinguem seleção, tentativa e leitura"})
             return result
         crs,tr,size,local=grid
+        result["committed_grid_shape"]=[int(size[0]),int(size[1])]
+        result["committed_grid_crs"]=str(crs)
+        result["source_scene_count"]=len(data)
         inside=geometry_mask([mapping(local)],out_shape=size,transform=tr,invert=True)
         codes,qa=classify_temporal(np.stack([r[2][0] for r in data]),
                                    np.stack([r[2][1] for r in data]),inside)
