@@ -607,6 +607,7 @@ def _download(url,out,token=None):
     return str(out)
 def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
     out=[]
+    l2a_archives=[]
     for k,a in (item.get("assets") or {}).items():
         href=a.get("href",""); typ=(a.get("type") or "").lower(); roles=[str(x).lower() for x in (a.get("roles") or [])]
         if not href:continue
@@ -614,7 +615,12 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
         suffix=href.lower().split("?")[0]
         is_archive=suffix.endswith(".zip") or "zip" in typ
         if product_type==BIOMASS_FH_L2A:
-            # L2A: only the FH GeoTIFF (never quick-looks, KML, XML or quality).
+            # Prefer the FH GeoTIFF. Some official MAAP products expose only
+            # a ZIP via /data/zipper/... (URL has no .zip extension).
+            # Allow the product archive only as a fallback, never quicklooks.
+            if is_archive and (k.lower()=="product" or "product" in roles):
+                l2a_archives.append((k,href))
+                continue
             if not suffix.endswith((".tif",".tiff")) and "tiff" not in typ:
                 continue
             is_agb=False
@@ -634,7 +640,7 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
             out.append((k,href))
         elif product_type in ("FP_FH__L2B",BIOMASS_FH_L2A) and (is_fh or generic):
             out.append((k,href))
-    return out
+    return out if out else l2a_archives
 
 def _extract_biomass_agb_assets(path,outdir):
     p=Path(path); outdir=Path(outdir); outdir.mkdir(parents=True,exist_ok=True)
@@ -724,6 +730,9 @@ def download_maap_height(gdf,offline_token,cache,items=None):
     for it in fh_items:
         for key,url in _biomass_product_assets(it,it.get("_product_type") or "FP_FH__L2B"):
             base=Path(url.split("?")[0]).name or (it.get("id","biomass")+"_FH_"+key)
+            asset_type=str((it.get("assets") or {}).get(key,{}).get("type") or "").lower()
+            if ("zip" in asset_type or "/zipper/" in url.lower()) and not base.lower().endswith(".zip"):
+                base += ".zip"
             target=Path(cache)/(it.get("id","biomass")+"_"+base)
             try:
                 if not target.exists():
