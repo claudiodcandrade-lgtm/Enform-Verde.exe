@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.64"
+VERSION = "V87.65"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_64_SAR_PIXEL_DIAGNOSTICS"
+MARKER = "ENFORM_CHECKPOINT_V87_65_MAAP_REAL_PIXELS"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,11 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.65 10/11/2026: integracao ESA MAAP corrigida para busca STAC por POST intersects com fallback oficial GET bbox, paginacao real de links next, limite explicito e erros de HTTP/catalogo separados de ausencia de produtos. Nao registrar dados privados nem tokens em logs.",
+    "BiomassLevel2a/L2b e IOC: falhas de todas as colecoes disparam MAAP_ALL_COLLECTION_SEARCHES_FAILED, nunca NO_FH_PRODUCTS falso; filtro FH usa metadados do item/ativos e evita confundir titulo de colecao com produto efetivo.",
+    "Produtos FP_FH__L2A na rota /data/zipper/ sem extensao ZIP agora sao reconhecidos; suportar ativos product/download/enclosure/data e testar ZIP caso um GeoTIFF direto falhe. Raster FH so pode virar altura se pixels georreferenciados reais e validos forem lidos na AOI.",
+    "Novo job paralelo de CI maap-real-fh-proof: usar ESA_MAAP_OFFLINE_TOKEN exclusivamente como segredo GitHub, sondar Sinop, e executar download/pixels reais em bbox Borneo exemplificado na documentacao oficial STAC. Resultado naquele local demonstra integracao global, NAO cobertura da Fazenda Maria Eduarda/Tapajos. Job falha se dados reais nao forem lidos; nao ocultar isso como sucesso.",
+    "A ESA documenta colecoes BiomassLevel2a/L2b e tipos FP_FH__L2A, FP_FH__L2B e FP_AGB_L2B. FH H100 a 200 m nao e diretamente AGB, nem constitui area nativa confirmada; AGB exige produto quantitativo ou alometria/inventarios compativeis e erro.",
     "V87.64: o relatorio de uso da terra agora imprime diagnostico por provedor Sentinel-1 (cenas candidatas, serie elegivel, tentativas, leituras reais, falhas) e ate seis erros de leitura VV/VH com URL/token redigidos. O motivo SELECTED_SCENES_PIXEL_READ_FAILED nao pode permanecer sozinho sem causa auditavel.",
     "FALHA DE SINOP: distinguir indisponibilidade de rede, acesso SAS/TLS, erro de COG, falta de mascara semantica, baixa separabilidade SAR e ausencia de cenas. O texto do relatorio deve permitir diagnostico sem captura de credenciais.",
     "V87.63: inclusao do teste end-to-end tools/live_gui_optical_sinop.py em .github/workflows/build-windows.yml. O gate exige pixels reais CBERS-4A apresentados no canvas Tk, com foto, provedor e itens visiveis; nao basta receber cenas no catalogo ou ler COG em processo isolado.",
