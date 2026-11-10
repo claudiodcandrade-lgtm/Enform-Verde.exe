@@ -190,7 +190,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                               src_transform=src.window_transform(window),src_crs=src.crs,
                                               src_nodata=np.nan,dst_nodata=np.nan,dst_crs=crs,
                                               dst_transform=tr,resampling=Resampling.nearest)
-                                    if not np.isfinite(arr).any():
+                                    if not (np.isfinite(arr) & (arr > 0)).any():
                                         raise ValueError("SAR_SCENE_NO_VALID_PIXELS_IN_AOI")
                                     pair.append(arr)
                         if len(pair)!=2:
