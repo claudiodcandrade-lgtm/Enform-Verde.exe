@@ -1541,6 +1541,16 @@ class App(tk.Tk):
                 self._map_queue.put((generation,p["image"],p.get("polygons") or [],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("NASA GIBS VIIRS: "+str(e))
+            # Last online optical context fallback: actual aerial/satellite imagery
+            # mosaic. Acquisition date/sensor cannot be inferred from this API.
+            # Do not use it for classifying SAR land cover or deriving carbon.
+            try:
+                im=esri_export(rs,service="World_Imagery")
+                copyright="Esri World Imagery • mosaico óptico de referência • data e sensor N/D"
+                _store_satellite_preview_cache(g,extent_factor,w,h,im,[],"ESRI_WORLD_IMAGERY",copyright)
+                self._map_queue.put((generation,im,[],"ESRI_WORLD_IMAGERY",None,copyright,None))
+                return
+            except Exception as e:errors.append("Esri World Imagery: "+type(e).__name__+": "+str(e)[:180])
             cached=_read_satellite_preview_cache(g,extent_factor,w,h)
             if cached:
                 image,meta=cached
