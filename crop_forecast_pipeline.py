@@ -300,6 +300,24 @@ def _panel_lines(report, fmt):
                 productivity_display(rid, p, fmt),
                 f"    Validação do modelo no grupo: MAE {fmt(l['mae_kg_ha'])} kg/ha vs. {fmt(l['trend_only_mae_kg_ha'])} só tendência "
                 f"(ganho {100*l['skill_vs_trend']:.0f}%; {l['units_improved']}/{l['units']} microrregiões melhoram)"]
+        soil = r.get("soil_water_modelled") or {}
+        if soil.get("status") == "ARMAZENAMENTO_HIDRICO_MODELADO":
+            stores=soil.get("storage_mm_by_scenario") or {}
+            deficits=soil.get("deficit_mm_by_scenario") or {}
+            changes=soil.get("storage_trend_7d_mm_by_scenario") or {}
+            out.append("    ARMAZENAMENTO HÍDRICO MODELADO (não medido; cenários de sensibilidade, NÃO IC95): "+
+                       "; ".join(f"{label}: {fmt(stores[label],1)} mm; déficit {fmt(deficits.get(label,0),1)} mm"
+                                 f"; tendência 7 d {fmt(changes.get(label,0),1)} mm"
+                                 for label in ("seco","central","umido") if label in stores))
+            water_yield=soil.get("yield_sensitivity_by_scenario") or {}
+            if water_yield:
+                out.append("    SENSIBILIDADE DA PRODUTIVIDADE AO SOLO (PAM + FAO; não calibrada localmente): "+
+                           "; ".join(f"{label}: {fmt(water_yield[label]['yield_baseline_model_kg_ha'],0)} kg/ha"
+                                     for label in ("seco","central","umido") if label in water_yield))
+            if soil.get("soil_input_is_assumed"):
+                out.append("    Água disponível no solo baseada em HIPÓTESE de contingência, não em atributo medido.")
+        else:
+            out.append("    Armazenamento hídrico: N/D — "+str(soil.get("reason") or soil.get("status") or "sem parâmetros"))
     if "production" in report:
         t = report["production"]["production_t"]
         out.append(f"  PRODUÇÃO TOTAL: {fmt(t['median'])} t (intervalo 90%: {fmt(t['p05'])}–{fmt(t['p95'])} t)")
