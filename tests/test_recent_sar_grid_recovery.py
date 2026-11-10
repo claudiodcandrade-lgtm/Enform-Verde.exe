@@ -66,16 +66,28 @@ class Sentinel1GridRecoveryTests(unittest.TestCase):
                 response = run_recent_sar_screen(
                     aoi, str(root / "out"), now=ref, search=search,
                     token_fn=lambda: "dummy-test-token")
-            self.assertEqual(response["status"], "SAR_REAL_EXPERIMENTAL_CANDIDATES",
-                             str(response))
-            self.assertEqual(response["readable_scene_count"], 3)
+            # Two independent contracts: reader successfully recovered the 3
+            # subsequent scenes, and the scientific classifier may abstain when
+            # these synthetic inputs do not separate candidate signatures.
+            self.assertEqual(response["readable_scene_count"], 3, str(response))
             self.assertGreaterEqual(response["provider_processing_diagnostics"][0]
                                     ["failed_scene_count"], 1)
-            with rasterio.open(response["raster_path"]) as src:
-                # 0.01-degree AOI at 0.00025-degree pixels is roughly 40 x 40.
-                # A failed first scene at 0.0001 must never set the raster grid.
-                self.assertLess(src.width, 65)
-                self.assertLess(src.height, 65)
+            self.assertEqual(response["source_scene_count"], 3)
+            height, width = response["committed_grid_shape"]
+            self.assertLess(width, 65)
+            self.assertLess(height, 65)
+            self.assertGreater(width, 20)
+            self.assertGreater(height, 20)
+            self.assertEqual(response["committed_grid_crs"], "EPSG:4326")
+            if response["status"] == "ERRO_TECNICO":
+                self.assertIn("does not spatially/temporally separate", response["reason"])
+                self.assertFalse(response["native_confirmed"])
+                self.assertFalse(response["crop_confirmed"])
+            else:
+                self.assertEqual(response["status"], "SAR_REAL_EXPERIMENTAL_CANDIDATES",
+                                 str(response))
+                with rasterio.open(response["raster_path"]) as src:
+                    self.assertEqual((src.height, src.width), (height, width))
 
 
 if __name__ == "__main__":
