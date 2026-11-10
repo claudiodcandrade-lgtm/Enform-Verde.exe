@@ -60,7 +60,7 @@ def load():
 
 
 def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
-    """Read bounded real Sentinel-1 RTC VV/VH windows, one scene per month.
+    """Read bounded real Sentinel-1 RTC VV/VH windows with monthly means.
 
     Monthly feature vectors are only eligible if ALL 12 months contain paired
     valid VV/VH pixels. A failed polarization never counts as an observed pair.
@@ -134,10 +134,10 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
     except Exception as exc:
         return None, {"reason":"SAR_TOKEN_INDISPONIVEL",
                       "error_type":type(exc).__name__}
-    S={};C={};used=[];failed=[];observed_months=[]
+    S={};C={};used=[];failed=[];observed_months=[];monthly_pair_counts={}
     for ym in months:
-        selected=False
-        for feat in grouped.get(ym,[])[:4]:
+        pairs=[]
+        for feat in grouped.get(ym,[])[:5]:
             # Atomic scene: commit both polarizations or neither.
             pair={}
             for attempt in range(2):
@@ -182,21 +182,28 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
             if len(pair)!=2:continue
             good=np.isfinite(pair["vv"]) & np.isfinite(pair["vh"])
             if not good.any():continue
-            for pol in ("vv","vh"):
-                S[(ym,pol)]=np.where(good,pair[pol],np.nan)
-                C[(ym,pol)]=good
+            pairs.append({pol:np.where(good,pair[pol],np.nan) for pol in ("vv","vh")})
             used.append(str(feat.get("id","")))
-            observed_months.append(f"{ym[0]}-{ym[1]:02d}")
-            selected=True
-            break
-        if not selected:
-            continue
+            if len(pairs)>=3:break
+        if not pairs:continue
+        monthly_pair_counts[f"{ym[0]}-{ym[1]:02d}"]=len(pairs)
+        for pol in ("vv","vh"):
+            # Average up to 3 independent paired acquisitions in linear units,
+            # matching the RF's monthly-mean training feature semantics.
+            valid_stack=np.stack([p[pol] for p in pairs])
+            numerator=np.nansum(valid_stack,axis=0)
+            count=np.isfinite(valid_stack).sum(axis=0)
+            S[(ym,pol)]=np.divide(numerator,count,out=np.full((H,W),np.nan),
+                                  where=count>0)
+            C[(ym,pol)]=count>0
+        observed_months.append(f"{ym[0]}-{ym[1]:02d}")
     missing=[f"{ym[0]}-{ym[1]:02d}" for ym in months if ym not in
              {tuple(map(int,x.split("-"))) for x in observed_months}]
     if missing:
         return None, {"reason":"MESES_RTC_SEM_PARES_VV_VH",
             "observed_months":observed_months,"missing_months":missing,
-            "scenes_used":len(used),"pixel_read_errors":failed[:12]}
+            "scenes_used":len(used),"monthly_pair_counts":monthly_pair_counts,
+            "pixel_read_errors":failed[:12]}
     bands=[]
     for ym in months:
         vv,vh=S[(ym,"vv")],S[(ym,"vh")]
@@ -206,6 +213,7 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
     return (np.stack(bands,-1),dst_tr,(H,W)),{
         "orbit":orbit,"scenes_used":len(used),
         "observed_months":observed_months,
+        "monthly_pair_counts":monthly_pair_counts,
         "pixel_read_errors":failed[:12],
         "first_scene":used[0],"last_scene":used[-1]}
 
