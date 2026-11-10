@@ -570,11 +570,13 @@ def maap_search(gdf,collection,limit=50,product_type=None):
     # The official MAAP STAC documentation explicitly supports GET with bbox.
     # Avoid sortby initially because some deployments reject the extension.
     try:
-        response=requests.post(base,json=body,timeout=(10,60))
+        # ESA's documented GET bbox route returns products missed by POST
+        # intersects in the real Borneo validation (10 Nov 2026). GET first.
+        response=requests.get(base,params={
+            "collections":collection,"bbox":",".join(map(str,bbox)),
+            "limit":page_size},timeout=(10,60))
         if response.status_code in (400,404,405,415,422,500,501,502,503):
-            response=requests.get(base,params={
-                "collections":collection,"bbox":",".join(map(str,bbox)),
-                "limit":page_size},timeout=(10,60))
+            response=requests.post(base,json=body,timeout=(10,60))
         response.raise_for_status()
     except requests.exceptions.RequestException as exc:
         raise RuntimeError("MAAP_STAC_SEARCH_FAILED:"+type(exc).__name__) from None
