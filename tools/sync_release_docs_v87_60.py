@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.67"
+VERSION = "V87.68"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_67_MAAP_FH_PIXELS_CONFIRMED"
+MARKER = "ENFORM_CHECKPOINT_V87_68_FH_L2A_AUTOMATIC"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,10 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.68 — corrigido em sar_pipeline.automatic_pipeline o bloqueio que ignorava produtos ESA BIOMASS FP_FH__L2A. O pipeline agora seleciona FH L2A ou L2B, executa estatistica zonal georreferenciada real, registra quantidade de pixels, produto de origem e altura H100, sem converter FH diretamente em AGB.",
+    "Teste de contrato tests/test_maap_fh_l2a_automatic.py criado: atesta roteamento L2A, produto, media, n pixels e separacao entre altura e biomassa. Seus dados sao sinteticos e NAO equivalem a comprovacao de campo ou cobertura da propriedade.",
+    "Evidencia live valida independente: 2304 pixels FH reais e altura media 18,284244 m numa janela de teste Sinop (GitHub Actions run 42813753319); a media nao caracteriza o KML completo Fazenda Maria Eduarda.",
+    "Condicoes de liberacao permanecem: teste CBERS-4A ate tela Tk, leitura Sentinel-1 VV/VH real, mascara semantica rastreavel na AOI, altura ESA FH por formacao nativa e carbonos com incerteza. CI e build devem ser aprovados no mesmo commit; homologacao cientifica independente e separada.",
     "V87.67 — PROVA LIVE ESA BIOMASS EM SINOP: GitHub Actions run 42813753319, job maap-real-fh-proof, concluido SUCCESS em 10/11/2026; logs: authentication ACCESS_TOKEN_ISSUED, discovery FH 2 produtos FP_FH__L2A, HTTP 206 em enclosure_i_fh_tiff, leitura real FH_PIXELS_READ com 2304 pixels validos e media 18.284244156328196 m. Evidencia: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/42813753319/artifacts/13763952334.",
     "ESCOPO E LIMITACAO DA PROVA: a media de 18,28 m pertence a pequena bbox de teste em Sinop (-55.21,-11.89,-55.17,-11.85), NAO ao KML completo da Fazenda Maria Eduarda (1459,91 ha). A leitura de pixels H100 nao comprova area nativa, AGB, carbono, precisao metrica local, amostras independentes ou homologacao cientifica.",
     "CORRECAO PENDENTE IDENTIFICADA: em sar_pipeline.automatic_pipeline, a condicao de download de altura utiliza apenas FP_FH__L2B, desconsiderando FP_FH__L2A que efetivamente foi lido. Adequar a condicao para ambos os tipos e identificar no resultado o tipo realmente processado. Nao afirmar que essa integracao GUI foi concluida ate teste de compilacao e de AOI real.",
