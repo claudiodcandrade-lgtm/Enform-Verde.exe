@@ -20,7 +20,7 @@ class NationalCIContractTests(unittest.TestCase):
                 self.assertEqual(r["current_sar_observation"],"N/D")
     def test_ibge_potential_only_in_separate_diagnostic(self):
         src=(ROOT/"desktop_app.py").read_text(encoding="utf-8")
-        self.assertIn("Fitofisionomia presente na propriedade:",src)
+        self.assertIn("Fitofisionomias presentes na propriedade:",src)
         self.assertIn("Código(s) das regiões fitoecológicas",src)
         self.assertIn("format_property_physiognomies",src)
         self.assertIn("POTENCIAL IBGE",src)
