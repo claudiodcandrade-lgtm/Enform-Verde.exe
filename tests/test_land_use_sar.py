@@ -73,7 +73,8 @@ class LandUseTests(unittest.TestCase):
             aoi=gpd.GeoDataFrame(geometry=[box(-50,-10,-49.99,-9.99)],crs=4326)
             ibge=aoi.copy();ibge['legenda_1']='FOD'
             from unittest.mock import patch
-            with patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
+            with patch('sar_landcover_lemplus.classify_aoi',return_value={'status':'N/D_SEM_PIXELS_SAR','reason':'teste offline'}), \
+                 patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
                 r=run_land_use(aoi,d,mapbiomas_path=str(Path(d)/'absent.tif'),ibge=ibge)
             # V87.37+: without SAR pixels and without classifier the cover is N/D (never MapBiomas)
             self.assertEqual(r['status'],'N/D_SEM_COBERTURA_SAR')
