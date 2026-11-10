@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.66"
+VERSION = "V87.67"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_66_MAAP_SINOP_FH_FOUND"
+MARKER = "ENFORM_CHECKPOINT_V87_67_MAAP_FH_PIXELS_CONFIRMED"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,12 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.67 — PROVA LIVE ESA BIOMASS EM SINOP: GitHub Actions run 42813753319, job maap-real-fh-proof, concluido SUCCESS em 10/11/2026; logs: authentication ACCESS_TOKEN_ISSUED, discovery FH 2 produtos FP_FH__L2A, HTTP 206 em enclosure_i_fh_tiff, leitura real FH_PIXELS_READ com 2304 pixels validos e media 18.284244156328196 m. Evidencia: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/42813753319/artifacts/13763952334.",
+    "ESCOPO E LIMITACAO DA PROVA: a media de 18,28 m pertence a pequena bbox de teste em Sinop (-55.21,-11.89,-55.17,-11.85), NAO ao KML completo da Fazenda Maria Eduarda (1459,91 ha). A leitura de pixels H100 nao comprova area nativa, AGB, carbono, precisao metrica local, amostras independentes ou homologacao cientifica.",
+    "CORRECAO PENDENTE IDENTIFICADA: em sar_pipeline.automatic_pipeline, a condicao de download de altura utiliza apenas FP_FH__L2B, desconsiderando FP_FH__L2A que efetivamente foi lido. Adequar a condicao para ambos os tipos e identificar no resultado o tipo realmente processado. Nao afirmar que essa integracao GUI foi concluida ate teste de compilacao e de AOI real.",
+    "PIPELINE CIENTIFICO: tratar altura florestal ESA BIOMASS H100 em metros como compartimento estrutural separado de AGB; associar somente a mascara de floresta atual comprovada, inventarios microrregionais e equacoes especificas validas. Nao converter media H100 em Mg/ha, tC/ha ou tCO2e sem modelo documentado e incerteza.",
+    "GATE DE ACEITACAO DA PROPRIEDADE: processar produto de altura com intersecao efetiva da Fazenda Maria Eduarda, contabilizar pixels e nodata, registrar fonte/data/identificador/QA/erro, cruzar com mascara SAR de vegetacao nativa comprovada, comparar inventarios e exportar mapas/planilhas com unidades, incerteza e N/D quando necessario.",
+    "BLOQUEIOS PARA RELEASE COMPLETO: imagem CBERS-4A ou Sentinel-2 nao apareceu na GUI real do usuario; leitura/classificacao Sentinel-1 e mascara semantica da Fazenda Maria Eduarda continuam pendentes; regressao dashboard da CI atual reprovada; homologacao independente reprovada. Nao confundir job FH exitoso com EXE validado.",
     "V87.66 — evidencia MAAP LIVE em 10/11/2026: bbox de Sinop encontrou 2 produtos verdadeiros ESA BIOMASS FP_FH__L2A; o ativo enclosure_i_fh_tiff respondeu HTTP 206 e 1024 bytes validos. Isto comprova descoberta e acesso a arquivo, mas ainda NAO pixels georreferenciados de altura dentro do KML.",
     "Uma segunda consulta em Borneo mostrou defeito concreto: POST intersects produziu NO_FH_PRODUCTS, enquanto GET bbox retornou 100 itens iniciais e reconheceu 50 produtos FH, com proxima pagina. A producao maap_search foi corrigida para priorizar o GET bbox oficial e usar POST como fallback, sem esconder erros.",
     "Novo gate MAAP em GitHub Actions deve executar --download primeiro para bbox Sinop; a rota de exemplo Borneo e contingencia para prova global, nao autorizacao para atribuir seus valores a Sinop. Somente FH_PIXELS_READ em coordenadas da AOI permite declarar integracao completa nessa area.",
