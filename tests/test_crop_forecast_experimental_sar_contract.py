@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 import geopandas as gpd
 from shapely.geometry import box
-from crop_monitoring_forecast import crops_in_land_result,canonical_crop
+from crop_monitoring_forecast import crops_in_land_result,experimental_crops_in_land_result,canonical_crop
 from crop_spatial_monitoring import crop_geometry
 
 
@@ -26,7 +26,8 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
                 {"class_name":"Formação florestal","source":"SAR_EXPERIMENTAL_MODELO",
                  "area_ha":float(frame.iloc[[1]].to_crs(6933).geometry.area.sum()/10000)}],
                 "validation":{"observed_season":"2025/2026"}}
-            crops=crops_in_land_result(land)
+            self.assertFalse(crops_in_land_result(land))
+            crops=experimental_crops_in_land_result(land)
             self.assertIn("Soja",crops)
             self.assertNotIn("Formação florestal",crops)
             geoms=crop_geometry(land,"Soja",canonical_fn=canonical_crop)
