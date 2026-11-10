@@ -3285,6 +3285,22 @@ def module_check():
     art=load_artifact()
     if not art or "Soja" not in art.get("crops",{}):raise RuntimeError("modelo de produtividade calibrado não empacotado")
     out["yield_panel_model"]={c:{g:round(v["loyo"]["skill_vs_trend"],3) for g,v in d.items()} for c,d in art["crops"].items()}
+    # Enforce Python-source / frozen-EXE parity of the INSTALLED SAR model.
+    # Import alone is insufficient: resolve the bundled joblib and verify its SHA.
+    from sar_landcover_lemplus import load as load_sar_rf, agricultural_year
+    from datetime import date as _date
+    rf,rf_manifest=load_sar_rf()
+    if rf_manifest.get("model_id")!="ENFORM_SAR_BRASIL_RF_V2":
+        raise RuntimeError("Modelo SAR instalado nao corresponde ao manifesto esperado")
+    months,season=agricultural_year(_date(2026,11,10))
+    if season!="2025/2026" or len(months)!=12:
+        raise RuntimeError("Janela retrospectiva do modelo SAR divergente")
+    out["sar_model"]={"model_id":rf_manifest["model_id"],
+                      "sha256":rf_manifest["sha256"],"season":season,
+                      "months":len(months)}
+    from crop_water_balance_yield import sowing_dates, _kc
+    out["crop_water"]={"soy_sowing_dates":str(sowing_dates("Soja",-12.5,2025)),
+                       "soy_kc_day_50":round(float(_kc("Soja",50)),6)}
     (Path(tempfile.gettempdir())/"enform_verde_module_check.json").write_text(json.dumps(out,ensure_ascii=False),encoding="utf-8")
     return out
 
