@@ -232,7 +232,11 @@ def in_validated_domain(ibge=None, ibge_field="legenda_1", aoi=None):
             if w <= centroid.x <= e and s <= centroid.y <= n:
                 return True, ("DOMINIO_GEOGRAFICO_PROVISORIO; fita IBGE indisponível; "
                               "classificação SAR EXPERIMENTAL sem validação local de fitofisionomia")
-        return False, "fitorregião IBGE indisponível e domínio geográfico de treino não comprovado"
+        if aoi is not None:
+            return True, ("EXTRAPOLACAO_NACIONAL_EXPERIMENTAL; fora do dominio "
+                          "regional conhecido; inferencia para afericao em campo, "
+                          "acuracia e incerteza de transferencia N/D")
+        return False, "AOI nao fornecida; nao e possivel determinar extrapolacao"
     eq = ibge.to_crs(6933)
     names = eq[ibge_field].astype(str).str.casefold()
     share = eq.geometry.area.groupby(names).sum()
@@ -244,7 +248,9 @@ def in_validated_domain(ibge=None, ibge_field="legenda_1", aoi=None):
         w, s_, e, n = DOMAIN_ENVELOPE
         if w <= ref.x <= e and s_ <= ref.y <= n:
             return True, "dentro do domínio de treino (floresta amazônica, envelope MT/RO)"
-    return False, "fora do domínio de treino (fitorregião dominante: " + dominant + ")"
+    return True, ("EXTRAPOLACAO_NACIONAL_EXPERIMENTAL; fora do domínio "
+                  "de treino (fitorregião dominante: " + dominant +
+                  "); inferencia SAR para afericao em campo, sem acuracia local")
 
 
 def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
