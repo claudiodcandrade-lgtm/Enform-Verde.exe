@@ -25,14 +25,14 @@ class AutomaticFHL2ATests(unittest.TestCase):
                    "agb_mg_ha":120.0,
                    "uncertainty_mg_ha":None,
                    "data_origin":"SYNTHETIC_TEST_ONLY"}
-        with patch.object(sp,"national_predictive_route_matrix",return_value={}), \\
-             patch.object(sp,"biomass_l2b_search",return_value=[item]), \\
+        with patch.object(sp,"national_predictive_route_matrix",return_value={}), \
+             patch.object(sp,"biomass_l2b_search",return_value=[item]), \
              patch.object(sp,"download_maap_height",
                           return_value={"available":True,"paths":["/test/FP_FH__L2A_height.tif"],
-                                        "fh_items":1}) as downloader, \\
-             patch.object(sp,"role",return_value="HEIGHT"), \\
+                                        "fh_items":1}) as downloader, \
+             patch.object(sp,"role",return_value="HEIGHT"), \
              patch.object(sp,"_zonal",return_value={"mean":21.5,"sd":4.3,
-                                                     "n":1200,"min":4.0,"max":36.0}), \\
+                                                     "n":1200,"min":4.0,"max":36.0}), \
              patch.object(sp,"tapajos_h100_structure_agb",return_value=predicted):
             result=sp.automatic_pipeline(
                 aoi,"Amazônia","Floresta Estacional Sempre-Verde",cache="/tmp/enform-fh-test")
