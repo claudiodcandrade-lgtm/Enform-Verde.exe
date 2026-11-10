@@ -1364,7 +1364,7 @@ class App(tk.Tk):
         self.aoi_area_display=tk.StringVar(value="Aguardando perímetro.")
         ttk.Label(ibgebox,text="Bioma:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
         ttk.Label(ibgebox,textvariable=self.ibge_biome_display,wraplength=840).grid(row=0,column=1,sticky="w",padx=(8,0))
-        ttk.Label(ibgebox,text="Fitofisionomias presentes na propriedade:",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
+        ttk.Label(ibgebox,text="Fitofisionomias (SAR atual / potencial IBGE):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
         # Multiline read-only text: complete class names stay visible at any window width.
         phys_frame=ttk.Frame(ibgebox)
         phys_frame.grid(row=1,column=1,sticky="ew",padx=(8,0),pady=(4,0))
@@ -2596,9 +2596,14 @@ class App(tk.Tk):
             self.ibge_biome_display.set(self.biome.get() or "Não determinado")
         # IBGE describes potential vegetation, never current cover.
         if hasattr(self,"ibge_phys_display") and not self.project.get("native_carbon"):
+            potential="; ".join(
+                str(x.get("name") or "não determinada")+" — "+
+                format_ptbr(float(x.get("area_ha",0)),2)+" ha"
+                for x in d.get("regioes_fitoecologicas",[]) if x.get("name"))
             self.ibge_phys_display.set(
-                "Aguardando interseção da cobertura nativa mapeada com a "
-                "região fitoecológica IBGE; nenhuma área atual confirmada.")
+                "Cobertura nativa ATUAL: aguardando confirmação por SAR.\n"+
+                ("Fitofisionomia POTENCIAL IBGE (não comprova presença atual): "+
+                 potential if potential else "Fitofisionomia potencial IBGE: não determinada."))
         btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d.get("biomas",[]))
         code_txt="\n".join(f"  código {x.get('code') or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
         ibge_lines=["Bioma(s) IBGE: "+(btxt or "não determinado")]+ibge_area_summary_lines(d)
@@ -2763,7 +2768,17 @@ class App(tk.Tk):
             self.ibge_biome_display.set(self.biome.get() or "Não determinado")
         if hasattr(self,"ibge_phys_display"):
             from property_physiognomy_display import format_property_physiognomies
-            self.ibge_phys_display.set(format_property_physiognomies(native,format_ptbr))
+            native_text=format_property_physiognomies(native,format_ptbr)
+            if not native.get("native_area_ha",0):
+                d=self.project.get("ibge_diagnosis") or {}
+                potential="; ".join(
+                    str(x.get("name") or "N/D")+" — "+
+                    format_ptbr(float(x.get("area_ha",0)),2)+" ha"
+                    for x in d.get("regioes_fitoecologicas",[]) if x.get("name"))
+                if potential:
+                    native_text += ("\nPOTENCIAL IBGE (não confirmado como nativo atual): "+
+                                    potential)
+            self.ibge_phys_display.set(native_text)
         known=native.get("known_total_tc")
         area=native["native_area_ha"]
         self.project["total_tc_ha"]=(known/area if known is not None and area else None)
