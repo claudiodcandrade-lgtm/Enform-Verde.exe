@@ -913,6 +913,25 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
         lines.append('  NÃO confirmar vegetação nativa nem lavouras a partir de limiares heurísticos.')
     else:
         lines.append('  Não houve pixels orbitais suficientes: '+str(orbital.get('reason','N/D')))
+    # Operators need actionable evidence in the plain-text report: a generic
+    # SELECTED_SCENES_PIXEL_READ_FAILED hid provider-specific causes at Sinop.
+    for provider in (orbital.get('provider_processing_diagnostics') or []):
+        lines.append('  DIAGNÓSTICO VV/VH '+str(provider.get('provider','N/D'))+
+                     ': candidatas='+str(provider.get('candidate_scene_count',0))+
+                     '; série elegível='+str(bool(provider.get('eligible_series_found',False)))+
+                     '; selecionadas='+str(provider.get('selected_scene_count',0))+
+                     '; leituras tentadas='+str(provider.get('pixel_read_attempt_count',0))+
+                     '; cenas legíveis='+str(provider.get('readable_scene_count',0))+
+                     '; falhas='+str(provider.get('failed_scene_count',0)))
+    for error in (orbital.get('failed_scene_reads') or [])[:6]:
+        lines.append('  FALHA SAR '+str(error.get('provider','N/D'))+
+                     ' / '+str(error.get('scene_id','N/D'))[:65]+
+                     ': '+str(error.get('error_type','N/D'))+
+                     ' — '+str(error.get('error','N/D'))[:150])
+    if orbital.get('committed_grid_shape'):
+        lines.append('  Grade SAR efetivamente lida (linhas, colunas): '+
+                     str(orbital['committed_grid_shape'])+
+                     '; CRS: '+str(orbital.get('committed_grid_crs','N/D')))
     alt=summary.get('alternative_radar_screen') or {}
     lines.append('CONTINGÊNCIA RADAR L/X/NISAR — '+str(alt.get('status','N/D'))+'; identificação semântica permanece N/D até validação específica.')
     if alt.get('reason'):lines.append('  '+str(alt.get('reason'))[:220])
