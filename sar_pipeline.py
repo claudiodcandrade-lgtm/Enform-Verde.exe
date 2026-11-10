@@ -673,7 +673,10 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
             # Prefer the FH GeoTIFF. Some official MAAP products expose only
             # a ZIP via /data/zipper/... (URL has no .zip extension).
             # Allow the product archive only as a fallback, never quicklooks.
-            if is_archive and (k.lower()=="product" or "product" in roles):
+            if is_archive and (k.lower() in ("product","download","enclosure","data")
+                               or "product" in roles or "data" in roles):
+                # Official MAAP can name the ZIP asset "download" and serve
+                # it via /data/zipper/ with no extension/MIME ZIP.
                 l2a_archives.append((k,href))
                 continue
             if not suffix.endswith((".tif",".tiff")) and "tiff" not in typ:
@@ -695,7 +698,9 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
             out.append((k,href))
         elif product_type in ("FP_FH__L2B",BIOMASS_FH_L2A) and (is_fh or generic):
             out.append((k,href))
-    return out if out else l2a_archives
+    # Direct height GeoTIFFs are preferred, but ZIP archives must still be
+    # attempted when those files fail to download or decode.
+    return out+l2a_archives
 
 def _extract_biomass_agb_assets(path,outdir):
     p=Path(path); outdir=Path(outdir); outdir.mkdir(parents=True,exist_ok=True)
