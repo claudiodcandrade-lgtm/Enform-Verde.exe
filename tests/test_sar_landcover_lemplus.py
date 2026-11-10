@@ -81,11 +81,17 @@ class LandUseIntegrationTests(unittest.TestCase):
              patch("sar_model_discovery.discover_installed_sar_configs", return_value=([], [])):
             return run_land_use(AOI, d, ibge=ib)
 
-    def test_in_domain_classes_are_sar_and_native_named_by_ibge(self):
+    def test_in_domain_classes_preserve_experimental_sar_identity(self):
         r = self._run("Savana Arborizada")
         names = {c["class_name"]: c for c in r["classes"]}
-        self.assertIn("Lavoura de Soja", names); self.assertIs(names["Lavoura de Soja"]["native_status"], False)
-        self.assertIn("Savana Arborizada", names); self.assertIs(names["Savana Arborizada"]["native_status"], True)
+        self.assertIn("Lavoura de Soja", names)
+        self.assertIs(names["Lavoura de Soja"]["native_status"], False)
+        # Potential IBGE vegetation legend must NEVER overwrite a
+        # non-field-validated model-derived native class.
+        self.assertIn("Formação savânica", names)
+        self.assertIs(names["Formação savânica"]["native_status"], True)
+        self.assertEqual(names["Formação savânica"]["source"],
+                         "SAR_EXPERIMENTAL_MODELO")
         self.assertFalse(any(str(c["source"]).startswith("MAPBIOMAS") for c in r["classes"]))
 
     def test_out_of_domain_output_is_not_used(self):
