@@ -50,7 +50,8 @@ jobs:
             echo "::error::Configure repository Actions secret ESA_MAAP_OFFLINE_TOKEN before running this probe."
             exit 2
           fi
-      - name: Authenticate, discover and test ESA FH byte-range access
+      - name: Authenticate, discover and test ESA FH byte-range access — Sinop
+        continue-on-error: true
         if: ${{ env.ESA_MAAP_OFFLINE_TOKEN != '' }}
         shell: bash
         run: |
@@ -60,3 +61,12 @@ jobs:
           else
             python tools/verify_esa_maap_live.py --bbox "$west" "$south" "$east" "$north"
           fi
+      - name: Real ESA BIOMASS FH product and pixel proof — official Borneo example
+        if: ${{ env.ESA_MAAP_OFFLINE_TOKEN != '' }}
+        timeout-minutes: 25
+        shell: bash
+        run: |
+          # The official MAAP STAC documentation has results for this Borneo bbox.
+          # Only actual FH products, asset HTTP and AOI FH pixel reads can pass.
+          # This is a global integration smoke, NOT coverage of Sinop or Tapajos.
+          python tools/verify_esa_maap_live.py --bbox 108.0 -4.66 119.0 8.05 --download
