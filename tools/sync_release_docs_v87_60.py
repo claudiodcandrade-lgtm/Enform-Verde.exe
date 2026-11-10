@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.72"
+VERSION = "V87.73"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_72_IBGE_EXTERNAL_TIMEOUT"
+MARKER = "ENFORM_CHECKPOINT_V87_73_NATIONAL_EXPERIMENTAL_SAR"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,17 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.73 — DIRETRIZ NACIONAL OBRIGATORIA: para QUALQUER AOI valida no territorio brasileiro, piloto Enform Verde deve executar modelos matematicos de tratamento espacial de dados orbitais reais, gerar resultados EXPERIMENTAIS de cobertura nativa e agricultura, mapas raster/vetor, areas em EPSG:6933, probabilidades e elementos para validacao em campo. Nao exigir validacao local previa para tentar inferencia experimental; jamais afirmar homologacao nacional sem medidas independentes.",
+    "ARQUITETURA ESPACIAL: reprojecao rigorosa, rasterização de mascara AOI, leitura COG por janelas com controle de memoria, composicao temporal Sentinel-1 RTC VV/VH em unidades lineares, features mensais dB de VV/VH e VH-VV com orbita coerente, Random Forest SAR com pesos e manifesto SHA256, vetorizacao de classe, clip da AOI, soma de area exclusiva e conferencia de fechamento. Opcao por mosaico/blocos para AOIs extensas.",
+    "MAPAS EXPERIMENTAIS OBRIGATORIOS: vegetacao nativa, area cultivada, cultura agricola quando o modelo apoiar, cultivo sem identificacao de cultura se nao houver suporte, outras classes e pixels nao classificados. Nao confundir floresta plantada com vegetacao nativa; MapBiomas e IBGE nao determinam cobertura contemporanea.",
+    "INCERTEZAS: distinguir probabilidade/entropia do classificador, IC95% das precisões AMOSTRAIS nas regiões de treino, incerteza de area calibrada localmente quando existir e risco de extrapolacao. Sem validacao regional, reportar transfer_error=N/D e nao produzir IC95% de area falso. As porcentagens de probabilidade do RF nao sao certeza ou precisao de campo.",
+    "PRODUTOS E AUDITORIA: GeoTIFF de classes e probabilidades, GeoJSON/GPKG de poligonos com area hectares e %, CSV/Excel de classes e fontes, JSON contendo data de aquisicao, orbita, provider, algoritmo/parametros e SHA256 dos modelos e insumos, totais exclusivos, area desconhecida, status observacional, incertezas, falhas de leitura sem expor token ou SAS. Arquivos de validacao por ponto/parcela/mes para afericao futura.",
+    "FENologia: o modelo SAR RF atual usa o ultimo ano agricola COMPLETO Out-Set e e rotulado sazonal/retrospectivo. Nao representar a safra 2025/26 como classificacao do plantio atual 2026/27. Triagem SAR contemporanea separada exige series novas e avaliacao independente de transferencia.",
+    "TRANSFERÊNCIA NACIONAL: sar_landcover_lemplus.in_validated_domain permite inferencia nacional com EXTRAPOLACAO_NACIONAL_EXPERIMENTAL fora da area treinada. land_use_sar deve declarar SAR_EXPERIMENTAL_MODELO, nunca SAR_VALIDADO fora do dominio. Sem pixels RTC validos, recusar mapa ficticio e informar causa + outras rotas SAR pertinentes (X/L/S1) quando observaveis.",
+    "SINOP E LIMITACOES DE PROVA: ferramentas tools/live_sinop_semantic_sar.py e workflow sinop-sar-experimental-live.yml tentam classificar REAL Sentinel-1 em caixa de teste proxima ao centroide, NAO no KML completo Fazenda Maria Eduarda. Nao inferir area por classe da propriedade com base na caixa nem declarar resultado sem GeoJSON/GeoTIFF efetivos e relatorio de probabilidade.",
+    "TESTE NACIONAL: validar algoritmo e artefatos em amostras independentes de seis biomas, extremos geograficos, culturas e orbitas/cenas diferentes; checar continuidade de mascaras, area/CRS, latencia, regressoes e as alternativas CBERS-4A/Sentinel-2 de fundo. A CI e os exemplos regionais nao estabelecem acuracia em todo Brasil.",
+    "MATRIZ DE PROJECAO DE SAFRA: produtividade so quando cultura, area e vigor tiverem sinais SAR suficientes; combinar vigoria/estrutura, variaveis meteorologicas NASA POWER/INMET/CPTEC e estatistica PAM na matriz matematica parametrizada por cultura/regiao. N/D justificado quando faltarem fatores observacionais; apresentar t/ha, sacas/ha e intervalos pertinentes quando sustentados.",
+    "CARBONO: vegetacao nativa experimental separada de cobertura validada, AGB por BIOMASS P-band/L2A FH ou L2B AGB somente com alometria/calibracao pertinente; X como proxima prioridade, L seguinte; raizes, necromassa, serrapilheira e solo Embrapa 0–100 cm por fontes/escalas compatíveis e incertezas, sem preencher classes apenas com medias genericas.",
     "V87.72 — a compilacao Windows 3.26.9 no run GitHub 42818900252 falhou por timeout na consulta AOI Tapajos da base fitoecologica oficial IBGE (12 minutos). Regressao completa, pixel proof MAAP (2304 pixels L2A em Sinop), CBERS-4A ate canvas Tk Sinop e triagem SAR de pixels reais no Tapajos haviam passado.",
     "Corrigida em .github/workflows/build-windows.yml a dependencia indevida de disponibilidade live IBGE no build: limite de 5 min, continue-on-error APENAS neste probe externo, warning explicito e artefato de auditoria ibge_live_availability.txt. Outros testes scientificos e de regressao permanecem obrigatorios; nao rotular dados IBGE ausentes como sucesso ou floresta nativa presente.",
     "Sem base IBGE atual disponivel, usar N/D para fitofisionomia potencial e diagnostico da fonte, sem substituicao silenciosa por mapa de cobertura; as mascaras de nativas e cultivos atuais devem continuar vindo de SAR observacional e ter auditoria por AOI.",
