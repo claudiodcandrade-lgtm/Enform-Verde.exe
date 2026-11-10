@@ -11,7 +11,7 @@ import os
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-MAAP_TOKEN_PORTAL="https://portal.maap.eo.esa.int/ini/services/auth/token/90dToken.php"
+MAAP_TOKEN_PORTAL="https://portal.maap.eo.esa.int/ini/services/auth/token/"
 TOKEN_VALIDITY_DAYS=90
 WARN_DAYS=15
 STATUS_FILENAME="esa_maap_token_renewal.json"
