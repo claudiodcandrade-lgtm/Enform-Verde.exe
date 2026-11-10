@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.60"
+VERSION = "V87.61"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_60_MAAP_DISCOVERY"
+MARKER = "ENFORM_CHECKPOINT_V87_61_SINOP_REGRESSION"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,11 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.61 10/11/2026: teste real informado pelo proprietario na Fazenda Maria Eduarda, Sinop (1459,91 ha, EPSG:6933), reproduziu falha de imagem optica, falha SELECTED_SCENES_PIXEL_READ_FAILED para Sentinel-1 RTC, e ausencia de mascara nativa/cultivada; carbono, vigor e safra ficaram N/D. Build/CI verdes da V87.60 nao asseguraram abertura em Windows de usuario; tratar como REGRESSAO REAL bloqueante.",
+    "SAR atual: recent_sar_landcover.py agora faz rollback da grade de reprojecao de cena falha, so publicando provider_grid apos VV e VH efetivamente lidos, e rejeita arrays sem pixels positivos validos; teste sintetico tests/test_recent_sar_grid_recovery.py documenta o defeito. Essa correcao ainda exige teste Windows live em Sinop para comprovar recuperacao; nao marcar como resolvida por teste mock.",
+    "LIBERACAO: regressao de CI e autoteste Windows devem ser complementados por teste em AOI real Sinop com imagem otica visivel no aplicativo, VV/VH lidos em mais de uma data/orbita adequada, mascara e areas semanticas defensaveis, e quadros de carbono/agricultura/Excel consistentes. Sem amostras rotuladas independentes, manter informacao experimental, com N/D para dados sem suporte.",
+    "Nao confundir IBGE H potencial e legenda_2 cartografica com cobertura atual da propriedade. Nunca apresentar 99,41% de floresta como resultado SAR. Relatorio do proprietario aponta N/D completo, nao ausencia de vegetacao.",
+    "Diagnostico obrigatorio: registrar provider, scene id nao sigiloso, momento de aquisicao, contador de tentativas, tipo de erro, status de leitura VV/VH, pixels validos, scene failover e data/qualidade da imagem optica. Segredos e URLs assinadas ficam redigidos.",
     "PR #51, branch patches-3.26.6: piloto pre-campo experimental; release Windows so pode ser anunciado apos build, autoteste e regresao completos no mesmo SHA.",
     "ESA MAAP: teste live confirmou ACCESS_TOKEN_ISSUED em 10/11/2026, portanto a troca do offline token em access token funciona. A busca retornou NO_FH_PRODUCTS e exit code 5; isto NAO confirma ausencia de produtos ou pixels.",
     "A busca atual por FP_FH__L2A e FP_FH__L2B precisa distinguir erro de catalogo, consulta/colecao, filtro, paginacao, restricao de acesso e verdadeira ausencia de cobertura; nunca converter erro em lista vazia sem diagnostico.",
