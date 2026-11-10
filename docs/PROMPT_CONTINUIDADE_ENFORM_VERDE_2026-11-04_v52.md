@@ -1,3 +1,4 @@
+<!-- V87_60_CI_REVALIDATION_TRIGGER: docs synchronized in a988288173cc8bdb7d0b9af7efed8f2a58029814 -->
 <!-- ENFORM_CHECKPOINT_V87_60_MAAP_DISCOVERY -->
 ## V87.60 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
