@@ -1,3 +1,4 @@
+<!-- V87_76_FINAL_WINDOWS_3_26_10_VALIDATION -->
 <!-- ENFORM_CHECKPOINT_V87_76_RELEASE_3_26_10 -->
 ## V87.76 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
