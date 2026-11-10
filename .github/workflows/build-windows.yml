@@ -1044,6 +1044,12 @@ jobs:
           if (!(Test-Path (Join-Path $root 'data\sar_data_sources_brazil_v1.csv'))) { throw 'National SAR source catalog is missing from package' }
           if (!(Test-Path (Join-Path $root 'data\ifn_necromass_biome_uf_v1.csv'))) { throw 'IFN deadwood inventory means are missing from package' }
           Write-Host "Embedded runtime: $($dll.FullName)"
+      - name: Capture source Python core-module reference
+        shell: pwsh
+        run: |
+          python -c "import desktop_app; desktop_app.module_check()"
+          if ($LASTEXITCODE -ne 0) { throw 'Source Python module check failed' }
+          Copy-Item -Force (Join-Path $env:TEMP 'enform_verde_module_check.json') (Join-Path $env:RUNNER_TEMP 'enform_python_reference.json')
       - name: Compiled EXE self-test from clean copied folder
         shell: pwsh
         run: |
@@ -1066,6 +1072,17 @@ jobs:
               throw "Compiled EXE module/data check failed: $($mc.ExitCode)"
             }
             Get-Content (Join-Path $env:TEMP 'enform_verde_module_check.json')
+            # The same observed test input must return the same results under
+            # Python and the PyInstaller Windows executable, not just import.
+            $pythonRef = Get-Content (Join-Path $env:RUNNER_TEMP 'enform_python_reference.json') -Raw | ConvertFrom-Json -AsHashtable
+            $windowsResult = Get-Content (Join-Path $env:TEMP 'enform_verde_module_check.json') -Raw | ConvertFrom-Json -AsHashtable
+            foreach ($key in @('version','soil_exact_intersection','pre_field_model_contract','microregion','pam_years','yield_panel_model','sar_model','crop_water')) {
+              if (!$pythonRef.ContainsKey($key) -or !$windowsResult.ContainsKey($key)) { throw "Python/Windows parity missing module evidence: $key" }
+              $left = ConvertTo-Json -InputObject $pythonRef[$key] -Depth 30 -Compress
+              $right = ConvertTo-Json -InputObject $windowsResult[$key] -Depth 30 -Compress
+              if ($left -ne $right) { throw "Python/Windows parity differs for $key : Python=$left Windows=$right" }
+            }
+            Write-Host 'PYTHON_WINDOWS_CORE_MODULE_PARITY_OK'
             $vc = Start-Process -FilePath $exe -ArgumentList '--visual-check' -WorkingDirectory $dst -PassThru -Wait
             if ($vc.ExitCode -ne 0) {
               foreach ($f in 'enform_verde_visual_check.txt','enform_verde_visual_check_error.txt') {
