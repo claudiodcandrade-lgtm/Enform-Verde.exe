@@ -22,7 +22,11 @@ def item(pid, ptype):
 class BiomassL2aTests(unittest.TestCase):
     def test_only_fh_geotiff_selected_for_l2a(self):
         keys = [k for k, _ in sp._biomass_product_assets(item("BIO_FP_FH__L2A_X", "FP_FH__L2A"), "FP_FH__L2A")]
-        self.assertEqual(keys, ["enclosure_i_fh_tiff"])
+        # Direct FH GeoTIFF first; the official product ZIP is a fallback
+        # if the TIFF is unreadable. QA and quicklooks are not height rasters.
+        self.assertEqual(keys, ["enclosure_i_fh_tiff", "product"])
+        self.assertNotIn("enclosure_i_quality_tiff", keys)
+        self.assertNotIn("enclosure_fh_ql_png", keys)
 
     def test_l2b_ranked_before_l2a_and_l2a_included(self):
         def fake(gdf, collection, limit=50, product_type=None):
