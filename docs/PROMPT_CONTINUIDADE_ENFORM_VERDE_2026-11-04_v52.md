@@ -1,3 +1,4 @@
+<!-- V87_63_REVALIDATE_GUI_OPTICAL_AND_SAR -->
 <!-- ENFORM_CHECKPOINT_V87_63_GUI_OPTICAL_LIVE -->
 ## V87.63 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
