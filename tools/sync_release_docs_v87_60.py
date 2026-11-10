@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.76"
+VERSION = "V87.77"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_76_RELEASE_3_26_10"
+MARKER = "ENFORM_CHECKPOINT_V87_77_WINDOWS_REGRESSION"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,11 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.77 — build 3.26.10 no SHA e77310ba falhou: regressao geral 1037 testes com 3 falhas e 1 erro, e build Windows reprovou teste nativo; portanto ZIP NAO liberado. Corrigidos contrato de identidade atual vs anual, fixtures de ausencia de modelo SAR, e campo scenario_intervals_are_not_CI95 no modulo hidrico.",
+    "CLASSIFICACAO ATUAL vs EXPERIMENTAL RETROSPECTIVA: crops_in_land_result retorna exclusivamente SAR_VALIDADO; experimental_crops_in_land_result retorna exclusivamente SAR_EXPERIMENTAL_MODELO. monitoring_forecast utiliza estimativa historica apenas para PREVISAO CONDICIONAL, nunca identifica cultura atual com ela. Origem e incerteza de transferencia aparecem no relatorio.",
+    "TESTE CI: tests/test_current_mapping_contract agora assegura as duas rotas distintas; tests/test_crop_forecast_experimental_sar_contract agora verifica que RF anual NAO entra como classe contemporanea; testes sem modelo mockam especificamente o classificador RF embutido, sem inferir falta do modelo por ausencia de arquivo adicional instalado.",
+    "AGUA SOLOS: scenarios retorna campo scenario_intervals_are_not_CI95=True para demarcar que seco/central/umido nao e IC95. Preserva a necessidade de fonte real de solo e clima, n/d na ausencia dos dados e cenarios etiquetados como modelados.",
+    "SUITE e build no mesmo commit sao obrigatorios, incluindo MAAP FH real, S1 real Sinop, CBERS-4A ate Tk, autoteste do EXE e ZIP com hash; homologacao independente por bioma e local continua distinta de piloto tecnicamente compilado.",
     "V87.76 — nova versão PILOTO 3.26.10-PRECAMPO-EXPERIMENTAL: APP_VERSION atualizado, APP_RELEASE_NOTES_v3.26.10.md criado, soil_water_balance_spatial incluso no PyInstaller. Nao disponibilizar arquivos 3.26.9 como 3.26.10; release exige regressao e build no mesmo commit.",
     "SAR RF v2: classes do classificador sao sempre SAR_EXPERIMENTAL_MODELO e nunca SAR_VALIDADO na falta de afericao independente do imovel. Evitar que IBGE potencial sobrescreva mascara nativa modelada; preservar probabilidade, periodo 2025/26, modelo e risco de extrapolacao.",
     "Previsao experimental condicional: crop_spatial_monitoring.crop_geometry e crop_monitoring_forecast.crops_in_land_result agora reconhecem poligonos SAR_EXPERIMENTAL_MODELO para uso em matriz PAM + clima + vigor. Rotulo obrigatorio SAR_EXPERIMENTAL_ANUAL_NAO_ATUAL e transfer_uncertainty=NAO_QUANTIFICADA quando a classe foi inferida da safra historica; nunca afirmar safra corrente observada.",
