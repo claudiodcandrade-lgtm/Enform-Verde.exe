@@ -44,3 +44,42 @@ def current_crop_area_by_semantic_sar(land):
                 if str(x.get("class_name") or "") in
                 ("Áreas cultivadas","Lavoura Temporária","Outras Lavouras Temporárias"))
     return crop,generic
+
+
+def experimental_seasonal_sar_classes(land):
+    """Summarize real-pixel seasonal model output without calling it current/validated.
+
+    The LEM+ RF result is eligible only when its runtime audit identifies the
+    experimental classifier and the final area rows retain that SAR source.
+    Areas are exact polygon/pixel intersections, not statistically corrected
+    estimates; uncertainty for the AOI is therefore explicitly unmeasured.
+    """
+    if not isinstance(land, dict):
+        return None
+    meta = land.get("sar_classifier_lemplus")
+    if not isinstance(meta, dict) or meta.get("status") != "SAR_CLASSIFICADOR_EXPERIMENTAL":
+        return None
+    rows = []
+    for item in land.get("classes") or []:
+        if not isinstance(item, dict) or not str(item.get("source") or "").startswith("SAR_EXPERIMENTAL_MODELO"):
+            continue
+        try:
+            area = float(item.get("area_ha"))
+        except (TypeError, ValueError):
+            continue
+        if area > 0:
+            rows.append({"class_name": str(item.get("class_name") or "Classe SAR não identificada"),
+                         "area_ha": area})
+    if not rows:
+        return None
+    return {
+        "season": meta.get("season"), "model_id": meta.get("model_id"),
+        "model_sha256": meta.get("model_sha256"), "pixels": meta.get("pixels"),
+        "scenes_used": meta.get("scenes_used"), "observed_months": meta.get("observed_months"),
+        "landcover_overall_accuracy": meta.get("landcover_overall_accuracy"),
+        "landcover_overall_accuracy_wilson95": meta.get("landcover_overall_accuracy_wilson95"),
+        "crop_overall_accuracy": meta.get("crop_overall_accuracy"),
+        "in_training_domain": meta.get("in_training_domain"),
+        "domain": meta.get("domain"), "classes": rows,
+        "area_uncertainty": "Estimativa com incerteza não mensurada",
+    }

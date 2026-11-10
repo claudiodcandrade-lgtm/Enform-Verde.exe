@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.14-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.15-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -2075,7 +2075,9 @@ class App(tk.Tk):
         self._weather_query_generation+=1
         self._last_land=land
         classes=land.get("classes",[])
-        non_native=[item for item in classes if item.get("native_status") is False and float(item.get("area_ha") or 0)>0]
+        non_native=[item for item in classes if item.get("native_status") is False and
+                    not str(item.get("source") or "").startswith("SAR_EXPERIMENTAL_MODELO") and
+                    float(item.get("area_ha") or 0)>0]
         native=[item for item in classes if item.get("native_status") is True and float(item.get("area_ha") or 0)>0]
         classified_ha=sum(float(item.get("area_ha") or 0) for item in classes)
         aoi_ha=float(self.project.get("area_ha") or 0)
@@ -2125,6 +2127,30 @@ class App(tk.Tk):
                                  ("; referência: "+str(item.get("taxonomy")) if item.get("taxonomy") else ""))
         else:
             executive.append("• Não determinado")
+        from crop_report_consistency import experimental_seasonal_sar_classes
+        seasonal_sar=experimental_seasonal_sar_classes(land)
+        if seasonal_sar:
+            executive.extend(["", "CLASSIFICAÇÃO SAR EXPERIMENTAL — SAFRA COMPLETA OBSERVADA (não representa cobertura atual)",
+                "Safra: "+str(seasonal_sar.get("season") or "N/D")+
+                "; Sentinel-1: "+str(seasonal_sar.get("scenes_used") or "N/D")+" cenas; "+
+                str(seasonal_sar.get("pixels") or "N/D")+" pixels classificados.",
+                "Este resultado de pixels reais é sazonal e experimental; não equivale ao monitoramento atual nem a validação de campo."])
+            for item in seasonal_sar["classes"]:
+                executive.append("  "+item["class_name"]+": "+format_ptbr(item["area_ha"],2)+
+                                 " ha — estimativa com incerteza não mensurada")
+            executive.append("Modelo: "+str(seasonal_sar.get("model_id") or "N/D")+
+                             "; SHA-256: "+str(seasonal_sar.get("model_sha256") or "N/D"))
+            oa=seasonal_sar.get("landcover_overall_accuracy")
+            ci=seasonal_sar.get("landcover_overall_accuracy_wilson95")
+            crop_oa=seasonal_sar.get("crop_overall_accuracy")
+            if isinstance(oa,(int,float)):
+                accuracy_line="Acurácia global de uso/cobertura no holdout espacial do treinamento: "+format_ptbr(100*oa,1)+"%"
+                if isinstance(ci,(list,tuple)) and len(ci)==2:
+                    accuracy_line+=" (IC95% Wilson "+format_ptbr(100*float(ci[0]),1)+"–"+format_ptbr(100*float(ci[1]),1)+"%)"
+                if isinstance(crop_oa,(int,float)):
+                    accuracy_line+="; acurácia da identificação agrícola no treinamento: "+format_ptbr(100*crop_oa,1)+"%"
+                executive.append(accuracy_line)
+            executive.append("Acurácias e IC95% do modelo referem-se à avaliação espacial de treinamento, não à incerteza de área desta AOI.")
         executive.append(native_summary)
         national=land.get("national_audit") or {}
         if national:
@@ -2233,6 +2259,7 @@ class App(tk.Tk):
                       json.dumps({"probable_crop_age":age_assessment,
                                   "apparent_phytosanitary_state":health,
                                   "yield_forecast":forecast,
+                                  "experimental_seasonal_sar_classification":seasonal_sar,
                                   "yield_calculation_trace":audit_yield_forecast(forecast,analysis_id=self.project.get("analysis_run_id")),
                                   "yield_unit_conversion":unit_conversion_audit},ensure_ascii=False,indent=2,default=str)])
         for item in classes:

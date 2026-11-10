@@ -1,6 +1,7 @@
 """Executive report regression: regional forecast supersedes only blocked placeholders."""
 import unittest
-from crop_report_consistency import (remove_superseded_yield_placeholders, current_crop_area_by_semantic_sar)
+from crop_report_consistency import (remove_superseded_yield_placeholders, current_crop_area_by_semantic_sar,
+                                    experimental_seasonal_sar_classes)
 
 
 class SinopExecutiveConsistencyTest(unittest.TestCase):
@@ -31,6 +32,32 @@ class CurrentCropAreaEvidenceTests(unittest.TestCase):
     def test_eligible_empty_crop_mask_is_measured_zero(self):
         self.assertEqual(current_crop_area_by_semantic_sar(
             {"status":"SAR_ELEGIVEL","classes":[]}), (0.0,0.0))
+
+    def test_experimental_real_pixel_classes_are_preserved_as_seasonal_not_current(self):
+        land={"status":"N/D_SEM_COBERTURA_SAR",
+              "sar_classifier_lemplus":{"status":"SAR_CLASSIFICADOR_EXPERIMENTAL",
+                  "season":"2025/2026","model_id":"ENFORM_SAR_BRASIL_RF_V2",
+                  "model_sha256":"abc","pixels":1692,"scenes_used":30,
+                  "landcover_overall_accuracy":0.921,
+                  "landcover_overall_accuracy_wilson95":[0.90,0.94]},
+              "classes":[
+                  {"class_name":"Lavoura de Soja","area_ha":325.73,"source":"SAR_EXPERIMENTAL_MODELO"},
+                  {"class_name":"Floresta nativa","area_ha":279.72,"source":"SAR_EXPERIMENTAL_MODELO"},
+                  {"class_name":"Agricultura histórica","area_ha":8,"source":"MAPBIOMAS"}]}
+        result=experimental_seasonal_sar_classes(land)
+        self.assertEqual(result["season"],"2025/2026")
+        self.assertEqual(result["pixels"],1692)
+        self.assertEqual(sum(x["area_ha"] for x in result["classes"]),605.45)
+        self.assertEqual(result["area_uncertainty"],"Estimativa com incerteza não mensurada")
+        self.assertEqual(current_crop_area_by_semantic_sar(land),(None,None))
+
+    def test_experimental_seasonal_result_requires_classifier_audit_and_sar_source(self):
+        self.assertIsNone(experimental_seasonal_sar_classes({
+            "sar_classifier_lemplus":{"status":"ERRO_TECNICO"},
+            "classes":[{"class_name":"Soja","area_ha":10,"source":"SAR_EXPERIMENTAL_MODELO"}]}))
+        self.assertIsNone(experimental_seasonal_sar_classes({
+            "sar_classifier_lemplus":{"status":"SAR_CLASSIFICADOR_EXPERIMENTAL"},
+            "classes":[{"class_name":"Soja","area_ha":10,"source":"MAPBIOMAS"}]}))
 
 
 if __name__ == "__main__":
