@@ -300,7 +300,7 @@ def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
                 s2 = clab == crop
                 classes.append({"class_name": CROP_NAMES.get(crop, "Lavoura de " + crop),
                                 "area_ha": float(s2.sum() * pix_ha), "native_status": False,
-                                "source": "SAR_VALIDADO", "validation_status": "experimental_medido",
+                                "source": "SAR_EXPERIMENTAL_MODELO", "validation_status": "experimental_medido",
                                 "mean_probability": float(pc[s2].max(1).mean()),
                                 "class_precision_wilson95": val["crop"]["per_class"].get(crop, {}).get("precision_wilson95"),
                                 "season": season})
@@ -311,7 +311,7 @@ def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
                         "area_ha": float(sel.sum() * pix_ha),
                         "native_status": (True if name in (NATIVE_LABEL, FOREST_LABEL) else
                                           None if name == "Área úmida" else False),
-                        "source": "SAR_VALIDADO", "validation_status": "experimental_medido",
+                        "source": "SAR_EXPERIMENTAL_MODELO", "validation_status": "experimental_medido",
                         "mean_probability": float(pl[sel].max(1).mean()),
                         "class_precision_wilson95": val["landcover"]["per_class"].get(name, {}).get("precision_wilson95"),
                         "season": season})
