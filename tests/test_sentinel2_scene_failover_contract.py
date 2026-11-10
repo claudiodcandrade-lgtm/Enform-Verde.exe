@@ -40,7 +40,8 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         calls=[n.func.id for n in ast.walk(fn) if isinstance(n,ast.Call)
                and isinstance(n.func,ast.Name)]
         self.assertIn("nasa_gibs_preview",calls)
-        self.assertNotIn("esri_export",calls)
+        self.assertIn("esri_export", calls)
+        self.assertLess(nasa if "nasa" in locals() else body.index("nasa_gibs_preview("), source.index("esri_export(") if "source" in locals() else body.index("esri_export("))
         self.assertLess(body.index("nasa_gibs_preview("),body.index("offline_brazil_preview("))
         self.assertIn("contingência sem imagem óptica",body)
 
