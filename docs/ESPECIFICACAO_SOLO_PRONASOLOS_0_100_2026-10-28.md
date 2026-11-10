@@ -1,3 +1,19 @@
+<!-- ENFORM_CHECKPOINT_V87_60_MAAP_DISCOVERY -->
+## V87.60 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
+
+- PR #51, branch patches-3.26.6: piloto pre-campo experimental; release Windows so pode ser anunciado apos build, autoteste e regresao completos no mesmo SHA.
+- ESA MAAP: teste live confirmou ACCESS_TOKEN_ISSUED em 10/11/2026, portanto a troca do offline token em access token funciona. A busca retornou NO_FH_PRODUCTS e exit code 5; isto NAO confirma ausencia de produtos ou pixels.
+- A busca atual por FP_FH__L2A e FP_FH__L2B precisa distinguir erro de catalogo, consulta/colecao, filtro, paginacao, restricao de acesso e verdadeira ausencia de cobertura; nunca converter erro em lista vazia sem diagnostico.
+- Implementados no PR: fallback para download ZIP de FH, sonda autenticada tools/verify_esa_maap_live.py, workflow manual verify-esa-maap-live.yml, diagnostico GET STAC por bbox em quatro colecoes e testes de contrato.
+- ACEITE MAAP: autenticacao bem sucedida + produto FH com intersecao espacial verificada + ativo HTTP legivel + download integro + pixels de altura validos dentro da AOI, com QA, data, resolucao, fonte e incerteza. Ate la, status N/D e nao afirmar produto processado.
+- Imagem de fundo optica CBERS-4A ou Sentinel-2 efetivamente aberta; IBGE para nomenclatura e classes pedologicas, nao como comprovacao de cobertura atual.
+- Identificacao de cobertura e agricultura por SAR observado, rotulando modelos experimentais e dominio. Vigor via observacoes SAR sem transformar proxy VV+VH em altura metrica; previsao apenas quando matriz clima-PAM-vigor estiver documentada.
+- Carbono nativo por formacao/compartimento com AGB, raizes, necromassa, serrapilheira, carbono de solo brasileiro 0-100 cm e respectivas incertezas. N/D quando nao sustentado; nunca evidencias sinteticas para homologacao.
+- Correcoes tecnicas de regressao: agregar poligonos da mesma classe e preservar talhoes repetidos; eliminar conflito de nomes do unittest. Teste rapido de modelos aprovado, homologacao cientifica independente bloqueada; CI completa deve ser verificada novamente apos commit de documentacao.
+- O token ESA MAAP e geometria privada nao devem aparecer em codigo, relatórios, logs ou artefatos. Usar exclusivamente segredo do Actions/entrada protegida.
+
+---
+
 ## Sincronização V87.50 — 09/11/2026
 Esta atualização não relaxa os requisitos de fonte, profundidade, unidade ou cobertura. Carbono do solo (0–100 cm) e fertilidade devem usar exclusivamente dados brasileiros específicos da Embrapa Solos/PronaSolos, compatíveis com atributo, unidade, profundidade e interseção efetivamente coberta. Dados globais ou estrangeiros, inclusive SoilGrids, são inaplicáveis: não usar para preencher lacuna, substituir profundidade, calibrar, comparar, fazer análise de sensibilidade ou validar. Sem camada nacional adequada e proveniência/incerteza defensáveis, reportar N/D com motivo e lacuna exata; não transformar indisponibilidade em zero.
 
