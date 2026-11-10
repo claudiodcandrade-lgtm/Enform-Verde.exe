@@ -1220,6 +1220,13 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
         self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue(); self._weather_query_generation=0; self._crop_monitoring_base_report=""
+        # Seed the user's confirmed token issuance date (08/11/2026) only
+        # when no newer issuance/renewal record exists.
+        try:
+            from esa_maap_token_renewal import initialize_current_token_date
+            initialize_current_token_date()
+        except (OSError,ValueError):
+            pass  # Filesystem failures must never prevent the GUI opening.
         self._style(); self._ui(); self.bind("<Return>",self.execute)
         self.after(1600,self._check_maap_token_renewal)
     def _style(self):
