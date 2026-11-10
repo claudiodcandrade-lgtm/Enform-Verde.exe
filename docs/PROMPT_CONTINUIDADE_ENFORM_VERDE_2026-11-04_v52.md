@@ -1,3 +1,4 @@
+<!-- V87_70_FINAL_REVALIDATE_3_26_9_MAAP_GET -->
 <!-- ENFORM_CHECKPOINT_V87_70_MAAP_GET_RECENCY -->
 ## V87.70 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
