@@ -614,20 +614,32 @@ def maap_search(gdf,collection,limit=50,product_type=None):
 def biomass_l2b_search(gdf,limit=100):
     """Discover both official AGB and forest-height L2B products; retain their distinct roles."""
     out=[]
+    search_errors=[]
+    successful_queries=0
     for collection,stage in (("BiomassLevel2b","OPERATIONAL"),("BiomassLevel2bIOC","IOC")):
         for product_type in BIOMASS_L2B_PRODUCT_TYPES:
-            try: items=maap_search(gdf,collection,limit=limit,product_type=product_type)
-            except Exception: continue
+            try:
+                items=maap_search(gdf,collection,limit=limit,product_type=product_type)
+                successful_queries+=1
+            except Exception as exc:
+                search_errors.append(collection+":"+type(exc).__name__)
+                continue
             for it in items:
                 z=dict(it); z["_collection"]=collection; z["_stage"]=stage
                 z["_product_type"]=product_type; out.append(z)
     # Open Level-2A Forest Height (P-band, per stack), after L2B in priority.
     for collection,stage in (("BiomassLevel2a","OPERATIONAL_L2A"),("BiomassLevel2aIOC","IOC_L2A")):
-        try: items=maap_search(gdf,collection,limit=limit,product_type=BIOMASS_FH_L2A)
-        except Exception: continue
+        try:
+            items=maap_search(gdf,collection,limit=limit,product_type=BIOMASS_FH_L2A)
+            successful_queries+=1
+        except Exception as exc:
+            search_errors.append(collection+":"+type(exc).__name__)
+            continue
         for it in items:
             z=dict(it); z["_collection"]=collection; z["_stage"]=stage
             z["_product_type"]=BIOMASS_FH_L2A; out.append(z)
+    if successful_queries==0:
+        raise RuntimeError("MAAP_ALL_COLLECTION_SEARCHES_FAILED: "+",".join(search_errors))
     unique={}
     for item in out:
         unique[(item.get("_collection"),item.get("id"),item.get("_product_type"))]=item
@@ -656,7 +668,7 @@ def _biomass_product_assets(item,product_type="FP_AGB_L2B"):
         if not href:continue
         name=(k+" "+href+" "+str(a.get("title") or "")).lower()
         suffix=href.lower().split("?")[0]
-        is_archive=suffix.endswith(".zip") or "zip" in typ
+        is_archive=suffix.endswith(".zip") or "zip" in typ or "/zipper/" in suffix
         if product_type==BIOMASS_FH_L2A:
             # Prefer the FH GeoTIFF. Some official MAAP products expose only
             # a ZIP via /data/zipper/... (URL has no .zip extension).
