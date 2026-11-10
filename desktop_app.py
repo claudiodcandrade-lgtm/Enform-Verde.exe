@@ -1351,7 +1351,7 @@ class App(tk.Tk):
         self.aoi_area_display=tk.StringVar(value="Aguardando perímetro.")
         ttk.Label(ibgebox,text="Bioma:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
         ttk.Label(ibgebox,textvariable=self.ibge_biome_display,wraplength=840).grid(row=0,column=1,sticky="w",padx=(8,0))
-        ttk.Label(ibgebox,text="Fitofisionomia presente na propriedade:",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
+        ttk.Label(ibgebox,text="Fitofisionomias presentes na propriedade:",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
         # Multiline read-only text: complete class names stay visible at any window width.
         phys_frame=ttk.Frame(ibgebox)
         phys_frame.grid(row=1,column=1,sticky="ew",padx=(8,0),pady=(4,0))
