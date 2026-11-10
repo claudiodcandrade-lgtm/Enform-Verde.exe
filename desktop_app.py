@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.13-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.14-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -549,6 +549,39 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
     result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
+    # Separate conditional inventory scenario; never reinterpret potential
+    # IBGE vegetation as current native cover. It is allowed only if SAR
+    # absence is confirmed and there is no unresolved technical failure.
+    if not result.get('strata') and not result.get('native_area_ha'):
+        from ifn_carbon_fallback import estimate_fesv_state_scenario
+        scenarios=[]
+        for potential in land.get('potential_physiognomy_intersections') or []:
+            physiognomy=str(potential.get('name') or '')
+            if not physiognomy:
+                continue
+            try:
+                sar_result=sar_estimator(aoi,biome,physiognomy)
+                scenario=estimate_fesv_state_scenario(
+                    biome=biome,physiognomy=physiognomy,
+                    area_ha=float(potential.get('area_ha') or 0),
+                    sar_result=sar_result,
+                    centroid_lon=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.x),
+                    centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
+                scenario['sar_status']=sar_result.get('status') if isinstance(sar_result,dict) else None
+                scenario['sar_reason']=sar_result.get('reason') if isinstance(sar_result,dict) else None
+                if scenario.get('status')=='CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR':
+                    scenarios.append(scenario)
+            except Exception as exc:
+                result['inventory_scenario_diagnostic']={
+                    'status':'ERRO_TECNICO_SEM_FALLBACK',
+                    'reason':type(exc).__name__+': '+str(exc)[:300],
+                    'physiognomy':physiognomy}
+        if scenarios:
+            result['conditional_inventory_scenarios']=scenarios
+        elif not result.get('inventory_scenario_diagnostic'):
+            result['inventory_scenario_diagnostic']={
+                'status':'N/D',
+                'reason':'Nenhum cenário elegível: SAR com pixels, falha técnica pendente ou inventário compatível indisponível.'}
     if inventory_manifest is not None:
         # File hash proves input identity, not scientific validity.
         result["external_inventory_manifest"]=inventory_manifest
@@ -2816,6 +2849,21 @@ class App(tk.Tk):
         lines = (executive_carbon_lines(native,format_ptbr) +
                  pedology_report_lines(pedology or {},format_ptbr) +
                  fertility_report_lines(fertility or {},format_ptbr) + lines)
+        for scenario in native.get("conditional_inventory_scenarios",[]):
+            lines += ["", "CENÁRIO CONDICIONAL DE CARBONO — INVENTÁRIO IFN (não é cobertura atual confirmada)",
+                      "Estado: "+str(scenario.get("status")),
+                      "Área-base: "+format_ptbr(scenario.get("area_ha",0),2)+" ha — "+str(scenario.get("area_basis")),
+                      "Fitofisionomia: "+str(scenario.get("physiognomy"))+"; domínio geográfico: "+str(scenario.get("geographic_tier")),
+                      "IFN: n="+str(scenario.get("inventory_n_unique_sampling_units"))+" unidades únicas; AGB média "+format_ptbr(scenario.get("agb_mean_mg_ha"),2)+" Mg/ha; DP amostral "+format_ptbr(scenario.get("agb_sample_sd_mg_ha"),2)+" Mg/ha.",
+                      "Faixa observada entre unidades (não é IC95%): "+json.dumps(scenario.get("agb_observed_range_mg_ha"),ensure_ascii=False),
+                      "Carbono condicional: "+format_ptbr(scenario.get("carbon_mean_tc_ha"),2)+" tC/ha; total cenário "+format_ptbr(scenario.get("carbon_total_tc_scenario"),2)+" tC ("+format_ptbr(scenario.get("carbon_total_tco2e_scenario"),2)+" tCO₂e).",
+                      "Incerteza: "+str(scenario.get("uncertainty")),
+                      "Confiança: "+str(scenario.get("confidence")),
+                      "Fonte: "+str(scenario.get("source"))+" — "+str(scenario.get("source_url")),
+                      "Limitações: "+"; ".join(scenario.get("limitations",[]))]
+        diag=native.get("inventory_scenario_diagnostic")
+        if diag:
+            lines += ["", "CENÁRIO DE INVENTÁRIO: "+str(diag.get("status"))+" — "+str(diag.get("reason"))]
         for st in native["strata"]:
             lines.append(st["class_name"]+": "+format_ptbr(st["area_ha"],2)+" ha ("+format_ptbr(st["area_pct"],2)+"% da AOI) — "+st["source"])
             lines.append("  FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: "+st["physiognomy"]+" — "+st["physiognomy_resolution"])

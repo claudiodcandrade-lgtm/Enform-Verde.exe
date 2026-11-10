@@ -904,6 +904,19 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     # accepted land-cover totals and from annual MapBiomas reference polygons.
     summary['recent_sar_cover']=recent_sar_cover or {'status':'N/D','reason':'triagem SAR não executada'}
     summary['alternative_radar_screen']=alternative_radar_screen
+    # Keep the official potential phytoregion intersection available for a
+    # separately labelled inventory scenario when SAR has no usable pixels.
+    # This area is never appended to the current-cover classes or native mask.
+    if reference is not None and not reference.empty:
+        try:
+            summary['potential_physiognomy_intersections'] = _shares_with_code(
+                aoi, reference, 'class_name', None)
+        except Exception as exc:
+            summary['potential_physiognomy_intersections'] = []
+            warnings.append('Interseção potencial IBGE para cenário de inventário indisponível: '+
+                            type(exc).__name__+': '+str(exc)[:180])
+    else:
+        summary['potential_physiognomy_intersections'] = []
     # National audit: reconcile area, provenance and unknown uncertainty.
     from national_analysis_audit import audit_national_coverage
     summary['national_audit']=audit_national_coverage(aoi,summary)
