@@ -21,6 +21,11 @@ class IfnCarbonFallbackTests(unittest.TestCase):
         self.assertGreaterEqual(result["inventory_n_unique_sampling_units"], 5)
         self.assertIsNotNone(result["carbon_total_tc_scenario"])
         self.assertIn("não IC95%", result["uncertainty"])
+        self.assertEqual(result["estimate_label"], "estimativa com incerteza não mensurada")
+        self.assertEqual(result["calculation_trace"]["selected_ua_count"],
+                         result["inventory_n_unique_sampling_units"])
+        self.assertAlmostEqual(result["calculation_trace"]["stock_tc_scenario"],
+                               result["carbon_total_tc_scenario"])
 
     def test_technical_errors_and_processed_pixels_block_fallback(self):
         technical = {**self.no_pixels,

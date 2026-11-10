@@ -2856,8 +2856,9 @@ class App(tk.Tk):
                       "Fitofisionomia: "+str(scenario.get("physiognomy"))+"; domínio geográfico: "+str(scenario.get("geographic_tier")),
                       "IFN: n="+str(scenario.get("inventory_n_unique_sampling_units"))+" unidades únicas; AGB média "+format_ptbr(scenario.get("agb_mean_mg_ha"),2)+" Mg/ha; DP amostral "+format_ptbr(scenario.get("agb_sample_sd_mg_ha"),2)+" Mg/ha.",
                       "Faixa observada entre unidades (não é IC95%): "+json.dumps(scenario.get("agb_observed_range_mg_ha"),ensure_ascii=False),
-                      "Carbono condicional: "+format_ptbr(scenario.get("carbon_mean_tc_ha"),2)+" tC/ha; total cenário "+format_ptbr(scenario.get("carbon_total_tc_scenario"),2)+" tC ("+format_ptbr(scenario.get("carbon_total_tco2e_scenario"),2)+" tCO₂e).",
+                      str(scenario.get("estimate_label"))+" — carbono condicional: "+format_ptbr(scenario.get("carbon_mean_tc_ha"),2)+" tC/ha; total cenário "+format_ptbr(scenario.get("carbon_total_tc_scenario"),2)+" tC ("+format_ptbr(scenario.get("carbon_total_tco2e_scenario"),2)+" tCO₂e).",
                       "Incerteza: "+str(scenario.get("uncertainty")),
+                      "TRILHA DE CÁLCULO: "+json.dumps(scenario.get("calculation_trace") or {},ensure_ascii=False,sort_keys=True),
                       "Confiança: "+str(scenario.get("confidence")),
                       "Fonte: "+str(scenario.get("source"))+" — "+str(scenario.get("source_url")),
                       "Limitações: "+"; ".join(scenario.get("limitations",[]))]

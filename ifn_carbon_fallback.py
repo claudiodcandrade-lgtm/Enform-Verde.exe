@@ -78,11 +78,14 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
     mean = statistics.mean(values)
     sd = statistics.stdev(values)
     carbon = mean * CARBON_FRACTION
+    area = float(area_ha)
+    stock_tc = carbon * area
     return {
         "status": "CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR",
+        "estimate_label": "estimativa com incerteza não mensurada",
         "current_native_cover_confirmed": False,
         "area_basis": "interseção da AOI com fitofisionomia potencial IBGE legenda_1; não é máscara atual",
-        "area_ha": float(area_ha), "biome": "Amazônia", "physiognomy": physiognomy,
+        "area_ha": area, "biome": "Amazônia", "physiognomy": physiognomy,
         "geographic_tier": "regional por proximidade (≤250 km) — unidades do IFN em Mato Grosso; microrregião não comprovada",
         "nearest_inventory_unit_distance_km": min(distance_km(r) for r in rows),
         "selection_radius_km": 250.0,
@@ -90,10 +93,23 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
         "agb_mean_mg_ha": mean, "agb_sample_sd_mg_ha": sd,
         "agb_observed_range_mg_ha": [min(values), max(values)],
         "carbon_fraction": CARBON_FRACTION, "carbon_fraction_uncertainty": "NÃO QUANTIFICADA",
-        "carbon_mean_tc_ha": carbon, "carbon_total_tc_scenario": carbon * float(area_ha),
-        "carbon_total_tco2e_scenario": carbon * float(area_ha) * 44 / 12,
+        "carbon_mean_tc_ha": carbon, "carbon_total_tc_scenario": stock_tc,
+        "carbon_total_tco2e_scenario": stock_tc * 44 / 12,
+        "calculation_trace": {
+            "candidate_filter": "bioma Amazônia + UF MT + Floresta Natural + Floresta Estacional Sempre-verde + distância geodésica ao centroide <= 250 km; uma linha por UA física",
+            "selected_ua_count": len(values), "sum_agb_mg_ha": sum(values),
+            "agb_mean_formula": "sum(AGB_Chave das UAs selecionadas) / n",
+            "agb_mean_mg_ha": mean, "agb_sample_sd_formula": "desvio-padrão amostral entre UAs independentes",
+            "agb_sample_sd_mg_ha": sd,
+            "carbon_density_formula": "AGB média × fator C 0,47",
+            "carbon_density_tc_ha": carbon, "area_formula": "interseção exata AOI × IBGE legenda_1 (EPSG:6933)",
+            "area_ha": area, "stock_formula": "carbono tC/ha × área condicional ha",
+            "stock_tc_scenario": stock_tc, "co2e_formula": "estoque tC × 44/12",
+            "stock_tco2e_scenario": stock_tc * 44 / 12,
+            "not_included_in_uncertainty": ["transferência regional para a AOI", "erro da equação AGB_Chave", "incerteza do fator de carbono 0,47", "erro de classificação da cobertura potencial"],
+        },
         "uncertainty": (
-            f"DP amostral entre {len(values)} unidades IFN únicas: {sd:.2f} Mg AGB/ha; "
+            f"estimativa com incerteza não mensurada. DP amostral conhecido entre {len(values)} unidades IFN únicas: {sd:.2f} Mg AGB/ha; "
             "faixa observada e DP são dispersão descritiva, não IC95%/intervalo preditivo da AOI. "
             "Erro de equação, transferência espacial, posição das unidades e fração de carbono não quantificados."
         ),
