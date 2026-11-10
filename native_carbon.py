@@ -51,10 +51,12 @@ def native_class(name, source, class_metadata=None):
     if str(source or "").startswith(("MAPBIOMAS", "IBGE+MAPBIOMAS")):
         return None
     if source=='SEM_COBERTURA':return None
-    if source=='SAR_VALIDADO':
+    if source in ('SAR_VALIDADO','SAR_EXPERIMENTAL_MODELO'):
         if text.startswith('grupo: '):return text=='grupo: vegetacao natural'
         meta=(class_metadata or {}).get(name,{})
-        return meta.get('parent')=='vegetação natural' if meta else None
+        if meta and meta.get('parent') in ('vegetação natural','uso não nativo'):
+            return meta['parent']=='vegetação natural'
+        return None
     if source in ('SAR_VALIDADO+IBGE','SAR_VALIDADO+IBGE_PROXIMIDADE'):return True
     if source=='IBGE':return None
     return None
@@ -99,7 +101,7 @@ def summarize_native_carbon(aoi, class_polygons, estimator, class_metadata=None,
         if flag is None:unknown_area+=area;continue
         native_area+=area
         meta=(class_metadata or {}).get(record.class_name,{})
-        physiognomy=record.class_name if record.source.startswith('SAR_VALIDADO') else (meta.get('physiognomy') or record.class_name)
+        physiognomy=record.class_name if record.source.startswith(('SAR_VALIDADO','SAR_EXPERIMENTAL_MODELO')) else (meta.get('physiognomy') or record.class_name)
         detail=('região/fitofisionomia identificada na legenda IBGE' if record.source in ('IBGE+MAPBIOMAS','SAR_VALIDADO+IBGE') else ('fitofisionomia declarada no modelo SAR' if meta.get('physiognomy') else 'classe de cobertura; subtipo fitofisionômico não determinado'))
         try: estimated=estimator(frame,physiognomy)
         except Exception as exc:estimated={'components':[], 'error':str(exc)}
