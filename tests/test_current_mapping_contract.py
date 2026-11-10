@@ -24,7 +24,9 @@ class CurrentMappingContract(unittest.TestCase):
     def test_current_crop_identity_requires_validated_sar(self):
         self.assertNotIn("MAPBIOMAS_C11", self.crops)
         body = self.monitor[self.monitor.index("def crops_in_land_result"):self.monitor.index("def monitoring_forecast")]
-        self.assertIn('startswith("SAR_VALIDADO")', body)
+        self.assertIn('return _crops_from_sar_source(land, "SAR_VALIDADO")', body)
+        self.assertIn('return _crops_from_sar_source(land, "SAR_EXPERIMENTAL_MODELO")', body)
+        self.assertIn('annual_experimental = bool(conditional_crops and not current_crops)', self.monitor)
         self.assertNotIn('source") == "MAPBIOMAS"', body)
         self.assertIn("PAM is a yield baseline", self.crops)
 
