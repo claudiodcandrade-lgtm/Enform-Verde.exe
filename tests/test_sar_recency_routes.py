@@ -64,10 +64,16 @@ class SarRecencyRouteTests(unittest.TestCase):
         from shapely.geometry import box
         aoi=gpd.GeoDataFrame(geometry=[box(-54.98,-3.05,-54.96,-3.03)],
                              crs="EPSG:4326")
-        with patch("sar_pipeline.requests.post",return_value=fake) as call:
+        with patch("sar_pipeline.requests.get",return_value=fake) as get, \
+             patch("sar_pipeline.requests.post") as post:
             out=maap_search(aoi, "BiomassLevel2b", limit=10)
-        body=call.call_args.kwargs["json"]
-        self.assertEqual(body["sortby"][0]["direction"],"desc")
+        self.assertEqual(post.call_count,0)
+        params=get.call_args.kwargs["params"]
+        self.assertEqual(params["collections"],"BiomassLevel2b")
+        self.assertEqual(params["limit"],10)
+        self.assertIn("bbox",params)
+        # The real MAAP GET route can return unsorted results; the pipeline
+        # sorts locally by acquisition rather than date of publication.
         self.assertEqual([x["id"] for x in out],["new","old"])
 
     def test_annual_cci_latest_candidate_is_checked_before_2024(self):
