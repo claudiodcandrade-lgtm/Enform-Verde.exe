@@ -93,6 +93,86 @@ def forecast_fields(fields, *, as_of=None, season=None, weather_fetcher=fetch_po
     return report
 
 
+def _modelled_soil_water_and_yield(crop, lat, weather, as_of, sy,
+                                   years, aw, base_ensemble, params):
+    """Add FAO-56 soil-water sensitivity to calibrated PAM yield predictions.
+
+    The historical coefficient beta is unchanged: soil scenarios are
+    transparent EXTRAPOLATIONS of this coefficient, not independently
+    recalibrated local yield confidence intervals.
+    """
+    import numpy as np
+    from crop_climate_favorability import _by_date
+    from crop_water_balance_yield import CROP
+    from crop_panel_yield_model import season_ry_ensemble
+    from soil_water_balance_spatial import scenarios, pedotransfer_saxton_rawls
+    series=_by_date(weather)
+    observed=[d for d,v in series.items()
+              if d<=as_of and all(v.get(k) is not None
+              for k in ("PRECTOTCORR","T2M_MAX","T2M_MIN"))]
+    if not observed:
+        return {"status":"N/D_METEOROLOGIA_DIARIA"}
+    last=max(observed)
+    recent=[]
+    from datetime import timedelta
+    for step in range(90):
+        d=last-timedelta(days=step)
+        row=series.get(d)
+        if row is None or any(row.get(k) is None for k in
+                              ("PRECTOTCORR","T2M_MAX","T2M_MIN")):
+            break
+        recent.append(row)
+    if len(recent)<14:
+        return {"status":"N/D_JANELA_HIDRICA","days":len(recent),
+                "reason":"menos de 14 dias consecutivos com chuva e temperatura"}
+    recent.reverse()
+    kwargs={"root_depth_m":CROP[crop]["zr"],"lat_deg":lat,
+            "kc":CROP[crop]["kc"][1],"p":CROP[crop]["p"]}
+    if aw.get("ad_class") in ("AD1","AD2","AD3","AD4","AD5","AD6"):
+        kwargs["ad_class"]=aw["ad_class"]
+    elif all(aw.get(k) is not None for k in
+             ("sand_fraction","clay_fraction","organic_matter_pct")):
+        ptf=pedotransfer_saxton_rawls(aw["sand_fraction"],
+              aw["clay_fraction"],aw["organic_matter_pct"])
+        kwargs["theta_fc"]=ptf["theta_fc"];kwargs["theta_wp"]=ptf["theta_wp"]
+    elif aw.get("awc_mm_cm") is not None:
+        kwargs["ad_mm_cm"]=aw["awc_mm_cm"]
+    else:
+        return {"status":"N/D_HIDRAULICA_SOLO","reason":"AD/retencao nao disponivel"}
+    model=scenarios(recent,**kwargs)
+    if model.get("status")!="ARMAZENAMENTO_HIDRICO_MODELADO":
+        return model
+    soil_source=str(aw.get("source",""))
+    model["soil_input_provenance"]=soil_source
+    model["soil_input_is_assumed"]=("fallback" in soil_source.lower()
+                                  or "assum" in soil_source.lower())
+    model["crop"]=crop
+    model["weather_last_observation_date"]=last.isoformat()
+    variants={"seco":(.2,.65),"central":(.5,.85),"umido":(.8,1.)}
+    base=float(np.median(base_ensemble)) if base_ensemble else None
+    forecast={}
+    for label,(initial,infil) in variants.items():
+        cap=model["root_zone_capacity_mm_by_scenario"][label]
+        ad=cap/(CROP[crop]["zr"]*100.)
+        alt=season_ry_ensemble(weather,crop,lat,sy,ad,as_of,years,
+                    initial_fraction=initial,infiltration_fraction=infil)
+        if not alt:continue
+        relative=float(np.median(alt))
+        beta=float(params["beta"])
+        forecast[label]={"ry_median":relative,
+             "yield_baseline_model_kg_ha":max(0.,float(params["a"])+
+                    float(params["b"])*float(params["harvest_year"])+beta*relative),
+             "delta_vs_calibrated_RY_kg_ha":beta*(relative-base) if base is not None else None,
+             "analog_count":len(alt)}
+    model["yield_sensitivity_by_scenario"]=forecast
+    model["yield_sensitivity_method"]=(
+       "PAM panel calibrated beta applied to FAO56/FAO33 RY for soil "
+       "hydraulic/initial moisture/infiltration sensitivity; not independently "
+       "hindcast-recalibrated for these soil variants")
+    model["scenario_intervals_are_not_CI95"]=True
+    return model
+
+
 def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fetcher):
     from crop_panel_yield_model import field_params, season_ry_ensemble, simulate
     from crop_water_balance_yield import awc_at, harvest_year
@@ -129,9 +209,17 @@ def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fe
             continue
         ready.append({"id": rid, "area_ha": f["area_ha"], "area_sd_ha": f.get("area_sd_ha"),
                       "group": (micro["code"], crop), "params": params})
+        try:
+            soil_model=_modelled_soil_water_and_yield(crop,c.y,wx["daily"],as_of,
+                      sy,range(first_ref,sy),aw,ens,params)
+        except (ValueError,KeyError,ZeroDivisionError) as exc:
+            soil_model={"status":"N/D_MODELO_HIDRICO",
+                "reason":type(exc).__name__+": "+str(exc)[:180]}
+        # Storage is a modelled trajectory, NOT an in-situ moisture observation.
         report["fields"][rid] = {"status": ("experimental_validated_out_of_sample" if vig_ok else
                                             "experimental_sem_vigor_clima_historico"),
-                                 "no_vigor_reason": no_vigor_reason, "microregion": micro,
+                                 "no_vigor_reason": no_vigor_reason,
+                                 "soil_water_modelled": soil_model, "microregion": micro,
                                  "harvest_year": hy, "awc": aw, "ry_median": float(sorted(ens)[len(ens) // 2]),
                                  "ry_p10_p90": [float(x) for x in __import__("numpy").quantile(ens, [.1, .9])],
                                  "n_analogs": len(ens), "region_group": params["region_group"],
