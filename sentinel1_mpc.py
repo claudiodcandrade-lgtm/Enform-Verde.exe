@@ -118,6 +118,26 @@ def get_runtime_sas_token(*, opener=urlopen):
                        + ",".join(failures) + ")")
 
 
+def sign_asset_href(href, *, opener=urlopen):
+    """Sign one STAC asset using MPC's official signing endpoint.
+
+    This is an independent fallback when collection-wide SAS issuance fails.
+    No signed URL or secret is written to diagnostics.
+    """
+    parts = urlsplit(href)
+    if parts.scheme != "https" or parts.hostname not in ALLOWED_HOSTS:
+        raise ValueError("Refusing asset outside trusted MPC hosts")
+    endpoint = "https://planetarycomputer.microsoft.com/api/sas/v1/sign?" + urlencode({"href": href})
+    payload = _https_json(endpoint, opener=opener)
+    signed = payload.get("href") if isinstance(payload, dict) else None
+    if not signed:
+        raise RuntimeError("MPC asset signing returned no href")
+    dest = urlsplit(str(signed))
+    if dest.scheme != "https" or dest.hostname not in ALLOWED_HOSTS:
+        raise ValueError("MPC signer returned an untrusted asset host")
+    return str(signed)
+
+
 def _signed_href(href, token):
     parts = urlsplit(href)
     if parts.scheme != "https" or parts.hostname not in ALLOWED_HOSTS:
