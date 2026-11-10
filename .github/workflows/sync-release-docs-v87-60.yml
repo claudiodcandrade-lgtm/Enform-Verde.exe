@@ -1,4 +1,4 @@
-name: Synchronize V87.64 release documentation
+name: Synchronize V87.65 release documentation
 
 on:
   push:
@@ -41,8 +41,8 @@ jobs:
                  'docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md',
                  'docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md']
           for name in names:
-              assert 'ENFORM_CHECKPOINT_V87_64_SAR_PIXEL_DIAGNOSTICS' in (root/name).read_text(encoding='utf-8'), name
-          assert any('ENFORM_CHECKPOINT_V87_64_SAR_PIXEL_DIAGNOSTICS' in p.text for p in
+              assert 'ENFORM_CHECKPOINT_V87_65_MAAP_REAL_PIXELS' in (root/name).read_text(encoding='utf-8'), name
+          assert any('ENFORM_CHECKPOINT_V87_65_MAAP_REAL_PIXELS' in p.text for p in
                      Document('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx').paragraphs[:40])
           print('ALL_FOUR_RELEASE_DOCUMENTS_UPDATED')
           PY
@@ -55,6 +55,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Documentation already synchronized"
           else
-            git commit -m "docs: sync V87.64 ESA MAAP checkpoint to all four required docs"
+            git commit -m "docs: sync V87.65 ESA MAAP checkpoint to all four required docs"
             git push origin HEAD:patches-3.26.6
           fi
