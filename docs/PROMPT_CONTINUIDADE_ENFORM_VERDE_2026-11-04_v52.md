@@ -1,3 +1,4 @@
+<!-- V87_77_FINAL_WINDOWS_3_26_10_VALIDATION -->
 <!-- ENFORM_CHECKPOINT_V87_77_WINDOWS_REGRESSION -->
 ## V87.77 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
