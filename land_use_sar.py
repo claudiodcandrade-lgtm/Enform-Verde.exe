@@ -726,7 +726,10 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                 # Explicitly distinguish it from locally validated SAR.
                 provisional=any(x in domain_msg for x in
                     ('DOMINIO_GEOGRAFICO_PROVISORIO','EXTRAPOLACAO_NACIONAL_EXPERIMENTAL'))
-                model_source='SAR_EXPERIMENTAL_MODELO' if provisional else 'SAR_VALIDADO'
+                # Regional model validation does not constitute verification
+                # of an individual property. Keep every installed RF output
+                # experimental until an AOI-specific independent validation.
+                model_source='SAR_EXPERIMENTAL_MODELO'
                 lay['source']=model_source
                 lay['taxonomy']='SAR RF experimental, ano agrícola '+str(res.get('season'))
                 layers.append(lay[['class_name','source','taxonomy','geometry']])
@@ -761,9 +764,12 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         except Exception as exc:
             lemplus_audit={'status':'ERRO_TECNICO','reason':type(exc).__name__+': '+str(exc)[:200]}
             warnings.append('Classificador SAR LEM+ indisponível: '+lemplus_audit['reason'])
-    if layers:
-        # Use IBGE only to NAME SAR-confirmed native polygons.
-        # Proximity is explicit and bounded to 3 km in a metric projection.
+    if layers and not any(
+            str(source).startswith('SAR_EXPERIMENTAL_MODELO')
+            for layer in layers for source in layer.get('source',[])):
+        # Only already independently validated native polygons can inherit
+        # an IBGE formation name. Experimental RF results preserve their
+        # source, class and model-derived confidence for field verification.
         layers[0]=name_native_from_ibge(layers[0],reference,max_proximity_m=3000)
     # IBGE legend is not evidence of current native cover and never fills gaps.
     # A gap remains explicitly unclassified unless a current SAR product covers it.
