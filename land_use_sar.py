@@ -718,15 +718,41 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             polys=res.get('polygons_6933')
             if domain_ok and res.get('status')=='SAR_CLASSIFICADOR_EXPERIMENTAL' and polys is not None and not polys.empty:
                 lay=polys.copy()
-                lay['class_name']=lay['class_name'].replace({'Vegetação nativa (assinatura SAR)':'Formação savânica',
-                                                             'Floresta nativa (assinatura SAR)':'Formação florestal'})
-                lay['source']='SAR_VALIDADO'; lay['taxonomy']='SAR LEM+ RF v1 ('+str(res.get('season'))+')'
+                rename={'Vegetação nativa (assinatura SAR)':'Formação savânica',
+                        'Floresta nativa (assinatura SAR)':'Formação florestal'}
+                lay['class_name']=lay['class_name'].replace(rename)
+                # The model was spatially evaluated in its training geography.
+                # It is NOT independently field-verified on this property.
+                # Explicitly distinguish it from locally validated SAR.
+                provisional='DOMINIO_GEOGRAFICO_PROVISORIO' in domain_msg
+                model_source='SAR_EXPERIMENTAL_MODELO' if provisional else 'SAR_VALIDADO'
+                lay['source']=model_source
+                lay['taxonomy']='SAR RF experimental, ano agrícola '+str(res.get('season'))
                 layers.append(lay[['class_name','source','taxonomy','geometry']])
-                validation={'class_metadata':{'Formação savânica':{'parent':'vegetação natural'},
-                                              'Formação florestal':{'parent':'vegetação natural'}},'gates':{},
-                            'model_id':res.get('model_id'),'validation_scope':'blocos espaciais 0,1° (LEM+ BA 2019/20; INPE MT 2014-16; INPE RO 2022)'}
+                class_metadata={}
+                for item in res.get('classes') or []:
+                    cls=rename.get(item['class_name'],item['class_name'])
+                    native=item.get('native_status')
+                    parent=('vegetação natural' if native is True else
+                            'uso não nativo' if native is False else None)
+                    class_metadata[cls]={'parent':parent,
+                         'mean_probability':item.get('mean_probability'),
+                         'precision_wilson95_training':item.get('class_precision_wilson95'),
+                         'source':'modelo SAR treinado fora da AOI; validação local pendente'}
+                validation={'class_metadata':class_metadata,'gates':{},
+                    'model_id':res.get('model_id'),
+                    'validation_scope':'blocos espaciais 0,1°: treino LEM+ BA, INPE MT e RO',
+                    'local_validation_status':'NAO_REALIZADA',
+                    'experimental':True,
+                    'observed_season':res.get('season'),
+                    'scene_count':res.get('scenes_used'),
+                    'observed_months':res.get('observed_months'),
+                    'model_sha256':res.get('model_sha256'),
+                    'geographic_domain_status':domain_msg}
                 active_sar_config='sar_landcover_lemplus:'+str(res.get('model_id'))
-                warnings.append('Classificador SAR LEM+ (experimental medido) aplicado: '+domain_msg)
+                warnings.append('Máscaras e áreas de modelo SAR EXPERIMENTAL para safra '+
+                    str(res.get('season'))+'; NÃO representam confirmação de campo nem cobertura do mês atual. '+
+                    domain_msg)
             else:
                 warnings.append('Classificador SAR LEM+ não aplicado: '+domain_msg+'; status '+str(res.get('status')))
         except Exception as exc:
@@ -809,13 +835,16 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         return []
     has_validated_sar = any(source.startswith("SAR_VALIDADO")
                             for layer in layers for source in _layer_sources(layer))
+    has_experimental_sar = any(source.startswith("SAR_EXPERIMENTAL_MODELO")
+                            for layer in layers for source in _layer_sources(layer))
     summary['current_sar_crop_identification'] = (
         'CLASSIFICACAO_SAR_VALIDADA' if has_validated_sar else
+        'CLASSIFICACAO_SAR_EXPERIMENTAL_SEM_VALIDACAO_LOCAL' if has_experimental_sar else
         'N/D_SEM_MODELO_EXECUTAVEL_VALIDADO')
     summary['worldwide_candidate_sources'] = (
         ['ESA WorldCereal/Presto', 'agroimpacts LSTM/CNN',
          'WorldCereal RDM', 'Radiant MLHub', 'EuroCropsML optico']
-        if not has_validated_sar else [])
+        if not (has_validated_sar or has_experimental_sar) else [])
     metadata=(validation or {}).get('class_metadata',{})
     polygons['native_status']=[native_class(r.class_name,r.source,metadata) for r in polygons.itertuples()]
     for row in summary['classes']:
@@ -829,14 +858,14 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     native_rows=[row for row in summary['classes'] if row['native_status'] is True]
     native_area=sum(float(row['area_ha']) for row in native_rows)
     sar_native_rows=[row for row in native_rows
-                     if str(row.get('source') or '').startswith('SAR_VALIDADO')]
+                     if str(row.get('source') or '').startswith(('SAR_VALIDADO','SAR_EXPERIMENTAL_MODELO'))]
     sar_native_area=sum(float(row['area_ha']) for row in sar_native_rows)
     summary['native_occurrence']={
-        "status":"detected_by_validated_SAR" if sar_native_area>0 else "N/D_NOT_VERIFIABLE_WITHOUT_VALIDATED_SAR",
-        "label":"Vegetação nativa — somente máscara de classificador SAR validado",
+        "status":("model_experimental_not_field_validated" if has_experimental_sar else "detected_by_validated_SAR") if sar_native_area>0 else "N/D_NOT_VERIFIABLE_WITHOUT_VALIDATED_SAR",
+        "label":"Vegetação nativa — máscara SAR experimental, não validada em campo" if has_experimental_sar else "Vegetação nativa — máscara SAR do classificador",
         "area_ha":sar_native_area if sar_native_area>0 else None,
         "area_pct_aoi":(100.0*sar_native_area/summary['area_aoi_ha'] if sar_native_area>0 and summary['area_aoi_ha'] else None),
-        "source":"classificador SAR com validação independente" if sar_native_area>0 else "N/D — MapBiomas é somente referência anual e IBGE somente nomeia fitofisionomia por proximidade",
+        "source":"modelo SAR experimental com avaliação fora da AOI" if has_experimental_sar else "classificador SAR com validação independente" if sar_native_area>0 else "N/D — MapBiomas é somente referência anual e IBGE somente nomeia fitofisionomia por proximidade",
         "field_confirmed":False,
         "native_class_breakdown":[{"class_name":row["class_name"],"area_ha":row["area_ha"],"source":row["source"]} for row in sar_native_rows],
         "diversified_property_with_native_and_other_use":bool(sar_native_area>0 and any(row['native_status'] is False for row in summary['classes']))
@@ -869,6 +898,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                     'sar_selection':'EXPLICIT_OPERATOR' if active_sar_config and config_path else
                                     ('INSTALLED_AUTO_DISCOVERED' if active_sar_config else 'NO_EXECUTABLE_SAR_CLASSIFIER'),
                     'status':('SAR_ELEGIVEL' if any(str(r.get('source','')).startswith('SAR_VALIDADO') for r in summary['classes']) else
+                              'SAR_MODELO_EXPERIMENTAL' if has_experimental_sar else
                               'SAR_UNIDADES_EXPERIMENTAIS' if any(r.get('source')=='SAR_CURRENT_EXPERIMENTAL' for r in summary['classes']) else
                               'N/D_SEM_COBERTURA_SAR')})
     (outdir/'uso_solo_auditoria.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
