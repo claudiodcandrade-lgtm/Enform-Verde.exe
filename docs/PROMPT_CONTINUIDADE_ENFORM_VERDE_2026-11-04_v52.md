@@ -1,3 +1,4 @@
+<!-- V87_65_MAAP_E2E_REVALIDATION_TRIGGER -->
 <!-- ENFORM_CHECKPOINT_V87_65_MAAP_REAL_PIXELS -->
 ## V87.65 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
