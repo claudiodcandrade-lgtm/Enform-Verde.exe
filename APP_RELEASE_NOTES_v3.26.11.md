@@ -19,3 +19,11 @@ A compilação Windows e a regressão devem passar **no mesmo SHA desta versão*
 ## Limites científicos
 
 O processamento real de SAR em pequena caixa de Sinop e o FH ESA BIOMASS não estabelecem classificação da propriedade nem validam AGB local. Sem máscara atual, os compartimentos dependentes dela permanecem N/D. A validação independente e a calibração agronômica nacional são futuras, sem inventar IC95% nem evidências de campo. Verificar licenciamento de fontes cartográficas antes de exploração comercial.
+
+## Checkpoint pós-regressão — documentação V87.80
+
+- O primeiro build 3.26.11 foi barrado por teste GUI literal ainda preso ao título singular; contratos de testes nacionais e ópticos foram corrigidos, incluindo Esri como último recurso visual sem atribuição de sensor/data da cena.
+- A regressão completa registrou 1.040 testes com quatro falhas de contrato/documentação que motivaram correções; aprovação integral posterior depende de novo ciclo de CI.
+- O `network_check` do EXE agora verifica pixels de CBERS-4A **ou** Sentinel-2 e Sentinel-1 RTC via assinatura individual do ativo, sem token global obrigatório; verificação TLS mantida.
+- Documentos canônicos e especificação Word integral atualizados até V87.80; sincronização Word concluída em GitHub Actions.
+- O ZIP 3.26.11 só é considerado distribuível quando empacotamento e autoteste do EXE do SHA final passarem. O teste no KML integral da propriedade permanece exigência separada de aceitação operacional.
