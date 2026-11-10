@@ -1,3 +1,4 @@
+<!-- V87_68_REVALIDATE_SAR_FH_AUTOMATIC_AND_GUI -->
 <!-- ENFORM_CHECKPOINT_V87_68_FH_L2A_AUTOMATIC -->
 ## V87.68 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
