@@ -15,6 +15,9 @@ MAAP_TOKEN_PORTAL="https://portal.maap.eo.esa.int/ini/services/auth/token/"
 TOKEN_VALIDITY_DAYS=90
 WARN_DAYS=15
 STATUS_FILENAME="esa_maap_token_renewal.json"
+# Date explicitly provided by the owner for the currently active token.
+# Seed once only; every later renewal date takes precedence.
+INITIAL_TOKEN_ISSUE_DATE=date(2026,11,8)
 
 
 def status_path(home=None):
@@ -42,6 +45,26 @@ def save_renewal_date(issued_on=None, *, path=None):
     finally:
         if tmp.exists():tmp.unlink()
     return renewal_status(path=location)
+
+
+def initialize_current_token_date(*, path=None, today=None):
+    """Seed owner's stated 2026-11-08 date only if no record yet.
+
+    Does not overwrite any previously registered renewal. The seed is
+    applicable solely to the current (Nov 2026) installation and must not
+    claim validity on a future new installation.
+    """
+    today=today or datetime.now(timezone.utc).date()
+    location=Path(path) if path is not None else status_path()
+    if location.exists():
+        return renewal_status(path=location,today=today)
+    if today<INITIAL_TOKEN_ISSUE_DATE:
+        return renewal_status(path=location,today=today)
+    if today>=INITIAL_TOKEN_ISSUE_DATE+timedelta(days=TOKEN_VALIDITY_DAYS):
+        # An absent record on a future install does not establish that an
+        # unentered 2026 token is still in use.
+        return renewal_status(path=location,today=today)
+    return save_renewal_date(INITIAL_TOKEN_ISSUE_DATE,path=location)
 
 
 def renewal_status(*, path=None, today=None):
