@@ -76,6 +76,7 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
                                         "ENFORM_LAND_USE_SAR_CONFIG":""}):
                 with patch("land_use_sar.raster_class_polygons",
                            side_effect=RuntimeError("test offline map")),patch("time.sleep"), \
+                     patch("sar_landcover_lemplus.classify_aoi",return_value={"status":"N/D_SEM_PIXELS_SAR","reason":"teste offline"}), \
                      patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}):
                     result=run_land_use(self.aoi,Path(d)/"out",mapbiomas_path="missing.tif")
             self.assertEqual(result["sar_selection"],"NO_EXECUTABLE_SAR_CLASSIFIER")
