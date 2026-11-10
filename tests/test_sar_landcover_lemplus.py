@@ -54,8 +54,13 @@ class LemplusModelTests(unittest.TestCase):
         ib["legenda_1"] = "Floresta Estacional Sempre-Verde"
         self.assertTrue(sl.in_validated_domain(ib)[0])                     # Amazon forest inside MT/RO envelope
         far = gpd.GeoDataFrame({"legenda_1": ["Floresta Ombrófila Densa"]}, geometry=[box(-43.3, -22.9, -43.2, -22.8)], crs=4326)
-        self.assertFalse(sl.in_validated_domain(far)[0])                   # Atlantic forest (RJ): out of domain
-        ib["legenda_1"] = "Estepe"; self.assertFalse(sl.in_validated_domain(ib)[0])
+        outside_ok, outside_msg = sl.in_validated_domain(far)
+        self.assertTrue(outside_ok)  # national pilot executes, but extrapolation is explicitly unvalidated
+        self.assertIn("EXTRAPOLACAO_NACIONAL_EXPERIMENTAL", outside_msg)
+        ib["legenda_1"] = "Estepe"
+        extrap_ok, extrap_msg = sl.in_validated_domain(ib)
+        self.assertTrue(extrap_ok)
+        self.assertIn("EXTRAPOLACAO_NACIONAL_EXPERIMENTAL", extrap_msg)
         self.assertFalse(sl.in_validated_domain(None)[0])
 
 
@@ -86,7 +91,8 @@ class LandUseIntegrationTests(unittest.TestCase):
     def test_out_of_domain_output_is_not_used(self):
         r = self._run("Estepe Arborizada")
         self.assertFalse(any(str(c["source"]).startswith("SAR_VALIDADO") for c in r["classes"]))
-        self.assertIn("fora do domínio", r["sar_classifier_lemplus"]["domain"])
+        self.assertTrue(any(str(c["source"]).startswith("SAR_EXPERIMENTAL_MODELO") for c in r["classes"]))
+        self.assertIn("EXTRAPOLACAO_NACIONAL_EXPERIMENTAL", r["sar_classifier_lemplus"]["domain"])
 
 
 if __name__ == "__main__":
