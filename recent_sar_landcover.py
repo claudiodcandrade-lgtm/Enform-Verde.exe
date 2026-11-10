@@ -88,7 +88,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         from rasterio.windows import from_bounds,Window
         from rasterio.warp import reproject,Resampling,transform_geom
         from sentinel1_sources import search_sentinel1_sources
-        from sentinel1_mpc import get_runtime_sas_token,_signed_href
+        from sentinel1_mpc import get_runtime_sas_token,_signed_href,sign_asset_href
         ref=(now or datetime.now(timezone.utc)).astimezone(timezone.utc)
         geom=aoi.to_crs(4326).geometry.union_all()
         if geom.is_empty:raise ValueError("AOI empty")
@@ -136,13 +136,17 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
             provider_grid=None
             provider_data=[]
             provider_errors=[]
-            try:
-                provider_token=(token_fn or get_runtime_sas_token)() if provider=="MPC" else ""
-            except Exception as exc:
-                errors.append({"provider":provider,"error_type":"TOKEN_"+type(exc).__name__,
-                               "error":_safe_reason(exc),"recovered":False})
-                provider_diag["token_error_count"]+=1
-                continue
+            provider_token=""
+            if provider=="MPC":
+                try:
+                    provider_token=(token_fn or get_runtime_sas_token)()
+                except Exception as exc:
+                    # An unavailable collection SAS must not skip all discovered scenes.
+                    # Try the official per-asset signing endpoint during the read loop.
+                    errors.append({"provider":provider,"error_type":"TOKEN_"+type(exc).__name__,
+                                   "error":_safe_reason(exc),"recovered":False,
+                                   "fallback":"SIGN_INDIVIDUAL_ASSET"})
+                    provider_diag["token_error_count"]+=1
             for dt,scene in provider_selected:
                 scene_ok=False
                 for attempt in range(2):
@@ -159,7 +163,8 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                               GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
                                               GDAL_HTTP_RETRY_DELAY="1",**gdal_env()):
                                 asset_href=scene["assets"][pol]["href"]
-                                read_href=_signed_href(asset_href,provider_token) if provider=="MPC" else asset_href
+                                read_href=(_signed_href(asset_href,provider_token) if provider_token
+                                           else sign_asset_href(asset_href)) if provider=="MPC" else asset_href
                                 with rasterio.open(read_href) as src:
                                     if not src.crs:raise ValueError("Missing georeferencing in SAR source")
                                     if scene_grid is None:
