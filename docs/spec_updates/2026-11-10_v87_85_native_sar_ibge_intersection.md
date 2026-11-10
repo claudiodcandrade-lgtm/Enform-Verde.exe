@@ -14,3 +14,8 @@
 - Aplicação experimental Windows `3.26.12-PRECAMPO-EXPERIMENTAL`; observações/validação nacional pendentes.
 - Preservar classificação SAR `SAR_EXPERIMENTAL_MODELO` ao atribuir nome IBGE. Fonte `SAR_EXPERIMENTAL_MODELO+IBGE` é resultado de interseção e não altera o caráter experimental da máscara.
 - Atualização imediata do prompt canônico, prompt complementar, especificação de solo e documento Word completo `V87.85`. Preservar histórico de checkpoints anteriores.
+
+## Revisão de regressão Windows após primeira tentativa de build (V87.85.1)
+- O build 3.26.12 anterior falhou **antes do executável** por contratos antigos: test_sar_landcover_lemplus esperava o nome genérico Formação savânica, quando a regra nova exige Savana Arborizada nomeada por interseção e fonte SAR_EXPERIMENTAL_MODELO+IBGE. O contrato GUI e tests/test_v82_national_ci_contract.py ainda exigiam a legenda antiga e não a distinção SAR atual × IBGE potencial.
+- Corrigidos os testes para exigir a nova regra sem alterar indevidamente os resultados de classificação; registrado assert de fechamento da área AOI, identidade experimental e exclusão de soja da vegetação nativa.
+- Gate PyInstaller continua obrigatoriamente bloqueado até concluir GUI contract, suite total, EXE + leitura de pixels ópticos/SAR e checksums no mesmo SHA. Não alegar êxito do KML real só com aprovação da CI.
