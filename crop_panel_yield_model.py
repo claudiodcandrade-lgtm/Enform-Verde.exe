@@ -121,7 +121,8 @@ def load_artifact(path=ARTIFACT):
     return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else None
 
 
-def season_ry_ensemble(daily, crop, lat, season_year, awc_mm_cm, as_of, reference_years):
+def season_ry_ensemble(daily, crop, lat, season_year, awc_mm_cm, as_of, reference_years,
+                       *, initial_fraction=1.0, infiltration_fraction=1.0):
     """RY for the running season: observed days + each reference year's remaining days."""
     from crop_climate_favorability import _by_date
     from crop_water_balance_yield import CROP, simulate, sowing_dates
@@ -142,7 +143,10 @@ def season_ry_ensemble(daily, crop, lat, season_year, awc_mm_cm, as_of, referenc
                 d = s + timedelta(days=k)
                 if d > as_of:
                     merged[d] = series.get(d + shift) or merged.get(d)
-        sims = [simulate(merged, crop, s, lat, awc_mm_cm) for s in sowing_dates(crop, lat, season_year)]
+        sims = [simulate(merged, crop, s, lat, awc_mm_cm,
+                          initial_fraction=initial_fraction,
+                          infiltration_fraction=infiltration_fraction)
+                for s in sowing_dates(crop, lat, season_year)]
         sims = [x["ry"] for x in sims if x]
         if sims:
             out.append(float(np.mean(sims)))
