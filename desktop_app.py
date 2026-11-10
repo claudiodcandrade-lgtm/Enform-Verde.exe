@@ -792,7 +792,7 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
                 import time; time.sleep(1.2*(attempt+1))
     if not href:raise RuntimeError("Falha temporária ao assinar ativo Sentinel-2 após 3 tentativas: "+str(sign_error))
     import tls_setup
-    with rasterio.Env(**tls_setup.gdal_env(),GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+    with rasterio.Env(**tls_setup.gdal_env(),GDAL_HTTP_MULTIRANGE="NO",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="NO",CPL_VSIL_CURL_USE_HEAD="NO",GDAL_HTTP_VERSION="1.1"):
         with rasterio.open(href) as src:
             b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
             dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0)
@@ -896,8 +896,12 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     bounds=tuple(map(float,g.total_bounds))
     out_width=max(320,min(1600,int(out_w)))
     out_height=max(240,min(1200,int(out_h)))
+    # Keyless Sentinel-2 transport on Windows: avoid multipart byte ranges
+    # and HEAD negotiation rejected by some TLS-inspecting proxies.
     env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"35",
-         "GDAL_HTTP_MAX_RETRY":"2",**tls_setup.gdal_env()}
+         "GDAL_HTTP_MAX_RETRY":"2","CPL_VSIL_CURL_USE_HEAD":"NO",
+         "GDAL_HTTP_MULTIRANGE":"NO","GDAL_HTTP_VERSION":"1.1",
+         **tls_setup.gdal_env()}
     for cloud,dt,item,assets in pool:
         try:
             with rasterio.Env(**env):
@@ -1073,7 +1077,8 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
         scene=np.full((height,width,3),np.nan,dtype=np.float32)
         try:
             env={"GDAL_HTTP_TIMEOUT":"40","GDAL_HTTP_MAX_RETRY":"2",
-                 "GDAL_HTTP_MULTIRANGE":"YES","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"YES",
+                 "GDAL_HTTP_MULTIRANGE":"NO","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
+                 "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1",
                  "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",**tls_setup.gdal_env()}
             with rasterio.Env(**env):
                 mask=read_cog_window(assets["CMASK"]["href"],categorical=True)
