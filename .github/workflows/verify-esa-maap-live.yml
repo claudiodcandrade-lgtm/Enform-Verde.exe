@@ -1,0 +1,54 @@
+name: Verify ESA MAAP real BIOMASS access
+
+on:
+  workflow_dispatch:
+    inputs:
+      bbox:
+        description: "Diagnostic W S E N rectangle, not a private property boundary"
+        type: string
+        required: true
+        default: "-55.21 -11.89 -55.17 -11.85"
+      download:
+        description: "Download an actual potentially large FH product and inspect AOI pixels"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  maap-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ESA_MAAP_OFFLINE_TOKEN: ${{ secrets.ESA_MAAP_OFFLINE_TOKEN }}
+      MAAP_PROBE_BBOX: ${{ inputs.bbox }}
+      MAAP_PROBE_DOWNLOAD: ${{ inputs.download }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install geospatial dependencies for live probe
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests geopandas rasterio shapely numpy
+      - name: Require secret without displaying its value
+        shell: bash
+        run: |
+          if [ -z "$ESA_MAAP_OFFLINE_TOKEN" ]; then
+            echo "::error::Configure repository Actions secret ESA_MAAP_OFFLINE_TOKEN before running this probe."
+            exit 2
+          fi
+      - name: Authenticate, discover and test ESA FH byte-range access
+        shell: bash
+        run: |
+          read -r west south east north <<< "$MAAP_PROBE_BBOX"
+          if [ "$MAAP_PROBE_DOWNLOAD" = "true" ]; then
+            python tools/verify_esa_maap_live.py --bbox "$west" "$south" "$east" "$north" --download
+          else
+            python tools/verify_esa_maap_live.py --bbox "$west" "$south" "$east" "$north"
+          fi
