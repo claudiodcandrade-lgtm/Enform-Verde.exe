@@ -1,3 +1,4 @@
+<!-- V87_71_FINAL_FH_L2A_BUILD_3_26_9 -->
 <!-- ENFORM_CHECKPOINT_V87_71_FH_MOCKS_UPDATED -->
 ## V87.71 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
