@@ -255,8 +255,20 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         result["committed_grid_crs"]=str(crs)
         result["source_scene_count"]=len(data)
         inside=geometry_mask([mapping(local)],out_shape=size,transform=tr,invert=True)
-        codes,qa=classify_temporal(np.stack([r[2][0] for r in data]),
-                                   np.stack([r[2][1] for r in data]),inside)
+        try:
+            codes,qa=classify_temporal(np.stack([r[2][0] for r in data]),
+                                       np.stack([r[2][1] for r in data]),inside)
+        except ValueError as exc:
+            # Readable SAR is not necessarily discriminative enough for a map.
+            # This is a model/data eligibility abstention, not an HTTP/IO error.
+            reason=str(exc)
+            if "spatially/temporally separate" in reason or "SAR signal" in reason:
+                result.update({"status":"N/D_VALIDACAO",
+                               "reason":"SAR_SIGNATURE_SEPARABILITY_INSUFFICIENT",
+                               "diagnostic":"Cenas VV/VH foram lidas, mas a dispersao espacial/temporal nao sustenta classes experimentais; sem area ou cultura inferida",
+                               "native_confirmed":False,"crop_confirmed":False})
+                return result
+            raise
         valid_observation=(codes>0)
         codes=sieve(codes,size=12,mask=valid_observation).astype(np.uint8)
         codes[(codes==0)&valid_observation]=3
