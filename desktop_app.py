@@ -3401,6 +3401,16 @@ def module_check():
     if model_check["scientifically_homologated"] or field_measurement_rows(model_check):
         raise RuntimeError("Modelo pré-campo fabricou observações ou homologação")
     out["pre_field_model_contract"]="ok"
+    # Verify the three executable research classifiers are importable both in
+    # source Python and inside the clean frozen Windows distribution.
+    from sar_algorithm_portfolio import ALGORITHMS, FEATURE_SCHEMA, _models
+    available=_models()
+    if set(available)!=set(ALGORITHMS) or len(FEATURE_SCHEMA)<6:
+        raise RuntimeError("SAR experimental algorithm portfolio unavailable")
+    out["sar_experimental_algorithms"]={
+        "available":sorted(available),"trained_and_locally_validated":False,
+        "scope":"trainable only with independent reference samples"}
+
     try:
         from enform_build_source import SOURCE_SHA
     except ImportError:
