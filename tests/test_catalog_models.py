@@ -131,7 +131,8 @@ class CatalogModelExecutionTests(unittest.TestCase):
                 "height_interpretation":{"observable":"forest height"}}
         with patch.object(sar,"biomass_l2b_search",return_value=items), \
              patch.object(sar,"download_maap_height",return_value={"paths":["fh.tif"],"available":True}), \
-             patch.object(sar,"process_real_sar",side_effect=[height,product]), \
+             patch.object(sar,"_zonal",return_value={"mean":26.0,"sd":3.0,"n":8,"min":18.0,"max":34.0}), \
+             patch.object(sar,"process_real_sar",return_value=product), \
              patch.object(sar,"download_maap_agb",return_value={"paths":["agb.tif"],"available":True}):
             out=sar.automatic_pipeline(object(),"Amazônia","Floresta Ombrófila Densa",cache="/tmp/enform-fh-agb")
         self.assertEqual(out["agb_mg_ha"],310.0)
@@ -201,7 +202,7 @@ class CatalogModelExecutionTests(unittest.TestCase):
                 "height_interpretation":{"observable":"H100"}}
         with patch.object(sar,"biomass_l2b_search",return_value=[fh]), \
              patch.object(sar,"download_maap_height",return_value={"paths":["fh.tif"],"available":True}), \
-             patch.object(sar,"process_real_sar",return_value=height), \
+             patch.object(sar,"_zonal",return_value={"mean":31.162,"sd":2.0,"n":8,"min":21.0,"max":37.0}), \
              patch.object(sar,"download_maap_agb",return_value={"paths":[],"available":False}):
             out=sar.automatic_pipeline(high,"Amazônia","Floresta Ombrófila Densa",cache="/tmp/enform-height-structure")
         self.assertEqual(out["status"],"SAR_PROCESSADO")
