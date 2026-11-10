@@ -55,7 +55,8 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         calls = [node.func.id for node in ast.walk(ast.parse(source))
                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)]
         self.assertIn("nasa_gibs_preview", calls)
-        self.assertNotIn("esri_export", calls)
+        self.assertIn("esri_export", calls)
+        self.assertLess(nasa if "nasa" in locals() else body.index("nasa_gibs_preview("), source.index("esri_export(") if "source" in locals() else body.index("esri_export("))
         # Labelled cartographic map remains only after all real imagery routes.
         self.assertLess(nasa, source.index("offline_brazil_preview("))
         self.assertIn("contingência sem imagem óptica", source)
