@@ -466,7 +466,7 @@ def ibge_formation(name):
 
 
 def name_native_from_ibge(predicted, reference, *, max_proximity_m=0):
-    """Name SAR-validated native patches from compatible IBGE physiognomies.
+    """Name SAR-derived native patches from intersected IBGE phytoregions.
 
     First intersect exact polygons. Remaining native geometry may inherit
     ONLY the name (not a cover-classification) of the nearest compatible IBGE
@@ -481,6 +481,10 @@ def name_native_from_ibge(predicted, reference, *, max_proximity_m=0):
     ref=reference.to_crs(AREA_CRS) if reference is not None else None
     for row in predicted.to_crs(AREA_CRS).itertuples():
         formation=native_formation(row.class_name)
+        # Experimental SAR remains experimental after receiving a botanical
+        # name. IBGE never supplies an observed current-cover mask.
+        experimental=str(row.source).startswith("SAR_EXPERIMENTAL_MODELO")
+        source_prefix=("SAR_EXPERIMENTAL_MODELO" if experimental else "SAR_VALIDADO")
         if not formation or ref is None:
             pieces.append(dict(class_name=row.class_name,source=row.source,taxonomy=row.taxonomy,geometry=row.geometry))
             continue
@@ -491,8 +495,10 @@ def name_native_from_ibge(predicted, reference, *, max_proximity_m=0):
                 break
             clipped=remaining.intersection(item.geometry)
             if clipped.area>0:
-                pieces.append(dict(class_name=item.class_name,source="SAR_VALIDADO+IBGE",
-                                   taxonomy="Formação SAR: "+formation+"; nome: IBGE legenda_1 por interseção",
+                pieces.append(dict(class_name=item.class_name,source=source_prefix+"+IBGE",
+                                   taxonomy=("Presença SAR "+("experimental não validada localmente" if experimental else "validada")+
+                                             "; formação: "+formation+
+                                             "; nome IBGE legenda_1 por interseção espacial"),
                                    geometry=clipped))
                 remaining=remaining.difference(clipped)
         if not remaining.is_empty and remaining.area>0:
@@ -504,7 +510,7 @@ def name_native_from_ibge(predicted, reference, *, max_proximity_m=0):
                 distance_m=float(remaining.distance(nearest.geometry))
                 if distance_m <= max_proximity_m:
                     pieces.append(dict(class_name=nearest.class_name,
-                                       source="SAR_VALIDADO+IBGE_PROXIMIDADE",
+                                       source=source_prefix+"+IBGE_PROXIMIDADE",
                                        taxonomy=("Presença de vegetação: classe SAR validada "+formation+
                                                  "; nome fitofisionômico INFERIDO por proximidade IBGE legenda_1; "+
                                                  "distância cartográfica aproximada "+f"{distance_m:.1f} m"+
@@ -764,13 +770,15 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         except Exception as exc:
             lemplus_audit={'status':'ERRO_TECNICO','reason':type(exc).__name__+': '+str(exc)[:200]}
             warnings.append('Classificador SAR LEM+ indisponível: '+lemplus_audit['reason'])
-    if layers and not any(
-            str(source).startswith('SAR_EXPERIMENTAL_MODELO')
-            for layer in layers for source in layer.get('source',[])):
-        # Only already independently validated native polygons can inherit
-        # an IBGE formation name. Experimental RF results preserve their
-        # source, class and model-derived confidence for field verification.
-        layers[0]=name_native_from_ibge(layers[0],reference,max_proximity_m=3000)
+    if layers and reference is not None and not reference.empty:
+        # Current native presence comes ONLY from modelled/validated SAR masks.
+        # IBGE names that SAR geometry by exact AOI-polygon intersection.
+        # No proximity transfer and no historical IBGE polygon is added as
+        # current cover. Keep the model's provenance/experimental status.
+        layers=[name_native_from_ibge(layer,reference,max_proximity_m=0)
+                if any(str(source).startswith(('SAR_VALIDADO','SAR_EXPERIMENTAL_MODELO'))
+                       for source in layer.get('source',[])) else layer
+                for layer in layers]
     # IBGE legend is not evidence of current native cover and never fills gaps.
     # A gap remains explicitly unclassified unless a current SAR product covers it.
     source_distributions=[]
