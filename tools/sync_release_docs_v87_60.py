@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.62"
+VERSION = "V87.63"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_62_SAR_GRID_ABSTENTION"
+MARKER = "ENFORM_CHECKPOINT_V87_63_GUI_OPTICAL_LIVE"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,9 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.63: inclusao do teste end-to-end tools/live_gui_optical_sinop.py em .github/workflows/build-windows.yml. O gate exige pixels reais CBERS-4A apresentados no canvas Tk, com foto, provedor e itens visiveis; nao basta receber cenas no catalogo ou ler COG em processo isolado.",
+    "O gate de GUI usa pequena janela ao redor do centroide da Fazenda Maria Eduarda e NAO substitui teste do KML original no Windows do proprietario. Falha em GUI bloqueia build e gera evidencia optical_gui_sinop_live.json sem segredo.",
+    "Reporte do GitHub Actions build anterior, 11 localidades, registra CBERS-4A/WFI com 100 por cento de pixels de preview em todas, inclusive Sinop em 2026-10-27. Isso demonstra disponibilidade no CI, mas nao exibe a imagem no computador do usuario.",
     "V87.62: regressao Windows anterior teve 1020 testes, uma falha no teste sintetico de recuperacao SAR. Tres cenas VV/VH foram lidas, mas a separabilidade de assinaturas foi insuficiente; o teste agora verifica recuperacao de grade independente da interpretacao semantica.",
     "recent_sar_landcover agora registra committed_grid_shape, committed_grid_crs e source_scene_count apos sucesso de leitura VV/VH, antes da classificacao. Falhas de tentativa nao poluem a grade seguinte. Arrays sem valores validos positivos sao descartados.",
     "Quando VV/VH sao lidos mas assinaturas nao separam classes, registrar N/D_VALIDACAO com SAR_SIGNATURE_SEPARABILITY_INSUFFICIENT; nao rotular ERRO_TECNICO, nao afirmar cultivo/floresta/solo exposto, nao estimar area de classe ou vigor.",
