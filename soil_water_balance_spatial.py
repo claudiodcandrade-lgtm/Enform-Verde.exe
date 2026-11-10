@@ -36,6 +36,27 @@ def available_capacity_mm(root_depth_m,*,ad_mm_cm=None,theta_fc=None,
     ad=_num(ad_mm_cm,"AD mm/cm",.01,4.)
     return ad*100.*zr*(1.-rock)
 
+def pedotransfer_saxton_rawls(sand_fraction, clay_fraction, organic_matter_pct):
+    """Saxton & Rawls (2006), FC -33kPa and PWP -1500kPa.
+
+    Texture inputs S/C are 0–1 mass fractions, OM is percentage (0–30).
+    Structure and compaction are not inferred from soil name; preserve
+    separate coarse-fragment and rain-infiltration sensitivity assumptions.
+    """
+    s=_num(sand_fraction,"sand fraction",0.,1.)
+    c=_num(clay_fraction,"clay fraction",0.,1.)
+    om=_num(organic_matter_pct,"organic matter pct",0.,30.)
+    if s+c>1.001:raise ValueError("sand + clay exceeds 100 percent")
+    wp_t=(-.024*s+.487*c+.006*om+.005*s*om-.013*c*om+.068*s*c+.031)
+    wp=wp_t+(.14*wp_t-.02)
+    fc_t=(-.251*s+.195*c+.011*om+.006*s*om-.027*c*om+.452*s*c+.299)
+    fc=fc_t+(1.283*fc_t**2-.374*fc_t-.015)
+    if not 0<wp<fc<.8:raise ValueError("pedotransfer predicted implausible retention")
+    return {"theta_fc":fc,"theta_wp":wp,"ad_mm_cm":10*(fc-wp),
+            "source":"Saxton & Rawls (2006) pedotransfer from texture and OM",
+            "measured_soil_water":False,
+            "uncertainty":"transfer to Brazilian soil units requires local validation"}
+
 def _date(r):
     x=r.get("date")
     if isinstance(x,date):return x
