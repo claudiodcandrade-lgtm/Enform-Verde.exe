@@ -1,5 +1,8 @@
 """ESA BIOMASS P-band Level-2A Forest Height (open since 30/06/2026) is a height source."""
 import unittest
+import tempfile
+import zipfile
+from pathlib import Path
 from unittest.mock import patch
 
 import sar_pipeline as sp
@@ -36,6 +39,30 @@ class BiomassL2aTests(unittest.TestCase):
         with patch.object(sp, "biomass_l2b_search", return_value=[]):
             r = sp.download_maap_height(None, None, "/tmp/x_cache")
         self.assertIn("banda P", r["reason"])
+
+    def test_zipper_fallback_is_selected_when_fh_tiff_absent(self):
+        obj = item("BIO_FP_FH__L2A_X", "FP_FH__L2A")
+        del obj["assets"]["enclosure_i_fh_tiff"]
+        self.assertEqual([k for k, _ in sp._biomass_product_assets(obj, "FP_FH__L2A")], ["product"])
+
+    def test_download_zipper_archive_extracts_fh_and_excludes_quality(self):
+        obj = item("BIO_FP_FH__L2A_X", "FP_FH__L2A")
+        del obj["assets"]["enclosure_i_fh_tiff"]
+        obj["_product_type"] = "FP_FH__L2A"
+        obj["_stage"] = "OPERATIONAL_L2A"
+        def fake_download(url, target, token=None):
+            self.assertTrue(str(target).endswith(".zip"))
+            with zipfile.ZipFile(target, "w") as z:
+                z.writestr("folder/BIO_FP_FH__L2A_i_fh.tiff", b"mock-raster")
+                z.writestr("folder/BIO_FP_FH__L2A_i_quality.tiff", b"mock-qa")
+            return str(target)
+        with tempfile.TemporaryDirectory() as td:
+            with patch.object(sp, "_download", side_effect=fake_download):
+                result = sp.download_maap_height(None, None, td, items=[obj])
+            self.assertTrue(result["available"])
+            self.assertEqual(len(result["paths"]), 1)
+            self.assertIn("_i_fh.tiff", result["paths"][0])
+            self.assertNotIn("quality", result["paths"][0])
 
 
 if __name__ == "__main__":
