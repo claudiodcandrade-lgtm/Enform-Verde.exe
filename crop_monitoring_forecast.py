@@ -33,11 +33,10 @@ def mapbiomas_historical_reference(land):
     return out
 
 
-def crops_in_land_result(land):
-    """Current crop masks must come from the independently validated SAR classifier."""
+def _crops_from_sar_source(land, prefix):
     out = {}
     for item in (land or {}).get("classes", []) or []:
-        if not str(item.get("source") or "").startswith(("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO")):
+        if not str(item.get("source") or "").startswith(prefix):
             continue
         name = str(item.get("class_name", ""))
         if name.startswith("Lavoura de "):
@@ -46,6 +45,16 @@ def crops_in_land_result(land):
         elif name in ("Outras Lavouras Temporárias", "Lavoura Temporária"):
             out["__temporarias__"] = out.get("__temporarias__", 0.0) + float(item.get("area_ha") or 0.0)
     return out
+
+
+def crops_in_land_result(land):
+    """Only locally accepted current SAR labels count as current identity."""
+    return _crops_from_sar_source(land, "SAR_VALIDADO")
+
+
+def experimental_crops_in_land_result(land):
+    """Annual SAR RF models generate RETROSPECTIVE conditional crop scenarios."""
+    return _crops_from_sar_source(land, "SAR_EXPERIMENTAL_MODELO")
 
 def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=None, micro_fn=None):
     from crop_forecast_pipeline import forecast_fields, forecast_lines
@@ -58,10 +67,11 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     vigor_fn = vigor_fn or automatic_vigor
     forecast_fn = forecast_fn or forecast_fields
     micro_fn = micro_fn or microregion_of
-    crops = crops_in_land_result(land)
+    current_crops = crops_in_land_result(land)
+    conditional_crops = experimental_crops_in_land_result(land)
+    crops = current_crops or conditional_crops
     historical = mapbiomas_historical_reference(land)
-    annual_experimental = any(str(x.get("source") or "").startswith("SAR_EXPERIMENTAL_MODELO")
-                              for x in (land or {}).get("classes",[]))
+    annual_experimental = bool(conditional_crops and not current_crops)
     model_season=((land or {}).get("validation") or {}).get("observed_season")
     lines = ["", "CLASSIFICAÇÃO SAR EXPERIMENTAL, VIGOR ATUAL E PREVISÃO CONDICIONAL DE SAFRA"]
     if annual_experimental:
