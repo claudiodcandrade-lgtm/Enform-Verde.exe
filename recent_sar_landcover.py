@@ -149,7 +149,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                     provider_diag["token_error_count"]+=1
             for dt,scene in provider_selected:
                 scene_ok=False
-                for attempt in range(2):
+                for attempt in range(3):
                     provider_diag["pixel_read_attempt_count"]+=1
                     try:
                         # A failed attempt must never poison the output grid for
@@ -159,9 +159,17 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                         pair=[]
                         for pol in ("vv","vh"):
                             from tls_setup import gdal_env
-                            with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
-                                              GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
-                                              GDAL_HTTP_RETRY_DELAY="1",**gdal_env()):
+                            # Last attempt avoids multipart HTTP range/HEAD.
+                            # Some Windows GDAL/proxy errors arrive as non-UTF8 bytes.
+                            gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
+                                       "GDAL_HTTP_TIMEOUT":"45","GDAL_HTTP_MAX_RETRY":"3",
+                                       "GDAL_HTTP_RETRY_DELAY":"1",**gdal_env()}
+                            if attempt==2:
+                                gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",
+                                                  "GDAL_HTTP_MULTIRANGE":"NO",
+                                                  "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
+                                                  "GDAL_HTTP_VERSION":"1.1"})
+                            with rasterio.Env(**gdal_opts):
                                 asset_href=scene["assets"][pol]["href"]
                                 read_href=(sign_asset_href(asset_href) if (attempt > 0 or not provider_token)
                                            else _signed_href(asset_href,provider_token)) if provider=="MPC" else asset_href
@@ -207,7 +215,10 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                         break
                     except (UnicodeError,OSError,RuntimeError,ValueError) as exc:
                         row={"provider":provider,"scene_id":str(scene.get("id","")),
-                             "error_type":type(exc).__name__,"error":_safe_reason(exc),
+                             "error_type":type(exc).__name__,
+                             "error_class":("GDAL_NATIVE_ERROR_NON_UTF8" if isinstance(exc,UnicodeError) else "COG_READ_ERROR"),
+                             "read_strategy":("HTTP_1_1_NO_MULTIRANGE" if attempt==2 else "DEFAULT_GDAL"),
+                             "error":_safe_reason(exc),
                              "attempt":attempt+1,"recovered":False}
                         provider_errors.append(row)
                         provider_diag["failed_scene_count"]+=1
