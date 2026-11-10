@@ -24,6 +24,26 @@ class MAAPRenewalTests(unittest.TestCase):
             self.assertEqual(s["state"],"EXPIRED")
             self.assertEqual(s["days_remaining"],0)
 
+    def test_initial_date_seed_does_not_override_newer_renewal(self):
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/"renewal.json"
+            snapshot=date(2026,11,10)
+            first=renewal.initialize_current_token_date(path=p,today=snapshot)
+            self.assertEqual(first["issued_on"],"2026-11-08")
+            self.assertEqual(first["expires_on"],"2027-02-06")
+            self.assertEqual(first["days_remaining"],88)
+            self.assertEqual(renewal.renewal_status(path=p,today=date(2027,1,22))["state"],"EXPIRING_SOON")
+            renewal.save_renewal_date("2026-11-10",path=p)
+            later=renewal.initialize_current_token_date(path=p,today=snapshot)
+            self.assertEqual(later["issued_on"],"2026-11-10")
+
+    def test_no_expired_initial_seed_on_new_install(self):
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/"renewal.json"
+            status=renewal.initialize_current_token_date(path=p,today=date(2027,2,6))
+            self.assertEqual(status["state"],"UNKNOWN")
+            self.assertFalse(p.exists())
+
     def test_unknown_date_does_not_claim_validity(self):
         with tempfile.TemporaryDirectory() as td:
             self.assertEqual(renewal.renewal_status(path=Path(td)/"absent")["state"],"UNKNOWN")
