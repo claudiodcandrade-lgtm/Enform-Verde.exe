@@ -10,9 +10,9 @@ from docx import Document
 from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "V87.65"
+VERSION = "V87.66"
 STAMP = "2026-11-10"
-MARKER = "ENFORM_CHECKPOINT_V87_65_MAAP_REAL_PIXELS"
+MARKER = "ENFORM_CHECKPOINT_V87_66_MAAP_SINOP_FH_FOUND"
 FILES = [
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
     "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md",
@@ -21,6 +21,10 @@ FILES = [
 WORD = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 
 POINTS = [
+    "V87.66 — evidencia MAAP LIVE em 10/11/2026: bbox de Sinop encontrou 2 produtos verdadeiros ESA BIOMASS FP_FH__L2A; o ativo enclosure_i_fh_tiff respondeu HTTP 206 e 1024 bytes validos. Isto comprova descoberta e acesso a arquivo, mas ainda NAO pixels georreferenciados de altura dentro do KML.",
+    "Uma segunda consulta em Borneo mostrou defeito concreto: POST intersects produziu NO_FH_PRODUCTS, enquanto GET bbox retornou 100 itens iniciais e reconheceu 50 produtos FH, com proxima pagina. A producao maap_search foi corrigida para priorizar o GET bbox oficial e usar POST como fallback, sem esconder erros.",
+    "Novo gate MAAP em GitHub Actions deve executar --download primeiro para bbox Sinop; a rota de exemplo Borneo e contingencia para prova global, nao autorizacao para atribuir seus valores a Sinop. Somente FH_PIXELS_READ em coordenadas da AOI permite declarar integracao completa nessa area.",
+    "A integracao deve registrar produto, classe FP_FH__L2A ou L2B, data, CRS, pixel count, altura media em metros e validade da mascara. FH mede estrutura florestal H100, NAO AGB; derivacao de AGB exige produto FP_AGB_L2B ou modelo alometrico com inventario e incerteza.",
     "V87.65 10/11/2026: integracao ESA MAAP corrigida para busca STAC por POST intersects com fallback oficial GET bbox, paginacao real de links next, limite explicito e erros de HTTP/catalogo separados de ausencia de produtos. Nao registrar dados privados nem tokens em logs.",
     "BiomassLevel2a/L2b e IOC: falhas de todas as colecoes disparam MAAP_ALL_COLLECTION_SEARCHES_FAILED, nunca NO_FH_PRODUCTS falso; filtro FH usa metadados do item/ativos e evita confundir titulo de colecao com produto efetivo.",
     "Produtos FP_FH__L2A na rota /data/zipper/ sem extensao ZIP agora sao reconhecidos; suportar ativos product/download/enclosure/data e testar ZIP caso um GeoTIFF direto falhe. Raster FH so pode virar altura se pixels georreferenciados reais e validos forem lidos na AOI.",
