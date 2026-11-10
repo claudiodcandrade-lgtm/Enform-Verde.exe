@@ -60,66 +60,154 @@ def load():
 
 
 def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
+    """Read bounded real Sentinel-1 RTC VV/VH windows, one scene per month.
+
+    Monthly feature vectors are only eligible if ALL 12 months contain paired
+    valid VV/VH pixels. A failed polarization never counts as an observed pair.
+    The function does not read a full satellite image through rasterio.band.
+    """
     import rasterio
-    import requests
     from rasterio.enums import Resampling
-    from rasterio.warp import reproject
+    from rasterio.warp import reproject, transform_geom
+    from rasterio.windows import from_bounds, Window
     from rasterio.transform import from_origin
-    from sentinel1_mpc import _signed_href, get_runtime_sas_token
+    from shapely.geometry import mapping, shape
+    from datetime import datetime, timezone
+    from sentinel1_mpc import (_signed_href, get_runtime_sas_token,
+                               search_sentinel1_rtc)
     import tls_setup
     tls_setup.configure()
     geom = aoi_4326.geometry.union_all()
     eq = aoi_4326.to_crs(6933)
     minx, miny, maxx, maxy = eq.total_bounds
-    W = int(np.ceil((maxx - minx) / PIXEL_M)); H = int(np.ceil((maxy - miny) / PIXEL_M))
+    W = max(1,int(np.ceil((maxx - minx) / PIXEL_M)))
+    H = max(1,int(np.ceil((maxy - miny) / PIXEL_M)))
     if W * H > 4_000_000:
         raise ValueError("AOI grande demais para a classificação SAR em 80 m")
     dst_tr = from_origin(minx, maxy, PIXEL_M, PIXEL_M)
     start = f"{months[0][0]}-{months[0][1]:02d}-01"
     ey, em = months[-1]
-    end = f"{ey}-{em:02d}-30"
+    import calendar
+    end = f"{ey}-{em:02d}-{calendar.monthrange(ey,em)[1]:02d}"
     if search_fn is None:
-        r = requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",
-                          json={"collections": ["sentinel-1-rtc"], "bbox": list(geom.bounds),
-                                "datetime": f"{start}/{end}", "limit": 250}, timeout=90).json()
-        feats = r.get("features", [])
+        found = search_sentinel1_rtc(mapping(geom),
+            start_utc=datetime.fromisoformat(start+"T00:00:00+00:00"),
+            end_utc=datetime.fromisoformat(end+"T23:59:59+00:00"),
+            max_pages=30, page_limit=100)
+        feats = found["scenes"]
+        pagination_complete = found["pagination_complete"]
     else:
         feats = search_fn(geom.bounds, start, end)
-    feats = [f for f in feats if {"vv", "vh"} <= set(f.get("assets", {}))]
+        pagination_complete = True
+    if not pagination_complete:
+        return None, {"reason":"PAGINACAO_STAC_INCOMPLETA",
+                      "scenes_discovered":len(feats)}
+    feats = [f for f in feats if {"vv", "vh"} <= set(f.get("assets") or {})]
     if not feats:
-        return None, {"reason": "nenhuma cena Sentinel-1 RTC VV/VH no ano agrícola"}
-    orbit = Counter(f["properties"].get("sat:relative_orbit") for f in feats).most_common(1)[0][0]
-    feats = [f for f in feats if f["properties"].get("sat:relative_orbit") == orbit]
-    token = (token_fn or get_runtime_sas_token)()
-    S = defaultdict(lambda: np.zeros((H, W))); C = defaultdict(lambda: np.zeros((H, W)))
-    used = []
-    for f in feats:
-        ym = tuple(int(x) for x in f["properties"]["datetime"][:7].split("-"))
-        if ym not in months:
-            continue
-        try:
-            for pol in ("vv", "vh"):
-                with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", GDAL_HTTP_MAX_RETRY="4",
-                                  **tls_setup.gdal_env()):
-                    with rasterio.open(_signed_href(f["assets"][pol]["href"], token)) as src:
-                        out = np.full((H, W), np.nan)
-                        reproject(rasterio.band(src, 1), out, dst_transform=dst_tr, dst_crs="EPSG:6933",
-                                  resampling=Resampling.average, dst_nodata=np.nan)
-                ok = np.isfinite(out) & (out > 0)
-                S[(ym, pol)][ok] += out[ok]; C[(ym, pol)][ok] += 1
-            used.append(f["id"])
-        except Exception:
-            continue
-    bands = []
+        return None, {"reason":"NENHUMA_CENA_RTC_VV_VH",
+                      "scenes_discovered":0}
+    def ym_of(f):
+        p=f.get("properties") or {}
+        value=p.get("datetime") or f.get("acquisition_utc") or p.get("start_datetime") or ""
+        try:return tuple(int(x) for x in str(value)[:7].split("-"))
+        except Exception:return None
+    def orb_of(f):
+        p=f.get("properties") or {}
+        return (p.get("sat:relative_orbit") or f.get("relative_orbit"),
+                p.get("sat:orbit_state") or f.get("orbit_state"))
+    month_set=set(months)
+    feats=[f for f in feats if ym_of(f) in month_set]
+    orbits=defaultdict(set)
+    for feat in feats:orbits[orb_of(feat)].add(ym_of(feat))
+    if not orbits:
+        return None, {"reason":"CENAS_FORA_DA_JANELA_AGRICOLA"}
+    orbit=max(orbits,key=lambda k:(len(orbits[k]),sum(orb_of(f)==k for f in feats)))
+    grouped=defaultdict(list)
+    for feat in feats:
+        if orb_of(feat)==orbit:grouped[ym_of(feat)].append(feat)
+    # Newest first, with fallback on read errors from individual assets.
+    for group in grouped.values():
+        group.sort(key=lambda f:str((f.get("properties") or {}).get("datetime")
+                                    or f.get("acquisition_utc") or ""),reverse=True)
+    try:
+        token=(token_fn or get_runtime_sas_token)()
+    except Exception as exc:
+        return None, {"reason":"SAR_TOKEN_INDISPONIVEL",
+                      "error_type":type(exc).__name__}
+    S={};C={};used=[];failed=[];observed_months=[]
     for ym in months:
-        vv = S[(ym, "vv")] / np.where(C[(ym, "vv")] > 0, C[(ym, "vv")], np.nan)
-        vh = S[(ym, "vh")] / np.where(C[(ym, "vh")] > 0, C[(ym, "vh")], np.nan)
-        vvd, vhd = 10 * np.log10(vv), 10 * np.log10(vh)
-        bands += [vvd, vhd, vhd - vvd]
-    return (np.stack(bands, -1), dst_tr, (H, W)), {"orbit": orbit, "scenes_used": len(used),
-                                                    "first_scene": used[0] if used else None,
-                                                    "last_scene": used[-1] if used else None}
-
+        selected=False
+        for feat in grouped.get(ym,[])[:4]:
+            # Atomic scene: commit both polarizations or neither.
+            pair={}
+            for attempt in range(2):
+                try:
+                    for pol in ("vv","vh"):
+                        with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+                            GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
+                            GDAL_HTTP_RETRY_DELAY="1",**tls_setup.gdal_env()):
+                            with rasterio.open(_signed_href(feat["assets"][pol]["href"],token)) as src:
+                                if src.crs is None:raise ValueError("SAR_COG_MISSING_CRS")
+                                local=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
+                                window=from_bounds(*local.bounds,transform=src.transform)
+                                from math import floor,ceil
+                                x0,y0=floor(window.col_off),floor(window.row_off)
+                                x1,y1=ceil(window.col_off+window.width),ceil(window.row_off+window.height)
+                                window=Window(x0,y0,max(1,x1-x0),max(1,y1-y0)).intersection(
+                                    Window(0,0,src.width,src.height))
+                                if window.width<1 or window.height<1:
+                                    raise ValueError("SAR_COG_OUTSIDE_AOI")
+                                if window.width*window.height>4_000_000:
+                                    raise ValueError("SAR_WINDOW_EXCEEDS_PIXEL_BUDGET")
+                                raw=np.ma.filled(src.read(1,window=window,masked=True)
+                                                 .astype(np.float32),np.nan)
+                                out=np.full((H,W),np.nan,dtype=np.float32)
+                                reproject(source=raw,destination=out,
+                                    src_transform=src.window_transform(window),
+                                    src_crs=src.crs,src_nodata=np.nan,
+                                    dst_transform=dst_tr,dst_crs="EPSG:6933",
+                                    dst_nodata=np.nan,resampling=Resampling.average)
+                                out[~np.isfinite(out)|(out<=0)]=np.nan
+                                if not np.isfinite(out).any():
+                                    raise ValueError("SAR_NO_POSITIVE_AOI_PIXELS")
+                                pair[pol]=out
+                    break
+                except (OSError,RuntimeError,ValueError,UnicodeError) as exc:
+                    failed.append({"scene":str(feat.get("id",""))[:65],
+                                   "type":type(exc).__name__,"attempt":attempt+1})
+                    pair={}
+                    if attempt==0 and token_fn is None:
+                        try:token=get_runtime_sas_token()
+                        except Exception:pass
+            if len(pair)!=2:continue
+            good=np.isfinite(pair["vv"]) & np.isfinite(pair["vh"])
+            if not good.any():continue
+            for pol in ("vv","vh"):
+                S[(ym,pol)]=np.where(good,pair[pol],np.nan)
+                C[(ym,pol)]=good
+            used.append(str(feat.get("id","")))
+            observed_months.append(f"{ym[0]}-{ym[1]:02d}")
+            selected=True
+            break
+        if not selected:
+            continue
+    missing=[f"{ym[0]}-{ym[1]:02d}" for ym in months if ym not in
+             {tuple(map(int,x.split("-"))) for x in observed_months}]
+    if missing:
+        return None, {"reason":"MESES_RTC_SEM_PARES_VV_VH",
+            "observed_months":observed_months,"missing_months":missing,
+            "scenes_used":len(used),"pixel_read_errors":failed[:12]}
+    bands=[]
+    for ym in months:
+        vv,vh=S[(ym,"vv")],S[(ym,"vh")]
+        with np.errstate(divide="ignore",invalid="ignore"):
+            vvd,vhd=10*np.log10(vv),10*np.log10(vh)
+        bands += [vvd,vhd,vhd-vvd]
+    return (np.stack(bands,-1),dst_tr,(H,W)),{
+        "orbit":orbit,"scenes_used":len(used),
+        "observed_months":observed_months,
+        "pixel_read_errors":failed[:12],
+        "first_scene":used[0],"last_scene":used[-1]}
 
 def in_validated_domain(ibge=None, ibge_field="legenda_1", aoi=None):
     """Validated domain (v2): savanna/Cerrado phytoregions, and Amazonian forest
