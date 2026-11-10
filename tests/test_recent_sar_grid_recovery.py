@@ -79,8 +79,9 @@ class Sentinel1GridRecoveryTests(unittest.TestCase):
             self.assertGreater(width, 20)
             self.assertGreater(height, 20)
             self.assertEqual(response["committed_grid_crs"], "EPSG:4326")
-            if response["status"] == "ERRO_TECNICO":
-                self.assertIn("does not spatially/temporally separate", response["reason"])
+            if response["status"] == "N/D_VALIDACAO":
+                self.assertEqual(response["reason"],
+                                 "SAR_SIGNATURE_SEPARABILITY_INSUFFICIENT")
                 self.assertFalse(response["native_confirmed"])
                 self.assertFalse(response["crop_confirmed"])
             else:
