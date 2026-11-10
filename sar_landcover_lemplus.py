@@ -140,12 +140,18 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
         for feat in grouped.get(ym,[])[:5]:
             # Atomic scene: commit both polarizations or neither.
             pair={}
-            for attempt in range(2):
+            for attempt in range(3):
                 try:
                     for pol in ("vv","vh"):
-                        with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
-                            GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
-                            GDAL_HTTP_RETRY_DELAY="1",**tls_setup.gdal_env()):
+                        gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
+                                   "GDAL_HTTP_TIMEOUT":"45","GDAL_HTTP_MAX_RETRY":"3",
+                                   "GDAL_HTTP_RETRY_DELAY":"1",**tls_setup.gdal_env()}
+                        if attempt==2:
+                            gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",
+                                              "GDAL_HTTP_MULTIRANGE":"NO",
+                                              "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
+                                              "GDAL_HTTP_VERSION":"1.1"})
+                        with rasterio.Env(**gdal_opts):
                             with rasterio.open((sign_asset_href(feat["assets"][pol]["href"])
                                                 if (attempt > 0 or not token)
                                                 else _signed_href(feat["assets"][pol]["href"],token))) as src:
@@ -176,7 +182,8 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                     break
                 except (OSError,RuntimeError,ValueError,UnicodeError) as exc:
                     failed.append({"scene":str(feat.get("id",""))[:65],
-                                   "type":type(exc).__name__,"attempt":attempt+1})
+                                   "type":type(exc).__name__,"attempt":attempt+1,
+                                   "read_strategy":("HTTP_1_1_NO_MULTIRANGE" if attempt==2 else "DEFAULT_GDAL")})
                     pair={}
                     if attempt==0 and token_fn is None:
                         try:token=get_runtime_sas_token()
