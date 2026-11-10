@@ -7,7 +7,7 @@ from pathlib import Path
 from decimal import Decimal, ROUND_HALF_UP
 import tkinter as tk
 import webbrowser
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox, simpledialog
 import numpy as np
 import pandas as pd
 from openpyxl import Workbook
@@ -1221,6 +1221,7 @@ class App(tk.Tk):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
         self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue(); self._weather_query_generation=0; self._crop_monitoring_base_report=""
         self._style(); self._ui(); self.bind("<Return>",self.execute)
+        self.after(1600,self._check_maap_token_renewal)
     def _style(self):
         s=ttk.Style(self)
         try:s.theme_use("vista")
@@ -1691,6 +1692,65 @@ class App(tk.Tk):
         bbox_txt=f"{format_ptbr(b4326[0],5)}; {format_ptbr(b4326[1],5)}  →  {format_ptbr(b4326[2],5)}; {format_ptbr(b4326[3],5)}"
         self.map_canvas.create_text(12,h-12,anchor="sw",text=bbox_txt,fill="#4A5B54",font=("Segoe UI",8))
 
+    def _maap_renewal_message(self):
+        from esa_maap_token_renewal import renewal_status
+        info=renewal_status()
+        if info["state"]=="EXPIRED":
+            return "ESA MAAP: prazo de 90 dias encerrado em "+info["expires_on"]+" — renovar o token."
+        if info["state"]=="EXPIRING_SOON":
+            return ("ESA MAAP: vencimento estimado em "+str(info["days_remaining"])+
+                    " dia(s) ("+info["expires_on"]+").")
+        if info["state"]=="VALID_ESTIMATED":
+            return ("ESA MAAP: vencimento estimado em "+str(info["days_remaining"])+
+                    " dias ("+info["expires_on"]+").")
+        return "ESA MAAP: data de emissão não cadastrada; validade desconhecida."
+
+    def _refresh_maap_renewal_label(self):
+        if hasattr(self,"maap_renewal_message"):
+            self.maap_renewal_message.set(self._maap_renewal_message())
+
+    def _open_maap_renewal(self):
+        from esa_maap_token_renewal import MAAP_TOKEN_PORTAL
+        if not webbrowser.open(MAAP_TOKEN_PORTAL):
+            messagebox.showinfo("Renovação ESA MAAP",
+                "Abra a página oficial para gerar novo token:\n"+MAAP_TOKEN_PORTAL)
+
+    def _focus_new_maap_token(self):
+        if hasattr(self,"maap_token_input"):
+            self.esa_token.set("")
+            self.maap_token_input.focus_set()
+            messagebox.showinfo("Novo token ESA MAAP",
+                "Cole o token renovado no campo protegido ESA MAAP.\n"
+                "O token substituído será descartado da interface. "
+                "Em seguida registre a data real de emissão no portal.")
+
+    def _record_maap_token_issue_date(self):
+        from datetime import date
+        from esa_maap_token_renewal import save_renewal_date
+        value=simpledialog.askstring("Data de emissão do ESA MAAP",
+            "Informe a data em que o token foi GERADO no portal ESA (AAAA-MM-DD).\n"
+            "Não use a data em que um token antigo foi inserido no programa.\n"
+            "O token em si não será salvo.",initialvalue=date.today().isoformat(),parent=self)
+        if value is None:return
+        try:
+            info=save_renewal_date(value.strip())
+        except (ValueError,OSError) as exc:
+            return messagebox.showerror("Data inválida",str(exc))
+        self._refresh_maap_renewal_label()
+        messagebox.showinfo("Prazo registrado",
+            "Data anotada: "+info["issued_on"]+"; vencimento estimado: "+
+            info["expires_on"]+".\nSomente a data foi armazenada. Cole o novo token no campo ESA MAAP.")
+
+    def _check_maap_token_renewal(self):
+        from esa_maap_token_renewal import renewal_status
+        self._refresh_maap_renewal_label()
+        info=renewal_status()
+        if info["state"] not in ("EXPIRED","EXPIRING_SOON"):return
+        if messagebox.askyesno("Renovação ESA MAAP",
+            self._maap_renewal_message()+
+            "\n\nDeseja abrir agora a página oficial para gerar novo token?"):
+            self._open_maap_renewal()
+
     def _remote(self):
         f=self.tabs[2]
         steps=ttk.Frame(f); steps.pack(fill="x",pady=(0,10))
@@ -1706,8 +1766,19 @@ class App(tk.Tk):
         ttk.Label(edl,text="Senha:").grid(row=0,column=2,sticky="w"); ttk.Entry(edl,textvariable=self.edl_password,show="•",width=28).grid(row=0,column=3,sticky="w",padx=5)
         ttk.Label(edl,text="Não é armazenada. O programa também tenta EARTHDATA_* e _netrc/.netrc automaticamente.",foreground="#666").grid(row=1,column=0,columnspan=4,sticky="w",pady=(4,0))
         ttk.Label(edl,text="ESA MAAP Long Lasting Token (90 dias):").grid(row=2,column=0,sticky="w",pady=(5,0))
-        ttk.Entry(edl,textvariable=self.esa_token,show="•",width=58).grid(row=2,column=1,columnspan=3,sticky="ew",padx=(5,5),pady=(5,0))
+        self.maap_token_input=ttk.Entry(edl,textvariable=self.esa_token,show="•",width=58)
+        self.maap_token_input.grid(row=2,column=1,columnspan=3,sticky="ew",padx=(5,5),pady=(5,0))
         ttk.Label(edl,text="Opcional; usado somente para baixar produtos BIOMASS protegidos e nunca gravado pelo programa.",foreground="#666").grid(row=3,column=0,columnspan=4,sticky="w",pady=(3,0))
+        self.maap_renewal_message=tk.StringVar(value=self._maap_renewal_message())
+        ttk.Label(edl,textvariable=self.maap_renewal_message,foreground="#9A4B16",
+                  wraplength=720).grid(row=4,column=0,columnspan=4,sticky="w",pady=(6,2))
+        renewal_row=ttk.Frame(edl); renewal_row.grid(row=5,column=0,columnspan=4,sticky="w",pady=(2,4))
+        ttk.Button(renewal_row,text="RENOVAR TOKEN NO PORTAL ESA",
+                   command=self._open_maap_renewal).pack(side="left")
+        ttk.Button(renewal_row,text="SUBSTITUIR TOKEN",
+                   command=self._focus_new_maap_token).pack(side="left",padx=8)
+        ttk.Button(renewal_row,text="REGISTRAR DATA DE EMISSÃO / RENOVAÇÃO",
+                   command=self._record_maap_token_issue_date).pack(side="left",padx=8)
         providers=ttk.LabelFrame(f,text="Fontes SAR automáticas — prioridade máxima",padding=12); providers.pack(fill="x",pady=(4,10))
         ttk.Label(providers,text="ESA BIOMASS — banda P",font=("Segoe UI",10,"bold")).grid(row=0,column=0,sticky="w")
         ttk.Label(providers,text="PRIORIDADE 1 — consulta automática das coleções BIOMASS L1/L2 e FP_AGB_L2B; processamento do produto disponível mais adequado.").grid(row=0,column=1,sticky="w",padx=8)
