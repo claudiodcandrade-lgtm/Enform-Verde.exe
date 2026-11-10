@@ -74,7 +74,7 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
     from shapely.geometry import mapping, shape
     from datetime import datetime, timezone
     from sentinel1_mpc import (_signed_href, get_runtime_sas_token,
-                               search_sentinel1_rtc)
+                               search_sentinel1_rtc, sign_asset_href)
     import tls_setup
     tls_setup.configure()
     geom = aoi_4326.geometry.union_all()
@@ -131,9 +131,9 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                                     or f.get("acquisition_utc") or ""),reverse=True)
     try:
         token=(token_fn or get_runtime_sas_token)()
-    except Exception as exc:
-        return None, {"reason":"SAR_TOKEN_INDISPONIVEL",
-                      "error_type":type(exc).__name__}
+    except Exception:
+        # Independent per-asset signing can still recover actual RTC pixels.
+        token=""
     S={};C={};used=[];failed=[];observed_months=[];monthly_pair_counts={}
     for ym in months:
         pairs=[]
@@ -146,7 +146,9 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                         with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
                             GDAL_HTTP_TIMEOUT="45",GDAL_HTTP_MAX_RETRY="3",
                             GDAL_HTTP_RETRY_DELAY="1",**tls_setup.gdal_env()):
-                            with rasterio.open(_signed_href(feat["assets"][pol]["href"],token)) as src:
+                            with rasterio.open((sign_asset_href(feat["assets"][pol]["href"])
+                                                if (attempt > 0 or not token)
+                                                else _signed_href(feat["assets"][pol]["href"],token))) as src:
                                 if src.crs is None:raise ValueError("SAR_COG_MISSING_CRS")
                                 local=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
                                 window=from_bounds(*local.bounds,transform=src.transform)
