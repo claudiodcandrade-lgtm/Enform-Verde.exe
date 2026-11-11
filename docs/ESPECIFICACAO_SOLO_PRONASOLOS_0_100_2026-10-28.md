@@ -1483,3 +1483,6 @@ O relatório de uso do solo e o painel executivo devem apresentar a auditoria do
 
 ## Registro V87.98 — release experimental e limites de validação (11/11/2026)
 O build Windows `3.26.18-PRECAMPO-EXPERIMENTAL` passou o autoteste em cópia limpa. A prova real do EXE leu CBERS-4A e Sentinel-1 em AOI de teste e processou SAR no KMZ de aceitação do Tapajós, sem preencher estoque por esses pixels. Isso não altera nem valida o carbono do solo: 0–100 cm segue dependendo da interseção dos produtos Embrapa/PronaSolos e da respectiva cobertura/incerteza. A Fazenda Maria Eduarda integral não foi validada neste run. Artefato `13893354363`; hash do EXE `497ad17b2a2e310def6f995b76c42dc94bbcb7df1a23e4f3ede30fed01c8b7a2`. Gate científico reprovado permanece explícito.
+
+## V87.99 — contrato de imagem óptica (11/11/2026)
+A correção do smoke de interface aceita CBERS-4A/WFI ou Sentinel-2 efetivamente renderizado no canvas. Esta é uma verificação de apresentação óptica e não altera os métodos de carbono/fertilidade do solo 0–100 cm, nem constitui evidência de leitura SAR, estoque de carbono ou validação da Fazenda Maria Eduarda. A especificação de solo permanece vinculada a produtos Embrapa/PronaSolos, interseção espacial, profundidade e incerteza próprias.

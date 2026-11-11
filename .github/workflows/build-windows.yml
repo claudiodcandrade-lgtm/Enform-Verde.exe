@@ -551,7 +551,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Live CBERS-4A worker-to-Tk-canvas smoke — Sinop
+      - name: Live CBERS-4A or Sentinel-2 worker-to-Tk-canvas smoke — Sinop
         shell: pwsh
         timeout-minutes: 7
         run: python tools/live_gui_optical_sinop.py
