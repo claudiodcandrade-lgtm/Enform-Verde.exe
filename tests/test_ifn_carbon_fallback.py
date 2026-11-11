@@ -7,7 +7,8 @@ class IfnCarbonFallbackTests(unittest.TestCase):
     def setUp(self):
         self.no_pixels = {
             "status": "SAR_NAO_PROCESSADO",
-            "audit": {"warnings": []},
+            "audit": {"warnings": [], "sar_sources_exhausted": True,
+                      "sar_pixel_processing_status": "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS"},
             "inventory_fallback_gate": {"eligible": True},
         }
 
@@ -27,17 +28,25 @@ class IfnCarbonFallbackTests(unittest.TestCase):
         self.assertAlmostEqual(result["calculation_trace"]["stock_tc_scenario"],
                                result["carbon_total_tc_scenario"])
 
-    def test_technical_errors_and_processed_pixels_block_fallback(self):
+    def test_technical_read_failure_stays_visible_but_does_not_block_inventory_contingency(self):
         technical = {**self.no_pixels,
-                     "audit": {"warnings": ["SELECTED_SCENES_PIXEL_READ_FAILED"]}}
-        self.assertFalse(no_valid_sar_pixels(technical))
+                     "audit": {**self.no_pixels["audit"], "warnings": ["SELECTED_SCENES_PIXEL_READ_FAILED"]},
+                     "inventory_fallback_gate": {"eligible": True,
+                         "status": "SAR_INDISPONIVEL_APOS_ESGOTAMENTO_COM_FALHAS_TECNICAS",
+                         "unresolved_warnings": ["SELECTED_SCENES_PIXEL_READ_FAILED"]}}
+        self.assertTrue(no_valid_sar_pixels(technical))
+        estimate=estimate_fesv_state_scenario(
+            biome="Amazônia", physiognomy="Floresta Estacional Sempre-Verde",
+            area_ha=10, sar_result=technical, centroid_lon=-55.19, centroid_lat=-11.87)
+        self.assertEqual(estimate["status"], "CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR")
+        self.assertIn("SELECTED_SCENES_PIXEL_READ_FAILED", technical["inventory_fallback_gate"]["unresolved_warnings"])
         processed = {**self.no_pixels, "audit": {"warnings": [],
                                                   "processed_without_agb": [{"source": "S1"}]}}
         self.assertFalse(no_valid_sar_pixels(processed))
         self.assertEqual(estimate_fesv_state_scenario(
             biome="Amazônia", physiognomy="Floresta Estacional Sempre-Verde",
             area_ha=10, sar_result=technical,
-            centroid_lon=-55.19, centroid_lat=-11.87)["status"], "BLOQUEADO")
+            centroid_lon=-55.19, centroid_lat=-11.87)["status"], "CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR")
 
     def test_no_generalization_to_other_physiognomies(self):
         result = estimate_fesv_state_scenario(

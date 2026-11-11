@@ -1452,3 +1452,8 @@ Prioridades do piloto: série temporal SAR observável com proveniência por cen
 ## V87.90 — separação de safra SAR observada e monitoramento atual
 - A política de incerteza e proveniência aplica-se também às áreas SAR experimentais exibidas no monitoramento agrícola: resultado de safra completa derivado de pixels reais deve permanecer acessível em bloco separado, com período e trilha de cálculo, sem ser reportado como atual.
 - Incerteza de área não mensurada deve ser explicitada; desempenho do classificador no holdout espacial não substitui intervalo de erro para a área da AOI. Esta mudança não altera solo 0–100 cm nem mistura inventários de carbono com agricultura.
+
+
+## Checkpoint de integração do aplicativo — V87.92 (11/11/2026)
+
+A correção de leitura SAR e a contingência de carbono estão descritas no checkpoint V87.92 do prompt e na atualização técnica geral. Não alteram método, profundidade, fontes, área de referência ou incerteza de carbono/fertilidade do solo: continuam exigidos Embrapa/PronaSolos, 0–100 cm, interseção AOI e fonte/profundidade/cobertura/incerteza próprias. Erro de leitura SAR não é ausência de dados de solo, nem autoriza substituições por SoilGrids.

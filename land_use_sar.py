@@ -114,6 +114,55 @@ def _robust_polygon_overlay(left, right, operation):
             ) from second
 
 
+def _shares_with_code(project, theme, name_field, code_field=None):
+    """Calculate exact equal-area AOI shares for potential IBGE physiognomies.
+
+    Kept in this module because land-use reporting and the inventory carbon
+    contingency both need it; do not import a UI helper from desktop_app.
+    """
+    import geopandas as gpd
+    import pandas as pd
+    import shapely
+    if project is None or theme is None or project.empty or theme.empty:
+        return []
+    if project.crs is None or theme.crs is None:
+        raise ValueError('AOI e camada de fitofisionomia precisam declarar CRS.')
+    if name_field not in theme.columns:
+        raise ValueError(f'Campo de nome IBGE ausente: {name_field}.')
+    p=project.to_crs(AREA_CRS)[['geometry']].copy()
+    t=theme.to_crs(AREA_CRS).copy()
+    p['geometry']=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+    t['geometry']=t.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+    columns=['geometry',name_field]+([code_field] if code_field and code_field in t.columns else [])
+    inter=gpd.overlay(t[columns],p,how='intersection',keep_geom_type=False)
+    inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
+    if inter.empty:
+        return []
+    union_area=float(inter.geometry.union_all().area)
+    summed_area=float(inter.geometry.area.sum())
+    if summed_area-union_area>max(1.0,union_area*1e-8):
+        raise ValueError('Sobreposição entre polígonos IBGE: área potencial ambígua.')
+    aoi_area=float(p.geometry.union_all().area)
+    if aoi_area<=0:
+        raise ValueError('AOI sem área positiva em EPSG:6933.')
+    inter['_ha']=inter.geometry.area/10000.0
+    keys=[name_field]+([code_field] if code_field and code_field in inter.columns else [])
+    grouped=inter.groupby(keys,dropna=False)['_ha'].sum().sort_values(ascending=False)
+    records=[]
+    for key,area in grouped.items():
+        values=key if isinstance(key,tuple) else (key,)
+        if float(area)<=0:
+            continue
+        records.append({'name':str(values[0]) if pd.notna(values[0]) else 'Não classificado',
+                        'code':(str(values[1]) if len(values)>1 and pd.notna(values[1]) else None),
+                        'area_ha':float(area),'percent':float(area/aoi_area*100.0)})
+    missing=max(0.0,(aoi_area-union_area)/10000.0)
+    if missing>max(0.01,aoi_area/10000.0*1e-8):
+        records.append({'name':'Sem cobertura IBGE','code':None,'area_ha':missing,
+                        'percent':float(missing/(aoi_area/10000.0)*100.0)})
+    return records
+
+
 def partition_land_use(aoi, layers):
     """Ordered layers: accepted SAR, IBGE, MapBiomas. Disjoint exact intersections.
 
@@ -922,6 +971,13 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     summary['national_audit']=audit_national_coverage(aoi,summary)
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
+    recent_status=str((recent_sar_cover or {}).get('status') or '').upper()
+    recent_reason=str((recent_sar_cover or {}).get('reason') or '').upper()
+    read_attempts=int((recent_sar_cover or {}).get('pixel_read_attempt_count') or 0)
+    readable_scenes=int((recent_sar_cover or {}).get('readable_scene_count') or 0)
+    sar_read_failed=(recent_status in ('ERRO_TECNICO','ERROR') or
+                     'PIXEL_READ_FAILED' in recent_reason or
+                     (read_attempts>0 and readable_scenes==0 and bool((recent_sar_cover or {}).get('failed_scene_reads'))))
     summary.update({'warnings':warnings,'validation':validation,'vector_path':str(vector_path),
                     'mapbiomas_source':None,
                     'sar_model_config':active_sar_config,
@@ -930,6 +986,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                     'status':('SAR_ELEGIVEL' if any(str(r.get('source','')).startswith('SAR_VALIDADO') for r in summary['classes']) else
                               'SAR_MODELO_EXPERIMENTAL' if has_experimental_sar else
                               'SAR_UNIDADES_EXPERIMENTAIS' if any(r.get('source')=='SAR_CURRENT_EXPERIMENTAL' for r in summary['classes']) else
+                              'ERRO_TECNICO_LEITURA_SAR' if sar_read_failed else
                               'N/D_SEM_COBERTURA_SAR')})
     (outdir/'uso_solo_auditoria.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
     return summary

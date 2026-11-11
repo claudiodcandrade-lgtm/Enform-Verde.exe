@@ -59,24 +59,36 @@ _NO_COVERAGE_MARKERS = (
     "sem cobertura", "no coverage", "sem resultados", "empty result",
 )
 
-def inventory_fallback_gate(sar_processed, warnings=()):
-    """Permit inventory/literature AGB only after confirmed SAR unavailability.
+def inventory_fallback_gate(sar_processed, warnings=(), *, sources_exhausted=False,
+                            height_processed=False):
+    """Permit a clearly conditional inventory estimate after configured SAR routes.
 
-    Unknown warnings are treated as unresolved technical/access failures and
-    block fallback; processed SAR pixels or a valid SAR height product always
-    block the non-SAR estimate.
+    A technical read/access failure is never described as proof that scenes or
+    valid pixels do not exist. Once every configured route has actually run,
+    and no SAR pixel/height was read, the estimate may proceed as an explicit
+    ``SAR_INDISPONIVEL_APOS_ESGOTAMENTO`` contingency. This prevents a broken
+    transport from silently becoming a false ``NO_COVERAGE`` state while still
+    returning an inventory-based carbon scenario when the SAR pipeline cannot
+    produce observations.
     """
     warning_list=[str(w) for w in (warnings or ())]
-    if sar_processed:
+    if sar_processed or height_processed:
         return {"eligible":False,"reason":"SAR foi processado; fallback não-SAR não pode substituir AGB SAR ausente.",
                 "unresolved_warnings":[],"evidence":"observável SAR processado"}
+    if not sources_exhausted:
+        return {"eligible":False,"reason":"rotas SAR configuradas ainda não foram todas tentadas; ausência não confirmada.",
+                "unresolved_warnings":warning_list,"evidence":"ROTAS_PENDENTES"}
     unresolved=[w for w in warning_list
                 if not any(marker in w.casefold() for marker in _NO_COVERAGE_MARKERS)]
     if unresolved:
-        return {"eligible":False,"reason":"falha técnica/acesso não resolvida; ausência de SAR ainda não foi comprovada.",
-                "unresolved_warnings":unresolved,"evidence":"avisos que exigem resolução"}
+        return {"eligible":True,
+                "status":"SAR_INDISPONIVEL_APOS_ESGOTAMENTO_COM_FALHAS_TECNICAS",
+                "reason":"nenhuma rota configurada forneceu pixels SAR utilizáveis; as falhas técnicas permanecem explícitas e não significam ausência de cenas/pixels no catálogo.",
+                "unresolved_warnings":unresolved,
+                "evidence":"ROTAS_CONFIGURADAS_ESGOTADAS_SEM_PIXELS; FALHA_TECNICA_NAO_EQUIVALE_A_AUSENCIA_DE_COBERTURA"}
     return {"eligible":True,"reason":"rotas SAR consultadas sem falha técnica pendente e sem observáveis/pixels utilizáveis.",
-            "unresolved_warnings":[],"evidence":"ausência operacional de cobertura/processamento confirmada"}
+            "status":"SAR_SEM_PIXELS_UTILIZAVEIS_APOS_ESGOTAMENTO",
+            "unresolved_warnings":[],"evidence":"rotas configuradas esgotadas; nenhuma cena com pixels válidos foi processada"}
 
 def national_agb_fallback(biome, physiognomy, aoi=None):
     """Return a mandatory modelled AGB estimate for the four scoped Brazilian biomes.

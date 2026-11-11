@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.15-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.16-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -549,22 +549,24 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
     result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
-    # Separate conditional inventory scenario; never reinterpret potential
-    # IBGE vegetation as current native cover. It is allowed only if SAR
-    # absence is confirmed and there is no unresolved technical failure.
+    # Separate conditional inventory scenario. The wrapper first tries the
+    # open IFN plot data for the matching physiognomy/region, then the existing
+    # published regional hierarchy. Exhausted-route technical failures stay
+    # visible; they are not relabelled as no-scene/no-pixel evidence.
     if not result.get('strata') and not result.get('native_area_ha'):
-        from ifn_carbon_fallback import estimate_fesv_state_scenario
+        from ifn_carbon_fallback import estimate_inventory_carbon_scenario
         scenarios=[]
         for potential in land.get('potential_physiognomy_intersections') or []:
             physiognomy=str(potential.get('name') or '')
-            if not physiognomy:
+            if not physiognomy or physiognomy == 'Sem cobertura IBGE':
                 continue
             try:
                 sar_result=sar_estimator(aoi,biome,physiognomy)
-                scenario=estimate_fesv_state_scenario(
+                scenario=estimate_inventory_carbon_scenario(
                     biome=biome,physiognomy=physiognomy,
                     area_ha=float(potential.get('area_ha') or 0),
                     sar_result=sar_result,
+                    aoi=aoi,
                     centroid_lon=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.x),
                     centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
                 scenario['sar_status']=sar_result.get('status') if isinstance(sar_result,dict) else None
@@ -825,7 +827,7 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
                 import time; time.sleep(1.2*(attempt+1))
     if not href:raise RuntimeError("Falha temporária ao assinar ativo Sentinel-2 após 3 tentativas: "+str(sign_error))
     import tls_setup
-    with rasterio.Env(**tls_setup.gdal_env(),GDAL_HTTP_MULTIRANGE="NO",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="NO",CPL_VSIL_CURL_USE_HEAD="NO",GDAL_HTTP_VERSION="1.1"):
+    with rasterio.Env(**tls_setup.gdal_env(),GDAL_HTTP_MULTIRANGE="SERIAL",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="NO",CPL_VSIL_CURL_USE_HEAD="NO",GDAL_HTTP_VERSION="1.1"):
         with rasterio.open(href) as src:
             b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
             dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0)
@@ -933,7 +935,7 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     # and HEAD negotiation rejected by some TLS-inspecting proxies.
     env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"35",
          "GDAL_HTTP_MAX_RETRY":"2","CPL_VSIL_CURL_USE_HEAD":"NO",
-         "GDAL_HTTP_MULTIRANGE":"NO","GDAL_HTTP_VERSION":"1.1",
+         "GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_VERSION":"1.1",
          **tls_setup.gdal_env()}
     for cloud,dt,item,assets in pool:
         try:
@@ -1110,7 +1112,7 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
         scene=np.full((height,width,3),np.nan,dtype=np.float32)
         try:
             env={"GDAL_HTTP_TIMEOUT":"40","GDAL_HTTP_MAX_RETRY":"2",
-                 "GDAL_HTTP_MULTIRANGE":"NO","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
+                 "GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
                  "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1",
                  "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",**tls_setup.gdal_env()}
             with rasterio.Env(**env):
@@ -2877,17 +2879,17 @@ class App(tk.Tk):
                  pedology_report_lines(pedology or {},format_ptbr) +
                  fertility_report_lines(fertility or {},format_ptbr) + lines)
         for scenario in native.get("conditional_inventory_scenarios",[]):
-            lines += ["", "CENÁRIO CONDICIONAL DE CARBONO — INVENTÁRIO IFN (não é cobertura atual confirmada)",
+            lines += ["", "CENÁRIO CONDICIONAL DE CARBONO — INVENTÁRIO/REFERÊNCIA REGIONAL (não é cobertura atual confirmada)",
                       "Estado: "+str(scenario.get("status")),
                       "Área-base: "+format_ptbr(scenario.get("area_ha",0),2)+" ha — "+str(scenario.get("area_basis")),
                       "Fitofisionomia: "+str(scenario.get("physiognomy"))+"; domínio geográfico: "+str(scenario.get("geographic_tier")),
-                      "IFN: n="+str(scenario.get("inventory_n_unique_sampling_units"))+" unidades únicas; AGB média "+format_ptbr(scenario.get("agb_mean_mg_ha"),2)+" Mg/ha; DP amostral "+format_ptbr(scenario.get("agb_sample_sd_mg_ha"),2)+" Mg/ha.",
-                      "Faixa observada entre unidades (não é IC95%): "+json.dumps(scenario.get("agb_observed_range_mg_ha"),ensure_ascii=False),
+                      "Fonte e evidência: "+str(scenario.get("source"))+" — "+str(scenario.get("source_url")),
+                      "Unidades/parcelas (quando declaradas pela fonte): n="+str(scenario.get("inventory_n_unique_sampling_units"))+"; AGB "+format_ptbr(scenario.get("agb_mean_mg_ha"),2)+" Mg/ha; faixa da fonte "+json.dumps(scenario.get("agb_range_mg_ha") or scenario.get("agb_observed_range_mg_ha"),ensure_ascii=False),
                       str(scenario.get("estimate_label"))+" — carbono condicional: "+format_ptbr(scenario.get("carbon_mean_tc_ha"),2)+" tC/ha; total cenário "+format_ptbr(scenario.get("carbon_total_tc_scenario"),2)+" tC ("+format_ptbr(scenario.get("carbon_total_tco2e_scenario"),2)+" tCO₂e).",
                       "Incerteza: "+str(scenario.get("uncertainty")),
                       "TRILHA DE CÁLCULO: "+json.dumps(scenario.get("calculation_trace") or {},ensure_ascii=False,sort_keys=True),
+                      "Falhas SAR registradas (não equivalem a ausência de cenas): "+json.dumps(scenario.get("sar_technical_failures") or [],ensure_ascii=False),
                       "Confiança: "+str(scenario.get("confidence")),
-                      "Fonte: "+str(scenario.get("source"))+" — "+str(scenario.get("source_url")),
                       "Limitações: "+"; ".join(scenario.get("limitations",[]))]
         diag=native.get("inventory_scenario_diagnostic")
         if diag:

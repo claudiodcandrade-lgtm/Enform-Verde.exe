@@ -148,7 +148,7 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                                    "GDAL_HTTP_RETRY_DELAY":"1",**tls_setup.gdal_env()}
                         if attempt==2:
                             gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",
-                                              "GDAL_HTTP_MULTIRANGE":"NO",
+                                              "GDAL_HTTP_MULTIRANGE":"SERIAL",
                                               "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
                                               "GDAL_HTTP_VERSION":"1.1"})
                         with rasterio.Env(**gdal_opts):

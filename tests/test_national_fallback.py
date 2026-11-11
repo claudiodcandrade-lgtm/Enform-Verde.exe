@@ -10,10 +10,14 @@ import sar_pipeline as sar
 
 class NationalFallbackTests(unittest.TestCase):
     def test_inventory_fallback_gate_requires_confirmed_sar_unavailability(self):
-        self.assertTrue(inventory_fallback_gate(False,[])["eligible"])
-        self.assertTrue(inventory_fallback_gate(False,["Sentinel-1: sem pixels processados"])["eligible"])
-        self.assertFalse(inventory_fallback_gate(True,[])["eligible"])
-        self.assertFalse(inventory_fallback_gate(False,["Earthdata authentication rejected"])["eligible"])
+        self.assertFalse(inventory_fallback_gate(False,[])['eligible'])
+        self.assertTrue(inventory_fallback_gate(False,["Sentinel-1: sem pixels processados"],sources_exhausted=True)["eligible"])
+        failed=inventory_fallback_gate(False,["SELECTED_SCENES_PIXEL_READ_FAILED"],sources_exhausted=True)
+        self.assertTrue(failed["eligible"])
+        self.assertEqual(failed["status"],"SAR_INDISPONIVEL_APOS_ESGOTAMENTO_COM_FALHAS_TECNICAS")
+        self.assertIn("SELECTED_SCENES_PIXEL_READ_FAILED",failed["unresolved_warnings"])
+        self.assertFalse(inventory_fallback_gate(True,[])['eligible'])
+        self.assertFalse(inventory_fallback_gate(False,["Earthdata authentication rejected"])['eligible'])
 
     def test_all_scoped_biomes_always_return_agb_and_uncertainty(self):
         cases=[
@@ -69,7 +73,7 @@ class NationalFallbackTests(unittest.TestCase):
             self.assertIsNone(out["literature_reference"])
             self.assertIsNone(out["agb_mg_ha"])
             self.assertFalse(out["inventory_fallback_gate"]["eligible"])
-            self.assertIn("não será substituída",out["message"])
+            self.assertIn("não substitui esse observável SAR",out["message"])
         finally:
             sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history=real
 

@@ -8,7 +8,7 @@
 - Solo e dados de fertilidade independentes foram apresentados, o que confirma funcionamento parcial dos acessos espaciais e não prova estoque de carbono nativo.
 
 ## Correções implementadas no código
-- `recent_sar_landcover.py` e `sar_landcover_lemplus.py`: a terceira tentativa de leitura de cada cena usa assinatura por ativo e transporte HTTP/1.1 com `CPL_VSIL_CURL_USE_HEAD=NO`, `GDAL_HTTP_MULTIRANGE=NO`, `GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=NO`. Quando o GDAL Windows emite erro nativo não UTF-8, reter diagnóstico `GDAL_NATIVE_ERROR_NON_UTF8`; não chamar ausência de cenas.
+- `recent_sar_landcover.py` e `sar_landcover_lemplus.py`: a terceira tentativa de leitura de cada cena usa assinatura por ativo e transporte HTTP/1.1 com `CPL_VSIL_CURL_USE_HEAD=NO`, `GDAL_HTTP_MULTIRANGE=NO` (configuração inválida; substituída por `SERIAL` no V87.92), `GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=NO`. Quando o GDAL Windows emite erro nativo não UTF-8, reter diagnóstico `GDAL_NATIVE_ERROR_NON_UTF8`; não chamar ausência de cenas.
 - `desktop_app.py`: CBERS-4A/WFI, Sentinel-2 Earth Search e Sentinel-2 Planetary Computer utilizam configurações COG de requisições simples, sem multipartes. Não ignorar exceções de leitura nem declarar imagem pronta sem pixels.
 - `desktop_app.py`: eliminar ciclo de carregamento por comparação equivocada entre tamanho da imagem (requisição) e tamanho do canvas (área visível). Uma atualização obsoleta não deve se sobrepor à imagem já carregada.
 - A cada busca de imagem, registrar `~/.enform_verde/ultimo_diagnostico_imagem_otica.json` com o provedor exibido e causas por fonte, com URLs e parâmetros assinados redigidos. Isso permite localizar falha no Windows do proprietário sem expor segredos.

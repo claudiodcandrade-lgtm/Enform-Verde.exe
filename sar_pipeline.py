@@ -1892,11 +1892,19 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             return _preserve_sar_canopy_height(pr,sar_height,audit)
     except Exception as e: audit["cci"]={"error":str(e)}
 
-    # Inventory/literature AGB is permitted only when SAR unavailability is
-    # established; processed SAR pixels/height or unresolved errors block it.
+    # Mark the end of every configured live/direct route reached above. A
+    # technical failure is not scene absence: preserve it in the audit, but
+    # permit a separately labelled inventory contingency only when all
+    # configured routes completed and zero SAR pixels/height were processed.
     audit["sar_sources_exhausted"]=True
     sar_processed=bool(audit.get("processed_without_agb")) or bool(sar_height)
-    fallback_gate=inventory_fallback_gate(sar_processed,audit.get("warnings",[]))
+    audit["sar_pixel_processing_status"]=(
+        "PIXELS_PROCESSADOS_SEM_MODELO_AGB" if sar_processed else
+        "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS")
+    fallback_gate=inventory_fallback_gate(
+        sar_processed,audit.get("warnings",[]),
+        sources_exhausted=bool(audit.get("sar_sources_exhausted")),
+        height_processed=bool(sar_height))
     audit["inventory_fallback_gate"]=fallback_gate
     lit=None
     if fallback_gate["eligible"]:
@@ -1913,9 +1921,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                       if sar_processed else "nenhum arquivo SAR pôde ser baixado/processado nesta execução"),
             "audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "inventory_fallback_gate":fallback_gate,
-            "message":("SAR real processado, mas não há modelo AGB quantitativo compatível e validado; AGB não será substituída por fallback de inventário."
-                       if sar_processed else ("AGB de fallback disponível porque as rotas SAR foram consultadas sem observáveis utilizáveis nem falha técnica pendente."
-                       if fallback_gate["eligible"] else "SAR não foi processado, mas persistem erros/bloqueios não resolvidos; AGB de fallback foi retida até confirmar a inviabilidade SAR."))}
+            "message":("SAR real/altura de dossel processado, mas não há modelo AGB quantitativo compatível; o inventário não substitui esse observável SAR."
+                       if sar_processed else ("SAR sem pixels utilizáveis após esgotar as rotas configuradas; emitir cenário condicional de inventário e preservar cada falha técnica, sem declarar ausência de cenas."
+                       if fallback_gate["eligible"] else "Rotas SAR ainda não esgotadas; a estimativa de inventário permanece bloqueada."))}
     if 'class_stats' in locals() and class_audit is not None:
         result["fitofisionomia_status"]="INTERSECAO_IBGE_PROCESSADA"
         result["fitofisionomia_area_audit"]=class_audit

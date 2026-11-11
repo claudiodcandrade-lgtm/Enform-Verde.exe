@@ -74,13 +74,18 @@ class LandUseTests(unittest.TestCase):
             ibge=aoi.copy();ibge['legenda_1']='FOD'
             from unittest.mock import patch
             with patch('sar_landcover_lemplus.classify_aoi',return_value={'status':'N/D_SEM_PIXELS_SAR','reason':'teste offline'}), \
-                 patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
+                 patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'ERRO_TECNICO','reason':'SELECTED_SCENES_PIXEL_READ_FAILED','pixel_read_attempt_count':3,'readable_scene_count':0,'failed_scene_reads':[{'type':'UnicodeDecodeError'}]}):
                 r=run_land_use(aoi,d,mapbiomas_path=str(Path(d)/'absent.tif'),ibge=ibge)
             # V87.37+: without SAR pixels and without classifier the cover is N/D (never MapBiomas)
-            self.assertEqual(r['status'],'N/D_SEM_COBERTURA_SAR')
+            self.assertEqual(r['status'],'ERRO_TECNICO_LEITURA_SAR')
             self.assertEqual(r['classes'][0]['source'],'SEM_COBERTURA')
             self.assertEqual(r['classes'][0]['class_name'],'Não classificado')
             self.assertIsNone(r['validation'])
+            potential=r['potential_physiognomy_intersections']
+            self.assertEqual(len(potential),1)
+            self.assertEqual(potential[0]['name'],'FOD')
+            self.assertAlmostEqual(potential[0]['area_ha'],aoi.to_crs('EPSG:6933').geometry.area.sum()/10000,places=5)
+            self.assertFalse(any('_shares_with_code' in w for w in r['warnings']))
 
     def fixture(self,directory):
         root=Path(directory);transform=from_origin(500000,9000000,1000,1000)

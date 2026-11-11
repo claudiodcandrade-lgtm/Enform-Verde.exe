@@ -42,8 +42,16 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
         for fn in (app.cbers4a_wfi_preview,app.sentinel2_earthsearch_preview):
             src=inspect.getsource(fn)
             self.assertIn("CPL_VSIL_CURL_USE_HEAD",src)
-            self.assertIn('GDAL_HTTP_MULTIRANGE":"NO"',src)
+            self.assertIn('GDAL_HTTP_MULTIRANGE":"SERIAL"',src)
+            self.assertNotIn('GDAL_HTTP_MULTIRANGE":"NO"',src)
             self.assertIn('GDAL_HTTP_VERSION":"1.1"',src)
+
+    def test_sar_retries_use_a_valid_serial_range_mode(self):
+        for fn in (recent_sar_landcover.run_recent_sar_screen,
+                   sar_landcover_lemplus._monthly_features):
+            src=inspect.getsource(fn)
+            self.assertIn('GDAL_HTTP_MULTIRANGE":"SERIAL"',src)
+            self.assertNotIn('GDAL_HTTP_MULTIRANGE":"NO"',src)
 
     def test_optical_provider_errors_are_saved_and_redacted(self):
         with tempfile.TemporaryDirectory() as td:

@@ -159,14 +159,16 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                         pair=[]
                         for pol in ("vv","vh"):
                             from tls_setup import gdal_env
-                            # Last attempt avoids multipart HTTP range/HEAD.
-                            # Some Windows GDAL/proxy errors arrive as non-UTF8 bytes.
+                            # Last attempt serializes byte ranges and avoids HEAD.
+                            # GDAL_HTTP_MULTIRANGE accepts SERIAL, SINGLE_GET or
+                            # YES; "NO" is not a valid value and silently leaves
+                            # the default multipart transport enabled.
                             gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
                                        "GDAL_HTTP_TIMEOUT":"45","GDAL_HTTP_MAX_RETRY":"3",
                                        "GDAL_HTTP_RETRY_DELAY":"1",**gdal_env()}
                             if attempt==2:
                                 gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",
-                                                  "GDAL_HTTP_MULTIRANGE":"NO",
+                                                  "GDAL_HTTP_MULTIRANGE":"SERIAL",
                                                   "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
                                                   "GDAL_HTTP_VERSION":"1.1"})
                             with rasterio.Env(**gdal_opts):

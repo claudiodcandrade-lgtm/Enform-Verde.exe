@@ -26,19 +26,23 @@ def _norm(value):
 
 
 def no_valid_sar_pixels(sar_result):
-    """Fail closed: technical/read failures and SAR observations block transfer."""
+    """Allow the contingency only after every configured route is exhausted.
+
+    Technical failures are retained as failures, never relabelled as catalogue
+    absence. They can still trigger the inventory contingency after the audit
+    confirms that configured routes ran and no SAR pixel/height was processed.
+    """
     if not isinstance(sar_result, dict) or sar_result.get("status") != "SAR_NAO_PROCESSADO":
         return False
     audit = sar_result.get("audit") or {}
     gate = sar_result.get("inventory_fallback_gate") or audit.get("inventory_fallback_gate") or {}
-    if gate.get("eligible") is not True or audit.get("processed_without_agb") or audit.get("biomass_height", {}).get("zonal_height"):
+    if (gate.get("eligible") is not True
+            or audit.get("sar_sources_exhausted") is not True
+            or audit.get("processed_without_agb")
+            or audit.get("biomass_height", {}).get("zonal_height")
+            or audit.get("gtdx_height", {}).get("available") is True):
         return False
-    warnings = [str(x).casefold() for x in audit.get("warnings", [])]
-    # A transport/authentication/read error is not evidence that suitable scenes
-    # do not exist. Do not mask a technical failure with an inventory scenario.
-    return not any(any(term in w for term in (
-        "erro", "falha", "failed", "authentication", "pixel read",
-        "não pôde ser lido", "nao pode ser lido", "timeout")) for w in warnings)
+    return audit.get("sar_pixel_processing_status") == "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS"
 
 
 def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
@@ -125,4 +129,99 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
             "conversão para carbono usa fração fixa 0,47 sem incerteza quantificada",
             "não somar ao estoque medido nem interpretar como resultado homologado",
         ],
+    }
+
+
+def estimate_inventory_carbon_scenario(*, biome, physiognomy, area_ha, sar_result,
+                                       aoi=None, centroid_lon=None, centroid_lat=None):
+    """Use open IFN plots first, then the existing regional/national literature hierarchy.
+
+    The returned number is a conditional AGB-derived carbon scenario on the
+    potential IBGE phytoregion area. It never confirms current native cover and
+    is never added to the SAR-measured stock.
+    """
+    if not no_valid_sar_pixels(sar_result):
+        return {"status":"BLOQUEADO","reason":"ROTAS_SAR_NAO_ESGOTADAS_OU_OBSERVAVEL_SAR_PROCESSADO"}
+    primary = estimate_fesv_state_scenario(
+        biome=biome, physiognomy=physiognomy, area_ha=area_ha,
+        sar_result=sar_result, centroid_lon=centroid_lon, centroid_lat=centroid_lat)
+    if primary.get("status") == "CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR":
+        return primary
+
+    if not isinstance(area_ha, (int, float)) or not math.isfinite(float(area_ha)) or float(area_ha) <= 0:
+        return {"status":"N/D","reason":"AREA_IBGE_POTENCIAL_INVALIDA"}
+    reference=(sar_result or {}).get("literature_reference") or {}
+    if not reference.get("available") or reference.get("agb_mg_ha") is None:
+        try:
+            from national_fallback import national_agb_fallback
+            reference=national_agb_fallback(biome,physiognomy,aoi=aoi) or {}
+        except Exception as exc:
+            return {"status":"N/D","reason":"FONTE_REGIONAL_COMPATIVEL_INDISPONIVEL",
+                    "diagnostic":type(exc).__name__}
+    if not reference.get("available") or reference.get("agb_mg_ha") is None:
+        return {"status":"N/D","reason":"SEM_INVENTARIO_OU_REFERENCIA_PUBLICADA_COMPATIVEL_NESTA_FITOFISIONOMIA",
+                "potential_area_ha":float(area_ha),
+                "sar_gate":(sar_result or {}).get("inventory_fallback_gate")}
+    try:
+        agb=float(reference["agb_mg_ha"])
+        if not math.isfinite(agb) or agb < 0:
+            raise ValueError("AGB inválida")
+        fraction=CARBON_FRACTION
+        area=float(area_ha)
+        carbon=agb*fraction
+        stock=carbon*area
+        bounds=reference.get("agb_range_mg_ha")
+        if not bounds and reference.get("uncertainty_mg_ha") is not None:
+            u=abs(float(reference["uncertainty_mg_ha"]))
+            bounds=[max(0.0,agb-u),agb+u]
+        if bounds and len(bounds)>=2:
+            low_agb,high_agb=sorted((max(0.0,float(bounds[0])),float(bounds[1])))
+            low_stock=low_agb*fraction*area
+            high_stock=high_agb*fraction*area
+            uncertainty=(
+                f"Envelope da fonte: AGB {low_agb:.2f}–{high_agb:.2f} Mg/ha; "
+                f"carbono condicional {low_stock:.2f}–{high_stock:.2f} tC. "
+                "Esse envelope não é IC95% nem incerteza da AOI; erro de transferência para a propriedade e fração C permanecem não mensurados."
+            )
+            estimate_label="cenário condicional com envelope da fonte; incerteza de transferência não mensurada"
+        else:
+            low_agb=high_agb=low_stock=high_stock=None
+            uncertainty=("estimativa com incerteza não mensurada. A fonte não fornece dispersão compatível para a AOI; "
+                         "transferência espacial, erro da equação e fração de carbono não quantificados.")
+            estimate_label="estimativa com incerteza não mensurada"
+    except (TypeError,ValueError,OverflowError) as exc:
+        return {"status":"N/D","reason":"REFERENCIA_AGB_INVALIDA","diagnostic":type(exc).__name__}
+
+    audit=(sar_result or {}).get("audit") or {}
+    gate=(sar_result or {}).get("inventory_fallback_gate") or audit.get("inventory_fallback_gate") or {}
+    evidence=reference.get("evidence") or []
+    return {
+        "status":"CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR",
+        "estimate_label":estimate_label,
+        "current_native_cover_confirmed":False,
+        "area_basis":"interseção AOI × IBGE legenda_1 (potencial; não é máscara SAR de cobertura atual)",
+        "area_ha":area,"biome":biome,"physiognomy":physiognomy,
+        "geographic_tier":reference.get("label") or "referência publicada hierárquica; domínio conforme a fonte",
+        "inventory_n_unique_sampling_units":reference.get("n"),
+        "agb_mean_mg_ha":agb,"agb_range_mg_ha":[low_agb,high_agb] if bounds else None,
+        "carbon_fraction":fraction,"carbon_fraction_uncertainty":"não fornecida pela fonte; fração operacional 0,47",
+        "carbon_mean_tc_ha":carbon,"carbon_total_tc_scenario":stock,
+        "carbon_total_tco2e_scenario":stock*44/12,
+        "uncertainty":uncertainty,"confidence":"BAIXA; cenário condicional, sem validação na propriedade",
+        "source":reference.get("source"),"source_url":reference.get("url"),"source_evidence":evidence,
+        "sar_availability_status":gate.get("status") or gate.get("evidence"),
+        "sar_technical_failures":gate.get("unresolved_warnings") or [],
+        "calculation_trace":{
+            "source_priority":"IFN/parcelas abertas microrregionais ou regionais; em seguida síntese publicada regional/nacional compatível",
+            "selected_reference_method":reference.get("method") or reference.get("basis"),
+            "agb_mg_ha":agb,"agb_interval_mg_ha":[low_agb,high_agb] if bounds else None,
+            "carbon_fraction_formula":"AGB × fração de carbono 0,47",
+            "carbon_density_tc_ha":carbon,
+            "area_formula":"interseção exata AOI × IBGE legenda_1 em EPSG:6933; uso potencial",
+            "area_ha":area,"stock_formula":"carbono tC/ha × área potencial ha",
+            "stock_tc":stock,"co2e_formula":"estoque tC × 44/12",
+            "stock_tco2e":stock*44/12,
+            "not_included_in_uncertainty":["confirmação de cobertura atual", "transferência espacial para a propriedade", "erro de classificação SAR", "incerteza da fração de carbono"]
+        },
+        "limitations":["não confirma vegetação nativa atual", "não substitui altura SAR nem pixels SAR", "não somar ao estoque medido", "faixa de fonte não é intervalo de confiança da AOI"]
     }

@@ -24,14 +24,15 @@ def status_path(home=None):
     return Path(home if home is not None else Path.home())/".enform_verde"/STATUS_FILENAME
 
 
-def save_renewal_date(issued_on=None, *, path=None):
+def save_renewal_date(issued_on=None, *, path=None, today=None):
     """Store only the calendar issue date; NEVER the token or any hash of it."""
     issued_on=issued_on or datetime.now(timezone.utc).date()
     if isinstance(issued_on,str):
         issued_on=date.fromisoformat(issued_on)
     if not isinstance(issued_on,date):
         raise ValueError("Data de emissão inválida")
-    if issued_on>datetime.now(timezone.utc).date():
+    reference_today=today or datetime.now(timezone.utc).date()
+    if issued_on>reference_today:
         raise ValueError("Data de emissão não pode ser futura")
     location=Path(path) if path is not None else status_path()
     location.parent.mkdir(parents=True,exist_ok=True)
@@ -44,7 +45,7 @@ def save_renewal_date(issued_on=None, *, path=None):
         tmp.replace(location)
     finally:
         if tmp.exists():tmp.unlink()
-    return renewal_status(path=location)
+    return renewal_status(path=location,today=reference_today)
 
 
 def initialize_current_token_date(*, path=None, today=None):
@@ -64,7 +65,7 @@ def initialize_current_token_date(*, path=None, today=None):
         # An absent record on a future install does not establish that an
         # unentered 2026 token is still in use.
         return renewal_status(path=location,today=today)
-    return save_renewal_date(INITIAL_TOKEN_ISSUE_DATE,path=location)
+    return save_renewal_date(INITIAL_TOKEN_ISSUE_DATE,path=location,today=today)
 
 
 def renewal_status(*, path=None, today=None):
