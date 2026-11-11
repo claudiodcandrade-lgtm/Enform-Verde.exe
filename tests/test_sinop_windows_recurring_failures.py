@@ -28,7 +28,7 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
             self.assertIn('GDAL_HTTP_MULTIRANGE',src)
             self.assertIn('GDAL_HTTP_VERSION',src)
             self.assertIn('"1.1"',src)
-            self.assertIn("sign_asset_href(",src)
+            self.assertIn("asset_href_for_read_attempt(",src)
             self.assertIn("GDAL_HTTP_TIMEOUT",src)
 
     def test_map_refresh_uses_canvas_size_not_rendered_image_size(self):
@@ -52,6 +52,7 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
             src=inspect.getsource(fn)
             self.assertIn('GDAL_HTTP_MULTIRANGE":"SERIAL"',src)
             self.assertNotIn('GDAL_HTTP_MULTIRANGE":"NO"',src)
+            self.assertIn("asset_href_for_read_attempt(",src)
 
     def test_optical_provider_errors_are_saved_and_redacted(self):
         with tempfile.TemporaryDirectory() as td:

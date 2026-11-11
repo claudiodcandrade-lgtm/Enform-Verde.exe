@@ -22,7 +22,10 @@ CARBON_FRACTION = 0.47  # existing application convention; its uncertainty is no
 
 def _norm(value):
     value = unicodedata.normalize("NFKD", str(value or "").casefold())
-    return " ".join("".join(c for c in value if not unicodedata.combining(c)).split())
+    # IBGE legenda_1 varies between releases and files: e.g. the official
+    # ``Sempre Verde`` spelling and the literature's ``Sempre-Verde`` label
+    # denote the same phytoregion. Compare semantic tokens, not punctuation.
+    return "".join(c for c in value if c.isalnum() and not unicodedata.combining(c))
 
 
 def no_valid_sar_pixels(sar_result):

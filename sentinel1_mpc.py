@@ -138,6 +138,32 @@ def sign_asset_href(href, *, opener=urlopen):
     return str(signed)
 
 
+def asset_href_for_read_attempt(href, *, attempt, token=None, token_fn=None,
+                                signer=None):
+    """Rotate independent MPC access methods for a failed COG read.
+
+    Attempt 0 uses the collection SAS; attempt 1 uses the per-asset signer;
+    attempt 2 refreshes the collection token. Previously attempts 1 and 2
+    both repeated the signer, so an HTTP error there exhausted all retries
+    without trying a fresh collection credential.
+    """
+    signer = signer or sign_asset_href
+    token_fn = token_fn or get_runtime_sas_token
+    if attempt == 0:
+        return _signed_href(href, token) if token else signer(href)
+    if attempt == 1:
+        return signer(href)
+    try:
+        refreshed = token_fn()
+        if refreshed:
+            return _signed_href(href, refreshed)
+    except Exception:
+        pass
+    if token:
+        return _signed_href(href, token)
+    return signer(href)
+
+
 def _signed_href(href, token):
     parts = urlsplit(href)
     if parts.scheme != "https" or parts.hostname not in ALLOWED_HOSTS:

@@ -73,8 +73,8 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
     from rasterio.transform import from_origin
     from shapely.geometry import mapping, shape
     from datetime import datetime, timezone
-    from sentinel1_mpc import (_signed_href, get_runtime_sas_token,
-                               search_sentinel1_rtc, sign_asset_href)
+    from sentinel1_mpc import (asset_href_for_read_attempt, get_runtime_sas_token,
+                               search_sentinel1_rtc)
     import tls_setup
     tls_setup.configure()
     geom = aoi_4326.geometry.union_all()
@@ -152,9 +152,10 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                                               "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
                                               "GDAL_HTTP_VERSION":"1.1"})
                         with rasterio.Env(**gdal_opts):
-                            with rasterio.open((sign_asset_href(feat["assets"][pol]["href"])
-                                                if (attempt > 0 or not token)
-                                                else _signed_href(feat["assets"][pol]["href"],token))) as src:
+                            read_href=asset_href_for_read_attempt(
+                                feat["assets"][pol]["href"],attempt=attempt,token=token,
+                                token_fn=token_fn or get_runtime_sas_token)
+                            with rasterio.open(read_href) as src:
                                 if src.crs is None:raise ValueError("SAR_COG_MISSING_CRS")
                                 local=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
                                 window=from_bounds(*local.bounds,transform=src.transform)
@@ -185,8 +186,8 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                                    "type":type(exc).__name__,"attempt":attempt+1,
                                    "read_strategy":("HTTP_1_1_NO_MULTIRANGE" if attempt==2 else "DEFAULT_GDAL")})
                     pair={}
-                    if attempt==0 and token_fn is None:
-                        try:token=get_runtime_sas_token()
+                    if attempt==0 and not token:
+                        try:token=(token_fn or get_runtime_sas_token)()
                         except Exception:pass
             if len(pair)!=2:continue
             good=np.isfinite(pair["vv"]) & np.isfinite(pair["vh"])

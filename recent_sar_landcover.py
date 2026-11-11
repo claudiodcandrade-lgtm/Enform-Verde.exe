@@ -88,7 +88,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         from rasterio.windows import from_bounds,Window
         from rasterio.warp import reproject,Resampling,transform_geom
         from sentinel1_sources import search_sentinel1_sources
-        from sentinel1_mpc import get_runtime_sas_token,_signed_href,sign_asset_href
+        from sentinel1_mpc import (get_runtime_sas_token, asset_href_for_read_attempt)
         ref=(now or datetime.now(timezone.utc)).astimezone(timezone.utc)
         geom=aoi.to_crs(4326).geometry.union_all()
         if geom.is_empty:raise ValueError("AOI empty")
@@ -151,6 +151,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                 scene_ok=False
                 for attempt in range(3):
                     provider_diag["pixel_read_attempt_count"]+=1
+                    read_stage="asset_authorization"
                     try:
                         # A failed attempt must never poison the output grid for
                         # the next scene or provider. Commit only after both
@@ -173,9 +174,13 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                                   "GDAL_HTTP_VERSION":"1.1"})
                             with rasterio.Env(**gdal_opts):
                                 asset_href=scene["assets"][pol]["href"]
-                                read_href=(sign_asset_href(asset_href) if (attempt > 0 or not provider_token)
-                                           else _signed_href(asset_href,provider_token)) if provider=="MPC" else asset_href
+                                read_href=(asset_href_for_read_attempt(
+                                    asset_href,attempt=attempt,token=provider_token,
+                                    token_fn=token_fn or get_runtime_sas_token)
+                                    if provider=="MPC" else asset_href)
+                                read_stage="open_cog"
                                 with rasterio.open(read_href) as src:
+                                    read_stage="read_cog_window"
                                     if not src.crs:raise ValueError("Missing georeferencing in SAR source")
                                     if scene_grid is None:
                                         aoig=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
@@ -201,6 +206,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                         window_values=src.read(1,window=window,masked=True)
                                         src_values=np.ma.filled(window_values.astype(np.float32),np.nan)
                                     arr=np.full(size,np.nan,dtype=np.float32)
+                                    read_stage="reproject_cog_window"
                                     reproject(source=src_values,destination=arr,
                                               src_transform=src.window_transform(window),src_crs=src.crs,
                                               src_nodata=np.nan,dst_nodata=np.nan,dst_crs=crs,
@@ -219,6 +225,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                         row={"provider":provider,"scene_id":str(scene.get("id","")),
                              "error_type":type(exc).__name__,
                              "error_class":("GDAL_NATIVE_ERROR_NON_UTF8" if isinstance(exc,UnicodeError) else "COG_READ_ERROR"),
+                             "stage":read_stage,
                              "read_strategy":("HTTP_1_1_NO_MULTIRANGE" if attempt==2 else "DEFAULT_GDAL"),
                              "error":_safe_reason(exc),
                              "attempt":attempt+1,"recovered":False}

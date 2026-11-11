@@ -988,6 +988,16 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                               'SAR_UNIDADES_EXPERIMENTAIS' if any(r.get('source')=='SAR_CURRENT_EXPERIMENTAL' for r in summary['classes']) else
                               'ERRO_TECNICO_LEITURA_SAR' if sar_read_failed else
                               'N/D_SEM_COBERTURA_SAR')})
+    # Historical MapBiomas + PAM is a last-resort agricultural reference only.
+    # It must not run while any configured SAR path produced usable pixels or
+    # while route audits are incomplete, and it never enters current classes.
+    try:
+        from crop_mapbiomas_pam_fallback import build_mapbiomas_pam_contingency
+        summary['agriculture_historical_contingency']=build_mapbiomas_pam_contingency(aoi,summary)
+    except Exception as exc:
+        summary['agriculture_historical_contingency']={
+            'status':'ERRO_TECNICO_CONTINGENCIA_HISTORICA',
+            'reason':type(exc).__name__+': '+str(exc)[:200]}
     (outdir/'uso_solo_auditoria.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
     return summary
 
@@ -1043,6 +1053,7 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
     for error in (orbital.get('failed_scene_reads') or [])[:6]:
         lines.append('  FALHA SAR '+str(error.get('provider','N/D'))+
                      ' / '+str(error.get('scene_id','N/D'))[:65]+
+                     ' ['+str(error.get('stage','etapa não registrada'))+']'+
                      ': '+str(error.get('error_type','N/D'))+
                      ' — '+str(error.get('error','N/D'))[:150])
     if orbital.get('committed_grid_shape'):

@@ -12,6 +12,7 @@ class IfnCarbonFallbackTests(unittest.TestCase):
             "inventory_fallback_gate": {"eligible": True},
         }
 
+
     def test_state_inventory_returns_conditional_estimate_and_descriptive_uncertainty(self):
         result = estimate_fesv_state_scenario(
             biome="Amazônia", physiognomy="Floresta Estacional Sempre-Verde Submontana",
@@ -27,6 +28,17 @@ class IfnCarbonFallbackTests(unittest.TestCase):
                          result["inventory_n_unique_sampling_units"])
         self.assertAlmostEqual(result["calculation_trace"]["stock_tc_scenario"],
                                result["carbon_total_tc_scenario"])
+
+    def test_official_ibge_spelling_without_hyphen_matches_open_ifn_units(self):
+        # This exact label was present in the user's Sinop report. Earlier
+        # code accepted only ``Sempre-Verde`` and silently returned N/D.
+        result = estimate_fesv_state_scenario(
+            biome="Amazônia", physiognomy="Floresta Estacional Sempre Verde Submontana",
+            area_ha=1459.91, sar_result=self.no_pixels,
+            centroid_lon=-55.190498, centroid_lat=-11.872667)
+        self.assertEqual(result["status"], "CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR")
+        self.assertEqual(result["inventory_n_unique_sampling_units"], 30)
+        self.assertEqual(result["estimate_label"], "estimativa com incerteza não mensurada")
 
     def test_technical_read_failure_stays_visible_but_does_not_block_inventory_contingency(self):
         technical = {**self.no_pixels,
