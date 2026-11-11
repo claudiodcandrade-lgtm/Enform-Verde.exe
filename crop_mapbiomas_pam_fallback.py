@@ -25,6 +25,14 @@ MAPBIOMAS_CROPS = {
 PIXEL_STATUSES = {"SAR_REAL_EXPERIMENTAL_CANDIDATES", "SAR_CLASSIFICADOR_EXPERIMENTAL",
                   "ALTERNATIVE_RADAR_PIXELS_PROCESSED", "SAR_ELEGIVEL", "SAR_MODELO_EXPERIMENTAL",
                   "SAR_UNIDADES_EXPERIMENTAIS"}
+TERMINAL_ROUTE_STATUSES = {
+    "sentinel1_recente": {"N/D", "N/D_DADOS", "N/D_VALIDACAO", "ERRO_TECNICO",
+                          "ERROR", "SAR_REAL_EXPERIMENTAL_CANDIDATES"},
+    "lemplus_sazonal": {"N/D_SEM_PIXELS_SAR", "ERRO_TECNICO", "SAR_CLASSIFICADOR_EXPERIMENTAL"},
+    "radar_alternativo": {"N/D", "N/D_DADOS", "ERRO_TECNICO", "ERROR", "ACESSO_RESTRITO",
+                           "NOT_NEEDED_SENTINEL1_PIXELS_AVAILABLE", "ALTERNATIVE_RADAR_PIXELS_PROCESSED"},
+    "triagem_nativa": {"N/D", "ERRO_TECNICO", "ERROR", "SAR_EXPERIMENTAL_CANDIDATE_SCREEN"},
+}
 
 
 def sar_routes_exhausted(land):
@@ -51,6 +59,9 @@ def sar_routes_exhausted(land):
                 "missing_routes": missing}
     for name, row in routes.items():
         status = str(row.get("status") or "").upper()
+        if status not in TERMINAL_ROUTE_STATUSES[name]:
+            return {"eligible": False, "reason": "ROTA_SAR_NAO_EXECUTADA_OU_STATUS_NAO_TERMINAL",
+                    "route": name, "route_status": status or "STATUS_AUSENTE"}
         pixels = row.get("pixels")
         if status in PIXEL_STATUSES or (isinstance(pixels, (int, float)) and pixels > 0):
             return {"eligible": False, "reason": "PIXELS_SAR_PROCESSADOS", "route": name,

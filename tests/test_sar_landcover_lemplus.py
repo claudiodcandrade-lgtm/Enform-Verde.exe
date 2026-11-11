@@ -10,7 +10,7 @@ import geopandas as gpd
 from shapely.geometry import box
 
 import sar_landcover_lemplus as sl
-from land_use_sar import run_land_use
+from land_use_sar import report_lines, run_land_use
 
 AOI = gpd.GeoDataFrame(geometry=[box(-45.90, -12.30, -45.86, -12.26)], crs=4326)
 
@@ -96,6 +96,32 @@ class LandUseIntegrationTests(unittest.TestCase):
         self.assertAlmostEqual(sum(c["area_ha"] for c in r["classes"]),
                                r["area_aoi_ha"], places=4)
         self.assertFalse(any(str(c["source"]).startswith("MAPBIOMAS") for c in r["classes"]))
+        audit=r["sar_classifier_lemplus"]
+        self.assertTrue(audit["model_call_attempted"])
+        self.assertTrue(audit["result_applied_to_current_aoi"])
+        self.assertEqual(audit["execution_scope"],"AOI_INTEGRAL_DA_EXECUCAO_ATUAL")
+        self.assertAlmostEqual(audit["aoi_area_ha"],r["area_aoi_ha"],places=5)
+        self.assertTrue(audit["aoi_sha256_wgs84"])
+        self.assertIn("resultado aplicado=True","\n".join(report_lines(r)))
+
+    def test_existing_sar_classifier_records_lemplus_as_not_executed(self):
+        predicted = gpd.GeoDataFrame(
+            {"class_name": ["Soja"], "source": ["SAR_VALIDADO_TESTE"],
+             "taxonomy": ["teste"]}, geometry=AOI.geometry, crs=AOI.crs)
+        validation = {"class_metadata": {"Soja": {"parent": "uso agrícola"}}}
+        ib = AOI.copy(); ib["legenda_1"] = "Savana Arborizada"
+        with tempfile.TemporaryDirectory() as d, \
+             patch("sar_model_discovery.discover_installed_sar_configs", return_value=(["modelo.json"], [])), \
+             patch("land_use_sar.classify_config", return_value=(predicted, validation)), \
+             patch("sar_landcover_lemplus.classify_aoi") as classify_lemplus, \
+             patch("recent_sar_landcover.run_recent_sar_screen", return_value={"status": "N/D_DADOS", "reason": "offline"}):
+            r = run_land_use(AOI, d, ibge=ib)
+        classify_lemplus.assert_not_called()
+        audit = r["sar_classifier_lemplus"]
+        self.assertEqual(audit["status"], "NOT_EXECUTED")
+        self.assertEqual(audit["execution_scope"], "NOT_EXECUTED")
+        self.assertFalse(audit["model_call_attempted"])
+        self.assertFalse(audit["result_applied_to_current_aoi"])
 
     def test_out_of_domain_output_is_not_used(self):
         r = self._run("Estepe Arborizada")

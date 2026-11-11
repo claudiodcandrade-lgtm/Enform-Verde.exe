@@ -758,7 +758,15 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         raw_layers.append(reference)
     else:
         warnings.append('IBGE sem polígonos disponíveis; não há detalhamento fitofisionômico oficial.')
-    lemplus_audit=None
+    # Always preserve an explicit per-run state. A result produced by a
+    # separate CI fixture is not an application result; the app must either
+    # execute this classifier for the loaded AOI or say why it did not.
+    lemplus_audit={
+        'status':'NOT_EXECUTED',
+        'model_call_attempted':False,
+        'result_applied_to_current_aoi':False,
+        'execution_scope':'NOT_EXECUTED',
+        'reason':'Classificador SAR semântico anterior já forneceu classes; LEM+ não foi necessário nesta execução.'}
     if not layers:
         # Owner decision 8A: always attempt a SAR semantic classifier. The
         # LEM+ model (INPE field labels, CC BY 4.0) is used ONLY inside its
@@ -770,6 +778,9 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             res=classify_aoi(aoi)
             lemplus_audit={k:v for k,v in res.items() if k!='polygons_6933'}
             lemplus_audit['domain']=domain_msg
+            lemplus_audit['model_call_attempted']=True
+            lemplus_audit['result_applied_to_current_aoi']=False
+            lemplus_audit['execution_scope']='AOI_INTEGRAL_DA_EXECUCAO_ATUAL'
             polys=res.get('polygons_6933')
             if domain_ok and res.get('status')=='SAR_CLASSIFICADOR_EXPERIMENTAL' and polys is not None and not polys.empty:
                 lay=polys.copy()
@@ -788,6 +799,8 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                 lay['source']=model_source
                 lay['taxonomy']='SAR RF experimental, ano agrícola '+str(res.get('season'))
                 layers.append(lay[['class_name','source','taxonomy','geometry']])
+                lemplus_audit['result_applied_to_current_aoi']=True
+                lemplus_audit['reason']=None
                 class_metadata={
                     'Formação savânica':{'parent':'vegetação natural'},
                     'Formação florestal':{'parent':'vegetação natural'}}
@@ -815,9 +828,15 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                     str(res.get('season'))+'; NÃO representam confirmação de campo nem cobertura do mês atual. '+
                     domain_msg)
             else:
+                lemplus_audit['reason']=('DOMINIO_SAR_NAO_ELEGIVEL' if not domain_ok else
+                    'CLASSIFICADOR_SEM_POLIGONOS' if res.get('status')=='SAR_CLASSIFICADOR_EXPERIMENTAL' else
+                    str(res.get('reason') or res.get('status') or 'CLASSIFICADOR_SEM_RESULTADO'))
                 warnings.append('Classificador SAR LEM+ não aplicado: '+domain_msg+'; status '+str(res.get('status')))
         except Exception as exc:
-            lemplus_audit={'status':'ERRO_TECNICO','reason':type(exc).__name__+': '+str(exc)[:200]}
+            lemplus_audit={'status':'ERRO_TECNICO','model_call_attempted':True,
+                'result_applied_to_current_aoi':False,
+                'execution_scope':'AOI_INTEGRAL_DA_EXECUCAO_ATUAL',
+                'reason':type(exc).__name__+': '+str(exc)[:200]}
             warnings.append('Classificador SAR LEM+ indisponível: '+lemplus_audit['reason'])
     if layers and reference is not None and not reference.empty:
         # Current native presence comes ONLY from modelled/validated SAR masks.
@@ -969,6 +988,8 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     # National audit: reconcile area, provenance and unknown uncertainty.
     from national_analysis_audit import audit_national_coverage
     summary['national_audit']=audit_national_coverage(aoi,summary)
+    lemplus_audit['aoi_area_ha']=summary.get('area_aoi_ha')
+    lemplus_audit['aoi_sha256_wgs84']=(summary.get('national_audit') or {}).get('aoi_sha256_wgs84')
     vector_path=outdir/'uso_solo_intersecao.geojson'
     polygons.to_file(vector_path,driver='GeoJSON')
     recent_status=str((recent_sar_cover or {}).get('status') or '').upper()
@@ -1008,6 +1029,22 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
         lines.append(f"  {row['class_name']}: {fmt(row['area_ha'])} ha ({fmt(row['area_pct'])}%) — {row['source']} / {row['taxonomy']}")
     lines.append('Identificador SAR utilizado: '+str(summary.get('sar_model_config') or 'NENHUM; classes semânticas atuais N/D.'))
     lines.append('Seleção SAR: '+str(summary.get('sar_selection') or 'não especificada'))
+    lemplus=summary.get('sar_classifier_lemplus') or {}
+    lines.append('CLASSIFICADOR SAZONAL SENTINEL-1 LEM+: '+str(lemplus.get('status','N/D'))+
+                 '; tentativa na AOI integral='+str(bool(lemplus.get('model_call_attempted',False)))+
+                 '; resultado aplicado='+str(bool(lemplus.get('result_applied_to_current_aoi',False))))
+    if lemplus.get('season'):
+        lines.append('  Safra='+str(lemplus.get('season'))+'; cenas='+str(lemplus.get('scenes_used','N/D'))+
+                     '; pixels='+str(lemplus.get('pixels','N/D'))+'; domínio='+str(lemplus.get('domain','N/D')))
+    lem_reason=lemplus.get('reason')
+    acquisition=lemplus.get('acquisition_diagnostic') or {}
+    if lem_reason or acquisition:
+        lines.append('  Motivo LEM+: '+str(lem_reason or acquisition.get('reason') or 'diagnóstico detalhado no JSON de auditoria')[:220])
+        if acquisition.get('missing_months'):
+            lines.append('  Meses sem pares VV/VH: '+', '.join(map(str,acquisition['missing_months'])))
+        for error in (acquisition.get('pixel_read_errors') or [])[:3]:
+            lines.append('  Falha LEM+ '+str(error.get('scene','N/D'))+' — '+str(error.get('type','N/D'))+
+                         '; tentativa '+str(error.get('attempt','N/D')))
     exp=summary.get('native_sar_experimental') or {}
     if exp.get('status')=='SAR_EXPERIMENTAL_CANDIDATE_SCREEN':
         sensitivity=exp.get('threshold_sensitivity_area_ha') or {}

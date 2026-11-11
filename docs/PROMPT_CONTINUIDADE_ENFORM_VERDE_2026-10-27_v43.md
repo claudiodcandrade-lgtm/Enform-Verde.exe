@@ -1824,3 +1824,16 @@ Prioridades do piloto: série temporal SAR observável com proveniência por cen
 
 - A legenda oficial `Floresta Estacional Sempre Verde Submontana` era recusada pela diferença de hífen; normalização agora compara tokens sem pontuação e encontra 30 unidades IFN compatíveis no conjunto local e raio regional já definido. A contingência de carbono também é acionada quando existe estrato, mas nenhum estoque foi quantificado.
 - Nove testes focados passaram. GeoPandas e Rasterio não estão instalados neste ambiente; portanto esta alteração não comprova leitura de pixels. O CI Windows e a leitura de pixels no KML integral do Tapajós e da Fazenda Maria Eduarda continuam obrigatórios antes de chamar a versão de funcional ou corrigida. A imagem de fundo também não está validada para esses KMLs.
+
+## V87.97 — LEM+ runtime da AOI e integração do relatório (11/11/2026)
+- O processamento CI em Sinop é um fixture de caixa ao redor do centroide, safra anterior, publicado como artefato GitHub Actions; não é a AOI integral da propriedade nem é importado pelo aplicativo.
+- O aplicativo executa o classificador LEM+ na geometria carregada quando nenhum classificador SAR anterior produz classes. Relatório e auditoria exibem estado da rota, tentativa, aplicação à AOI, motivo, cenas/pixels, safra, área integral e hash da geometria. Separar LEM+ da triagem SAR recente; falha de uma não resume nem substitui a outra.
+- Se outra rota já forneceu classes SAR, registrar LEM+ como `NOT_EXECUTED` e `execution_scope=NOT_EXECUTED`; não sugerir que a AOI integral foi processada. Qualquer rota não executada ou estado desconhecido impede a contingência MapBiomas + PAM.
+- A auditoria de causa raiz confirma que o artefato CI de caixa fixa não é importado pelo aplicativo: o runtime faz a própria execução. O defeito de observabilidade escondia o estado e a identidade da AOI; a correção o torna rastreável, mas não repara indisponibilidade de provedor, credencial, COG ou pixels válidos.
+- Verificação final: suíte completa 1.071 testes aprovados e 1 ignorado; contrato documental passou após sincronização Word e nova regressão `NOT_EXECUTED` incluída. Coleta 156 módulos aprovada. `ui_visual_standard.py` indisponível sem DISPLAY. Build Windows e KML integral com pixels reais ainda pendentes.
+
+
+### V87.97 — auditoria da rota LEM+ no runtime (11/11/2026)
+- O classificador executado pelo CI em caixa fixa não era transferido ao aplicativo. O runtime executa separadamente na geometria carregada. Relatório agora diferencia `NOT_EXECUTED`, N/D, erro técnico e resultado aplicado; associa área/hash da geometria e auditoria por safra/cenas/pixels.
+- A contingência MapBiomas + PAM não pode avançar enquanto uma rota SAR estiver sem execução ou estado terminal reconhecido.
+- Verificação desta revisão: 34 testes focados passaram; suíte completa 1.070 com 1 falha documental (versão Word ainda não sincronizada) e 1 skip; coleta 156 módulos aprovada; teste visual indisponível sem display. Build Windows e leitura real da fazenda completa continuam pendentes. A integração evita ocultar o diagnóstico, mas não demonstra que provedores/credenciais/COG estarão acessíveis.

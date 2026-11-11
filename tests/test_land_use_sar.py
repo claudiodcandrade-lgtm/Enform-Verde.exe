@@ -8,7 +8,7 @@ import geopandas as gpd
 import rasterio
 from rasterio.transform import from_origin
 from shapely.geometry import box, Point, mapping
-from land_use_sar import validation_report, partition_land_use, raster_class_polygons, classify_config, run_land_use
+from land_use_sar import validation_report, partition_land_use, raster_class_polygons, classify_config, report_lines, run_land_use
 
 class LandUseTests(unittest.TestCase):
     def test_experimental_cultivated_candidate_is_detected_without_becoming_a_crop_label(self):
@@ -86,6 +86,9 @@ class LandUseTests(unittest.TestCase):
             self.assertEqual(potential[0]['name'],'FOD')
             self.assertAlmostEqual(potential[0]['area_ha'],aoi.to_crs('EPSG:6933').geometry.area.sum()/10000,places=5)
             self.assertFalse(any('_shares_with_code' in w for w in r['warnings']))
+            audit='\n'.join(report_lines(r))
+            self.assertIn('CLASSIFICADOR SAZONAL SENTINEL-1 LEM+: N/D_SEM_PIXELS_SAR',audit)
+            self.assertIn('Motivo LEM+: teste offline',audit)
 
     def fixture(self,directory):
         root=Path(directory);transform=from_origin(500000,9000000,1000,1000)

@@ -30,6 +30,16 @@ class CropMapBiomasPAMFallbackTests(unittest.TestCase):
         out=build_mapbiomas_pam_contingency(None,land,map_reader=lambda _: self.fail("must not read MapBiomas"))
         self.assertEqual(out["status"],"BLOQUEADO_ATE_ESGOTAR_SAR")
 
+    def test_unexecuted_sar_classifier_blocks_the_historical_fallback(self):
+        land=exhausted_land()
+        land["sar_classifier_lemplus"]={"status":"NOT_EXECUTED",
+                                        "reason":"primary model already produced output"}
+        out=build_mapbiomas_pam_contingency(None,land,
+            map_reader=lambda _: self.fail("MapBiomas must remain blocked"))
+        self.assertEqual(out["status"],"BLOQUEADO_ATE_ESGOTAR_SAR")
+        self.assertEqual(out["sar_gate"]["reason"],
+                         "ROTA_SAR_NAO_EXECUTADA_OU_STATUS_NAO_TERMINAL")
+
     def test_exhausted_sar_uses_mapbiomas_area_and_regional_pam_as_historical_reference(self):
         land=exhausted_land()
         mapped={"collection":11,"year":2025,"mapped_area_ha":100,

@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.17-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.18-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -2155,6 +2155,21 @@ class App(tk.Tk):
             executive.append("• Não determinado")
         from crop_report_consistency import experimental_seasonal_sar_classes
         seasonal_sar=experimental_seasonal_sar_classes(land)
+        seasonal_audit=land.get("sar_classifier_lemplus") or {}
+        executive.append("CLASSIFICADOR SAZONAL SENTINEL-1 LEM+: "+
+                         str(seasonal_audit.get("status","N/D"))+
+                         "; tentativa na AOI integral="+
+                         ("SIM" if seasonal_audit.get("model_call_attempted") else "NÃO")+
+                         "; resultado aplicado="+
+                         ("SIM" if seasonal_audit.get("result_applied_to_current_aoi") else "NÃO"))
+        seasonal_reason=(seasonal_audit.get("reason") or
+                         (seasonal_audit.get("acquisition_diagnostic") or {}).get("reason"))
+        if seasonal_reason:
+            executive.append("  Diagnóstico LEM+: "+str(seasonal_reason)[:220])
+        seasonal_acquisition=seasonal_audit.get("acquisition_diagnostic") or {}
+        if seasonal_acquisition.get("missing_months"):
+            executive.append("  Meses sem pares VV/VH: "+
+                             ", ".join(map(str,seasonal_acquisition["missing_months"])))
         if seasonal_sar:
             executive.extend(["", "CLASSIFICAÇÃO SAR EXPERIMENTAL — SAFRA COMPLETA OBSERVADA (não representa cobertura atual)",
                 "Safra: "+str(seasonal_sar.get("season") or "N/D")+
