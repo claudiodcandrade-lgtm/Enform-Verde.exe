@@ -10,6 +10,8 @@
 
 ## Evidência / limitações
 
+Build final do commit `b70894e1796121027aaaf09c00a533d131e5a749`: run Windows 43050581961 aprovado; artefato ID 13871576858 (533.400.808 bytes), SHA-256 ZIP `1abc923ed7133ce259c1130b5b7be729c827226891e52e5739aab82777b7d4f6`; SHA-256 do EXE `66c17b8d8fad210a9e3aa92e16a05e3d11d3c4655d0b8722e2477f7958a6cc97`. Self-test em pasta limpa, paridade Python/Windows, padrão visual, network-check e aceite SAR Tapajós passaram. O aceite SAR leu 302.348 pixels em cinco cenas para 1.290,69 ha (`SAR_PROCESSADO`), mas não retornou AGB quantitativa (`fallback_agb_mg_ha=null`). Smoke óptico e CBERS canvas tiveram sucesso em amostras; a AOI integral da Fazenda Maria Eduarda ainda não foi processada.
+
 Verificação local: 1.063 testes aprovados, 1 ignorado; coleta de 154 módulos aprovada. O contrato visual de janela foi ignorado e a checagem da interface não pôde executar por falta de `$DISPLAY`.
 
 No CI foram lidos pixels reais ESA BIOMASS FH em Sinop. Uma execução independente também processou 30 cenas Sentinel-1 RTC VV/VH (out/2025–set/2026) e 1.692 pixels em uma janela experimental ao redor do centroide, gerando polígonos e classes exploratórias para 1.079,26 ha. A janela de pixels tinha 1.084,73 ha; ela não é o KML integral de 1.459,91 ha. O resultado não está validado em campo e não autoriza transferência para a propriedade ou estimativa de carbono com base nessas classes.

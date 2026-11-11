@@ -1,3 +1,10 @@
+<!-- V87_95_FINAL_WINDOWS_BUILD -->
+## V87.95 — build Windows final 3.26.16 no commit b70894e (11/11/2026)
+- Run Windows `43050581961` concluiu verde no SHA `b70894e1796121027aaaf09c00a533d131e5a749`. Artefato `Enform-Verde-Windows-v3.26.16-PRECAMPO-EXPERIMENTAL`, ID `13871576858` (533.400.808 bytes; SHA-256 ZIP `1abc923ed7133ce259c1130b5b7be729c827226891e52e5739aab82777b7d4f6`). EXE SHA-256 `66c17b8d8fad210a9e3aa92e16a05e3d11d3c4655d0b8722e2477f7958a6cc97`.
+- O EXE passou teste em pasta limpa, paridade núcleo Python/Windows, `--visual-check`, `--network-check` TLS ativo e aceite SAR Tapajós. Aceite: `SAR_PROCESSADO`, 1.290,69 ha, 302.348 pixels, 5 cenas; sem AGB quantitativa (`fallback_agb_mg_ha=null`). É execução observada em fixture, não validação de campo nem resultado de carbono.
+- CBERS-4A/WFI real passou no network-check; smoke óptico 11/11 locais amostrais brasileiros (9 CBERS, 2 Sentinel-2 fallback) e CBERS worker→canvas Tk em janela Sinop passaram. Cobertura amostral não garante pixels em cada local/data nem comprova o KML integral de Sinop.
+- Gate científico permanece reprovado; BIOMASS FH para as AOIs de alta biomassa do Tapajós não foi confirmado. Não declarar altura FH para Tapajós, homologação nacional ou resultados da Fazenda Maria Eduarda integral até testar o KML completo no Windows. PR #51 segue draft; release restrita a `main`.
+
 <!-- V87_94_WINDOWS_BUILD_AND_REAL_OPTICAL_SMOKE -->
 ## V87.94 — build Windows, leitura óptica em amostras nacionais e limites da prova (11/11/2026)
 - Fonte do executável testado: SHA `a1a11b1e406af0d322c5697222012403c92735ba`; versão `3.26.16-PRECAMPO-EXPERIMENTAL`; artefato Actions `Enform-Verde-Windows-v3.26.16-PRECAMPO-EXPERIMENTAL`, ID `13867841475`, 533.397.855 bytes. O EXE passou compilação, runtime, self-test em pasta limpa, network check e aceite SAR com AOI de Tapajós. SHA-256 do executável: `95aa798b72ddcafc9c962ffd338b5cf7f7e4740488ed325fde7ee710c8e2631f`.
