@@ -1837,3 +1837,9 @@ Prioridades do piloto: série temporal SAR observável com proveniência por cen
 - O classificador executado pelo CI em caixa fixa não era transferido ao aplicativo. O runtime executa separadamente na geometria carregada. Relatório agora diferencia `NOT_EXECUTED`, N/D, erro técnico e resultado aplicado; associa área/hash da geometria e auditoria por safra/cenas/pixels.
 - A contingência MapBiomas + PAM não pode avançar enquanto uma rota SAR estiver sem execução ou estado terminal reconhecido.
 - Verificação desta revisão: 34 testes focados passaram; suíte completa 1.070 com 1 falha documental (versão Word ainda não sincronizada) e 1 skip; coleta 156 módulos aprovada; teste visual indisponível sem display. Build Windows e leitura real da fazenda completa continuam pendentes. A integração evita ocultar o diagnóstico, mas não demonstra que provedores/credenciais/COG estarão acessíveis.
+
+
+### V87.98 — evidências de build e pixels (11/11/2026)
+- Build Windows `3.26.18-PRECAMPO-EXPERIMENTAL` passou no commit de código `b8ef8f04221f92fefad74021f0f831d4555706a7`; executável testado em pasta limpa. SHA256 do EXE `497ad17b2a2e310def6f995b76c42dc94bbcb7df1a23e4f3ede30fed01c8b7a2`; artefato Actions `13893354363`, ZIP digest `afdcd2a2dc37b9d371b9a9716dcecf3e7b1c0d6be55ab205f2211c53148b4e6e`.
+- O EXE leu CBERS-4A e S1 VV/VH numa AOI de smoke; o KMZ de teste do Tapajós processou 1.290,688 ha, 302.348 pixels e 5 cenas. Não gerou AGB via fallback. Dashboard CI: 1.071 aprovados, 1 ignorado; gate científico segue reprovado.
+- Esses testes não correspondem ao KML integral da Fazenda Maria Eduarda. A validação final deve confirmar leitura, máscara, painéis agrícolas e carbono na AOI completa.
