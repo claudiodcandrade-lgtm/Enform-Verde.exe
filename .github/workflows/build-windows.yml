@@ -1167,7 +1167,7 @@ jobs:
     # permanent GitHub Release with the SAME tested package. PR builds only
     # produce the 90-day artifact.
     needs: build-windows
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
       contents: write
