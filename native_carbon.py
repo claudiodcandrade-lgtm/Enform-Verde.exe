@@ -417,4 +417,4 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                 rows[rows.index(existing)]=candidate
     return {'components':rows,'secondary_evidence_audit':secondary_audit,
             'soil_profiles':soil,'sar_audit':sar.get('audit'), 'error':sar.get('error'),
-            'sar_details':{k:sar[k] for k in ('status','data_origin','source','sensor','paths','stats','height_mean_m','height_interpretation','sar_validation_metrics','agb_blocker','message','reason') if k in sar}}
+            'sar_details':{k:sar[k] for k in ('status','data_origin','source','sensor','product','paths','stats','height_mean_m','height_sd_m','height_n_valid_pixels','height_pixel_distribution','height_interpretation','height_route_status','height_absence_certificate','sar_validation_metrics','agb_blocker','message','reason') if k in sar}}

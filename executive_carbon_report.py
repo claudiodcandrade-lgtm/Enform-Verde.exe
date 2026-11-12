@@ -1,6 +1,7 @@
 """Readable native-carbon executive summary with honest per-pool uncertainty units."""
 from __future__ import annotations
 import math
+import json
 
 def uncertainty_for_pool(row, carbon_fraction=0.47):
     value=row.get("tc")
@@ -134,6 +135,42 @@ def executive_carbon_lines(native, fmt):
                  " | "+(fmt(total_unc_abs) if total_unc_abs is not None else "N/D")+
                  " | "+(fmt(total_unc_pct)+"%" if total_unc_pct is not None else "N/D")+" |")
     table.append("+-----------------------------------------------+")
+    biodiversity=native.get("biodiversity_references") or []
+    biodiversity_lines=["PERSPECTIVA DE BIODIVERSIDADE E ESTRUTURA — INVENTÁRIOS REGIONAIS",
+        "Referência fitossociológica compatível; não representa inventário medido na propriedade."]
+    if not biodiversity:
+        biodiversity_lines.append("N/D — resumo de inventário não foi executado.")
+    else:
+        for ref in biodiversity:
+            if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":
+                biodiversity_lines.append("N/D — "+str(ref.get("reason") or "sem referência compatível")+
+                    "; fitofisionomia: "+str(ref.get("target",{}).get("physiognomy","N/D")))
+                continue
+            biodiversity_lines.append(
+                str(ref.get("physiognomy"))+" / "+str(ref.get("microregion"))+": "+
+                str(ref.get("inventory_n_plots"))+" parcelas; "+
+                str(ref.get("inventory_n_live_stems"))+" indivíduos vivos; "+
+                str(ref.get("species_richness_observed"))+" espécies observadas; "+
+                "DAP mínimo "+fmt(ref.get("inclusion_threshold_dap_cm"))+" cm.")
+            biodiversity_lines.append("Área basal média de toda a comunidade: "+
+                fmt(ref.get("community_mean_basal_area_m2_ha"))+" m²/ha; DP entre parcelas "+
+                fmt(ref.get("community_sd_between_plots_m2_ha"))+" m²/ha; IC95% da região de origem "+
+                (json.dumps(ref.get("community_ci95_source_region_m2_ha"),ensure_ascii=False)
+                 if ref.get("community_ci95_source_region_m2_ha") else "N/D pelo delineamento amostral")+
+                ". Erro de transferência para a fazenda não quantificado.")
+            biodiversity_lines.append("Riqueza e Shannon H′ são descritivos da amostra, sem IC de transferência: "+
+                str(ref.get("species_richness_observed"))+" espécies; H′="+
+                fmt(ref.get("shannon_h_descriptive"))+".")
+            biodiversity_lines.append("Top 10 por frequência nas parcelas — frequência | área basal média (m²/ha) | IC95% amostral da região:")
+            for row in ref.get("top10_by_plot_incidence",[]):
+                ci=row.get("ci95_source_region_m2_ha")
+                biodiversity_lines.append("  "+str(row.get("species"))+" — "+
+                    fmt(row.get("frequency_pct"))+"% | "+fmt(row.get("mean_basal_area_m2_ha"))+" | "+
+                    (fmt(ci[0])+"–"+fmt(ci[1]) if ci else "N/D"))
+            biodiversity_lines.append("Soma da área basal média das 10 espécies: "+
+                fmt(ref.get("top10_mean_basal_area_sum_m2_ha"))+" m²/ha. A estimativa da comunidade mantém todas as espécies; espécies raras não são descartadas.")
+            biodiversity_lines.append("Fontes: "+"; ".join(ref.get("institutions") or [])+
+                " — "+"; ".join(ref.get("source_urls") or []))
     lines=["PAINEL EXECUTIVO — ESTOQUES DE CARBONO",
            "ÁREA TOTAL ANALISADA: "+fmt(aoi_ha)+" ha (100%)",
            "VEGETAÇÃO NATIVA MAPEADA: "+
@@ -145,6 +182,7 @@ def executive_carbon_lines(native, fmt):
            "A formação IBGE nomeia SOMENTE a interseção nativa; NÃO é cobertura de toda a AOI.",
            "Cobertura nativa: "+("N/D — cobertura não integralmente verificada" if unknown>0 else
                                   (fmt(pct)+"% da AOI conforme classes mapeadas" if pct is not None else "N/D")),
+           *biodiversity_lines,
            "Cobertura cartográfica: "+("completa dentro da precisão de área" if cover_complete
                                     else "parcial — área sem classe; não inferir sua cobertura"),
            "COMPARTIMENTOS DE CARBONO: "+("todos quantificados" if complete

@@ -1946,3 +1946,27 @@ Linux/macOS: criar um `venv`, ativá-lo e executar `python -m pip install -r req
 ## Estado das pendências
 
 A falta de GeoPandas no runtime foi resolvida para esta validação e a suíte completa passou. Continuam pendentes gates diferentes: build/GUI Windows no SHA atual, smoke ponta a ponta no KML integral da Fazenda Maria Eduarda, leitura óptica nessa geometria e homologação científica. O único skip local é a captura visual Tk por ausência de display; a evidência visual deve vir de Windows CI ou de sessão gráfica com baseline.
+
+# V88.12 — modelo estrutural com distribuição DAP e gráficos de planilha (12/11/2026)
+
+## Prioridade matemática e estrutural
+
+- Usar como referência primária alometrias publicadas compatíveis com domínio e variáveis observadas. Chave et al. (2014, DOI 10.1111/gcb.12629) pode formar rótulos de AGB por parcela a partir de DAP, altura medida e densidade da madeira; esses rótulos não substituem altura do imóvel. No imóvel, a altura do dossel vem exclusivamente de pixel SAR real e de produto com métrica identificada.
+- O candidato experimental combina altura SAR, área basal total média do inventário e composição relativa da área basal nas classes DAP 5–10, 10–20, 20–30, 30–40, 40–60 e ≥60 cm. A área basal total não deve ser somada novamente às áreas basais brutas por classe: usar G total mais proporções relativas das classes, com 5–10 cm como referência composicional.
+- Comparar modelo publicado, modelo-base e candidato experimental em validação espacial agrupada e sítios externos. Reportar RMSE, MAE, viés, R², fator de retransformação, incerteza e domínio. Coeficientes exploratórios não são implantáveis nem entram no estoque sem validação independente suficiente.
+
+## Inventário e painel executivo
+
+- O CSV de inventário deve preservar fonte, URL, instituição, licença, parcelas, área, desenho amostral, microrregião, fitofisionomia, DAP, espécie e classe de inclusão. Top 10 ordenadas por incidência em parcelas; área basal por espécie é média de parcela incluindo zeros. A área basal comunitária inclui todas as espécies. IC95% regional somente quando o desenho e pesos permitem; nunca apresentar como incerteza de transferência para a fazenda.
+- A interface aceita altura medida opcional por árvore no inventário apenas para referências regionais e calibração de parcela. Não preencher altura SAR da propriedade com esses dados enquanto houver busca SAR aberta ou falha técnica.
+
+## Planilha exportada
+
+- Criar aba “Gráficos” com: (1) gráfico de linhas da área basal média por classe diamétrica dos inventários compatíveis, ponderada pela área dos estratos; (2) gráfico de linhas da frequência de pixels de altura SAR válida por faixa de 5 m, calculada dentro dos polígonos; (3) gráfico de barras das 10 espécies mais frequentes, com média ponderada por parcelas e fontes declaradas. Se e somente se ausência SAR estiver certificada, preencher a série de altura com a frequência média de alturas de árvores medidas em inventários da mesma fitofisionomia e microrregião/região, rotulando-a como referência de inventário (não como altura SAR do imóvel); informar fonte e número de parcelas. Erro ou leitura incompleta mantém N/D técnico.
+- Se e somente se ausência SAR de altura estiver certificada após busca global, paginação e leitura completas, todas as rotas configuradas auditadas, zero pixels e zero erros técnicos, permitir série de altura regional da mesma fitofisionomia e microrregião/região, com fontes, número de parcelas e rótulo claro de referência de inventário. Auditorias ESA BIOMASS FH L2A/L2B e GTDX/CMR agora alimentam o certificado; paginação sem contagem verificável, rota não executada ou erro bloqueia a contingência. Rotular a série alternativa como altura de árvores medidas em inventários, nunca como altura do dossel SAR ou medição da fazenda. Valores SAR negativos não entram nas estatísticas. Com falha técnica ou estado incompleto, deixar N/D com diagnóstico e retentativa; não substituir por média regional.
+- Sem pixels SAR válidos, o gráfico não é altura da propriedade. Informar número de pixels ou parcelas, URL/instituição, domínio e incerteza/limitação. Não interpolar lacunas.
+
+## Regressões adicionadas e gates pendentes
+
+- Testes locais direcionados passaram para CSV/proveniência, Top 10, cálculo de referência Chave, distribuição DAP e altura inventariada, bloqueio de contingência sem certificado de ausência e calibração espacial que nunca marca o candidato como implantável. `py_compile` e `git diff --check` passaram.
+- Smoke local do exportador XLSX criou os três gráficos tanto com pixels SAR observados quanto com fallback regional certificado; corrigiu-se uma sobreposição de células mescladas que impedia a exportação N/D. Falta executar no SHA final: build/autocheck Windows, smoke visual do Excel, integração observacional real do produto de altura no KML integral da Fazenda Maria Eduarda e homologação científica. Testes de fixture não são resultado do imóvel. Não declarar conclusão operacional até esses gates passarem.

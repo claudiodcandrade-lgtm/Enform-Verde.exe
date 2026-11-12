@@ -25,25 +25,22 @@ MAPBIOMAS_CROPS = {
 PIXEL_STATUSES = {"SAR_REAL_EXPERIMENTAL_CANDIDATES", "SAR_CLASSIFICADOR_EXPERIMENTAL",
                   "ALTERNATIVE_RADAR_PIXELS_PROCESSED", "SAR_ELEGIVEL", "SAR_MODELO_EXPERIMENTAL",
                   "SAR_UNIDADES_EXPERIMENTAIS"}
-TERMINAL_ROUTE_STATUSES = {
-    "sentinel1_recente": {"N/D", "N/D_DADOS", "N/D_VALIDACAO", "ERRO_TECNICO",
-                          "ERROR", "SAR_REAL_EXPERIMENTAL_CANDIDATES"},
-    "lemplus_sazonal": {"N/D_SEM_PIXELS_SAR", "ERRO_TECNICO", "ERRO_TECNICO_LEITURA_SAR",
-                        "SAR_CLASSIFICADOR_EXPERIMENTAL"},
-    "radar_alternativo": {"N/D", "N/D_DADOS", "ERRO_TECNICO", "ERROR", "ACESSO_RESTRITO",
-                           "NOT_NEEDED_SENTINEL1_PIXELS_AVAILABLE", "ALTERNATIVE_RADAR_PIXELS_PROCESSED"},
-    "triagem_nativa": {"N/D", "ERRO_TECNICO", "ERROR", "SAR_EXPERIMENTAL_CANDIDATE_SCREEN"},
-}
+CONFIRMED_ABSENCE_STATUS = "SAR_AUSENCIA_COBERTURA_CONFIRMADA"
 
 
 def sar_routes_exhausted(land):
-    """True only when each configured semantic/radar route ran without pixels.
+    """Allow a historical contingency only after audited, complete SAR absence.
 
-    A missing audit is deliberately not treated as exhaustion. Any processed
-    SAR pixels or SAR-derived polygons block the historical contingency.
+    Errors, inaccessible assets, incomplete pagination, unconfigured missions,
+    and missing route audits are not evidence of absent SAR coverage. The
+    explicit absence certificate is intentionally stricter than a generic N/D
+    status so a reader/transport defect can never open the fallback gate.
     """
     if not isinstance(land, dict) or land.get("status") in PIXEL_STATUSES:
         return {"eligible": False, "reason": "SAR_PROCESSADO_OU_RESULTADO_SAR_PRESENTE"}
+    app_status = str(land.get("status") or "").upper()
+    if any(token in app_status for token in ("ERRO", "ERROR", "INCOMPLETE", "INCOMPLETO", "FAILED")):
+        return {"eligible": False, "reason": "ERRO_TECNICO_SAR_NAO_EVIDENCIA_AUSENCIA"}
     classes = land.get("classes") or []
     if any(str(row.get("source") or "").startswith(("SAR_VALIDADO", "SAR_EXPERIMENTAL_MODELO",
                                                        "SAR_CURRENT_EXPERIMENTAL")) for row in classes):
@@ -58,23 +55,28 @@ def sar_routes_exhausted(land):
     if missing:
         return {"eligible": False, "reason": "AUDITORIA_DE_ROTAS_SAR_INCOMPLETA",
                 "missing_routes": missing}
+    if land.get("all_sar_missions_checked") is not True:
+        return {"eligible": False, "reason": "BUSCA_GLOBAL_SAR_NAO_CONFIRMADA"}
+    if land.get("unconfigured_sar_routes"):
+        return {"eligible": False, "reason": "ROTAS_SAR_NAO_CONFIGURADAS",
+                "unconfigured_routes": list(land.get("unconfigured_sar_routes") or [])}
     for name, row in routes.items():
         status = str(row.get("status") or "").upper()
-        if status not in TERMINAL_ROUTE_STATUSES[name]:
-            return {"eligible": False, "reason": "ROTA_SAR_NAO_EXECUTADA_OU_STATUS_NAO_TERMINAL",
+        if status != CONFIRMED_ABSENCE_STATUS:
+            return {"eligible": False, "reason": "AUSENCIA_SAR_NAO_COMPROVADA_OU_ROTA_COM_ERRO",
                     "route": name, "route_status": status or "STATUS_AUSENTE"}
+        if (row.get("coverage_absence_confirmed") is not True
+                or row.get("catalog_search_complete") is not True
+                or row.get("pagination_complete") is not True
+                or row.get("pixel_read_complete") is not True
+                or int(row.get("valid_pixel_count") or 0) != 0
+                or int(row.get("technical_error_count") or 0) != 0):
+            return {"eligible": False, "reason": "CERTIFICADO_DE_AUSENCIA_SAR_INCOMPLETO",
+                    "route": name}
         pixels = row.get("pixels")
         if status in PIXEL_STATUSES or (isinstance(pixels, (int, float)) and pixels > 0):
             return {"eligible": False, "reason": "PIXELS_SAR_PROCESSADOS", "route": name,
                     "route_status": status}
-    if int(recent.get("readable_scene_count") or 0) > 0:
-        return {"eligible": False, "reason": "CENAS_SAR_RECENTES_LEGIVEIS"}
-    if seasonal.get("status") == "SAR_CLASSIFICADOR_EXPERIMENTAL":
-        return {"eligible": False, "reason": "CLASSIFICADOR_SAR_SAZONAL_EXECUTADO"}
-    if alternative.get("status") == "ALTERNATIVE_RADAR_PIXELS_PROCESSED":
-        return {"eligible": False, "reason": "RADAR_ALTERNATIVO_PROCESSADO"}
-    if native.get("status") == "SAR_EXPERIMENTAL_CANDIDATE_SCREEN":
-        return {"eligible": False, "reason": "TRIAGEM_SAR_NATIVA_PROCESSADA"}
     return {"eligible": True, "reason": "ROTAS_SAR_CONFIGURADAS_ESGOTADAS_SEM_PIXELS_UTILIZAVEIS",
             "routes": {name: {"status": row.get("status"),
                               "reason": row.get("reason") or row.get("diagnostic")}

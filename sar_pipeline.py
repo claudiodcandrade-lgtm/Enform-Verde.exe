@@ -108,8 +108,24 @@ def _zonal(gdf,path):
         gj=transform_geom("EPSG:4326",src.crs,gdf.to_crs(4326).geometry.union_all().__geo_interface__)
         arr,_=mask(src,[gj],crop=True,filled=False);a=np.ma.array(arr[0]).compressed();a=a[np.isfinite(a)]
         if src.nodata is not None:a=a[a!=src.nodata]
-        if not len(a):raise ValueError("Raster sem pixels válidos dentro do polígono.")
-        return {"mean":float(a.mean()),"sd":float(a.std(ddof=1)) if len(a)>1 else 0.0,"n":int(len(a)),"min":float(a.min()),"max":float(a.max())}
+        if role(path)=="HEIGHT":a=a[a>=0]
+        if not len(a):raise ValueError("Raster sem pixels válidos de altura não negativos dentro do polígono.")
+        result={"mean":float(a.mean()),"sd":float(a.std(ddof=1)) if len(a)>1 else 0.0,"n":int(len(a)),"min":float(a.min()),"max":float(a.max())}
+        if role(path)=="HEIGHT":
+            # Fixed 5 m bins with an open upper class make histograms
+            # comparable across native strata. These are actual valid SAR
+            # raster pixels clipped by the requested AOI geometry.
+            edges=np.array([0,5,10,15,20,25,30,35,40,45,50,55,60,np.inf],dtype=float)
+            valid=a[np.isfinite(a)]
+            counts,_=np.histogram(valid,bins=edges)
+            result["pixel_distribution"]={"status":"SAR_PIXELS_HISTOGRAMMED",
+                "bin_width_m":5,"valid_pixel_n":int(len(valid)),
+                "bins":[{"lower_m":float(lo),"upper_m":(float(hi) if np.isfinite(hi) else None),
+                    "label":(f"{int(lo)}–{int(hi)} m" if np.isfinite(hi) else "≥60 m"),
+                    "pixel_count":int(count)} for lo,hi,count in zip(edges[:-1],edges[1:],counts)],
+                "source_raster":Path(path).name,
+                "scope":"Pixels SAR válidos dentro da geometria da AOI processada; não extrapolado para pixels sem dados."}
+        return result
 def role(path):
     n=Path(path).name.lower()
     # Sigma0 is the backscatter measurement, not an uncertainty layer. Check
@@ -486,6 +502,7 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
             if ibge_load_error:out["fitofisionomia_error"]=ibge_load_error
         if height is not None:
             out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"],
+                        "height_pixel_distribution":height.get("pixel_distribution"),
                         "height_interpretation":_height_interpretation(height.get("path"))})
         return out
     refs=[m for m in MODEL_REGISTRY if m["biome"]==biome]
@@ -494,6 +511,7 @@ def process_real_sar(gdf,paths,biome="",phys="",ibge_physiognomy_gdf=None,ibge_c
     out={"status":"SAR_ATRIBUTOS_SEM_MODELO","agb_mg_ha":None,"uncertainty_mg_ha":None,"stats":stats,"references":refs,"agb_blocker":blocker,"message":"SAR processado; AGB bloqueada por incompatibilidade explícita de preditores/modelo. Consulte agb_blocker."}
     if height is not None:
         out.update({"height_mean_m":height["mean"],"height_sd_m":height["sd"],"height_n_valid_pixels":height["n"],
+                    "height_pixel_distribution":height.get("pixel_distribution"),
                     "height_interpretation":_height_interpretation(height.get("path"))})
     return out
 
@@ -553,7 +571,7 @@ def maap_access_token(offline_token):
     t=r.json().get("access_token")
     if not t:raise RuntimeError("A ESA MAAP não retornou access_token.")
     return t
-def maap_search(gdf,collection,limit=50,product_type=None):
+def maap_search(gdf,collection,limit=50,product_type=None,return_audit=False):
     """Search official MAAP STAC with pagination and a GET/bbox fallback.
 
     STAC metadata search does not require passing the ESA offline token.
@@ -609,22 +627,49 @@ def maap_search(gdf,collection,limit=50,product_type=None):
             payload=response.json()
         except requests.exceptions.RequestException as exc:
             raise RuntimeError("MAAP_STAC_PAGINATION_FAILED:"+type(exc).__name__) from None
+    catalog_item_count=len(items)
     if product_type:
         items=[item for item in items if product_type in _biomass_item_product_types(item)]
-    return _newest_first(items)
+    items=_newest_first(items)
+    if return_audit:
+        return items,{"catalog_search_complete":True,"pagination_complete":True,
+            "pages_read":pages,"catalog_item_count":catalog_item_count,
+            "matching_product_count":len(items),"pixel_read_complete":not bool(items),
+            "valid_pixel_count":0 if not items else None,"technical_error_count":0}
+    return items
 
-def biomass_l2b_search(gdf,limit=100):
+def _maap_search_with_audit(gdf,collection,limit,product_type):
+    """Return audit metadata when supported; mocks/legacy callers stay fail-closed."""
+    try:
+        result=maap_search(gdf,collection,limit=limit,product_type=product_type,return_audit=True)
+    except TypeError as exc:
+        if "return_audit" not in str(exc):raise
+        items=maap_search(gdf,collection,limit=limit,product_type=product_type)
+        return items,{"catalog_search_complete":False,"pagination_complete":False,
+            "pixel_read_complete":False,"valid_pixel_count":None,"technical_error_count":1,
+            "error_type":"AUDIT_METADATA_UNAVAILABLE"}
+    if isinstance(result,tuple) and len(result)==2 and isinstance(result[1],dict):return result
+    return result,{"catalog_search_complete":False,"pagination_complete":False,
+        "pixel_read_complete":False,"valid_pixel_count":None,"technical_error_count":1,
+        "error_type":"AUDIT_METADATA_UNAVAILABLE"}
+
+def biomass_l2b_search(gdf,limit=100,return_audit=False):
     """Discover both official AGB and forest-height L2B products; retain their distinct roles."""
     out=[]
     search_errors=[]
-    successful_queries=0
+    successful_queries=0;query_audits=[]
     for collection,stage in (("BiomassLevel2b","OPERATIONAL"),("BiomassLevel2bIOC","IOC")):
         for product_type in BIOMASS_L2B_PRODUCT_TYPES:
             try:
-                items=maap_search(gdf,collection,limit=limit,product_type=product_type)
+                items,query_audit=_maap_search_with_audit(gdf,collection,limit,product_type)
                 successful_queries+=1
+                query_audits.append({"route":collection,"product_type":product_type,**query_audit})
             except Exception as exc:
                 search_errors.append(collection+":"+type(exc).__name__)
+                query_audits.append({"route":collection,"product_type":product_type,
+                    "catalog_search_complete":False,"pagination_complete":False,
+                    "pixel_read_complete":False,"technical_error_count":1,
+                    "error_type":type(exc).__name__})
                 continue
             for it in items:
                 z=dict(it); z["_collection"]=collection; z["_stage"]=stage
@@ -632,10 +677,15 @@ def biomass_l2b_search(gdf,limit=100):
     # Open Level-2A Forest Height (P-band, per stack), after L2B in priority.
     for collection,stage in (("BiomassLevel2a","OPERATIONAL_L2A"),("BiomassLevel2aIOC","IOC_L2A")):
         try:
-            items=maap_search(gdf,collection,limit=limit,product_type=BIOMASS_FH_L2A)
+            items,query_audit=_maap_search_with_audit(gdf,collection,limit,BIOMASS_FH_L2A)
             successful_queries+=1
+            query_audits.append({"route":collection,"product_type":BIOMASS_FH_L2A,**query_audit})
         except Exception as exc:
             search_errors.append(collection+":"+type(exc).__name__)
+            query_audits.append({"route":collection,"product_type":BIOMASS_FH_L2A,
+                "catalog_search_complete":False,"pagination_complete":False,
+                "pixel_read_complete":False,"technical_error_count":1,
+                "error_type":type(exc).__name__})
             continue
         for it in items:
             z=dict(it); z["_collection"]=collection; z["_stage"]=stage
@@ -652,6 +702,11 @@ def biomass_l2b_search(gdf,limit=100):
     stage_rank={"OPERATIONAL":0,"IOC":1,"OPERATIONAL_L2A":2,"IOC_L2A":3}
     out.sort(key=lambda it:(stage_rank.get(it.get("_stage"),9),
                             0 if it.get("_product_type")=="FP_AGB_L2B" else 1))
+    if return_audit:
+        return out,{"queries":query_audits,"errors":search_errors,
+            "height_queries_complete":all(q.get("catalog_search_complete") is True and q.get("pagination_complete") is True
+                for q in query_audits if q.get("product_type") in (BIOMASS_FH_L2A,"FP_FH__L2B")),
+            "height_catalog_item_count":sum(1 for item in out if item.get("_product_type") in (BIOMASS_FH_L2A,"FP_FH__L2B"))}
     return out
 
 def _download(url,out,token=None):
@@ -823,6 +878,8 @@ def _preserve_sar_canopy_height(result, height, audit=None):
     out=dict(result or {})
     if audit is not None and out.get("audit") is None:
         out["audit"]=audit
+    if audit and audit.get("height_absence_certificate"):
+        out["height_absence_certificate"]=audit["height_absence_certificate"]
     if not isinstance(height,dict):
         out.setdefault("height_route_status","SEM_PRODUTO_DE_ALTURA_SAR_VALIDO")
         return out
@@ -897,8 +954,21 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
     params={"collection_concept_id":GTDX_COLLECTION_ID,
             "bounding_box":f"{west},{south},{east},{north}","page_size":200}
     try:
-        response=session.get("https://cmr.earthdata.nasa.gov/search/granules.json",params=params,timeout=(15,90))
-        response.raise_for_status(); entries=response.json().get("feed",{}).get("entry",[])
+        entries=[];page=1;hits=None
+        while page<=20:
+            page_params=dict(params,page_num=page)
+            response=session.get("https://cmr.earthdata.nasa.gov/search/granules.json",params=page_params,timeout=(15,90))
+            response.raise_for_status()
+            if hits is None:
+                raw_hits=getattr(response,"headers",{}).get("CMR-Hits")
+                hits=int(raw_hits) if raw_hits is not None else None
+            page_entries=response.json().get("feed",{}).get("entry",[])
+            entries.extend(page_entries)
+            if hits is None or len(entries)>=hits or not page_entries:break
+            page+=1
+        cmr_pagination_complete=(hits is not None and len(entries)>=hits)
+        if hits==0:cmr_pagination_complete=True
+        if page>20 and hits is not None and len(entries)<hits:cmr_pagination_complete=False
         wanted={"height_amazon_25m.tif":None,"height_uncertainty_amazon_25m.tif":None}
         for entry in entries:
             candidates=list(entry.get("links",[]) or [])
@@ -910,7 +980,12 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
                     if name==key:wanted[key]=href
         if not all(wanted.values()):
             return {"available":False,"reason":"CMR não retornou os COGs de altura e incerteza Amazon 25 m.",
-                    "collection_id":GTDX_COLLECTION_ID,"cmr_entries":len(entries),"auth_state":state}
+                    "collection_id":GTDX_COLLECTION_ID,"cmr_entries":len(entries),"cmr_hits":hits,
+                    "catalog_search_complete":cmr_pagination_complete,
+                    "pagination_complete":cmr_pagination_complete,
+                    "pixel_read_complete":bool(cmr_pagination_complete and not entries),
+                    "valid_pixel_count":0 if cmr_pagination_complete and not entries else None,
+                    "technical_error_count":0 if cmr_pagination_complete else 1,"auth_state":state}
         paths={}
         for name,url in wanted.items():
             target=cache/name
@@ -929,13 +1004,19 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
         h=_zonal(gdf,paths["height_amazon_25m.tif"])
         u=_zonal(gdf,paths["height_uncertainty_amazon_25m.tif"])
         result=_gtdx_height_summary(h,u,paths["height_amazon_25m.tif"],paths["height_uncertainty_amazon_25m.tif"])
-        result.update({"cmr_entries":len(entries),"auth_state":state,"uncertainty_pixels":int(u["n"]),
+        result.update({"cmr_entries":len(entries),"cmr_hits":hits,
+                       "catalog_search_complete":cmr_pagination_complete,
+                       "pagination_complete":cmr_pagination_complete,
+                       "pixel_read_complete":True,"valid_pixel_count":int(h["n"]),
+                       "technical_error_count":0,"auth_state":state,"uncertainty_pixels":int(u["n"]),
                        "warning":"Produto de altura SAR–GEDI independente do ESA BIOMASS; não aplicar modelo G×H100 sem equivalência/validação.",
                        "access_route":"Earthdata autenticado" if authenticated else "tentativa pública sem autenticação"})
         return result
     except Exception as exc:
         return {"available":False,"reason":type(exc).__name__+": "+str(exc)[:500],
-                "collection_id":GTDX_COLLECTION_ID,"auth_state":state}
+                "collection_id":GTDX_COLLECTION_ID,"catalog_search_complete":False,
+                "pagination_complete":False,"pixel_read_complete":False,
+                "valid_pixel_count":None,"technical_error_count":1,"auth_state":state}
 
 CCI_V7_GEOTIFF_ROOT="https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
 CCI_V7_GEOTIFF_ALT_ROOT="https://dap.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps/v7.0/geotiff"
@@ -1657,8 +1738,17 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     audit["height_scope"]=height_scope_contract(biome,phys)
 
     # 1 — ESA BIOMASS P-band / official L2B AGB.
-    try: l2items=biomass_l2b_search(gdf,limit=100)
-    except Exception as e: l2items=[]; audit["warnings"].append("BIOMASS catálogo: "+str(e))
+    try:
+        search_result=biomass_l2b_search(gdf,limit=100,return_audit=True)
+        if isinstance(search_result,tuple) and len(search_result)==2:
+            l2items,biomass_search_audit=search_result
+        else:
+            l2items=search_result
+            biomass_search_audit={"queries":[],"errors":["AUDIT_METADATA_UNAVAILABLE"],"height_queries_complete":False}
+    except Exception as e:
+        l2items=[];biomass_search_audit={"queries":[],"errors":[type(e).__name__],"height_queries_complete":False}
+        audit["warnings"].append("BIOMASS catálogo: "+str(e))
+    audit["biomass_search_audit"]=biomass_search_audit
     audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"products_discovered":{p:sum(1 for x in l2items if x.get("_product_type")==p) for p in BIOMASS_PRODUCT_TYPES},"items":[_biomass_catalog_summary(x) for x in l2items[:50]],"access_policy":"BiomassLevel2a/2b e IOC; FP_FH__L2A, FP_FH__L2B e FP_AGB_L2B separados; altura FH não implica AGB"}
     # P-band FH is independent from AGB. In 2026 the operational height
     # products are primarily FP_FH__L2A, NOT L2B. A successful live Sinop
@@ -1689,6 +1779,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                         "height_mean_m":z["mean"],
                         "height_sd_m":z["sd"],
                         "height_n_valid_pixels":z["n"],
+                        "height_pixel_distribution":z.get("pixel_distribution"),
                         "height_definition_compatible_with_H100":True,
                         "height_metric":"ESA BIOMASS upper forest canopy height H100",
                         "height_error_kind":"spatial standard deviation; not measurement uncertainty",
@@ -1721,6 +1812,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 sar_height.update({k:gtdx[k] for k in ("product","product_id","sensor","band","source") if k in gtdx})
         except Exception as e:
             audit["gtdx_height"]={"available":False,"reason":str(e)}
+    from sar_height_absence import build_height_absence_certificate
+    audit["height_absence_certificate"]=build_height_absence_certificate(
+        biomass_search_audit,audit.get("biomass_height"),audit.get("gtdx_height"))
     height_structure_estimate=None
     if sar_height and sar_height.get("height_definition_compatible_with_H100",True):
         try:

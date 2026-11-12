@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.20-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.21-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -546,6 +546,7 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     # Never forward a data manifest as a SAR model parameter.
     inventory_evidence=options.pop("inventory_evidence",None)
     inventory_manifest=options.pop("inventory_evidence_manifest",None)
+    biodiversity_inventory_records=options.pop("biodiversity_inventory_records",None)
     def sar_estimator(frame,b,p):
         if sar_paths:return process_real_sar(frame,sar_paths,b,p)
         return automatic_pipeline(frame,b,p,**options)
@@ -553,6 +554,27 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
     result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
+    native_strata=[st for st in result.get("strata",[]) if float(st.get("area_ha") or 0)>0]
+    height_certs=[(st.get("sar_details") or {}).get("height_absence_certificate") for st in native_strata]
+    height_certs=[c for c in height_certs if isinstance(c,dict)]
+    if height_certs and all(c==height_certs[0] for c in height_certs):
+        result["height_absence_certificate"]=height_certs[0]
+    if not biodiversity_inventory_records:
+        result["biodiversity_references"]=[{"status":"N/D","reason":"INVENTARIO_FITOSSOCIOLOGICO_NAO_CARREGADO"}]
+    elif not native_strata:
+        result["biodiversity_references"]=[{"status":"N/D","reason":"NENHUM_ESTRATO_NATIVO_ATUAL_CONFIRMADO_POR_SAR"}]
+    else:
+        try:
+            from crop_yield_scenario import microregion_of
+            micro=microregion_of(aoi)["dominant"]
+            from biodiversity_inventory import summarize_top10_species
+            result["biodiversity_references"]=[summarize_top10_species(
+                biodiversity_inventory_records,biome=biome,
+                physiognomy=st.get("physiognomy") or st.get("class_name"),
+                microregion=micro.get("name") or micro.get("code")) for st in native_strata]
+        except Exception as exc:
+            result["biodiversity_references"]=[{"status":"N/D","reason":"CONSULTA_MICRORREGIONAL_FALHOU_"+
+                type(exc).__name__+": "+str(exc)[:180]}]
     # Separate conditional inventory scenario. The wrapper first tries the
     # open IFN plot data for the matching physiognomy/region, then the existing
     # published regional hierarchy. Exhausted-route technical failures stay
@@ -1934,6 +1956,14 @@ class App(tk.Tk):
             value="Opcional: referências licenciadas compatíveis com fitofisionomia; uso experimental, não homologado.")
         ttk.Label(native_row,textvariable=self.inventory_evidence_state,
                   wraplength=680).pack(side="left",padx=8)
+        self.biodiversity_inventory_records=None
+        biodiversity_row=ttk.Frame(f);biodiversity_row.pack(fill="x",pady=(0,6))
+        ttk.Button(biodiversity_row,text="CARREGAR INVENTÁRIO FITOSSOCIOLÓGICO CSV",
+                   command=self.pick_biodiversity_inventory).pack(side="left")
+        self.biodiversity_inventory_state=tk.StringVar(
+            value="Resumo regional de espécies e distribuição diamétrica; não representa medição da propriedade.")
+        ttk.Label(biodiversity_row,textvariable=self.biodiversity_inventory_state,
+                  wraplength=800).pack(side="left",padx=8)
         self.sar_paths=[]; self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
         self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
         remote_box=ttk.Frame(f); remote_box.pack(fill="both",expand=True,pady=8)
@@ -1968,6 +1998,21 @@ class App(tk.Tk):
             str(len(package["records"]))+" registros — "+package["filename"]+
             " — estimativas secundárias experimentais; validação independente pendente.")
         self.status.set("Evidências externas carregadas com checksum; apenas classes compatíveis serão consideradas.")
+
+    def pick_biodiversity_inventory(self):
+        filename=filedialog.askopenfilename(title="Inventário fitossociológico georreferenciado",
+            filetypes=[("CSV de árvores","*.csv"),("Todos","*.*")])
+        if not filename:return
+        try:
+            from biodiversity_inventory import load_biodiversity_inventory_csv
+            rows=load_biodiversity_inventory_csv(filename)
+        except (OSError,ValueError) as exc:
+            self.status.set("Inventário fitossociológico recusado; não foi aplicado.")
+            return messagebox.showwarning("Inventário fitossociológico",str(exc))
+        self.biodiversity_inventory_records=rows
+        self.biodiversity_inventory_state.set(str(len(rows))+" árvores licenciadas — "+Path(filename).name+
+            "; será filtrado por bioma, fitofisionomia e microrregião.")
+        self.status.set("Inventário fitossociológico carregado; referência regional, não medição da propriedade.")
 
     def pick_land_use_config(self):
         p=filedialog.askopenfilename(title="Contrato de atributos e referências SAR",filetypes=[("Configuração JSON","*.json")])
@@ -2791,6 +2836,8 @@ class App(tk.Tk):
         land_config=self.land_use_config
         inventory_evidence=(list(self.inventory_evidence_data)
                             if self.inventory_evidence_data is not None else None)
+        biodiversity_inventory_records=(list(self.biodiversity_inventory_records)
+            if self.biodiversity_inventory_records is not None else None)
         inventory_manifest=(dict(self.inventory_evidence_manifest)
                             if self.inventory_evidence_manifest is not None else None)
         land_ibge=self.ibge_physiognomy_gdf.copy() if self.ibge_physiognomy_gdf is not None else None
@@ -2811,6 +2858,7 @@ class App(tk.Tk):
                 options={"offline_token":token,"edl_user":edl_user,"edl_password":edl_password,"edl_token":edl_token,
                          "cdse_token":cdse_token,"cdse_client_id":cdse_client_id,"cdse_client_secret":cdse_client_secret,
                          "inventory_evidence":inventory_evidence,
+                         "biodiversity_inventory_records":biodiversity_inventory_records,
                          "inventory_evidence_manifest":inventory_manifest}
                 native=native_carbon_analysis(gdf,land,biome,options)
                 from soil_pedology_embrapa import analyze_embrapa_pedology
@@ -2880,6 +2928,7 @@ class App(tk.Tk):
                         sar_options={
                             "inventory_evidence":self.inventory_evidence_data,
                             "inventory_evidence_manifest":self.inventory_evidence_manifest,
+                            "biodiversity_inventory_records":self.biodiversity_inventory_records,
                         },
                         sar_paths=self.sar_paths))
             if precomputed_pedology is not None:
@@ -3359,6 +3408,125 @@ class App(tk.Tk):
             sh.column_dimensions["E"].width=30
             sh.column_dimensions["F"].width=37
             sh.column_dimensions["G"].width=76
+        # Charts use only inventory references already matched to each native
+        # stratum and SAR height pixels actually read inside that stratum.
+        chart_native=self.project.get("native_carbon") or {}
+        bio_refs=chart_native.get("biodiversity_references") or []
+        native_strata=chart_native.get("strata") or []
+        chart=wb.create_sheet("Gráficos")
+        from openpyxl.chart import BarChart, LineChart, Reference
+        chart.sheet_view.showGridLines=False
+        chart.merge_cells("A1:L1");chart["A1"]="Enform Verde — distribuições estruturais e biodiversidade"
+        chart["A1"].font=Font(size=16,bold=True,color=white);chart["A1"].fill=PatternFill("solid",fgColor=green)
+        chart["A1"].alignment=Alignment(vertical="center");chart.row_dimensions[1].height=30
+        for span in ("A2:C2","A3:C3","D2:F2","D3:F3","G2:L2","G3:L3"):
+            chart.merge_cells(span)
+        for col in "ABCDEFGHIJKL":chart.column_dimensions[col].width=17
+        chart.column_dimensions["A"].width=20;chart.column_dimensions["D"].width=22;chart.column_dimensions["G"].width=28
+        for c in ("A2","A3","A4","D2","D3","D4","G2","G3","G4"):
+            chart[c].alignment=Alignment(wrap_text=True,vertical="center")
+        chart["A2"]="Distribuição diamétrica média aplicável — área basal média por classe DAP (m²/ha)."
+        chart["A2"].font=Font(bold=True,color=green)
+        chart["A4"]="Classe DAP";chart["B4"]="Área basal média (m²/ha)"
+        dbh_bins=[("5–10 cm","dbh_5_10_cm"),("10–20 cm","dbh_10_20_cm"),
+            ("20–30 cm","dbh_20_30_cm"),("30–40 cm","dbh_30_40_cm"),
+            ("40–60 cm","dbh_40_60_cm"),("≥60 cm","dbh_60_plus_cm")]
+        dbh_by_stratum=[]
+        for idx,ref in enumerate(bio_refs):
+            if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":continue
+            st=native_strata[idx] if idx<len(native_strata) else {}
+            area=float(st.get("area_ha") or 0)
+            rows={x.get("bin_id"):x for x in ref.get("dbh_distribution_by_plot_mean") or []}
+            if area>0 and all(key in rows for _,key in dbh_bins):
+                dbh_by_stratum.append((area,rows))
+        if dbh_by_stratum:
+            area_sum=sum(x[0] for x in dbh_by_stratum)
+            for row,(label,key) in enumerate(dbh_bins,5):
+                value=sum(area*float(rows[key]["mean_basal_area_m2_ha"]) for area,rows in dbh_by_stratum)/area_sum
+                chart.cell(row,1,label);chart.cell(row,2,value)
+            dbh_sources=sorted({url for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" for url in ref.get("source_urls") or []})
+            chart["A3"]="Referência regional; média ponderada pela área dos estratos nativos. Fontes: "+("; ".join(dbh_sources) or "inventário sem URL declarada")
+            lc=LineChart();lc.title="Área basal média por classe diamétrica";lc.y_axis.title="m²/ha";lc.x_axis.title="DAP"
+            lc.add_data(Reference(chart,min_col=2,min_row=4,max_row=10),titles_from_data=True)
+            lc.set_categories(Reference(chart,min_col=1,min_row=5,max_row=10));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
+        else:
+            chart["A5"]="N/D — sem inventário compatível e carregado para os estratos nativos confirmados."
+            chart.merge_cells("A5:F5")
+            chart["A3"]="Fonte/escopo: N/D; não substituir por média de outra fitofisionomia ou região sem identificação."
+
+        chart["D2"]="Altura: distribuição observada por pixels SAR; se ausência certificada, referência de alturas de árvores inventariadas."
+        chart["D2"].font=Font(bold=True,color=green);chart["D4"]="Faixa de altura (m)";chart["E4"]="Frequência (%)"
+        sar_bins={};sar_pixel_total=0;strata_with_height=0
+        for st in native_strata:
+            info=(st.get("sar_details") or {}).get("height_pixel_distribution") or {}
+            if info.get("status")!="SAR_PIXELS_HISTOGRAMMED":continue
+            strata_with_height+=1
+            for b in info.get("bins") or []:
+                key=b.get("label");sar_bins[key]=sar_bins.get(key,0)+int(b.get("pixel_count") or 0)
+                sar_pixel_total+=int(b.get("pixel_count") or 0)
+        height_source=""
+        if sar_pixel_total:
+            labels=[("0–5 m",0), ("5–10 m",1), ("10–15 m",2), ("15–20 m",3),
+                ("20–25 m",4), ("25–30 m",5), ("30–35 m",6), ("35–40 m",7),
+                ("40–45 m",8), ("45–50 m",9), ("50–55 m",10), ("55–60 m",11), ("≥60 m",12)]
+            for row,(label,_) in enumerate(labels,5):
+                chart.cell(row,4,label);chart.cell(row,5,100*sar_bins.get(label,0)/sar_pixel_total)
+            height_source=("Pixels SAR válidos lidos em "+str(strata_with_height)+" estrato(s) nativo(s); n="+
+                str(sar_pixel_total)+" pixels. Fonte: "+"; ".join(sorted({str((st.get("sar_details") or {}).get("source") or (st.get("sar_details") or {}).get("product") or "produto SAR" ) for st in native_strata if (st.get("sar_details") or {}).get("height_pixel_distribution")})))
+            chart["D3"]=height_source+". Pixels sem dado não foram preenchidos."
+        else:
+            cert=(chart_native.get("height_absence_certificate") or
+                  (self.project.get("sar_result") or {}).get("height_absence_certificate"))
+            from sar_height_absence import regional_height_fallback_decision
+            allow_region,absence_reason=regional_height_fallback_decision(cert)
+            regional=[]
+            if allow_region:
+                regional=[ref.get("inventory_tree_height_distribution") or {} for ref in bio_refs
+                    if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL"]
+                regional=[x for x in regional if x.get("status")=="REFERENCIA_ALTURA_INVENTARIO_REGIONAL"]
+            if allow_region and regional:
+                plot_weights=[float(x.get("n_plots") or 0) for x in regional]
+                weight_sum=sum(plot_weights)
+                for row,(i,label) in enumerate(enumerate(["0–5 m","5–10 m","10–15 m","15–20 m","20–25 m","25–30 m","30–35 m","35–40 m","40–45 m","45–50 m","50–55 m","55–60 m","≥60 m"]),5):
+                    value=sum(w*float(x["bins"][i]["mean_frequency_pct"]) for x,w in zip(regional,plot_weights))/weight_sum
+                    chart.cell(row,4,label);chart.cell(row,5,value)
+                sources=sorted({url for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" for url in ref.get("source_urls") or []})
+                height_source="Fallback regional autorizado por ausência SAR certificada. Médias de altura medida em inventários compatíveis ("+str(sum(plot_weights))+" parcelas). Fontes: "+("; ".join(sources) or "inventário sem URL declarada")
+                chart["D3"]=height_source+". Altura de árvores inventariadas, não altura do dossel SAR nem medição da propriedade."
+            else:
+                chart["D5"]="N/D — "+absence_reason+"; médias regionais de inventário não substituem uma falha técnica."
+                # Keep the no-data note within the height panel; extending
+                # through column G overwrote the Top-10 species table.
+                chart.merge_cells("D5:F5")
+                chart["D3"]="Sem altura SAR válida; contingência microrregional/regional bloqueada até comprovar ausência de cobertura."
+        if sar_pixel_total or (allow_region and regional):
+            hc=LineChart();hc.title="Distribuição de altura";hc.y_axis.title="Frequência (%)";hc.x_axis.title="Altura"
+            hc.add_data(Reference(chart,min_col=5,min_row=4,max_row=17),titles_from_data=True)
+            hc.set_categories(Reference(chart,min_col=4,min_row=5,max_row=17));hc.height=8;hc.width=16;chart.add_chart(hc,"H12")
+
+        chart["G2"]="10 espécies dominantes — frequência média de ocorrência nas parcelas compatíveis."
+        chart["G2"].font=Font(bold=True,color=green);chart["G4"]="Espécie";chart["H4"]="Frequência média (%)"
+        species_values={};species_weights={}
+        for ref in bio_refs:
+            if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":continue
+            weight=float(ref.get("inventory_n_plots") or 0)
+            for item in ref.get("top10_by_plot_incidence") or []:
+                name=str(item.get("species") or "");freq=float(item.get("frequency_pct") or 0)
+                if name:
+                    species_values[name]=species_values.get(name,0)+freq*weight
+                    species_weights[name]=species_weights.get(name,0)+weight
+        species_rank=sorted(((name,species_values[name]/species_weights[name]) for name in species_values if species_weights[name]>0),key=lambda x:(-x[1],x[0]))[:10]
+        if species_rank:
+            for row,(name,freq) in enumerate(species_rank,5):chart.cell(row,7,name);chart.cell(row,8,freq)
+            species_sources=sorted({url for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" for url in ref.get("source_urls") or []})
+            chart["G3"]="Inventários microrregionais/regionais compatíveis; média ponderada por parcelas. Fontes: "+("; ".join(species_sources) or "inventário sem URL declarada")
+            bc=BarChart();bc.type="bar";bc.style=10;bc.title="10 espécies mais frequentes";bc.x_axis.title="Frequência média (%)";bc.y_axis.title="Espécie"
+            bc.add_data(Reference(chart,min_col=8,min_row=4,max_row=4+len(species_rank)),titles_from_data=True)
+            bc.set_categories(Reference(chart,min_col=7,min_row=5,max_row=4+len(species_rank)));bc.height=8;bc.width=16;chart.add_chart(bc,"A29")
+        else:
+            chart["G5"]="N/D — inventário compatível não carregado ou não encontrado."
+            chart.merge_cells("G5:L5");chart["G3"]="Fonte: N/D; espécies não serão inferidas de inventários incompatíveis."
+        chart.freeze_panes="A4";chart.sheet_view.zoomScale=85
         # Single-screen executive index. Numeric stocks remain numeric so the
         # operator can audit or reuse them; no missing pool is treated as zero.
         dashboard=wb.create_sheet("PAINEL EXECUTIVO",0)
