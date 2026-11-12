@@ -54,6 +54,15 @@ class CropMapBiomasPAMFallbackTests(unittest.TestCase):
                                out["classes"][0]["area_ha"]*3450/1000)
         self.assertIn("não mensurada",out["classes"][0]["uncertainty"])
 
+    def test_mapbiomas_unicode_failure_keeps_stage_and_detail(self):
+        def fail(_):
+            raise UnicodeDecodeError("utf-8", b"\\xff", 0, 1, "invalid native GDAL message")
+        out=build_mapbiomas_pam_contingency(exhausted_land(), exhausted_land(), map_reader=fail)
+        self.assertEqual(out["status"],"ERRO_TECNICO_MAPBIOMAS")
+        self.assertEqual(out["stage"],"mapbiomas_pixel_read")
+        self.assertIn("UnicodeDecodeError",out["reason"])
+        self.assertTrue(out["detail"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -28,7 +28,8 @@ PIXEL_STATUSES = {"SAR_REAL_EXPERIMENTAL_CANDIDATES", "SAR_CLASSIFICADOR_EXPERIM
 TERMINAL_ROUTE_STATUSES = {
     "sentinel1_recente": {"N/D", "N/D_DADOS", "N/D_VALIDACAO", "ERRO_TECNICO",
                           "ERROR", "SAR_REAL_EXPERIMENTAL_CANDIDATES"},
-    "lemplus_sazonal": {"N/D_SEM_PIXELS_SAR", "ERRO_TECNICO", "SAR_CLASSIFICADOR_EXPERIMENTAL"},
+    "lemplus_sazonal": {"N/D_SEM_PIXELS_SAR", "ERRO_TECNICO", "ERRO_TECNICO_LEITURA_SAR",
+                        "SAR_CLASSIFICADOR_EXPERIMENTAL"},
     "radar_alternativo": {"N/D", "N/D_DADOS", "ERRO_TECNICO", "ERROR", "ACESSO_RESTRITO",
                            "NOT_NEEDED_SENTINEL1_PIXELS_AVAILABLE", "ALTERNATIVE_RADAR_PIXELS_PROCESSED"},
     "triagem_nativa": {"N/D", "ERRO_TECNICO", "ERROR", "SAR_EXPERIMENTAL_CANDIDATE_SCREEN"},
@@ -93,9 +94,11 @@ def build_mapbiomas_pam_contingency(aoi, land, *, map_reader=None,
             map_reader = mapbiomas_class_percentages
         mapped = map_reader(aoi)
         if not isinstance(mapped, dict) or not mapped.get("classes"):
-            return {"status": "N/D", "reason": "MAPBIOMAS_SEM_PIXELS_VALIDOS", "sar_gate": gate}
+            return {"status": "N/D", "stage": "mapbiomas_result_validation",
+                    "reason": "MAPBIOMAS_SEM_PIXELS_VALIDOS", "sar_gate": gate}
     except Exception as exc:
-        return {"status": "ERRO_TECNICO_MAPBIOMAS", "reason": type(exc).__name__, "sar_gate": gate}
+        return {"status": "ERRO_TECNICO_MAPBIOMAS", "stage":"mapbiomas_pixel_read",
+                "reason": type(exc).__name__, "detail":_safe_exception_detail(exc), "sar_gate": gate}
     try:
         if micro_fn is None:
             from crop_yield_scenario import microregion_of
@@ -105,7 +108,8 @@ def build_mapbiomas_pam_contingency(aoi, land, *, map_reader=None,
             yields_fn = load_microregion_yields
         micro = micro_fn(aoi)["dominant"]
     except Exception as exc:
-        return {"status": "ERRO_TECNICO_PAM", "reason": type(exc).__name__,
+        return {"status": "ERRO_TECNICO_PAM", "stage":"microregion_lookup",
+                "reason": type(exc).__name__, "detail":_safe_exception_detail(exc),
                 "mapbiomas": {"year": mapped.get("year"), "mapped_area_ha": mapped.get("mapped_area_ha")},
                 "sar_gate": gate}
 
@@ -139,6 +143,7 @@ def build_mapbiomas_pam_contingency(aoi, land, *, map_reader=None,
                     row["pam_status"] = "N/D_HISTORICO_COM_MENOS_DE_6_ANOS"
             except Exception as exc:
                 row["pam_status"] = "ERRO_TECNICO_PAM_" + type(exc).__name__
+                row["pam_error_detail"] = _safe_exception_detail(exc)
         else:
             row["pam_status"] = "CULTURA_NAO_IDENTIFICADA_NA_LEGENDA_MAPBIOMAS"
         rows.append(row)
@@ -153,3 +158,15 @@ def build_mapbiomas_pam_contingency(aoi, land, *, map_reader=None,
                                   "yield": "estatísticas descritivas dos anos PAM 2015–2024 na microrregião IBGE dominante",
                                   "production": "área MapBiomas histórica × mediana PAM regional (kg/ha) ÷ 1000",
                                   "prohibited_inference": "não chamar de área atual, cultura observada por SAR, previsão de safra ou validação de campo"}}
+
+
+def _safe_exception_detail(exc):
+    """Keep useful diagnostics even when a native exception contains bad bytes."""
+    try:
+        detail = str(exc)
+    except Exception:
+        detail = "mensagem da exceção não decodificável"
+    # Signed COG URLs and query credentials must never enter an audit report.
+    import re
+    detail = re.sub(r"https?://[^\s'\"]+", "[URL_REMOVIDA]", detail)
+    return detail.encode("utf-8", "replace").decode("utf-8")[:240]

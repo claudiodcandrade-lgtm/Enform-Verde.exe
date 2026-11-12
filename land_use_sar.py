@@ -1044,7 +1044,9 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
             lines.append('  Meses sem pares VV/VH: '+', '.join(map(str,acquisition['missing_months'])))
         for error in (acquisition.get('pixel_read_errors') or [])[:3]:
             lines.append('  Falha LEM+ '+str(error.get('scene','N/D'))+' — '+str(error.get('type','N/D'))+
-                         '; tentativa '+str(error.get('attempt','N/D')))
+                         '; etapa '+str(error.get('stage','N/D'))+
+                         '; tentativa '+str(error.get('attempt','N/D'))+
+                         ('; detalhe '+str(error.get('detail'))[:160] if error.get('detail') else ''))
     exp=summary.get('native_sar_experimental') or {}
     if exp.get('status')=='SAR_EXPERIMENTAL_CANDIDATE_SCREEN':
         sensitivity=exp.get('threshold_sensitivity_area_ha') or {}

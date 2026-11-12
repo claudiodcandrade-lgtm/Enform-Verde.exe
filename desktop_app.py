@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.18-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.19-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -938,12 +938,23 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     out_height=max(240,min(1200,int(out_h)))
     # Keyless Sentinel-2 transport on Windows: avoid multipart byte ranges
     # and HEAD negotiation rejected by some TLS-inspecting proxies.
-    env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"35",
-         "GDAL_HTTP_MAX_RETRY":"2","CPL_VSIL_CURL_USE_HEAD":"NO",
-         "GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_VERSION":"1.1",
-         **tls_setup.gdal_env()}
-    for cloud,dt,item,assets in pool:
+    base_env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"35",
+         "GDAL_HTTP_MAX_RETRY":"2",**tls_setup.gdal_env()}
+    # Repeat each scene with independent GDAL transports before abandoning its
+    # pixels; this specifically handles WinHTTP/TLS proxies that reject one
+    # Range/HEAD combination for every candidate scene.
+    expanded_pool=[(c,dt,item,assets,strategy) for c,dt,item,assets in pool
+                   for strategy in range(3)]
+    for cloud,dt,item,assets,strategy in expanded_pool:
         try:
+            env=dict(base_env)
+            env.update({"GDAL_HTTP_MULTIRANGE":"YES"})
+            if strategy==1:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","CPL_VSIL_CURL_USE_HEAD":"NO",
+                            "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO","GDAL_HTTP_VERSION":"1.1"})
+            elif strategy==2:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MULTIPLEX":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
             with rasterio.Env(**env):
                 with rasterio.open(assets["red"]["href"]) as red_src:
                     crs=red_src.crs
@@ -1017,7 +1028,10 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                             "polygons":scaled_polygons,"scene_id":item.get("id"),
                             "datetime":dt,"cloud_cover":cloud,
                             "provider":"Sentinel-2 L2A / Earth Search AWS public COGs",
-                            "attempted_scenes":len(errors)+1,
+                            "attempted_scenes":len({e.split(":",1)[0] for e in errors})+1,
+                            "transport_attempts_for_scene":strategy+1,
+                            "transport_strategy":("DEFAULT_MULTIRANGE" if strategy==0 else
+                                                  "SERIAL_HTTP11" if strategy==1 else "SERIAL_NO_MULTIPLEX_HTTP11"),
                             "aoi_coverage_fraction":aoi_coverage}
         except (UnicodeError,OSError,RuntimeError,ValueError,rasterio.errors.RasterioError) as exc:
             errors.append(str(item.get("id",""))+": "+type(exc).__name__+": "+str(exc)[:100])
@@ -1109,7 +1123,16 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                       dst_crs="EPSG:4326",dst_nodata=(0 if categorical else np.nan),resampling=method)
         return destination
 
-    for dt,item in scenes[:1200]:
+    attempts_by_scene={}
+    successful_scene_ids=set()
+    transport_counts={"DEFAULT_MULTIRANGE":0,"SERIAL_HTTP11":0,"SERIAL_NO_MULTIPLEX_HTTP11":0}
+    expanded_scenes=[(dt,item,strategy) for dt,item in scenes[:120]
+                     for strategy in range(3)]
+    for dt,item,transport_strategy in expanded_scenes:
+        scene_id=str(item.get("id",""))
+        if scene_id in successful_scene_ids:continue
+        attempts_by_scene[scene_id]=attempts_by_scene.get(scene_id,0)+1
+        transport_counts[("DEFAULT_MULTIRANGE","SERIAL_HTTP11","SERIAL_NO_MULTIPLEX_HTTP11")[transport_strategy]]+=1
         assets=item.get("assets") or {}
         keys=("BAND15","BAND14","BAND13")
         if not all((assets.get(k) or {}).get("href") for k in keys) or not (assets.get("CMASK") or {}).get("href"):
@@ -1117,9 +1140,14 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
         scene=np.full((height,width,3),np.nan,dtype=np.float32)
         try:
             env={"GDAL_HTTP_TIMEOUT":"40","GDAL_HTTP_MAX_RETRY":"2",
-                 "GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
-                 "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1",
+                 "GDAL_HTTP_MULTIRANGE":"YES",
                  "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",**tls_setup.gdal_env()}
+            if transport_strategy==1:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
+            elif transport_strategy==2:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MULTIPLEX":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
             with rasterio.Env(**env):
                 mask=read_cog_window(assets["CMASK"]["href"],categorical=True)
                 # Current INPE catalogue collection defines CMASK: 127 clear,
@@ -1135,12 +1163,14 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             if take_observed.any():rgb_observed[take_observed]=scene[take_observed]
             if take_clear.any():rgb_clear[take_clear]=scene[take_clear]
             if take_observed.any() or take_clear.any():
-                scene_ids.append(str(item.get("id","")));source_dates.append(dt.date().isoformat())
+                scene_ids.append(scene_id);successful_scene_ids.add(scene_id);source_dates.append(dt.date().isoformat())
             covered=int((np.isfinite(rgb_clear).all(axis=2)&aoi_mask).sum())
             observed_covered=int((np.isfinite(rgb_observed).all(axis=2)&aoi_mask).sum())
             if covered/aoi_pixels>=0.98 or observed_covered/aoi_pixels>=0.98:break
         except Exception as exc:
-            errors.append(str(item.get("id",""))+": "+type(exc).__name__+": "+str(exc)[:90])
+            try: detail=str(exc)
+            except Exception: detail="mensagem da exceção não decodificável"
+            errors.append(scene_id+" transporte="+str(transport_strategy+1)+": "+type(exc).__name__+": "+detail.encode("utf-8","replace").decode("utf-8")[:90])
     rgb=rgb_clear.copy()
     holes=~np.isfinite(rgb).all(axis=2)
     observed=np.isfinite(rgb_observed).all(axis=2)&(rgb_observed>0).any(axis=2)
@@ -1169,6 +1199,8 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             "datetime":max(source_dates),"date_range":[min(source_dates),max(source_dates)],"scene_ids":scene_ids,
             "provider":"CBERS-4A/WFI L4-SR / INPE STAC (COG, composição RGB de pixels claros)",
             "resolution_m":55,"pixel_count":int(valid.sum()),"aoi_coverage_fraction":aoi_coverage,
+            "transport_attempt_count":sum(attempts_by_scene.values()),
+            "transport_strategy_counts":transport_counts,
             "cloud_pixels_included":cloud_fallback_used,"polygons":[]}
 
 
@@ -2144,7 +2176,10 @@ class App(tk.Tk):
                 executive.append(row)
             executive.append(str(contingency.get("uncertainty") or "Incerteza de área MapBiomas e transferência não mensuradas."))
         elif contingency.get("status") not in (None,"BLOQUEADO_ATE_ESGOTAR_SAR"):
-            executive.extend(["", "CONTINGÊNCIA MAPBIOMAS + PAM indisponível: "+str(contingency.get("reason") or contingency.get("status"))])
+            why=str(contingency.get("reason") or contingency.get("status"))
+            if contingency.get("stage"):why="etapa="+str(contingency["stage"])+"; "+why
+            if contingency.get("detail"):why+="; detalhe="+str(contingency["detail"])
+            executive.extend(["", "CONTINGÊNCIA MAPBIOMAS + PAM indisponível: "+why])
         if non_native:
             for item in non_native:
                 executive.append("• "+str(item.get("class_name","Uso não determinado"))+" — "+

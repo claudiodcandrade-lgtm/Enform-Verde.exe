@@ -110,37 +110,64 @@ def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None):
     geom = frame.geometry.union_all()
     if geom.is_empty:
         raise ValueError("AOI vazia")
-    with rasterio.Env(
-        GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
-        CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif",
-        GDAL_HTTP_MULTIRANGE="YES",
-        VSI_CACHE="TRUE",
-    ):
-        with rasterio.open("/vsicurl/" + url) as src:
-            if src.crs is None:
-                raise ValueError("GeoTIFF MapBiomas sem CRS")
-            geom_src = gpd.GeoSeries([geom], crs="EPSG:4326").to_crs(src.crs).iloc[0]
-            bounds = gpd.GeoSeries([geom_src], crs=src.crs).total_bounds
-            window = from_bounds(*bounds, transform=src.transform).round_offsets().round_lengths()
-            window = window.intersection(rasterio.windows.Window(0, 0, src.width, src.height))
-            values = src.read(1, window=window, boundless=False)
-            transform = window_transform(window, src.transform)
-            mask = geometry_mask([mapping(geom_src)], out_shape=values.shape, transform=transform, invert=True, all_touched=False)
-            geod = Geod(ellps="WGS84")
-            from pyproj import Transformer
-            to_wgs84 = Transformer.from_crs(src.crs, "EPSG:4326", always_xy=True)
-            areas = []
-            for row in range(values.shape[0]):
-                corners = [transform * (0, row), transform * (values.shape[1], row),
-                           transform * (values.shape[1], row + 1), transform * (0, row + 1)]
-                lons, lats = to_wgs84.transform([p[0] for p in corners], [p[1] for p in corners])
-                area, _ = geod.polygon_area_perimeter(lons, lats)
-                areas.append(abs(area) / values.shape[1])
-            result = summarize_class_grid(values, mask, areas, nodata=src.nodata)
-            result.update({
-                "collection": COLLECTION, "year": int(year), "resolution_m": RESOLUTION_M,
-                "source_url": url, "legend_url": SOURCE_URL,
-                "method": "contagem de pixels MapBiomas dentro da AOI; área geodésica por linha; percentual relativo aos pixels válidos; resolução nominal 30 m; máscara por centro do pixel",
-                "status": "MAPBIOMAS — COBERTURA E USO, NÃO SUBSTITUI LEGENDA DETALHADA IBGE",
-            })
-            return result
+    # Different Windows TLS proxies and GDAL builds handle multipart Range,
+    # HEAD, and HTTP/2 differently. Try independent transports against the
+    # same public GeoTIFF; never turn a transport failure into an empty mask.
+    strategies = [
+        {"GDAL_HTTP_MULTIRANGE":"YES"},
+        {"GDAL_HTTP_MULTIRANGE":"SERIAL", "CPL_VSIL_CURL_USE_HEAD":"NO",
+         "GDAL_HTTP_VERSION":"1.1", "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO"},
+        {"GDAL_HTTP_MULTIRANGE":"YES", "GDAL_HTTP_MULTIPLEX":"NO",
+         "CPL_VSIL_CURL_USE_HEAD":"NO", "GDAL_HTTP_VERSION":"1.1"},
+    ]
+    last_error = None
+    for strategy_index, strategy in enumerate(strategies, start=1):
+        stage = "open_cog"
+        try:
+            with rasterio.Env(
+                GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+                CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif",
+                VSI_CACHE="TRUE", GDAL_HTTP_TIMEOUT="45",
+                GDAL_HTTP_MAX_RETRY="2", **strategy,
+            ):
+                with rasterio.open("/vsicurl/" + url) as src:
+                    if src.crs is None:
+                        raise ValueError("GeoTIFF MapBiomas sem CRS")
+                    geom_src = gpd.GeoSeries([geom], crs="EPSG:4326").to_crs(src.crs).iloc[0]
+                    bounds = gpd.GeoSeries([geom_src], crs=src.crs).total_bounds
+                    window = from_bounds(*bounds, transform=src.transform).round_offsets().round_lengths()
+                    window = window.intersection(rasterio.windows.Window(0, 0, src.width, src.height))
+                    stage = "read_pixel_window"
+                    values = src.read(1, window=window, boundless=False)
+                    transform = window_transform(window, src.transform)
+                    mask = geometry_mask([mapping(geom_src)], out_shape=values.shape, transform=transform, invert=True, all_touched=False)
+                    stage = "summarize_pixels"
+                    geod = Geod(ellps="WGS84")
+                    from pyproj import Transformer
+                    to_wgs84 = Transformer.from_crs(src.crs, "EPSG:4326", always_xy=True)
+                    areas = []
+                    for row in range(values.shape[0]):
+                        corners = [transform * (0, row), transform * (values.shape[1], row),
+                                   transform * (values.shape[1], row + 1), transform * (0, row + 1)]
+                        lons, lats = to_wgs84.transform([p[0] for p in corners], [p[1] for p in corners])
+                        area, _ = geod.polygon_area_perimeter(lons, lats)
+                        areas.append(abs(area) / values.shape[1])
+                    result = summarize_class_grid(values, mask, areas, nodata=src.nodata)
+                    result.update({
+                        "collection": COLLECTION, "year": int(year), "resolution_m": RESOLUTION_M,
+                        "source_url": url, "legend_url": SOURCE_URL,
+                        "method": "contagem de pixels MapBiomas dentro da AOI; área geodésica por linha; percentual relativo aos pixels válidos; resolução nominal 30 m; máscara por centro do pixel",
+                        "status": "MAPBIOMAS — COBERTURA E USO, NÃO SUBSTITUI LEGENDA DETALHADA IBGE",
+                    })
+                    result["read_strategy"] = ["MULTIRANGE_DEFAULT", "SERIAL_RANGE_NO_HEAD_HTTP11",
+                                               "MULTIRANGE_NO_MULTIPLEX_HTTP11"][strategy_index-1]
+                    result["transport_attempts"] = strategy_index
+                    return result
+        except Exception as exc:
+            try: detail = str(exc)
+            except Exception: detail = "mensagem não decodificável"
+            import re
+            detail = re.sub(r"https?://[^\s'\"]+", "[URL_REMOVIDA]", detail)
+            last_error = (stage, type(exc).__name__, detail.encode("utf-8","replace").decode("utf-8")[:240])
+    stage, kind, detail = last_error or ("open_cog", "RuntimeError", "falha sem diagnóstico")
+    raise RuntimeError(f"MAPBIOMAS_{stage}_{kind}: {detail}") from None

@@ -1847,3 +1847,20 @@ Prioridades do piloto: série temporal SAR observável com proveniência por cen
 ### V87.99 — contrato CBERS ou Sentinel-2 desenhado no canvas (11/11/2026)
 - Corrigida incompatibilidade do smoke: Sentinel-2 Earth Search foi efetivamente carregado na janela de Sinop, mas o gate exigia CBERS-4A e classificava a alternativa autorizada como `FALLBACK_ONLY`/falha. Agora o teste aceita CBERS ou Sentinel-2 somente com foto real de dimensões positivas e item imagem no canvas Tk visível. Texto de status, cartografia, VIIRS e mosaico Esri não satisfazem o gate.
 - Registro do provedor preserva se passou por CBERS ou por fallback Sentinel-2; não oculta a indisponibilidade de CBERS. A validação usa caixa próxima ao centroide, não a geometria integral da Fazenda Maria Eduarda; esse teste não comprova SAR, carbono ou monitoramento agrícola.
+
+
+## V88.00 — diagnóstico e retentativas de leitura de pixels na versão 3.26.19 (12/11/2026)
+
+Evidência de regressão recebida da execução 3.26.18 na Fazenda Maria Eduarda (Sinop): CBERS/Sentinel-2 não apareceram; SAR atual falhou ao ler cenas; LEM+ registrou UnicodeDecodeError em tentativas repetidas e nenhum par VV/VH mensal; a contingência MapBiomas + PAM também reportou UnicodeDecodeError. O relatório não prova ausência de cenas ou de pixels; comprova que as rotas da versão testada não entregaram dados utilizáveis nessa AOI.
+
+Alterações de código desta revisão: o leitor MapBiomas tenta transportes GDAL distintos (multirange padrão, ranges serializados sem HEAD/HTTP 1.1 e multirange sem multiplexação/HTTP 1.1), registra a etapa e preserva detalhe seguro da exceção; os leitores Sentinel-1 recente e LEM+ fazem quatro tentativas de transporte/credencial com diagnóstico de etapa, estratégia e exceção; falha técnica de pixels LEM+ permanece ERRO_TECNICO_LEITURA_SAR, separada de N/D_SEM_PIXELS_SAR; CBERS-4A e Sentinel-2 repetem a mesma cena com três configurações de transporte antes de abandoná-la; a auditoria da contingência exibe etapa e detalhe e não converte falha em classe vazia ou zero.
+
+O MapBiomas + PAM continua estritamente histórico e só elegível depois que todas as rotas SAR configuradas tiverem auditorias terminais sem pixels processados. A saída não representa cobertura ou safra atual. Falhas de leitura não são chamadas de ausência real de pixels.
+
+Verificação executada neste ambiente: cinco testes unitários do fallback MapBiomas + PAM passaram; py_compile e git diff --check passaram. A suíte que importa a GUI não pôde ser executada neste ambiente porque o runtime não contém a dependência requests. Não houve execução Windows nem leitura de pixels na geometria integral da Fazenda Maria Eduarda neste checkpoint.
+
+Critério de liberação inalterado: não declarar a versão funcional para a fazenda nem atribuir resultados de pixels à AOI integral até que o executável Windows leia e registre pixels SAR e ópticos na geometria original e o pipeline produza os painéis correspondentes. CI de caixa/centroide, compilação e testes sintéticos não substituem essa prova.
+
+Configuração de transporte baseada nas opções oficiais do GDAL para GDAL_HTTP_MULTIRANGE (YES, SERIAL e SINGLE_GET), GDAL_HTTP_MULTIPLEX, GDAL_HTTP_VERSION e /vsicurl/: https://gdal.org/en/stable/user/configoptions.html e https://gdal.org/en/stable/user/virtual_file_systems.html.
+
+Próxima ação: compilar em Windows e executar testes de leitura real em AOIs autorizadas. Anexar métricas sanitizadas de pixels válidos, datas, percentual de cobertura, provedor, estágios/transportes tentados e erros sem URLs assinadas. Não publicar geometrias privadas; não anunciar sucesso com fixture representativo.

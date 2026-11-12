@@ -140,23 +140,28 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
         for feat in grouped.get(ym,[])[:5]:
             # Atomic scene: commit both polarizations or neither.
             pair={}
-            for attempt in range(3):
+            read_stage = "asset_authorization"
+            for attempt in range(4):
                 try:
                     for pol in ("vv","vh"):
                         gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
                                    "GDAL_HTTP_TIMEOUT":"45","GDAL_HTTP_MAX_RETRY":"3",
                                    "GDAL_HTTP_RETRY_DELAY":"1",**tls_setup.gdal_env()}
-                        if attempt==2:
+                        if attempt>=1:
                             gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",
-                                              "GDAL_HTTP_MULTIRANGE":"SERIAL",
+                                              "GDAL_HTTP_MULTIRANGE":("SERIAL" if attempt in (1,3) else "SINGLE_GET"),
                                               "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
                                               "GDAL_HTTP_VERSION":"1.1"})
+                        if attempt==3:
+                            gdal_opts["GDAL_HTTP_MULTIPLEX"]="NO"
                         with rasterio.Env(**gdal_opts):
                             read_href=asset_href_for_read_attempt(
                                 feat["assets"][pol]["href"],attempt=attempt,token=token,
                                 token_fn=token_fn or get_runtime_sas_token)
+                            read_stage="open_cog"
                             with rasterio.open(read_href) as src:
                                 if src.crs is None:raise ValueError("SAR_COG_MISSING_CRS")
+                                read_stage="read_pixel_window"
                                 local=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
                                 window=from_bounds(*local.bounds,transform=src.transform)
                                 from math import floor,ceil
@@ -171,6 +176,7 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                                 raw=np.ma.filled(src.read(1,window=window,masked=True)
                                                  .astype(np.float32),np.nan)
                                 out=np.full((H,W),np.nan,dtype=np.float32)
+                                read_stage="reproject_pixel_window"
                                 reproject(source=raw,destination=out,
                                     src_transform=src.window_transform(window),
                                     src_crs=src.crs,src_nodata=np.nan,
@@ -184,7 +190,10 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                 except (OSError,RuntimeError,ValueError,UnicodeError) as exc:
                     failed.append({"scene":str(feat.get("id",""))[:65],
                                    "type":type(exc).__name__,"attempt":attempt+1,
-                                   "read_strategy":("HTTP_1_1_NO_MULTIRANGE" if attempt==2 else "DEFAULT_GDAL")})
+                                   "stage":read_stage,"detail":_safe_error_detail(exc),
+                                   "read_strategy":("MULTIRANGE_DEFAULT" if attempt==0 else
+                                     "SERIAL_RANGE_HTTP11" if attempt==1 else
+                                     "SINGLE_GET_HTTP11" if attempt==2 else "SERIAL_NO_MULTIPLEX_HTTP11")})
                     pair={}
                     if attempt==0 and not token:
                         try:token=(token_fn or get_runtime_sas_token)()
@@ -211,9 +220,10 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
              {tuple(map(int,x.split("-"))) for x in observed_months}]
     if missing:
         return None, {"reason":"MESES_RTC_SEM_PARES_VV_VH",
+            "status":("ERRO_TECNICO_LEITURA_SAR" if failed else "N/D_SEM_PIXELS_SAR"),
             "observed_months":observed_months,"missing_months":missing,
             "scenes_used":len(used),"monthly_pair_counts":monthly_pair_counts,
-            "pixel_read_errors":failed[:12]}
+            "pixel_read_errors":failed[:24]}
     bands=[]
     for ym in months:
         vv,vh=S[(ym,"vv")],S[(ym,"vh")]
@@ -226,6 +236,14 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
         "monthly_pair_counts":monthly_pair_counts,
         "pixel_read_errors":failed[:12],
         "first_scene":used[0],"last_scene":used[-1]}
+
+def _safe_error_detail(exc):
+    try: detail = str(exc)
+    except Exception: detail = "mensagem da exceção não decodificável"
+    import re
+    detail = re.sub(r"https?://[^\s'\"]+", "[URL_REMOVIDA]", detail)
+    return detail.encode("utf-8", "replace").decode("utf-8")[:220]
+
 
 def in_validated_domain(ibge=None, ibge_field="legenda_1", aoi=None):
     """Validated domain (v2): savanna/Cerrado phytoregions, and Amazonian forest
@@ -274,7 +292,7 @@ def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
     aoi4326 = aoi.to_crs(4326)
     data, info = _monthly_features(aoi4326, months, search_fn, token_fn)
     if data is None:
-        return {"status": "N/D_SEM_PIXELS_SAR", "reason": info["reason"],
+        return {"status": info.get("status", "N/D_SEM_PIXELS_SAR"), "reason": info["reason"],
                 "season": season, "acquisition_diagnostic": info}
     X, tr, (H, W) = data
     inside = geometry_mask([mapping(g) for g in aoi.to_crs(6933).geometry], out_shape=(H, W),

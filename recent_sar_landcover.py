@@ -149,7 +149,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                     provider_diag["token_error_count"]+=1
             for dt,scene in provider_selected:
                 scene_ok=False
-                for attempt in range(3):
+                for attempt in range(4):
                     provider_diag["pixel_read_attempt_count"]+=1
                     read_stage="asset_authorization"
                     try:
@@ -160,18 +160,18 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                         pair=[]
                         for pol in ("vv","vh"):
                             from tls_setup import gdal_env
-                            # Last attempt serializes byte ranges and avoids HEAD.
-                            # GDAL_HTTP_MULTIRANGE accepts SERIAL, SINGLE_GET or
-                            # YES; "NO" is not a valid value and silently leaves
-                            # the default multipart transport enabled.
+                            # Rotate actual HTTP transports after failures:
+                            # default multiplexing, serial ranges, single GET,
+                            # and serial ranges without HTTP/2 multiplexing.
                             gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
                                        "GDAL_HTTP_TIMEOUT":"45","GDAL_HTTP_MAX_RETRY":"3",
                                        "GDAL_HTTP_RETRY_DELAY":"1",**gdal_env()}
-                            if attempt==2:
+                            if attempt>=1:
                                 gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",
-                                                  "GDAL_HTTP_MULTIRANGE":"SERIAL",
+                                                  "GDAL_HTTP_MULTIRANGE":("SERIAL" if attempt in (1,3) else "SINGLE_GET"),
                                                   "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
                                                   "GDAL_HTTP_VERSION":"1.1"})
+                            if attempt==3:gdal_opts["GDAL_HTTP_MULTIPLEX"]="NO"
                             with rasterio.Env(**gdal_opts):
                                 asset_href=scene["assets"][pol]["href"]
                                 read_href=(asset_href_for_read_attempt(
@@ -226,7 +226,9 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                              "error_type":type(exc).__name__,
                              "error_class":("GDAL_NATIVE_ERROR_NON_UTF8" if isinstance(exc,UnicodeError) else "COG_READ_ERROR"),
                              "stage":read_stage,
-                             "read_strategy":("HTTP_1_1_NO_MULTIRANGE" if attempt==2 else "DEFAULT_GDAL"),
+                             "read_strategy":("MULTIRANGE_DEFAULT" if attempt==0 else
+                               "SERIAL_RANGE_HTTP11" if attempt==1 else
+                               "SINGLE_GET_HTTP11" if attempt==2 else "SERIAL_NO_MULTIPLEX_HTTP11"),
                              "error":_safe_reason(exc),
                              "attempt":attempt+1,"recovered":False}
                         provider_errors.append(row)

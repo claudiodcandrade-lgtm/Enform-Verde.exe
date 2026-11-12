@@ -19,17 +19,18 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class SinopWindowsRecurrenceTests(unittest.TestCase):
-    def test_sar_both_paths_have_third_transport_retry(self):
+    def test_sar_both_paths_have_four_transport_attempts(self):
         for fn in (recent_sar_landcover.run_recent_sar_screen,
                    sar_landcover_lemplus._monthly_features):
             src=inspect.getsource(fn)
-            self.assertIn("for attempt in range(3):",src)
+            self.assertIn("for attempt in range(4):",src)
             self.assertIn('CPL_VSIL_CURL_USE_HEAD',src)
             self.assertIn('GDAL_HTTP_MULTIRANGE',src)
             self.assertIn('GDAL_HTTP_VERSION',src)
             self.assertIn('"1.1"',src)
             self.assertIn("asset_href_for_read_attempt(",src)
             self.assertIn("GDAL_HTTP_TIMEOUT",src)
+            self.assertIn('"SINGLE_GET"',src)
 
     def test_map_refresh_uses_canvas_size_not_rendered_image_size(self):
         src=inspect.getsource(app.App._on_map_resize)
@@ -50,9 +51,25 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
         for fn in (recent_sar_landcover.run_recent_sar_screen,
                    sar_landcover_lemplus._monthly_features):
             src=inspect.getsource(fn)
-            self.assertIn('GDAL_HTTP_MULTIRANGE":"SERIAL"',src)
+            self.assertIn('SERIAL',src)
+            self.assertIn('SINGLE_GET',src)
             self.assertNotIn('GDAL_HTTP_MULTIRANGE":"NO"',src)
             self.assertIn("asset_href_for_read_attempt(",src)
+
+    def test_mapbiomas_reader_has_independent_serial_transport(self):
+        import mapbiomas_zonal
+        src=inspect.getsource(mapbiomas_zonal.mapbiomas_class_percentages)
+        self.assertIn('"GDAL_HTTP_MULTIRANGE":"SERIAL"',src)
+        self.assertIn('"GDAL_HTTP_MULTIPLEX":"NO"',src)
+        self.assertIn('"read_pixel_window"',src)
+
+    def test_optical_pixels_retry_transport_per_candidate_scene(self):
+        for fn,marker in ((app.sentinel2_earthsearch_preview,"expanded_pool"),
+                          (app.cbers4a_wfi_preview,"expanded_scenes")):
+            src=inspect.getsource(fn)
+            self.assertIn(marker,src)
+            self.assertIn("for strategy in range(3)",src)
+            self.assertIn('GDAL_HTTP_MULTIPLEX',src)
 
     def test_optical_provider_errors_are_saved_and_redacted(self):
         with tempfile.TemporaryDirectory() as td:
