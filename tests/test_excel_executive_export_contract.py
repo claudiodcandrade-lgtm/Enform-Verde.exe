@@ -28,18 +28,18 @@ class ExcelExecutiveContract(unittest.TestCase):
         self.assertIn('wrap_text=True',self.src)
         self.assertIn('sheet.column_dimensions',self.src)
 
-    def test_graphs_tab_contains_all_three_source_backed_charts(self):
-        self.assertIn('create_sheet("Gráficos")', self.src)
-        self.assertIn("mean_stems_ha", self.src)
-        self.assertIn("mean_basal_area_m2_ha", self.src)
-        self.assertIn("height_pixel_distribution", self.src)
-        self.assertIn("height_absence_certificate", self.src)
-        self.assertIn("regional_height_fallback_decision", self.src)
-        self.assertIn("top10_by_plot_incidence", self.src)
-        self.assertEqual(self.src.count("LineChart()"), 2)
-        self.assertEqual(self.src.count("BarChart()"), 1)
-        self.assertIn("Fonte:", self.src)
-        self.assertIn("Pixels SAR", self.src)
+    def test_graphs_show_inventory_stems_basal_area_and_sar_height(self):
+        self.assertIn("create_sheet('Gráficos')",self.src)
+        self.assertIn('mean_stems_ha',self.src)
+        self.assertIn('mean_basal_area_m2_ha',self.src)
+        self.assertIn('height_pixel_distribution',self.src)
+        self.assertIn('height_absence_certificate',self.src)
+        self.assertIn('regional_height_fallback_decision',self.src)
+        self.assertIn('top10_by_plot_incidence',self.src)
+        self.assertEqual(self.src.count('LineChart()'),2)
+        self.assertEqual(self.src.count('BarChart()'),1)
+        self.assertIn('Fonte:',self.src)
+        self.assertIn('Pixels SAR',self.src)
 
     def test_missing_litter_never_fabricated_as_zero(self):
         self.assertIn('N/D — NÃO SOMADA',self.src)

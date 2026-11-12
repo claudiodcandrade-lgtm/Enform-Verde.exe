@@ -3475,11 +3475,13 @@ class App(tk.Tk):
             chart[c].alignment=Alignment(wrap_text=True,vertical="center")
         chart["A2"]="Distribuição diamétrica média aplicável — área basal média por classe DAP (m²/ha)."
         chart["A2"].font=Font(bold=True,color=green)
-        chart["A4"]="Classe DAP";chart["B4"]="Área basal média (m²/ha)"
+        chart["A4"]="Classe DAP";chart["B4"]="Árvores médias (ind./ha)"
+        chart["C4"]="Área basal média (m²/ha)";chart["D4"]="Frequência de árvores (%)"
+        chart["E4"]="Área basal da classe (%)"
         dbh_bins=[("5–10 cm","dbh_5_10_cm"),("10–20 cm","dbh_10_20_cm"),
             ("20–30 cm","dbh_20_30_cm"),("30–40 cm","dbh_30_40_cm"),
             ("40–60 cm","dbh_40_60_cm"),("≥60 cm","dbh_60_plus_cm")]
-        dbh_by_stratum=[]
+        dbh_by_stratum=[];dbh_contributing_refs=[]
         for idx,ref in enumerate(bio_refs):
             if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":continue
             st=native_strata[idx] if idx<len(native_strata) else {}
@@ -3487,16 +3489,24 @@ class App(tk.Tk):
             rows={x.get("bin_id"):x for x in ref.get("dbh_distribution_by_plot_mean") or []}
             if area>0 and all(key in rows for _,key in dbh_bins):
                 dbh_by_stratum.append((area,rows))
+                dbh_contributing_refs.append(ref)
         if dbh_by_stratum:
             area_sum=sum(x[0] for x in dbh_by_stratum)
+            means=[]
             for row,(label,key) in enumerate(dbh_bins,5):
-                value=sum(area*float(rows[key]["mean_basal_area_m2_ha"]) for area,rows in dbh_by_stratum)/area_sum
-                chart.cell(row,1,label);chart.cell(row,2,value)
-            dbh_refs=[ref for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls")]
+                mean_stems=sum(area*float(rows[key]["mean_stems_ha"]) for area,rows in dbh_by_stratum)/area_sum
+                mean_basal=sum(area*float(rows[key]["mean_basal_area_m2_ha"]) for area,rows in dbh_by_stratum)/area_sum
+                means.append((mean_stems,mean_basal))
+                chart.cell(row,1,label);chart.cell(row,2,mean_stems);chart.cell(row,3,mean_basal)
+            total_stems=sum(x[0] for x in means);total_basal=sum(x[1] for x in means)
+            for row,(mean_stems,mean_basal) in enumerate(means,5):
+                chart.cell(row,4,100*mean_stems/total_stems if total_stems else 0)
+                chart.cell(row,5,100*mean_basal/total_basal if total_basal else 0)
+            dbh_refs=[ref for ref in dbh_contributing_refs if ref.get("source_urls")]
             dbh_sources=inventory_source_labels(dbh_refs)
-            chart["A3"]="Referência regional; média ponderada pela área dos estratos nativos. Fontes (instituição — URL): "+("; ".join(dbh_sources) or "N/D")
-            lc=LineChart();lc.title="Área basal média por classe diamétrica";lc.y_axis.title="m²/ha";lc.x_axis.title="DAP"
-            lc.add_data(Reference(chart,min_col=2,min_row=4,max_row=10),titles_from_data=True)
+            chart["A3"]="Médias por DAP ponderadas pela área dos estratos nativos; curvas mostram frequência relativa de indivíduos e participação da área basal. Fontes (instituição — URL): "+("; ".join(dbh_sources) or "N/D")
+            lc=LineChart();lc.title="Distribuição diamétrica média e área basal";lc.y_axis.title="Participação média (%)";lc.x_axis.title="DAP"
+            lc.add_data(Reference(chart,min_col=4,max_col=5,min_row=4,max_row=10),titles_from_data=True)
             lc.set_categories(Reference(chart,min_col=1,min_row=5,max_row=10));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
         else:
             chart["A5"]="N/D — sem inventário compatível e carregado para os estratos nativos confirmados."
@@ -3534,10 +3544,12 @@ class App(tk.Tk):
             allow_region,absence_reason=regional_height_fallback_decision(cert)
             regional=[]
             if allow_region:
-                regional_refs=[ref for ref in bio_refs
+                regional_pairs=[(ref,ref.get("inventory_tree_height_distribution") or {}) for ref in bio_refs
                     if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls") and ref.get("institutions")]
-                regional=[ref.get("inventory_tree_height_distribution") or {} for ref in regional_refs]
-                regional=[x for x in regional if x.get("status")=="REFERENCIA_ALTURA_INVENTARIO_REGIONAL"]
+                regional_pairs=[(ref,dist) for ref,dist in regional_pairs
+                    if dist.get("status")=="REFERENCIA_ALTURA_INVENTARIO_REGIONAL" and float(dist.get("n_plots") or 0)>0]
+                regional_refs=[ref for ref,_ in regional_pairs]
+                regional=[dist for _,dist in regional_pairs]
             if allow_region and regional:
                 plot_weights=[float(x.get("n_plots") or 0) for x in regional]
                 weight_sum=sum(plot_weights)
