@@ -20,3 +20,5 @@
 - A classificação SAR sazonal na versão compatível do modelo foi repetida diretamente no KML completo, mas ainda não foi confirmada na integração do dashboard.
 - O painel integral do aplicativo para essa AOI, a altura de dossel e a estimativa de carbono continuam sem comprovação de ponta a ponta. Pixels de classificação sazonal não equivalem a pixels de altura/biomassa.
 - A verificação visual local não rodou por falta de display. Build Windows/EXE ainda não executado. O produto permanece experimental e não homologado.
+
+- O primeiro CI live detectou um segundo instalador de dependências que ainda usava scikit-learn 1.9.1. A classificação foi corretamente bloqueada antes da predição. Os workflows live e dashboard agora fixam 1.8.0; um teste de contrato impede divergência futura. A prova desses workflows deve ser refeita no novo commit.

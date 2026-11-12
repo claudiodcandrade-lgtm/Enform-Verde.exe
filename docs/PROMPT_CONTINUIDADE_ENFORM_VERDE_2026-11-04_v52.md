@@ -1912,3 +1912,9 @@ O workflow #43130208992 concluiu `success` sobre o código `8d9d56d442e967474dbb
 - O artefato `sar_brasil_rf_v2.joblib` foi serializado em scikit-learn 1.8.0. Agora `requirements_desktop.txt` fixa `scikit-learn==1.8.0`, o manifesto registra a versão de treino e o loader rejeita incompatibilidade antes da desserialização (`VERSAO_SKLEARN_INCOMPATIVEL`). Isso elimina inferência silenciosa com runtime não compatível; o modelo mantém rótulo experimental e limitações de transferência já documentadas.
 - No runtime 1.8.0, a classificação sazonal direta do KML completo Sinop repetiu: corte raso/solo exposto 576,00 ha; soja 399,36 ha; café 1,92 ha; área cultivada não identificada 3,20 ha; floresta nativa 471,68 ha; vegetação nativa 5,12 ha; área úmida 0,64 ha; 1.457,92 ha classificados e 1,99 ha sem classe. Não representa altura, biomassa, carbono nem validação de campo.
 - Suíte completa com scikit-learn 1.8.0: 1.083 testes aprovados, 1 ignorado; coleta/importação: 157 módulos; 12 testes direcionados aprovados. Ainda é preciso build Windows e prova no KML da imagem óptica, integração dos painéis e execução end-to-end.
+
+## V88.06 — todos os workflows usam o runtime do modelo (12/11/2026)
+
+- O run live do commit anterior recusou a predição corretamente porque seu instalador ainda puxava scikit-learn 1.9.1, embora o modelo declare 1.8.0. `dashboard-dual-tests.yml` também aceitava qualquer versão da faixa 1.x. Corrigidos ambos para `scikit-learn==1.8.0`, igual a `requirements_desktop.txt` e ao manifesto. Teste de contrato protege os três caminhos de instalação.
+- O erro foi fail-closed: nenhuma classificação live foi apresentada com runtime incompatível. Não reaproveitar evidência/artefato do SHA antigo para esta correção.
+- Reexecutar teste dirigido, suíte completa, live SAR e build Windows no novo SHA. A imagem óptica da AOI integral, o dashboard de fazenda e os painéis de altura/carbono seguem sem prova Windows.

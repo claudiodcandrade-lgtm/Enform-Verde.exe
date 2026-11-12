@@ -1507,3 +1507,7 @@ A correção do bundle TLS e do desenho de KML 3D não altera método, fontes, p
 ## Registro V88.05 — paridade do classificador experimental (12/11/2026)
 
 O runtime do classificador SAR foi fixado em scikit-learn 1.8.0, igual à versão usada para serializar o artefato. O carregador bloqueia divergência da dependência. Esta alteração melhora a reprodutibilidade do classificador, sem convertê-lo em fonte de altura, biomassa, carbono ou fertilidade do solo. A metodologia de carbono do solo permanece Embrapa/PronaSolos 0–100 cm, com interseção espacial e incerteza próprias.
+
+## Registro V88.06 — runtime consistente nos workflows (12/11/2026)
+
+Os workflows de testes do classificador foram alinhados à versão scikit-learn 1.8.0 declarada no manifesto do modelo. O loader bloqueou uma execução live que ainda usava 1.9.1, impedindo inferência incompatível; a correção atualiza os dois instaladores e adiciona contrato. Esta é uma proteção de reprodutibilidade de software e não altera dados, fontes, profundidade, incerteza ou qualquer cálculo de carbono/fertilidade do solo.
