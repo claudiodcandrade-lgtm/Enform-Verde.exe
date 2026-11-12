@@ -1486,3 +1486,8 @@ O build Windows `3.26.18-PRECAMPO-EXPERIMENTAL` passou o autoteste em cópia lim
 
 ## V87.99 — contrato de imagem óptica (11/11/2026)
 A correção do smoke de interface aceita CBERS-4A/WFI ou Sentinel-2 efetivamente renderizado no canvas. Esta é uma verificação de apresentação óptica e não altera os métodos de carbono/fertilidade do solo 0–100 cm, nem constitui evidência de leitura SAR, estoque de carbono ou validação da Fazenda Maria Eduarda. A especificação de solo permanece vinculada a produtos Embrapa/PronaSolos, interseção espacial, profundidade e incerteza próprias.
+
+
+## Registro V88.00 — versão 3.26.19 (12/11/2026)
+
+Esta atualização trata de acesso/decodificação de COGs ópticos, SAR e MapBiomas. Não altera a metodologia de carbono do solo: continuam obrigatórios produtos Embrapa/PronaSolos, profundidade de 0–100 cm, interseção com a AOI e incerteza própria. Falha de leitura SAR não preenche nem invalida o módulo de solo. SoilGrids segue apenas como sensibilidade, nunca como substituto de uma camada oficial ou como preenchimento automático de ausência. A validação do KML integral da Fazenda Maria Eduarda permanece pendente.

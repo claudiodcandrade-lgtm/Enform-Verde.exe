@@ -13,7 +13,10 @@ SPEC = "docs/ESPECIFICACAO_TECNICA_COMPLETA.docx"
 PROMPT = "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md"
 HISTORICAL_PROMPT = "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md"
 SOIL_SPEC = "docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md"
-SYNC = ".github/workflows/sync-full-spec-word.yml"
+SYNC_WORKFLOWS = (
+    ".github/workflows/sync-full-spec-word.yml",
+    ".github/workflows/sync-pixel-read-spec-word.yml",
+)
 
 def effective(path):
     if path in (SPEC,PROMPT) or path.startswith("docs/"):
@@ -29,7 +32,8 @@ def check(changed, *, workflow_text=None, word_exists=None):
     if SOIL_SPEC not in changed:missing.append(SOIL_SPEC)
     if SPEC not in changed:
         if workflow_text is None:
-            workflow_text=Path(SYNC).read_text(encoding="utf-8") if Path(SYNC).exists() else ""
+            workflow_text="\n".join(Path(p).read_text(encoding="utf-8")
+                                      for p in SYNC_WORKFLOWS if Path(p).exists())
         if word_exists is None:
             word_exists=Path(SPEC).is_file()
         checkpoints=[p for p in changed if p.startswith("docs/spec_updates/") and p.endswith(".md")]

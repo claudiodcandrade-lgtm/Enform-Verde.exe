@@ -19,3 +19,5 @@ Cinco testes unitários do fallback passaram; compilação sintática e `git dif
 ## Referência técnica
 
 GDAL, documentação oficial de `GDAL_HTTP_MULTIRANGE`, `GDAL_HTTP_MULTIPLEX`, `GDAL_HTTP_VERSION` e `/vsicurl/`: https://gdal.org/en/stable/user/configoptions.html e https://gdal.org/en/stable/user/virtual_file_systems.html
+
+O arquivo Word completo é atualizado a partir deste checkpoint pelo workflow de sincronização do repositório, mantendo o histórico editorial e o registro de versão.
