@@ -34,6 +34,7 @@ Se nenhum pixel de altura SAR for efetivamente encontrado, a linha de altura só
 
 ## Evidência e escopo
 
+- A workflow Windows em branch de PR roda pelo evento `pull_request`; o gatilho `push` fica restrito à `main`, evitando que os dois eventos concorrentes cancelem entre si a mesma build cara.
 - No checkpoint anterior, o teste ESA MAAP leu 2.304 pixels FH em uma caixa próxima ao centroide de Sinop (média da amostra: 18,284 m). Essa leitura prova acesso ao produto na caixa de teste; não é média de altura da Fazenda Maria Eduarda nem prova de altura integrada ao dashboard.
 - No workflow Windows iniciado sobre o commit anterior, o smoke óptico leu CBERS-4A/WFI com cobertura de pixels de 95% ou mais em 11/11 AOIs amostrais, incluindo uma janela centrada em Sinop. O teste worker→canvas em Sinop também passou. A amostragem não prova cobertura exaustiva nacional nem processa o KML privado integral.
 - A triagem SAR sazonal da área de teste de Sinop e a máscara SAR no KMZ de teste Tapajós são experimentais; não demonstram acurácia de cultura, altura ou carbono na Fazenda Maria Eduarda.

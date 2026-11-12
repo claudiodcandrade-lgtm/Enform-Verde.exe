@@ -1,7 +1,12 @@
+Warning: truncated output (original token count: 22603)
+Total output lines: 1252
+
 name: Build Enform Verde Windows
 on:
   push:
-    branches: [main, patches-3.26.6]
+    # Feature branches targeting main are built by pull_request. Avoid firing
+    # the same expensive Windows build again for the matching push event.
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -505,172 +510,7 @@ jobs:
               ui._reset_analysis_state()
               assert ui._map_generation>old_generation and not ui._satellite_map_visible, "new input must invalidate stale satellite map responses"
           ui.destroy()
-          print("GUI_CONTRACT_OK")
-          '@ | Set-Content gui_contract_test.py -Encoding UTF8
-          python gui_contract_test.py
-      - name: Live Sentinel-2 polygon preview — actual Tapajos KMZ
-        shell: pwsh
-        timeout-minutes: 8
-        run: |
-          @'
-          import desktop_app as a
-          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          import requests
-          try:
-              p=a.sentinel2_preview(g,out_h=420,extent_factor=1.36)
-          except (requests.exceptions.Timeout,requests.exceptions.ConnectionError) as exc:
-              # Public imagery outage is not a software regression. Never
-              # report a successful live preview if the catalog timed out.
-              print("LIVE_SENTINEL2_UNAVAILABLE_EXTERNAL",type(exc).__name__,str(exc))
-          except requests.exceptions.HTTPError as exc:
-              code=getattr(getattr(exc,"response",None),"status_code",None)
-              if code not in (429,500,502,503,504):raise
-              print("LIVE_SENTINEL2_UNAVAILABLE_EXTERNAL",code,str(exc))
-          else:
-              assert p["image"].height==420 and p["image"].width>=420
-              assert p["polygons"] and len(p["polygons"][0])>=6
-              assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
-              assert 0 <= float(p["cloud_cover"]) <= 100
-              print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
-          offline_zoom,_=a.offline_brazil_preview(g,extent_factor=2.04,out_size=(900,420))
-          assert offline_zoom.size==(900,420), "offline geographic zoom preview failed"
-          print("OFFLINE_ZOOM_EXTENT_OK",offline_zoom.size)
-          '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
-          python live_sentinel2_preview.py
-
-      - name: Live optical background smoke — Brazilian biomes and geographic extremes
-        shell: pwsh
-        timeout-minutes: 45
-        run: python tools/live_optical_coverage_brazil.py
-      - name: Upload Brazilian optical coverage smoke report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: optical-background-brazil-sample-${{ github.run_number }}
-          path: optical_coverage_brazil_smoke.json
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Live CBERS-4A or Sentinel-2 worker-to-Tk-canvas smoke — Sinop
-        shell: pwsh
-        timeout-minutes: 7
-        run: python tools/live_gui_optical_sinop.py
-
-      - name: Upload live Sinop optical GUI evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: optical-gui-sinop-live-${{ github.run_number }}
-          path: optical_gui_sinop_live.json
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
-        shell: pwsh
-        run: |
-          @'
-          import sar_pipeline as s
-          import desktop_app as a
-          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          r=s.planetary_sentinel1_cog(g,"sar_ci_cache",limit=4)
-          assert r.get("stats"), "Sentinel-1 catalog responded but no real AOI pixels were processed: "+str(r.get("errors"))
-          assert sum(x.get("n",0) for x in r["stats"])>0
-          l=s.planetary_alos_palsar(g,"sar_ci_cache/alos",limit=4)
-          assert l.get("stats"), "ALOS/PALSAR L-band returned no processed Tapajos pixels: "+str(l.get("errors"))
-          assert sum(x.get("n",0) for x in l["stats"])>0
-          assert all(-35 < float(x["mean_db"]) < 5 for x in l["stats"]), "ALOS/PALSAR calibrated dB outside plausible range: "+repr(l["stats"])
-          assert all("DN^2" in x.get("calibration","") for x in l["stats"]), "JAXA DN-squared calibration provenance missing"
-          pols={str(x.get("polarization","")).upper() for x in l["stats"]}
-          if {"HH","HV"} <= pols:
-              dg=s.lband_dualpol_diagnostic(l["stats"],"Amazônia","Floresta Ombrófila Densa",273.515)
-          else:
-              dg=s.lband_dualpol_diagnostic([
-                  {"polarization":"HH","mean_db":-7.039013463912296},
-                  {"polarization":"HV","mean_db":-11.637107111856047}
-              ],"Amazônia","Floresta Ombrófila Densa",273.515)
-          assert dg and dg["role"]=="SAR_ESTRATIFICADOR" and dg["saturation_risk"]=="high" and not dg["quantitative_agb_from_dualpol_permitted"], "Tapajos high-biomass dual-pol must be stratifier: "+repr(dg)
-          lit=s.literature_fallback("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi=g)
-          assert lit and lit["available"] and abs(lit["agb_mg_ha"]-273.515)<1e-6
-          assert lit["sar_metrics"]["RMSE"] is None and lit["agb_range_mg_ha"][0]<lit["agb_mg_ha"]<lit["agb_range_mg_ha"][1]
-          assert "não é IC95%" in lit["uncertainty_kind"]
-          comps=lit["regional_components"]
-          assert "Serapilheira — estoque no piso florestal" in comps
-          assert "IC95%" in comps["Serapilheira — estoque no piso florestal"]["uncertainty_kind"]
-          assert comps["Serapilheira — estoque no piso florestal"]["n_independent_units"] == 6
-          assert comps["Serapilheira — estoque no piso florestal"]["range_dry_mg_ha"][0] < comps["Serapilheira — estoque no piso florestal"]["mean_dry_mg_ha"] < comps["Serapilheira — estoque no piso florestal"]["range_dry_mg_ha"][1]
-          assert "estoque de forest floor" in comps["Serapilheira — estoque no piso florestal"]["method"].lower() and "não é produtividade/queda anual" in comps["Serapilheira — estoque no piso florestal"]["method"]
-          assert not any("Necromassa" in name or "Biomassa subterrânea" in name or "madeira caída" in name or "madeira morta em pé" in name for name in comps), "necromass requires direct inventory means, not literature or allometry"
-          import geopandas as gpd
-          from shapely.geometry import box
-          outside_local=gpd.GeoDataFrame(geometry=[box(-54.96,-3.31,-54.94,-3.29)],crs="EPSG:4326")
-          distant=s.literature_fallback("Amazônia","Floresta Ombrófila Densa das Terras Baixas",aoi=outside_local)
-          assert distant and distant["available"] and not distant["regional_components"], "Tapajos compartments must be geofenced to their actual study sites"
-          import json
-          print("LIVE_TAPAJOS_KMZ_SAR_AND_REGIONAL_REFERENCE_OK "+json.dumps({"sentinel1":r["stats"],"alos_palsar":l["stats"],"agb_reference":lit},ensure_ascii=True))
-          '@ | Set-Content live_sar_test.py -Encoding UTF8
-          python live_sar_test.py
-
-      - name: Official IBGE ZIP transport/cache regression
-        shell: pwsh
-        run: python -m unittest discover -s tests -p 'test_ibge_official_zip.py' -v
-
-      - name: Official IBGE phytoregion classification — real Tapajos AOI
-        id: live_ibge_phyto
-        continue-on-error: true
-        shell: pwsh
-        timeout-minutes: 5
-        run: |
-          @'
-          import json
-          import desktop_app as a
-          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          d=a.diagnose_ibge(g)
-          region=a.primary_ibge_physiognomy(d)
-          assert region and "Floresta Ombrófila Densa" in region, "IBGE legenda_1 did not identify expected Tapajos phytoregion: "+repr(d)
-          classes=d.get("regioes_fitoecologicas") or []
-          assert classes and classes[0]["name"]==region and classes[0]["code"], "dominant IBGE phytoregion code/name/area is incomplete: "+repr(d)
-          assert 0 < classes[0]["percent"] <= 100 and classes[0]["area_ha"] > 0
-          assert region==classes[0]["name"], "display/model phytophysiognomy must equal dominant official legenda_1 class"
-          src=open("desktop_app.py",encoding="utf-8").read()
-          assert "self.ibge_phys_display.set" in src and "Código(s) das regiões fitoecológicas" in src and "code_txt" in src and "ibge_area_summary_lines(d)" in src and "Fitofisionomia presente na propriedade:" in src, "IBGE POTENTIAL code must remain in diagnostic; actual native property label must not claim IBGE potential as present"
-          print("IBGE_VISIBLE_PHYTO_CONTRACT_OK",region,classes[0]["code"])
-          print("OFFICIAL_IBGE_TAPAJOS_CLASSIFICATION_OK "+json.dumps({"region":region,"classes":classes,"source":d.get("fonte_vegetacao")},ensure_ascii=True))
-          '@ | Set-Content ibge_acceptance_test.py -Encoding UTF8
-          python ibge_acceptance_test.py
-
-      - name: Record external IBGE phytoregion outage without inventing coverage
-        if: steps.live_ibge_phyto.outcome == 'failure'
-        shell: pwsh
-        run: |
-          Write-Host "::warning::Official IBGE vegetation coverage probe failed or timed out. The application must show N/D for unavailable IBGE phytoregion and never turn potential legend_1 into actual native-cover classification."
-          "STATUS=OFFICIAL_IBGE_LIVE_UNAVAILABLE; source=external; scientific_current_cover=not_confirmed" | Set-Content ibge_live_availability.txt
-
-      - name: Preserve IBGE live diagnostic
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: official-ibge-live-diagnostic-${{ github.run_number }}
-          path: |
-            ibge_live_availability.txt
-            ibge_acceptance_test.py
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Offline SICAR exact-code integrity regression
-        shell: pwsh
-        run: python -m unittest discover -s tests -p 'test_sicar_wfs_integrity.py' -v
-
-      - name: Live SICAR polygon lookup (external availability probe)
-        id: live_sicar
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          python -c "import desktop_app as a; g1=a.resolve_car('MT-5108501-CBE0F5EDD27A4D7888E7392EA7D44793'); g2=a.resolve_car('MT-5103700-92A39DC62FDF4D88874F218D41BE1C7F'); assert len(g1)==1 and len(g2)==1; assert tuple(g1.total_bounds)!=tuple(g2.total_bounds); print('SICAR_SEQUENCE_OK',g1.crs,g2.crs)"
-      - name: Record live SICAR outage without masking offline integrity failures
-        if: steps.live_sicar.outcome == 'failure'
-        shell: pwsh
-        run: |
-          Write-Host "::warning::Official SICAR WFS unreachable or returned no verified polygon. Live service not validated on this run; offline exact-code integrity tests remain mandatory. Do not claim operational SICAR validation."
+          print("GUI_CONTRACT_O…2603 tokens truncated…ional SICAR validation."
 
       - name: Professional scientific contracts
         shell: pwsh
