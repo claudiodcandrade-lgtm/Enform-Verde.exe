@@ -1511,3 +1511,8 @@ O runtime do classificador SAR foi fixado em scikit-learn 1.8.0, igual à versã
 ## Registro V88.06 — runtime consistente nos workflows (12/11/2026)
 
 Os workflows de testes do classificador foram alinhados à versão scikit-learn 1.8.0 declarada no manifesto do modelo. O loader bloqueou uma execução live que ainda usava 1.9.1, impedindo inferência incompatível; a correção atualiza os dois instaladores e adiciona contrato. Esta é uma proteção de reprodutibilidade de software e não altera dados, fontes, profundidade, incerteza ou qualquer cálculo de carbono/fertilidade do solo.
+
+
+## Registro de controle documental V88.08 — 12/11/2026
+
+A correção de escopo da prova Sentinel-1 em caixa próxima a Sinop altera somente a rotulagem do diagnóstico SAR. Não modifica dados, modelo, métodos, incerteza, profundidade ou resultados do carbono/fertilidade do solo. O recorte SAR não é a AOI parcelar e não fornece estimativa de estoque de carbono.

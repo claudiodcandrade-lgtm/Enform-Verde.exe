@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Experimental, reproducible real-SAR semantic polygons near Sinop centroid.
+"""Experimental real-SAR semantic polygons for a fixed test box near Sinop.
 
-Does NOT impersonate the private Fazenda Maria Eduarda KML or prove
-contemporaneous 2026/27 conditions. Uses full completed Oct-Sep season.
+This is explicitly NOT the Fazenda Maria Eduarda KML and does not prove
+contemporaneous 2026/27 conditions. Uses the last complete Oct-Sep season.
 """
 import json
 import sys
@@ -20,20 +20,29 @@ OUT=Path("sinop_sar_semantic_experimental")
 OUT.mkdir(exist_ok=True)
 
 
+def build_report_header(sample_box_area_ha, started_at=None):
+    """Name the fixed sample scope so its areas cannot be read as farm totals."""
+    return {
+        "status": "STARTED",
+        "scope": "fixed 0.03-degree test box near Sinop centroid; NOT original KML",
+        "sample_box_area_ha": float(sample_box_area_ha),
+        "reference_farm_area_ha_not_processed": 1459.91,
+        "data_origin": "Sentinel-1 RTC VV/VH observed SAR pixels",
+        "claim": "experimental model inference from last complete agricultural year",
+        "field_validated": False,
+        "current_sowing_season_2026_27_verified": False,
+        "mapbiomas_or_ibge_used_as_current_labels": False,
+        "started_at_utc": started_at or datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def run():
     # Fixed AOI only illustrates the API working over REAL SAR observations;
     # it is not a substitute for the owner's complete polygon.
     aoi=gpd.GeoDataFrame(geometry=[box(-55.205498,-11.887667,
                                       -55.175498,-11.857667)],crs="EPSG:4326")
     area_ha=float(aoi.to_crs(6933).geometry.area.sum()/1e4)
-    report={"status":"STARTED","scope":"small box at Sinop centroid; NOT original KML",
-            "aoi_area_ha":area_ha,"original_farm_area_ha":1459.91,
-            "data_origin":"Sentinel-1 RTC VV/VH observed SAR pixels",
-            "claim":"experimental model inference from last complete agricultural year",
-            "field_validated":False,
-            "current_sowing_season_2026_27_verified":False,
-            "mapbiomas_or_ibge_used_as_current_labels":False,
-            "started_at_utc":datetime.now(timezone.utc).isoformat()}
+    report=build_report_header(area_ha)
     try:
         eligible,reason=in_validated_domain(None,aoi=aoi)
         report["model_domain_status"]=reason
@@ -55,11 +64,11 @@ def run():
         polys["validation_status"]="EXPERIMENTAL_NO_LOCAL_FIELD_VALIDATION"
         polys["season"]=result["season"]
         polys.to_file(OUT/"sinop_semantic_polygons.geojson",driver="GeoJSON")
-        report["polygon_area_by_class_ha"]={
+        report["sample_box_polygon_area_by_class_ha"]={
             str(row.class_name):float(row.area_ha)
             for row in polys.itertuples()}
-        report["polygon_area_ha"]=float(polys["area_ha"].sum())
-        report["unclassified_area_ha"]=max(0.0,area_ha-report["polygon_area_ha"])
+        report["sample_box_polygon_area_ha"]=float(polys["area_ha"].sum())
+        report["sample_box_unclassified_area_ha"]=max(0.0,area_ha-report["polygon_area_ha"])
         report["ready_for_property_transfer"]=False
         report["status"]="SAR_EXPERIMENTAL_POLYGONS_OBSERVED"
     except Exception as exc:

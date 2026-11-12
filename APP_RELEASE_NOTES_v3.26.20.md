@@ -26,5 +26,11 @@
 
 ## V88.07 — resultado SAR real e regressão integral (12/11/2026)
 
-- No SHA `41d6b14bac637800e4dcdc21ea4ff5b0653919e4`, o workflow SAR #144 passou com 1.692 pixels Sentinel-1 RTC válidos em 3 cenas e runtime scikit-learn 1.8.0. A cobertura processada foi parcial: 1.084,73 ha observados de 1.459,91 ha; a área vetorial classificada totalizou 1.079,26 ha e 5,47 ha não foram classificados dentro da cobertura processada. Safra 2025/2026, experimental, não validada em campo, sem transferência à propriedade. Artefato ID `13949044333`, SHA-256 ZIP `9293e9c9af5a87a08192d89a80a9b7d186f5112eeb2532b950fd4a3294492bae`.
-- O workflow dashboard #3390 passou 1.084 testes (147,606 s), compilação integral e sincronização documental. O contrato rápido passou. O gate científico continua reprovado; não houve build Windows nem comprovação GUI/end-to-end, leitura óptica da fazenda, altura ou carbono.
+- No SHA `41d6b14bac637800e4dcdc21ea4ff5b0653919e4`, o workflow SAR #144 passou com 1.692 pixels Sentinel-1 RTC válidos em 3 cenas e runtime scikit-learn 1.8.0. A geometria foi uma caixa fixa perto do centroide, não o KML da fazenda: 1.084,73 ha da caixa; área vetorial classificada de 1.079,26 ha e 5,47 ha sem classe dentro da caixa. Nenhum desses números se refere à cobertura da propriedade. Safra 2025/2026, experimental, não validada em campo, sem transferência à propriedade. Artefato ID `13949044333`, SHA-256 ZIP `9293e9c9af5a87a08192d89a80a9b7d186f5112eeb2532b950fd4a3294492bae`.
+- O workflow dashboard #3390 passou 1.084 testes (147,606 s), compilação integral e sincronização documental. O contrato rápido passou. O gate científico continua reprovado; não houve comprovação GUI/end-to-end, leitura óptica na geometria real, altura ou carbono.
+
+
+## V88.08 — escopo de amostras explicitado nos relatórios (12/11/2026)
+
+- Corrigida a interpretação do registro V88.07: o teste Sentinel-1 foi feito numa caixa fixa próxima ao centroide, não no KML da fazenda. A checagem de altura ESA MAAP foi feita em caixa BBOX, não no limite exato do imóvel. O texto e os nomes de campos distinguem caixa experimental de área da propriedade; novo teste bloqueia os campos ambíguos.
+- Os testes em caixa comprovam acesso de pixels reais nas rotas avaliadas, mas não constituem resultados agrícolas, de altura ou carbono da fazenda. Permanecem sem comprovação GUI/end-to-end no KML real, imagem óptica no limite do imóvel, altura/estoques, monitoramento agrícola e validação de campo.
