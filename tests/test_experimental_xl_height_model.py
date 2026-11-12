@@ -28,17 +28,23 @@ class ExperimentalXLHeightTests(unittest.TestCase):
                     "date_sar": "2025-08-01T00:00:00Z",
                 })
         self.frame = pd.DataFrame(rows)
+        self.route_absence = {
+            "configured": True, "coverage_absence_confirmed": True,
+            "catalog_search_complete": True, "pagination_complete": True,
+            "pixel_read_complete": True, "valid_pixel_count": 0,
+            "technical_error_count": 0,
+        }
         self.kw = dict(
             feature_columns=["texture", "backscatter"], band="X",
             physiognomy="Floresta Ombrófila Densa", biome="Amazônia",
             region="Tapajós", reference_url="https://example.org/field-data",
             reference_sha256="a" * 64,
             reference_kind="independent_field_observations",
-            primary_route_status="UNAVAILABLE",
+            primary_route_status="NO_COVERAGE", primary_route_audit=self.route_absence,
         )
         self.prediction_scope = dict(
             band="X", physiognomy="Floresta Ombrófila Densa", biome="Amazônia",
-            region="Tapajós", primary_route_status="UNAVAILABLE",
+            region="Tapajós", primary_route_status="NO_COVERAGE", primary_route_audit=self.route_absence,
         )
 
     def test_spatial_x_fallback_fits_auditable_model_and_predicts_in_domain(self):
@@ -63,9 +69,25 @@ class ExperimentalXLHeightTests(unittest.TestCase):
         out = predict_experimental_xl_height(
             {"texture": 0.5, "backscatter": 1.1}, lmodel,
             band="L", physiognomy="Floresta Ombrófila Densa", biome="Amazônia",
-            region="Tapajós", primary_route_status="UNAVAILABLE",
+            region="Tapajós", primary_route_status="NO_COVERAGE", primary_route_audit=self.route_absence,
             x_route_status="AVAILABLE")
         self.assertEqual(out["status"], "N/D")
+
+    def test_technical_errors_and_incomplete_audits_never_authorize_fallback(self):
+        for status in ("ACCESS_DENIED", "TIMEOUT", "READ_ERROR", "INCOMPLETE"):
+            with self.subTest(status=status):
+                with self.assertRaisesRegex(ValueError, "ausência de cobertura certificada"):
+                    fit_experimental_xl_height_model(
+                        self.frame, **dict(self.kw, primary_route_status=status))
+                model = fit_experimental_xl_height_model(self.frame, **self.kw)
+                result = predict_experimental_xl_height(
+                    {"texture": 0.5, "backscatter": 1.1}, model,
+                    **dict(self.prediction_scope, primary_route_status=status))
+                self.assertEqual(result["status"], "N/D")
+        bad_audit = dict(self.route_absence, pagination_complete=False)
+        with self.assertRaisesRegex(ValueError, "ausência de cobertura certificada"):
+            fit_experimental_xl_height_model(
+                self.frame, **dict(self.kw, primary_route_audit=bad_audit))
 
     def test_out_of_domain_predictors_and_missing_uncertainty_return_nd(self):
         model = fit_experimental_xl_height_model(self.frame, **self.kw)
@@ -110,12 +132,12 @@ class ExperimentalXLHeightTests(unittest.TestCase):
         allowed = predict_experimental_xl_height(
             {"texture": 0.5, "backscatter": 1.1}, model,
             band="L", physiognomy="Floresta Ombrófila Densa", biome="Amazônia",
-            region="Tapajós", primary_route_status="UNAVAILABLE",
-            x_route_status="UNAVAILABLE")
+            region="Tapajós", primary_route_status="NO_COVERAGE", primary_route_audit=self.route_absence,
+            x_route_status="NO_COVERAGE", x_route_audit=self.route_absence)
         blocked = predict_experimental_xl_height(
             {"texture": 0.5, "backscatter": 1.1}, model,
             band="L", physiognomy="Floresta Ombrófila Densa", biome="Amazônia",
-            region="Tapajós", primary_route_status="UNAVAILABLE",
+            region="Tapajós", primary_route_status="NO_COVERAGE", primary_route_audit=self.route_absence,
             x_route_status="AVAILABLE")
         self.assertEqual(allowed["status"], "ALTURA_XL_EXPERIMENTAL")
         self.assertEqual(blocked["status"], "N/D")
