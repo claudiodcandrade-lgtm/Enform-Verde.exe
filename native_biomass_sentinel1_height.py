@@ -19,6 +19,18 @@ def _num(v):
         return None
 
 
+def _certified_route_absence(audit):
+    """Only a complete, error-free AOI audit proving zero valid pixels is absence."""
+    return (isinstance(audit,dict)
+        and audit.get("configured") is True
+        and audit.get("coverage_absence_confirmed") is True
+        and audit.get("catalog_search_complete") is True
+        and audit.get("pagination_complete") is True
+        and audit.get("pixel_read_complete") is True
+        and audit.get("valid_pixel_count") == 0
+        and audit.get("technical_error_count") == 0)
+
+
 def sentinel1_structure_features(vv_linear, vh_linear, *, mask=None):
     """Sample-descriptive, not trained vegetation labels or tree height."""
     import numpy as np
@@ -127,7 +139,7 @@ def combine_biomass_sentinel1_height(biomass_fh, sentinel1=None, *, residual_mod
 
 def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognomy, biome, region,
                                       reference_url, reference_sha256,
-                                      reference_kind, primary_route_status,
+                                      reference_kind, primary_route_status, primary_route_audit=None,
                                       group_column="site_id", target_column="field_height_m"):
     """Fit an auditable X/L fallback height model from independent field pairs.
 
@@ -144,10 +156,9 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
     band=str(band).upper().strip()
     if band not in ("X","L"):
         raise ValueError("A contingência de altura aceita apenas banda X ou L.")
-    unavailable={"UNAVAILABLE","NO_COVERAGE","ACCESS_DENIED","NO_VALID_PIXELS"}
     status=str(primary_route_status or "").upper().strip()
-    if status not in unavailable:
-        raise ValueError("X/L só pode ser usado quando P-band ESA/SAR recente estiver indisponível na AOI.")
+    if status != "NO_COVERAGE" or not _certified_route_absence(primary_route_audit):
+        raise ValueError("X/L só pode ser usado após ausência de cobertura certificada, com busca, paginação e leitura completas e sem erros.")
     if reference_kind != "independent_field_observations":
         raise ValueError("A calibração X/L exige observações de campo independentes; mapas não são rótulos de altura.")
     if not reference_url or not reference_sha256 or not physiognomy:
@@ -243,16 +254,17 @@ def fit_experimental_xl_height_model(frame, *, feature_columns, band, physiognom
 
 
 def predict_experimental_xl_height(features, model, *, band, physiognomy, biome, region,
-                                    primary_route_status, x_route_status="UNAVAILABLE"):
+                                    primary_route_status, primary_route_audit=None,
+                                    x_route_status="NO_COVERAGE", x_route_audit=None):
     """Predict height only through the authorized X-then-L fallback chain."""
     import numpy as np
     band=str(band).upper().strip()
     status=str(primary_route_status or "").upper().strip()
-    if status not in {"UNAVAILABLE","NO_COVERAGE","ACCESS_DENIED","NO_VALID_PIXELS"}:
+    if status != "NO_COVERAGE" or not _certified_route_absence(primary_route_audit):
         return {"status":"N/D","height_mean_m":None,
-                "reason":"Rota prioritária P ESA/Sentinel-1 recente está disponível; fallback X/L não acionado."}
-    if band=="L" and str(x_route_status or "").upper().strip() not in {
-            "UNAVAILABLE","NO_COVERAGE","ACCESS_DENIED","NO_VALID_PIXELS"}:
+                "reason":"Ausência da rota prioritária não foi certificada; erro técnico ou auditoria incompleta não autoriza fallback."}
+    if band=="L" and (str(x_route_status or "").upper().strip() != "NO_COVERAGE"
+                       or not _certified_route_absence(x_route_audit)):
         return {"status":"N/D","height_mean_m":None,
                 "reason":"L-band só é acionada quando a rota X-band também está indisponível."}
     if (not isinstance(model,dict) or model.get("band")!=band
