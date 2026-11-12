@@ -2843,6 +2843,12 @@ class App(tk.Tk):
         land_ibge=self.ibge_physiognomy_gdf.copy() if self.ibge_physiognomy_gdf is not None else None
         land_field=self.ibge_class_field or "legenda_1"
         gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
+        try:
+            from analysis_pipeline_contract import geometry_hash
+            aoi_hash=geometry_hash(gdf)
+        except Exception as exc:
+            self.status.set("Falha ao identificar a geometria da AOI.")
+            return messagebox.showerror("Análise", "Não foi possível gerar o hash da AOI; análise bloqueada: "+type(exc).__name__)
         edl_token=self.edl_token.get().strip(); edl_user=self.edl_user.get().strip(); edl_password=self.edl_password.get(); cdse_token=self.cdse_token.get().strip()
         cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
         self._analysis_generation+=1; run_id=self._analysis_generation
@@ -2871,7 +2877,7 @@ class App(tk.Tk):
                                "units":{},"layers":[]}
                 self._analysis_queue.put((run_id,"ok",{"sar":{},"soil":{},"land_use":land,
                                                       "native_carbon":native,"pedology":pedology,
-                                                      "fertility":fertility}))
+                                                      "fertility":fertility,"aoi_hash":aoi_hash}))
             except Exception:self._analysis_queue.put((run_id,"error",traceback.format_exc()))
         threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
         self.after(120,self._poll_analysis)
@@ -2890,13 +2896,13 @@ class App(tk.Tk):
             self.status.set("Falha controlada — programa permanece responsivo.")
             return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
         self.status.set("SAR consultado; calculando carbono…")
-        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility")) if rid==self._analysis_generation else None)
+        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility"),expected_aoi_hash=p.get("aoi_hash")) if rid==self._analysis_generation else None)
 
-    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None):
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None,expected_aoi_hash=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         self.project["analysis_run_id"]=uuid.uuid4().hex[:12].upper()
         self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
-        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility","modeled_field_predictions","modeled_field_files"):
+        for k in ("analysis_aoi_hash","analysis_aoi_crs","pipeline_audit","analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility","modeled_field_predictions","modeled_field_files"):
             self.project.pop(k,None)
         current_car=self.car.get().strip().upper()
         current_ccir=re.sub(r"\D","",self.ccir.get())
@@ -2911,6 +2917,17 @@ class App(tk.Tk):
                 self.gdf=resolve_ccir_sigef(current_ccir); self.active_source="CCIR"; self.active_input_id=current_ccir; self._show_geom("CCIR / SIGEF")
             except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e))
         if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR/CCIR ou carregue o arquivo vetorial da propriedade.")
+        from analysis_pipeline_contract import geometry_hash, validate_result_for_publication
+        try:
+            run_aoi_hash=geometry_hash(self.gdf)
+            if expected_aoi_hash and expected_aoi_hash!=run_aoi_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE — o processamento em segundo plano pertence a outra geometria.")
+        except Exception as exc:
+            self.status.set("Análise bloqueada por identidade inconsistente da AOI.")
+            return messagebox.showerror("Análise",str(exc))
+        self.project["analysis_aoi_hash"]=run_aoi_hash
+        self.project["analysis_aoi_crs"]=str(self.gdf.crs)
+        self.project["analysis_app_version"]=APP_VERSION
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
@@ -2945,6 +2962,21 @@ class App(tk.Tk):
                                "units":{},"layers":[]}
             self.project["soil_pedology"]=pedology
             self.project["soil_fertility"]=fertility or {"status":"N/D","reason":"sem consulta"}
+            validate_result_for_publication(run_aoi_hash,self.gdf,land,required_keys=("vector_path",))
+            validate_result_for_publication(run_aoi_hash,self.gdf,native,
+                required_keys=("area_aoi_ha","strata","components"))
+            self.project["pipeline_audit"]={
+                "analysis_run_id":self.project["analysis_run_id"],
+                "aoi_hash":run_aoi_hash,
+                "stages":{
+                    "land_use":{"status":"CONCLUIDA","vector_path":land.get("vector_path")},
+                    "native_carbon":{"status":"CONCLUIDA" if native.get("complete") else "PARCIAL",
+                                     "native_area_ha":native.get("native_area_ha"),
+                                     "unknown_cover_area_ha":native.get("unknown_cover_area_ha")},
+                    "pedology":{"status":(pedology or {}).get("status","N/D")},
+                    "fertility":{"status":(fertility or {}).get("status","N/D")},
+                },
+            }
             self._present_native_carbon(native,land,pedology=pedology,fertility=fertility)
             self._present_cultivated_monitoring(land)
             return
@@ -3109,6 +3141,13 @@ class App(tk.Tk):
         fert_audit.write_text(json.dumps(fertility or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
 
     def export_excel(self):
+        from analysis_pipeline_contract import geometry_hash
+        try:
+            expected_hash=self.project.get("analysis_aoi_hash")
+            if not expected_hash or geometry_hash(self.gdf)!=expected_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE — reexecute a análise para esta geometria antes de exportar.")
+        except Exception as exc:
+            return messagebox.showerror("Excel",str(exc))
         if not self.project.get("analysis_rows") and not self.project.get("land_use"):
             return messagebox.showwarning("Excel","Execute a análise antes de exportar.")
         p=filedialog.asksaveasfilename(defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
