@@ -106,7 +106,11 @@ def main():
     print(json.dumps({"stage": "authentication", "status": "ACCESS_TOKEN_ISSUED"}))
 
     try:
-        items = sp.biomass_l2b_search(aoi, limit=30)
+        # Match the production search window. A 30-item first page can omit
+        # valid FH scenes even when the same AOI catalog returns them by 100;
+        # all `next` links are then followed by maap_search before absence is
+        # ever considered.
+        items = sp.biomass_l2b_search(aoi, limit=100)
         fh = [x for x in items if x.get("_product_type") in
               ("FP_FH__L2A", "FP_FH__L2B")]
     except Exception as ex:

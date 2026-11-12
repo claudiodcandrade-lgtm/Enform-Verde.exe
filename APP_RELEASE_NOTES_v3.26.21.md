@@ -7,6 +7,7 @@
 - Nova aba Excel “Gráficos”: distribuição diamétrica média, distribuição de altura SAR ou referência de inventário somente após ausência SAR certificada, e barras de frequência média das 10 espécies; fontes explícitas.
 - Certificado de ausência ligado a auditorias ESA BIOMASS FH e GTDX/CMR; rota incompleta, não auditável ou com erro bloqueia médias regionais.
 - Valores negativos são removidos das estatísticas de altura SAR. A série de inventário informa alturas de árvores medidas, não altura SAR do dossel.
+- Diagnóstico live ESA alinhado ao limite de consulta de produção (100 itens, com paginação) para não omitir cenas FH por janela inicial curta.
 
 ## Situação de validação
 
