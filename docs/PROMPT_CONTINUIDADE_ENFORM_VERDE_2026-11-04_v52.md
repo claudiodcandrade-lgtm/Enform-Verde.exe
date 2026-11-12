@@ -1918,3 +1918,10 @@ O workflow #43130208992 concluiu `success` sobre o código `8d9d56d442e967474dbb
 - O run live do commit anterior recusou a predição corretamente porque seu instalador ainda puxava scikit-learn 1.9.1, embora o modelo declare 1.8.0. `dashboard-dual-tests.yml` também aceitava qualquer versão da faixa 1.x. Corrigidos ambos para `scikit-learn==1.8.0`, igual a `requirements_desktop.txt` e ao manifesto. Teste de contrato protege os três caminhos de instalação.
 - O erro foi fail-closed: nenhuma classificação live foi apresentada com runtime incompatível. Não reaproveitar evidência/artefato do SHA antigo para esta correção.
 - Reexecutar teste dirigido, suíte completa, live SAR e build Windows no novo SHA. A imagem óptica da AOI integral, o dashboard de fazenda e os painéis de altura/carbono seguem sem prova Windows.
+
+
+## V88.07 — evidência SAR real após pin do runtime (12/11/2026)
+
+No commit `41d6b14bac637800e4dcdc21ea4ff5b0653919e4`, o workflow Sentinel-1 experimental #144 (`43231012155`) concluiu com sucesso usando scikit-learn 1.8.0: 1.692 pixels válidos em 3 cenas, área observada reportada 1.084,73 ha de uma AOI de 1.459,91 ha; área vetorial classificada 1.079,26 ha e 5,47 ha não classificados dentro da cobertura processada. Safra inferida 2025/2026; sem validação de campo e sem aptidão para transferência à propriedade. Não preencher o restante da AOI com essa máscara nem renormalizar classes. O dashboard CI #3390 (`43231012125`) aprovou 1.084 testes e a compilação integral; o contrato rápido #747 passou. O gate científico independente (`43231012004`) continua reprovado.
+
+A prova demonstra que o fluxo CI acessou e classificou pixels SAR reais; não demonstra integração desses resultados à GUI/EXE, imagem óptica CBERS/Sentinel-2, altura de dossel, carbono ou validação de campo. Não declarar esses itens resolvidos. A prevenção da regressão de runtime usa dependência exata em todos os instaladores, contrato de paridade e recusa fail-closed no carregador.

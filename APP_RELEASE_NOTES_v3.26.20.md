@@ -22,3 +22,9 @@
 - A verificação visual local não rodou por falta de display. Build Windows/EXE ainda não executado. O produto permanece experimental e não homologado.
 
 - O primeiro CI live detectou um segundo instalador de dependências que ainda usava scikit-learn 1.9.1. A classificação foi corretamente bloqueada antes da predição. Os workflows live e dashboard agora fixam 1.8.0; um teste de contrato impede divergência futura. A prova desses workflows deve ser refeita no novo commit.
+
+
+## V88.07 — resultado SAR real e regressão integral (12/11/2026)
+
+- No SHA `41d6b14bac637800e4dcdc21ea4ff5b0653919e4`, o workflow SAR #144 passou com 1.692 pixels Sentinel-1 RTC válidos em 3 cenas e runtime scikit-learn 1.8.0. A cobertura processada foi parcial: 1.084,73 ha observados de 1.459,91 ha; a área vetorial classificada totalizou 1.079,26 ha e 5,47 ha não foram classificados dentro da cobertura processada. Safra 2025/2026, experimental, não validada em campo, sem transferência à propriedade. Artefato ID `13949044333`, SHA-256 ZIP `9293e9c9af5a87a08192d89a80a9b7d186f5112eeb2532b950fd4a3294492bae`.
+- O workflow dashboard #3390 passou 1.084 testes (147,606 s), compilação integral e sincronização documental. O contrato rápido passou. O gate científico continua reprovado; não houve build Windows nem comprovação GUI/end-to-end, leitura óptica da fazenda, altura ou carbono.
