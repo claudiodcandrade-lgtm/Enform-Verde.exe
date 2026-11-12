@@ -36,6 +36,18 @@ def build_report_header(sample_box_area_ha, started_at=None):
     }
 
 
+def summarize_sample_box(sample_box_area_ha, class_areas_ha):
+    """Summarize only the fixed test box; never label it as farm-area totals."""
+    class_areas = {str(name): float(area) for name, area in class_areas_ha.items()}
+    classified = float(sum(class_areas.values()))
+    return {
+        "sample_box_polygon_area_by_class_ha": class_areas,
+        "sample_box_polygon_area_ha": classified,
+        "sample_box_unclassified_area_ha": max(
+            0.0, float(sample_box_area_ha) - classified),
+    }
+
+
 def run():
     # Fixed AOI only illustrates the API working over REAL SAR observations;
     # it is not a substitute for the owner's complete polygon.
@@ -64,11 +76,10 @@ def run():
         polys["validation_status"]="EXPERIMENTAL_NO_LOCAL_FIELD_VALIDATION"
         polys["season"]=result["season"]
         polys.to_file(OUT/"sinop_semantic_polygons.geojson",driver="GeoJSON")
-        report["sample_box_polygon_area_by_class_ha"]={
+        class_areas={
             str(row.class_name):float(row.area_ha)
             for row in polys.itertuples()}
-        report["sample_box_polygon_area_ha"]=float(polys["area_ha"].sum())
-        report["sample_box_unclassified_area_ha"]=max(0.0,area_ha-report["polygon_area_ha"])
+        report.update(summarize_sample_box(area_ha, class_areas))
         report["ready_for_property_transfer"]=False
         report["status"]="SAR_EXPERIMENTAL_POLYGONS_OBSERVED"
     except Exception as exc:

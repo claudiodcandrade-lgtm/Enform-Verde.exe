@@ -34,3 +34,8 @@
 
 - Corrigida a interpretação do registro V88.07: o teste Sentinel-1 foi feito numa caixa fixa próxima ao centroide, não no KML da fazenda. A checagem de altura ESA MAAP foi feita em caixa BBOX, não no limite exato do imóvel. O texto e os nomes de campos distinguem caixa experimental de área da propriedade; novo teste bloqueia os campos ambíguos.
 - Os testes em caixa comprovam acesso de pixels reais nas rotas avaliadas, mas não constituem resultados agrícolas, de altura ou carbono da fazenda. Permanecem sem comprovação GUI/end-to-end no KML real, imagem óptica no limite do imóvel, altura/estoques, monitoramento agrícola e validação de campo.
+
+
+## V88.09 — correção do KeyError no relatório SAR de teste (12/11/2026)
+
+O workflow SAR #147 processou a caixa de teste, mas o relatório falhou ao calcular o saldo não classificado porque uma referência ainda usava a chave antiga `polygon_area_ha`. O cálculo foi centralizado em `summarize_sample_box()` e um teste verifica total, saldo e chaves do escopo. O run #147 é evidência do defeito, não resultado concluído. A correção não processa o KML da fazenda e não prova integração com GUI.

@@ -1516,3 +1516,8 @@ Os workflows de testes do classificador foram alinhados à versão scikit-learn 
 ## Registro de controle documental V88.08 — 12/11/2026
 
 A correção de escopo da prova Sentinel-1 em caixa próxima a Sinop altera somente a rotulagem do diagnóstico SAR. Não modifica dados, modelo, métodos, incerteza, profundidade ou resultados do carbono/fertilidade do solo. O recorte SAR não é a AOI parcelar e não fornece estimativa de estoque de carbono.
+
+
+## Registro V88.09 — erro no relatório do SAR de teste (12/11/2026)
+
+O relatório da caixa SAR teve falha de chave ao calcular área não classificada após a leitura de pixels. A correção é restrita ao resumo de área da amostra SAR; não altera método, entrada, incerteza ou cálculo de carbono e fertilidade do solo. O run com KeyError não é evidência de resultado SAR concluído.

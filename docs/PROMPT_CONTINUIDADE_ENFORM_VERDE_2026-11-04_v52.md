@@ -1930,3 +1930,8 @@ A prova demonstra que o fluxo CI acessou e classificou pixels SAR reais; não de
 ## V88.08 — correção do escopo das provas em caixa (12/11/2026)
 
 Correção do registro V88.07: o workflow SAR processou apenas uma caixa fixa próxima ao centroide, não o KML da Fazenda Maria Eduarda. A execução ESA MAAP também leu pixels em um retângulo BBOX, sem recorte pelo limite do imóvel; 2.304 pixels e média 18,284 m são diagnóstico do produto nessa caixa, não altura da fazenda. Os relatórios passam a nomear explicitamente os campos `sample_box_*` e `reference_farm_area_ha_not_processed`; teste de regressão impede voltar aos nomes ambíguos. Continua sem prova o processamento do KML real, integração GUI, CBERS/Sentinel-2 para a geometria real, altura/estoque de carbono e monitoramento da propriedade.
+
+
+## V88.09 — correção do KeyError no relatório SAR de teste (12/11/2026)
+
+O workflow SAR #147 processou a caixa de teste, mas o relatório falhou ao calcular o saldo não classificado porque uma referência ainda usava a chave antiga `polygon_area_ha`. O cálculo foi centralizado em `summarize_sample_box()` e um teste verifica total, saldo e chaves do escopo. O run #147 é evidência do defeito, não resultado concluído. A correção não processa o KML da fazenda e não prova integração com GUI.
