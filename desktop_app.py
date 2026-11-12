@@ -3434,9 +3434,9 @@ class App(tk.Tk):
         chart.column_dimensions["A"].width=20;chart.column_dimensions["D"].width=22;chart.column_dimensions["G"].width=28
         for c in ("A2","A3","A4","D2","D3","D4","G2","G3","G4"):
             chart[c].alignment=Alignment(wrap_text=True,vertical="center")
-        chart["A2"]="Distribuição diamétrica média aplicável à área; a tabela apresenta fustes/ha e área basal média por classe DAP."
+        chart["A2"]="Distribuição diamétrica média aplicável — área basal média por classe DAP (m²/ha)."
         chart["A2"].font=Font(bold=True,color=green)
-        chart["A4"]="Classe DAP";chart["B4"]="Frequência média (fustes/ha)";chart["C4"]="Área basal média (m²/ha)"
+        chart["A4"]="Classe DAP";chart["B4"]="Área basal média (m²/ha)"
         dbh_bins=[("5–10 cm","dbh_5_10_cm"),("10–20 cm","dbh_10_20_cm"),
             ("20–30 cm","dbh_20_30_cm"),("30–40 cm","dbh_30_40_cm"),
             ("40–60 cm","dbh_40_60_cm"),("≥60 cm","dbh_60_plus_cm")]
@@ -3452,11 +3452,11 @@ class App(tk.Tk):
             area_sum=sum(x[0] for x in dbh_by_stratum)
             for row,(label,key) in enumerate(dbh_bins,5):
                 value=sum(area*float(rows[key]["mean_basal_area_m2_ha"]) for area,rows in dbh_by_stratum)/area_sum
-                chart.cell(row,1,label);chart.cell(row,2,sum(area*float(rows[key]["mean_stems_ha"]) for area,rows in dbh_by_stratum)/area_sum);chart.cell(row,3,value)
+                chart.cell(row,1,label);chart.cell(row,2,value)
             dbh_refs=[ref for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls")]
             dbh_sources=inventory_source_labels(dbh_refs)
             chart["A3"]="Referência regional; média ponderada pela área dos estratos nativos. Fontes (instituição — URL): "+("; ".join(dbh_sources) or "N/D")
-            lc=LineChart();lc.title="Distribuição diamétrica média";lc.y_axis.title="Fustes/ha";lc.x_axis.title="DAP"
+            lc=LineChart();lc.title="Área basal média por classe diamétrica";lc.y_axis.title="m²/ha";lc.x_axis.title="DAP"
             lc.add_data(Reference(chart,min_col=2,min_row=4,max_row=10),titles_from_data=True)
             lc.set_categories(Reference(chart,min_col=1,min_row=5,max_row=10));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
         else:
