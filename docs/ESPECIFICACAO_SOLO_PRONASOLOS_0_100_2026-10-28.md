@@ -1521,3 +1521,8 @@ A correção de escopo da prova Sentinel-1 em caixa próxima a Sinop altera some
 ## Registro V88.09 — erro no relatório do SAR de teste (12/11/2026)
 
 O relatório da caixa SAR teve falha de chave ao calcular área não classificada após a leitura de pixels. A correção é restrita ao resumo de área da amostra SAR; não altera método, entrada, incerteza ou cálculo de carbono e fertilidade do solo. O run com KeyError não é evidência de resultado SAR concluído.
+
+
+## Registro documental V88.10 — build e escopo da evidência (12/11/2026)
+
+O build experimental Windows 3.26.20 passou autocheck e testes de pixel separados em AOIs de Tapajós/Cerrado e caixas ópticas amostrais. A prova SAR de Sinop é apenas uma caixa próxima ao centroide, não o KML do imóvel; não há resultado de carbono do imóvel validado. Nenhum resultado de teste altera a metodologia de carbono/fertilidade do solo ou sua incerteza.

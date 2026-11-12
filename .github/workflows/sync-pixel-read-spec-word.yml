@@ -1,10 +1,10 @@
-name: Sync Word specification from V88.09 checkpoint
+name: Sync Word specification from V88.10 checkpoint
 on:
   push:
     branches:
       - patches-3.26.6
     paths:
-      - docs/spec_updates/2026-11-12_v88_09_polygon_area_keyerror_fix.md
+      - docs/spec_updates/2026-11-12_v88_10_windows_build_evidence.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -23,25 +23,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Append V88.09 checkpoint to complete Word specification
+      - name: Append V88.10 checkpoint to complete Word specification
         run: |
           if python - <<'PY'
           from zipfile import ZipFile
           with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as z:
               xml=z.read('word/document.xml').decode('utf-8')
-          raise SystemExit(0 if 'V88.09' in xml else 1)
+          raise SystemExit(0 if 'V88.10' in xml else 1)
           PY
           then
-            echo 'V88.09 já está sincronizado no DOCX.'
+            echo 'V88.10 já está sincronizado no DOCX.'
           else
             python tools/update_spec_docx.py \
               --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-              --entry docs/spec_updates/2026-11-12_v88_09_polygon_area_keyerror_fix.md \
-              --baseline "Enform Verde 3.26.20-PRECAMPO-EXPERIMENTAL (V88.09 correção do KeyError no resumo SAR da caixa de teste)" \
+              --entry docs/spec_updates/2026-11-12_v88_10_windows_build_evidence.md \
+              --baseline "Enform Verde 3.26.20-PRECAMPO-EXPERIMENTAL (V88.10 build Windows e resultados reproduzíveis)" \
               --head-sha "${{ github.sha }}" \
               --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
               --date "12 de novembro de 2026" \
-              --footer-label "V88.09 · 3.26.20 experimental · integração Windows integral pendente" \
+              --footer-label "V88.10 · 3.26.20 experimental · integração Windows integral pendente" \
               --footer-date "12/11/2026"
           fi
       - name: Validate Word archive and version marker
@@ -55,13 +55,13 @@ jobs:
               xml=z.read('word/document.xml').decode('utf-8')
               assert len(xml)>10000
               assert '3.26.20-PRECAMPO-EXPERIMENTAL' in xml
-              assert 'V88.09' in xml
-          print('Word specification synchronized and validated for 3.26.20/V88.09')
+              assert 'V88.10' in xml
+          print('Word specification synchronized and validated for 3.26.20/V88.10')
           PY
       - name: Commit synchronized Word specification
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: sync Word specification for V88.09 model-runtime checkpoint"
+          git diff --cached --quiet || git commit -m "docs: sync Word specification for V88.10 model-runtime checkpoint"
           git push origin HEAD:patches-3.26.6
