@@ -3451,7 +3451,11 @@ class App(tk.Tk):
             lc.set_categories(Reference(chart,min_col=1,min_row=5,max_row=10));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
         else:
             chart["A5"]="N/D — sem inventário compatível e carregado para os estratos nativos confirmados."
-            chart.merge_cells("A5:F5")
+            # Keep the missing-inventory note inside the left chart panel;
+            # columns D:F belong to the height panel and its own N/D note.
+            chart.merge_cells("A5:C5")
+            chart["A5"].alignment=Alignment(wrap_text=True,vertical="center")
+            chart.row_dimensions[5].height=32
             chart["A3"]="Fonte/escopo: N/D; não substituir por média de outra fitofisionomia ou região sem identificação."
 
         chart["D2"]="Altura: distribuição observada por pixels SAR; se ausência certificada, referência de alturas de árvores inventariadas."
