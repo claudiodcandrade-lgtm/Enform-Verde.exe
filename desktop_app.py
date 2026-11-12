@@ -3413,6 +3413,15 @@ class App(tk.Tk):
         chart_native=self.project.get("native_carbon") or {}
         bio_refs=chart_native.get("biodiversity_references") or []
         native_strata=chart_native.get("strata") or []
+        def inventory_source_labels(refs):
+            labels=set()
+            for ref in refs:
+                institution=str(ref.get("institutions") or "Instituição não identificada")
+                institutions=ref.get("institutions") or []
+                urls=ref.get("source_urls") or []
+                for url in urls:
+                    labels.add(f"{', '.join(institutions) if institutions else institution} — {url}")
+            return sorted(labels)
         chart=wb.create_sheet("Gráficos")
         from openpyxl.chart import BarChart, LineChart, Reference
         chart.sheet_view.showGridLines=False
@@ -3444,8 +3453,9 @@ class App(tk.Tk):
             for row,(label,key) in enumerate(dbh_bins,5):
                 value=sum(area*float(rows[key]["mean_basal_area_m2_ha"]) for area,rows in dbh_by_stratum)/area_sum
                 chart.cell(row,1,label);chart.cell(row,2,value)
-            dbh_sources=sorted({url for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" for url in ref.get("source_urls") or []})
-            chart["A3"]="Referência regional; média ponderada pela área dos estratos nativos. Fontes: "+("; ".join(dbh_sources) or "inventário sem URL declarada")
+            dbh_refs=[ref for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls")]
+            dbh_sources=inventory_source_labels(dbh_refs)
+            chart["A3"]="Referência regional; média ponderada pela área dos estratos nativos. Fontes (instituição — URL): "+("; ".join(dbh_sources) or "N/D")
             lc=LineChart();lc.title="Área basal média por classe diamétrica";lc.y_axis.title="m²/ha";lc.x_axis.title="DAP"
             lc.add_data(Reference(chart,min_col=2,min_row=4,max_row=10),titles_from_data=True)
             lc.set_categories(Reference(chart,min_col=1,min_row=5,max_row=10));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
@@ -3485,8 +3495,9 @@ class App(tk.Tk):
             allow_region,absence_reason=regional_height_fallback_decision(cert)
             regional=[]
             if allow_region:
-                regional=[ref.get("inventory_tree_height_distribution") or {} for ref in bio_refs
-                    if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL"]
+                regional_refs=[ref for ref in bio_refs
+                    if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls") and ref.get("institutions")]
+                regional=[ref.get("inventory_tree_height_distribution") or {} for ref in regional_refs]
                 regional=[x for x in regional if x.get("status")=="REFERENCIA_ALTURA_INVENTARIO_REGIONAL"]
             if allow_region and regional:
                 plot_weights=[float(x.get("n_plots") or 0) for x in regional]
@@ -3494,11 +3505,13 @@ class App(tk.Tk):
                 for row,(i,label) in enumerate(enumerate(["0–5 m","5–10 m","10–15 m","15–20 m","20–25 m","25–30 m","30–35 m","35–40 m","40–45 m","45–50 m","50–55 m","55–60 m","≥60 m"]),5):
                     value=sum(w*float(x["bins"][i]["mean_frequency_pct"]) for x,w in zip(regional,plot_weights))/weight_sum
                     chart.cell(row,4,label);chart.cell(row,5,value)
-                sources=sorted({url for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" for url in ref.get("source_urls") or []})
-                height_source="Fallback regional autorizado por ausência SAR certificada. Médias de altura medida em inventários compatíveis ("+str(sum(plot_weights))+" parcelas). Fontes: "+("; ".join(sources) or "inventário sem URL declarada")
+                sources=inventory_source_labels(regional_refs)
+                height_source="Fallback regional autorizado por ausência SAR certificada. Médias de alturas medidas em inventários compatíveis ("+str(sum(plot_weights))+" parcelas). Fontes (instituição — URL): "+"; ".join(sources)
                 chart["D3"]=height_source+". Altura de árvores inventariadas, não altura do dossel SAR nem medição da propriedade."
             else:
-                chart["D5"]="N/D — "+absence_reason+"; médias regionais de inventário não substituem uma falha técnica."
+                if allow_region and not regional:
+                    absence_reason="SEM_INVENTARIO_COMPATIVEL_COM_FONTE_IDENTIFICAVEL"
+                chart["D5"]="N/D — "+absence_reason+"; médias regionais sem fonte rastreável ou falhas técnicas não substituem a observação SAR."
                 # Keep the no-data note within the height panel; extending
                 # through column G overwrote the Top-10 species table.
                 chart.merge_cells("D5:F5")
@@ -3522,8 +3535,9 @@ class App(tk.Tk):
         species_rank=sorted(((name,species_values[name]/species_weights[name]) for name in species_values if species_weights[name]>0),key=lambda x:(-x[1],x[0]))[:10]
         if species_rank:
             for row,(name,freq) in enumerate(species_rank,5):chart.cell(row,7,name);chart.cell(row,8,freq)
-            species_sources=sorted({url for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" for url in ref.get("source_urls") or []})
-            chart["G3"]="Inventários microrregionais/regionais compatíveis; média ponderada por parcelas. Fontes: "+("; ".join(species_sources) or "inventário sem URL declarada")
+            species_refs=[ref for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls")]
+            species_sources=inventory_source_labels(species_refs)
+            chart["G3"]="Inventários microrregionais/regionais compatíveis; média ponderada por parcelas. Fontes (instituição — URL): "+("; ".join(species_sources) or "N/D")
             bc=BarChart();bc.type="bar";bc.style=10;bc.title="10 espécies mais frequentes";bc.x_axis.title="Frequência média (%)";bc.y_axis.title="Espécie"
             bc.add_data(Reference(chart,min_col=8,min_row=4,max_row=4+len(species_rank)),titles_from_data=True)
             bc.set_categories(Reference(chart,min_col=7,min_row=5,max_row=4+len(species_rank)));bc.height=8;bc.width=16;chart.add_chart(bc,"A29")
