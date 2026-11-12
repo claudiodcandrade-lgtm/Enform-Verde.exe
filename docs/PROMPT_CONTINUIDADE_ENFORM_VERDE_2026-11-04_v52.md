@@ -1971,3 +1971,7 @@ Linux/macOS: criar um `venv`, ativá-lo e executar `python -m pip install -r req
 ## Estado das pendências
 
 A falta de GeoPandas no runtime foi resolvida para esta validação e a suíte completa passou. Continuam pendentes gates diferentes: build/GUI Windows no SHA atual, smoke ponta a ponta no KML integral da Fazenda Maria Eduarda, leitura óptica nessa geometria e homologação científica. O único skip local é a captura visual Tk por ausência de display; a evidência visual deve vir de Windows CI ou de sessão gráfica com baseline.
+
+## V88.12 — altura de inventário condicionada a ausência SAR e gráficos exportados
+
+Consultar o checkpoint V88.12 no prompt canônico V43 e na especificação técnica: a aba Excel “Gráficos” apresenta distribuição DAP/área basal, distribuição de altura SAR e frequência Top 10 com fontes. Alturas medidas em inventários da mesma fitofisionomia e microrregião/região só podem preencher o gráfico quando ESA BIOMASS FH L2A/L2B e GTDX comprovarem ausência de cobertura; falha, paginação incompleta ou pixel não lido permanece erro técnico/N/D. A série regional é referência de árvores inventariadas, não altura SAR observada na fazenda. O candidato estrutural segue não utilizável para estoque sem validação externa independente.

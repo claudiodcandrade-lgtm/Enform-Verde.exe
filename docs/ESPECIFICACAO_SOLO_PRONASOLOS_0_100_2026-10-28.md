@@ -1530,3 +1530,7 @@ O build experimental Windows 3.26.20 passou autocheck e testes de pixel separado
 ## Registro V88.11 — runtime geoespacial e regressão (12/11/2026)
 
 A dependência GeoPandas foi disponibilizada num ambiente isolado para executar os testes reais de geometria, CRS, vetores e rasters. A suíte integral passou com 1.085 testes e um skip de captura Tk sem display; o teste live MPC leu pixels VV/VH reais. Essa validação de software não altera nem valida métodos ou resultados de carbono/fertilidade do solo. KML integral no Windows e homologação científica permanecem gates separados.
+
+## Registro V88.12 — gráficos de estrutura florestal e biomassa
+
+A atualização V88.12 trata de área basal e distribuição diamétrica de inventários, altura estrutural SAR e gráficos de biodiversidade. Ela não modifica a metodologia PronaSolos/Embrapa para carbono orgânico do solo de 0–100 cm, nem a seleção de horizontes, a interseção espacial, a incerteza ou os resultados dessa camada. Alturas de árvores de inventário são apenas referência gráfica após ausência SAR certificada; não são atributo do solo nem medição da propriedade.
