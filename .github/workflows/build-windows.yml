@@ -1,18 +1,18 @@
-Warning: truncated output (original token count: 22603)
+Warning: truncated output (original token count: 22614)
 Total output lines: 1252
 
 name: Build Enform Verde Windows
 on:
   push:
-    # Feature branches targeting main are built by pull_request. Avoid firing
-    # the same expensive Windows build again for the matching push event.
-    branches: [main]
+    branches: [main, patches-3.26.6]
   pull_request:
     branches: [main]
   workflow_dispatch:
 concurrency:
   # Cancel superseded PR jobs; every surviving job still checks out and verifies its exact source SHA.
-  group: enform-windows-${{ github.event.pull_request.number || github.ref }}
+  # Keep push and pull_request runs in separate groups; GitHub emits both for
+  # a branch with an open PR, and one must not cancel the other mid-build.
+  group: enform-windows-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -509,8 +509,7 @@ jobs:
               old_generation=ui._map_generation
               ui._reset_analysis_state()
               assert ui._map_generation>old_generation and not ui._satellite_map_visible, "new input must invalidate stale satellite map responses"
-          ui.destroy()
-          print("GUI_CONTRACT_O…2603 tokens truncated…ional SICAR validation."
+          ui…2614 tokens truncated…ional SICAR validation."
 
       - name: Professional scientific contracts
         shell: pwsh
