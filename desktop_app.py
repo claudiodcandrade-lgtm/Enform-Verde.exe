@@ -3473,7 +3473,7 @@ class App(tk.Tk):
         chart.column_dimensions["A"].width=20;chart.column_dimensions["D"].width=22;chart.column_dimensions["G"].width=28
         for c in ("A2","A3","A4","D2","D3","D4","G2","G3","G4"):
             chart[c].alignment=Alignment(wrap_text=True,vertical="center")
-        chart["A2"]="Distribuição diamétrica média aplicável — área basal média por classe DAP (m²/ha)."
+        chart["A2"]="Distribuição diamétrica média e participação da área basal por classe DAP."
         chart["A2"].font=Font(bold=True,color=green)
         chart["A4"]="Classe DAP";chart["B4"]="Árvores médias (ind./ha)"
         chart["C4"]="Área basal média (m²/ha)";chart["D4"]="Frequência de árvores (%)"
@@ -3499,15 +3499,18 @@ class App(tk.Tk):
                 means.append((mean_stems,mean_basal))
                 chart.cell(row,1,label);chart.cell(row,2,mean_stems);chart.cell(row,3,mean_basal)
             total_stems=sum(x[0] for x in means);total_basal=sum(x[1] for x in means)
-            for row,(mean_stems,mean_basal) in enumerate(means,5):
-                chart.cell(row,4,100*mean_stems/total_stems if total_stems else 0)
-                chart.cell(row,5,100*mean_basal/total_basal if total_basal else 0)
+            chart["A40"]="Dados auxiliares das curvas diamétricas"
+            chart["A41"]="Classe DAP";chart["B41"]="Frequência de árvores (%)";chart["C41"]="Área basal da classe (%)"
+            for row,((label,_),(mean_stems,mean_basal)) in enumerate(zip(dbh_bins,means),42):
+                chart.cell(row,1,label)
+                chart.cell(row,2,100*mean_stems/total_stems if total_stems else 0)
+                chart.cell(row,3,100*mean_basal/total_basal if total_basal else 0)
             dbh_refs=[ref for ref in dbh_contributing_refs if ref.get("source_urls")]
             dbh_sources=inventory_source_labels(dbh_refs)
             chart["A3"]="Médias por DAP ponderadas pela área dos estratos nativos; curvas mostram frequência relativa de indivíduos e participação da área basal. Fontes (instituição — URL): "+("; ".join(dbh_sources) or "N/D")
             lc=LineChart();lc.title="Distribuição diamétrica média e área basal";lc.y_axis.title="Participação média (%)";lc.x_axis.title="DAP"
-            lc.add_data(Reference(chart,min_col=4,max_col=5,min_row=4,max_row=10),titles_from_data=True)
-            lc.set_categories(Reference(chart,min_col=1,min_row=5,max_row=10));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
+            lc.add_data(Reference(chart,min_col=2,max_col=3,min_row=41,max_row=47),titles_from_data=True)
+            lc.set_categories(Reference(chart,min_col=1,min_row=42,max_row=47));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
         else:
             chart["A5"]="N/D — sem inventário compatível e carregado para os estratos nativos confirmados."
             # Keep the missing-inventory note inside the left chart panel;
