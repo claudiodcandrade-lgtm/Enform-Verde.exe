@@ -19,6 +19,18 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertRegex(ver, r"^\d+\.\d+\.\d+(-[A-Z0-9-]+)?$")
         self.assertTrue((ROOT / f"APP_RELEASE_NOTES_v{ver.split('-')[0]}.md").is_file())
 
+    def test_release_notes_title_matches_executable_version(self):
+        ver = app_version()
+        notes = (ROOT / f"APP_RELEASE_NOTES_v{ver.split('-')[0]}.md").read_text(encoding="utf-8")
+        self.assertRegex(notes.splitlines()[0], rf"^# Enform Verde v{re.escape(ver)}$")
+
+    def test_build_never_reuses_a_hard_coded_old_version_map(self):
+        text = WF.read_text(encoding="utf-8")
+        self.assertNotIn("actions/download-artifact@v4", text[:text.index("      - name: Verify offline IBGE map asset")])
+        self.assertNotIn("ibge-map-cache", text)
+        self.assertIn("APP_RELEASE_NOTES_v$num.md", text)
+        self.assertIn("does not match desktop_app.APP_VERSION", text)
+
     def test_artifact_and_release_derive_from_app_version(self):
         text = WF.read_text(encoding="utf-8")
         # parse without PyYAML (not a runtime dependency)
