@@ -47,9 +47,11 @@ def _windows_store_pems():
 
 
 def merged_ca_bundle(cache_dir=None):
+    certifi_path = None
     try:
         import certifi
-        base = Path(certifi.where()).read_text(encoding="ascii", errors="ignore")
+        certifi_path = Path(certifi.where()).resolve()
+        base = certifi_path.read_text(encoding="ascii", errors="ignore")
     except Exception:
         base = ""
     extra = _windows_store_pems()
@@ -58,8 +60,14 @@ def merged_ca_bundle(cache_dir=None):
     paths = ssl.get_default_verify_paths()
     for candidate in (os.environ.get("SSL_CERT_FILE"), paths.cafile, paths.openssl_cafile):
         try:
-            if candidate and Path(candidate).is_file() and "certifi" not in str(candidate):
-                extra.append(Path(candidate).read_text(encoding="ascii", errors="ignore"))
+            candidate_path = Path(candidate).resolve() if candidate else None
+            # Compare the actual bundle path instead of searching its spelling.
+            # Paths such as `/usr/local/share/ca-certificates/custom.crt` contain
+            # the substring `certifi` even though they are the proxy/system CA
+            # bundle that GDAL must trust.
+            if (candidate_path and candidate_path.is_file()
+                    and candidate_path != certifi_path):
+                extra.append(candidate_path.read_text(encoding="ascii", errors="ignore"))
                 break
         except OSError:
             continue

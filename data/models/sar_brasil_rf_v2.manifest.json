@@ -1,5 +1,8 @@
 {
  "model_id": "ENFORM_SAR_BRASIL_RF_V2",
+ "runtime_dependencies": {
+  "scikit-learn": "1.8.0"
+ },
  "file": "sar_brasil_rf_v2.joblib",
  "sha256": "f91ace8b347b9a3305db55d1cebafa08fc472b6bc8824bd5c55ade2d5c6f66a1",
  "algorithm": "RandomForest (scikit-learn): cobertura 400 árvores (semente 20261109); cultura 300 árvores (semente 20261108); class_weight=balanced",

@@ -1499,3 +1499,11 @@ A falha do Windows #43127520197 ocorreu no contrato que compara a versão do apl
 ## Registro V88.02 — build 3.26.19 (12/11/2026)
 
 O EXE `3.26.19-PRECAMPO-EXPERIMENTAL` passou os testes de pacote e a suíte de contratos no workflow Windows #43130208992. Essa validação de software não altera nem valida os cálculos de carbono/fertilidade do solo: permanecem exigidos dados Embrapa/PronaSolos, camada 0–100 cm, interseção com a AOI e incerteza própria. O solo na Fazenda Maria Eduarda não deve ser inferido a partir dos testes ópticos ou SAR de outras AOIs.
+
+## Registro V88.04 — tratamento de falha de transporte e escopo do carbono (12/11/2026)
+
+A correção do bundle TLS e do desenho de KML 3D não altera método, fontes, profundidade, cobertura ou incerteza do carbono/fertilidade do solo. O fallback MapBiomas HTTPS é referência histórica e nunca fonte de estoque/fertilidade do solo nem substituto de Embrapa/PronaSolos. A leitura de pixels SAR LEM+ na propriedade, por si só, não determina altura, biomassa ou carbono. O processamento do estoque de solo na AOI integral continua dependente de interseção e pixels oficiais adequados; erro técnico não deve ser interpretado como ausência real dos dados.
+
+## Registro V88.05 — paridade do classificador experimental (12/11/2026)
+
+O runtime do classificador SAR foi fixado em scikit-learn 1.8.0, igual à versão usada para serializar o artefato. O carregador bloqueia divergência da dependência. Esta alteração melhora a reprodutibilidade do classificador, sem convertê-lo em fonte de altura, biomassa, carbono ou fertilidade do solo. A metodologia de carbono do solo permanece Embrapa/PronaSolos 0–100 cm, com interseção espacial e incerteza próprias.

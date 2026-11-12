@@ -19,6 +19,18 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class SinopWindowsRecurrenceTests(unittest.TestCase):
+    def test_optical_overlays_accept_3d_kml_coordinates(self):
+        from shapely.geometry import Polygon
+        ring=Polygon([(-55.21,-11.89,250),(-55.17,-11.89,251),
+                      (-55.17,-11.85,252),(-55.21,-11.85,253),
+                      (-55.21,-11.89,250)])
+        coords=app._xy_coords(ring.exterior.coords)
+        self.assertEqual(len(coords[0]),2)
+        self.assertEqual(coords[0],(-55.21,-11.89))
+        self.assertEqual(len(coords),5)
+        for fn in (app.cbers4a_wfi_preview,app.nasa_gibs_preview):
+            self.assertIn("_xy_coords(poly.exterior.coords)",inspect.getsource(fn))
+
     def test_sar_both_paths_have_four_transport_attempts(self):
         for fn in (recent_sar_landcover.run_recent_sar_screen,
                    sar_landcover_lemplus._monthly_features):

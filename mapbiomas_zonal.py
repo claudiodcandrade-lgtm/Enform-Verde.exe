@@ -95,7 +95,66 @@ def summarize_class_grid(values, inside, row_pixel_areas_m2, nodata=None):
     return {"classes": rows, "mapped_area_ha": valid_area / 10000.0}
 
 
-def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None):
+def _mapbiomas_cache_path(year):
+    """Stable per-user cache for the HTTPS fallback when GDAL lacks /vsicurl/."""
+    import os
+    from pathlib import Path
+    root = os.environ.get("LOCALAPPDATA")
+    if root:
+        base = Path(root) / "EnformVerde" / "cache" / "mapbiomas"
+    else:
+        base = Path.home() / ".cache" / "enform-verde" / "mapbiomas"
+    return base / f"brazil_coverage-col11_{int(year)}.tif"
+
+
+def _download_mapbiomas_geotiff(url, destination, *, max_bytes=5_000_000_000):
+    """Download and validate the official COG if the bundled GDAL has no curl VFS.
+
+    This is deliberately a last resort: the national GeoTIFF may be large.
+    A partial/HTML response is never cached or treated as valid coverage.
+    """
+    import os
+    import urllib.request
+    import rasterio
+    from pathlib import Path
+
+    destination = Path(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(destination.suffix + ".part")
+    request = urllib.request.Request(
+        url, headers={"User-Agent": "EnformVerde/3.26 MapBiomas official GeoTIFF"}
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            content_type = (response.headers.get("Content-Type") or "").lower()
+            reported = response.headers.get("Content-Length")
+            if "text/html" in content_type or "application/json" in content_type:
+                raise ValueError("Resposta MapBiomas não é GeoTIFF: " + content_type)
+            if reported and int(reported) > max_bytes:
+                raise ValueError("GeoTIFF MapBiomas excede limite de cache de 5 GB")
+            copied = 0
+            with temporary.open("wb") as stream:
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    copied += len(chunk)
+                    if copied > max_bytes:
+                        raise ValueError("Download MapBiomas excedeu limite de cache de 5 GB")
+                    stream.write(chunk)
+        if copied == 0 or (reported and copied != int(reported)):
+            raise ValueError("Download MapBiomas vazio ou truncado")
+        with rasterio.open(temporary) as check:
+            if not check.crs or check.count < 1 or check.width < 1 or check.height < 1:
+                raise ValueError("GeoTIFF MapBiomas sem metadados válidos")
+        os.replace(temporary, destination)
+        return destination
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
+def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None, _source_url=None):
     """Return MapBiomas class area and percent for an AOI from public C11 GeoTIFF."""
     import rasterio
     import geopandas as gpd
@@ -105,7 +164,8 @@ def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None):
     from shapely.geometry import mapping
     from carbon_compartments import aoi_to_wgs84
 
-    url = raster_url or RASTER_URL.format(year=int(year))
+    url = str(raster_url or RASTER_URL.format(year=int(year)))
+    published_url = _source_url or url
     frame = aoi_to_wgs84(aoi)
     geom = frame.geometry.union_all()
     if geom.is_empty:
@@ -130,7 +190,8 @@ def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None):
                 VSI_CACHE="TRUE", GDAL_HTTP_TIMEOUT="45",
                 GDAL_HTTP_MAX_RETRY="2", **strategy,
             ):
-                with rasterio.open("/vsicurl/" + url) as src:
+                raster_path = ("/vsicurl/" + url) if url.startswith(("http://", "https://")) else url
+                with rasterio.open(raster_path) as src:
                     if src.crs is None:
                         raise ValueError("GeoTIFF MapBiomas sem CRS")
                     geom_src = gpd.GeoSeries([geom], crs="EPSG:4326").to_crs(src.crs).iloc[0]
@@ -155,7 +216,7 @@ def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None):
                     result = summarize_class_grid(values, mask, areas, nodata=src.nodata)
                     result.update({
                         "collection": COLLECTION, "year": int(year), "resolution_m": RESOLUTION_M,
-                        "source_url": url, "legend_url": SOURCE_URL,
+                        "source_url": published_url, "legend_url": SOURCE_URL,
                         "method": "contagem de pixels MapBiomas dentro da AOI; área geodésica por linha; percentual relativo aos pixels válidos; resolução nominal 30 m; máscara por centro do pixel",
                         "status": "MAPBIOMAS — COBERTURA E USO, NÃO SUBSTITUI LEGENDA DETALHADA IBGE",
                     })
@@ -170,4 +231,32 @@ def mapbiomas_class_percentages(aoi, year=YEAR, raster_url=None):
             detail = re.sub(r"https?://[^\s'\"]+", "[URL_REMOVIDA]", detail)
             last_error = (stage, type(exc).__name__, detail.encode("utf-8","replace").decode("utf-8")[:240])
     stage, kind, detail = last_error or ("open_cog", "RuntimeError", "falha sem diagnóstico")
+    # A retry options matrix cannot fix a GDAL build compiled without curl VFS.
+    # Fall back to an atomic HTTPS download only for that specific open failure,
+    # then rerun the same exact AOI pixel calculation against the validated file.
+    unsupported_vsi = ("does not exist in the file system" in detail.lower()
+                       or "not recognized as a supported dataset name" in detail.lower()
+                       or "not recognized as a supported file format" in detail.lower())
+    if url.startswith(("http://", "https://")) and stage == "open_cog" and unsupported_vsi:
+        local = _mapbiomas_cache_path(year)
+        try:
+            cache_valid = False
+            if local.is_file() and local.stat().st_size > 0:
+                try:
+                    with rasterio.open(local) as check:
+                        cache_valid = bool(check.crs and check.count >= 1 and check.width > 0 and check.height > 0)
+                except Exception:
+                    cache_valid = False
+            if not cache_valid:
+                local.unlink(missing_ok=True)
+                _download_mapbiomas_geotiff(url, local)
+            return mapbiomas_class_percentages(aoi, year=year, raster_url=str(local), _source_url=url)
+        except Exception as exc:
+            try: fallback_detail = str(exc)
+            except Exception: fallback_detail = "mensagem não decodificável"
+            import re
+            fallback_detail = re.sub(r"https?://[^\s'\"]+", "[URL_REMOVIDA]", fallback_detail)
+            detail = (detail + "; HTTPS_LOCAL_FALLBACK_"
+                      + type(exc).__name__ + ": "
+                      + fallback_detail.encode("utf-8", "replace").decode("utf-8")[:180])
     raise RuntimeError(f"MAPBIOMAS_{stage}_{kind}: {detail}") from None

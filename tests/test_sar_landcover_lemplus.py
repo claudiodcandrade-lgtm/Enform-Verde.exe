@@ -43,6 +43,18 @@ class LemplusModelTests(unittest.TestCase):
         models, _ = sl.load()
         self.assertEqual(models["landcover"].n_features_in_, 36)
 
+    def test_model_loader_blocks_incompatible_sklearn_runtime(self):
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as d:
+            manifest = Path(d) / "model.json"
+            manifest.write_text(json.dumps({
+                "sha256": hashlib.sha256(sl.MODEL.read_bytes()).hexdigest(),
+                "runtime_dependencies": {"scikit-learn": "0.0-test-mismatch"},
+            }), encoding="utf-8")
+            with patch.object(sl, "_resource", side_effect=[manifest, sl.MODEL]):
+                with self.assertRaisesRegex(RuntimeError, "VERSAO_SKLEARN_INCOMPATIVEL"):
+                    sl.load()
+
     def test_agricultural_year_is_last_complete_oct_sep(self):
         months, season = sl.agricultural_year(date(2026, 11, 8))
         self.assertEqual(season, "2025/2026"); self.assertEqual(months[0], (2025, 10)); self.assertEqual(months[-1], (2026, 9))

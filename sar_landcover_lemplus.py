@@ -56,6 +56,14 @@ def load():
     path = _resource(MODEL)
     if hashlib.sha256(path.read_bytes()).hexdigest() != man["sha256"]:
         raise RuntimeError("SHA-256 do modelo SAR não confere com o manifesto")
+    expected_sklearn = (man.get("runtime_dependencies") or {}).get("scikit-learn")
+    if expected_sklearn:
+        import sklearn
+        if sklearn.__version__ != expected_sklearn:
+            raise RuntimeError(
+                "VERSAO_SKLEARN_INCOMPATIVEL: modelo requer scikit-learn "
+                + str(expected_sklearn) + "; runtime instalado=" + str(sklearn.__version__)
+            )
     return joblib.load(path), man
 
 

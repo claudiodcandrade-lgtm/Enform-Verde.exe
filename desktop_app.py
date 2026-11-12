@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.19-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.20-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -35,6 +35,10 @@ SOURCES={
 }
 ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
 CARBON_FRACTION=0.47
+
+def _xy_coords(coords):
+    """Return 2D map coordinates from KML rings, ignoring optional altitude."""
+    return [(float(coord[0]),float(coord[1])) for coord in coords]
 
 def format_ptbr(value,decimals=2):
     """Format a numeric result for Brazilian readers with half-up rounding."""
@@ -1193,7 +1197,8 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     for shape in g.geometry:
         geoms=list(shape.geoms) if shape.geom_type=="MultiPolygon" else ([shape] if shape.geom_type=="Polygon" else [])
         for poly in geoms:
-            pts=[((x-west)/(east-west)*width,(north-y)/(north-south)*height) for x,y in poly.exterior.coords]
+            pts=[((x-west)/(east-west)*width,(north-y)/(north-south)*height)
+                 for x,y in _xy_coords(poly.exterior.coords)]
             if len(pts)>=4:draw.polygon(pts,fill=(255,138,0,32),outline=(255,138,0,255));draw.line(pts,width=3,fill=(255,138,0,255))
     return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
             "datetime":max(source_dates),"date_range":[min(source_dates),max(source_dates)],"scene_ids":scene_ids,
@@ -1283,7 +1288,7 @@ def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             for geom in g.geometry:
                 geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
                 for poly in geoms:
-                    pts=[px(lon,lat) for lon,lat in poly.exterior.coords]
+                    pts=[px(lon,lat) for lon,lat in _xy_coords(poly.exterior.coords)]
                     if len(pts)>=4:
                         d.polygon(pts,fill=(255,138,0,32),outline=(255,138,0,255))
                         d.line(pts,width=max(2,round(iw/500)),fill=(255,138,0,255),joint="curve")

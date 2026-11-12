@@ -1,15 +1,15 @@
-name: Sync Word specification from pixel-read checkpoint
+name: Sync Word specification from V88.05 checkpoint
 on:
   push:
     branches:
       - patches-3.26.6
     paths:
-      - docs/spec_updates/2026-11-12_v88_00_pixel_read_retries.md
+      - docs/spec_updates/2026-11-12_v88_05_model_runtime_parity.md
   workflow_dispatch:
 permissions:
   contents: write
 concurrency:
-  group: enform-word-spec-pixel-read-sync
+  group: enform-word-spec-v88-05-sync
   cancel-in-progress: false
 jobs:
   update-word:
@@ -23,18 +23,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Append reviewed pixel-read checkpoint to complete Word specification
+      - name: Append V88.05 checkpoint to complete Word specification
         run: |
-          python tools/update_spec_docx.py \
-            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-            --entry docs/spec_updates/2026-11-12_v88_00_pixel_read_retries.md \
-            --baseline "Enform Verde 3.26.19-PRECAMPO-EXPERIMENTAL (V88.00 retentativas e diagnóstico de leitura)" \
-            --head-sha "${{ github.sha }}" \
-            --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
-            --date "12 de novembro de 2026" \
-            --footer-label "V88.00 · 3.26.19 experimental · AOI Maria Eduarda integral pendente" \
-            --footer-date "12/11/2026"
-      - name: Validate Word archive and new version marker
+          if python - <<'PY'
+          from zipfile import ZipFile
+          with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as z:
+              xml=z.read('word/document.xml').decode('utf-8')
+          raise SystemExit(0 if 'V88.05' in xml else 1)
+          PY
+          then
+            echo 'V88.05 já está sincronizado no DOCX.'
+          else
+            python tools/update_spec_docx.py \
+              --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+              --entry docs/spec_updates/2026-11-12_v88_05_model_runtime_parity.md \
+              --baseline "Enform Verde 3.26.20-PRECAMPO-EXPERIMENTAL (V88.05 paridade do classificador SAR e correções de pixels)" \
+              --head-sha "${{ github.sha }}" \
+              --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
+              --date "12 de novembro de 2026" \
+              --footer-label "V88.05 · 3.26.20 experimental · integração Windows integral pendente" \
+              --footer-date "12/11/2026"
+          fi
+      - name: Validate Word archive and version marker
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -44,14 +54,14 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode('utf-8')
               assert len(xml)>10000
-              assert '3.26.19-PRECAMPO-EXPERIMENTAL' in xml
-              assert 'V88.00' in xml
-          print('Word specification synchronized and validated for 3.26.19/V88.00')
+              assert '3.26.20-PRECAMPO-EXPERIMENTAL' in xml
+              assert 'V88.05' in xml
+          print('Word specification synchronized and validated for 3.26.20/V88.05')
           PY
       - name: Commit synchronized Word specification
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: sync Word specification for V88.00 pixel-read checkpoint"
+          git diff --cached --quiet || git commit -m "docs: sync Word specification for V88.05 model-runtime checkpoint"
           git push origin HEAD:patches-3.26.6

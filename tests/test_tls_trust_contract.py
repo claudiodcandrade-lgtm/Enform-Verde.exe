@@ -12,7 +12,11 @@ class TlsTrustContract(unittest.TestCase):
         import os, tempfile
         import tls_setup
         with tempfile.TemporaryDirectory() as d:
-            fake = os.path.join(d, "proxy_root.pem")
+            # Reproduces the deployment path: `ca-certificates` contains the
+            # substring `certifi`, so substring-based filtering dropped it.
+            cert_dir = os.path.join(d, "ca-certificates")
+            os.makedirs(cert_dir)
+            fake = os.path.join(cert_dir, "proxy_root.pem")
             with open(fake, "w") as f:
                 f.write("-----BEGIN CERTIFICATE-----\nFAKEPROXYROOT\n-----END CERTIFICATE-----\n")
             old = {k: os.environ.pop(k, None) for k in tls_setup.ENV_KEYS}

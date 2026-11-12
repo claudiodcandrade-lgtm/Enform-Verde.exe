@@ -1872,3 +1872,18 @@ O workflow Windows #43127520197 comprovou leituras reais nos casos do smoke: ima
 ## V88.02 — Build Windows 3.26.19 concluído (12/11/2026)
 
 O workflow Windows #43130208992 passou a suíte completa de 1.080 testes, autocheck do EXE em pasta limpa, leitura óptica/SAR real nos testes e aceitação do KMZ de teste Tapajós. Artefato Actions ID `13905414794` (533.419.321 bytes), SHA-256 ZIP `2586497f0d0b0b09aa59181b7662736dd0bc570981432de06c502e53550784b9`; SHA-256 EXE `9907b91a615ad45011efa7c832dea4bd86506d661cef222e89958c28281fc7fb`. O build é `3.26.19-PRECAMPO-EXPERIMENTAL`, não homologado. As provas em 11 AOIs ópticas são amostrais; não demonstram pixels em todos os locais/datas do país. O KML integral da Fazenda Maria Eduarda segue pendente de classificação SAR, carbono e agricultura validados.
+
+## V88.04 — causas de falha TLS/KML e estado real das correções (12/11/2026)
+
+- Corrigida causa raiz TLS: o merge das autoridades certificadoras descartava caminhos do sistema por substring (`certifi`), incluindo `/usr/local/share/ca-certificates/...`. Agora só exclui o caminho exato do bundle Python certifi. TLS continua verificado.
+- Corrigido desenho de contornos CBERS/NASA GIBS para KML com altitude: usar somente longitude/latitude na rasterização visual; conservar coordenadas e geometrias originais nos cálculos.
+- Fallback MapBiomas para COG publicado via HTTPS, cache local e validação GeoTIFF quando `/vsicurl/` falhar. É somente histórico e requer esgotamento auditado de todas as rotas SAR.
+- Evidência: 1.082 testes aprovados, 1 ignorado; 157 módulos inspecionados; 10 testes direcionados aprovados. Execução LEM+ direta no KML integral de Sinop leu 2.278 pixels em 30 aquisições, com 1.457,92 ha classificados sazonalmente e 1,99 ha sem classe. Isso não demonstra integração da resposta ao dashboard nem validação de campo.
+- Bloqueios: imagem óptica ao vivo ainda não revalidada na geometria integral após o ajuste 3D; painel completo de agricultura/carbono/altura não comprovado; GUI visual não testada por falta de display; build Windows pendente. O job de modelos em scikit-learn 1.9.1 avisou que o artefato foi serializado em 1.8.0; manter resultado experimental e corrigir/pinar paridade antes de interpretar métricas.
+- Versão de trabalho 3.26.20-PRECAMPO-EXPERIMENTAL. Não declarar EXE, homologação científica ou aceite integral da fazenda até teste Windows no KML original e demonstração de pixels ópticos, alturas/estoques e painéis com incerteza.
+
+## V88.05 — paridade do modelo SAR fixada (12/11/2026)
+
+- O artefato `sar_brasil_rf_v2.joblib` foi serializado em scikit-learn 1.8.0. Agora `requirements_desktop.txt` fixa `scikit-learn==1.8.0`, o manifesto registra a versão de treino e o loader rejeita incompatibilidade antes da desserialização (`VERSAO_SKLEARN_INCOMPATIVEL`). Isso elimina inferência silenciosa com runtime não compatível; o modelo mantém rótulo experimental e limitações de transferência já documentadas.
+- No runtime 1.8.0, a classificação sazonal direta do KML completo Sinop repetiu: corte raso/solo exposto 576,00 ha; soja 399,36 ha; café 1,92 ha; área cultivada não identificada 3,20 ha; floresta nativa 471,68 ha; vegetação nativa 5,12 ha; área úmida 0,64 ha; 1.457,92 ha classificados e 1,99 ha sem classe. Não representa altura, biomassa, carbono nem validação de campo.
+- Suíte completa com scikit-learn 1.8.0: 1.083 testes aprovados, 1 ignorado; coleta/importação: 157 módulos; 12 testes direcionados aprovados. Ainda é preciso build Windows e prova no KML da imagem óptica, integração dos painéis e execução end-to-end.

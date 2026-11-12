@@ -49,6 +49,48 @@ class MapBiomasZonalTests(unittest.TestCase):
             expected=abs(Geod(ellps="WGS84").geometry_area_perimeter(aoi.geometry.iloc[0])[0])/10000
             self.assertAlmostEqual(result["mapped_area_ha"],expected,places=5)
 
+    def test_unsupported_vsi_downloads_validated_local_geotiff(self):
+        """A Windows GDAL without /vsicurl must reach the same AOI pixel read."""
+        import io
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        import rasterio
+        import geopandas as gpd
+        from rasterio.errors import RasterioIOError
+        from rasterio.transform import from_origin
+        from shapely.geometry import box
+        import mapbiomas_zonal as mz
+
+        class Response(io.BytesIO):
+            def __init__(self, payload):
+                super().__init__(payload)
+                self.headers = {"Content-Type":"image/tiff", "Content-Length":str(len(payload))}
+            def __enter__(self): return self
+            def __exit__(self, *args): self.close()
+
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            source=root/"official.tif"
+            cached=root/"cache"/"official.tif"
+            with rasterio.open(source,"w",driver="GTiff",height=2,width=2,count=1,
+                               dtype="uint8",crs=4326,transform=from_origin(-50,-10,.001,.001),nodata=0) as dst:
+                dst.write(np.array([[3,4],[3,4]],dtype="uint8"),1)
+            payload=source.read_bytes()
+            original=rasterio.open
+            def fail_remote(value,*args,**kwargs):
+                if str(value).startswith("/vsicurl/"):
+                    raise RasterioIOError("not recognized as a supported dataset name")
+                return original(value,*args,**kwargs)
+            aoi=gpd.GeoDataFrame(geometry=[box(-50,-10.002,-49.998,-10)],crs=4326)
+            with patch.object(mz,"_mapbiomas_cache_path",return_value=cached), \
+                 patch("rasterio.open",side_effect=fail_remote), \
+                 patch("urllib.request.urlopen",return_value=Response(payload)):
+                result=mz.mapbiomas_class_percentages(aoi,raster_url="https://example.test/official.tif")
+            self.assertGreater(result["mapped_area_ha"],0)
+            self.assertEqual(result["source_url"],"https://example.test/official.tif")
+            self.assertTrue(cached.is_file())
+
     def test_known_collection_11_natural_classes_have_landcover_crosswalk(self):
         for code in (3, 4, 5, 6, 7, 11, 12, 49, 50):
             self.assertIn(code, LEGEND)
