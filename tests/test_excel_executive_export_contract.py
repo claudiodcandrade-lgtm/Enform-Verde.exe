@@ -41,6 +41,22 @@ class ExcelExecutiveContract(unittest.TestCase):
         self.assertIn('Fonte:',self.src)
         self.assertIn('Pixels SAR',self.src)
 
+    def test_diameter_chart_data_isolated_from_height_panel(self):
+        # Diameter values and their chart helper series stay in A:C and rows
+        # 40:47; D:E are exclusively the visible height distribution panel.
+        start = self.src.index("dbh_bins =")
+        end = self.src.index("chart['D2'] =")
+        diameter = self.src[start:end]
+        self.assertIn("chart['A40']", diameter)
+        self.assertIn("chart['A41']", diameter)
+        self.assertIn("min_row=41, max_row=47", diameter)
+        self.assertIn("max_col=3", diameter)
+        self.assertNotRegex(diameter, r"chart(?:\.cell\([^)]*,\\s*[45]\\s*,|\\[['\\\"](?:D|E)\\d)")
+        height = self.src[end:]
+        self.assertIn("chart['D4'] = 'Faixa de altura (m)'", height)
+        self.assertIn("chart['E4'] = 'Frequência (%)'", height)
+        self.assertIn("chart.cell(row, 4, label)", height)
+
     def test_missing_litter_never_fabricated_as_zero(self):
         self.assertIn('N/D — NÃO SOMADA',self.src)
         self.assertIn('Serapilheira',self.src)
