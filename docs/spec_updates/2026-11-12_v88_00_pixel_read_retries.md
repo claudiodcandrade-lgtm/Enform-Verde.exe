@@ -21,3 +21,9 @@ Cinco testes unitários do fallback passaram; compilação sintática e `git dif
 GDAL, documentação oficial de `GDAL_HTTP_MULTIRANGE`, `GDAL_HTTP_MULTIPLEX`, `GDAL_HTTP_VERSION` e `/vsicurl/`: https://gdal.org/en/stable/user/configoptions.html e https://gdal.org/en/stable/user/virtual_file_systems.html
 
 O arquivo Word completo é atualizado a partir deste checkpoint pelo workflow de sincronização do repositório, mantendo o histórico editorial e o registro de versão.
+
+## V88.01 — Evidências do build e sincronização documental (12/11/2026)
+
+- No workflow Windows #43127520197, a imagem CBERS-4A ou Sentinel-2 chegou ao canvas Tk em Sinop; o smoke óptico distribuído por biomas/extremos, o pixel SAR Sentinel-1 no KMZ real do Tapajós, a validação de fontes SAR, os pixels ALOS-PALSAR do Cerrado e a cobertura ESA BIOMASS FH nos AOIs apoiados por inventários do Tapajós passaram.
+- O empacotamento não ocorreu. A suíte completa falhou em `test_versioned_spec_is_valid_docx_with_current_update`: o job fixou o SHA `14df5ab4dfe5aba156a7f1218dab2f1fdfeebc74`, iniciado antes do commit `6b1673e49565defc45acbd311e1880147c9c3b59` que sincronizou o DOCX com V88.00/3.26.19. É uma corrida de ordem entre workflows, portanto o build deve ser repetido sobre um commit que já contenha a especificação Word atual.
+- Essas amostras não validam o KML integral da Fazenda Maria Eduarda, não comprovam classificação agrícola/carbono nessa fazenda e não equivalem a cobertura exaustiva de pixels de todo o Brasil. O gate científico independente permanece reprovado; não declarar calibração nem homologação.
