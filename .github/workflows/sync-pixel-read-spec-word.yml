@@ -41,7 +41,7 @@ jobs:
               --head-sha "${{ github.sha }}" \
               --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
               --date "12 de novembro de 2026" \
-              --footer-label "V88.16 · 3.26.20 experimental · integração Windows integral pendente" \
+              --footer-label "V88.16 · 3.26.21 experimental · AOI integral pendente" \
               --footer-date "12/11/2026"
           fi
       - name: Validate Word archive and version marker
