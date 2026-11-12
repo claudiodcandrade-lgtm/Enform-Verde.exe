@@ -39,7 +39,7 @@ class ExcelExecutiveContract(unittest.TestCase):
         self.assertEqual(self.src.count("LineChart()"), 2)
         self.assertEqual(self.src.count("BarChart()"), 1)
         self.assertIn("Fonte:", self.src)
-        self.assertIn("pixels SAR", self.src)
+        self.assertIn("Pixels SAR", self.src)
 
     def test_missing_litter_never_fabricated_as_zero(self):
         self.assertIn('N/D — NÃO SOMADA',self.src)
