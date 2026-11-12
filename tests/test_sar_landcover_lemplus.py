@@ -90,6 +90,8 @@ class LandUseIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, \
              patch("sar_landcover_lemplus.classify_aoi", return_value=fake_result()), \
              patch("recent_sar_landcover.run_recent_sar_screen", return_value={"status": "N/D_DADOS", "reason": "offline"}), \
+             patch("radar_contingency.run_alternative_radar_screen", return_value={"status":"N/D_DADOS","reason":"offline","classification_status":"N/D_VALIDACAO"}), \
+             patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency", return_value={"status":"N/D","reason":"fixture offline"}), \
              patch("sar_model_discovery.discover_installed_sar_configs", return_value=([], [])):
             return run_land_use(AOI, d, ibge=ib)
 
@@ -126,7 +128,9 @@ class LandUseIntegrationTests(unittest.TestCase):
              patch("sar_model_discovery.discover_installed_sar_configs", return_value=(["modelo.json"], [])), \
              patch("land_use_sar.classify_config", return_value=(predicted, validation)), \
              patch("sar_landcover_lemplus.classify_aoi") as classify_lemplus, \
-             patch("recent_sar_landcover.run_recent_sar_screen", return_value={"status": "N/D_DADOS", "reason": "offline"}):
+             patch("recent_sar_landcover.run_recent_sar_screen", return_value={"status": "N/D_DADOS", "reason": "offline"}), \
+             patch("radar_contingency.run_alternative_radar_screen", return_value={"status":"N/D_DADOS","reason":"offline","classification_status":"N/D_VALIDACAO"}), \
+             patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency", return_value={"status":"N/D","reason":"fixture offline"}):
             r = run_land_use(AOI, d, ibge=ib)
         classify_lemplus.assert_not_called()
         audit = r["sar_classifier_lemplus"]

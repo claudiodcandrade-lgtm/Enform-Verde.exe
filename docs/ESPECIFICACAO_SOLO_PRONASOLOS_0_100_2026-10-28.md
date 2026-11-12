@@ -1526,3 +1526,7 @@ O relatório da caixa SAR teve falha de chave ao calcular área não classificad
 ## Registro documental V88.10 — build e escopo da evidência (12/11/2026)
 
 O build experimental Windows 3.26.20 passou autocheck e testes de pixel separados em AOIs de Tapajós/Cerrado e caixas ópticas amostrais. A prova SAR de Sinop é apenas uma caixa próxima ao centroide, não o KML do imóvel; não há resultado de carbono do imóvel validado. Nenhum resultado de teste altera a metodologia de carbono/fertilidade do solo ou sua incerteza.
+
+## Registro V88.11 — runtime geoespacial e regressão (12/11/2026)
+
+A dependência GeoPandas foi disponibilizada num ambiente isolado para executar os testes reais de geometria, CRS, vetores e rasters. A suíte integral passou com 1.085 testes e um skip de captura Tk sem display; o teste live MPC leu pixels VV/VH reais. Essa validação de software não altera nem valida métodos ou resultados de carbono/fertilidade do solo. KML integral no Windows e homologação científica permanecem gates separados.

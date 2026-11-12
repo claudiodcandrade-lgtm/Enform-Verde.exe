@@ -77,7 +77,9 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
                 with patch("land_use_sar.raster_class_polygons",
                            side_effect=RuntimeError("test offline map")),patch("time.sleep"), \
                      patch("sar_landcover_lemplus.classify_aoi",return_value={"status":"N/D_SEM_PIXELS_SAR","reason":"teste offline"}), \
-                     patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}):
+                     patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}), \
+                     patch("radar_contingency.run_alternative_radar_screen",return_value={"status":"N/D_DADOS","reason":"offline","classification_status":"N/D_VALIDACAO"}), \
+                     patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency",return_value={"status":"N/D","reason":"fixture offline"}):
                     result=run_land_use(self.aoi,Path(d)/"out",mapbiomas_path="missing.tif")
             self.assertEqual(result["sar_selection"],"NO_EXECUTABLE_SAR_CLASSIFIER")
             self.assertIsNone(result["sar_model_config"])
@@ -99,7 +101,9 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
                 with patch("land_use_sar.classify_config",return_value=(sar,validation)) as trained, \
                      patch("land_use_sar.raster_class_polygons",side_effect=RuntimeError("offline")), \
                      patch("time.sleep"), \
-                     patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}):
+                     patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}), \
+                     patch("radar_contingency.run_alternative_radar_screen",return_value={"status":"N/D_DADOS","reason":"offline","classification_status":"N/D_VALIDACAO"}), \
+                     patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency",return_value={"status":"N/D","reason":"fixture offline"}):
                     result=run_land_use(self.aoi,Path(d)/"output",mapbiomas_path="missing.tif")
             trained.assert_called_once()
             self.assertEqual(Path(result["sar_model_config"]),active.resolve())
@@ -121,7 +125,9 @@ class AutomaticIdentifierDiscoveryTests(unittest.TestCase):
                      patch("land_use_sar.raster_class_polygons",side_effect=RuntimeError("offline")), \
                      patch("time.sleep"), \
                      patch("recent_sar_landcover.run_recent_sar_screen",return_value={"status":"N/D_DADOS","reason":"offline"}), \
-                     patch("sar_landcover_lemplus.classify_aoi",return_value={"status":"N/D_SEM_PIXELS_SAR","reason":"teste offline"}):
+                     patch("sar_landcover_lemplus.classify_aoi",return_value={"status":"N/D_SEM_PIXELS_SAR","reason":"teste offline"}), \
+                     patch("radar_contingency.run_alternative_radar_screen",return_value={"status":"N/D_DADOS","reason":"offline","classification_status":"N/D_VALIDACAO"}), \
+                     patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency",return_value={"status":"N/D","reason":"fixture offline"}):
                     result=run_land_use(self.aoi,Path(d)/"out",mapbiomas_path="missing.tif",ibge=reference)
             self.assertEqual(result["status"],"N/D_SEM_COBERTURA_SAR")  # V87.37+: never cartographic fallback
             self.assertIsNone(result["validation"])

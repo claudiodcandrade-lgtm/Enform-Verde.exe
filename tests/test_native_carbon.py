@@ -225,7 +225,10 @@ class NativeCarbonTests(unittest.TestCase):
             aoi=gpd.GeoDataFrame(geometry=[box(0,0,20,10)],crs=6933)
             ibge=aoi.copy();ibge['legenda_1']='Floresta Ombrófila Densa'
             predicted=gpd.GeoDataFrame([dict(class_name='Soja',source='SAR_VALIDADO',taxonomy='modelo',geometry=box(0,0,10,10))],crs=6933)
-            with patch('land_use_sar.classify_config',return_value=(predicted,{'class_metadata':{'Soja':{'parent':'uso agropecuário'}}})):
+            with patch('land_use_sar.classify_config',return_value=(predicted,{'class_metadata':{'Soja':{'parent':'uso agropecuário'}}})), \
+                 patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}), \
+                 patch('radar_contingency.run_alternative_radar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline','classification_status':'N/D_VALIDACAO'}), \
+                 patch('crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency',return_value={'status':'N/D','reason':'fixture offline'}):
                 land=run_land_use(aoi,Path(d)/'out',config_path='TEST_ONLY',mapbiomas_path=str(path),ibge=ibge)
             soy=next(r for r in land['classes'] if r['class_name']=='Soja')
             self.assertEqual(soy['source'],'SAR_VALIDADO');self.assertIs(soy['native_status'],False)
@@ -326,6 +329,10 @@ class MapBiomasExcludedFromCurrentCoverRegression(unittest.TestCase):
         nd={'status':'N/D_DADOS','reason':'teste offline'}
         with tempfile.TemporaryDirectory() as d, \
              patch('recent_sar_landcover.run_recent_sar_screen',return_value=nd), \
+             patch('radar_contingency.run_alternative_radar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline','classification_status':'N/D_VALIDACAO'}), \
+             patch('sar_model_discovery.discover_installed_sar_configs',return_value=([],[])), \
+             patch('sar_landcover_lemplus.classify_aoi',return_value={'status':'N/D_SEM_PIXELS_SAR','reason':'teste offline'}), \
+             patch('crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency',return_value={'status':'N/D','reason':'fixture offline'}), \
              patch('land_use_sar._download_official_mapbiomas') as dl, \
              patch('land_use_sar.raster_class_polygons') as rcp:
             aoi=gpd.GeoDataFrame(geometry=[box(0,0,200,100)],crs=6933)

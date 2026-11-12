@@ -75,7 +75,9 @@ class LandUseTests(unittest.TestCase):
             from unittest.mock import patch
             with patch('sar_landcover_lemplus.classify_aoi',return_value={'status':'N/D_SEM_PIXELS_SAR','reason':'teste offline'}), \
                  patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'ERRO_TECNICO','reason':'SELECTED_SCENES_PIXEL_READ_FAILED','pixel_read_attempt_count':3,'readable_scene_count':0,'failed_scene_reads':[{'type':'UnicodeDecodeError'}]}):
-                r=run_land_use(aoi,d,mapbiomas_path=str(Path(d)/'absent.tif'),ibge=ibge)
+                with patch('radar_contingency.run_alternative_radar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline','classification_status':'N/D_VALIDACAO'}), \
+                     patch('crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency',return_value={'status':'N/D','reason':'fixture offline'}):
+                    r=run_land_use(aoi,d,mapbiomas_path=str(Path(d)/'absent.tif'),ibge=ibge)
             # V87.37+: without SAR pixels and without classifier the cover is N/D (never MapBiomas)
             self.assertEqual(r['status'],'ERRO_TECNICO_LEITURA_SAR')
             self.assertEqual(r['classes'][0]['source'],'SEM_COBERTURA')
@@ -170,7 +172,9 @@ class LandUseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, \
              patch('land_use_sar.classify_config',return_value=(sar,validation)), \
              patch('land_use_sar.raster_class_polygons',return_value=mb):
-            with patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
+            with patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}), \
+                 patch('radar_contingency.run_alternative_radar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline','classification_status':'N/D_VALIDACAO'}), \
+                 patch('crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency',return_value={'status':'N/D','reason':'fixture offline'}):
                 result=run_land_use(aoi,d,config_path='SAR_TEST',mapbiomas_path='TEST_ONLY')
         rows=result['classes']
         sar_row=next(row for row in rows if row['source']=='SAR_VALIDADO')
@@ -220,7 +224,11 @@ class NativeNamingTests(unittest.TestCase):
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,10,10)],crs=6933)
         mb=gpd.GeoDataFrame([dict(class_name='Soja',source='MAPBIOMAS',taxonomy='MapBiomas',geometry=box(0,0,10,10))],crs=6933)
         with tempfile.TemporaryDirectory() as d, patch('land_use_sar.raster_class_polygons',return_value=mb):
-            with patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}):
+            with patch('sar_model_discovery.discover_installed_sar_configs',return_value=([],[])), \
+                 patch('sar_landcover_lemplus.classify_aoi',return_value={'status':'N/D_SEM_PIXELS_SAR','reason':'teste offline'}), \
+                 patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}), \
+                 patch('radar_contingency.run_alternative_radar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline','classification_status':'N/D_VALIDACAO'}), \
+                 patch('crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency',return_value={'status':'N/D','reason':'fixture offline'}):
                 result=run_land_use(aoi,d)
             # V87.37+: an annual-map crop never becomes a current class.
             self.assertFalse(any(str(r['source']).startswith('MAPBIOMAS') for r in result['classes']))
@@ -233,7 +241,12 @@ class EmptyMapBiomasCoverageRegression(unittest.TestCase):
         empty=gpd.GeoDataFrame(columns=['class_code','class_name','source','taxonomy','geometry'],
                                geometry='geometry',crs='EPSG:6933')
         aoi=gpd.GeoDataFrame(geometry=[box(0,0,100,100)],crs='EPSG:6933')
-        with tempfile.TemporaryDirectory() as directory, patch('land_use_sar.raster_class_polygons',return_value=empty):
+        with tempfile.TemporaryDirectory() as directory, patch('land_use_sar.raster_class_polygons',return_value=empty), \
+             patch('sar_model_discovery.discover_installed_sar_configs',return_value=([],[])), \
+             patch('sar_landcover_lemplus.classify_aoi',return_value={'status':'N/D_SEM_PIXELS_SAR','reason':'teste offline'}), \
+             patch('recent_sar_landcover.run_recent_sar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline'}), \
+             patch('radar_contingency.run_alternative_radar_screen',return_value={'status':'N/D_DADOS','reason':'teste offline','classification_status':'N/D_VALIDACAO'}), \
+             patch('crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency',return_value={'status':'N/D','reason':'fixture offline'}):
             result=run_land_use(aoi,directory,mapbiomas_path='test-raster.tif')
         self.assertIsNotNone(result['mapbiomas_failure'])
         self.assertEqual(result['cover_verification'],'COBERTURA_ATUAL_PARCIAL_OU_INDISPONIVEL')
