@@ -694,12 +694,18 @@ jobs:
           s.cci_history=lambda *args,**kwargs:{"items":0,"paths":[]}
           with tempfile.TemporaryDirectory() as td:
               out=s.automatic_pipeline(g,"Amazônia","Floresta Ombrófila Densa das Terras Baixas",cache=td)
-          # Real SAR pixels without a validated quantitative AGB model must NOT become a literature AGB estimate.
+          # Auxiliary SAR pixels do not yield quantitative AGB. After all compatible biomass routes are exhausted,
+          # an eligible inventory reference may appear only in its separate field, never as SAR-derived AGB.
           assert out["status"]=="SAR_PROCESSADO_SEM_MODELO_AGB",out
           assert out.get("agb_mg_ha") is None,out
-          assert out.get("literature_reference") is None,out
+          lit=out.get("literature_reference")
+          assert lit is not None and lit.get("available") is True,out
+          assert lit.get("sar_processed") is False and lit.get("sar_pixel_audit")==[],lit
+          assert lit.get("data_origin") in {"LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"},lit
+          assert out.get("data_origin")=="SAR_ATRIBUTOS_ESTRATIFICADORES",out
+          assert out["inventory_fallback_gate"].get("eligible") is True,out
           assert out.get("sar_attempted_first") is True,out
-          print("AUTOMATIC_SAR_NO_UNVALIDATED_AGB_FALLBACK_OK")
+          print("AUTOMATIC_SAR_SEPARATE_INVENTORY_CONTINGENCY_OK")
           '@ | Set-Content fallback_flow_test.py -Encoding UTF8
           python fallback_flow_test.py
           python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
