@@ -1,5 +1,6 @@
 import unittest
-from executive_carbon_report import executive_carbon_lines, uncertainty_for_pool
+from executive_carbon_report import (executive_carbon_lines, uncertainty_for_pool,
+                                     litter_dashboard_summaries)
 
 class ExecutiveCarbonReportTests(unittest.TestCase):
     def test_tapajos_agb_sd_is_not_confidence_interval(self):
@@ -35,6 +36,22 @@ class ExecutiveCarbonReportTests(unittest.TestCase):
         self.assertIn("PAINEL EXECUTIVO",lines[0])
         self.assertTrue(any("1.30 tC/ha" in x for x in lines))
         self.assertTrue(any("IC95%" in x for x in lines))
+
+    def test_experimental_litter_is_reported_separately_from_known_pool_total(self):
+        native={"components":[{"parametro":"Serapilheira","known_total_tc":None}],
+            "strata":[{"class_name":"FESV","physiognomy":"FESV","area_ha":100,
+                "components":[{"parametro":"Serapilheira","tc":3.075,
+                    "area_ha":100,"total_tc":None,"experimental_total_tc":307.5,
+                    "origem":"EXPERIMENTAL_FISICO","fonte":"inventários FESV",
+                    "metodo":"hierarquia regional","uncertainty_kind":"preditivo 90%",
+                    "source_url":"https://example.org/data"}]}]}
+        rows=litter_dashboard_summaries(native)
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]["status"],"CENÁRIO EXPERIMENTAL — FORA DO TOTAL CONHECIDO")
+        self.assertAlmostEqual(rows[0]["tc_ha"],3.075)
+        self.assertAlmostEqual(rows[0]["stock_tc"],307.5)
+        self.assertIn("preditivo 90%",rows[0]["note"])
+        self.assertIn("https://example.org/data",rows[0]["note"])
 
 if __name__=="__main__":
     unittest.main()

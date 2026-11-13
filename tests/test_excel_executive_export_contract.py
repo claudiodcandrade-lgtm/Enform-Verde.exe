@@ -58,7 +58,8 @@ class ExcelExecutiveContract(unittest.TestCase):
         self.assertIn("chart.cell(row, 4, label)", height)
 
     def test_missing_litter_never_fabricated_as_zero(self):
-        self.assertIn('N/D — NÃO SOMADA',self.src)
+        self.assertIn('litter_dashboard_summaries',self.src)
+        self.assertIn('N/D — MOTIVO REGISTRADO',self.src)
         self.assertIn('Serapilheira',self.src)
 
 if __name__=='__main__':

@@ -5,6 +5,7 @@ one class is never propagated to another class or multiplied by the whole AOI.
 """
 from __future__ import annotations
 import math
+import json
 import unicodedata
 
 COMPARTMENTS=('Biomassa aérea','Biomassa subterrânea','Necromassa aérea','Necromassa subterrânea','Serapilheira','Solo 0–100 cm')
@@ -207,13 +208,47 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
     origin=str(selected.get('data_origin') or '')
     if agb is not None and not (origin.startswith('SAR') or origin in ('LITERATURA_MICRORREGIONAL','LITERATURA_SECUNDARIA','MODELAGEM_LITERATURA_HIERARQUICA')):
         agb=None
-    rows=[];regional=dict(selected.get('regional_components') or {})
+    rows=[];litter_audit=None;regional=dict(selected.get('regional_components') or {})
     regional.update(sar.get('regional_components') or {})
     regional.update(tapajos_necromass_components(biome,physiognomy,aoi))
     # Do not silently transfer biome×UF necromass to an IBGE physiognomy.
     # The public IFN biome×UF aggregate lacks a verified physiognomy field;
     # its predictive interval cannot quantify ecological transfer bias.
     # Retain only class-compatible microrregional/validated source components.
+    if not any('serapilheira' in normalize(k) for k in regional):
+        # IFN provides depth only. Convert it only when this very AOI has an
+        # explicit evidence package with paired, independently grouped
+        # gravimetry and measured C fractions, all matched to region and class.
+        if inventory_evidence is not None and not callable(inventory_evidence):
+            try:
+                from litter_depth_mass import estimate_litter_carbon_from_depth
+                from carbon_compartments import aoi_to_wgs84
+                from carbon_compartments import infer_uf_from_aoi
+                geom=aoi_to_wgs84(aoi)
+                lon,lat=geom.centroid.x,geom.centroid.y
+                region=infer_uf_from_aoi(aoi)
+                litter=estimate_litter_carbon_from_depth(
+                    inventory_evidence,biome=biome,physiognomy=physiognomy,
+                    region=region,aoi_lon=lon,aoi_lat=lat)
+                litter_audit=litter
+                if litter.get('status')=='ESTIMATIVA_EXPERIMENTAL_IFN_GRAVIMETRICA':
+                    regional['Serapilheira']={
+                        'mean_tc_ha':litter['mean_tc_ha'],
+                        'mean_dry_mg_ha':litter['dry_litter_mg_ha'],
+                        'origin':'EXPERIMENTAL_FISICO','include_in_total':False,
+                        'source':litter['source'],
+                        'source_url':json.dumps(litter['sources'],ensure_ascii=False,sort_keys=True),
+                        'method':'Regressão gravimétrica regional profundidade–massa; validação leave-one-unidade-fora',
+                        'uncertainty':litter['uncertainty'],
+                        'uncertainty_kind':litter['uncertainty']['meaning'],
+                        'status':litter['status'],
+                        'calculation_trace':litter['calculation_trace'],
+                        'limitations':litter['limitations']}
+            except Exception as exc:
+                # Preserve the failure in the audit; it must never masquerade
+                # as a calculated stock or block other valid carbon pools.
+                litter_audit={'status':'ERRO_TECNICO_CALIBRACAO_GRAVIMETRICA',
+                              'reason':type(exc).__name__+': '+str(exc)[:350]}
     if not any('serapilheira' in normalize(k) for k in regional):
         from regional_litter_hierarchy import fesv_northern_mt_litter_component
         # V87.40: FESV (northern MT) litter now enters with QUANTIFIED transfer
@@ -333,6 +368,14 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                      'range_tc_ha':c.get('range_tc_ha'),'range_dry_mg_ha':c.get('range_dry_mg_ha'),
                      'source_url':c.get('source_url') or c.get('url'),
                      'source_sha256':c.get('source_sha256') or c.get('dataset_sha256')})
+    if litter_audit is not None and not any(r.get('parametro')=='Serapilheira' for r in rows):
+        rows.append({'parametro':'Serapilheira','tc':None,'origem':'N/D',
+            'fonte':litter_audit.get('source') or 'SFB/IFN + pacote gravimétrico informado',
+            'metodo':litter_audit.get('calculation_trace') or 'Conversão profundidade–massa não habilitada',
+            'obs':litter_audit.get('reason') or litter_audit.get('status'),
+            'include_in_total':False,'uncertainty_kind':litter_audit.get('reason') or litter_audit.get('status'),
+            'calculation_trace':litter_audit.get('calculation_trace'),
+            'source_url':litter_audit.get('sources')})
     soil={}
     try:
         soil=soil_estimator(aoi) or {};top=soil.get('0–100 cm')
@@ -415,6 +458,7 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                 rows.append(candidate)
             elif existing.get('tc') is None:
                 rows[rows.index(existing)]=candidate
-    return {'components':rows,'secondary_evidence_audit':secondary_audit,
+    return {'components':rows,'litter_gravimetric_audit':litter_audit,
+            'secondary_evidence_audit':secondary_audit,
             'soil_profiles':soil,'sar_audit':sar.get('audit'), 'error':sar.get('error'),
             'sar_details':{k:sar[k] for k in ('status','data_origin','source','sensor','product','paths','stats','height_mean_m','height_sd_m','height_n_valid_pixels','height_pixel_distribution','height_interpretation','height_route_status','height_absence_certificate','sar_validation_metrics','agb_blocker','message','reason') if k in sar}}

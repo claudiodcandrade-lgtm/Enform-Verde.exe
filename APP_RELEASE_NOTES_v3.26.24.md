@@ -1,0 +1,7 @@
+# Enform Verde v3.26.24-PRECAMPO-EXPERIMENTAL
+
+- Exibe todas as classes de cobertura espacialmente intersectadas com hectares, percentual da AOI, origem e fechamento da área; resíduos permanecem não classificados/não reconciliados.
+- O painel agrícola mostra o tipo de cultivo e “Produtividade estimada no momento dessa análise”, com unidades t/ha e, quando pertinente ao padrão da cultura, sacas/ha e intervalo preditivo.
+- Mantém a busca SAR mais recente com tolerância máxima de 30 dias para o monitoramento de vigor e previsão, registrando a data da aquisição; a contingência histórica MapBiomas + PAM não é rotulada como previsão SAR atual.
+- O painel de carbono expõe serapilheira por estrato, origem e incerteza, preservando cenários experimentais fora do total conhecido.
+- Versão experimental; não declara homologação científica. Build Windows, execução no KML integral da Fazenda Maria Eduarda e disponibilidade de artefato dependem de validação no workflow desta versão.

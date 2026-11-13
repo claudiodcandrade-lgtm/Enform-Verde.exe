@@ -17,7 +17,8 @@ def remove_superseded_yield_placeholders(chunks):
         kept = []
         for line in text.splitlines(keepends=True):
             clean = line.strip()
-            is_productivity = clean.startswith("Produtividade provável:")
+            is_productivity = (clean.startswith("Produtividade provável:") or
+                               clean.startswith("Produtividade estimada no momento dessa análise:"))
             is_production = clean.startswith("Produção provável:")
             provisional = (
                 ("BLOQUEADA" in clean or "INDISPONÍVEL" in clean)
@@ -44,6 +45,41 @@ def current_crop_area_by_semantic_sar(land):
                 if str(x.get("class_name") or "") in
                 ("Áreas cultivadas","Lavoura Temporária","Outras Lavouras Temporárias"))
     return crop,generic
+
+
+def executive_cover_distribution_lines(land, aoi_area_ha, fmt):
+    """List each disjoint cover class with hectares and percent of the AOI."""
+    classes=(land or {}).get("classes") or []
+    if not classes:
+        return ["• Classes de cobertura: N/D — nenhuma área foi determinada; não converter ausência em zero."]
+    lines=[]
+    for row in classes:
+        try:
+            area=float(row.get("area_ha") or 0.0)
+        except (TypeError,ValueError):
+            area=0.0
+        pct=row.get("area_pct")
+        try:
+            pct=float(pct) if pct is not None else (100.0*area/float(aoi_area_ha) if aoi_area_ha else None)
+        except (TypeError,ValueError,ZeroDivisionError):
+            pct=None
+        pct_label=fmt(pct,2)+"% da AOI" if pct is not None else "percentual N/D"
+        name=str(row.get("class_name") or "Cobertura sem rótulo")
+        source=str(row.get("source") or "fonte não informada")
+        line="• "+name+" — "+fmt(area,2)+" ha ("+pct_label+"); situação: "+source
+        if row.get("taxonomy"):
+            line+="; referência: "+str(row["taxonomy"])
+        lines.append(line)
+    try:
+        total=sum(float(row.get("area_ha") or 0.0) for row in classes)
+        aoi=float(aoi_area_ha)
+    except (TypeError,ValueError):
+        total=aoi=None
+    if aoi is not None:
+        lines.append("Fechamento: classes disjuntas "+fmt(total,2)+" ha; AOI "+fmt(aoi,2)+
+                     " ha; diferença "+fmt(aoi-total,2)+
+                     " ha (resíduo não classificado/não reconciliado; nunca absorver em outra classe).")
+    return lines
 
 
 def experimental_seasonal_sar_classes(land):

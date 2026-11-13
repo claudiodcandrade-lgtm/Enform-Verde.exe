@@ -1,7 +1,8 @@
 """Executive report regression: regional forecast supersedes only blocked placeholders."""
 import unittest
 from crop_report_consistency import (remove_superseded_yield_placeholders, current_crop_area_by_semantic_sar,
-                                    experimental_seasonal_sar_classes)
+                                    experimental_seasonal_sar_classes,
+                                    executive_cover_distribution_lines)
 
 
 class SinopExecutiveConsistencyTest(unittest.TestCase):
@@ -22,6 +23,28 @@ class SinopExecutiveConsistencyTest(unittest.TestCase):
     def test_preserves_valid_yield_results(self):
         text = "Produtividade provável: ESTIMATIVA EXPERIMENTAL 3,82 t/ha\n"
         self.assertEqual(remove_superseded_yield_placeholders([text]), [text])
+
+    def test_removes_superseded_new_productivity_headline_too(self):
+        text = "Produtividade estimada no momento dessa análise: BLOQUEADA — modelo insuficiente\n"
+        self.assertEqual(remove_superseded_yield_placeholders([text]), [""])
+
+
+class ExecutiveCoverDistributionTests(unittest.TestCase):
+    def test_every_disjoint_cover_class_has_area_percent_and_reconciliation(self):
+        land={"classes":[
+            {"class_name":"Lavoura de Soja","area_ha":40,"area_pct":40,"source":"SAR_VALIDADO"},
+            {"class_name":"Vegetação nativa","area_ha":50,"area_pct":50,"source":"SAR_VALIDADO"},
+            {"class_name":"Não classificado","area_ha":10,"area_pct":10,"source":"SEM_COBERTURA"}]}
+        lines=executive_cover_distribution_lines(land,100,lambda x,nd=2:f"{x:.{nd}f}")
+        joined="\n".join(lines)
+        for label in ("Lavoura de Soja","Vegetação nativa","Não classificado"):
+            self.assertIn(label,joined)
+        for value in ("40.00 ha (40.00% da AOI)","50.00 ha (50.00% da AOI)","10.00 ha (10.00% da AOI)"):
+            self.assertIn(value,joined)
+        self.assertIn("100.00 ha; AOI 100.00 ha; diferença 0.00 ha",joined)
+
+    def test_no_classes_stays_nd_instead_of_zero(self):
+        self.assertIn("N/D",executive_cover_distribution_lines({},100,lambda x,nd=2:f"{x:.{nd}f}")[0])
 
 
 class CurrentCropAreaEvidenceTests(unittest.TestCase):

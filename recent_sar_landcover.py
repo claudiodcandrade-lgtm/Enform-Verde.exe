@@ -42,6 +42,56 @@ def classify_temporal(vv,vh,inside):
                     "valid_fraction":float(good.sum()/max(1,int(inside.sum()))),
                     "uncertainty":"Threshold heuristic only; no calibrated error, no IC95%, no classification accuracy"}
 
+def _rolling_history(data, inside, aoi_area_ha, *, max_window_days=150,
+                     min_scenes=3, min_span_days=35):
+    """Experimental rolling SAR candidate areas, never field-validated land use.
+
+    Each point is reclassified using only same-orbit VV/VH scenes acquired on
+    or before that date and within the preceding ``max_window_days``. The
+    class-2 area is therefore a temporal-signature candidate, not a confirmed
+    crop area. Pixel areas are normalized to the exact AOI area to account for
+    the partial boundary cells selected by the rasterized AOI mask.
+    """
+    chronological=sorted(data,key=lambda row:row[0])
+    history=[]
+    inside_count=int(np.asarray(inside,dtype=bool).sum())
+    if inside_count<=0 or not chronological:return history
+    cell_area=float(aoi_area_ha)/inside_count
+    for end_index,(end_dt,_,_) in enumerate(chronological):
+        start_dt=end_dt-timedelta(days=max_window_days)
+        window=[row for row in chronological[:end_index+1]
+                if start_dt<=row[0]<=end_dt]
+        span=(window[-1][0]-window[0][0]).total_seconds()/86400 if window else 0
+        base={"as_of_utc":end_dt.isoformat(),
+              "window_start_utc":window[0][0].isoformat() if window else None,
+              "window_days":max_window_days,"scene_count":len(window),
+              "span_days":round(span,2),"status":"N/D_SERIE_INSUFICIENTE"}
+        if len(window)<min_scenes or span<min_span_days:
+            base["reason"]="exige ao menos 3 cenas e 35 dias de intervalo"
+            history.append(base);continue
+        try:
+            codes,qa=classify_temporal(
+                np.stack([row[2][0] for row in window]),
+                np.stack([row[2][1] for row in window]),inside)
+        except ValueError as exc:
+            base.update({"status":"N/D_SEPARABILIDADE_SAR",
+                         "reason":str(exc)[:180],"qa":None})
+            history.append(base);continue
+        areas={}
+        for code,name in SAR_CANDIDATE_CLASSES.items():
+            areas[name]=round(float(np.count_nonzero(codes==code))*cell_area,2)
+        mapped=int(np.count_nonzero(codes))
+        base.update({"status":"CANDIDATOS_EXPERIMENTAIS",
+                     "areas_ha":areas,
+                     "cultivated_candidate_area_ha":areas[SAR_CANDIDATE_CLASSES[2]],
+                     "mapped_candidate_area_ha":round(mapped*cell_area,2),
+                     "valid_pixels":qa["valid_pixels"],
+                     "valid_fraction":qa["valid_fraction"],
+                     "uncertainty":"não quantificada; heurística temporal sem validação local nem IC95%",
+                     "qa":qa})
+        history.append(base)
+    return history
+
 def _select_orbit_series(candidates,ref):
     """Select most recent COMPLETE same-orbit time series, not merely latest item."""
     groups={}
@@ -328,6 +378,8 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         if len(features)<4000:
             vec.write_text(json.dumps({"type":"FeatureCollection","features":features},
                                       ensure_ascii=False),encoding="utf-8")
+        aoi_area_ha=float(aoi.to_crs(6933).geometry.area.sum())/10000
+        history=_rolling_history(data,inside,aoi_area_ha)
         result.update({"status":"SAR_REAL_EXPERIMENTAL_CANDIDATES",
              "raster_path":str(raster),"vector_path":str(vec) if len(features)<4000 else None,
              "provider_diagnostics":found.get("providers",[]),
@@ -337,6 +389,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
              "latest_acquisition_utc":data[0][0].isoformat(),
              "orbit_state":orbit[1],"relative_orbit":orbit[2],
              "areas_ha":{names[k]:round(areas[k],2) for k in names},
+             "history_window_days":150,"history_by_date":history,
              "qa":qa,"method":"unsupervised Sentinel-1 temporal signature screen; class 2 is only a cultivated-area candidate; no crop/native confirmation or calibrated accuracy"})
     except (UnicodeError,OSError,RuntimeError,ValueError,ImportError) as exc:
         result["status"]="ERRO_TECNICO"

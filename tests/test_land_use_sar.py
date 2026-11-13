@@ -87,6 +87,7 @@ class LandUseTests(unittest.TestCase):
             self.assertEqual(len(potential),1)
             self.assertEqual(potential[0]['name'],'FOD')
             self.assertAlmostEqual(potential[0]['area_ha'],aoi.to_crs('EPSG:6933').geometry.area.sum()/10000,places=5)
+            self.assertAlmostEqual(potential[0]['percent'],100.0,places=5)
             self.assertFalse(any('_shares_with_code' in w for w in r['warnings']))
             audit='\n'.join(report_lines(r))
             self.assertIn('CLASSIFICADOR SAZONAL SENTINEL-1 LEM+: N/D_SEM_PIXELS_SAR',audit)

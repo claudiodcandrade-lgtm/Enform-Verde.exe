@@ -52,7 +52,7 @@ def discover_asf(gdf,limit=25):
             params={"dataset":("NISAR" if label.startswith("NISAR") else label),"intersectsWith":_wkt(gdf),
                     "output":"geojson","maxResults":limit}
             params.update(extra)
-            r=requests.get(ASF_SEARCH,params=params,timeout=(10,60)); r.raise_for_status()
+            r=requests.get(ASF_SEARCH,params=params,timeout=(5,15)); r.raise_for_status()
             js=r.json(); fs=js.get("features",[])
             # Defensive GCOV filter because catalogue parameter behavior can vary.
             if label.startswith("NISAR"):
@@ -85,7 +85,7 @@ def discover_asf(gdf,limit=25):
 def discover_cdse(gdf,limit=25):
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
     try:
-        r=requests.post(CDSE_STAC,json={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]},timeout=(10,45));r.raise_for_status();fs=r.json().get("features",[])
+        r=requests.post(CDSE_STAC,json={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]},timeout=(5,15));r.raise_for_status();fs=r.json().get("features",[])
         return {"provider":"Copernicus Data Space","dataset":"Sentinel-1 GRD","band":"C","count":len(fs),"items":[{"id":x.get("id"),"datetime":x.get("properties",{}).get("datetime")} for x in fs]}
     except Exception as e:return {"provider":"Copernicus Data Space","dataset":"Sentinel-1 GRD","band":"C","count":0,"items":[],"error":str(e)}
 def discover_sar(gdf):
@@ -361,7 +361,7 @@ def _load_official_ibge_vegetation_local(aoi_gdf):
         fd,tmp_name=tempfile.mkstemp(prefix="ibge-vegetation-",suffix=".part",dir=root)
         os.close(fd); tmp=Path(tmp_name)
         try:
-            with requests.get(url,stream=True,timeout=(30,180),
+            with requests.get(url,stream=True,timeout=(8,45),
                               headers={"User-Agent":"Enform-Verde/3.24.33"}) as response:
                 response.raise_for_status()
                 with tmp.open("wb") as stream:
@@ -545,7 +545,7 @@ BIOMASS_PRODUCT_TYPES=BIOMASS_L2B_PRODUCT_TYPES+(BIOMASS_FH_L2A,)
 def _biomass_item_product_types(item):
     """Return BIOMASS L2B product types evidenced by item/asset metadata."""
     props=item.get("properties") or {}; assets=item.get("assets") or {}
-    evidence=" ".join([str(item.get("id") or ""),str(props)," ".join(
+    evidence=" ".join([str(item.get("id") or ""),str(item.get("_product_type") or ""),str(props)," ".join(
         str(k)+" "+str(v.get("title") or "")+" "+str(v.get("href") or "")
         for k,v in assets.items())]).upper()
     return [product for product in BIOMASS_PRODUCT_TYPES if product in evidence]
@@ -567,7 +567,7 @@ def _biomass_catalog_summary(item):
 MAAP_TOKEN_URL="https://iam.maap.eo.esa.int/realms/esa-maap/protocol/openid-connect/token"
 def maap_access_token(offline_token):
     if not offline_token:raise ValueError("Informe o offline token ESA MAAP. Ele não é armazenado pelo Enform Verde.")
-    r=requests.post(MAAP_TOKEN_URL,data={"client_id":"offline-token","client_secret":"p1eL7uonXs6MDxtGbgKdPVRAmnGxHpVE","grant_type":"refresh_token","refresh_token":offline_token,"scope":"offline_access openid"},timeout=(10,45));r.raise_for_status()
+    r=requests.post(MAAP_TOKEN_URL,data={"client_id":"offline-token","client_secret":"p1eL7uonXs6MDxtGbgKdPVRAmnGxHpVE","grant_type":"refresh_token","refresh_token":offline_token,"scope":"offline_access openid"},timeout=(5,15));r.raise_for_status()
     t=r.json().get("access_token")
     if not t:raise RuntimeError("A ESA MAAP não retornou access_token.")
     return t
@@ -592,9 +592,9 @@ def maap_search(gdf,collection,limit=50,product_type=None,return_audit=False):
         # intersects in the real Borneo validation (10 Nov 2026). GET first.
         response=requests.get(base,params={
             "collections":collection,"bbox":",".join(map(str,bbox)),
-            "limit":page_size},timeout=(10,60))
+            "limit":page_size},timeout=(8,30))
         if response.status_code in (400,404,405,415,422,500,501,502,503):
-            response=requests.post(base,json=body,timeout=(10,60))
+            response=requests.post(base,json=body,timeout=(8,30))
         response.raise_for_status()
     except requests.exceptions.RequestException as exc:
         raise RuntimeError("MAAP_STAC_SEARCH_FAILED:"+type(exc).__name__) from None
@@ -618,9 +618,9 @@ def maap_search(gdf,collection,limit=50,product_type=None,return_audit=False):
         try:
             if method=="POST":
                 response=requests.post(href,json=next_link.get("body") or body,
-                                       timeout=(10,60))
+                                       timeout=(8,30))
             elif method=="GET":
-                response=requests.get(href,timeout=(10,60))
+                response=requests.get(href,timeout=(8,30))
             else:
                 raise RuntimeError("MAAP_STAC_UNSUPPORTED_NEXT_METHOD")
             response.raise_for_status()
@@ -655,41 +655,42 @@ def _maap_search_with_audit(gdf,collection,limit,product_type):
 
 def biomass_l2b_search(gdf,limit=100,return_audit=False):
     """Discover both official AGB and forest-height L2B products; retain their distinct roles."""
+    from concurrent.futures import ThreadPoolExecutor,as_completed
     out=[]
     search_errors=[]
     successful_queries=0;query_audits=[]
-    for collection,stage in (("BiomassLevel2b","OPERATIONAL"),("BiomassLevel2bIOC","IOC")):
-        for product_type in BIOMASS_L2B_PRODUCT_TYPES:
-            try:
-                items,query_audit=_maap_search_with_audit(gdf,collection,limit,product_type)
-                successful_queries+=1
-                query_audits.append({"route":collection,"product_type":product_type,**query_audit})
-            except Exception as exc:
-                search_errors.append(collection+":"+type(exc).__name__)
+    routes=(("BiomassLevel2b","OPERATIONAL",BIOMASS_L2B_PRODUCT_TYPES),
+            ("BiomassLevel2bIOC","IOC",BIOMASS_L2B_PRODUCT_TYPES),
+            ("BiomassLevel2a","OPERATIONAL_L2A",(BIOMASS_FH_L2A,)),
+            ("BiomassLevel2aIOC","IOC_L2A",(BIOMASS_FH_L2A,)))
+    results={}
+    # These are four independent collections for the same AOI. Query them
+    # concurrently once each; serial product-by-product searches duplicated
+    # identical STAC pagination and delayed the fallback carbon routes.
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures={pool.submit(_maap_search_with_audit,gdf,collection,limit,None):collection
+                 for collection,_,_ in routes}
+        for future in as_completed(futures):
+            collection=futures[future]
+            try:results[collection]=future.result()
+            except Exception as exc:results[collection]=(None,exc)
+    for collection,stage,product_types in routes:
+        all_items,query_audit=results[collection]
+        if isinstance(query_audit,Exception):
+            search_errors.append(collection+":"+type(query_audit).__name__)
+            for product_type in product_types:
                 query_audits.append({"route":collection,"product_type":product_type,
                     "catalog_search_complete":False,"pagination_complete":False,
                     "pixel_read_complete":False,"technical_error_count":1,
-                    "error_type":type(exc).__name__})
-                continue
-            for it in items:
+                    "error_type":type(query_audit).__name__})
+            continue
+        successful_queries+=1
+        for product_type in product_types:
+            query_audits.append({"route":collection,"product_type":product_type,**query_audit})
+            for it in all_items:
+                if product_type not in _biomass_item_product_types(it):continue
                 z=dict(it); z["_collection"]=collection; z["_stage"]=stage
                 z["_product_type"]=product_type; out.append(z)
-    # Open Level-2A Forest Height (P-band, per stack), after L2B in priority.
-    for collection,stage in (("BiomassLevel2a","OPERATIONAL_L2A"),("BiomassLevel2aIOC","IOC_L2A")):
-        try:
-            items,query_audit=_maap_search_with_audit(gdf,collection,limit,BIOMASS_FH_L2A)
-            successful_queries+=1
-            query_audits.append({"route":collection,"product_type":BIOMASS_FH_L2A,**query_audit})
-        except Exception as exc:
-            search_errors.append(collection+":"+type(exc).__name__)
-            query_audits.append({"route":collection,"product_type":BIOMASS_FH_L2A,
-                "catalog_search_complete":False,"pagination_complete":False,
-                "pixel_read_complete":False,"technical_error_count":1,
-                "error_type":type(exc).__name__})
-            continue
-        for it in items:
-            z=dict(it); z["_collection"]=collection; z["_stage"]=stage
-            z["_product_type"]=BIOMASS_FH_L2A; out.append(z)
     if successful_queries==0:
         raise RuntimeError("MAAP_ALL_COLLECTION_SEARCHES_FAILED: "+",".join(search_errors))
     unique={}
@@ -711,7 +712,9 @@ def biomass_l2b_search(gdf,limit=100,return_audit=False):
 
 def _download(url,out,token=None):
     h={"Authorization":"Bearer "+token} if token else {}
-    with requests.get(url,headers=h,stream=True,timeout=(10,180)) as r:
+    # Bound stalled proxy/TLS reads so one unavailable asset cannot hold up
+    # the carbon analysis and the alternate biomass routes indefinitely.
+    with requests.get(url,headers=h,stream=True,timeout=(8,30)) as r:
         r.raise_for_status()
         with open(out,"wb") as f:
             for c in r.iter_content(8*1024*1024):
@@ -807,8 +810,8 @@ def _raster_assets(item):
         href=a.get("href",""); typ=(a.get("type") or "").lower()
         if href and (href.lower().endswith((".tif",".tiff")) or "geotiff" in typ):out.append((k,href))
     return out
-def download_maap_agb(gdf,offline_token,cache):
-    items=biomass_l2b_search(gdf,limit=100)
+def download_maap_agb(gdf,offline_token,cache,items=None):
+    items=items if items is not None else biomass_l2b_search(gdf,limit=100)
     agb_items=[it for it in items if it.get("_product_type","FP_AGB_L2B")=="FP_AGB_L2B"]
     fh_items=[it for it in items if it.get("_product_type")=="FP_FH__L2B"]
     if not agb_items:return {"available":False,"paths":[],"items":len(items),"agb_items":0,
@@ -816,8 +819,8 @@ def download_maap_agb(gdf,offline_token,cache):
                             "reason":"FP_AGB_L2B sem cobertura; FP_FH__L2B de altura não substitui AGB"}
     token=None; token_loaded=False
     Path(cache).mkdir(parents=True,exist_ok=True);paths=[];errors=[]
-    for it in agb_items:
-        for k,url in _biomass_product_assets(it,"FP_AGB_L2B"):
+    for it in agb_items[:4]:
+        for k,url in _biomass_product_assets(it,"FP_AGB_L2B")[:2]:
             base=Path(url.split("?")[0]).name or (it.get("id","biomass")+"_"+k)
             p=Path(cache)/(it.get("id","biomass")+"_"+base)
             try:
@@ -844,8 +847,8 @@ def download_maap_height(gdf,offline_token,cache,items=None):
         return {"available":False,"paths":[],"items":len(items),"fh_items":0,
                 "reason":"nenhum produto ESA BIOMASS FH (L2B ou L2A, banda P) cobre a AOI; altura SAR não calculável nesta rota"}
     Path(cache).mkdir(parents=True,exist_ok=True); paths=[]; errors=[]; token=None; token_loaded=False
-    for it in fh_items:
-        for key,url in _biomass_product_assets(it,it.get("_product_type") or "FP_FH__L2B"):
+    for it in fh_items[:4]:
+        for key,url in _biomass_product_assets(it,it.get("_product_type") or "FP_FH__L2B")[:2]:
             base=Path(url.split("?")[0]).name or (it.get("id","biomass")+"_FH_"+key)
             asset_type=str((it.get("assets") or {}).get(key,{}).get("type") or "").lower()
             if ("zip" in asset_type or "/zipper/" in url.lower()) and not base.lower().endswith(".zip"):
@@ -957,7 +960,7 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
         entries=[];page=1;hits=None
         while page<=20:
             page_params=dict(params,page_num=page)
-            response=session.get("https://cmr.earthdata.nasa.gov/search/granules.json",params=page_params,timeout=(15,90))
+            response=session.get("https://cmr.earthdata.nasa.gov/search/granules.json",params=page_params,timeout=(5,20))
             response.raise_for_status()
             if hits is None:
                 raw_hits=getattr(response,"headers",{}).get("CMR-Hits")
@@ -992,7 +995,7 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
             if not target.exists() or target.stat().st_size==0:
                 partial=target.with_suffix(target.suffix+".part")
                 try:
-                    with session.get(url,stream=True,timeout=(20,600)) as response:
+                    with session.get(url,stream=True,timeout=(8,45)) as response:
                         response.raise_for_status()
                         with open(partial,"wb") as out:
                             for chunk in response.iter_content(8*1024*1024):
@@ -1334,7 +1337,7 @@ def cdse_access_token(client_id,client_secret):
     if not client_id or not client_secret:
         raise ValueError("CDSE Client ID e Client Secret são necessários para a Process API.")
     r=requests.post(CDSE_TOKEN_URL,data={"grant_type":"client_credentials","client_id":client_id,"client_secret":client_secret},
-                    headers={"Content-Type":"application/x-www-form-urlencoded"},timeout=(10,45))
+                    headers={"Content-Type":"application/x-www-form-urlencoded"},timeout=(5,15))
     r.raise_for_status()
     token=(r.json() or {}).get("access_token")
     if not token: raise RuntimeError("CDSE não retornou access_token.")
@@ -1358,7 +1361,7 @@ function evaluatePixel(s){return [s.VV,s.VH,s.dataMask]}"""
                                           "speckleFilter":{"type":"LEE","windowSizeX":5,"windowSizeY":5}}}]},
           "output":{"width":1024,"height":1024,"responses":[{"identifier":"default","format":{"type":"image/tiff"}}]},
           "evalscript":evalscript}
-    r=requests.post(CDSE_PROCESS_URL,json=body,headers={"Authorization":"Bearer "+token,"Accept":"image/tiff"},timeout=(15,300))
+    r=requests.post(CDSE_PROCESS_URL,json=body,headers={"Authorization":"Bearer "+token,"Accept":"image/tiff"},timeout=(8,45))
     r.raise_for_status()
     Path(cache).mkdir(parents=True,exist_ok=True)
     out=Path(cache)/("S1_GRD_RTC_"+time.strftime("%Y%m%d",time.gmtime(now))+"_VV_VH.tif")
@@ -1373,7 +1376,7 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
     body={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
-    r=requests.post(CDSE_STAC,json=body,timeout=(10,60)); r.raise_for_status()
+    r=requests.post(CDSE_STAC,json=body,timeout=(5,15)); r.raise_for_status()
     items=r.json().get("features",[])
     items=_newest_first(items)
     Path(cache).mkdir(parents=True,exist_ok=True)
@@ -1419,7 +1422,9 @@ def _planetary_sign_asset(unsigned_href, *, max_attempts=3, sleep=None):
     max_attempts = max(1, min(int(max_attempts), 5))
     for attempt in range(max_attempts):
         try:
-            response = requests.get(endpoint, params={"href": unsigned_href}, timeout=(10, 45))
+            # Bound proxy/TLS stalls so a failed sign service cannot prevent
+            # the pipeline from reaching its remaining SAR and inventory routes.
+            response = requests.get(endpoint, params={"href": unsigned_href}, timeout=(5, 12))
             response.raise_for_status()
             signed = response.json()["href"]
             if not isinstance(signed, str) or not signed.startswith("https://"):
@@ -1429,7 +1434,7 @@ def _planetary_sign_asset(unsigned_href, *, max_attempts=3, sleep=None):
             code = getattr(getattr(exc, "response", None), "status_code", None)
             transient = code in (429, 500, 502, 503, 504) or isinstance(
                 exc, (requests.exceptions.Timeout, requests.exceptions.ConnectionError))
-            if not transient or attempt + 1 >= max_attempts:
+            if not transient or attempt + 1 >= min(max_attempts, 2):
                 raise
             header = getattr(getattr(exc, "response", None), "headers", {}) or {}
             retry = header.get("Retry-After")
@@ -1462,7 +1467,7 @@ def planetary_alos_palsar(gdf,cache,limit=12):
     body={"collections":["alos-palsar-mosaic"],"bbox":bbox,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]}
     api="https://planetarycomputer.microsoft.com/api/stac/v1/search"
     try:
-        rr=requests.post(api,json=body,timeout=(10,60))
+        rr=requests.post(api,json=body,timeout=(5,15))
         rr.raise_for_status()
         items=rr.json().get("features",[])
     except requests.exceptions.RequestException as exc:
@@ -1563,7 +1568,7 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
     import time
     for attempt in range(3):
         try:
-            rr=requests.post(api,json=body,timeout=(10,60))
+            rr=requests.post(api,json=body,timeout=(5,15))
             rr.raise_for_status()
             items=rr.json().get("features",[])
             break
@@ -1571,7 +1576,7 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             code=getattr(getattr(exc,'response',None),'status_code',None)
             transient=code in (429,500,502,503,504) or isinstance(
                 exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError))
-            if not transient or attempt==2:
+            if not transient or attempt>=1:
                 raise
             time.sleep(2*(attempt+1))
     if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":["sem cenas Sentinel-1 GRD no AOI"]}
@@ -1725,7 +1730,7 @@ def _earthaccess_requests_session(edl_user="",edl_password="",edl_token=""):
     except Exception as e:
         return None,{"available":False,"reason":type(e).__name__+": "+str(e)[:240],"source":"earthaccess"}
 
-def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret=""):
+def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret="",biomass_catalog_items=None,biomass_search_audit=None):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     from datetime import datetime, timezone
     audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI",
@@ -1738,16 +1743,23 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     audit["height_scope"]=height_scope_contract(biome,phys)
 
     # 1 — ESA BIOMASS P-band / official L2B AGB.
-    try:
-        search_result=biomass_l2b_search(gdf,limit=100,return_audit=True)
-        if isinstance(search_result,tuple) and len(search_result)==2:
-            l2items,biomass_search_audit=search_result
-        else:
-            l2items=search_result
-            biomass_search_audit={"queries":[],"errors":["AUDIT_METADATA_UNAVAILABLE"],"height_queries_complete":False}
-    except Exception as e:
-        l2items=[];biomass_search_audit={"queries":[],"errors":[type(e).__name__],"height_queries_complete":False}
-        audit["warnings"].append("BIOMASS catálogo: "+str(e))
+    if biomass_catalog_items is not None:
+        l2items=list(biomass_catalog_items)
+        biomass_search_audit=dict(biomass_search_audit or {})
+        if not biomass_search_audit:
+            biomass_search_audit={"queries":[],"errors":["AUDIT_METADATA_UNAVAILABLE"],
+                                  "height_queries_complete":False}
+    else:
+        try:
+            search_result=biomass_l2b_search(gdf,limit=100,return_audit=True)
+            if isinstance(search_result,tuple) and len(search_result)==2:
+                l2items,biomass_search_audit=search_result
+            else:
+                l2items=search_result
+                biomass_search_audit={"queries":[],"errors":["AUDIT_METADATA_UNAVAILABLE"],"height_queries_complete":False}
+        except Exception as e:
+            l2items=[];biomass_search_audit={"queries":[],"errors":[type(e).__name__],"height_queries_complete":False}
+            audit["warnings"].append("BIOMASS catálogo: "+str(e))
     audit["biomass_search_audit"]=biomass_search_audit
     audit["biomass_l2b"]={"count":len(l2items),"operational_count":sum(1 for x in l2items if x.get("_stage")=="OPERATIONAL"),"ioc_count":sum(1 for x in l2items if x.get("_stage")=="IOC"),"products_discovered":{p:sum(1 for x in l2items if x.get("_product_type")==p) for p in BIOMASS_PRODUCT_TYPES},"items":[_biomass_catalog_summary(x) for x in l2items[:50]],"access_policy":"BiomassLevel2a/2b e IOC; FP_FH__L2A, FP_FH__L2B e FP_AGB_L2B separados; altura FH não implica AGB"}
     # P-band FH is independent from AGB. In 2026 the operational height
@@ -1826,7 +1838,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # an ESA MAAP token is used only when the catalogue asset is technically protected.
     if l2items:
         try:
-            d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass")
+            d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass",items=l2items)
             audit["biomass_l2b"]["download"]=d
             if d.get("paths"):
                 pr=process_real_sar(gdf,d["paths"],biome,phys)
@@ -1910,7 +1922,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                                 sess.headers.update({"Authorization":"Bearer "+edl_token})
                             else:
                                 sess.auth=(edl_user,edl_password)
-                        with sess.get(url,stream=True,timeout=(10,300),allow_redirects=True) as rr:
+                        with sess.get(url,stream=True,timeout=(8,45),allow_redirects=True) as rr:
                             rr.raise_for_status()
                             with open(target,"wb") as out:
                                 for chunk in rr.iter_content(8*1024*1024):
@@ -1989,11 +2001,15 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # Mark the end of every configured live/direct route reached above. A
     # technical failure is not scene absence: preserve it in the audit, but
     # permit a separately labelled inventory contingency only when all
-    # configured routes completed and zero SAR pixels/height were processed.
+    # configured biomass routes completed without a quantitative AGB/height product.
     audit["sar_sources_exhausted"]=True
-    sar_processed=bool(audit.get("processed_without_agb")) or bool(sar_height)
+    # Only biomass-quantitative AGB or an eligible canopy-height product
+    # blocks an inventory contingency. Ancillary SAR pixels (e.g. Sentinel-1
+    # C-band screening) are retained in the audit but are not an AGB estimate.
+    sar_processed=bool(sar_height)
     audit["sar_pixel_processing_status"]=(
-        "PIXELS_PROCESSADOS_SEM_MODELO_AGB" if sar_processed else
+        "ALTURA_SAR_PROCESSADA_SEM_MODELO_AGB" if sar_height else
+        "PIXELS_AUXILIARES_PROCESSADOS_SEM_AGB_OU_ALTURA_QUANTITATIVA" if audit.get("processed_without_agb") else
         "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS")
     fallback_gate=inventory_fallback_gate(
         sar_processed,audit.get("warnings",[]),
@@ -2008,15 +2024,18 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     if lit:
         lit["sar_processed"]=False
         lit["sar_pixel_audit"]=[]
-    result={"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if sar_processed else "SAR_NAO_PROCESSADO"),
+    auxiliary_sar=bool(audit.get("processed_without_agb"))
+    result={"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if auxiliary_sar or sar_height else "SAR_NAO_PROCESSADO"),
             "agb_mg_ha":None,"uncertainty_mg_ha":None,
-            "data_origin":("SAR_ATRIBUTOS_ESTRATIFICADORES" if sar_processed else "SAR_NAO_PROCESSADO"),
-            "source":("pixels SAR reais processados; sem equação AGB quantitativa compatível no domínio científico"
-                      if sar_processed else "nenhum arquivo SAR pôde ser baixado/processado nesta execução"),
+            "data_origin":("SAR_ALTURA_SEM_MODELO_AGB" if sar_height else
+                           "SAR_ATRIBUTOS_ESTRATIFICADORES" if auxiliary_sar else "SAR_NAO_PROCESSADO"),
+            "source":("pixels de altura SAR reais processados; sem equação AGB quantitativa compatível no domínio científico"
+                      if sar_height else "pixels SAR auxiliares reais processados; sem altura/AGB quantitativa compatível"
+                      if auxiliary_sar else "nenhum arquivo SAR pôde ser baixado/processado nesta execução"),
             "audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "inventory_fallback_gate":fallback_gate,
-            "message":("SAR real/altura de dossel processado, mas não há modelo AGB quantitativo compatível; o inventário não substitui esse observável SAR."
-                       if sar_processed else ("SAR sem pixels utilizáveis após esgotar as rotas configuradas; emitir cenário condicional de inventário e preservar cada falha técnica, sem declarar ausência de cenas."
+            "message":("Pixels SAR auxiliares foram lidos, mas não há altura/AGB quantitativa de biomassa compatível; após esgotar as rotas de biomassa, pode-se emitir cenário separado de inventário, preservando a trilha e sem chamar inventário de SAR."
+                       if audit.get("processed_without_agb") else ("SAR sem pixels utilizáveis após esgotar as rotas configuradas; emitir cenário condicional de inventário e preservar cada falha técnica, sem declarar ausência de cenas."
                        if fallback_gate["eligible"] else "Rotas SAR ainda não esgotadas; a estimativa de inventário permanece bloqueada."))}
     if 'class_stats' in locals() and class_audit is not None:
         result["fitofisionomia_status"]="INTERSECAO_IBGE_PROCESSADA"

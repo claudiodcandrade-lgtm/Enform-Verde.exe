@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.23-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.24-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -547,9 +547,30 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     inventory_evidence=options.pop("inventory_evidence",None)
     inventory_manifest=options.pop("inventory_evidence_manifest",None)
     biodiversity_inventory_records=options.pop("biodiversity_inventory_records",None)
+    catalog_cache={}
     def sar_estimator(frame,b,p):
         if sar_paths:return process_real_sar(frame,sar_paths,b,p)
-        return automatic_pipeline(frame,b,p,**options)
+        # Search official BIOMASS collections once against the full AOI, then
+        # reuse the discovered products while reading each native stratum's
+        # own pixel window. This avoids repeated catalog round trips per class.
+        if "biomass_catalog" not in catalog_cache:
+            try:
+                from sar_pipeline import biomass_l2b_search
+                found=biomass_l2b_search(aoi,limit=100,return_audit=True)
+                if isinstance(found,tuple) and len(found)==2:
+                    catalog_cache["biomass_catalog"]=(found[0],found[1])
+                else:
+                    catalog_cache["biomass_catalog"]=(found,{
+                        "queries":[],"errors":["AUDIT_METADATA_UNAVAILABLE"],
+                        "height_queries_complete":False})
+            except Exception as exc:
+                catalog_cache["biomass_catalog"]=([],{
+                    "queries":[],"errors":[type(exc).__name__],
+                    "height_queries_complete":False,
+                    "technical_error":type(exc).__name__+": "+str(exc)[:180]})
+        items,audit=catalog_cache["biomass_catalog"]
+        return automatic_pipeline(frame,b,p,biomass_catalog_items=items,
+                                  biomass_search_audit=audit,**options)
     def estimator(frame,phys):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
@@ -602,7 +623,7 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
                     centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
                 scenario['sar_status']=sar_result.get('status') if isinstance(sar_result,dict) else None
                 scenario['sar_reason']=sar_result.get('reason') if isinstance(sar_result,dict) else None
-                if scenario.get('status')=='CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR':
+                if scenario.get('status')=='CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR':
                     scenarios.append(scenario)
             except Exception as exc:
                 result['inventory_scenario_diagnostic']={
@@ -2209,7 +2230,7 @@ class App(tk.Tk):
                    "  Áreas agrícolas sem identificação de cultura: "+(format_ptbr(generic_cultivated_ha,2)+" ha" if semantic_area_supported else "N/D — classificação atual indisponível"),
                    "  Outros usos não nativos: "+(format_ptbr(max(0,other_non_native_ha),2)+" ha" if land.get("status")=="SAR_ELEGIVEL" else "N/D — classe semântica SAR não validada"),
                    "ATENÇÃO: área da AOI NÃO é integralmente floresta nem integralmente lavoura.",
-                   "Uso/cobertura não nativo — discriminação por classe:"]
+                   "DISTRIBUIÇÃO ESPACIAL DAS CLASSES INTERSECTADAS NA AOI — ha e % (origem/status em cada linha):"]
         contingency=land.get("agriculture_historical_contingency") or {}
         if contingency.get("status")=="FALLBACK_HISTORICO_MAPBIOMAS_PAM":
             executive.extend(["", "CONTINGÊNCIA AGRÍCOLA HISTÓRICA — usada após esgotar as rotas SAR configuradas",
@@ -2232,14 +2253,8 @@ class App(tk.Tk):
             if contingency.get("stage"):why="etapa="+str(contingency["stage"])+"; "+why
             if contingency.get("detail"):why+="; detalhe="+str(contingency["detail"])
             executive.extend(["", "CONTINGÊNCIA MAPBIOMAS + PAM indisponível: "+why])
-        if non_native:
-            for item in non_native:
-                executive.append("• "+str(item.get("class_name","Uso não determinado"))+" — "+
-                                 format_ptbr(item.get("area_ha",0),2)+" ha; fonte: "+
-                                 str(item.get("source","não informada"))+
-                                 ("; referência: "+str(item.get("taxonomy")) if item.get("taxonomy") else ""))
-        else:
-            executive.append("• Não determinado")
+        from crop_report_consistency import executive_cover_distribution_lines
+        executive.extend(executive_cover_distribution_lines(land,aoi_ha,format_ptbr))
         from crop_report_consistency import experimental_seasonal_sar_classes
         seasonal_sar=experimental_seasonal_sar_classes(land)
         seasonal_audit=land.get("sar_classifier_lemplus") or {}
@@ -2296,6 +2311,30 @@ class App(tk.Tk):
             executive.append("ATENÇÃO: candidatos SAR não são áreas de soja/nativa confirmadas; não somar ao mapa anual.")
         else:
             executive.append("SAR atual N/D — "+str(orbital.get("reason","cenas/pixels indisponíveis"))[:190])
+        executive.extend(["", "HISTÓRICO DE USO AGRÍCOLA — 150 DIAS",
+            "Série experimental de candidatos a área cultivada baseada em Sentinel-1 VV/VH; não confirma cultura nem substitui validação de campo."])
+        history=orbital.get("history_by_date") if isinstance(orbital.get("history_by_date"),list) else []
+        if orbital.get("status")=="SAR_REAL_EXPERIMENTAL_CANDIDATES" and history:
+            from datetime import datetime, timezone, timedelta
+            utc_minus_3=timezone(timedelta(hours=-3))
+            for point in history:
+                instant=point.get("as_of_utc")
+                if instant:
+                    try:date_label=datetime.fromisoformat(str(instant).replace("Z","+00:00")).astimezone(utc_minus_3).strftime("%d/%m/%Y %H:%M BRT")
+                    except (ValueError,TypeError):date_label=str(instant)
+                else:date_label="Data N/D"
+                if point.get("status")=="CANDIDATOS_EXPERIMENTAIS":
+                    executive.append("  "+date_label+": "+
+                        format_ptbr(point.get("cultivated_candidate_area_ha"),2)+
+                        " ha de candidato agrícola no recorte temporal até a data; " +
+                        str(point.get("scene_count"))+" cenas / "+
+                        format_ptbr(point.get("span_days"),1)+" dias; cultura N/D; incerteza não quantificada.")
+                else:
+                    executive.append("  "+date_label+": sem área candidata calculável — "+
+                        str(point.get("reason") or point.get("status") or "série insuficiente")[:180])
+            executive.append("Área candidata por data: classificação experimental em janela móvel de até 150 dias; classes não são hectares agrícolas confirmados e os pontos não constituem observações de campo independentes.")
+        else:
+            executive.append("N/D — não houve série de cenas SAR compatível e legível para calcular candidatos experimentais por data.")
         # A mostly urban classification in an operator-supplied agricultural AOI
         # is a QA anomaly, not permission to erase real class-24 pixels or
         # relabel them as crops from the filename or historical location.
@@ -2369,10 +2408,16 @@ class App(tk.Tk):
             productivity_text="ESTIMATIVA EXPERIMENTAL (não homologada) — "+productivity_text
             if not production_text.startswith("INDISPONÍVEL"):
                 production_text="ESTIMATIVA EXPERIMENTAL (não homologada) — "+production_text
+        crop_labels=sorted({str(k) for k in ((land.get("yield_forecast") or {}).get("crop"),)
+                            if k and str(k).strip()})
+        crop_labels += sorted({str(item.get("class_name")).replace("Lavoura de ","") for item in classes
+                               if str(item.get("class_name") or "").startswith("Lavoura de ")})
+        crop_labels=list(dict.fromkeys(crop_labels))
         executive.extend(["","PAINEL EXECUTIVO — PREVISÃO DE SAFRAS",
+                          "Tipo de cultivo: "+("; ".join(crop_labels) if crop_labels else "N/D — cultura não identificada"),
                           "Idade provável da lavoura: "+age_text,
                           "Estado fitossanitário aparente: "+health_text,
-                          "Produtividade provável: "+productivity_text,
+                          "Produtividade estimada no momento dessa análise: "+productivity_text,
                           "Produção provável: "+production_text,
                           "Estado aparente é um sinal remoto inespecífico; não é diagnóstico de doença ou praga.",
                           "Carbono nativo: calculado separadamente na aba de formações nativas."])
@@ -2498,7 +2543,7 @@ class App(tk.Tk):
                         from crop_report_consistency import remove_superseded_yield_placeholders
                         executive = remove_superseded_yield_placeholders(executive)
                         executive += [
-                            "Produtividade provável: ESTIMATIVA EXPERIMENTAL regional — "
+                            "Produtividade estimada no momento dessa análise: ESTIMATIVA EXPERIMENTAL regional — "
                             + format_ptbr(v["median"] / 1000, 2) + " t/ha (intervalo 90%: "
                             + format_ptbr(v["p05"] / 1000, 2) + "–"
                             + format_ptbr(v["p95"] / 1000, 2) + " t/ha)"
@@ -3304,6 +3349,27 @@ class App(tk.Tk):
             data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
             if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
             put(sh,data)
+        sh=wb.create_sheet("Auditoria Gravimétrica"); setup(sh,"Serapilheira — origem, equação, incerteza e auditoria")
+        litter_audit_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            for c in st.get("components",[]):
+                if c.get("parametro")!="Serapilheira": continue
+                litter_audit_rows.append([st.get("physiognomy"),st.get("area_ha"),
+                    c.get("status") or ("CENÁRIO EXPERIMENTAL" if c.get("origin")=="EXPERIMENTAL_FISICO" else "N/D"),
+                    c.get("tc"),c.get("source"),c.get("source_url"),c.get("method"),
+                    c.get("uncertainty_kind"),json.dumps(c.get("uncertainty") or {},ensure_ascii=False,sort_keys=True),
+                    json.dumps(c.get("calculation_trace") or {},ensure_ascii=False,sort_keys=True),
+                    "; ".join(map(str,c.get("limitations") or [])),
+                    "IFN profundidade não equivale a massa; estoque de C requer fração medida."])
+        if not litter_audit_rows:
+            litter_audit_rows=[["N/D",None,"N/D",None,"SFB/IFN: profundidade apenas",None,
+                "Sem conversão; aguarda pares de massa seca e profundidade compatíveis",None,None,None,
+                "Nenhuma calibração gravimétrica pareada validada foi fornecida para esta classe/região.",
+                "Não converter profundidade em massa com constante nacional."]]
+        put(sh,[["Fitofisionomia","Área nativa (ha)","Situação","tC/ha (fora do total conhecido se experimental)",
+                 "Fonte","URL / fontes","Método","Tipo de incerteza","Incerteza e interpretação",
+                 "Equação e trilha de cálculo","Limites / transferência","Regra de leitura"],*litter_audit_rows])
+        sh.freeze_panes="A4"; sh.auto_filter.ref=f"A3:L{3+len(litter_audit_rows)}"
         sar_result=self.project.get("sar_result") or {}
         class_layers=(sar_result.get("fitofisionomia_raster_stats") or {})
         class_rows=(class_layers.get("AGB") or {}).get("classes",[])
@@ -3617,9 +3683,6 @@ class App(tk.Tk):
         d_ha=dn.get("area_aoi_ha") or self.project.get("area_ha")
         d_native=dn.get("native_area_ha")
         d_known=dn.get("known_total_tc")
-        d_litter=next((x for x in dn.get("components") or []
-                       if "serapilheira" in str(x.get("parametro") or "").casefold()
-                       or "serrapilheira" in str(x.get("parametro") or "").casefold()),None)
         def drow(section,label,tc=None,tco2=None,stock=None,status="INFORMATIVO",note=""):
             dash.append([section,label,tc,tco2,stock,
                          (stock*44/12 if stock is not None else None),status,note])
@@ -3632,7 +3695,11 @@ class App(tk.Tk):
              format_ptbr(dn.get("excluded_other_uses_ha"),2)+" ha" if dn.get("excluded_other_uses_ha") is not None else "N/D")
         drow("VEGETAÇÃO","Cobertura não determinada",status="N/D / MAPA",note=
              format_ptbr(dn.get("unknown_cover_area_ha"),2)+" ha" if dn.get("unknown_cover_area_ha") is not None else "N/D")
+        from executive_carbon_report import litter_dashboard_summaries
+        litter_rows=litter_dashboard_summaries(dn)
         for part in dn.get("components") or []:
+            if str(part.get("parametro") or "").casefold() in ("serapilheira","serrapilheira"):
+                continue
             stock=part.get("known_total_tc")
             drow("CARBONO",part.get("parametro") or "Compartimento",
                  (stock/d_native if stock is not None and d_native else None),
@@ -3646,9 +3713,19 @@ class App(tk.Tk):
              d_known/d_native*44/12 if d_known is not None and d_native else None,
              d_known,"PARCIAL" if not dn.get("complete") else "CONSOLIDADO",
              "Somente estoques elegíveis; densidade sobre área NATIVA; não extrapolado.")
-        if d_litter is None or d_litter.get("known_total_tc") is None:
-            drow("CARBONO","Serapilheira",status="N/D — NÃO SOMADA",
-                 note="Exige estoque seco observacional ou transferência regional auditável; sem substituir por zero.")
+        if litter_rows:
+            for litter in litter_rows:
+                label="Serapilheira — "+str(litter["physiognomy"])
+                drow("CARBONO",label,litter.get("tc_ha"),litter.get("tco2e_ha"),
+                     litter.get("stock_tc"),litter.get("status"),litter.get("note"))
+        else:
+            diagnostic=next((c for st in dn.get("strata",[]) for c in st.get("components",[])
+                             if c.get("parametro")=="Serapilheira"),{})
+            audit=dn.get("litter_gravimetric_audit") or {}
+            reason=(diagnostic.get("obs") or diagnostic.get("uncertainty_kind") or
+                    audit.get("reason") or audit.get("status") or
+                    "Nenhuma referência de estoque compatível foi aceita; sem substituir por zero.")
+            drow("CARBONO","Serapilheira",status="N/D — MOTIVO REGISTRADO",note=str(reason))
         dp=self.project.get("soil_pedology") or {}
         soil_units=dp.get("soil_mapping_units") or []
         if soil_units:

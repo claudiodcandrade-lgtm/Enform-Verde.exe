@@ -1,7 +1,7 @@
 """Conditional state-level AGB scenario from public SFB/IFN observations.
 
-This is called only after SAR routes report no quantitative pixels usable in
-the AOI and the pipeline's own inventory fallback gate accepts the absence.
+This is called only after SAR routes report no quantitative AGB/height usable
+in the AOI and the pipeline's inventory fallback gate accepts the contingency.
 It never confirms current native cover: the area basis is explicitly the
 potential IBGE phytoregion intersection. The spread across independent IFN
 sampling units is descriptive, not an AOI confidence/prediction interval.
@@ -29,23 +29,25 @@ def _norm(value):
 
 
 def no_valid_sar_pixels(sar_result):
-    """Allow the contingency only after every configured route is exhausted.
+    """Allow inventory AGB only after every biomass route is exhausted.
 
     Technical failures are retained as failures, never relabelled as catalogue
     absence. They can still trigger the inventory contingency after the audit
     confirms that configured routes ran and no SAR pixel/height was processed.
     """
-    if not isinstance(sar_result, dict) or sar_result.get("status") != "SAR_NAO_PROCESSADO":
+    if not isinstance(sar_result, dict) or sar_result.get("status") not in (
+            "SAR_NAO_PROCESSADO", "SAR_PROCESSADO_SEM_MODELO_AGB"):
         return False
     audit = sar_result.get("audit") or {}
     gate = sar_result.get("inventory_fallback_gate") or audit.get("inventory_fallback_gate") or {}
     if (gate.get("eligible") is not True
             or audit.get("sar_sources_exhausted") is not True
-            or audit.get("processed_without_agb")
             or audit.get("biomass_height", {}).get("zonal_height")
             or audit.get("gtdx_height", {}).get("available") is True):
         return False
-    return audit.get("sar_pixel_processing_status") == "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS"
+    return audit.get("sar_pixel_processing_status") in (
+        "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS",
+        "PIXELS_AUXILIARES_PROCESSADOS_SEM_AGB_OU_ALTURA_QUANTITATIVA")
 
 
 def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
@@ -79,6 +81,11 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
         h=math.sin(dlat/2)**2+math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
         return 6371.0088*2*math.asin(min(1.0,math.sqrt(h)))
     rows=[r for r in rows if distance_km(r)<=250.0]
+    # Prefer the closest same-physiognomy, same-region independent field units.
+    # Expand only to the nearest five because fewer points cannot support even
+    # the descriptive regional sample spread reported below. Never mix farther
+    # units into the estimate merely to inflate n.
+    rows=sorted(rows,key=distance_km)[:5]
     values = [float(r["agb_mg_ha"]) for r in rows]
     if len(values) < 5 or any(not math.isfinite(x) or x < 0 for x in values):
         return {"status": "N/D", "reason": "AMOSTRA_IFN_INSUFICIENTE_OU_INVALIDA", "n_ua": len(values)}
@@ -88,12 +95,12 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
     area = float(area_ha)
     stock_tc = carbon * area
     return {
-        "status": "CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR",
+        "status": "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR",
         "estimate_label": "estimativa com incerteza não mensurada",
         "current_native_cover_confirmed": False,
         "area_basis": "interseção da AOI com fitofisionomia potencial IBGE legenda_1; não é máscara atual",
         "area_ha": area, "biome": "Amazônia", "physiognomy": physiognomy,
-        "geographic_tier": "regional por proximidade (≤250 km) — unidades do IFN em Mato Grosso; microrregião não comprovada",
+        "geographic_tier": "mesma fitofisionomia e região (MT); cinco unidades IFN abertas mais próximas até 250 km; microrregião não comprovada",
         "nearest_inventory_unit_distance_km": min(distance_km(r) for r in rows),
         "selection_radius_km": 250.0,
         "inventory_n_unique_sampling_units": len(values),
@@ -103,7 +110,7 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
         "carbon_mean_tc_ha": carbon, "carbon_total_tc_scenario": stock_tc,
         "carbon_total_tco2e_scenario": stock_tc * 44 / 12,
         "calculation_trace": {
-            "candidate_filter": "bioma Amazônia + UF MT + Floresta Natural + Floresta Estacional Sempre-verde + distância geodésica ao centroide <= 250 km; uma linha por UA física",
+            "candidate_filter": "bioma Amazônia + UF MT + Floresta Natural + Floresta Estacional Sempre-verde + cinco UAs físicas mais próximas dentro de 250 km; seleção por distância geodésica",
             "selected_ua_count": len(values), "sum_agb_mg_ha": sum(values),
             "agb_mean_formula": "sum(AGB_Chave das UAs selecionadas) / n",
             "agb_mean_mg_ha": mean, "agb_sample_sd_formula": "desvio-padrão amostral entre UAs independentes",
@@ -127,7 +134,7 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
         "limitations": [
             "cobertura nativa atual não confirmada por SAR",
             "classe IBGE é potencial e serve apenas como área-base condicional",
-            "amostra regional de até 250 km; raio define seleção, não valida transferência; sem estrato microregional verificado",
+            "cinco UAs mais próximas dentro de 250 km; proximidade não valida transferência; microrregião ainda não verificada",
             "coordenadas IFN têm precisão posicional insuficiente para pareamento pixel-parcela",
             "conversão para carbono usa fração fixa 0,47 sem incerteza quantificada",
             "não somar ao estoque medido nem interpretar como resultado homologado",
@@ -148,7 +155,7 @@ def estimate_inventory_carbon_scenario(*, biome, physiognomy, area_ha, sar_resul
     primary = estimate_fesv_state_scenario(
         biome=biome, physiognomy=physiognomy, area_ha=area_ha,
         sar_result=sar_result, centroid_lon=centroid_lon, centroid_lat=centroid_lat)
-    if primary.get("status") == "CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR":
+    if primary.get("status") == "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR":
         return primary
 
     if not isinstance(area_ha, (int, float)) or not math.isfinite(float(area_ha)) or float(area_ha) <= 0:
@@ -199,7 +206,7 @@ def estimate_inventory_carbon_scenario(*, biome, physiognomy, area_ha, sar_resul
     gate=(sar_result or {}).get("inventory_fallback_gate") or audit.get("inventory_fallback_gate") or {}
     evidence=reference.get("evidence") or []
     return {
-        "status":"CENARIO_CONDICIONAL_INVENTARIO_SEM_PIXELS_SAR",
+        "status":"CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR",
         "estimate_label":estimate_label,
         "current_native_cover_confirmed":False,
         "area_basis":"interseção AOI × IBGE legenda_1 (potencial; não é máscara SAR de cobertura atual)",

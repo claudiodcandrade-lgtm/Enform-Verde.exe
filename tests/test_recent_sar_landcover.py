@@ -1,7 +1,7 @@
 """Synthetic regression fixtures: NOT orbital or accuracy validation."""
 import unittest
 import numpy as np
-from recent_sar_landcover import classify_temporal,run_recent_sar_screen,candidate_class_name
+from recent_sar_landcover import classify_temporal,run_recent_sar_screen,candidate_class_name,_rolling_history
 class CurrentRadarScreenTests(unittest.TestCase):
     def test_class_two_is_a_cultivated_candidate_not_a_named_crop(self):
         label=candidate_class_name(2)
@@ -27,6 +27,24 @@ class CurrentRadarScreenTests(unittest.TestCase):
     def test_missing_observations_are_not_valid_land_cover(self):
         a=np.ones((1,12,12))
         with self.assertRaises(ValueError):classify_temporal(a,a,np.ones((12,12),bool))
+
+    def test_rolling_150_day_history_emits_experimental_candidate_areas_by_date(self):
+        from datetime import datetime,timezone,timedelta
+        rng=np.random.default_rng(14)
+        inside=np.ones((12,12),bool)
+        data=[]
+        for days_ago in (60,45,30,15,0):
+            dt=datetime(2026,11,12,tzinfo=timezone.utc)-timedelta(days=days_ago)
+            vv=np.clip(rng.normal(.13,.02,(12,12)),.0001,None)
+            vh=np.clip(rng.normal(.04,.014,(12,12)),.0001,None)
+            data.append((dt,"scene",[vv,vh]))
+        history=_rolling_history(data,inside,1.44)
+        eligible=[row for row in history if row["status"]=="CANDIDATOS_EXPERIMENTAIS"]
+        self.assertGreaterEqual(len(eligible),2)
+        self.assertTrue(all(row["window_days"]==150 for row in eligible))
+        self.assertTrue(all(row["cultivated_candidate_area_ha"]>=0 for row in eligible))
+        self.assertTrue(all("não quantificada" in row["uncertainty"] for row in eligible))
+        self.assertEqual(eligible[-1]["as_of_utc"],data[-1][0].isoformat())
 
     def test_ineligible_candidates_are_not_reported_as_pixel_read_failure(self):
         import geopandas as gpd

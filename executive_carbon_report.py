@@ -3,6 +3,46 @@ from __future__ import annotations
 import math
 import json
 
+
+def litter_dashboard_summaries(native):
+    """Return one auditable dashboard row per native stratum with litter stock.
+
+    Consolidated stocks and experimental-only stocks are kept distinct. The
+    function reads stratum components because pool totals intentionally omit
+    experimental-only scenarios.
+    """
+    output=[]
+    for stratum in native.get("strata",[]):
+        for component in stratum.get("components",[]):
+            if component.get("parametro")!="Serapilheira":
+                continue
+            experimental=component.get("experimental_total_tc")
+            known=component.get("total_tc")
+            if experimental is not None:
+                stock=float(experimental)
+                area=float(component.get("area_ha") or stratum.get("area_ha") or 0)
+                status="CENÁRIO EXPERIMENTAL — FORA DO TOTAL CONHECIDO"
+            elif known is not None:
+                stock=float(known)
+                area=float(component.get("quantified_area_ha") or component.get("area_ha") or 0)
+                status=str(component.get("status") or "ESTOQUE QUANTIFICADO")
+            else:
+                continue
+            density=(stock/area if area>0 else component.get("tc"))
+            source=str(component.get("fonte") or component.get("source") or "fonte N/D")
+            source_url=component.get("source_url") or component.get("url")
+            method=component.get("metodo") or component.get("method")
+            uncertainty=(component.get("uncertainty_kind") or
+                         component.get("uncertainty") or "incerteza não quantificada")
+            note=(f"Área: {area:.4f} ha; fonte: {source}; "
+                  f"método: {method or 'N/D'}; incerteza: {uncertainty}; "
+                  f"URL/fontes: {source_url or 'N/D'}")
+            output.append({"physiognomy":stratum.get("physiognomy") or stratum.get("class_name") or "N/D",
+                           "area_ha":area,"stock_tc":stock,"tc_ha":density,
+                           "tco2e_ha":density*44/12 if density is not None else None,
+                           "status":status,"note":note,"experimental":experimental is not None})
+    return output
+
 def uncertainty_for_pool(row, carbon_fraction=0.47):
     value=row.get("tc")
     if not isinstance(value,(int,float)) or value<=0:
@@ -206,8 +246,8 @@ def executive_carbon_lines(native, fmt):
             if not isinstance(v,(int,float)):
                 lines.append("  "+row["parametro"]+": não estimado; incerteza: N/D tC/ha | N/D tCO₂e/ha | N/D %")
                 if row["parametro"] == "Serapilheira":
-                    lines.append("    Motivo: nenhuma referência gravimétrica de estoque seco compatível foi aceita para esta interseção.")
-                    lines.append("    IFN/SFB: espessura (cm) não representa massa seca (Mg/ha); conversão exige calibração e incerteza verificadas.")
+                    lines.append("    Origem/diagnóstico: "+str(row.get("fonte") or "nenhuma referência gravimétrica compatível")+" — "+str(row.get("obs") or "N/D"))
+                    lines.append("    IFN/SFB: espessura (cm) não é massa seca (Mg/ha); conversão exige pares de campo compatíveis, validação agrupada e fração de C medida.")
                 continue
             abs_u=u["absolute_tc_ha"]
             error=(fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | "+fmt(u["percent"])+"%" if abs_u is not None and u["percent"] is not None else
@@ -217,6 +257,12 @@ def executive_carbon_lines(native, fmt):
                        if row.get("origem")=="EXPERIMENTAL_FISICO" else row["parametro"])
             lines.append("  "+pool_name+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | incerteza: "+error)
             lines.append("    Natureza: "+u["kind"])
+            if row["parametro"] == "Serapilheira":
+                lines.append("    Fonte/método gravimétrico: "+str(row.get("fonte") or "N/D")+" | "+str(row.get("metodo") or "N/D"))
+                if row.get("calculation_trace"):
+                    lines.append("    Trilha de cálculo: "+json.dumps(row["calculation_trace"],ensure_ascii=False,sort_keys=True))
+                if row.get("limitations"):
+                    lines.append("    Limites de transferência: "+"; ".join(map(str,row["limitations"])))
             scenario=u.get("scenario_range_tc_ha")
             if scenario is not None:
                 lo,hi=scenario

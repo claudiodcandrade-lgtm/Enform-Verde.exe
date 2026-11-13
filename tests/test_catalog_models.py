@@ -28,15 +28,14 @@ class CatalogModelExecutionTests(unittest.TestCase):
         calls=[]
         def fake_search(_gdf,collection,limit=100,product_type=None):
             calls.append((collection,product_type))
-            rows={"FP_AGB_L2B":[agb],"FP_FH__L2B":[fh]}
-            return rows.get(product_type,[])
+            return [agb,fh] if collection=="BiomassLevel2b" and product_type is None else []
         with patch.object(sar,"maap_search",side_effect=fake_search):
             items=sar.biomass_l2b_search(object())
-        # V87.58: the open P-band Level-2A Forest Height is also searched.
+        # One paginated request per collection replaces repeated product-type
+        # searches over the same bbox; product roles are filtered locally.
         self.assertEqual(set(calls),{
-            ("BiomassLevel2b","FP_AGB_L2B"),("BiomassLevel2b","FP_FH__L2B"),
-            ("BiomassLevel2bIOC","FP_AGB_L2B"),("BiomassLevel2bIOC","FP_FH__L2B"),
-            ("BiomassLevel2a","FP_FH__L2A"),("BiomassLevel2aIOC","FP_FH__L2A")})
+            ("BiomassLevel2b",None),("BiomassLevel2bIOC",None),
+            ("BiomassLevel2a",None),("BiomassLevel2aIOC",None)})
         self.assertEqual({x["_product_type"] for x in items},{"FP_AGB_L2B","FP_FH__L2B"})
         self.assertEqual(sar._biomass_product_assets(fh,"FP_AGB_L2B"),[])
         self.assertEqual(sar._biomass_product_assets(agb,"FP_AGB_L2B"),[("product","https://example.test/agb.zip")])

@@ -58,7 +58,7 @@ class NationalFallbackTests(unittest.TestCase):
         self.assertIn("não é produtividade/queda anual",components["Serapilheira — estoque no piso florestal"]["method"])
 
     @unittest.skipUnless(gpd and box,"geospatial dependencies required")
-    def test_pipeline_withholds_inventory_agb_after_processed_sar_without_model(self):
+    def test_auxiliary_sar_pixels_do_not_block_inventory_carbon_contingency(self):
         g=gpd.GeoDataFrame(geometry=[box(-47.96,-15.98,-47.94,-15.96)],crs="EPSG:4326")
         real=(sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history)
         try:
@@ -70,10 +70,10 @@ class NationalFallbackTests(unittest.TestCase):
             sar.cci_history=lambda *a,**k:{"items":0,"paths":[]}
             out=sar.automatic_pipeline(g,"Cerrado","Savana Arborizada",cache="test_cache_national")
             self.assertEqual(out["status"],"SAR_PROCESSADO_SEM_MODELO_AGB")
-            self.assertIsNone(out["literature_reference"])
+            self.assertIsNotNone(out["literature_reference"])
             self.assertIsNone(out["agb_mg_ha"])
-            self.assertFalse(out["inventory_fallback_gate"]["eligible"])
-            self.assertIn("não substitui esse observável SAR",out["message"])
+            self.assertTrue(out["inventory_fallback_gate"]["eligible"])
+            self.assertIn("pixels sar auxiliares",out["message"].casefold())
         finally:
             sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history=real
 

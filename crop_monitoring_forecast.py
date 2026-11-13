@@ -63,7 +63,10 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     from crop_yield_scenario import microregion_of
     from crop_spatial_monitoring import crop_geometry, sampled_sentinel_vigor
     from crop_specific_model_registry import model_contract
-    as_of = as_of or (date.today() - timedelta(days=3))
+    # Acquisition recency is measured against today's actual date. Shifting
+    # as_of three days back could admit a scene 33 days old while the owner
+    # permits a strict maximum age of 30 days.
+    as_of = as_of or date.today()
     vigor_fn = vigor_fn or automatic_vigor
     forecast_fn = forecast_fn or forecast_fields
     micro_fn = micro_fn or microregion_of
@@ -200,7 +203,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                         def _date_br(iso):
                             return datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone(utc_minus_3).isoformat()
                         lines.append(f"  Aquisição Sentinel-1 (UTC−3): {_date_br(dates[0])} até {_date_br(dates[1])}")
-                        lines.append(f"  Janela operacional: até 24 dias, limite máximo 30 dias; data de referência {as_of.isoformat()}")
+                        lines.append(f"  Janela operacional: aquisição com idade máxima de 30 dias; data de referência {as_of.isoformat()}")
                         scene_ids = sorted({v["scene_id"] for v in vig.get("accepted_scenes", []) if v.get("scene_id")})
                         lines.append("  Cenas auditáveis: " + ", ".join(scene_ids))
                     else:

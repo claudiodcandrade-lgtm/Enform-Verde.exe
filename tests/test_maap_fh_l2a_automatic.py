@@ -26,7 +26,7 @@ class AutomaticFHL2ATests(unittest.TestCase):
                    "uncertainty_mg_ha":None,
                    "data_origin":"SYNTHETIC_TEST_ONLY"}
         with patch.object(sp,"national_predictive_route_matrix",return_value={}), \
-             patch.object(sp,"biomass_l2b_search",return_value=[item]), \
+             patch.object(sp,"biomass_l2b_search",return_value=[item]) as catalog_search, \
              patch.object(sp,"download_maap_height",
                           return_value={"available":True,"paths":["/test/FP_FH__L2A_height.tif"],
                                         "fh_items":1}) as downloader, \
@@ -35,7 +35,14 @@ class AutomaticFHL2ATests(unittest.TestCase):
                                                      "n":1200,"min":4.0,"max":36.0}), \
              patch.object(sp,"tapajos_h100_structure_agb",return_value=predicted):
             result=sp.automatic_pipeline(
-                aoi,"Amazônia","Floresta Estacional Sempre-Verde",cache="/tmp/enform-fh-test")
+                aoi,"Amazônia","Floresta Estacional Sempre-Verde",cache="/tmp/enform-fh-test",
+                biomass_catalog_items=[item],
+                biomass_search_audit={"queries":[
+                    {"product_type":"FP_FH__L2A","catalog_search_complete":True,
+                     "pagination_complete":True}],
+                    "errors":[],"height_queries_complete":True,
+                    "height_catalog_item_count":1})
+        catalog_search.assert_not_called()
         self.assertTrue(downloader.called)
         self.assertEqual(result["sar_height"]["product"],"FP_FH__L2A")
         self.assertEqual(result["height_mean_m"],21.5)

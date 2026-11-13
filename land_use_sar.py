@@ -155,7 +155,7 @@ def _shares_with_code(project, theme, name_field, code_field=None):
             continue
         records.append({'name':str(values[0]) if pd.notna(values[0]) else 'Não classificado',
                         'code':(str(values[1]) if len(values)>1 and pd.notna(values[1]) else None),
-                        'area_ha':float(area),'percent':float(area/aoi_area*100.0)})
+                        'area_ha':float(area),'percent':float(area/(aoi_area/10000.0)*100.0)})
     missing=max(0.0,(aoi_area-union_area)/10000.0)
     if missing>max(0.01,aoi_area/10000.0*1e-8):
         records.append({'name':'Sem cobertura IBGE','code':None,'area_ha':missing,

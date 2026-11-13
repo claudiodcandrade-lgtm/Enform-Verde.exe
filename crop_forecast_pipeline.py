@@ -241,7 +241,7 @@ def productivity_display(crop, summary, fmt=lambda x, nd=0: f"{x:,.{nd}f}".repla
     conversion is exact: t/ha = kg/ha / 1000; 60-kg bags/ha = kg/ha / 60.
     """
     p = summary
-    out = (f"    Produtividade prevista: {fmt(p['median']/1000, 2)} t/ha "
+    out = (f"    Produtividade estimada no momento dessa análise: {fmt(p['median']/1000, 2)} t/ha "
            f"(intervalo 90%: {fmt(p['p05']/1000, 2)}–{fmt(p['p95']/1000, 2)} t/ha)")
     if str(crop).strip().casefold() == "soja":
         out += (f"; equivalente a {fmt(p['median']/60, 2)} sacas/ha (60 kg/saca; "

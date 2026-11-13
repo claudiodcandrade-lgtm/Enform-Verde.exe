@@ -30,9 +30,9 @@ class BiomassL2aTests(unittest.TestCase):
 
     def test_l2b_ranked_before_l2a_and_l2a_included(self):
         def fake(gdf, collection, limit=50, product_type=None):
-            if collection == "BiomassLevel2a" and product_type == "FP_FH__L2A":
+            if collection == "BiomassLevel2a" and product_type is None:
                 return [item("BIO_FP_FH__L2A_X", "FP_FH__L2A")]
-            if collection == "BiomassLevel2b" and product_type == "FP_FH__L2B":
+            if collection == "BiomassLevel2b" and product_type is None:
                 return [item("BIO_FP_FH__L2B_Y", "FP_FH__L2B")]
             return []
         with patch.object(sp, "maap_search", side_effect=fake):

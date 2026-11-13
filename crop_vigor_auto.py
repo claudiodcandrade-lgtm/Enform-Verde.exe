@@ -31,7 +31,7 @@ def _scene(field_4326, as_of, window_days, search):
 
 
 def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=8.0,
-                    window_days=24, search=None, token_fn=None, height_provider=None,
+                    window_days=30, search=None, token_fn=None, height_provider=None,
                     max_px=2500):
     import rasterio
     from rasterio.enums import Resampling

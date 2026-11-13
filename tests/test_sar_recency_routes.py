@@ -37,7 +37,7 @@ class SarRecencyRouteTests(unittest.TestCase):
             def find(gdf, collection, limit=100, product_type=None):
                 # Test only this fixture's operational collection. IOC items
                 # come from a different STAC collection and must not be cloned.
-                return [x for x in data if x["_product_type"] == product_type
+                return [x for x in data if product_type is None
                         and collection == "BiomassLevel2b"]
             api.side_effect=find
             out=biomass_l2b_search(object())
@@ -46,10 +46,12 @@ class SarRecencyRouteTests(unittest.TestCase):
     def test_ioc_more_recent_does_not_automatically_override_operational(self):
         operational=item("operational", "2026-01-05T00:00:00Z")
         ioc=item("ioc-newer", "2026-10-25T00:00:00Z")
+        operational["_product_type"]="FP_AGB_L2B"
+        ioc["_product_type"]="FP_AGB_L2B"
         with patch("sar_pipeline.maap_search") as api:
             api.side_effect=lambda gdf,collection,limit=100,product_type=None: (
-                [operational] if collection=="BiomassLevel2b" and product_type=="FP_AGB_L2B"
-                else [ioc] if collection=="BiomassLevel2bIOC" and product_type=="FP_AGB_L2B"
+                [operational] if collection=="BiomassLevel2b" and product_type is None
+                else [ioc] if collection=="BiomassLevel2bIOC" and product_type is None
                 else [])
             out=biomass_l2b_search(object())
         self.assertEqual(out[0]["_stage"],"OPERATIONAL")
