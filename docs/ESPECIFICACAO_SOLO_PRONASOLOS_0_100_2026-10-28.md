@@ -1582,3 +1582,7 @@ No primeiro disparo, o workflow Dashboard dual falhou no guard documental porque
 ## V88.33 — contrato de contingência de carbono separado do SAR (13/11/2026)
 - No build do SHA `784b29fafe76a19bb4b631b11aff4dec86121703`, a falha ocorreu porque um teste antigo exigia ausência de `literature_reference` mesmo depois de esgotadas as rotas de biomassa SAR, apesar de não haver `agb_mg_ha` quantitativa. A saída preservou SAR auxiliar e referência regional de inventário em campos separados; ela não converteu inventário em AGB SAR.
 - O teste do build passa a exigir `agb_mg_ha=None`, fonte `SAR_ATRIBUTOS_ESTRATIFICADORES`, gate elegível, e referência de inventário com origem própria, `sar_processed=false` e trilha SAR vazia. Rotas técnicas ainda não esgotadas não liberam contingência; falhas e ausência de cobertura continuam diferenciadas.
+
+## Controle de escopo V88.35 — transporte SAR e estados independentes (13/11/2026)
+
+A candidata 3.26.25 trata de transporte/leitura de COG Sentinel-1 e publicação de estados parciais do pipeline. Não altera dados, fontes, método, profundidade de 0–100 cm, incerteza nem cálculos de carbono orgânico do solo. O estoque do solo continua independente de erro ou indisponibilidade de imagem óptica/SAR.
