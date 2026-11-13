@@ -48,6 +48,13 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
             self.assertIn("GDAL_HTTP_TIMEOUT",src)
             self.assertIn('"SINGLE_GET"',src)
 
+    def test_compiled_exe_network_check_exercises_https_local_pixel_reader(self):
+        import desktop_app
+        src=inspect.getsource(desktop_app.network_check)
+        self.assertIn("_open_signed_cog_via_https",src)
+        self.assertIn('"https_local_valid_pixels"',src)
+        self.assertIn('"https_local"',src)
+
     def test_map_refresh_uses_canvas_size_not_rendered_image_size(self):
         src=inspect.getsource(app.App._on_map_resize)
         self.assertIn("self._last_canvas_size",src)

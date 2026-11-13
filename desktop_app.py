@@ -3985,7 +3985,8 @@ def network_check(attempts=3):
     try:
         from datetime import timedelta
         from sentinel1_sources import search_sentinel1_sources
-        from sentinel1_mpc import sign_asset_href
+        from sentinel1_mpc import get_runtime_sas_token, sign_asset_href
+        from recent_sar_landcover import _open_signed_cog_via_https
         import rasterio
         from rasterio.windows import from_bounds
         from rasterio.warp import transform_geom
@@ -3996,7 +3997,7 @@ def network_check(attempts=3):
         if not scenes:raise RuntimeError("catálogos sem cena VV/VH em 40 dias")
         s=scenes[0]
         def read():
-            vals={}
+            vals={};https_local={}
             for pol in ("vv","vh"):
                 href=s["assets"][pol]["href"]
                 if s.get("provider","MPC")=="MPC":
@@ -4007,11 +4008,26 @@ def network_check(attempts=3):
                         w=from_bounds(*g.bounds,transform=src.transform).round_offsets().round_lengths()
                         a=src.read(1,window=w,masked=True)
                         vals[pol]=int((~a.mask).sum()) if hasattr(a,"mask") else int(a.size)
-            return vals
+                if s.get("provider","MPC")=="MPC":
+                    # Exercise the independent Requests/TLS/local-COG path in
+                    # the compiled Windows executable; GDAL-only success is
+                    # not evidence that the recovery route works.
+                    with _open_signed_cog_via_https(
+                            s["assets"][pol]["href"],rasterio=rasterio,
+                            token_fn=get_runtime_sas_token) as src:
+                        geom=shape(transform_geom(
+                            "EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
+                        w=from_bounds(*geom.bounds,transform=src.transform)
+                        a=src.read(1,window=w,masked=True)
+                        https_local[pol]=int((~a.mask).sum()) if hasattr(a,"mask") else int(a.size)
+            return {"gdal":vals,"https_local":https_local}
         px=retry(read)
-        if min(px.values())<100:raise RuntimeError("menos de 100 pixels SAR válidos: "+str(px))
+        if min(px["gdal"].values())<100:raise RuntimeError("menos de 100 pixels SAR válidos via GDAL: "+str(px["gdal"]))
+        if s.get("provider","MPC")=="MPC" and min(px["https_local"].values())<100:
+            raise RuntimeError("menos de 100 pixels SAR válidos via HTTPS local: "+str(px["https_local"]))
         out["sentinel1"]={"status":"OK","scene_id":s.get("id"),"acquisition_utc":s.get("acquisition_utc"),
-                          "provider":s.get("provider","MPC"),"valid_pixels":px}
+                          "provider":s.get("provider","MPC"),"valid_pixels":px["gdal"],
+                          "https_local_valid_pixels":px["https_local"]}
     except Exception as exc:
         out["sentinel1"]={"status":"ERRO","reason":type(exc).__name__+": "+str(exc)[:300]}
     (Path(tempfile.gettempdir())/"enform_verde_network_check.json").write_text(json.dumps(out,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
