@@ -13,7 +13,7 @@ O arquivo `uso_solo_auditoria.json` registra 13 cenas SAR candidatas no Microsof
 
 ## Verificações e limites
 
-- Passaram localmente os testes específicos da leitura HTTPS temporária, status parcial, versionamento e rotas de transporte, além de compilação dos módulos alterados e coleção dos testes (166 módulos).
+- Passaram localmente os testes específicos da leitura HTTPS temporária, status parcial, versionamento e rotas de transporte, compilação dos módulos alterados e coleção (166 módulos); suíte completa: 1.130 aprovados e 1 ignorado por ausência de display.
 - O teste live do Planetary Computer leu VV e VH no ponto central da área de Sinop. É uma leitura real pontual, não validação do KML integral.
 - Uma execução local do leitor no KML integral produziu raster e vetor SAR experimental. O raster tem 146.014 pixels válidos a 10 m (área nominal de células 1.460,14 ha); a soma vetorial recortada é 1.457,793 ha, frente à AOI de 1.459,907 ha. O residual de 2,114 ha permanece não reconciliado e não recebe classe; a soma nominal das células de borda difere da área vetorial e não deve ser reportada como área exata da fazenda. As três classes representam assinatura estável, candidato a uso cultivado e assinatura ambígua — não confirmam agricultura ou vegetação nativa.
 - Essa execução direta não conclui a cadeia do aplicativo: faltam um resultado persistido com cenas/data/órbita, execução dos módulos de carbono e agricultura no mesmo `run_id`, conferência da área vetorial e apresentação final na janela do dashboard.
