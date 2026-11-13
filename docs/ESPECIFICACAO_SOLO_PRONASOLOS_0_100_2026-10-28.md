@@ -1595,7 +1595,21 @@ Esta atualização não altera os métodos de carbono do solo ou fertilidade. Re
 
 # V88.40 — parsing resiliente do XML de capacidades PronaSolos
 
-**Versão do programa:** `3.26.26-PRECAMPO-EXPERIMENTAL`.
+## Diagnóstico
+
+O estoque SOC Embrapa/PronaSolos de 0–100 cm foi calculado, mas a leitura das camadas WCS de incerteza parou em `ParseError: reference to invalid character number`. O erro ocorre antes da descoberta das dez camadas (limite inferior/superior para cinco horizontes). Ele caracteriza conteúdo de resposta inválido para XML 1.0, não ausência de serviço ou credencial. Não zerar incerteza nem eliminar o estoque já calculado por esse erro secundário.
+
+## Correção de software
+
+Antes do `ElementTree.fromstring`, inspecionar referências numéricas XML e remover somente aquelas cujo código Unicode não pertence à produção `Char` do XML 1.0. Preservar referências válidas e todo o restante da resposta. O hash SHA-256 da resposta WCS original e a quantidade de referências removidas entram na proveniência. Respostas truncadas, estruturalmente inválidas ou sem as dez camadas continuam como `ERRO_TECNICO`/N/D; nunca são interpretadas como ausência confirmada.
+
+Após a descoberta, manter os contratos existentes: baixar limites inferior e superior para os cinco horizontes, validar formato GeoTIFF, CRS, resolução, NoData, grade alinhada, cobertura da AOI e conteúdo dos rasters. Repetir somente falhas transitórias com tentativas limitadas e TLS validado. Enquanto qualquer requisito falhar, manter estoque SOC quando disponível e exibir sua incerteza como N/D com motivo específico. O envelope marginal publicado não deve ser rotulado como IC95% conjunto.
+
+## Teste e limites
+
+Teste de regressão: referência inválida `&#x0;` é removida, referência XML legal `&#x20;` permanece, e o identificador de cobertura reparado é descoberto. A suíte completa e os workflows devem ser reportados pelo SHA exato antes de atualizar o branch. A candidata 3.26.26-PRECAMPO-EXPERIMENTAL continua pré-campo experimental, não homologada; não declarar resultado de incerteza até leitura de dados reais passar no runtime.
+
+# V88.40 — parsing resiliente do XML de capacidades PronaSolos
 
 ## Diagnóstico
 
@@ -1609,4 +1623,38 @@ Após a descoberta, manter os contratos existentes: baixar limites inferior e su
 
 ## Teste e limites
 
-Teste de regressão: referência inválida `&#x0;` é removida, referência XML legal `&#x20;` permanece, e o identificador de cobertura reparado é descoberto. A suíte completa e os workflows devem ser reportados pelo SHA exato antes de atualizar o branch. A candidata 3.26.26 continua pré-campo experimental, não homologada; não declarar resultado de incerteza até leitura de dados reais passar no runtime.
+Teste de regressão: referência inválida `&#x0;` é removida, referência XML legal `&#x20;` permanece, e o identificador de cobertura reparado é descoberto. A suíte completa e os workflows devem ser reportados pelo SHA exato antes de atualizar o branch. A candidata 3.26.26-PRECAMPO-EXPERIMENTAL continua pré-campo experimental, não homologada; não declarar resultado de incerteza até leitura de dados reais passar no runtime.
+
+
+# V88.41 — acesso SAR recente do INPE e contingência com pixels reais (13/11/2026)
+
+O usuário reforça que dados SAR recentes são fundamentais tanto para carbono quanto para monitoramento de lavouras e previsão de safra. A regra temporal operacional é: a aquisição SAR mais recente usada como evidência atual na AOI deve ter até 30 dias. Séries para fenologia podem abranger até 150 dias, desde que a aquisição final tenha até 30 dias e as datas/órbitas sejam auditadas. Sem observação recente, mostrar N/D/ERRO com motivo; não reaproveitar uma cena antiga como monitoramento atual.
+
+A busca multiprovedor Sentinel-1 consulta MPC e INPE RTC e ordena as cenas por aquisição. A nova rota do pipeline de carbono lê diretamente VV/VH de COGs da coleção pública INPE `sentinel-1-rtc-1`, em TLS verificado e recorte na AOI. A rota realiza também a leitura INPE mesmo quando MPC obtém pixels, para comparar datas reais; apenas descoberta de catálogo não conta como processamento. MPC, INPE e CDSE recebem janela temporal de 30 dias nas consultas instantâneas.
+
+O teste de aceitação live `tools/probe_inpe_sentinel1_rtc_live.py` deve obter ≥100 pixels válidos em VV e VH na mesma cena, tanto para Sinop quanto para o AOI KMZ do Tapajós, e registrar cena/data/CRS/contagem sem URL assinada. O `--network-check` valida leitura VV/VH com data dentro de 30 dias. Séries do módulo agrícola permanecem experimentais: exigem uma série de mesma órbita e pixels reais; ausência de cena recente é distinta de falha de rede.
+
+Limite científico: Sentinel-1 banda C é evidência para cobertura/monitoramento e entrada SAR compatível, mas não se converte isoladamente em AGB. O estimador quantitativo de biomassa continua a exigir produto/modelo compatível, inventário e validação aplicáveis. O gate de aceite depende da aprovação live no SHA final. Versão candidata 3.26.27-PRECAMPO-EXPERIMENTAL; não homologada.
+
+
+# V88.42 — handoff ponta a ponta do core para os dashboards (13/11/2026)
+
+A verificação do fluxo worker → fila → `_execute_main` → painéis encontrou duas lacunas: a auditoria agrícola não preservava explicitamente a proveniência SAR recebida do core, e o painel de carbono podia ocultar a data quando recebia `acquisition_utc` sem o campo derivado de Brasília. A auditoria agora registra ID da execução, estado da etapa do pipeline e proveniência SAR com datas, cenas, pixels, provedor e diagnósticos; o painel de carbono deriva a apresentação UTC−03:00 do timestamp de aquisição confirmado. Nenhuma data é inferida de nome de arquivo ou horário de download.
+
+As rotas públicas agora fazem repetição limitada de consultas transitórias (MPC/INPE, até três tentativas com backoff); a chamada STAC de pixels MPC usa timeout (15 s de conexão, 45 s de leitura). Nenhuma rota transforma timeout em ausência confirmada.
+
+Regressão de integração: `tests/test_core_to_dashboard_handoff.py` atravessa a fila assíncrona, executa o caminho principal real e os dois apresentadores reais, com fixtures determinísticas. Verifica carbono e data de cena no painel de carbono, candidatos VV/VH com data/provedor/pixels no painel e auditoria agrícola sem convertê-los em área de cultura validada, propagação de falha SAR/status parcial e persistência JSON. A prova live de acesso consulta MPC e INPE em oito AOIs distribuídas nos seis biomas, incluindo Sinop e o perímetro de aceitação do Tapajós; cada AOI exige que pelo menos uma rota pública leia VV/VH da mesma cena, aquisição de até 30 dias e ao menos 100 pixels válidos por polarização. A rota sem cena ou com erro fica registrada, e o gate só reprova quando ambas não fornecem pixels. Isso testa conectividade em pontos representativos, não uma garantia wall-to-wall em cada coordenada ou época; cada AOI real continua auditada e pode declarar N/D/ERRO.
+
+Resultado live neste ambiente (13/11): a busca de catálogo MPC encontrou cenas de até 30 dias para Manaus, Sinop e Brasília; o catálogo INPE não retornou cenas nesses recortes. A tentativa live de ler pixels no primeiro recorte falhou por `ReadTimeout` no MPC e erro HTTP transitório no INPE. Portanto, ainda não há evidência live de pixel lido nesta execução, e o teste permanece obrigatório no CI/Windows; não marcar conexão como resolvida até essa evidência passar.
+
+A suíte completa passou localmente: 1.141 testes aprovados e 1 ignorado por ausência de display; coleta: 168 módulos. Build/CI, consulta live no SHA final, execução completa do KML Maria Eduarda no Windows e validação científica de campo permanecem gates separados. Candidata 3.26.28-PRECAMPO-EXPERIMENTAL; não homologada.
+
+# V88.43 — integridade do par SAR e status operacional (13/11/2026)
+
+Uma leitura isolada de VV podia ser registrada como processamento SAR concluído mesmo quando a leitura VH da mesma aquisição falhava. A rota MPC agora publica resultados completos somente quando VV e VH são lidos da mesma cena; leituras parciais ficam separadas em `partial_stats`/`partial_paths`, com estado `VV_VH_PAIR_INCOMPLETE`, e `available=false`. Isso impede que o dashboard ou os módulos seguintes interpretem uma polarização isolada como par SAR processado.
+
+O teste `test_mpc_single_polarization_is_partial_not_processed` reproduz falha de VH após VV válido. Verificação local concluída: 1.145 testes passaram, 1 foi ignorado por ausência de display; a coleta inspecionou 168 módulos. O contrato do assinador MPC também foi ajustado para exercer até três tentativas transitórias; o teste de 429 agora comprova limite de três chamadas e encerramento fechado. Nenhuma tentativa ignora TLS, Retry-After ou limites configurados.
+
+A candidata é `3.26.29-PRECAMPO-EXPERIMENTAL`. O ensaio local mede contratos, não demonstra conectividade remota. Catálogo encontrado não equivale a pixels decodificados: só declarar acesso operacional após leitura VV/VH real, recente (≤30 dias) e auditada no SHA final. A cobertura amostral em oito AOIs distribuídas nos seis biomas não é garantia para toda coordenada/época do Brasil; cada AOI deve preservar N/D/ERRO quando aplicável.
+
+A atualização do prompt, da especificação de solo e da especificação técnica registra o estado de testes, build Windows, leitura live e ensaio do KML como gates independentes. A checagem visual local não pôde abrir Tk por falta de display; requer CI/Windows. Não declarar homologação científica sem validação observacional independente.

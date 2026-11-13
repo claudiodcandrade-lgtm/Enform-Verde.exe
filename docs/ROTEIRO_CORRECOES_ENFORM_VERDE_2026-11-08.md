@@ -11,7 +11,7 @@ Objetivo: concluir as correções sem regressões. Cada item tem critério de ac
 
 ## B. Leitura de dados orbitais e mapeamento atual
 - ✅ **B1 — Certificados (causa raiz SAR/CBERS).** Aceite: no Windows do usuário, triagem SAR com cenas lidas e CBERS-4A visível; no build, `--network-check` aprovado.
-- **B2 — Esgotar provedores SAR.** MPC → INPE RTC → demais configurados; N/D só após registrar falha de todos. Aceite: auditoria lista cada tentativa.
+- **B2 — Esgotar provedores SAR.** MPC → INPE RTC → demais configurados; comparar datas de aquisição reais, não presumir que a fonte primária seja a mais recente. Para monitoramento agrícola, a aquisição mais recente deve ter até 30 dias; histórico pode cobrir até 150 dias. N/D só após registrar falhas/defasagens dos provedores. Aceite: auditoria lista tentativas, data UTC e pixels válidos reais por fonte.
 - **B3 — Classificador SAR semântico (nativa × cultivo × outros usos).** Sentinel-1 VV/VH temporal; rótulos independentes (LEM/Campo Verde INPE, JECAM CIRAD, parcelas IFN, campo); validação em blocos espaciais e temporais, matriz de confusão, precisão/recall por classe com IC95%. Aceite: modelo com SHA-256 e relatório; MapBiomas proibido como rótulo.
 - **B4 — Nome da fitofisionomia.** Só após nativa confirmada por SAR: interseção com IBGE; sem sobreposição perfeita, vizinho mais próximo com distância informada.
 - ✅ **B5 — Decidido (08/11/2026, resposta 2B):** qualquer acurácia MEDIDA é aceita como experimental, com n independente e IC95% Wilson obrigatórios; sem limiar mínimo.
@@ -48,3 +48,13 @@ Objetivo: concluir as correções sem regressões. Cada item tem critério de ac
 - TerraClass 2024 tem classes para Amazônia e Cerrado; não extrapolar para os demais biomas nem separar soja/milho. PRODES é camada de supressão primária, não classe de uso atual pós-supressão. Outros biomas permanecem N/D sem referência compatível.
 - Altura/vigor: coeficientes publicados não estão instalados; não usar valores transferidos nem inferir altura de retroespalhamento sem modelo/erro/estádio compatíveis.
 - A ferramenta é opt-in, não foi treinada em dados reais nesta alteração, não está integrada ao painel/inferência e não altera resultados padrão. Antes de promoção, executar em dados oficiais e SAR reais, revisar a matriz espacial e adicionar validação independente de campo.
+
+## Atualização V88.41 — acesso SAR recente (13/11/2026)
+
+- Integrar ao pipeline principal de carbono leitura de pixels COG Sentinel-1 RTC do INPE como fonte independente da rota MPC; consultar e comparar a data efetiva das aquisições em ambas as fontes, com janela corrente de 30 dias.
+- A agricultura usa séries históricas para fenologia, mas a cena mais recente da série só é elegível se tiver no máximo 30 dias. Cenas antigas isoladas não passam como monitoramento atual.
+- Adicionar teste live obrigatório de catálogo até pixel para o INPE em Sinop e Tapajós. O `--network-check` do EXE também passa a exigir cena VV/VH de até 30 dias.
+- Este é um ajuste técnico para atualidade, leitura e fallback. Sentinel-1 C-band continua auxiliar; não gera AGB isoladamente. A confirmação para cada área depende de CI live no SHA da candidata.
+
+- **B7 — Handoff core→dashboard:** teste integrado obrigatório da fila até os dois apresentadores reais; resultados de carbono, estado/data/provedor SAR, IDs de execução e motivos de falha devem aparecer na interface e auditoria correspondente. Fixture verifica contrato de propagação; consulta live e ensaio do KML completo seguem como evidência separada.
+- **B8 — Cobertura nacional SAR:** consultar provedores públicos independentes em AOIs amostrais dos seis biomas; exigir leitura VV/VH recente em cada amostra por pelo menos uma rota, guardar estado por provedor e não converter o resultado amostral em garantia de cobertura de toda coordenada do Brasil. O ensaio em cada AOI de usuário usa a geometria carregada e preserva N/D/ERRO quando nenhuma rota lê pixels.

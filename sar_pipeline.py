@@ -1,4 +1,5 @@
 import math,re,hashlib,time,zipfile
+from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import numpy as np, requests
 from scientific_calibration import SCIENTIFIC_INVENTORY_REGISTRY, saturation_audit, glcm_features, multiscale_texture, rank_external_evidence, fit_local_ensemble
@@ -1343,7 +1344,7 @@ def cdse_access_token(client_id,client_secret):
     if not token: raise RuntimeError("CDSE não retornou access_token.")
     return token
 
-def cdse_sentinel1_process(gdf,cache,client_id="",client_secret="",access_token="",days=120):
+def cdse_sentinel1_process(gdf,cache,client_id="",client_secret="",access_token="",days=30):
     """Request real Sentinel-1 GRD VV/VH pixels from CDSE Sentinel Hub Process API.
     Output is an orthorectified, terrain-corrected FLOAT32 GeoTIFF. Discovery,
     authentication, pixel processing and zonal use are recorded separately.
@@ -1374,7 +1375,9 @@ function evaluatePixel(s){return [s.VV,s.VH,s.dataMask]}"""
 def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
     """Legacy catalogue/direct-asset route retained as a fallback when Process API credentials are absent."""
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
+    now=datetime.now(timezone.utc)
     body={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,
+          "datetime":(now-timedelta(days=30)).isoformat().replace("+00:00","Z")+"/"+now.isoformat().replace("+00:00","Z"),
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
     r=requests.post(CDSE_STAC,json=body,timeout=(5,15)); r.raise_for_status()
     items=r.json().get("features",[])
@@ -1400,6 +1403,69 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
         except Exception as e: errors.append(Path(p).name+": "+str(e))
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,
             "provider":"Copernicus Data Space Ecosystem catalogue/direct asset fallback","errors":errors}
+
+def inpe_sentinel1_rtc(gdf,*,days=30,limit=6):
+    """Read actual public INPE Sentinel-1 RTC VV/VH COG pixels over an AOI.
+
+    This is an independent, credential-free fallback for biomass pipeline SAR
+    evidence. The measurements are ancillary C-band backscatter and are never
+    converted to AGB without a separately accepted calibration model.
+    """
+    from datetime import datetime,timedelta,timezone
+    from shapely.geometry import mapping
+    from sentinel1_inpe import search_sentinel1_inpe_rtc
+    if not isinstance(days,int) or not 1<=days<=3650:raise ValueError("days must be from 1 to 3650")
+    if not isinstance(limit,int) or not 1<=limit<=40:raise ValueError("limit must be from 1 to 40")
+    geom=gdf.to_crs(4326).geometry.union_all()
+    if geom.is_empty:raise ValueError("INPE Sentinel-1 AOI is empty")
+    end=datetime.now(timezone.utc)
+    found=search_sentinel1_inpe_rtc(mapping(geom),start_utc=end-timedelta(days=days),end_utc=end)
+    scenes=found.get("scenes",[])[:limit]
+    if not scenes:
+        return {"available":False,"provider":"INPE Sentinel-1 RTC COG","collection":found.get("collection"),
+                "catalogued":0,"scene_ids":[],"stats":[],"errors":[],"pixel_state":"SEM_CENAS_COMPATIVEIS",
+                "pagination_complete":found.get("pagination_complete",False)}
+    import rasterio
+    from rasterio.mask import mask
+    from rasterio.warp import transform_geom
+    stats=[];errors=[];scene_ids=[]
+    for scene in scenes:
+        scene_ids.append(scene.get("id"))
+        pair=[];scene_stats=[]
+        for pol in ("vv","vh"):
+            asset=(scene.get("assets") or {}).get(pol) or {}
+            href=asset.get("href")
+            try:
+                if not href or not str(href).startswith("https://data.inpe.br/"):
+                    raise ValueError("INPE RTC asset missing or outside official host")
+                import tls_setup
+                with rasterio.Env(**tls_setup.gdal_env(),GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+                                  GDAL_HTTP_MAX_RETRY="3",GDAL_HTTP_TIMEOUT="45"):
+                    with rasterio.open(href) as src:
+                        if src.crs is None:raise ValueError("INPE RTC COG missing CRS")
+                        local_geom=transform_geom("EPSG:4326",src.crs,mapping(geom))
+                        data,_=mask(src,[local_geom],crop=True,filled=False)
+                        values=np.asarray(np.ma.array(data[0]).compressed(),dtype=np.float64)
+                        values=values[np.isfinite(values)&(values>0)]
+                        if not len(values):raise ValueError("INPE RTC COG has no valid pixels inside AOI")
+                        scene_stats.append({"scene":scene.get("id"),"acquisition_utc":scene.get("acquisition_utc"),
+                            "polarization":pol.upper(),"n":int(len(values)),"mean":float(values.mean()),
+                            "median":float(np.median(values)),"sd":float(values.std(ddof=1)) if len(values)>1 else 0.0,
+                            "min":float(values.min()),"max":float(values.max()),"crs":src.crs.to_string(),
+                            "unit":"INPE RTC gamma0 native linear power","pixel_state":"PROCESSADO"})
+                pair.append(pol)
+            except Exception as exc:
+                errors.append({"scene":scene.get("id"),"polarization":pol.upper(),
+                               "error_type":type(exc).__name__,"error":str(exc)[:240]})
+        if pair==["vv","vh"]:
+            stats.extend(scene_stats)
+            if len({x["scene"] for x in stats})>=min(3,limit):break
+    return {"available":bool(stats),"provider":"INPE Sentinel-1 RTC COG","collection":found.get("collection"),
+            "catalogued":len(scenes),"scene_ids":scene_ids,"stats":stats,"errors":errors,
+            "pixel_state":"PROCESSADO" if stats else "CATALOGO_OK_PIXEL_READ_FAILED",
+            "pagination_complete":found.get("pagination_complete",False),
+            "warning":"INPE Sentinel-1 RTC VV/VH C-band pixels are ancillary evidence, not AGB estimates."}
+
 def _jaxa_mosaic_gamma0_db(dn,cf=-83.0):
     """JAXA global mosaic DN -> gamma0 dB: 10*log10(DN^2)+CF."""
     a=np.asarray(dn,dtype=np.float64)
@@ -1424,7 +1490,7 @@ def _planetary_sign_asset(unsigned_href, *, max_attempts=3, sleep=None):
         try:
             # Bound proxy/TLS stalls so a failed sign service cannot prevent
             # the pipeline from reaching its remaining SAR and inventory routes.
-            response = requests.get(endpoint, params={"href": unsigned_href}, timeout=(5, 12))
+            response = requests.get(endpoint, params={"href": unsigned_href}, timeout=(15, 45))
             response.raise_for_status()
             signed = response.json()["href"]
             if not isinstance(signed, str) or not signed.startswith("https://"):
@@ -1434,7 +1500,7 @@ def _planetary_sign_asset(unsigned_href, *, max_attempts=3, sleep=None):
             code = getattr(getattr(exc, "response", None), "status_code", None)
             transient = code in (429, 500, 502, 503, 504) or isinstance(
                 exc, (requests.exceptions.Timeout, requests.exceptions.ConnectionError))
-            if not transient or attempt + 1 >= min(max_attempts, 2):
+            if not transient or attempt + 1 >= max_attempts:
                 raise
             header = getattr(getattr(exc, "response", None), "headers", {}) or {}
             retry = header.get("Retry-After")
@@ -1561,14 +1627,20 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
     Reads signed Cloud-Optimized GeoTIFF windows for the AOI and reports actual VV/VH pixel statistics.
     This proves SAR pixel processing; it does not fabricate AGB from C-band alone."""
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
-    body={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,"sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    now=datetime.now(timezone.utc)
+    body={"collections":["sentinel-1-grd"],"intersects":geom,"limit":limit,
+          "datetime":(now-timedelta(days=30)).isoformat().replace("+00:00","Z")+"/"+now.isoformat().replace("+00:00","Z"),
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
     api="https://planetarycomputer.microsoft.com/api/stac/v1/search"
     # The public STAC API intermittently returns 502/503/504 on live gates.
     # Retry transient server failures without changing the search or inventing pixels.
     import time
     for attempt in range(3):
         try:
-            rr=requests.post(api,json=body,timeout=(5,15))
+            # A five-second connect timeout is too short for the public
+            # planetary STAC endpoint from slower Windows networks. Retry
+            # transient failures with bounded backoff while keeping TLS on.
+            rr=requests.post(api,json=body,timeout=(15,45))
             rr.raise_for_status()
             items=rr.json().get("features",[])
             break
@@ -1576,7 +1648,7 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             code=getattr(getattr(exc,'response',None),'status_code',None)
             transient=code in (429,500,502,503,504) or isinstance(
                 exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError))
-            if not transient or attempt>=1:
+            if not transient or attempt>=2:
                 raise
             time.sleep(2*(attempt+1))
     if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":["sem cenas Sentinel-1 GRD no AOI"]}
@@ -1585,7 +1657,7 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
     import rasterio
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
-    selected_item=None
+    selected_item=None; partial_stats=[]; partial_paths=[]
     for it in items[:min(limit,8)]:
         scene_ids.append(it.get("id")); assets=it.get("assets") or {}
         scene_stats=[]; scene_paths=[]
@@ -1607,23 +1679,31 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
                     v=np.ma.array(arr[0]).compressed(); v=v[np.isfinite(v) & (v>0)]
                     if not len(v):raise ValueError("sem pixels válidos no polígono")
                     # GRD DN values are real SAR image pixels. Keep native-domain stats and dB only when values are power-like positive.
-                    z={"scene":it.get("id"),"polarization":pol.upper(),"n":int(len(v)),"mean":float(v.mean()),"sd":float(v.std(ddof=1)) if len(v)>1 else 0.0,"min":float(v.min()),"max":float(v.max()),"pixel_state":"PROCESSADO"}
+                    z={"scene":it.get("id"),"acquisition_utc":(it.get("properties") or {}).get("datetime"),
+                       "polarization":pol.upper(),"n":int(len(v)),"mean":float(v.mean()),
+                       "sd":float(v.std(ddof=1)) if len(v)>1 else 0.0,"min":float(v.min()),
+                       "max":float(v.max()),"pixel_state":"PROCESSADO"}
                     scene_stats.append(z); scene_paths.append(unsigned)
                 if {"VV","VH"}.issubset({v["polarization"] for v in scene_stats}):break
             except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
-        if len(scene_stats)>len(stats):
+        # Publish a scene only when both VV and VH were actually read from that
+        # same acquisition. Keep incomplete reads separately for diagnostics.
+        polarizations={v["polarization"] for v in scene_stats}
+        if {"VV","VH"}.issubset(polarizations):
             stats=scene_stats; paths=scene_paths; selected_item=it
-        # Prefer the most recent scientifically useful VV/VH pair from ONE scene.
-        if {"VV","VH"}.issubset({v["polarization"] for v in scene_stats}):break
+            break
+        if len(scene_stats)>len(partial_stats):
+            partial_stats=scene_stats; partial_paths=scene_paths
     from sar_acquisition_time import annotate_acquisition
     selected=annotate_acquisition(selected_item) if selected_item else {}
-    return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,
+    return {"available":bool(stats),"paths":paths,"items":len(items),"scene_ids":scene_ids,
             "selected_scene_id":selected_item.get("id") if selected_item else None,
             "selected_acquisition_utc":selected.get("acquisition_utc"),
             "selected_acquisition_brasilia":selected.get("acquisition_brasilia"),
             "catalog_acquisition":[dict(id=x.get("id"), acquisition_utc=annotate_acquisition(x)["acquisition_utc"]) for x in items[:limit]],
-            "stats":stats,"provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,
-            "pixel_state":"PROCESSADO" if stats else "NAO_PROCESSADO"}
+            "stats":stats,"partial_stats":partial_stats,"partial_paths":partial_paths,
+            "provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,
+            "pixel_state":"PROCESSADO" if stats else "VV_VH_PAIR_INCOMPLETE" if partial_stats else "NAO_PROCESSADO"}
 
 SUPPORTED_NATIONAL_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica","Pantanal")
 SFB_IFN_BIOMASS_REFERENCE={
@@ -1948,6 +2028,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     audit["x_band"]={"status":"rota local/licenciada","note":"TerraSAR-X/TanDEM-X não é inventado como download público automático."}
 
     # 4 — Real public Sentinel-1 C-band. First use the credential-free Planetary Computer COG route.
+    pc=None
     try:
         pc=planetary_sentinel1_cog(gdf,Path(cache)/"sentinel1_public")
         if pc.get("stats"):
@@ -1957,6 +2038,29 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         else:
             audit["warnings"].append("Sentinel-1 Planetary Computer: "+("; ".join(pc.get("errors",[])[:3]) or "sem pixels processados"))
     except Exception as e: audit["warnings"].append("Sentinel-1 Planetary Computer: "+str(e))
+
+    # Independent Brazil-wide official source. Query and read it even when MPC
+    # succeeds so the audit compares real acquisition dates instead of assuming
+    # a provider priority is the same as a recency priority.
+    try:
+        s1inpe=inpe_sentinel1_rtc(gdf,days=30,limit=8)
+        inpe_stats=s1inpe.get("stats",[])
+        inpe_dates=[x.get("acquisition_utc") for x in inpe_stats if x.get("acquisition_utc")]
+        audit["sentinel1_inpe"]={"provider":s1inpe.get("provider"),
+            "collection":s1inpe.get("collection"),"catalogued":s1inpe.get("catalogued",0),
+            "scene_ids":s1inpe.get("scene_ids",[]),"pixel_state":s1inpe.get("pixel_state"),
+            "latest_pixel_acquisition_utc":max(inpe_dates) if inpe_dates else None,
+            "stats":inpe_stats,"errors":s1inpe.get("errors",[]),
+            "pagination_complete":s1inpe.get("pagination_complete")}
+        if inpe_stats:
+            audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C",
+                "provider":s1inpe.get("provider"),"stats":inpe_stats})
+            audit["warnings"].append("Sentinel-1 INPE RTC: pixels VV/VH reais processados; não há conversão para AGB sem modelo calibrado e validado compatível.")
+        else:
+            audit["warnings"].append("Sentinel-1 INPE RTC: "+str(s1inpe.get("pixel_state")))
+    except Exception as e:
+        audit["sentinel1_inpe"]={"pixel_state":"ERRO_TECNICO","error_type":type(e).__name__,"error":str(e)[:300]}
+        audit["warnings"].append("Sentinel-1 INPE RTC: "+type(e).__name__+": "+str(e)[:240])
 
     # Secondary Sentinel-1 route: CDSE Process API/direct assets.
     try:

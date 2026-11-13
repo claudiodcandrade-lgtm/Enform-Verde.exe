@@ -43,6 +43,7 @@ jobs:
           # PowerShell does not necessarily fail a multi-command CI step when an
           # earlier native command exits nonzero. Enforce EACH test result.
           $patterns = @(
+            'test_core_to_dashboard_handoff.py',
             'test_dual_dashboard.py',
             'test_agricultural_weather.py',
             'test_enform_uncertainty_core.py',

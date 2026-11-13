@@ -581,6 +581,20 @@ jobs:
           '@ | Set-Content live_sar_test.py -Encoding UTF8
           python live_sar_test.py
 
+      - name: Live recent INPE Sentinel-1 RTC catalog-to-pixel fallback — representative sites in all six biomes
+        shell: pwsh
+        timeout-minutes: 20
+        run: python tools/probe_inpe_sentinel1_rtc_live.py
+
+      - name: Upload INPE Sentinel-1 RTC live pixel evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inpe-sentinel1-rtc-live-${{ github.run_number }}
+          path: inpe_sentinel1_rtc_live.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Official IBGE ZIP transport/cache regression
         shell: pwsh
         run: python -m unittest discover -s tests -p 'test_ibge_official_zip.py' -v

@@ -50,12 +50,12 @@ class PlanetarySignRetryTests(unittest.TestCase):
 
     def test_429_is_bounded_and_fails_closed(self):
         waits = []
-        with patch("sar_pipeline.requests.get", side_effect=[_error(429)] * 2) as get:
+        with patch("sar_pipeline.requests.get", side_effect=[_error(429)] * 3) as get:
             with self.assertRaises(requests.exceptions.HTTPError):
                 _planetary_sign_asset("https://assets.example.test/a.tif", sleep=waits.append)
-        self.assertEqual(get.call_count, 2)
-        self.assertEqual(len(waits), 1)
-        self.assertTrue(all(1.0 <= x <= 1.25 for x in waits))
+        self.assertEqual(get.call_count, 3)
+        self.assertEqual(len(waits), 2)
+        self.assertTrue(all(1.0 <= x <= 2.25 for x in waits))
 
     def test_403_is_not_retried(self):
         with patch("sar_pipeline.requests.get", side_effect=_error(403)) as get:

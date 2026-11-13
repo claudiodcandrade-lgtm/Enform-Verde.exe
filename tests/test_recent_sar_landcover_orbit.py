@@ -11,6 +11,15 @@ class OrbitSelectionTests(unittest.TestCase):
         selected,orbit=_select_orbit_series(records,t)
         self.assertEqual(orbit,("MPC","descending",80))
         self.assertGreaterEqual(len(selected),3)
+        self.assertLessEqual((t-selected[0][0]).total_seconds(),30*86400)
+
+    def test_stale_latest_scene_cannot_make_a_current_monitoring_series(self):
+        t=datetime(2026,11,13,tzinfo=timezone.utc)
+        records=[(t-timedelta(days=d),{"provider":"INPE","orbit_state":"ascending","relative_orbit":1})
+                 for d in (40,55,70,85)]
+        selected,orbit=_select_orbit_series(records,t)
+        self.assertEqual(selected,[])
+        self.assertIsNone(orbit)
     def test_unknown_orbit_must_not_be_mixed(self):
         t=datetime(2026,11,4,tzinfo=timezone.utc)
         rows=[(t-timedelta(days=d),{"orbit_state":None,"relative_orbit":None}) for d in (1,20,45)]

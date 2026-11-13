@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.26-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.29-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -2422,6 +2422,8 @@ class App(tk.Tk):
                           "Estado aparente é um sinal remoto inespecífico; não é diagnóstico de doença ou praga.",
                           "Carbono nativo: calculado separadamente na aba de formações nativas."])
         audit=["AUDITORIA TÉCNICA — USO DO SOLO, CULTURAS E FONTES",
+               "ID da execução: "+str(self.project.get("analysis_run_id") or "N/D"),
+               "Estado da etapa no pipeline: "+str(((self.project.get("pipeline_audit") or {}).get("stages") or {}).get("land_use",{}).get("status",land.get("status","N/D"))),
                "Método: "+str(land.get("method","não informado")),
                "Prioridade de fontes: "+str(land.get("priority","não informada")),
                "Incerteza da área/classificação: "+str(land.get("area_uncertainty") or "não quantificada"),
@@ -2436,6 +2438,15 @@ class App(tk.Tk):
                                   "experimental_seasonal_sar_classification":seasonal_sar,
                                   "yield_calculation_trace":audit_yield_forecast(forecast,analysis_id=self.project.get("analysis_run_id")),
                                   "yield_unit_conversion":unit_conversion_audit},ensure_ascii=False,indent=2,default=str)])
+        # Keep acquisition and processing evidence alongside the executive
+        # crop panel. Previously the summary showed a SAR failure, while this
+        # audit tab could omit the provider, scene date and read diagnostics.
+        sar_audit_fields=("recent_sar_cover","sentinel1_inpe","sar_processing_diagnostics",
+                          "sar_provider_results","sar_selection","sar_classifier_lemplus")
+        sar_audit={key:land[key] for key in sar_audit_fields if key in land}
+        audit.extend(["", "AQUISIÇÃO E PROCESSAMENTO SAR — PROVENIÊNCIA RECEBIDA DO CORE:",
+                      json.dumps(sar_audit,ensure_ascii=False,indent=2,default=str)
+                      if sar_audit else "N/D — o core não forneceu metadados SAR para a auditoria."])
         for item in classes:
             audit.append(json.dumps(item,ensure_ascii=False,sort_keys=True,default=str))
         validation=land.get("validation")
@@ -3139,7 +3150,8 @@ class App(tk.Tk):
                     if not isinstance(scene,dict):
                         continue
                     lines.append("  CENA PROCESSADA: "+str(scene.get("path") or scene.get("scene") or "arquivo não identificado"))
-                    from sar_acquisition_time import acquisition_display
+                    from sar_acquisition_time import acquisition_display, annotate_acquisition
+                    scene=annotate_acquisition(scene)
                     acquisition=acquisition_display(scene)
                     lines.append("    Horário de aquisição (UTC -3): "+acquisition["brasilia"])
                     lines.append("    Horário de aquisição (UTC): "+acquisition["utc"])
@@ -3997,9 +4009,9 @@ def network_check(attempts=3):
         from rasterio.warp import transform_geom
         from shapely.geometry import shape
         now=datetime.now(timezone.utc)
-        found=retry(lambda:search_sentinel1_sources(mapping(aoi.geometry.iloc[0]),start_utc=now-timedelta(days=40),end_utc=now))
+        found=retry(lambda:search_sentinel1_sources(mapping(aoi.geometry.iloc[0]),start_utc=now-timedelta(days=30),end_utc=now))
         scenes=[s for s in found.get("scenes",[]) if {"vv","vh"}<=set(s.get("assets") or {})]
-        if not scenes:raise RuntimeError("catálogos sem cena VV/VH em 40 dias")
+        if not scenes:raise RuntimeError("catálogos sem cena VV/VH em 30 dias")
         s=scenes[0]
         def read():
             vals={};https_local={}

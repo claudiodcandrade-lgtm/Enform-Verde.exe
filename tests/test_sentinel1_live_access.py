@@ -44,7 +44,7 @@ class Sentinel1LiveAccessTests(unittest.TestCase):
                 [-55.215, -11.892]]
         aoi = {"type": "Polygon", "coordinates": [ring]}
         now = datetime.now(timezone.utc)
-        found = search_sentinel1_rtc(aoi, start_utc=now-timedelta(days=45), end_utc=now,
+        found = search_sentinel1_rtc(aoi, start_utc=now-timedelta(days=30), end_utc=now,
                                      page_limit=30, max_pages=5)
         scenes = [s for s in found["scenes"] if {"vv", "vh"} <= set(s.get("assets") or {})]
         self.assertTrue(scenes, "MPC found no recent VV/VH Sentinel-1 scenes over the AOI")

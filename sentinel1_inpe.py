@@ -7,6 +7,7 @@ orbit compatibility must still be checked before using it.
 from __future__ import annotations
 
 import json
+import time
 from datetime import datetime, timezone
 from urllib.parse import urlencode, urljoin, urlsplit
 from urllib.request import Request, urlopen
@@ -21,11 +22,17 @@ def _json(url, *, opener=urlopen, timeout=45):
     if parts.scheme!="https" or parts.hostname not in ALLOWED_HOSTS:
         raise ValueError("Untrusted INPE STAC/COG endpoint")
     req=Request(url,headers={"Accept":"application/geo+json, application/json"})
-    try:
-        with opener(req,timeout=timeout) as response:
-            return json.load(response)
-    except Exception as exc:
-        raise RuntimeError("INPE STAC request failed ("+type(exc).__name__+")") from None
+    last=None
+    for attempt in range(3):
+        try:
+            with opener(req,timeout=timeout) as response:
+                return json.load(response)
+        except Exception as exc:
+            last=exc
+            if attempt>=2:break
+            time.sleep(2**attempt)
+    raise RuntimeError("INPE STAC request failed after 3 attempts ("+
+                       type(last).__name__+")") from None
 
 
 def _bounds(geometry):

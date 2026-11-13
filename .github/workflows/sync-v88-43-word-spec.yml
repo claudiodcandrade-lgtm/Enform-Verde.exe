@@ -1,0 +1,62 @@
+name: Synchronize Word specification for V88.43
+on:
+  push:
+    branches:
+      - patches-3.26.6
+    paths:
+      - docs/spec_updates/2026-11-13_v88_43_sar_pair_integrity.md
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: enform-word-spec-v88-43-sync
+  cancel-in-progress: false
+jobs:
+  update-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Append V88.43 checkpoint while preserving specification history
+        run: |
+          python - <<'PY'
+          from zipfile import ZipFile
+          docx='docs/ESPECIFICACAO_TECNICA_COMPLETA.docx'
+          with ZipFile(docx) as archive:
+              xml=archive.read('word/document.xml').decode('utf-8')
+          if 'V88.43 — integridade do par SAR' not in xml:
+              import subprocess
+              subprocess.run([
+                  'python','tools/update_spec_docx.py',
+                  '--docx',docx,
+                  '--entry','docs/spec_updates/2026-11-13_v88_43_sar_pair_integrity.md',
+                  '--baseline','Enform Verde 3.26.29-PRECAMPO-EXPERIMENTAL (par SAR VV/VH íntegro)',
+                  '--head-sha','${{ github.sha }}',
+                  '--code-sha',subprocess.check_output(['git','log','-1','--format=%H','--','desktop_app.py'],text=True).strip(),
+                  '--date','13 de novembro de 2026',
+                  '--footer-label','V88.43 · 3.26.29 experimental · CI pendente',
+                  '--footer-date','13/11/2026'],check=True)
+          PY
+      - name: Verify Word archive and checkpoint
+        run: |
+          python - <<'PY'
+          from zipfile import ZipFile
+          with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as archive:
+              assert archive.testzip() is None
+              xml = archive.read('word/document.xml').decode('utf-8')
+              assert 'V88.43 — integridade do par SAR' in xml and '3.26.29-PRECAMPO-EXPERIMENTAL' in xml
+          print('V88.43 synchronized into the complete Word specification')
+          PY
+      - name: Commit synchronized specification
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
+          git diff --cached --quiet || git commit -m "docs: synchronize full Word specification for V88.43"
+          git push origin HEAD:patches-3.26.6
