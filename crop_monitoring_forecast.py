@@ -151,7 +151,7 @@ def _append_candidate_vigor_lines(lines, result):
     elif result.get("status") == "ERRO_TECNICO":
         lines.append("• Vigor SAR condicional: ERRO TÉCNICO — " + str(result.get("reason", "falha sem detalhe")))
     else:
-        lines.append("• Vigor SAR condicional: N/D — " + str(result.get("reason", "não há dados/referências suficientes")))
+        lines.append("• Vigor: N/D — diagnóstico SAR condicional indisponível: " + str(result.get("reason", "não há dados/referências suficientes")))
 
 def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=None, micro_fn=None):
     from crop_forecast_pipeline import forecast_fields, forecast_lines
