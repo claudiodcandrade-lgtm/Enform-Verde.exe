@@ -39,6 +39,17 @@ class AnalysisPipelineContractTests(unittest.TestCase):
             validate_result_for_publication(
                 self.fingerprint, self.aoi, {"status": "ERRO_TECNICO_LEITURA_SAR"})
 
+    def test_declared_stage_failure_can_be_reported_without_becoming_success(self):
+        result={"status":"ERRO_TECNICO_LEITURA_SAR","vector_path":"/tmp/unknown.geojson",
+                "recent_sar_cover":{"reason":"SELECTED_SCENES_PIXEL_READ_FAILED"}}
+        self.assertTrue(validate_result_for_publication(
+            self.fingerprint,self.aoi,result,required_keys=("vector_path",),
+            allow_declared_error_status=True))
+        with self.assertRaisesRegex(ValueError,"ERRO_INTERNO_NA_ETAPA"):
+            validate_result_for_publication(
+                self.fingerprint,self.aoi,{**result,"error":"internal exception"},
+                required_keys=("vector_path",),allow_declared_error_status=True)
+
 
 if __name__ == "__main__":
     unittest.main()

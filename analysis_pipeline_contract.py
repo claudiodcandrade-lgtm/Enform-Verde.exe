@@ -26,8 +26,15 @@ def geometry_hash(frame) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
 
-def validate_result_for_publication(start_hash, current_frame, result, *, required_keys=()):
-    """Reject stale-AOI, missing, internally failed, or malformed stage output."""
+def validate_result_for_publication(start_hash, current_frame, result, *, required_keys=(),
+                                    allow_declared_error_status=False):
+    """Validate stage identity and shape before displaying results.
+
+    A declared technical status can be displayed as a partial/N-D diagnostic
+    when the caller opts in. This does not make the stage successful and does
+    not permit it to supply analytical classes or values. Internal exceptions,
+    stale AOIs and malformed output remain hard failures.
+    """
     if not start_hash or geometry_hash(current_frame) != start_hash:
         raise ValueError("HASH_AOI_DIVERGENTE — resultado pertence a outra geometria; publicação bloqueada.")
     if not isinstance(result, dict):
@@ -35,7 +42,8 @@ def validate_result_for_publication(start_hash, current_frame, result, *, requir
     if result.get("error"):
         raise ValueError("ERRO_INTERNO_NA_ETAPA — " + str(result["error"])[:300])
     status = str(result.get("status") or "").upper()
-    if status.startswith(("ERRO", "FAILED", "FAILURE")):
+    if (status.startswith(("ERRO", "FAILED", "FAILURE"))
+            and not allow_declared_error_status):
         raise ValueError("ETAPA_COM_ERRO — " + status)
     missing = [key for key in required_keys if key not in result]
     if missing:

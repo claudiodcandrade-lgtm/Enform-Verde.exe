@@ -6,6 +6,8 @@ classifier. Sensitivity to thresholds is not a statistical confidence interval.
 """
 from __future__ import annotations
 import json
+import tempfile
+from contextlib import contextmanager
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import numpy as np
@@ -126,6 +128,59 @@ def _safe_reason(error):
     return result[:200]
 
 
+@contextmanager
+def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=None,
+                               request_get=None, max_bytes=1024*1024*1024):
+    """Download one signed COG over Requests and open it locally.
+
+    This is an independent last read path for Windows builds where GDAL's
+    /vsicurl/ HTTP stack fails to decode provider/proxy error responses. The
+    COG is streamed to a temporary file, size and TIFF signature are checked,
+    and the file is removed as soon as the AOI window has been read. TLS
+    verification stays enabled and signed URLs are never written to disk.
+    """
+    import requests
+    from sentinel1_mpc import asset_href_for_read_attempt
+    import tls_setup
+
+    tls_setup.configure()
+    getter=request_get or requests.get
+    # Use a refreshed collection SAS token first. If the token endpoint is
+    # unavailable, asset_href_for_read_attempt falls back to the per-asset
+    # signer without exposing credentials in diagnostics.
+    signed=asset_href_for_read_attempt(
+        asset_href,attempt=2,token=token,token_fn=token_fn)
+    with tempfile.TemporaryDirectory(prefix="enform_s1_cog_") as temp_dir:
+        path=Path(temp_dir)/"asset.tif"
+        total=0
+        try:
+            with getter(signed,headers={"Accept-Encoding":"identity"},
+                        timeout=(15,180),stream=True,verify=True) as response:
+                if int(response.status_code)!=200:
+                    raise RuntimeError("HTTPS COG download returned HTTP "+str(response.status_code))
+                content_type=str(response.headers.get("Content-Type","")).lower()
+                if "text/html" in content_type or "application/json" in content_type:
+                    raise RuntimeError("HTTPS COG endpoint returned a non-raster response")
+                declared=response.headers.get("Content-Length")
+                if declared and int(declared)>max_bytes:
+                    raise RuntimeError("HTTPS COG exceeds the per-asset download limit")
+                with path.open("wb") as output:
+                    for chunk in response.iter_content(chunk_size=1024*1024):
+                        if not chunk:continue
+                        total+=len(chunk)
+                        if total>max_bytes:
+                            raise RuntimeError("HTTPS COG exceeded the per-asset download limit")
+                        output.write(chunk)
+        except requests.RequestException as exc:
+            raise RuntimeError("HTTPS COG download failed: "+type(exc).__name__) from None
+        with path.open("rb") as source:
+            signature=source.read(4)
+        if signature not in (b"II*\x00",b"MM\x00*",b"II+\x00",b"MM\x00+"):
+            raise RuntimeError("HTTPS COG response is not a TIFF/BigTIFF asset")
+        with rasterio.open(str(path)) as dataset:
+            yield dataset
+
+
 def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
     """Acquire at least three same-orbit actual VV/VH RTC scenes and map candidates."""
     result={"status":"N/D","native_confirmed":False,"crop_confirmed":False,
@@ -199,7 +254,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                     provider_diag["token_error_count"]+=1
             for dt,scene in provider_selected:
                 scene_ok=False
-                for attempt in range(4):
+                for attempt in range(5 if provider=="MPC" else 4):
                     provider_diag["pixel_read_attempt_count"]+=1
                     read_stage="asset_authorization"
                     try:
@@ -222,14 +277,22 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                                   "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
                                                   "GDAL_HTTP_VERSION":"1.1"})
                             if attempt==3:gdal_opts["GDAL_HTTP_MULTIPLEX"]="NO"
-                            with rasterio.Env(**gdal_opts):
-                                asset_href=scene["assets"][pol]["href"]
+                            asset_href=scene["assets"][pol]["href"]
+                            if provider=="MPC" and attempt==4:
+                                source_context=_open_signed_cog_via_https(
+                                    asset_href,rasterio=rasterio,token=provider_token,
+                                    token_fn=token_fn or get_runtime_sas_token)
+                            else:
                                 read_href=(asset_href_for_read_attempt(
                                     asset_href,attempt=attempt,token=provider_token,
                                     token_fn=token_fn or get_runtime_sas_token)
                                     if provider=="MPC" else asset_href)
+                                source_context=None
+                            with rasterio.Env(**gdal_opts):
                                 read_stage="open_cog"
-                                with rasterio.open(read_href) as src:
+                                if source_context is None:
+                                    source_context=rasterio.open(read_href)
+                                with source_context as src:
                                     read_stage="read_cog_window"
                                     if not src.crs:raise ValueError("Missing georeferencing in SAR source")
                                     if scene_grid is None:
@@ -278,7 +341,9 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                              "stage":read_stage,
                              "read_strategy":("MULTIRANGE_DEFAULT" if attempt==0 else
                                "SERIAL_RANGE_HTTP11" if attempt==1 else
-                               "SINGLE_GET_HTTP11" if attempt==2 else "SERIAL_NO_MULTIPLEX_HTTP11"),
+                               "SINGLE_GET_HTTP11" if attempt==2 else
+                               "SERIAL_NO_MULTIPLEX_HTTP11" if attempt==3 else
+                               "HTTPS_STREAM_TO_LOCAL_TIFF"),
                              "error":_safe_reason(exc),
                              "attempt":attempt+1,"recovered":False}
                         provider_errors.append(row)

@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.24-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.25-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -3011,15 +3011,32 @@ class App(tk.Tk):
                                "units":{},"layers":[]}
             self.project["soil_pedology"]=pedology
             self.project["soil_fertility"]=fertility or {"status":"N/D","reason":"sem consulta"}
-            validate_result_for_publication(run_aoi_hash,self.gdf,land,required_keys=("vector_path",))
+            # A SAR transport failure is a reportable analysis state, not a
+            # reason to discard independent soil/carbon diagnostics or leave
+            # the dashboard blank. The failed stage remains explicitly failed
+            # and its classes stay N/D; internal exceptions and stale AOIs
+            # remain hard blockers.
+            validate_result_for_publication(run_aoi_hash,self.gdf,land,
+                required_keys=("vector_path",),allow_declared_error_status=True)
             validate_result_for_publication(run_aoi_hash,self.gdf,native,
-                required_keys=("area_aoi_ha","strata","components"))
+                required_keys=("area_aoi_ha","strata","components"),
+                allow_declared_error_status=True)
+            land_status=str(land.get("status") or "N/D").upper()
+            recent_sar=land.get("recent_sar_cover") or {}
+            land_failed=land_status.startswith(("ERRO","FAILED","FAILURE"))
+            native_status=str(native.get("status") or "N/D").upper()
+            native_failed=native_status.startswith(("ERRO","FAILED","FAILURE"))
+            partial=land_failed or native_failed
             self.project["pipeline_audit"]={
                 "analysis_run_id":self.project["analysis_run_id"],
                 "aoi_hash":run_aoi_hash,
+                "overall_status":"PARCIAL_COM_ERRO_TECNICO" if partial else "CONCLUIDA_COM_ESTADOS_DECLARADOS",
                 "stages":{
-                    "land_use":{"status":"CONCLUIDA","vector_path":land.get("vector_path")},
-                    "native_carbon":{"status":"CONCLUIDA" if native.get("complete") else "PARCIAL",
+                    "land_use":{"status":"ERRO_TECNICO" if land_failed else land_status,
+                                 "reason":recent_sar.get("reason") or land.get("reason"),
+                                 "vector_path":land.get("vector_path")},
+                    "native_carbon":{"status":"ERRO_TECNICO" if native_failed else
+                                               "CONCLUIDA" if native.get("complete") else "PARCIAL",
                                      "native_area_ha":native.get("native_area_ha"),
                                      "unknown_cover_area_ha":native.get("unknown_cover_area_ha")},
                     "pedology":{"status":(pedology or {}).get("status","N/D")},
@@ -3028,6 +3045,12 @@ class App(tk.Tk):
             }
             self._present_native_carbon(native,land,pedology=pedology,fertility=fertility)
             self._present_cultivated_monitoring(land)
+            if partial:
+                reason=(recent_sar.get("reason") or land.get("reason") or
+                        native.get("reason") or "falha técnica registrada na auditoria da etapa")
+                self.status.set("Análise parcial — SAR com erro técnico; classes atuais permanecem N/D. "+str(reason)[:180])
+            else:
+                self.status.set("Análise concluída com estados e lacunas declarados; consulte a trilha de auditoria.")
             return
         except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
 

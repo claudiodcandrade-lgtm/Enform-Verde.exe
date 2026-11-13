@@ -31,11 +31,15 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
         for fn in (app.cbers4a_wfi_preview,app.nasa_gibs_preview):
             self.assertIn("_xy_coords(poly.exterior.coords)",inspect.getsource(fn))
 
-    def test_sar_both_paths_have_four_transport_attempts(self):
+    def test_sar_has_transport_retries_and_an_independent_https_reader(self):
+        src=inspect.getsource(recent_sar_landcover.run_recent_sar_screen)
+        self.assertIn("range(5 if provider==\"MPC\" else 4)",src)
+        self.assertIn("_open_signed_cog_via_https(",src)
+        self.assertIn("HTTPS_STREAM_TO_LOCAL_TIFF",src)
+        self.assertIn("for attempt in range(4):",inspect.getsource(sar_landcover_lemplus._monthly_features))
         for fn in (recent_sar_landcover.run_recent_sar_screen,
                    sar_landcover_lemplus._monthly_features):
             src=inspect.getsource(fn)
-            self.assertIn("for attempt in range(4):",src)
             self.assertIn('CPL_VSIL_CURL_USE_HEAD',src)
             self.assertIn('GDAL_HTTP_MULTIRANGE',src)
             self.assertIn('GDAL_HTTP_VERSION',src)
@@ -67,6 +71,7 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
             self.assertIn('SINGLE_GET',src)
             self.assertNotIn('GDAL_HTTP_MULTIRANGE":"NO"',src)
             self.assertIn("asset_href_for_read_attempt(",src)
+        self.assertIn("HTTPS_STREAM_TO_LOCAL_TIFF",inspect.getsource(recent_sar_landcover.run_recent_sar_screen))
 
     def test_mapbiomas_reader_has_independent_serial_transport(self):
         import mapbiomas_zonal
