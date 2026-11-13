@@ -6,8 +6,9 @@ from pathlib import Path
 import unittest
 import geopandas as gpd
 from shapely.geometry import box
-from crop_monitoring_forecast import crops_in_land_result,experimental_crops_in_land_result,canonical_crop
-from crop_spatial_monitoring import crop_geometry
+from crop_monitoring_forecast import (crops_in_land_result,experimental_crops_in_land_result,
+                                     canonical_crop,_append_candidate_vigor_lines)
+from crop_spatial_monitoring import crop_geometry,current_sar_cultivated_candidate_geometry
 
 
 class ExperimentalCropForecastContracts(unittest.TestCase):
@@ -40,6 +41,35 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
             {"class_name":"Lavoura de Soja","source":"IBGE_POTENCIAL","area_ha":900},
             {"class_name":"Lavoura de Milho","source":"FALLBACK_CARTOGRAFICO","area_ha":800}]}
         self.assertFalse(crops_in_land_result(land))
+
+    def test_current_vigor_mask_uses_only_recent_sar_cultivated_candidates(self):
+        frame=gpd.GeoDataFrame({
+            "class_code":[1,2,3,2],
+            "source":["SAR_CURRENT_EXPERIMENTAL"]*3+["SAR_EXPERIMENTAL_MODELO"]},
+            geometry=[box(0,0,.01,.01),box(1,1,1.02,1.02),box(2,2,2.01,2.01),
+                      box(3,3,3.02,3.02)],crs=4326)
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"recent.geojson"
+            frame.to_file(path,driver="GeoJSON")
+            land={"recent_sar_cover":{"status":"SAR_REAL_EXPERIMENTAL_CANDIDATES",
+                                       "vector_path":str(path)}}
+            result=current_sar_cultivated_candidate_geometry(land)
+            self.assertIsNotNone(result)
+            self.assertEqual(len(result),1)
+            self.assertAlmostEqual(result.geometry.iloc[0].area,frame.geometry.iloc[1].area)
+            self.assertIsNone(current_sar_cultivated_candidate_geometry(
+                {"recent_sar_cover":{"status":"N/D","vector_path":str(path)}}))
+
+    def test_candidate_vigor_panel_is_always_explicitly_conditional(self):
+        lines=[]
+        _append_candidate_vigor_lines(lines,{"status":"experimental","class":"vigor adequado",
+            "probabilities":{"baixo vigor":.2,"vigor adequado":.6,"alto vigor":.2},
+            "acquisition_period_utc":["2026-11-01T00:00:00Z","2026-11-12T00:00:00Z"]})
+        rendered="\n".join(lines)
+        self.assertIn("CONDICIONAL/EXPERIMENTAL",rendered)
+        self.assertIn("cultura não identificada",rendered)
+        self.assertIn("não confirma cultivo atual",rendered)
+        self.assertIn("janela máxima 30 dias",rendered)
 
 
 if __name__=="__main__":

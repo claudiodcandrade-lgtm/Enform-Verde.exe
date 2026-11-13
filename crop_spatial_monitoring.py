@@ -29,6 +29,48 @@ def crop_geometry(land, crop, *, canonical_fn):
     return selected if not selected.empty else None
 
 
+def current_sar_cultivated_candidate_geometry(land):
+    """Read only contemporaneous Sentinel-1 class-2 candidate polygons.
+
+    These geometries indicate a radar signature compatible with cultivation;
+    they do not identify a crop and must only support a conditional SAR
+    structural-vigor diagnostic. The caller still has to enforce scene age.
+    """
+    import geopandas as gpd
+    orbital = (land or {}).get("recent_sar_cover") or {}
+    if orbital.get("status") != "SAR_REAL_EXPERIMENTAL_CANDIDATES":
+        return None
+    path = orbital.get("vector_path")
+    if path and Path(path).is_file():
+        frame = gpd.read_file(path)
+        required = {"class_code", "source", "geometry"}
+        if frame.empty or not required.issubset(frame.columns) or frame.crs is None:
+            return None
+        mask = (frame["class_code"].astype(str) == "2") & (
+            frame["source"].astype(str) == "SAR_CURRENT_EXPERIMENTAL")
+        selected = frame.loc[mask, ["geometry"]].copy()
+        selected = selected[selected.geometry.notna() & ~selected.geometry.is_empty]
+        return selected if not selected.empty else None
+    # A deliberately bounded vector export may be omitted for very fragmented
+    # masks. Recover connected class-2 regions from the exact SAR raster.
+    raster_path = orbital.get("raster_path")
+    if not raster_path or not Path(raster_path).is_file():
+        return None
+    import rasterio
+    from rasterio.features import shapes
+    from shapely.geometry import shape
+    with rasterio.open(raster_path) as src:
+        codes = src.read(1, masked=True)
+        mask = (~codes.mask) & (codes.data == 2)
+        geoms = [shape(g) for g, value in shapes(codes.data, mask=mask, transform=src.transform)
+                 if int(value) == 2]
+        crs = src.crs
+    geoms = [geom for geom in geoms if geom is not None and not geom.is_empty]
+    if not geoms or crs is None:
+        return None
+    return gpd.GeoDataFrame(geometry=geoms, crs=crs)
+
+
 def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
                         target_patch_ha=64.0, min_purity=.90):
     """Deterministic representative interior patches, using equal-area metres.
@@ -81,8 +123,11 @@ def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
 
 
 def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
-                           max_patches=6, require_scene_evidence=False):
-    patches = sample_crop_patches(crop_gdf, max_patches=max_patches)
+                           max_patches=6, require_scene_evidence=False,
+                           min_area_ha=12.0, target_patch_ha=64.0):
+    patches = sample_crop_patches(crop_gdf, max_patches=max_patches,
+                                  min_area_ha=min_area_ha,
+                                  target_patch_ha=target_patch_ha)
     if not patches:
         return {"status": "N/D", "reason": "sem parcelas internas suficientemente homogêneas no mapa anual",
                 "patches_evaluated": 0, "patches_valid": 0}
@@ -107,6 +152,8 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
                          "metric_boot_p05_p95": result.get("metric_boot_p05_p95"),
                          "composite_boot_p05_p95": result.get("composite_boot_p05_p95"),
                          "n_bootstrap": result.get("n_bootstrap"),
+                         "reference_fields": result.get("reference_fields"),
+                         "size_basis": result.get("size_basis"),
                          "probabilities": result.get("probabilities"),
                          "uncertainty_scope": result.get("uncertainty_scope"),
                          "reference_blocks": result.get("reference_blocks"),

@@ -56,6 +56,103 @@ def experimental_crops_in_land_result(land):
     """Annual SAR RF models generate RETROSPECTIVE conditional crop scenarios."""
     return _crops_from_sar_source(land, "SAR_EXPERIMENTAL_MODELO")
 
+
+def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
+    """Estimate relative radar vigor on current cultivated-area candidates.
+
+    The candidate mask is deliberately crop-agnostic. It is eligible only for
+    a conditional Sentinel-1 diagnostic, never for current crop confirmation
+    or crop-specific yield conditioning.
+    """
+    from crop_spatial_monitoring import current_sar_cultivated_candidate_geometry
+    orbital=(land or {}).get("recent_sar_cover") or {}
+    if orbital.get("status") == "ERRO_TECNICO":
+        return {"status":"ERRO_TECNICO",
+                "reason":str(orbital.get("reason") or "falha técnica na leitura SAR atual"),
+                "crop_confirmed":False,"scope":"CURRENT_CULTIVATED_CANDIDATE"}
+    if orbital.get("status") != "SAR_REAL_EXPERIMENTAL_CANDIDATES":
+        status=str(orbital.get("status") or "N/D")
+        reason=str(orbital.get("reason") or "não há série SAR atual utilizável")
+        return {"status":"N/D","reason":status+": "+reason,
+                "crop_confirmed":False,"scope":"CURRENT_CULTIVATED_CANDIDATE"}
+    candidates = current_sar_cultivated_candidate_geometry(land)
+    if candidates is None:
+        return {"status": "N/D", "reason": "a série SAR atual foi lida, mas não há polígonos candidatos cultivados suficientes/representados no vetor ou raster",
+                "crop_confirmed": False, "scope": "CURRENT_CULTIVATED_CANDIDATE"}
+    try:
+        from shapely.ops import unary_union
+        import geopandas as gpd
+        merged = unary_union(list(candidates.geometry))
+        if merged is None or merged.is_empty:
+            raise ValueError("máscara candidata SAR vazia")
+        target = gpd.GeoDataFrame(geometry=[merged], crs=candidates.crs)
+
+        def candidate_scene_vigor(patch, day, label):
+            if getattr(vigor_fn, "__name__", "") == "automatic_vigor":
+                return vigor_fn(patch, day, label, reference_gdf=candidates)
+            return vigor_fn(patch, day, label)
+
+        result = sampled_fn(
+            target, as_of, "Área cultivada candidata (cultura N/D)",
+            candidate_scene_vigor,
+            require_scene_evidence=True,
+            min_area_ha=2.0,
+            target_patch_ha=16.0,
+        )
+        result.update({"crop_confirmed": False, "scope": "CURRENT_CULTIVATED_CANDIDATE"})
+        if result.get("status") in ("experimental", "validated"):
+            result.update({
+                "classification": "CONDITIONAL_EXPERIMENTAL",
+                "source": "máscara de candidato cultivado Sentinel-1 em janela móvel de até 150 dias + pixels VV/VH de aquisição com até 30 dias",
+                "reference_definition": "outros polígonos da classe SAR candidata 2, mesma AOI e aquisição; cultura não identificada",
+                "interpretation_limit": "indicador relativo de estrutura/retroespalhamento SAR; não confirma cultura, sanidade nem vigor agronômico absoluto",
+            })
+        else:
+            result["classification"] = "N/D"
+        return result
+    except Exception as exc:
+        return {"status": "ERRO_TECNICO", "reason": type(exc).__name__ + ": " + str(exc)[:180],
+                "crop_confirmed": False, "scope": "CURRENT_CULTIVATED_CANDIDATE"}
+
+
+def _append_candidate_vigor_lines(lines, result):
+    if result.get("status") in ("experimental", "validated"):
+        probs = result.get("probabilities") or {}
+        distribution = ", ".join(f"{k} {100*float(v):.0f}%" for k, v in probs.items())
+        lines.append("• Vigor SAR RELATIVO — CONDICIONAL/EXPERIMENTAL em área cultivada candidata; cultura não identificada: "
+                     + str(result.get("class", "N/D")) + (" (" + distribution + ")" if distribution else "") + ".")
+        lines.append("  A classe compara pixels/candidatos SAR da mesma AOI na mesma aquisição; não confirma cultivo atual, espécie, fitossanidade ou vigor absoluto.")
+        lines.append("  Máscara de candidatos: série temporal móvel de até 150 dias; vigor calculado apenas com VV/VH de cena datada dentro de 30 dias.")
+        lines.append("  Amostras SAR válidas: " + str(result.get("patches_valid", 0)) + "/" + str(result.get("patches_evaluated", 0)) +
+                     "; área de candidatos coberta: " + format(float(result.get("sar_sample_coverage_fraction", 0))*100, ".1f") + "%.")
+        dates = result.get("acquisition_period_utc")
+        if dates:
+            lines.append("  Cenas Sentinel-1 UTC: " + str(dates[0]) + " até " + str(dates[1]) + "; janela máxima 30 dias.")
+        for sample in result.get("sample_audit") or []:
+            metrics = sample.get("metrics") or {}
+            intervals = sample.get("metric_boot_p05_p95") or {}
+            if metrics:
+                metrics_line=[]
+                for key,label in (("size","porte proxy"),("uniformity","uniformidade"),("texture_homogeneity","textura VH")):
+                    value=metrics.get(key)
+                    if value is None:
+                        continue
+                    ci=intervals.get(key)
+                    suffix=(f" (bootstrap 90% {ci[0]:.3f}–{ci[1]:.3f})" if ci else " (incerteza N/D)")
+                    metrics_line.append(f"{label} {float(value):.3f}{suffix}")
+                if metrics_line:
+                    lines.append("  Indicadores SAR: " + "; ".join(metrics_line) + ".")
+                if sample.get("reference_fields") is not None:
+                    lines.append("  Referências SAR contemporâneas da mesma classe candidata: " + str(sample.get("reference_fields")) + "; composição de referências indicada na auditoria.")
+        lines.append("  Bootstrap espacial e probabilidades medem estabilidade interna, não acurácia validada em campo; altura em metros não é inferida de VV/VH.")
+        for sample in result.get("sample_audit") or []:
+            if sample.get("scene_id") and sample.get("acquisition_utc"):
+                lines.append("  Evidência de pixel: " + str(sample["scene_id"]) + " — " + str(sample["acquisition_utc"]))
+    elif result.get("status") == "ERRO_TECNICO":
+        lines.append("• Vigor SAR condicional: ERRO TÉCNICO — " + str(result.get("reason", "falha sem detalhe")))
+    else:
+        lines.append("• Vigor SAR condicional: N/D — " + str(result.get("reason", "não há dados/referências suficientes")))
+
 def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=None, micro_fn=None):
     from crop_forecast_pipeline import forecast_fields, forecast_lines
     from crop_panel_yield_model import load_artifact
@@ -89,6 +186,10 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
              "field_validation_status":"PENDENTE" if annual_experimental else "indefinido",
              "mapbiomas_historical_reference_only": historical,
              "sensor_contingency": fallback_plan(target="agricultura_area_vigor_safra")}
+    from crop_spatial_monitoring import sampled_sentinel_vigor
+    candidate_vigor = _current_candidate_vigor(
+        gdf, land, as_of, vigor_fn, sampled_sentinel_vigor)
+    audit["current_sar_candidate_vigor"] = candidate_vigor
     if not crops:
         lines.append("• Cultura atual: N/D — nenhum identificador SAR validado produziu máscara contemporânea nesta AOI.")
         if historical:
@@ -97,7 +198,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
             lines.append("• MapBiomas anual: referência histórica de "+format(area, ".2f")+" ha"+
                          ((" ("+labels+")") if labels else "")+
                          "; não usada para identificar cultura atual, vigor ou safra.")
-        lines.append("• Vigor: N/D — sem máscara atual de cultura derivada de SAR.")
+        _append_candidate_vigor_lines(lines, candidate_vigor)
         lines.append("• Produtividade e produção da propriedade: N/D — exigem identificador SAR atual e vigor com cenas datadas.")
         audit["forecast_block_reason"] = "sem classe de cultura SAR validada"
         return lines, audit
@@ -114,6 +215,8 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     # measurements are not a calibrated or class-specific SAR classifier.
     # Keeping a bounded query avoids repeated network calls for every crop.
     sar_probe_done = False
+    if annual_experimental:
+        _append_candidate_vigor_lines(lines, candidate_vigor)
 
     for crop, area in sorted(crops.items(), key=lambda kv: -kv[1]):
         if crop == "__temporarias__":
@@ -144,7 +247,18 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                  "coverage_age_status":"HISTORICO_SAFRA_COMPLETA" if annual_experimental else "a verificar"}
         crop_gdf = crop_geometry(land, crop, canonical_fn=canonical_crop)
         entry["crop_polygon_available"] = crop_gdf is not None
-        if crop_gdf is not None and not sar_probe_done:
+        if annual_experimental:
+            # The prior-season crop mask is not a current crop mask. Current
+            # SAR candidate vigor is reported separately and cannot condition
+            # this crop-specific forecast.
+            vig = {"status": "N/D",
+                   "reason": "vigor específico da cultura não estimado sobre máscara anual retrospectiva; consulte o diagnóstico SAR condicional de candidato cultivado",
+                   "scope": "ANNUAL_CROP_MASK_NOT_CURRENT"}
+            entry["vigor"] = candidate_vigor
+            entry["crop_specific_vigor"] = vig
+            entry["vigor_current_crop_confirmed"] = False
+            lines.append("  Vigor específico de " + crop + ": N/D — máscara de cultura da safra anterior não confirma a localização atual; não usar o indicador genérico de candidato para o modelo de safra desta cultura.")
+        elif crop_gdf is not None and not sar_probe_done:
             sar_probe_done = True
             try:
                 from sar_crop_live_probe import probe_recent_sar_crop_pixels
@@ -164,7 +278,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     "reason": type(exc).__name__ + ": " + str(exc)[:180]}
                 lines.append("  SAR ATUAL: ERRO TÉCNICO — "+
                              audit["live_sar_probe"]["reason"])
-        if crop in art.get("crops", {}):
+        if crop in art.get("crops", {}) and not annual_experimental:
             # Both target and peer masks must be current, accepted SAR crop labels.
             # No annual map-code or cartographic class selects the peer fields.
             def scene_vigor(patch, day, _crop_label):
