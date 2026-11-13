@@ -3948,6 +3948,11 @@ def module_check():
     (Path(tempfile.gettempdir())/"enform_verde_module_check.json").write_text(json.dumps(out,ensure_ascii=False),encoding="utf-8")
     return out
 
+def _valid_raster_pixel_count(array):
+    """Count unmasked pixels, including MaskedArray's scalar no-mask case."""
+    return int(np.ma.count(array))
+
+
 def network_check(attempts=3):
     """Compiled-EXE LIVE check (V87.37): real CBERS-4A pixels and real Sentinel-1
     RTC VV/VH pixels must be readable over a Brazilian AOI (Sinop) with TLS
@@ -4007,7 +4012,7 @@ def network_check(attempts=3):
                         g=shape(transform_geom("EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
                         w=from_bounds(*g.bounds,transform=src.transform).round_offsets().round_lengths()
                         a=src.read(1,window=w,masked=True)
-                        vals[pol]=int((~a.mask).sum()) if hasattr(a,"mask") else int(a.size)
+                        vals[pol]=_valid_raster_pixel_count(a)
                 if s.get("provider","MPC")=="MPC":
                     # Exercise the independent Requests/TLS/local-COG path in
                     # the compiled Windows executable; GDAL-only success is
@@ -4021,7 +4026,7 @@ def network_check(attempts=3):
                             "EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
                         w=from_bounds(*geom.bounds,transform=src.transform)
                         a=src.read(1,window=w,masked=True)
-                        https_local[pol]=int((~a.mask).sum()) if hasattr(a,"mask") else int(a.size)
+                        https_local[pol]=_valid_raster_pixel_count(a)
             return {"gdal":vals,"https_local":https_local}
         px=retry(read)
         if min(px["gdal"].values())<100:raise RuntimeError("menos de 100 pixels SAR válidos via GDAL: "+str(px["gdal"]))

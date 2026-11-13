@@ -19,6 +19,13 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class SinopWindowsRecurrenceTests(unittest.TestCase):
+    def test_valid_pixel_count_handles_scalar_unmasked_flag(self):
+        import numpy as np
+        unmasked=np.ma.array([1,2,3,4],mask=np.ma.nomask)
+        partly_masked=np.ma.array([1,2,3,4],mask=[False,True,False,True])
+        self.assertEqual(app._valid_raster_pixel_count(unmasked),4)
+        self.assertEqual(app._valid_raster_pixel_count(partly_masked),2)
+
     def test_optical_overlays_accept_3d_kml_coordinates(self):
         from shapely.geometry import Polygon
         ring=Polygon([(-55.21,-11.89,250),(-55.17,-11.89,251),

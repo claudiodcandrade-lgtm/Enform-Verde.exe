@@ -2047,4 +2047,9 @@ O arquivo `uso_solo_auditoria.json` registra 13 cenas SAR candidatas no Microsof
 
 # V88.36 — recuperação SAR por recorte limitado da AOI (13/11/2026)
 
-O teste do EXE no workflow Windows falhou porque a cena COG Sentinel-1 excedeu 1 GiB. A correção adiciona recuperação via recorte da AOI no serviço oficial do Planetary Computer para COGs grandes e falhas de assinatura/transporte/HTTP/TIFF. O fluxo não transforma erro técnico em ausência de dados. A suíte local passou com 1.134 testes e 1 skip; o workflow Windows no SHA final ainda precisa validar o recorte real. Até essa prova, sem artefato Windows aprovado ou afirmação de conclusão ponta a ponta.
+O teste do EXE no workflow Windows falhou porque a cena COG Sentinel-1 excedeu 1 GiB. A correção adiciona recuperação via recorte da AOI no serviço oficial do Planetary Computer para COGs grandes e falhas de assinatura/transporte/HTTP/TIFF. O fluxo não transforma erro técnico em ausência de dados. A suíte local passou com 1.135 testes e 1 skip; o workflow Windows no SHA final ainda precisa validar o recorte real. Até essa prova, sem artefato Windows aprovado ou afirmação de conclusão ponta a ponta.
+
+
+# V88.36 — retificação do autoteste Windows (13/11/2026)
+
+O workflow compilou o EXE, abriu pixels CBERS‑4A e passou nas provas SAR reais anteriores. O autoteste `--network-check` então registrou 1 pixel por polarização porque o código usava `(~a.mask).sum()`; quando Rasterio retorna `a.mask` como escalar `False` para máscara vazia, esse cálculo resulta em 1. Corrigido por `numpy.ma.count`, com teste para raster totalmente válido e parcialmente mascarado. A nova suíte local passou: 1.135 testes, 1 skip. A repetição do autoteste Windows no novo commit ainda é gate obrigatório; não declarar EXE operacional antes dela.

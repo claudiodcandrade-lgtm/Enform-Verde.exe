@@ -10,10 +10,11 @@ A rota HTTPS mantém a leitura local do COG quando o tamanho cabe no limite. Par
 
 O recorte é uma rota de recuperação de pixels, não uma prova de disponibilidade para qualquer AOI. Erros do serviço de recorte continuam registrados como erro técnico; não autorizam contingência como se a busca tivesse confirmado ausência de SAR.
 
-## Verificação local e gates restantes
+## Verificação e diagnóstico do gate Windows
 
-- A suíte completa local passou: 1.134 testes, com 1 teste ignorado por ausência de display. `py_compile` dos módulos modificados passou.
-- Testes novos simulam COG maior que 1 GiB, falha de assinatura e interrupção de transporte; todos confirmam tentativa do recorte limitado.
-- O teste Windows do EXE que falhou no COG de 2 GiB precisa ser repetido no commit final. O teste simulado não comprova a resposta real do serviço nem a leitura no Windows.
+- A suíte completa local passou após a última correção: 1.135 testes, com 1 teste ignorado por ausência de display. `py_compile` e os 17 testes direcionados passaram.
+- O workflow Windows executou as provas ópticas e SAR reais anteriores com sucesso, compilou o EXE e passou pela paridade Python/Windows. O autoteste seguinte falhou porque o contador interpretava a máscara escalar `False` de um raster sem pixels mascarados como apenas 1 pixel válido. Isso era erro no contador do gate, não evidência de que a leitura SAR retornou somente um pixel.
+- Corrigido com `numpy.ma.count`, que conta corretamente dados sem máscara e dados parcialmente mascarados. Há regressão cobrindo ambos os casos.
+- O novo commit ainda precisa repetir o autoteste live no EXE, inclusive a rota HTTPS/recorte SAR. Não declarar o build distribuível antes desse gate.
 - A classificação e as estimativas permanecem experimentais, sem homologação científica independente. A execução do KML integral no aplicativo até a apresentação no dashboard continua pendente.
 
