@@ -4014,7 +4014,9 @@ def network_check(attempts=3):
                     # not evidence that the recovery route works.
                     with _open_signed_cog_via_https(
                             s["assets"][pol]["href"],rasterio=rasterio,
-                            token_fn=get_runtime_sas_token) as src:
+                            token_fn=get_runtime_sas_token,item_id=s.get("id"),
+                            asset_key=pol,geometry=mapping(aoi.geometry.iloc[0]),
+                            collection=s.get("collection","sentinel-1-rtc")) as src:
                         geom=shape(transform_geom(
                             "EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
                         w=from_bounds(*geom.bounds,transform=src.transform)

@@ -16,7 +16,7 @@ class _Response:
 
 
 class _Dataset:
-    def __init__(self,path,observed):self.path=path;self.observed=observed
+    def __init__(self,path,observed):self.path=path;self.observed=observed;self.count=1;self.width=100;self.height=100
     def __enter__(self):
         from pathlib import Path
         self.observed.append(Path(self.path).is_file())
@@ -27,6 +27,13 @@ class _Dataset:
 class _Rasterio:
     def __init__(self,observed):self.observed=observed
     def open(self,path):return _Dataset(path,self.observed)
+
+class _MemoryFile:
+    def __init__(self,data):self.data=data
+    def __enter__(self):return _Dataset("memory",[])
+    def __exit__(self,*args):return False
+    def open(self):return _Dataset("memory",[])
+    def close(self):pass
 
 
 class _RequestsStub:
@@ -69,6 +76,90 @@ class SarHttpsLocalReadFallbackTests(unittest.TestCase):
                         "https://sentinel1euwestrtc.blob.core.windows.net/x.tif",
                             rasterio=_Rasterio([]),request_get=requests_stub.get):
                     pass
+
+    def test_oversized_cog_uses_bounded_official_aoi_crop(self):
+        class Large(_Response):
+            headers={"Content-Type":"image/tiff","Content-Length":str(2*1024**3)}
+            def iter_content(self,chunk_size):
+                raise AssertionError("oversized source must not be streamed in full")
+        class CropResponse:
+            status_code=200
+            headers={"Content-Type":"image/tiff; application=geotiff"}
+            content=b"II*\x00crop"
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+        observed=[]
+        rasterio=_Rasterio(observed)
+        rasterio.io=type("IO",(),{"MemoryFile":_MemoryFile})
+        requests_stub=_RequestsStub(Large())
+        crop_calls=[]
+        def post(url,**kwargs):
+            crop_calls.append((url,kwargs))
+            return CropResponse()
+        geom={"type":"Polygon","coordinates":[[[-55.21,-11.89],[-55.17,-11.89],
+             [-55.17,-11.855],[-55.21,-11.855],[-55.21,-11.89]]]}
+        with patch("tls_setup.configure"), \
+             patch("sentinel1_mpc.asset_href_for_read_attempt",return_value="https://signed.example/large.tif"), \
+             patch.dict(sys.modules,{"requests":requests_stub}):
+            with _open_signed_cog_via_https(
+                    "https://sentinel1euwestrtc.blob.core.windows.net/x.tif",
+                    rasterio=rasterio,request_get=requests_stub.get,request_post=post,
+                    item_id="S1_TEST_RTC",asset_key="vv",geometry=geom,
+                    max_bytes=1024) as ds:
+                self.assertEqual(ds.path,"memory")
+        self.assertEqual(len(crop_calls),1)
+        self.assertIn("/api/data/v1/item/crop?",crop_calls[0][0])
+        self.assertIn("assets=vv",crop_calls[0][0])
+        self.assertEqual(crop_calls[0][1]["verify"],True)
+
+    def test_signing_failure_recovers_through_aoi_crop(self):
+        class CropResponse:
+            status_code=200
+            headers={"Content-Type":"image/tiff; application=geotiff"}
+            content=b"II*\x00crop"
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+        requests_stub=_RequestsStub(None)
+        rasterio=_Rasterio([])
+        rasterio.io=type("IO",(),{"MemoryFile":_MemoryFile})
+        geom={"type":"Polygon","coordinates":[[[-55.21,-11.89],[-55.17,-11.89],
+             [-55.17,-11.855],[-55.21,-11.855],[-55.21,-11.89]]]}
+        crop_calls=[]
+        def post(url,**kwargs):crop_calls.append(url);return CropResponse()
+        with patch("tls_setup.configure"), \
+             patch("sentinel1_mpc.asset_href_for_read_attempt",side_effect=ValueError("token unavailable")), \
+             patch.dict(sys.modules,{"requests":requests_stub}):
+            with _open_signed_cog_via_https(
+                    "https://sentinel1euwestrtc.blob.core.windows.net/x.tif",
+                    rasterio=rasterio,request_post=post,item_id="S1_TEST_RTC",
+                    asset_key="vv",geometry=geom) as ds:
+                self.assertEqual(ds.path,"memory")
+        self.assertEqual(len(crop_calls),1)
+
+    def test_transport_failure_recovers_through_aoi_crop(self):
+        class CropResponse:
+            status_code=200
+            headers={"Content-Type":"image/tiff; application=geotiff"}
+            content=b"II*\x00crop"
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+        requests_stub=_RequestsStub(None)
+        def failed_get(*args,**kwargs):raise requests_stub.RequestException("connection reset")
+        rasterio=_Rasterio([])
+        rasterio.io=type("IO",(),{"MemoryFile":_MemoryFile})
+        geom={"type":"Polygon","coordinates":[[[-55.21,-11.89],[-55.17,-11.89],
+             [-55.17,-11.855],[-55.21,-11.855],[-55.21,-11.89]]]}
+        crop_calls=[]
+        def post(url,**kwargs):crop_calls.append(url);return CropResponse()
+        with patch("tls_setup.configure"), \
+             patch("sentinel1_mpc.asset_href_for_read_attempt",return_value="https://signed.example/x.tif"), \
+             patch.dict(sys.modules,{"requests":requests_stub}):
+            with _open_signed_cog_via_https(
+                    "https://sentinel1euwestrtc.blob.core.windows.net/x.tif",
+                    rasterio=rasterio,request_get=failed_get,request_post=post,
+                    item_id="S1_TEST_RTC",asset_key="vv",geometry=geom) as ds:
+                self.assertEqual(ds.path,"memory")
+        self.assertEqual(len(crop_calls),1)
 
 
 if __name__=="__main__":unittest.main()

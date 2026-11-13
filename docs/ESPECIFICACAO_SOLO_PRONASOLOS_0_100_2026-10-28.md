@@ -1587,3 +1587,8 @@ No primeiro disparo, o workflow Dashboard dual falhou no guard documental porque
 
 A candidata 3.26.25 trata de transporte/leitura de COG Sentinel-1 e publicação de estados parciais do pipeline. Não altera dados, fontes, método, profundidade de 0–100 cm, incerteza nem cálculos de carbono orgânico do solo. O estoque do solo continua independente de erro ou indisponibilidade de imagem óptica/SAR.
 - O gate Windows da candidata passou a testar também a rota HTTPS local de pixels Sentinel-1; essa alteração não afeta a metodologia nem a estimativa de carbono orgânico do solo.
+
+
+## Controle de escopo V88.36 — recuperação da leitura SAR (13/11/2026)
+
+Esta atualização não altera os métodos de carbono do solo ou fertilidade. Registra apenas que o fallback SAR pode recuperar a leitura por recorte limitado da AOI quando o COG integral exceder o limite de transferência ou falhar por assinatura, transporte ou resposta inválida. Erro persistente continua ERRO_TECNICO e não autoriza substituir SAR por uma contingência de ausência. Testes locais: 1.133 aprovados e 1 ignorado; a validação real da rota no Windows permanece pendente.

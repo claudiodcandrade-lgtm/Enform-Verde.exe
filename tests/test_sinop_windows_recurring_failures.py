@@ -35,7 +35,7 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
         src=inspect.getsource(recent_sar_landcover.run_recent_sar_screen)
         self.assertIn("range(5 if provider==\"MPC\" else 4)",src)
         self.assertIn("_open_signed_cog_via_https(",src)
-        self.assertIn("HTTPS_STREAM_TO_LOCAL_TIFF",src)
+        self.assertIn("HTTPS_STREAM_OR_MPC_AOI_CROP",src)
         self.assertIn("for attempt in range(4):",inspect.getsource(sar_landcover_lemplus._monthly_features))
         for fn in (recent_sar_landcover.run_recent_sar_screen,
                    sar_landcover_lemplus._monthly_features):
@@ -78,7 +78,7 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
             self.assertIn('SINGLE_GET',src)
             self.assertNotIn('GDAL_HTTP_MULTIRANGE":"NO"',src)
             self.assertIn("asset_href_for_read_attempt(",src)
-        self.assertIn("HTTPS_STREAM_TO_LOCAL_TIFF",inspect.getsource(recent_sar_landcover.run_recent_sar_screen))
+        self.assertIn("HTTPS_STREAM_OR_MPC_AOI_CROP",inspect.getsource(recent_sar_landcover.run_recent_sar_screen))
 
     def test_mapbiomas_reader_has_independent_serial_transport(self):
         import mapbiomas_zonal

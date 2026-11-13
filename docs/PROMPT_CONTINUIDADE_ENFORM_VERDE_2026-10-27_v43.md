@@ -2043,3 +2043,8 @@ O arquivo `uso_solo_auditoria.json` registra 13 cenas SAR candidatas no Microsof
 - Teste de regressão da suíte completa encontrou uma falha documental esperada antes da sincronização deste DOCX: falta do novo número de versão. O teste live de VV/VH passou. O `--network-check` do EXE foi ampliado para exigir pelo menos 100 pixels válidos por polarização via HTTPS local; o workflow Windows no SHA final ainda está pendente. Não declarar ainda o build distribuível nem funcionamento ponta a ponta homologado.
 - Homologação científica permanece separada e não aprovada sem dados de campo e validação independente.
 - O `--network-check` do EXE agora exercita também o leitor HTTPS local para pixels VV/VH, exigindo pelo menos 100 pixels válidos por polarização; a aprovação depende do workflow Windows no SHA final.
+
+
+# V88.36 — recuperação SAR por recorte limitado da AOI (13/11/2026)
+
+O teste do EXE no workflow Windows falhou porque a cena COG Sentinel-1 excedeu 1 GiB. A correção adiciona recuperação via recorte da AOI no serviço oficial do Planetary Computer para COGs grandes e falhas de assinatura/transporte/HTTP/TIFF. O fluxo não transforma erro técnico em ausência de dados. A suíte local passou com 1.133 testes e 1 skip; o workflow Windows no SHA final ainda precisa validar o recorte real. Até essa prova, sem artefato Windows aprovado ou afirmação de conclusão ponta a ponta.

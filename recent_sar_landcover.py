@@ -130,14 +130,18 @@ def _safe_reason(error):
 
 @contextmanager
 def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=None,
-                               request_get=None, max_bytes=1024*1024*1024):
-    """Download one signed COG over Requests and open it locally.
+                               request_get=None, request_post=None, item_id=None,
+                               asset_key=None, geometry=None,
+                               collection="sentinel-1-rtc",
+                               max_bytes=1024*1024*1024, max_crop_bytes=128*1024*1024):
+    """Read a signed MPC COG, using an AOI crop service for oversized assets.
 
-    This is an independent last read path for Windows builds where GDAL's
-    /vsicurl/ HTTP stack fails to decode provider/proxy error responses. The
-    COG is streamed to a temporary file, size and TIFF signature are checked,
-    and the file is removed as soon as the AOI window has been read. TLS
-    verification stays enabled and signed URLs are never written to disk.
+    This is an independent last path for Windows builds where GDAL's /vsicurl/
+    HTTP stack fails to decode provider/proxy error responses. COGs within the
+    explicit transfer bound are streamed to a temporary file. Larger assets
+    are read as an AOI-only GeoTIFF crop from the official MPC Data API, avoiding
+    multi-gigabyte scene downloads. TLS stays verified; SAS URLs/tokens are
+    never written to disk.
     """
     import requests
     from sentinel1_mpc import asset_href_for_read_attempt
@@ -145,14 +149,72 @@ def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=Non
 
     tls_setup.configure()
     getter=request_get or requests.get
-    # Use a refreshed collection SAS token first. If the token endpoint is
-    # unavailable, asset_href_for_read_attempt falls back to the per-asset
-    # signer without exposing credentials in diagnostics.
-    signed=asset_href_for_read_attempt(
-        asset_href,attempt=2,token=token,token_fn=token_fn)
+    @contextmanager
+    def yield_aoi_crop():
+        if not (item_id and asset_key and isinstance(geometry,dict)):
+            raise RuntimeError("oversized MPC COG requires item id, asset key and AOI geometry")
+        from urllib.parse import urlencode
+        from math import ceil,cos,radians
+        from shapely.geometry import shape
+        geom=shape(geometry)
+        if geom.is_empty:raise ValueError("cannot crop an empty AOI")
+        minx,miny,maxx,maxy=map(float,geom.bounds)
+        lat=max(-85.0,min(85.0,(miny+maxy)/2.0))
+        width_m=max(10.0,(maxx-minx)*111320.0*cos(radians(lat)))
+        height_m=max(10.0,(maxy-miny)*110574.0)
+        width=max(1,int(ceil(width_m/10.0)))
+        height=max(1,int(ceil(height_m/10.0)))
+        if width*height>1800000:
+            scale=(1800000/(width*height))**0.5
+            width=max(1,int(width*scale));height=max(1,int(height*scale))
+        params=urlencode({"collection":collection,"item":item_id,"assets":asset_key,
+                          "format":"tif","coord_crs":"EPSG:4326","dst_crs":"EPSG:4326",
+                          "width":width,"height":height,"max_size":max(width,height),
+                          "unscale":"false","resampling":"nearest"})
+        url="https://planetarycomputer.microsoft.com/api/data/v1/item/crop?"+params
+        feature={"type":"Feature","geometry":geometry,"properties":{}}
+        post=request_post or requests.post
+        try:
+            response=post(url,json=feature,headers={"Accept":"image/tiff; application=geotiff"},
+                          timeout=(15,180),verify=True)
+        except requests.RequestException as exc:
+            raise RuntimeError("MPC AOI crop request failed: "+type(exc).__name__) from None
+        with response:
+            if int(response.status_code)!=200:
+                raise RuntimeError("MPC AOI crop returned HTTP "+str(response.status_code))
+            content_type=str(response.headers.get("Content-Type","")).lower()
+            if not any(t in content_type for t in ("image/tiff","application/x-binary")):
+                raise RuntimeError("MPC AOI crop returned a non-TIFF response")
+            payload=bytes(response.content)
+        if not payload or len(payload)>max_crop_bytes:
+            raise RuntimeError("MPC AOI crop exceeded the bounded response size")
+        if payload[:4] not in (b"II*\x00",b"MM\x00*",b"II+\x00",b"MM\x00+"):
+            raise RuntimeError("MPC AOI crop response is not a TIFF/BigTIFF asset")
+        memory=rasterio.io.MemoryFile(payload)
+        try:
+            with memory.open() as dataset:
+                if dataset.count<1 or dataset.width*dataset.height>1800000:
+                    raise RuntimeError("MPC AOI crop has an invalid or oversized raster grid")
+                yield dataset
+        finally:
+            memory.close()
+
+    # Use a refreshed collection SAS token first. If signing or SAS renewal
+    # fails, the item-based crop endpoint is still an independent read route.
+    try:
+        signed=asset_href_for_read_attempt(
+            asset_href,attempt=2,token=token,token_fn=token_fn)
+    except Exception as exc:
+        if not (item_id and asset_key and isinstance(geometry,dict)):
+            raise RuntimeError("HTTPS COG signing failed: "+type(exc).__name__) from None
+        with yield_aoi_crop() as dataset:
+            yield dataset
+        return
+
     with tempfile.TemporaryDirectory(prefix="enform_s1_cog_") as temp_dir:
         path=Path(temp_dir)/"asset.tif"
         total=0
+        too_large=False
         try:
             with getter(signed,headers={"Accept-Encoding":"identity"},
                         timeout=(15,180),stream=True,verify=True) as response:
@@ -163,20 +225,38 @@ def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=Non
                     raise RuntimeError("HTTPS COG endpoint returned a non-raster response")
                 declared=response.headers.get("Content-Length")
                 if declared and int(declared)>max_bytes:
-                    raise RuntimeError("HTTPS COG exceeds the per-asset download limit")
-                with path.open("wb") as output:
-                    for chunk in response.iter_content(chunk_size=1024*1024):
-                        if not chunk:continue
-                        total+=len(chunk)
-                        if total>max_bytes:
-                            raise RuntimeError("HTTPS COG exceeded the per-asset download limit")
-                        output.write(chunk)
-        except requests.RequestException as exc:
-            raise RuntimeError("HTTPS COG download failed: "+type(exc).__name__) from None
+                    too_large=True
+                else:
+                    with path.open("wb") as output:
+                        for chunk in response.iter_content(chunk_size=1024*1024):
+                            if not chunk:continue
+                            total+=len(chunk)
+                            if total>max_bytes:
+                                too_large=True
+                                break
+                            output.write(chunk)
+        except requests.RequestException:
+            with yield_aoi_crop() as dataset:
+                yield dataset
+            return
+        except RuntimeError as exc:
+            # HTTP errors or provider/proxy error documents are recoverable
+            # through an item crop; do not mask errors raised while yielding.
+            if not (item_id and asset_key and isinstance(geometry,dict)):
+                raise
+            with yield_aoi_crop() as dataset:
+                yield dataset
+            return
+        if too_large:
+            with yield_aoi_crop() as dataset:
+                yield dataset
+            return
         with path.open("rb") as source:
             signature=source.read(4)
         if signature not in (b"II*\x00",b"MM\x00*",b"II+\x00",b"MM\x00+"):
-            raise RuntimeError("HTTPS COG response is not a TIFF/BigTIFF asset")
+            with yield_aoi_crop() as dataset:
+                yield dataset
+            return
         with rasterio.open(str(path)) as dataset:
             yield dataset
 
@@ -281,7 +361,10 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                             if provider=="MPC" and attempt==4:
                                 source_context=_open_signed_cog_via_https(
                                     asset_href,rasterio=rasterio,token=provider_token,
-                                    token_fn=token_fn or get_runtime_sas_token)
+                                    token_fn=token_fn or get_runtime_sas_token,
+                                    item_id=scene.get("id"),asset_key=pol,
+                                    geometry=mapping(geom),
+                                    collection=scene.get("collection","sentinel-1-rtc"))
                             else:
                                 read_href=(asset_href_for_read_attempt(
                                     asset_href,attempt=attempt,token=provider_token,
@@ -343,7 +426,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                                "SERIAL_RANGE_HTTP11" if attempt==1 else
                                "SINGLE_GET_HTTP11" if attempt==2 else
                                "SERIAL_NO_MULTIPLEX_HTTP11" if attempt==3 else
-                               "HTTPS_STREAM_TO_LOCAL_TIFF"),
+                               "HTTPS_STREAM_OR_MPC_AOI_CROP"),
                              "error":_safe_reason(exc),
                              "attempt":attempt+1,"recovered":False}
                         provider_errors.append(row)
