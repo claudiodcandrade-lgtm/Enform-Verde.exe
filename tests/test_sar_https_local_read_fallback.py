@@ -88,6 +88,7 @@ class SarHttpsLocalReadFallbackTests(unittest.TestCase):
             content=b"II*\x00crop"
             def __enter__(self):return self
             def __exit__(self,*args):return False
+            def iter_content(self,chunk_size):yield self.content
         observed=[]
         rasterio=_Rasterio(observed)
         rasterio.io=type("IO",(),{"MemoryFile":_MemoryFile})
@@ -119,6 +120,7 @@ class SarHttpsLocalReadFallbackTests(unittest.TestCase):
             content=b"II*\x00crop"
             def __enter__(self):return self
             def __exit__(self,*args):return False
+            def iter_content(self,chunk_size):yield self.content
         requests_stub=_RequestsStub(None)
         rasterio=_Rasterio([])
         rasterio.io=type("IO",(),{"MemoryFile":_MemoryFile})
@@ -143,6 +145,7 @@ class SarHttpsLocalReadFallbackTests(unittest.TestCase):
             content=b"II*\x00crop"
             def __enter__(self):return self
             def __exit__(self,*args):return False
+            def iter_content(self,chunk_size):yield self.content
         requests_stub=_RequestsStub(None)
         def failed_get(*args,**kwargs):raise requests_stub.RequestException("connection reset")
         rasterio=_Rasterio([])
@@ -160,6 +163,34 @@ class SarHttpsLocalReadFallbackTests(unittest.TestCase):
                     item_id="S1_TEST_RTC",asset_key="vv",geometry=geom) as ds:
                 self.assertEqual(ds.path,"memory")
         self.assertEqual(len(crop_calls),1)
+
+    def test_crop_response_is_stopped_at_size_limit(self):
+        class LargeCrop:
+            status_code=200
+            headers={"Content-Type":"image/tiff; application=geotiff"}
+            def __init__(self):self.closed=False
+            def __enter__(self):return self
+            def __exit__(self,*args):self.closed=True;return False
+            def iter_content(self,chunk_size):
+                yield b"1234"
+                yield b"5"
+                raise AssertionError("reader must stop after exceeding the cap")
+        response=LargeCrop()
+        requests_stub=_RequestsStub(None)
+        rasterio=_Rasterio([])
+        rasterio.io=type("IO",(),{"MemoryFile":_MemoryFile})
+        geom={"type":"Polygon","coordinates":[[[-55.21,-11.89],[-55.17,-11.89],
+             [-55.17,-11.855],[-55.21,-11.855],[-55.21,-11.89]]]}
+        with patch("tls_setup.configure"), \
+             patch("sentinel1_mpc.asset_href_for_read_attempt",side_effect=ValueError("token unavailable")), \
+             patch.dict(sys.modules,{"requests":requests_stub}):
+            with self.assertRaisesRegex(RuntimeError,"bounded response size"):
+                with _open_signed_cog_via_https(
+                        "https://sentinel1euwestrtc.blob.core.windows.net/x.tif",
+                        rasterio=rasterio,request_post=lambda *a,**k:response,
+                        item_id="S1_TEST_RTC",asset_key="vv",geometry=geom,max_crop_bytes=4):
+                    pass
+        self.assertTrue(response.closed)
 
 
 if __name__=="__main__":unittest.main()

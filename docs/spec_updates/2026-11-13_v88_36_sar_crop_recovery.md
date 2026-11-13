@@ -12,7 +12,7 @@ O recorte é uma rota de recuperação de pixels, não uma prova de disponibilid
 
 ## Verificação local e gates restantes
 
-- A suíte completa local passou: 1.133 testes, com 1 teste ignorado por ausência de display. `py_compile` dos módulos modificados passou.
+- A suíte completa local passou: 1.134 testes, com 1 teste ignorado por ausência de display. `py_compile` dos módulos modificados passou.
 - Testes novos simulam COG maior que 1 GiB, falha de assinatura e interrupção de transporte; todos confirmam tentativa do recorte limitado.
 - O teste Windows do EXE que falhou no COG de 2 GiB precisa ser repetido no commit final. O teste simulado não comprova a resposta real do serviço nem a leitura no Windows.
 - A classificação e as estimativas permanecem experimentais, sem homologação científica independente. A execução do KML integral no aplicativo até a apresentação no dashboard continua pendente.

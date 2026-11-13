@@ -176,7 +176,7 @@ def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=Non
         post=request_post or requests.post
         try:
             response=post(url,json=feature,headers={"Accept":"image/tiff; application=geotiff"},
-                          timeout=(15,180),verify=True)
+                          timeout=(15,180),verify=True,stream=True)
         except requests.RequestException as exc:
             raise RuntimeError("MPC AOI crop request failed: "+type(exc).__name__) from None
         with response:
@@ -185,9 +185,20 @@ def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=Non
             content_type=str(response.headers.get("Content-Type","")).lower()
             if not any(t in content_type for t in ("image/tiff","application/x-binary")):
                 raise RuntimeError("MPC AOI crop returned a non-TIFF response")
-            payload=bytes(response.content)
-        if not payload or len(payload)>max_crop_bytes:
-            raise RuntimeError("MPC AOI crop exceeded the bounded response size")
+            declared=response.headers.get("Content-Length")
+            if declared and int(declared)>max_crop_bytes:
+                raise RuntimeError("MPC AOI crop exceeded the bounded response size")
+            chunks=[]
+            total=0
+            for chunk in response.iter_content(chunk_size=1024*1024):
+                if not chunk:continue
+                total+=len(chunk)
+                if total>max_crop_bytes:
+                    raise RuntimeError("MPC AOI crop exceeded the bounded response size")
+                chunks.append(chunk)
+            payload=b"".join(chunks)
+        if not payload:
+            raise RuntimeError("MPC AOI crop returned an empty response")
         if payload[:4] not in (b"II*\x00",b"MM\x00*",b"II+\x00",b"MM\x00+"):
             raise RuntimeError("MPC AOI crop response is not a TIFF/BigTIFF asset")
         memory=rasterio.io.MemoryFile(payload)

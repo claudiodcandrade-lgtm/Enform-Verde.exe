@@ -1591,4 +1591,4 @@ A candidata 3.26.25 trata de transporte/leitura de COG Sentinel-1 e publicação
 
 ## Controle de escopo V88.36 — recuperação da leitura SAR (13/11/2026)
 
-Esta atualização não altera os métodos de carbono do solo ou fertilidade. Registra apenas que o fallback SAR pode recuperar a leitura por recorte limitado da AOI quando o COG integral exceder o limite de transferência ou falhar por assinatura, transporte ou resposta inválida. Erro persistente continua ERRO_TECNICO e não autoriza substituir SAR por uma contingência de ausência. Testes locais: 1.133 aprovados e 1 ignorado; a validação real da rota no Windows permanece pendente.
+Esta atualização não altera os métodos de carbono do solo ou fertilidade. Registra apenas que o fallback SAR pode recuperar a leitura por recorte limitado da AOI quando o COG integral exceder o limite de transferência ou falhar por assinatura, transporte ou resposta inválida. Erro persistente continua ERRO_TECNICO e não autoriza substituir SAR por uma contingência de ausência. Testes locais: 1.134 aprovados e 1 ignorado; a validação real da rota no Windows permanece pendente.
