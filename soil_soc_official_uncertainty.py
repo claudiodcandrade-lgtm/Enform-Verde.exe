@@ -12,6 +12,33 @@ from pathlib import Path
 
 DEPTHS = ("0-5", "5-15", "15-30", "30-60", "60-100")
 SOURCE = "https://geoinfo.dados.embrapa.br/geoserver/ows"
+_NUMERIC_CHAR_REF = re.compile(rb"&#(?:[xX]([0-9a-fA-F]+)|([0-9]+));")
+
+
+def sanitize_xml_10_numeric_char_refs(data):
+    """Remove only numeric references forbidden by the XML 1.0 Char production.
+
+    Some WCS capabilities responses contain references such as ``&#0;``.
+    ElementTree correctly rejects those even though the surrounding XML is
+    otherwise usable. Keep every legal reference and every other byte intact;
+    callers retain and hash the unmodified response for audit.
+    """
+    raw = data.encode("utf-8") if isinstance(data, str) else bytes(data)
+    removed = 0
+
+    def replace(match):
+        nonlocal removed
+        value = int(match.group(1), 16) if match.group(1) else int(match.group(2), 10)
+        valid = (value in (0x9, 0xA, 0xD)
+                 or 0x20 <= value <= 0xD7FF
+                 or 0xE000 <= value <= 0xFFFD
+                 or 0x10000 <= value <= 0x10FFFF)
+        if valid:
+            return match.group(0)
+        removed += 1
+        return b""
+
+    return _NUMERIC_CHAR_REF.sub(replace, raw), removed
 
 
 def _tokens(s):
@@ -23,7 +50,8 @@ def discover_official_bounds(data):
 
     The provider can use alternative identifier names; unknown products are N/D.
     """
-    root = ET.fromstring(data)
+    sanitized, _ = sanitize_xml_10_numeric_char_refs(data)
+    root = ET.fromstring(sanitized)
     candidates={}
     for el in root.iter():
         if el.tag.split("}")[-1] != "CoverageSummary": continue
@@ -80,7 +108,11 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
     response=session.get(SOURCE, params={"service":"WCS","version":"2.0.1",
                      "request":"GetCapabilities"},timeout=(10,30))
     response.raise_for_status()
-    coverage_ids=discover_official_bounds(response.content)
+    original_capabilities = response.content
+    sanitized_capabilities, invalid_refs_removed = sanitize_xml_10_numeric_char_refs(
+        original_capabilities)
+    capabilities_sha256 = hashlib.sha256(original_capabilities).hexdigest()
+    coverage_ids=discover_official_bounds(sanitized_capabilities)
     expected={(s,d) for s in ("lower","upper") for d in DEPTHS}
     missing=expected-set(coverage_ids)
     if missing:
@@ -95,6 +127,8 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
     root.mkdir(parents=True,exist_ok=True)
     paths={"lower":{},"upper":{}}
     provenance={"source":SOURCE,"meaning":"limites marginais de predição declarados pela Embrapa",
+                "capabilities_sha256":capabilities_sha256,
+                "invalid_xml10_numeric_char_refs_removed":invalid_refs_removed,
                 "layers":{}}
     for side in ("lower","upper"):
         for lid,d in enumerate(DEPTHS,start=2):

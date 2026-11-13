@@ -13,7 +13,8 @@ from shapely.geometry import box
 
 from soil_fertility_zonal import (ATTRS, analyze_fertility,
                                   discover_coverages, zonal_raster)
-from soil_soc_official_uncertainty import discover_official_bounds
+from soil_soc_official_uncertainty import (discover_official_bounds,
+                                          sanitize_xml_10_numeric_char_refs)
 from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
 from soil_intersection_report import soil_intersection_lines
 
@@ -144,6 +145,19 @@ class SoilMappedAttributesContractTests(unittest.TestCase):
                                           "</Contents></Capabilities>").encode())
         self.assertEqual(len(found), 10)
         self.assertIn(("lower","60-100"), found)
+
+    def test_official_bound_discovery_sanitizes_only_xml10_invalid_numeric_refs(self):
+        xml = (b"<Capabilities><Contents><CoverageSummary><CoverageId>"
+               b"geonode__br_90m_carbon&#x0;&#0;_stock_0_5cm_uncertainty_lower"
+               b"</CoverageId><Title>valid&#x20;metadata</Title>"
+               b"</CoverageSummary></Contents></Capabilities>")
+        sanitized, removed = sanitize_xml_10_numeric_char_refs(xml)
+        self.assertEqual(removed, 2)
+        self.assertIn(b"&#x20;", sanitized)
+        self.assertNotIn(b"&#x0;", sanitized)
+        found = discover_official_bounds(xml)
+        self.assertEqual(found[("lower", "0-5")],
+                         "geonode__br_90m_carbon_stock_0_5cm_uncertainty_lower")
 
     def test_marginal_bounds_envelope_not_joint_ci(self):
         paths={}
