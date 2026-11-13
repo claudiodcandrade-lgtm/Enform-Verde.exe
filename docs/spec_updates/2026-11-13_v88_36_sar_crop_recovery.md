@@ -1,20 +1,24 @@
-# V88.36 — recuperação SAR por recorte da AOI (13/11/2026)
+# V88.36 — recuperação SAR e validação Windows concluídas (13/11/2026)
 
-## Falha observada no build Windows
+## Correções e evidência operacional
 
-O workflow Windows da candidata `3.26.25-PRECAMPO-EXPERIMENTAL` falhou no teste do EXE porque o Sentinel-1 COG integral excedeu o limite local de transferência de 1 GiB. Esse resultado é uma falha técnica de leitura, não ausência de cenas SAR.
+A leitura de COGs Sentinel-1 grandes usa recorte limitado da AOI no Microsoft Planetary Computer quando necessário: grade máxima de 1,8 milhão de células, resposta transmitida em blocos limitada a 128 MiB, verificação TIFF e TLS ativo. Erros persistentes continuam como `ERRO_TECNICO`, sem serem confundidos com ausência de cenas.
 
-## Correção implementada
+O primeiro autoteste do EXE revelou um erro no contador, não uma falha comprovada de leitura: Rasterio retorna `array.mask=False` escalar quando o raster não tem pixels mascarados, e `(~array.mask).sum()` contabilizava apenas 1. O contador foi corrigido para `numpy.ma.count`, com regressão para arrays totalmente válidos e parcialmente mascarados.
 
-A rota HTTPS mantém a leitura local do COG quando o tamanho cabe no limite. Para COGs maiores, indisponibilidade de assinatura/token, interrupção de transporte, erro HTTP ou resposta que não seja TIFF, o leitor tenta o serviço oficial de recorte por geometria do Microsoft Planetary Computer. A requisição envia o item, a polarização VV/VH e a geometria AOI autorizada, solicita uma grade limitada a 1,8 milhão de células e rejeita respostas maiores que 128 MiB, respostas que não sejam TIFF e grades fora do limite. TLS permanece verificado. URLs assinadas não são gravadas em disco ou no relatório de auditoria.
+No workflow Windows do commit `32cac735fe9e26c664b832b755606e7e0d4fd6b0` passaram o build, paridade Python/Windows, teste visual, leitura CBERS‑4A no executável com TLS ativo, leitura Sentinel‑1 VV/VH real via GDAL e via rota HTTPS/recorte, e aceitação SAR/AOI em KMZ real do Tapajós. O `--network-check` contou 170.820 pixels GDAL por polarização e 169.168 pixels pela rota HTTPS local por polarização; cena `S1D_IW_GRDH_1SDV_20261112T091635_20261112T091700_005432_00A5E9_rtc`, aquisição 12/11/2026 09:16 UTC. A prova CBERS‑4A usou dados de 01/11/2026.
 
-O recorte é uma rota de recuperação de pixels, não uma prova de disponibilidade para qualquer AOI. Erros do serviço de recorte continuam registrados como erro técnico; não autorizam contingência como se a busca tivesse confirmado ausência de SAR.
+A aceitação do executável no KMZ de teste do Tapajós retornou `SAR_PROCESSADO`, 5 cenas, 302.348 pixels, 1.290,688 ha, origem `SAR_DERIVED_CCI` e sem AGB fallback. Isso comprova a execução nesse AOI de aceitação, não a fazenda Maria Eduarda nem a homologação científica nacional.
 
-## Verificação e diagnóstico do gate Windows
+## Build Windows auditado
 
-- A suíte completa local passou após a última correção: 1.135 testes, com 1 teste ignorado por ausência de display. `py_compile` e os 17 testes direcionados passaram.
-- O workflow Windows executou as provas ópticas e SAR reais anteriores com sucesso, compilou o EXE e passou pela paridade Python/Windows. O autoteste seguinte falhou porque o contador interpretava a máscara escalar `False` de um raster sem pixels mascarados como apenas 1 pixel válido. Isso era erro no contador do gate, não evidência de que a leitura SAR retornou somente um pixel.
-- Corrigido com `numpy.ma.count`, que conta corretamente dados sem máscara e dados parcialmente mascarados. Há regressão cobrindo ambos os casos.
-- O novo commit ainda precisa repetir o autoteste live no EXE, inclusive a rota HTTPS/recorte SAR. Não declarar o build distribuível antes desse gate.
-- A classificação e as estimativas permanecem experimentais, sem homologação científica independente. A execução do KML integral no aplicativo até a apresentação no dashboard continua pendente.
+- Versão: `3.26.25-PRECAMPO-EXPERIMENTAL`
+- Commit-fonte compilado e testado: `32cac735fe9e26c664b832b755606e7e0d4fd6b0`
+- SHA-256 do `Enform Verde.exe`: `e7ae5ee65a84af6168f813ec85192fdaa0dbf81255b5cd73b64a373c56482dfa`
+- Artefato Actions: `Enform-Verde-Windows-v3.26.25-PRECAMPO-EXPERIMENTAL` (531.984.389 bytes)
+- SHA-256 do ZIP do artefato: `3791ae997ad82aec768b65639128403996ba7c8cc1ff7e70d9f2eb9741435b63`
+- Run Windows: `43453754591`; dashboard: `43453754533` (ambos aprovados).
 
+## Limites mantidos
+
+A suíte local completa passou com 1.135 testes e 1 ignorado por ausência de display. As máscaras SAR experimentais e contratos rápidos passaram. A homologação científica independente continua pendente de dados de campo. O fluxo do KML integral da Fazenda Maria Eduarda até carbono, agricultura e dashboard não foi comprovado; não inferir esse resultado a partir do teste do Tapajós.
