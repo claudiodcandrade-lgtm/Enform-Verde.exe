@@ -1985,3 +1985,15 @@ A falta de GeoPandas no runtime foi resolvida para esta validação e a suíte c
 
 - Testes locais direcionados passaram para CSV/proveniência, Top 10, cálculo de referência Chave, distribuição DAP e altura inventariada, bloqueio de contingência sem certificado de ausência e calibração espacial que nunca marca o candidato como implantável. `py_compile` e `git diff --check` passaram.
 - Smoke local do exportador XLSX criou os três gráficos tanto com pixels SAR observados quanto com fallback regional certificado; corrigiu-se uma sobreposição de células mescladas que impedia a exportação N/D. Falta executar no SHA final: build/autocheck Windows, smoke visual do Excel, integração observacional real do produto de altura no KML integral da Fazenda Maria Eduarda e homologação científica. Testes de fixture não são resultado do imóvel. Não declarar conclusão operacional até esses gates passarem.
+
+# V88.23 — isolamento do estado do mapa óptico (13/11/2026)
+
+- O estado de carregamento, sucesso ou falha de CBERS/Sentinel-2/contingências passa a ser exibido em indicador próprio na aba de mapas. Ele não escreve nem substitui o status geral da análise.
+- Uma falha da imagem de fundo permanece falha visual; o processamento SAR, as rotas independentes de carbono/agricultura e a publicação de seus estados seguem seus próprios contratos. Esta mudança não prova que dados SAR tenham sido lidos, nem que a imagem óptica abra em toda AOI.
+- Teste de regressão verifica a separação dos indicadores e os rótulos de falha/sucesso visual. O resultado só será considerado funcional após suíte, coleção de testes e build Windows no mesmo SHA.
+- Estado real consultado antes desta revisão: PR #51 aberto em draft, SHA remoto c96de63b5f52296dda083306f2a1ef046c9b9a6e, APP_VERSION 3.26.21; sem build Windows verificada nesse SHA. Os registros locais V88.22/3.26.23 não estavam na branch remota e não foram tratados como commits publicados.
+- Limites ainda abertos: fluxo de análise da AOI integral da Fazenda Maria Eduarda até o dashboard, confirmação de altura SAR e estoque, integração do modelo altura+área basal+distribuição diamétrica, build Windows do novo SHA e homologação científica independente. Não emitir release nem promover PR até gates correspondentes passarem.
+## Correção de resíduo de workflow identificada nesta retomada
+
+A auditoria do arquivo de build Windows encontrou um sufixo duplicado e truncado: o pipeline completo aparecia duas vezes, com jobs duplicados e o comando de leitura do título das notas de versão quebrado no meio da linha. Isso fazia o contrato de artefato contar duas saídas e podia impedir que a validação de versão/build rodasse corretamente. O sufixo foi removido; o pipeline mantém uma única definição de build, publicação e prova FH, e a validação do título da release foi reconstruída. A regressão agora exige jobs e artefato únicos e comando de versão íntegro. A confirmação definitiva depende do workflow Windows no SHA final.
+- Código revisado e testado publicado como commit `cf5b8d4ca1de73c8fb836f3868d764d00d762eab`; a sincronização documental é commit subsequente e deve preservar essa referência ao código.

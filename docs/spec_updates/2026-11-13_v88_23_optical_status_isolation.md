@@ -1,0 +1,13 @@
+# V88.23 — isolamento do estado do mapa óptico (13/11/2026)
+
+- O estado de carregamento, sucesso ou falha de CBERS/Sentinel-2/contingências passa a ser exibido em indicador próprio na aba de mapas. Ele não escreve nem substitui o status geral da análise.
+- Uma falha da imagem de fundo permanece falha visual; o processamento SAR, as rotas independentes de carbono/agricultura e a publicação de seus estados seguem seus próprios contratos. Esta mudança não prova que dados SAR tenham sido lidos, nem que a imagem óptica abra em toda AOI.
+- Teste de regressão verifica a separação dos indicadores e os rótulos de falha/sucesso visual. O resultado só será considerado funcional após suíte, coleção de testes e build Windows no mesmo SHA.
+- Estado real consultado antes desta revisão: PR #51 aberto em draft, SHA remoto c96de63b5f52296dda083306f2a1ef046c9b9a6e, APP_VERSION 3.26.21; sem build Windows verificada nesse SHA. Os registros locais V88.22/3.26.23 não estavam na branch remota e não foram tratados como commits publicados.
+- A suíte anterior detectou ainda dois fixtures de exportação sem hash da AOI (ajustados para usar hash real) e um contrato que expôs a duplicação do workflow. Após as correções, a coleção inspecionou 163 módulos; a suíte integral executou 1.114 testes, todos aprovados, com um skip de captura visual Tk por ausência de display Linux. Os testes dirigidos (10) passaram, assim como py_compile e git diff --check.
+- Limites ainda abertos: fluxo de análise da AOI integral da Fazenda Maria Eduarda até o dashboard, confirmação de altura SAR e estoque, integração do modelo altura+área basal+distribuição diamétrica, build Windows do novo SHA e homologação científica independente. Não emitir release nem promover PR até gates correspondentes passarem.
+## Correção de resíduo de workflow identificada nesta retomada
+
+A auditoria do arquivo de build Windows encontrou um sufixo duplicado e truncado: o pipeline completo aparecia duas vezes, com jobs duplicados e o comando de leitura do título das notas de versão quebrado no meio da linha. Isso fazia o contrato de artefato contar duas saídas e podia impedir que a validação de versão/build rodasse corretamente. O sufixo foi removido; o pipeline mantém uma única definição de build, publicação e prova FH, e a validação do título da release foi reconstruída. A regressão agora exige jobs e artefato únicos e comando de versão íntegro. A confirmação definitiva depende do workflow Windows no SHA final.
+- Código revisado e testado publicado como commit `cf5b8d4ca1de73c8fb836f3868d764d00d762eab`; a sincronização documental é commit subsequente e deve preservar essa referência ao código.
+
