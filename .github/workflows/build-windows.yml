@@ -582,16 +582,34 @@ jobs:
           python live_sar_test.py
 
       - name: Live recent INPE Sentinel-1 RTC catalog-to-pixel fallback — representative sites in all six biomes
+        id: live_national_sar
+        continue-on-error: true
         shell: pwsh
         timeout-minutes: 20
         run: python tools/probe_inpe_sentinel1_rtc_live.py
+
+      - name: Record national SAR live-gate status for the experimental package
+        if: always()
+        shell: pwsh
+        run: |
+          $status = 'NOT_PASSED_DIAGNOSTIC_MISSING'
+          if (Test-Path 'inpe_sentinel1_rtc_live.json') {
+            try { $status = (Get-Content 'inpe_sentinel1_rtc_live.json' -Raw | ConvertFrom-Json).status }
+            catch { $status = 'DIAGNOSTIC_INVALID' }
+          }
+          if ('${{ steps.live_national_sar.outcome }}' -eq 'failure') {
+            Write-Warning "National recent-SAR sample did not pass. Package remains pre-field experimental; inspect DIAGNOSTICO_SAR_NACIONAL.json."
+          }
+          "status=$status`nstep_outcome=${{ steps.live_national_sar.outcome }}`nrelease_scope=pre-field experimental; not homologated; no wall-to-wall Brazil coverage claim" | Set-Content 'national_sar_gate_status.txt' -Encoding UTF8
 
       - name: Upload INPE Sentinel-1 RTC live pixel evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: inpe-sentinel1-rtc-live-${{ github.run_number }}
-          path: inpe_sentinel1_rtc_live.json
+          path: |
+            inpe_sentinel1_rtc_live.json
+            national_sar_gate_status.txt
           if-no-files-found: warn
           retention-days: 30
 
@@ -1141,7 +1159,10 @@ jobs:
           IMPORTANTE: extraia TODO o ZIP antes de abrir. Não execute o EXE de dentro do ZIP.
           A análise espacial aceita vetor local e tenta consulta pública do SICAR, SIGEF e Embrapa quando houver internet.
           O pacote inclui acceptance\Teste_SAR_Cerrado_DF.kmz (baixa biomassa) e acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml (AOI candidata de alta biomassa; requer modelo AGB SAR compatível, não aceitar fallback bibliográfico como resultado SAR).
+          MONITORAMENTO SAR NACIONAL: experimental, sem garantia de leitura recente em toda coordenada/data do Brasil. Consulte DIAGNOSTICO_SAR_NACIONAL.json para os resultados por amostra e por provedor; cada AOI sem par VV/VH legível deve permanecer N/D/ERRO. Esta versão não está homologada.
           '@ | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
+          if (Test-Path 'inpe_sentinel1_rtc_live.json') { Copy-Item 'inpe_sentinel1_rtc_live.json' 'dist\Enform Verde\DIAGNOSTICO_SAR_NACIONAL.json' }
+          if (Test-Path 'national_sar_gate_status.txt') { Copy-Item 'national_sar_gate_status.txt' 'dist\Enform Verde\STATUS_GATE_SAR_NACIONAL.txt' }
           $body = Get-Content 'dist\Enform Verde\LEIA-ME.txt' -Raw
           ("VERSÃO $env:APP_VERSION`r`n" + $body) | Set-Content 'dist\Enform Verde\LEIA-ME.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4

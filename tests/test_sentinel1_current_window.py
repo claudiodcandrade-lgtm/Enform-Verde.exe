@@ -80,6 +80,8 @@ class Sentinel1FreshnessTests(unittest.TestCase):
             return href
 
         with patch("sar_pipeline.requests.post",return_value=_SceneResponse()), \
+             patch("sentinel1_mpc.get_runtime_sas_token",return_value="sig=collection"), \
+             patch("sentinel1_mpc._signed_href",side_effect=lambda href,token:signed(href)), \
              patch("sar_pipeline._planetary_sign_asset",side_effect=signed), \
              patch("rasterio.open",return_value=_Raster()), \
              patch("rasterio.mask.mask",side_effect=read_mask):
@@ -90,6 +92,34 @@ class Sentinel1FreshnessTests(unittest.TestCase):
         self.assertEqual(result["pixel_state"],"VV_VH_PAIR_INCOMPLETE")
         self.assertEqual(len(result["partial_stats"]),1)
         self.assertIn("VH asset timed out", " ".join(result["errors"]))
+
+    def test_mpc_collection_sas_avoids_per_asset_signer(self):
+        from sar_pipeline import planetary_sentinel1_cog
+        from rasterio.mask import mask
+        with patch("sar_pipeline.requests.post",return_value=_SceneResponse()), \
+             patch("sentinel1_mpc.get_runtime_sas_token",return_value="sig=collection"), \
+             patch("sentinel1_mpc._signed_href",side_effect=lambda href,token:href), \
+             patch("sar_pipeline._planetary_sign_asset",side_effect=AssertionError("signer must not run")), \
+             patch("rasterio.open",return_value=_Raster()), \
+             patch("rasterio.mask.mask",return_value=(np.ma.array([[[2.0,3.0],[4.0,5.0]]]),None)):
+            result=planetary_sentinel1_cog(self.aoi,"unused-current-s1")
+        self.assertTrue(result["available"])
+        self.assertEqual(result["access_route"],"COLLECTION_SAS_TOKEN")
+        self.assertEqual({row["polarization"] for row in result["stats"]},{"VV","VH"})
+
+    def test_mpc_stops_scene_fanout_after_signer_429(self):
+        import requests
+        from sar_pipeline import planetary_sentinel1_cog
+        response=requests.Response(); response.status_code=429
+        failure=requests.exceptions.HTTPError("rate limited",response=response)
+        with patch("sar_pipeline.requests.post",return_value=_SceneResponse()), \
+             patch("sentinel1_mpc.get_runtime_sas_token",side_effect=RuntimeError("collection token unavailable")), \
+             patch("sar_pipeline._planetary_sign_asset",side_effect=failure) as signer:
+            result=planetary_sentinel1_cog(self.aoi,"unused-current-s1")
+        self.assertFalse(result["available"])
+        self.assertTrue(result["rate_limited"])
+        self.assertEqual(result["pixel_state"],"NAO_PROCESSADO")
+        self.assertEqual(signer.call_count,1)
 
 
 if __name__=="__main__":

@@ -13,15 +13,21 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
 STAC_SEARCH = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
-SAS_TOKEN_URLS = (
-    # The documented collection ID route is preferred. It automatically maps
-    # the current collection to its storage account/container.
-    "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-rtc",
-    # Keep the explicit storage route as compatibility fallback for older MPC
-    # deployment metadata.
-    "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel1euwestrtc/sentinel1-grd-rtc",
-)
-ALLOWED_HOSTS = {"planetarycomputer.microsoft.com", "sentinel1euwestrtc.blob.core.windows.net"}
+SAS_TOKEN_ROUTES = {
+    "sentinel-1-rtc": (
+        "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-rtc",
+        "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel1euwestrtc/sentinel1-grd-rtc",
+    ),
+    # The GRD collection uses a separate blob container from RTC. A single
+    # collection token avoids per-asset signer calls that may be throttled.
+    "sentinel-1-grd": (
+        "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-grd",
+        "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel1euwest/s1-grd",
+    ),
+}
+SAS_TOKEN_URLS = SAS_TOKEN_ROUTES["sentinel-1-rtc"]
+ALLOWED_HOSTS = {"planetarycomputer.microsoft.com", "sentinel1euwestrtc.blob.core.windows.net",
+                 "sentinel1euwest.blob.core.windows.net"}
 
 
 def _https_json(url, payload=None, *, opener=urlopen, timeout=45):
@@ -102,10 +108,13 @@ def _aware(value):
     return result.astimezone(timezone.utc)
 
 
-def get_runtime_sas_token(*, opener=urlopen):
-    """Request a fresh temporary SAS token; try official collection and legacy routes."""
+def get_runtime_sas_token(collection_id="sentinel-1-rtc", *, opener=urlopen):
+    """Request a fresh collection SAS token for RTC or GRD, never logging it."""
+    routes=SAS_TOKEN_ROUTES.get(str(collection_id))
+    if not routes:
+        raise ValueError("Unsupported MPC Sentinel-1 collection")
     failures = []
-    for endpoint in SAS_TOKEN_URLS:
+    for endpoint in routes:
         try:
             payload = _https_json(endpoint, opener=opener)
             token = payload.get("token") if isinstance(payload, dict) else None

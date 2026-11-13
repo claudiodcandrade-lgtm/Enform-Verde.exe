@@ -2135,3 +2135,32 @@ O teste `test_mpc_single_polarization_is_partial_not_processed` reproduz falha d
 A candidata é `3.26.29-PRECAMPO-EXPERIMENTAL`. O ensaio local mede contratos, não demonstra conectividade remota. Catálogo encontrado não equivale a pixels decodificados: só declarar acesso operacional após leitura VV/VH real, recente (≤30 dias) e auditada no SHA final. A cobertura amostral em oito AOIs distribuídas nos seis biomas não é garantia para toda coordenada/época do Brasil; cada AOI deve preservar N/D/ERRO quando aplicável.
 
 A atualização do prompt, da especificação de solo e da especificação técnica registra o estado de testes, build Windows, leitura live e ensaio do KML como gates independentes. A checagem visual local não pôde abrir Tk por falta de display; requer CI/Windows. Não declarar homologação científica sem validação observacional independente.
+
+# V88.44 — diagnóstico nacional SAR e pacote pré-campo auditável (13/11/2026)
+
+## Resultado confirmado no SHA V88.43
+
+No commit `431833f1cec7693d8892d5a615cdaac02eb8a879`, os testes do dashboard, contratos pré-campo e máscara semântica SAR experimental Sinop passaram. A leitura ESA BIOMASS FH real em Sinop também passou. O build Windows chegou à sondagem nacional de pixels e reprovou em Petrolina: havia cenas recentes no catálogo MPC, mas o assinador devolveu HTTP 429 em VV/VH; a coleção RTC do INPE retornou zero cenas nesse recorte. O relatório de oito áreas não foi salvo porque a sondagem parou no primeiro ponto sem par legível. O gate de homologação científica reprovou por falta de evidência independente e artefato final.
+
+## Ajustes na candidata 3.26.30
+
+- Ao receber HTTP 429 do assinador MPC, interromper a busca por cenas antigas no mesmo provedor/AOI e registrar `rate_limited`; não ampliar a carga no serviço enquanto a limitação estiver ativa.
+- A sondagem distribuída executa todos os oito AOIs (seis biomas), salva o resultado incrementalmente, sanitiza URLs e devolve código de saída reprovado se qualquer área não tiver par VV/VH recente com pixels válidos. A falha gera relatório por AOI/provedor, não desaparece nem vira sucesso.
+- O gate SAR distribuído não bloqueia a compilação do pacote pré-campo. O relatório `DIAGNOSTICO_SAR_NACIONAL.json` e `STATUS_GATE_SAR_NACIONAL.txt` seguem dentro do ZIP portátil, e o LEIA-ME declara que não há garantia de cobertura em toda coordenada/data do Brasil.
+- A regressão automatizada verifica que uma resposta 429 interrompe o fan-out por cenas e que uma polarização isolada continua parcial, nunca `PROCESSADO`.
+
+## Limites e aceitação
+
+Permitir a compilação experimental após o gate SAR reprovado não significa que o acesso nacional foi solucionado. Os resultados por AOI precisam ser lidos no diagnóstico do pacote; cada área sem par VV/VH recente mantém N/D/ERRO. A passagem em amostras de Sinop, Tapajós ou outro ponto não prova cobertura em qualquer local do Brasil. O monitoramento de lavouras e a estimativa de carbono devem manter seus limites científicos e não converter banda C isolada em AGB. A versão continua pré-campo experimental, sem homologação. Build, dashboard, sondagem e gate científico serão novamente avaliados no SHA 3.26.30.
+
+# V88.45 — contingência HTTP 429 Sentinel-1 por token SAS de coleção (13/11/2026)
+
+A leitura MPC Sentinel-1 GRD deve solicitar primeiro o token SAS da coleção `sentinel-1-grd` e usá-lo em memória para VV e VH. Para o storage GRD, as rotas documentadas são `/token/sentinel-1-grd` e `/token/sentinel1euwest/s1-grd`; são distintas das rotas RTC. Assim se evitam chamadas individuais ao signer para cada ativo quando a rota de coleção estiver disponível. Só recorrer ao signer por ativo se a emissão do token de coleção falhar; manter tentativas limitadas, respeitar Retry-After e parar o fan-out ao HTTP 429. Nunca registrar token, query SAS ou URL assinada.
+
+Preservar `PROCESSADO` somente se VV e VH forem realmente lidos na mesma aquisição. A auditoria deve informar `COLLECTION_SAS_TOKEN` ou `PER_ASSET_SIGNER_FALLBACK`; falha conserva `ERRO_TECNICO`/N/D com diagnóstico.
+
+Rotas independentes e estado: INPE RTC público e CDSE autenticado já são tentados pelo pipeline; falta de cena recente no INPE numa AOI não prova indisponibilidade nacional. ASF OPERA RTC-S1 é uma alternativa com Earthdata, mas seu catálogo ainda não está ligado a um leitor de pixels no pipeline. O arquivo global AWS Sentinel-1 GRD COG é uma opção pública que requer processamento RTC antes de comparação radiométrica; também não está integrado. ESA MAAP serve à rota Biomass já implementada e não autentica dados Sentinel-1.
+
+A correção de código está na candidata `3.26.31-PRECAMPO-EXPERIMENTAL`. A suíte local completa passou: 1.150 testes aprovados e 1 ignorado por ausência de display gráfico. Esse resultado não testa acesso live no Windows. O token SAS de coleção ainda precisa provar leitura VV/VH, e o build/dashboard no SHA final e a execução do KML integral Maria Eduarda continuam pendentes. A V88.43 falhou em Petrolina com 429 no signer MPC e sem cenas no catálogo INPE naquele recorte; isso não prova indisponibilidade de todos os provedores nem de todo o Brasil. Manter a versão pré-campo experimental e não homologada até evidência operacional e observacional independente.
+
+Fontes oficiais de acesso e alternativas constam em `docs/spec_updates/2026-11-13_v88_45_mpc_collection_token_sar_recovery.md`.

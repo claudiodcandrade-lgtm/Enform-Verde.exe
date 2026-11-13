@@ -1654,10 +1654,20 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
     if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":["sem cenas Sentinel-1 GRD no AOI"]}
     items=_newest_first(items)
     Path(cache).mkdir(parents=True,exist_ok=True); stats=[]; paths=[]; errors=[]; scene_ids=[]
+    mpc_token=None
+    try:
+        from sentinel1_mpc import get_runtime_sas_token
+        mpc_token=get_runtime_sas_token("sentinel-1-grd")
+        access_route="COLLECTION_SAS_TOKEN"
+    except Exception:
+        # The per-asset signer remains a bounded fallback, but is not called
+        # when the collection-level token route works.
+        access_route="PER_ASSET_SIGNER_FALLBACK"
+        errors.append("MPC GRD collection token unavailable; using bounded per-asset signer fallback")
     import rasterio
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
-    selected_item=None; partial_stats=[]; partial_paths=[]
+    selected_item=None; partial_stats=[]; partial_paths=[]; rate_limited=False
     for it in items[:min(limit,8)]:
         scene_ids.append(it.get("id")); assets=it.get("assets") or {}
         scene_stats=[]; scene_paths=[]
@@ -1665,7 +1675,12 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             a=assets.get(pol)
             if not a or not a.get("href"):continue
             try:
-                unsigned=a["href"]; href=_planetary_sign_asset(unsigned)
+                unsigned=a["href"]
+                if mpc_token:
+                    from sentinel1_mpc import _signed_href
+                    href=_signed_href(unsigned,mpc_token)
+                else:
+                    href=_planetary_sign_asset(unsigned)
                 with rasterio.open(href) as src:
                     # Sentinel-1 GRD COGs may expose geolocation through GCPs instead of a dataset CRS.
                     # WarpedVRT resolves those GCPs to EPSG:4326 before AOI masking.
@@ -1682,10 +1697,20 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
                     z={"scene":it.get("id"),"acquisition_utc":(it.get("properties") or {}).get("datetime"),
                        "polarization":pol.upper(),"n":int(len(v)),"mean":float(v.mean()),
                        "sd":float(v.std(ddof=1)) if len(v)>1 else 0.0,"min":float(v.min()),
-                       "max":float(v.max()),"pixel_state":"PROCESSADO"}
+                       "max":float(v.max()),"pixel_state":"PROCESSADO","access_route":access_route}
                     scene_stats.append(z); scene_paths.append(unsigned)
                 if {"VV","VH"}.issubset({v["polarization"] for v in scene_stats}):break
-            except Exception as e:errors.append(str(it.get("id"))+" / "+pol+": "+str(e))
+            except Exception as e:
+                detail=str(e)
+                detail=re.sub(r"https?://\S+","<asset-url-redacted>",detail)[:240]
+                errors.append(str(it.get("id"))+" / "+pol+": "+detail)
+                # A signer 429 is provider-wide throttling, not a bad scene.
+                # Stop this AOI's candidate loop instead of consuming more
+                # requests on older scenes while the rate limit is active.
+                response=getattr(e,"response",None)
+                if getattr(response,"status_code",None)==429:
+                    rate_limited=True
+                    break
         # Publish a scene only when both VV and VH were actually read from that
         # same acquisition. Keep incomplete reads separately for diagnostics.
         polarizations={v["polarization"] for v in scene_stats}
@@ -1694,6 +1719,8 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             break
         if len(scene_stats)>len(partial_stats):
             partial_stats=scene_stats; partial_paths=scene_paths
+        if rate_limited:
+            break
     from sar_acquisition_time import annotate_acquisition
     selected=annotate_acquisition(selected_item) if selected_item else {}
     return {"available":bool(stats),"paths":paths,"items":len(items),"scene_ids":scene_ids,
@@ -1703,6 +1730,8 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             "catalog_acquisition":[dict(id=x.get("id"), acquisition_utc=annotate_acquisition(x)["acquisition_utc"]) for x in items[:limit]],
             "stats":stats,"partial_stats":partial_stats,"partial_paths":partial_paths,
             "provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,
+            "access_route":access_route,
+            "rate_limited":rate_limited,
             "pixel_state":"PROCESSADO" if stats else "VV_VH_PAIR_INCOMPLETE" if partial_stats else "NAO_PROCESSADO"}
 
 SUPPORTED_NATIONAL_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica","Pantanal")
