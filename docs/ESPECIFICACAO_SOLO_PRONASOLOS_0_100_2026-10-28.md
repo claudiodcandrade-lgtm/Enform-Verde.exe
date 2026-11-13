@@ -1586,3 +1586,4 @@ No primeiro disparo, o workflow Dashboard dual falhou no guard documental porque
 ## Controle de escopo V88.35 — transporte SAR e estados independentes (13/11/2026)
 
 A candidata 3.26.25 trata de transporte/leitura de COG Sentinel-1 e publicação de estados parciais do pipeline. Não altera dados, fontes, método, profundidade de 0–100 cm, incerteza nem cálculos de carbono orgânico do solo. O estoque do solo continua independente de erro ou indisponibilidade de imagem óptica/SAR.
+- O gate Windows da candidata passou a testar também a rota HTTPS local de pixels Sentinel-1; essa alteração não afeta a metodologia nem a estimativa de carbono orgânico do solo.
