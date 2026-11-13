@@ -46,6 +46,15 @@ class ReleaseVersioningTests(unittest.TestCase):
         for mod in ("pronasolos_wcs", "crop_forecast_pipeline", "crop_vigor"):
             self.assertIn("--hidden-import " + mod, text)
 
+    def test_build_workflow_has_one_complete_release_pipeline(self):
+        text = WF.read_text(encoding="utf-8")
+        self.assertEqual(text.count("  build-windows:"), 1)
+        self.assertEqual(text.count("  publish-release:"), 1)
+        self.assertEqual(text.count("  maap-real-fh-proof:"), 1)
+        self.assertEqual(text.count("path: dist/Enform Verde/"), 1)
+        self.assertIn("-Pattern '^# Enform Verde v(.+)$' | Select-Object -First 1", text)
+        self.assertNotIn("-Pattern '^# Enform Verde v(.+)          git fetch", text)
+
 
 if __name__ == "__main__":
     unittest.main()

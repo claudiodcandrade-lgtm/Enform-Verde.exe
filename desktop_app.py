@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.21-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.23-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1487,13 +1487,15 @@ class App(tk.Tk):
         ibgebox.columnconfigure(1,weight=1)
 
         map_frame=ttk.Frame(f); map_frame.pack(fill="both",expand=True,pady=(2,6))
+        self.map_status=tk.StringVar(value="Aguardando carregamento de imagem de referência.")
+        ttk.Label(map_frame,textvariable=self.map_status,anchor="w",foreground="#52645E").grid(row=0,column=0,columnspan=2,sticky="ew",pady=(0,4))
         self.map_canvas=tk.Canvas(map_frame,height=560,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
                                   xscrollincrement=20,yscrollincrement=20)
         self.map_hscroll=ttk.Scrollbar(map_frame,orient="horizontal",command=self.map_canvas.xview)
         self.map_vscroll=ttk.Scrollbar(map_frame,orient="vertical",command=self.map_canvas.yview)
         self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
-        self.map_canvas.grid(row=0,column=0,sticky="nsew"); self.map_vscroll.grid(row=0,column=1,sticky="ns"); self.map_hscroll.grid(row=1,column=0,sticky="ew")
-        map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
+        self.map_canvas.grid(row=1,column=0,sticky="nsew"); self.map_vscroll.grid(row=1,column=1,sticky="ns"); self.map_hscroll.grid(row=2,column=0,sticky="ew")
+        map_frame.rowconfigure(1,weight=1); map_frame.columnconfigure(0,weight=1)
         self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._last_canvas_size=None; self._map_extent_factor=1.36; self._map_provider="SATELLITE_PENDING"
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
@@ -1579,7 +1581,7 @@ class App(tk.Tk):
         else:
             req_h=1200; req_w=max(320,min(1200,round(1200*ratio)))
         key=self.google_maps_key.get().strip(); extent_factor=max(0.30,min(8.0,float(self._map_extent_factor)))
-        if not refresh:self.status.set("Carregando imagem de satélite e perímetro...")
+        if not refresh:self.map_status.set("Carregando imagem de referência e perímetro… os cálculos são independentes deste mapa.")
         self.update_idletasks()
 
         def rings():
@@ -1738,7 +1740,7 @@ class App(tk.Tk):
         if error:
             self._satellite_map_visible=False
             self._draw_aoi_outline("Imagem Sentinel-2/CBERS-4A indisponível — perímetro mantido")
-            self.status.set("CBERS-4A e Sentinel-2 falharam; a contingência cartográfica também não pôde ser carregada.")
+            self.map_status.set("Imagem óptica e contingência cartográfica indisponíveis; esta falha visual não altera a análise quantitativa.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
@@ -1749,7 +1751,7 @@ class App(tk.Tk):
         self.map_canvas.xview_moveto(max(0.0,min(1.0,(view.width-max(1,self.map_canvas.winfo_width()))/(2*max(1,view.width)))))
         self.map_canvas.yview_moveto(max(0.0,min(1.0,(view.height-max(1,self.map_canvas.winfo_height()))/(2*max(1,view.height)))))
         self._map_provider=str(provider or "ONLINE")
-        self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {format_ptbr(1.36/max(self._map_extent_factor,1e-9),2)}×. Uso exclusivo para visualização.")
+        self.map_status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {format_ptbr(1.36/max(self._map_extent_factor,1e-9),2)}×. Uso exclusivo para visualização; não alimenta cálculos.")
 
     def _on_map_resize(self,event=None):
         """Keep the selected basemap fitted after a real canvas resize."""
@@ -1797,7 +1799,7 @@ class App(tk.Tk):
             self.map_canvas.configure(scrollregion=(0,0,w,h))
             return True
         except Exception as exc:
-            try:self.status.set(f"Falha na base raster IBGE offline: {exc}")
+            try:self.map_status.set(f"Falha ao carregar mapa cartográfico: {type(exc).__name__}: {exc}")
             except Exception:pass
             return False
 
@@ -2660,6 +2662,8 @@ class App(tk.Tk):
             if hasattr(self,"aoi_area_display"):self.aoi_area_display.set("Aguardando perímetro.")
         self._map_generation+=1
         self._satellite_map_visible=False
+        if hasattr(self,"map_status"):
+            self.map_status.set("Aguardando imagem de referência para a nova AOI.")
         if getattr(self,"_map_refresh_job",None) is not None:
             try:self.after_cancel(self._map_refresh_job)
             except Exception:pass

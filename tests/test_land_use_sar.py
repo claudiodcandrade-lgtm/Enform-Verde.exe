@@ -146,7 +146,9 @@ class LandUseTests(unittest.TestCase):
             text=SimpleNamespace(get=lambda:"Teste")
             land={'classes':[{'class_name':'FOD','area_ha':1,'area_pct':100,'source':'IBGE','taxonomy':'IBGE'}],
                   'method':'interseção','vector_path':'classes.geojson','validation':None,'warnings':['sem modelo']}
-            stub=SimpleNamespace(project={'area_ha':1,'land_use':land},name=text,biome=text,phys=text,sensor=text,
+            from analysis_pipeline_contract import geometry_hash
+            aoi=gpd.GeoDataFrame(geometry=[box(-50,-10,-49.99,-9.99)],crs=4326)
+            stub=SimpleNamespace(project={'area_ha':1,'land_use':land,'analysis_aoi_hash':geometry_hash(aoi)},gdf=aoi,name=text,biome=text,phys=text,sensor=text,
                                  status=SimpleNamespace(set=lambda value:None))
             with patch('desktop_app.filedialog.asksaveasfilename',return_value=str(path)):
                 App.export_excel(stub)

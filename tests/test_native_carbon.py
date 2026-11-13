@@ -263,8 +263,9 @@ class NativeCarbonTests(unittest.TestCase):
         native=summarize_native_carbon(aoi,classes,lambda g,p:{'components':[{'parametro':n,'tc':100 if p=='FOD' else 10} for n in COMPARTMENTS]})
         with tempfile.TemporaryDirectory() as d:
             land={'vector_path':str(Path(d)/'classes.geojson'),'classes':[],'priority':'SAR; fallback IBGE/MapBiomas','method':'interseção','area_uncertainty':'não quantificada','warnings':[],'validation':None}
+            from analysis_pipeline_contract import geometry_hash
             text=SimpleNamespace(get=lambda:'Teste');captured=[]
-            stub=SimpleNamespace(project={'land_use':land},name=text,biome=text,phys=text,sensor=text,res=None,tabs=[0,1,2,3],nb=SimpleNamespace(select=lambda v:None),status=SimpleNamespace(set=lambda v:None),_set=lambda w,t:captured.append(t))
+            stub=SimpleNamespace(project={'land_use':land,'analysis_aoi_hash':geometry_hash(aoi)},gdf=aoi,name=text,biome=text,phys=text,sensor=text,res=None,tabs=[0,1,2,3],nb=SimpleNamespace(select=lambda v:None),status=SimpleNamespace(set=lambda v:None),_set=lambda w,t:captured.append(t))
             App._present_native_carbon(stub,native,land)
             self.assertIn('FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: FOD',captured[0])
             path=Path(d)/'native.xlsx'
