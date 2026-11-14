@@ -2320,3 +2320,10 @@ Artefato Actions ID `14087567135` (531.996.993 bytes). SHA-256 ZIP `1ad43f128117
 - O runner Windows instalou os requisitos geoespaciais/HTTP e executou a suíte completa: 1.155 testes, 1 falha em `test_versioned_spec_is_valid_docx_with_current_update`, porque o DOCX ainda registrava a versão anterior. DOCX e prompts foram sincronizados; repetir CI no próximo SHA antes de declarar suíte aprovada.
 - Contrato rápido de modelos, máscara SAR experimental de Sinop e leitura real ESA BIOMASS FH em Sinop passaram. O workflow de build ainda não terminou no momento deste checkpoint. Homologação científica independente reprovada por falta de evidência observacional; o KML completo de Fazenda Maria Eduarda até o dashboard continua sem prova ponta a ponta.
 - A ausência local de `geopandas` e `requests` foi contornada no CI Windows, que instalou os requisitos de desktop e rodou os testes. É possível instalar localmente com o ambiente/arquivo de dependências do projeto, mas não é pré-requisito para CI. Manter versão pré-campo experimental e não homologada.
+
+## V88.53 — regressão completa aprovada no Windows (14/11/2026)
+
+- No SHA `15e0c0bc0742901d63892497f79c9c61148e11c4`, o runner Windows instalou os requisitos desktop/geoespaciais e passou compilação completa dos módulos, guard de coleta e suíte integral: 1.155 testes aprovados.
+- A única falha da execução anterior era documentação: DOCX em 3.26.33 com código em 3.26.34. O Word e os prompts foram sincronizados; a suíte completa seguinte passou.
+- Passaram também contrato rápido pré-campo, máscara semântica SAR experimental de Sinop e prova ESA BIOMASS FH com pixels reais em Sinop. Isso não equivale a análise integral da Fazenda Maria Eduarda até o dashboard.
+- Build Windows ainda preparava a base cartográfica IBGE offline; sem conclusão verde não declarar EXE pronto. Homologação científica independente reprovada por ausência de observações de campo independentes. Manter experimental, não homologado.
