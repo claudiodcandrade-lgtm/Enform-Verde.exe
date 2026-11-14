@@ -112,145 +112,6 @@ jobs:
           assert features[0].get("geometry"), "IFN point geometry is required for spatial matching"
           '@ | Set-Content inspect_ifn_live.py -Encoding UTF8
           python inspect_ifn_live.py
-      - name: Build offline IBGE administrative and infrastructure map
-        id: ibge_map_build
-        shell: pwsh
-        timeout-minutes: 15
-        run: |
-          @'
-          import io, json, gzip, zipfile, urllib.request, tempfile, os, re, shutil
-          from pathlib import Path
-          import geopandas as gpd
-          from shapely.geometry import mapping
-          from offline_map_tiles import write_quadrant_tiles
-
-          work=Path("ibge_offline_build"); work.mkdir(exist_ok=True)
-          mun_url="https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2025/Brasil/BR_Municipios_2025.zip"
-          bc_url="https://geoftp.ibge.gov.br/cartas_e_mapas/bases_cartograficas_continuas/bc250/versao2025/shapefiles/bc_250_shapefiles_2026_03_03.zip"
-
-          def download(url,path):
-              if path.exists(): return
-              req=urllib.request.Request(url,headers={"User-Agent":"Enform-Verde-build"})
-              with urllib.request.urlopen(req,timeout=180) as r, open(path,"wb") as f:
-                  shutil.copyfileobj(r,f,length=8*1024*1024)
-
-          mun_zip=work/"municipios.zip"; bc_zip=work/"bc250.zip"
-          download(mun_url,mun_zip); download(bc_url,bc_zip)
-
-          def extract_matching(zpath,tokens,outdir):
-              outdir.mkdir(parents=True,exist_ok=True)
-              stems=set()
-              with zipfile.ZipFile(zpath) as z:
-                  for n in z.namelist():
-                      base=Path(n).name.lower()
-                      if base.endswith(".shp") and any(t in base for t in tokens):
-                          stems.add(Path(n).with_suffix("").as_posix())
-                  for stem in stems:
-                      for ext in (".shp",".shx",".dbf",".prj",".cpg"):
-                          target_name=stem+ext
-                          names={n.lower():n for n in z.namelist()}
-                          real=names.get(target_name.lower())
-                          if real:
-                              target=outdir/Path(real).name
-                              with z.open(real) as src, open(target,"wb") as dst: shutil.copyfileobj(src,dst)
-              return sorted(outdir.glob("*.shp"))
-
-          # Municipal polygons
-          mun_dir=work/"mun"
-          with zipfile.ZipFile(mun_zip) as z:z.extractall(mun_dir)
-          mun_shp=next(mun_dir.rglob("*Municipios*.shp"))
-          mun=gpd.read_file(mun_shp).to_crs(4326)
-          name_col=next((c for c in mun.columns if c.upper() in ("NM_MUN","NM_MUNICIP","NOME")),None)
-          code_col=next((c for c in mun.columns if c.upper() in ("CD_MUN","CD_GEOCMU","GEOCODIGO")),None)
-          mun["geometry"]=mun.geometry.simplify(0.004,preserve_topology=True)
-
-          uf_map={"11":"RO","12":"AC","13":"AM","14":"RR","15":"PA","16":"AP","17":"TO","21":"MA","22":"PI","23":"CE","24":"RN","25":"PB","26":"PE","27":"AL","28":"SE","29":"BA","31":"MG","32":"ES","33":"RJ","35":"SP","41":"PR","42":"SC","43":"RS","50":"MS","51":"MT","52":"GO","53":"DF"}
-          features={"ufs":[],"municipios":[],"rodovias":[],"ferrovias":[],"hidrovias":[],"drenagem":[],"aeroportos":[],"portos":[],"localidades":[]}
-
-          def add_feat(layer,geom,props=None):
-              if geom is None or geom.is_empty:return
-              b=list(map(float,geom.bounds))
-              features[layer].append({"bbox":b,"properties":props or {},"geometry":mapping(geom)})
-
-          for _,r in mun.iterrows():
-              geom=r.geometry
-              rp=geom.representative_point()
-              nm=str(r.get(name_col,"")) if name_col else ""
-              cd=str(r.get(code_col,"")) if code_col else ""
-              add_feat("municipios",geom,{"name":nm,"code":cd,"label":[float(rp.x),float(rp.y)]})
-
-          if code_col:
-              tmp=mun.copy(); tmp["UFKEY"]=tmp[code_col].astype(str).str[:2]
-              for uf,grp in tmp.groupby("UFKEY"):
-                  geom=grp.geometry.union_all().simplify(0.008,preserve_topology=True)
-                  rp=geom.representative_point()
-                  add_feat("ufs",geom,{"sigla":uf_map.get(str(uf),str(uf)),"name":uf_map.get(str(uf),str(uf)),"label":[float(rp.x),float(rp.y)]})
-
-          # BC250 selected national infrastructure layers
-          specs={
-            "rodovias":["trecho_rodoviario","rodovia"],
-            "ferrovias":["trecho_ferroviario","ferrovia"],
-            "hidrovias":["trecho_hidroviario","hidrovia"],
-            "drenagem":["trecho_drenagem"],
-            "aeroportos":["pista_ponto_pouso","aerodromo","aeroporto","constr_aeroport"],
-            "portos":["atracadouro","constr_portuaria","porto"],
-            "localidades":["localidade","cidade_p","capital_p","vila_p"]
-          }
-          for layer,tokens in specs.items():
-              shpfiles=extract_matching(bc_zip,tokens,work/("bc_"+layer))
-              for shp in shpfiles:
-                  try:gdf=gpd.read_file(shp).to_crs(4326)
-                  except Exception:continue
-                  name_candidates=[c for c in gdf.columns if c.upper() in ("NM_LOCALIDADE","NM_MUNICIP","NOME","NM_NOME","NOME_GEO","NM_GEOGRAF")]
-                  ncol=name_candidates[0] if name_candidates else None
-                  if layer not in ("aeroportos","localidades"):
-                      gdf["geometry"]=gdf.geometry.simplify(0.0025,preserve_topology=True)
-                  for _,r in gdf.iterrows():
-                      geom=r.geometry
-                      if geom is None or geom.is_empty:continue
-                      props={}
-                      if ncol and r.get(ncol) is not None:props["name"]=str(r.get(ncol))
-                      add_feat(layer,geom,props)
-
-          # Hard contract: essential layers must exist; infrastructure may vary in exact filename but roads/localities must resolve.
-          assert len(features["ufs"])>=27, len(features["ufs"])
-          assert len(features["municipios"])>=5569, len(features["municipios"])
-          assert len(features["rodovias"])>0, "BC250 road layer not found"
-          assert len(features["ferrovias"])>0, "BC250 railway layer not found"
-          assert len(features["hidrovias"])>0, "BC250 waterway layer not found"
-          assert len(features["drenagem"])>0, "BC250 drainage layer not found"
-          assert len(features["aeroportos"])+len(features["portos"])>0, "BC250 airport/port infrastructure not found"
-          assert len(features["localidades"])>0, "BC250 locality layer not found"
-
-          payload={"source":{
-              "municipios":"IBGE Malha Municipal Digital 2025",
-              "infraestrutura":"IBGE Base Cartografica Continua do Brasil 1:250.000, versao 2025",
-              "crs":"EPSG:4326"},
-              "layers":features}
-          with gzip.open("offline_ibge_map.json.gz","wt",encoding="utf-8",compresslevel=9) as f:
-              json.dump(payload["layers"],f,ensure_ascii=False,separators=(",",":"))
-          quadrant_info=write_quadrant_tiles(features,Path("offline_ibge_tiles"),(-75.0,-35.0,-33.0,6.0),5.0)
-          print("OFFLINE_IBGE_QUADRANTS_OK",quadrant_info)
-          print("OFFLINE_IBGE_MAP_OK",{k:len(v) for k,v in features.items()},Path("offline_ibge_map.json.gz").stat().st_size)
-          '@ | Set-Content make_ibge_offline.py -Encoding UTF8
-          python make_ibge_offline.py
-          Get-Item offline_ibge_map.json.gz | Format-List Name,Length
-
-      - name: Verify offline IBGE map asset
-        shell: pwsh
-        run: |
-          if ((Get-Item 'offline_ibge_map.json.gz').Length -lt 1000000) { throw 'Offline IBGE map bundle is incomplete.' }
-          Get-Item 'offline_ibge_map.json.gz' | Format-List Name,Length
-
-      - name: Build on-demand IBGE quadrants from previous cache when needed
-        shell: pwsh
-        run: |
-          if (!(Test-Path 'offline_ibge_tiles/index.json')) {
-            python offline_map_tiles.py offline_ibge_map.json.gz offline_ibge_tiles
-          }
-          if (!(Test-Path 'offline_ibge_tiles/index.json')) { throw 'Offline IBGE quadrant index was not generated.' }
-          Get-Item 'offline_ibge_tiles/index.json' | Format-List Name,Length
-
       - name: Diagnose 2010 L-band H100 at Tapajos ORNL plots
         if: github.event_name == 'pull_request'
         continue-on-error: true
@@ -344,20 +205,20 @@ jobs:
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
           assert "cbers4a_wfi_preview" in src and "sentinel2_earthsearch_preview" in src and "sentinel2_preview" in src, "CBERS-4A/Sentinel-2 real-pixel providers missing"
           map_worker=src[src.index("        def worker():",src.index("def show_google_map")):src.index("        threading.Thread(target=worker",src.index("def show_google_map"))]
-          assert map_worker.index("cbers4a_wfi_preview(g,out_w=w") < map_worker.index("sentinel2_earthsearch_preview(g,out_w=w") < map_worker.index("sentinel2_preview(g,extent_factor=extent_factor)") < map_worker.index("nasa_gibs_preview(g,out_w=w") < map_worker.index("_read_satellite_preview_cache") < map_worker.index("offline_brazil_preview(g,extent_factor,(w,h))"), "optical priority regression: CBERS-4A > Sentinel-2 > NASA VIIRS > optical cache > cartographic contingency"
+          assert map_worker.index("cbers4a_wfi_preview(g,out_w=w") < map_worker.index("sentinel2_earthsearch_preview(g,out_w=w") < map_worker.index("sentinel2_preview(g,extent_factor=extent_factor)") < map_worker.index("if cached_optical:") < map_worker.index("nasa_gibs_preview(g,out_w=w") < map_worker.index("im=esri_export(rs,service="), "CBERS-4A remains primary; Sentinel-2, optical cache, NASA and Esri are bounded fallbacks"
           tls_src=open("tls_setup.py",encoding="utf-8").read()
           assert "_uses_windows_schannel" in tls_src and "WINDOWS_SCHANNEL_CA_LIMIT" in tls_src and "GDAL_HTTP_UNSAFESSL" in tls_src, "Windows Schannel trust handling or TLS verification missing"
           for optical_fn in ("cbers4a_wfi_preview","sentinel2_earthsearch_preview","sentinel2_preview"):
               optical_body=src[src.index("def "+optical_fn):src.find("\ndef ",src.index("def "+optical_fn)+4)]
               assert "tls_setup.gdal_env()" in optical_body, f"{optical_fn} must use platform-safe shared GDAL TLS settings"
               assert "verify=False" not in optical_body and "GDAL_HTTP_UNSAFESSL=YES" not in optical_body, f"{optical_fn} must preserve TLS verification"
-          assert "offline_brazil_preview" in src and "offline_ibge_map.json.gz" in src and Path("offline_ibge_map.json.gz").exists(), "packaged offline IBGE map missing"
+          assert "offline_brazil_preview" not in src and "offline_ibge_map.json.gz" not in src, "cartographic raster background must not block optical imagery"
           assert "Fitofisionomias (SAR atual / potencial IBGE):" in src and "ibge_phys_display" in src and "ibge_biome_display" in src and "format_property_physiognomies" in src, "visible actual property physiognomy panel missing"
           assert "def pick_ibge_physiognomy" in src and "FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA" in src and "Carbono por Formação" in src and "AGB por Fitofisionomia" in src, "per-class IBGE SAR reporting/export missing"
           import gravimetric_stock as gs
           assert gs.litter_stock_from_quadrats([250,500],[0.25,0.25])["n_independent_units"] == 2, "gravimetric module runtime contract failed"
           assert "Área do polígono:" in src and "aoi_area_display" in src, "visible polygon area field missing"
-          assert "IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades" in src, "offline IBGE map legend missing"
+          assert "CBERS-4A/WFI" in src and "Sentinel-2" in src and "OPTICAL_COG_TILE_SIZE=512" in src, "tiled optical imagery priority missing"
           assert "NÃO ESTIMADO / EXCLUÍDO DO TOTAL" in src and "sar_details" in src, "per-stratum SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -388,13 +249,13 @@ jobs:
           assert "sar_agb_blocker" in sar_src and "missing_predictors" in sar_src, "exact SAR AGB blocker diagnostics missing"
           assert "_jaxa_mosaic_gamma0_db" in sar_src and "np.square(a)" in sar_src, "JAXA mosaic gamma0 calibration regression"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
-          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Imagem orbital: CBERS-4A/WFI (55 m, INPE) prioritário; Sentinel-2 como alternativa; VIIRS/NASA apenas para contexto visual em contingência." in src and "Mapa cartográfico IBGE somente após falha das imagens." in src, "CBERS-4A/Sentinel-2/NASA/cartographic fallback label missing"
+          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Fundo óptico: CBERS-4A/WFI prioritária; Sentinel-2 como alternativa. Leitura por quadrantes ≤512 px" in src, "CBERS-first tiled optical-background contract missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
-          assert "def _schedule_offline_map_fit" in src and "mapa vetorial offline" in src, "offline AOI map must be authoritative and automatic"
+          assert "def _schedule_optical_map_fit" in src and "imagem orbital em busca" in src, "AOI outline and optical request must start automatically"
           assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
           assert "def map_zoom_in" in src and "def map_zoom_out" in src and "def map_zoom_fit" in src and "_map_extent_factor" in src, "geographic map zoom controls missing"
-          assert "def _apply_map_zoom" in src and "_map_provider" in src and "OFFLINE_IBGE" in src, "offline map zoom must be immediate and network-independent"
+          assert "def _apply_map_zoom" in src and "_map_provider" in src and "def _draw_aoi_outline" in src, "map zoom and local AOI outline missing"
           assert "map_hscroll" in src and "map_vscroll" in src and "scrollregion" in src, "map/tab scrollbars missing"
           assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
           assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
@@ -422,16 +283,10 @@ jobs:
           area=app.geom_metrics(preflight)["area_ha"]
           assert area>0, "AOI area must be positive"
           print("VISIBLE_AOI_AREA_OK",area)
-          offline,_=app.offline_brazil_preview(preflight,1.36,(900,420))
-          assert offline.size==(900,420), "offline IBGE map render failed"
-          offline_context=app._offline_ibge_layers()
-          if "__manifest__" in offline_context:
-              assert offline_context["__manifest__"].get("feature_counts",{}).get("municipios",0)>=5569, "offline IBGE municipal index missing"
-          else:
-              assert len(offline_context.get("municipios",[]))>=5569, "offline IBGE municipal layer missing"
-          tapajos_tiles=app._offline_ibge_layers([-55.0,-4.0,-54.0,-3.0])
-          assert tapajos_tiles.get("municipios"), "offline IBGE Tapajos quadrant failed to load municipal features"
-          print("OFFLINE_IBGE_MAP_OK",offline.size)
+          from desktop_app import _iter_optical_quadrants
+          quadrants=list(_iter_optical_quadrants(1024,768))
+          assert len(quadrants)==4 and all(w<=512 and h<=512 for _,_,w,h in quadrants), "optical preview must use bounded quadrants"
+
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
           ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
@@ -466,11 +321,11 @@ jobs:
               ui.pick_vector(); ui.update_idletasks()
               assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
-              # Total image failure leaves the AOI outline; IBGE is not a satellite-image fallback.
+              # Total image failure leaves the AOI outline; cartography is not imagery.
               current_gen=ui._map_generation
               ui._finish_satellite_map(current_gen,None,[],"Sentinel-2/CBERS-4A",None,None,"offline test")
               ui.update_idletasks()
-              assert not ui._satellite_map_visible and not any(ui.map_canvas.type(i)=="image" for i in ui.map_canvas.find_all()), "IBGE raster must not be substituted for unavailable Sentinel-2/CBERS-4A pixels"
+              assert not ui._satellite_map_visible and not any(ui.map_canvas.type(i)=="image" for i in ui.map_canvas.find_all()), "a cartographic raster must not be substituted for unavailable Sentinel-2/CBERS-4A pixels"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "AOI outline must remain visible when imagery is unavailable"
               old_generation=ui._map_generation
               ui._reset_analysis_state()
@@ -503,9 +358,9 @@ jobs:
               assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
               assert 0 <= float(p["cloud_cover"]) <= 100
               print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
-          offline_zoom,_=a.offline_brazil_preview(g,extent_factor=2.04,out_size=(900,420))
-          assert offline_zoom.size==(900,420), "offline geographic zoom preview failed"
-          print("OFFLINE_ZOOM_EXTENT_OK",offline_zoom.size)
+          quadrants=list(a._iter_optical_quadrants(1024,768))
+          assert len(quadrants)==4 and max(w*h for _,_,w,h in quadrants)<=512*512
+          print("OPTICAL_QUADRANTS_OK",quadrants)
           '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
           python live_sentinel2_preview.py
 
@@ -996,13 +851,11 @@ jobs:
           if ($sourceSha -ne $expected) { throw "Build SHA mismatch: $sourceSha vs $expected" }
           "SOURCE_SHA = '$sourceSha'" | Set-Content 'enform_build_source.py' -Encoding utf8
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "offline_ibge_map.json.gz;." --add-data "data/pam_microregion_yield_2015_2024.csv.gz;data" --add-data "data/ibge_microrregioes_2021_simplificada.geojson.gz;data" --add-data "data/ifn_fesv_mato_grosso_agb_candidates_v1.csv;data" --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj --collect-all sklearn --hidden-import pronasolos_wcs --hidden-import soil_intersection_report --hidden-import crop_model_priority --hidden-import crop_vigor --hidden-import crop_climate_favorability --hidden-import crop_yield_scenario --hidden-import crop_forecast_pipeline --hidden-import ui_visual_standard --hidden-import crop_water_balance_yield --hidden-import crop_panel_yield_model --hidden-import soil_water_balance_spatial --hidden-import crop_identifier_consolidated --hidden-import crop_vigor_auto --hidden-import crop_monitoring_forecast --hidden-import national_analysis_audit --hidden-import soil_pedology_embrapa --hidden-import soil_fertility_zonal --hidden-import soil_soc_official_uncertainty --hidden-import modeled_field_validation --hidden-import enform_build_source --hidden-import recent_sar_landcover --hidden-import property_physiognomy_display --hidden-import tls_setup --hidden-import regional_litter_hierarchy --hidden-import sar_landcover_lemplus --hidden-import ifn_carbon_fallback --add-data "data/models/sar_brasil_rf_v2.joblib;data/models" --add-data "data/models/sar_brasil_rf_v2.manifest.json;data/models" --collect-data certifi --add-data "data/models/yield_panel_v1.json;data/models" --add-data "validation/ui_visual_baseline.json;validation" desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "data/pam_microregion_yield_2015_2024.csv.gz;data" --add-data "data/ibge_microrregioes_2021_simplificada.geojson.gz;data" --add-data "data/ifn_fesv_mato_grosso_agb_candidates_v1.csv;data" --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj --collect-all sklearn --hidden-import pronasolos_wcs --hidden-import soil_intersection_report --hidden-import crop_model_priority --hidden-import crop_vigor --hidden-import crop_climate_favorability --hidden-import crop_yield_scenario --hidden-import crop_forecast_pipeline --hidden-import ui_visual_standard --hidden-import crop_water_balance_yield --hidden-import crop_panel_yield_model --hidden-import soil_water_balance_spatial --hidden-import crop_identifier_consolidated --hidden-import crop_vigor_auto --hidden-import crop_monitoring_forecast --hidden-import national_analysis_audit --hidden-import soil_pedology_embrapa --hidden-import soil_fertility_zonal --hidden-import soil_soc_official_uncertainty --hidden-import modeled_field_validation --hidden-import enform_build_source --hidden-import recent_sar_landcover --hidden-import property_physiognomy_display --hidden-import tls_setup --hidden-import regional_litter_hierarchy --hidden-import sar_landcover_lemplus --hidden-import ifn_carbon_fallback --add-data "data/models/sar_brasil_rf_v2.joblib;data/models" --add-data "data/models/sar_brasil_rf_v2.manifest.json;data/models" --collect-data certifi --add-data "data/models/yield_panel_v1.json;data/models" --add-data "validation/ui_visual_baseline.json;validation" desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
         run: |
           Copy-Item -Force 'enform_header.png' 'dist\Enform Verde\enform_header.png'
-          Copy-Item -Force 'offline_ibge_map.json.gz' 'dist\Enform Verde\offline_ibge_map.json.gz'
-          Copy-Item -Recurse -Force 'offline_ibge_tiles' 'dist\Enform Verde\offline_ibge_tiles'
           New-Item -ItemType Directory -Force 'dist\Enform Verde\acceptance' | Out-Null
           Copy-Item -Force 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' 'dist\Enform Verde\acceptance\Teste_SAR_Biomassa_Tapajos.kmz'
           Copy-Item -Force 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml' 'dist\Enform Verde\acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'
@@ -1037,12 +890,6 @@ jobs:
           $header = Join-Path $root 'enform_header.png'
           if (!(Test-Path $header)) { throw 'enform_header.png is missing from packaged application' }
           if ((Get-Item $header).Length -lt 20000) { throw 'Approved high-resolution Enform mask is unexpectedly small' }
-          $ibge = Join-Path $root 'offline_ibge_map.json.gz'
-          if (!(Test-Path $ibge)) { throw 'Offline IBGE map bundle is missing from packaged application' }
-          if ((Get-Item $ibge).Length -lt 1000000) { throw 'Offline IBGE map bundle is unexpectedly small' }
-          $tileIndex = Join-Path $root 'offline_ibge_tiles\index.json'
-          if (!(Test-Path $tileIndex)) { throw 'Offline IBGE quadrant index is missing from package' }
-          if (!(Get-ChildItem (Join-Path $root 'offline_ibge_tiles') -Filter 'q_*.json.gz').Count) { throw 'Offline IBGE quadrant files are missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'))) { throw 'High-biomass Brazilian SAR AOI is missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_PF_Alta.kml'))) { throw 'PF H100-structure AOI is missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_SF_Baixa.kml'))) { throw 'SF H100-structure AOI is missing from package' }

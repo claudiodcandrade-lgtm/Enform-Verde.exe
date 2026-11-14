@@ -1,7 +1,6 @@
 import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid
 import tls_setup  # V87.39: one TLS trust store for requests AND GDAL (Windows store + certifi + OS)
 tls_setup.configure()
-from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
 from decimal import Decimal, ROUND_HALF_UP
@@ -23,7 +22,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.34-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.35-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -64,158 +63,6 @@ def app_resource(name):
     # onedir builds may keep data beside the executable rather than inside _internal
     q=Path(sys.executable).parent/name if getattr(sys,"frozen",False) else p
     return q
-
-OFFLINE_BRAZIL_BOUNDS=(-75.0,-35.0,-33.0,6.0)  # west,south,east,north
-_OFFLINE_IBGE_CACHE=None
-_OFFLINE_IBGE_TILE_CACHE=OrderedDict()
-def _offline_ibge_layers(bx=None):
-    global _OFFLINE_IBGE_CACHE,_OFFLINE_IBGE_TILE_CACHE
-    if _OFFLINE_IBGE_CACHE is None:
-        index=app_resource("offline_ibge_tiles/index.json")
-        if index.exists():
-            try:_OFFLINE_IBGE_CACHE={"_tile_root":index.parent,"_manifest":json.loads(index.read_text(encoding="utf-8"))}
-            except Exception:_OFFLINE_IBGE_CACHE={}
-        else:
-            p=app_resource("offline_ibge_map.json.gz")
-            if not p.exists():_OFFLINE_IBGE_CACHE={}
-            else:
-                try:
-                    import gzip
-                    with gzip.open(p,"rt",encoding="utf-8") as fh:_OFFLINE_IBGE_CACHE=json.load(fh)
-                except Exception:_OFFLINE_IBGE_CACHE={}
-    if "_manifest" in _OFFLINE_IBGE_CACHE:
-        if bx is None:return {"__manifest__":_OFFLINE_IBGE_CACHE["_manifest"]}
-        from offline_map_tiles import load_quadrants_for_bbox
-        return load_quadrants_for_bbox(_OFFLINE_IBGE_CACHE["_tile_root"],bx,_OFFLINE_IBGE_CACHE["_manifest"],_OFFLINE_IBGE_TILE_CACHE,max_cached_tiles=8)
-    return _OFFLINE_IBGE_CACHE
-
-def _feature_intersects_bbox(feat,bx):
-    b=feat.get("bbox")
-    if not b:return True
-    return not (b[2]<bx[0] or b[0]>bx[2] or b[3]<bx[1] or b[1]>bx[3])
-
-def _geom_lines(geom):
-    typ=(geom or {}).get("type"); c=(geom or {}).get("coordinates") or []
-    if typ=="LineString":yield c
-    elif typ=="MultiLineString":
-        for ln in c:yield ln
-    elif typ=="Polygon":
-        if c:yield c[0]
-    elif typ=="MultiPolygon":
-        for poly in c:
-            if poly:yield poly[0]
-    elif typ=="Point":
-        yield [c]
-
-def _draw_offline_ibge(d,bx,ow,oh):
-    layers=_offline_ibge_layers(bx)
-    span=max(bx[2]-bx[0],bx[3]-bx[1])
-    def px(lon,lat):
-        return ((float(lon)-bx[0])/max(bx[2]-bx[0],1e-12)*ow,
-                (bx[3]-float(lat))/max(bx[3]-bx[1],1e-12)*oh)
-    def draw_lines(layer,fill,width=1):
-        for feat in layers.get(layer,[]):
-            if not _feature_intersects_bbox(feat,bx):continue
-            for line in _geom_lines(feat.get("geometry")):
-                pts=[px(c[0],c[1]) for c in line if len(c)>=2]
-                if len(pts)>=2:d.line(pts,fill=fill,width=width,joint="curve")
-    # Subtle municipality fills improve the thematic base while preserving boundaries.
-    if span<=14.0:
-        for feat in layers.get("municipios",[]):
-            if not _feature_intersects_bbox(feat,bx):continue
-            geom=feat.get("geometry") or {}; typ=geom.get("type"); coords=geom.get("coordinates") or []
-            polys=([coords] if typ=="Polygon" else coords if typ=="MultiPolygon" else [])
-            for poly in polys:
-                if not poly:continue
-                ring=poly[0]; pts=[px(c[0],c[1]) for c in ring if len(c)>=2]
-                if len(pts)>=4:d.polygon(pts,fill=(227,236,222,255))
-    # administrative context
-    draw_lines("ufs",(54,75,61,235),max(2,round(ow/700)))
-    for feat in layers.get("ufs",[]):
-        if not _feature_intersects_bbox(feat,bx):continue
-        props=feat.get("properties") or {}; c=props.get("label")
-        if not c:continue
-        x,y=px(c[0],c[1]); label=props.get("sigla") or props.get("name")
-        if label and 6<x<ow-6 and 6<y<oh-6:
-            d.text((x,y),str(label),anchor="mm",fill=(48,66,53,255),stroke_width=2,stroke_fill=(248,247,239,240))
-    if span<=14.0:draw_lines("municipios",(139,151,137,190),max(1,round(ow/1600)))
-    # infrastructure from official IBGE BC250
-    draw_lines("rodovias",(191,91,43,225),max(1,round(ow/900)))
-    draw_lines("ferrovias",(91,79,71,235),max(1,round(ow/900)))
-    if span<=18.0:draw_lines("hidrovias",(35,126,176,235),max(1,round(ow/1100)))
-    if span<=12.0:draw_lines("drenagem",(80,157,190,190),1)
-    # point infrastructure/localities
-    for layer,fill,radius,maxspan in [
-        ("aeroportos",(185,75,43,245),3,18.0),
-        ("portos",(191,119,38,245),3,18.0),
-        ("localidades",(62,82,68,240),2,7.0)]:
-        if span>maxspan:continue
-        for feat in layers.get(layer,[]):
-            if not _feature_intersects_bbox(feat,bx):continue
-            g=feat.get("geometry") or {}
-            if g.get("type")!="Point":continue
-            c=g.get("coordinates") or []
-            if len(c)<2:continue
-            x,y=px(c[0],c[1]); d.ellipse((x-radius,y-radius,x+radius,y+radius),fill=fill,outline=(0,0,0,180))
-            name=(feat.get("properties") or {}).get("name")
-            if name and span<=3.5:d.text((x+4,y-3),str(name)[:34],fill=(255,255,255,235),stroke_width=2,stroke_fill=(0,0,0,170))
-    # municipal labels only when zoomed sufficiently
-    if span<=3.0:
-        for feat in layers.get("municipios",[]):
-            if not _feature_intersects_bbox(feat,bx):continue
-            props=feat.get("properties") or {}
-            c=props.get("label")
-            if not c:continue
-            x,y=px(c[0],c[1])
-            if 4<x<ow-4 and 4<y<oh-4:d.text((x,y),str(props.get("name") or "")[:30],anchor="mm",fill=(45,61,50,245),stroke_width=2,stroke_fill=(248,247,239,240))
-    # compact orientation legend
-    legend="IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades"
-    d.rectangle((6,oh-42,min(ow-6,720),oh-8),fill=(250,249,242,235),outline=(93,111,97,220))
-    d.text((12,oh-25),legend,anchor="lm",fill=(42,60,48,255))
-
-def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
-    """Rasterize IBGE municipal/admin/infrastructure layers locally, with no network or imagery dependency."""
-    g=gdf.to_crs(4326).copy(); minx,miny,maxx,maxy=map(float,g.total_bounds)
-    dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8); f=max(0.30,min(8.0,float(extent_factor)))
-    cx=(minx+maxx)/2; cy=(miny+maxy)/2
-    bx=[cx-dx*f/2,cy-dy*f/2,cx+dx*f/2,cy+dy*f/2]
-    W,S,E,N=OFFLINE_BRAZIL_BOUNDS
-    bx=[max(W,bx[0]),max(S,bx[1]),min(E,bx[2]),min(N,bx[3])]
-    if bx[0]>=bx[2] or bx[1]>=bx[3]:raise ValueError("AOI fora da cobertura do mapa IBGE offline do Brasil")
-    layers=_offline_ibge_layers()
-    manifest=layers.get("__manifest__")
-    municipality_count=manifest.get("feature_counts",{}).get("municipios",0) if manifest else len(layers.get("municipios",[]))
-    if municipality_count<5000:
-        raise FileNotFoundError("Camada de municípios IBGE offline ausente ou incompleta.")
-    ow,oh=map(int,out_size)
-    midlat=(bx[1]+bx[3])/2; coslat=max(0.25,math.cos(math.radians(midlat)))
-    target=max(ow,1)/max(oh,1); xspan=(bx[2]-bx[0])*coslat; yspan=bx[3]-bx[1]
-    if xspan/yspan<target:
-        new_lon_span=yspan*target/coslat
-        bx[0]=max(W,cx-new_lon_span/2); bx[2]=min(E,cx+new_lon_span/2)
-    else:
-        new_lat_span=xspan/target
-        bx[1]=max(S,cy-new_lat_span/2); bx[3]=min(N,cy+new_lat_span/2)
-    crop=Image.new("RGB",(ow,oh),(238,241,232))
-    from PIL import ImageDraw
-    d=ImageDraw.Draw(crop,"RGBA")
-    _draw_offline_ibge(d,bx,ow,oh)
-    overlay=Image.new("RGBA",(ow,oh),(0,0,0,0))
-    overlay_draw=ImageDraw.Draw(overlay,"RGBA")
-    for geom in g.geometry:
-        geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
-        for poly in geoms:
-            pts=[]
-            for coord in poly.exterior.coords:
-                lon,lat=float(coord[0]),float(coord[1])
-                x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*ow
-                y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
-                pts.append((x,y))
-            if len(pts)>=4:
-                overlay_draw.polygon(pts,fill=(255,138,0,28),outline=(255,138,0,155))
-                overlay_draw.line(pts,width=max(2,round(ow/650)),fill=(255,138,0,155),joint="curve")
-    crop=Image.alpha_composite(crop.convert("RGBA"),overlay).convert("RGB")
-    return crop,bx
 
 def agb_mexiana(dbh_cm):
     return 0.1184*np.power(np.asarray(dbh_cm,dtype=float),2.53)
@@ -975,6 +822,54 @@ def _fetch_stac_features_paged(url,body,*,timeout=(8,45),max_pages=20):
     return features
 
 
+OPTICAL_COG_TILE_SIZE=512
+OPTICAL_MAX_SCENE_CANDIDATES=3
+
+def _iter_optical_quadrants(width,height,tile_size=OPTICAL_COG_TILE_SIZE):
+    """Yield bounded pixel windows so preview reads never scale with AOI size."""
+    width=int(width);height=int(height);tile_size=int(tile_size)
+    if width<=0 or height<=0 or tile_size<=0:raise ValueError("Dimensões ópticas inválidas")
+    for y in range(0,height,tile_size):
+        for x in range(0,width,tile_size):
+            yield x,y,min(tile_size,width-x),min(tile_size,height-y)
+
+
+def _read_optical_cog_quadrants(src,target_transform,target_crs,width,height,*,categorical=False):
+    """Read a remote COG by bounded quadrants and reproject into one preview."""
+    import rasterio
+    from rasterio.enums import Resampling
+    from rasterio.transform import array_bounds
+    from rasterio.warp import transform_bounds,reproject
+    from rasterio.windows import from_bounds,Window
+    if not src.crs:raise RuntimeError("COG óptico sem CRS")
+    dtype=np.uint8 if categorical else np.float32
+    nodata=0 if categorical else np.nan
+    output=np.full((int(height),int(width)),nodata,dtype=dtype)
+    method=Resampling.nearest if categorical else Resampling.bilinear
+    for xoff,yoff,tile_w,tile_h in _iter_optical_quadrants(width,height):
+        tile_transform=target_transform*rasterio.Affine.translation(xoff,yoff)
+        tile_bounds=array_bounds(tile_h,tile_w,tile_transform)
+        src_bounds=transform_bounds(target_crs,src.crs,*tile_bounds,densify_pts=11)
+        win=from_bounds(*src_bounds,transform=src.transform).round_offsets().round_lengths()
+        try:win=win.intersection(Window(0,0,src.width,src.height))
+        except rasterio.errors.WindowError:continue
+        if win.width<1 or win.height<1:continue
+        raw=src.read(1,window=win,out_shape=(tile_h,tile_w),masked=True,resampling=method)
+        if categorical:
+            data=raw.filled(0).astype(np.uint8,copy=False)
+        else:
+            # Convert masked integer sources before filling NaN; filling an
+            # integer MaskedArray with NaN raises on some rasterio builds.
+            data=np.ma.filled(raw.astype(np.float32),np.nan).astype(np.float32,copy=False)
+        scaled=src.window_transform(win)*rasterio.Affine.scale(
+            float(win.width)/tile_w,float(win.height)/tile_h)
+        target=output[yoff:yoff+tile_h,xoff:xoff+tile_w]
+        reproject(data,target,src_transform=scaled,src_crs=src.crs,src_nodata=nodata,
+                  dst_transform=tile_transform,dst_crs=target_crs,dst_nodata=nodata,
+                  resampling=method)
+    return output
+
+
 def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     """Real Sentinel-2 RGB COG pixels, scene fallback and pixel-aligned AOI overlay.
 
@@ -1014,19 +909,26 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     # is inaccessible or its viewport contains no actual data.
     clear=sorted((x for x in choices if x[0]<=20),key=lambda x:x[1],reverse=True)
     other=sorted((x for x in choices if x[0]>20),key=lambda x:(x[0],x[1]))
-    pool=(clear+other)[:80]
+    # Bound remote traffic and fallback latency. A long catalog of inaccessible
+    # COGs must never delay the next provider or leave Tk appearing frozen.
+    pool=(clear+other)[:OPTICAL_MAX_SCENE_CANDIDATES]
     bounds=tuple(map(float,g.total_bounds))
-    out_width=max(320,min(1600,int(out_w)))
-    out_height=max(240,min(1200,int(out_h)))
+    out_width=max(320,min(1024,int(out_w)))
+    out_height=max(240,min(768,int(out_h)))
     # Keyless Sentinel-2 transport on Windows: avoid multipart byte ranges
     # and HEAD negotiation rejected by some TLS-inspecting proxies.
-    base_env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"35",
-         "GDAL_HTTP_MAX_RETRY":"2",**tls_setup.gdal_env()}
+    base_env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"18",
+         "GDAL_HTTP_MAX_RETRY":"1",**tls_setup.gdal_env()}
     # Repeat each scene with independent GDAL transports before abandoning its
     # pixels; this specifically handles WinHTTP/TLS proxies that reject one
     # Range/HEAD combination for every candidate scene.
-    expanded_pool=[(c,dt,item,assets,strategy) for c,dt,item,assets in pool
-                   for strategy in range(3)]
+    expanded_pool=[]
+    for index,candidate in enumerate(pool):
+        c,dt,item,assets=candidate
+        # Exercise all Windows transport modes on the best candidate. Later
+        # scenes are single-pass failover, preventing retry multiplication.
+        expanded_pool.extend((c,dt,item,assets,strategy)
+                             for strategy in (range(3) if index==0 else (0,)))
     for cloud,dt,item,assets,strategy in expanded_pool:
         try:
             env=dict(base_env)
@@ -1050,30 +952,13 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                     window=window.intersection(Window(0,0,red_src.width,red_src.height))
                     if window.width<2 or window.height<2:raise RuntimeError("red band não cobre a AOI")
                     tr=red_src.window_transform(window)
+                    target_transform=tr*rasterio.Affine.scale(
+                        float(window.width)/out_width,float(window.height)/out_height)
                     rgb=[]
                     for band in ("red","green","blue"):
                         with rasterio.open(assets[band]["href"]) as src:
-                            if not src.crs:raise RuntimeError(band+" sem CRS")
-                            native_bounds=transform_bounds(crs,src.crs,*rasterio.windows.bounds(window,red_src.transform),densify_pts=21)
-                            win=from_bounds(*native_bounds,transform=src.transform)
-                            win=win.round_offsets().round_lengths()
-                            try:win=win.intersection(Window(0,0,src.width,src.height))
-                            except rasterio.errors.WindowError:raise RuntimeError(band+" sem interseção") from None
-                            if win.width<2 or win.height<2:raise RuntimeError(band+" fora da cena")
-                            source=src.read(1,window=win,out_shape=(min(1200,max(100,int(win.height))),
-                                                               min(1600,max(100,int(win.width)))),
-                                            masked=True,resampling=Resampling.bilinear)
-                            data=np.ma.filled(source.astype(np.float32),np.nan)
-                            dest=np.full((out_height,out_width),np.nan,dtype=np.float32)
-                            # Rasterio window transform must account for out_shape
-                            scaled_transform=src.window_transform(win)*rasterio.Affine.scale(
-                                float(win.width)/data.shape[1],float(win.height)/data.shape[0])
-                            target_transform=tr*rasterio.Affine.scale(
-                                float(window.width)/out_width,float(window.height)/out_height)
-                            reproject(data,dest,src_transform=scaled_transform,src_crs=src.crs,
-                                      src_nodata=np.nan,dst_transform=target_transform,dst_crs=crs,
-                                      dst_nodata=np.nan,resampling=Resampling.bilinear)
-                            rgb.append(dest)
+                            rgb.append(_read_optical_cog_quadrants(
+                                src,target_transform,crs,out_width,out_height,categorical=False))
                     stack=np.stack(rgb,axis=2)
                     valid=np.isfinite(stack).all(axis=2)&(stack>0).any(axis=2)
                     if valid.sum()<max(80,stack.shape[0]*stack.shape[1]//200):
@@ -1117,7 +1002,7 @@ def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
                             "aoi_coverage_fraction":aoi_coverage}
         except (UnicodeError,OSError,RuntimeError,ValueError,rasterio.errors.RasterioError) as exc:
             errors.append(str(item.get("id",""))+": "+type(exc).__name__+": "+str(exc)[:100])
-    raise RuntimeError("Nenhuma das "+str(len(pool))+" cenas Sentinel-2 forneceu RGB real. "+
+    raise RuntimeError("Nenhuma das "+str(len(pool))+" cenas Sentinel-2 forneceu RGB real após leitura por quadrantes. "+
                        "Erros: "+"; ".join(errors)[:480])
 
 
@@ -1146,7 +1031,7 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
         span=(north-south)*ratio/coslat;west,east=cx-span/2,cx+span/2
     else:
         span=(east-west)*coslat/ratio;south,north=cy-span/2,cy+span/2
-    width=max(320,min(1600,int(out_w)));height=max(240,min(1200,int(out_h)))
+    width=max(320,min(1024,int(out_w)));height=max(240,min(768,int(out_h)))
     target_transform=from_bounds(west,south,east,north,width,height)
     aoi_mask=geometry_mask(list(g.geometry),out_shape=(height,width),transform=target_transform,invert=True)
     aoi_pixels=max(1,int(aoi_mask.sum()))
@@ -1185,31 +1070,20 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
     source_dates=[];scene_ids=[];errors=[]
 
     def read_cog_window(href,categorical=False):
-        """Read only the map viewport from a remote COG, never the full scene."""
-        destination=np.zeros((height,width),dtype=np.uint8) if categorical else np.full((height,width),np.nan,dtype=np.float32)
+        """Read only bounded 512px quadrants from a remote COG."""
         with rasterio.open(href) as src:
-            if not src.crs:raise RuntimeError("COG sem CRS")
-            bounds=transform_bounds("EPSG:4326",src.crs,west,south,east,north,densify_pts=21)
-            win=window_from_bounds(*bounds,transform=src.transform).round_offsets().round_lengths()
-            try:win=win.intersection(Window(0,0,src.width,src.height))
-            except rasterio.errors.WindowError:return destination
-            if win.width<2 or win.height<2:return destination
-            ow=min(1600,max(100,int(win.width)));oh=min(1200,max(100,int(win.height)))
-            method=Resampling.nearest if categorical else Resampling.bilinear
-            raw=src.read(1,window=win,out_shape=(oh,ow),masked=True,resampling=method)
-            if categorical:arr=raw.filled(0).astype(np.uint8,copy=False)
-            else:arr=raw.astype(np.float32).filled(np.nan)
-            src_transform=src.window_transform(win)*rasterio.Affine.scale(float(win.width)/ow,float(win.height)/oh)
-            reproject(arr,destination,src_transform=src_transform,src_crs=src.crs,
-                      src_nodata=(0 if categorical else np.nan),dst_transform=target_transform,
-                      dst_crs="EPSG:4326",dst_nodata=(0 if categorical else np.nan),resampling=method)
-        return destination
+            return _read_optical_cog_quadrants(
+                src,target_transform,"EPSG:4326",width,height,categorical=categorical)
 
     attempts_by_scene={}
     successful_scene_ids=set()
     transport_counts={"DEFAULT_MULTIRANGE":0,"SERIAL_HTTP11":0,"SERIAL_NO_MULTIPLEX_HTTP11":0}
-    expanded_scenes=[(dt,item,strategy) for dt,item in scenes[:120]
-                     for strategy in range(3)]
+    # Three recent candidates are enough for a visual mosaic; trying a whole
+    # catalog can stall the GUI for minutes when an endpoint is unhealthy.
+    expanded_scenes=[]
+    for index,(dt,item) in enumerate(scenes[:OPTICAL_MAX_SCENE_CANDIDATES]):
+        expanded_scenes.extend((dt,item,strategy)
+                               for strategy in (range(3) if index==0 else (0,)))
     for dt,item,transport_strategy in expanded_scenes:
         scene_id=str(item.get("id",""))
         if scene_id in successful_scene_ids:continue
@@ -1221,7 +1095,7 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             errors.append(str(item.get("id",""))+" sem RGB/CMASK");continue
         scene=np.full((height,width,3),np.nan,dtype=np.float32)
         try:
-            env={"GDAL_HTTP_TIMEOUT":"40","GDAL_HTTP_MAX_RETRY":"2",
+            env={"GDAL_HTTP_TIMEOUT":"18","GDAL_HTTP_MAX_RETRY":"1",
                  "GDAL_HTTP_MULTIRANGE":"YES",
                  "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",**tls_setup.gdal_env()}
             if transport_strategy==1:
@@ -1511,7 +1385,7 @@ class App(tk.Tk):
         ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
         self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
         ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Imagem orbital: CBERS-4A/WFI (55 m, INPE) prioritário; Sentinel-2 como alternativa; VIIRS/NASA apenas para contexto visual em contingência. Mapa cartográfico IBGE somente após falha das imagens.",foreground="#666").pack(side="left")
+        ttk.Label(keyrow,text="Fundo óptico: CBERS-4A/WFI prioritária; Sentinel-2 como alternativa. Leitura por quadrantes ≤512 px; falhas preservam o perímetro e o diagnóstico.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1630,14 +1504,28 @@ class App(tk.Tk):
         g=self.gdf.to_crs(4326).copy()
         viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
         display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
-        w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
+        # Keep a bounded display raster; remote providers are read in <=512px
+        # quadrants, so very large canvas sizes cannot trigger giant COG reads.
+        w=max(500,min(1600,round(viewport_w*display_scale)))
+        h=max(280,min(1200,round(viewport_h*display_scale)))
         ratio=w/max(h,1)
         if ratio>=1:
             req_w=1200; req_h=max(320,min(1200,round(1200/ratio)))
         else:
             req_h=1200; req_w=max(320,min(1200,round(1200*ratio)))
         key=self.google_maps_key.get().strip(); extent_factor=max(0.30,min(8.0,float(self._map_extent_factor)))
-        if not refresh:self.map_status.set("Carregando imagem de referência e perímetro… os cálculos são independentes deste mapa.")
+        cached_preview=_read_satellite_preview_cache(g,extent_factor,w,h)
+        cached_optical=None
+        if cached_preview:
+            cached_image,cached_meta=cached_preview
+            cached_provider=str(cached_meta.get("provider") or "")
+            if "CBERS" in cached_provider.upper() or "SENTINEL-2" in cached_provider.upper():
+                cached_optical=(cached_image,cached_meta,cached_provider)
+                credit="Imagem óptica em cache • fonte original: "+cached_provider
+                self._finish_satellite_map(generation,cached_image,cached_meta.get("polygons") or [],
+                                           "CACHE ÓPTICO • "+cached_provider,None,credit,None)
+                self.map_status.set("Exibindo imagem óptica em cache enquanto atualiza CBERS-4A e Sentinel-2…")
+        if not refresh:self.map_status.set("Carregando CBERS-4A/WFI; Sentinel-2 será tentado em seguida.")
         self.update_idletasks()
 
         def rings():
@@ -1727,6 +1615,13 @@ class App(tk.Tk):
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
+            if cached_optical:
+                image,meta,original=cached_optical
+                credit="Imagem óptica em cache • fonte original: "+original
+                self._save_optical_diagnostic(generation,"CACHE_OPTICAL",errors)
+                self._map_queue.put((generation,image,meta.get("polygons") or [],
+                                     "CACHE ÓPTICO • "+original,None,credit,None))
+                return
             # Independent, keyless global optical fallback. VIIRS is lower
             # resolution than CBERS/Sentinel-2 and is strictly visual context;
             # it never feeds classification, vigor, or carbon calculations.
@@ -1749,29 +1644,6 @@ class App(tk.Tk):
                 self._map_queue.put((generation,im,[],"ESRI_WORLD_IMAGERY",None,copyright,None))
                 return
             except Exception as e:errors.append("Esri World Imagery: "+type(e).__name__+": "+str(e)[:180])
-            cached=_read_satellite_preview_cache(g,extent_factor,w,h)
-            if cached:
-                image,meta=cached
-                original=str(meta.get("provider") or meta.get("credit") or "")
-                optical=("CBERS" in original.upper() or "SENTINEL" in original.upper())
-                if optical:
-                    credit="Imagem óptica em cache local • fonte original: "+original
-                    self._save_optical_diagnostic(generation,"CACHE_OPTICAL",errors)
-                    self._map_queue.put((generation,image,meta.get("polygons") or [],
-                                         "CACHE ÓPTICO • "+original,None,credit,None))
-                    return
-                errors.append("Cache recusado: a origem não foi identificada como imagem óptica")
-            # Última contingência: mapa cartográfico claramente identificado.
-            # Nunca apresentá-lo como imagem orbital ou como observação da cobertura.
-            try:
-                image,_=offline_brazil_preview(g,extent_factor,(w,h))
-                label="MAPA CARTOGRÁFICO IBGE — contingência excepcional; CBERS-4A e Sentinel-2 indisponíveis"
-                self._save_optical_diagnostic(generation,"IBGE_CARTOGRAFICO",errors)
-                self._map_queue.put((generation,image,[],"MAPA CARTOGRÁFICO IBGE (contingência sem imagem óptica)",
-                                     None,label+" • "+" | ".join(errors),None))
-                return
-            except Exception as exc:
-                errors.append("Mapa cartográfico de contingência: "+type(exc).__name__+": "+str(exc)[:160])
             self._save_optical_diagnostic(generation,"NO_OPTICAL_IMAGE",errors)
             self._map_queue.put((generation,None,[],"CBERS-4A/Sentinel-2",None,None," | ".join(errors)))
 
@@ -1795,8 +1667,8 @@ class App(tk.Tk):
         if generation!=self._map_generation or self.gdf is None:return
         if error:
             self._satellite_map_visible=False
-            self._draw_aoi_outline("Imagem Sentinel-2/CBERS-4A indisponível — perímetro mantido")
-            self.map_status.set("Imagem óptica e contingência cartográfica indisponíveis; esta falha visual não altera a análise quantitativa.")
+            self._draw_aoi_outline("Imagem CBERS-4A/Sentinel-2 indisponível — perímetro mantido")
+            self.map_status.set("CBERS-4A e Sentinel-2 não forneceram pixels para esta AOI; o perímetro permanece visível. A análise segue independente do fundo.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
@@ -1839,26 +1711,6 @@ class App(tk.Tk):
         if not self._satellite_map_visible:
             self.show_google_map(refresh=True,prefer_public=True)
 
-    def _draw_offline_brazil_basemap(self,label="Mapa cartográfico IBGE — offline"):
-        if self.gdf is None:return False
-        try:
-            viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
-            display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
-            w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
-            view,_=offline_brazil_preview(self.gdf,self._map_extent_factor,(w,h))
-            self._satellite_map_visible=True; self._last_map_size=(w,h); self._map_provider="OFFLINE_IBGE"
-            self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all")
-            self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw",tags=("offline_ibge","aoi_visible"))
-            self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline="")
-            self.map_canvas.create_text(w-8,h-12,anchor="e",text="IBGE 2025/BC250 — mapa vetorial rasterizado localmente",fill="#333",font=("Segoe UI",8))
-            self.map_canvas.create_text(10,10,anchor="nw",text=label,fill="white",font=("Segoe UI",9,"bold"))
-            self.map_canvas.configure(scrollregion=(0,0,w,h))
-            return True
-        except Exception as exc:
-            try:self.map_status.set(f"Falha ao carregar mapa cartográfico: {type(exc).__name__}: {exc}")
-            except Exception:pass
-            return False
-
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
         """Render the AOI in a local metric projection and fit it to the live canvas."""
         if self.gdf is None:return
@@ -1871,7 +1723,7 @@ class App(tk.Tk):
         dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6); scale=min((w-2*pad)/dx,(h-2*pad)/dy)
         draw_w=dx*scale; draw_h=dy*scale; ox=(w-draw_w)/2; oy=(h-draw_h)/2
         self._last_map_size=(w,h); self.map_canvas.delete("all"); self.map_canvas.configure(bg="#EAF0EC")
-        # Offline map frame: always available and intentionally independent of tile/network services.
+        # Local AOI outline is immediate and independent of remote imagery.
         for frac in (0.25,0.5,0.75):
             gx=pad+(w-2*pad)*frac; gy=pad+(h-2*pad)*frac
             self.map_canvas.create_line(gx,pad,gx,h-pad,fill="#C9D4CF",dash=(2,4))
@@ -2817,14 +2669,13 @@ class App(tk.Tk):
             self._show_geom(Path(p).name); self.vector_status.set(f"Upload concluído ✓  {Path(p).name}  |  {len(self.gdf)} feição(ões) carregada(s).")
         except Exception as e:
             self.gdf=None; self.vector_status.set(f"Upload não concluído — {Path(p).name}: {e}"); self.status.set("Falha ao carregar vetor."); messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {Path(p).name}\n\nMotivo: {e}")
-    def _schedule_offline_map_fit(self,label):
-        """Load Sentinel-2/CBERS-4A imagery; keep only the AOI outline on failure."""
+    def _schedule_optical_map_fit(self,label):
+        """Load CBERS-4A/Sentinel-2 imagery; keep the AOI outline on failure."""
         self._map_extent_factor=1.36
         self._satellite_map_visible=False
         self._draw_aoi_outline(label + " — carregando camada online")
         self._map_provider="ONLINE_PENDING"
-        # Network requests run in a worker; the cartographic IBGE raster is not
-        # a satellite-background fallback.
+        # Network requests run in a worker; the outline is the only local fallback.
         self.show_google_map(refresh=False,prefer_public=False)
         # The AOI outline has already been rendered; do not schedule an undefined callback.
 
@@ -2840,7 +2691,7 @@ class App(tk.Tk):
         # provider or Tk canvas failure must never prevent the scientific AOI
         # setup from launching the independent IBGE diagnostic worker.
         try:
-            self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
+            self._schedule_optical_map_fit(f"Perímetro carregado: {src} — imagem orbital em busca")
         except Exception as exc:
             self.project["map_preview_error"] = f"{type(exc).__name__}: {exc}"
             try:

@@ -24,8 +24,7 @@ class OpticalStatusIsolationTests(unittest.TestCase):
         self.assertIn('self.status=tk.StringVar', self.source)
 
     def test_optical_routes_never_write_analysis_status(self):
-        for name in ("show_google_map", "_finish_satellite_map",
-                     "_draw_offline_brazil_basemap"):
+        for name in ("show_google_map", "_finish_satellite_map", "_draw_aoi_outline"):
             with self.subTest(method=name):
                 self.assertNotIn("self.status.set(", self._method(name))
 

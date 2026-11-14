@@ -36,7 +36,7 @@ O candidato CASINO P-band (Soja et al. 2021, DOI 10.1016/j.rse.2020.112153) est�
 
 ## Mapa-base IBGE offline
 
-O fundo padrão do mapa é gerado localmente a partir da malha municipal IBGE 2025 e da Base Cartográfica Contínua do Brasil 1:250.000 (BC250): limites de estados e municípios, rodovias, ferrovias, hidrografia, hidrovias, aeroportos, portos e localidades. A interface rasteriza essas camadas para a visualização e sobrepõe o polígono estudado. O aplicativo empacota os dados em `offline_ibge_map.json.gz` e não depende de mosaico de satélite para mostrar a AOI. Imagem de satélite segue opcional.
+O fundo óptico prioriza pixels reais de CBERS‑4A/WFI (INPE); Sentinel‑2 L2A é a rota alternativa. Os COGs são lidos em quadrantes de até 512 × 512 pixels, com limite de cenas e transportes para controlar memória e tempo de resposta. A base raster cartográfica nacional foi removida do pacote e do build. Se CBERS‑4A e Sentinel‑2 não fornecerem pixels válidos cobrindo ao menos 95% da AOI, a interface mantém o perímetro e informa a falha; não declara a imagem como carregada. NASA/Esri podem aparecer somente como contexto visual de contingência, identificadas no painel, e não alimentam SAR, classificação, carbono ou safra.
 # Política SAR para biomassa e altura
 
 1. Quando coberto e liberado pelo catálogo, `ESA BIOMASS FP_AGB_L2B` fornece a estimativa AGB primária e sua camada de desvio-padrão do produto. Ela é reportada como incerteza do produto, separada da dispersão espacial e sem alegação de validação local.

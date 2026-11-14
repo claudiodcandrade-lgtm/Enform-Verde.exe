@@ -57,9 +57,9 @@ class KeylessSatellitePreviewContract(unittest.TestCase):
         self.assertIn("nasa_gibs_preview", calls)
         self.assertIn("esri_export", calls)
         self.assertLess(source.index("nasa_gibs_preview(", source.index("def worker():")), source.index("im=esri_export(rs,service="))
-        # Labelled cartographic map remains only after all real imagery routes.
-        self.assertLess(nasa, source.index("offline_brazil_preview("))
-        self.assertIn("contingência sem imagem óptica", source)
+        self.assertLess(planetary, source.index("if cached_optical:"))
+        self.assertLess(source.index("if cached_optical:"), nasa)
+        self.assertNotIn("offline_brazil_preview", source)
         self.assertIn("strictly visual context", source)
 
     def test_nasa_provider_is_marked_as_visual_context(self):

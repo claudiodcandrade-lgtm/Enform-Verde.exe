@@ -14,8 +14,11 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         fn=funcs[0]
         calls=[n.func.attr for n in ast.walk(fn) if isinstance(n,ast.Call)
                and isinstance(n.func,ast.Attribute)]
-        self.assertTrue(any(isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=="reproject" for n in ast.walk(fn)))
-        self.assertIn("read",calls)
+        helper=next(f for f in ast.walk(tree) if isinstance(f,ast.FunctionDef)
+                    and f.name=="_read_optical_cog_quadrants")
+        helper_source=ast.get_source_segment(SOURCE.read_text(encoding="utf-8"),helper)
+        self.assertIn("reproject(",helper_source)
+        self.assertIn("src.read(",helper_source)
         self.assertIn("resize",calls)
         self.assertTrue(any(isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=="transform" for n in ast.walk(fn)))
         self.assertIn("isfinite",calls)
@@ -23,8 +26,8 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
                   and isinstance(n.value,str)]
         self.assertTrue(any("pixels RGB válidos" in value for value in literals))
         self.assertTrue(any("Nenhuma das" in value for value in literals))
-        # Distinct source band windows, not reusing red's exact pixel window.
-        self.assertIn("win=from_bounds(",ast.get_source_segment(SOURCE.read_text(encoding="utf-8"),fn))
+        self.assertIn("_read_optical_cog_quadrants(",ast.get_source_segment(SOURCE.read_text(encoding="utf-8"),fn))
+        self.assertIn("OPTICAL_MAX_SCENE_CANDIDATES",ast.get_source_segment(SOURCE.read_text(encoding="utf-8"),fn))
 
     def test_satellite_background_uses_verified_sources_then_nasa_visual_fallback(self):
         src=SOURCE.read_text(encoding="utf-8")
@@ -42,8 +45,8 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         self.assertIn("nasa_gibs_preview",calls)
         self.assertIn("esri_export", calls)
         self.assertLess(body.index("nasa_gibs_preview(", body.index("def worker():")), body.index("im=esri_export(rs,service="))
-        self.assertLess(body.index("nasa_gibs_preview("),body.index("offline_brazil_preview("))
-        self.assertIn("contingência sem imagem óptica",body)
+        self.assertLess(body.index("if cached_optical:"),body.index("nasa_gibs_preview("))
+        self.assertNotIn("offline_brazil_preview",body)
 
     def test_each_optical_route_requires_real_pixels_over_the_aoi(self):
         src=SOURCE.read_text(encoding="utf-8")
@@ -56,8 +59,18 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
             self.assertIn("aoi_coverage<0.95",body,name+" must reject partial-AOI imagery")
         cbers=bodies["cbers4a_wfi_preview"]
         self.assertIn("aoi_coverage_fraction",cbers)
+        self.assertIn("_read_optical_cog_quadrants",cbers)
         self.assertIn("_fetch_stac_features_paged",src)
         self.assertNotIn("_draw_offline_brazil_basemap",body)
+
+    def test_preview_reads_are_split_into_bounded_quadrants(self):
+        from desktop_app import OPTICAL_COG_TILE_SIZE,_iter_optical_quadrants
+        self.assertEqual(OPTICAL_COG_TILE_SIZE,512)
+        tiles=list(_iter_optical_quadrants(1024,768))
+        self.assertEqual(len(tiles),4)
+        self.assertTrue(all(w<=512 and h<=512 for _,_,w,h in tiles))
+        covered={(x+dx,y+dy) for x,y,w,h in tiles for dx in range(w) for dy in range(h)}
+        self.assertEqual(len(covered),1024*768)
 
     def test_cbers_4a_uses_official_rgb_cogs_and_clear_mask(self):
         src=SOURCE.read_text(encoding="utf-8")
