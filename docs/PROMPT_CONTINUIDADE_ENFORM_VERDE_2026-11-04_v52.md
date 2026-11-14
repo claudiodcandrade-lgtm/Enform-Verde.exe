@@ -318,3 +318,9 @@ Preservar, para os horizontes 0–5, 5–15, 15–30, 30–60 e 60–100 cm, a s
 ### Auditoria do código e limite da evidência
 
 A revisão V88.49 cobriu cache CCI por análise, retentativas e persistência da auditoria Sentinel-1 e o handoff SAR ao dashboard. Foi uma auditoria direcionada, não uma auditoria exaustiva de todos os módulos e fluxos do produto. Os testes verdes cobrem os contratos e cenários executados; não provam que todas as falhas recorrentes estejam eliminadas nem cobrem toda AOI. Manter essa distinção e realizar revisão estrutural/integração ponta a ponta antes de alegar correção definitiva.
+
+## V88.57 — auditoria arquitetural preliminar (14/11/2026)
+
+A primeira leitura estática da arquitetura foi feita no SHA `417e93141ec035d5bb414abb620224d490580927`. Ela identificou riscos que ainda precisam de correção e regressão: o caminho com SAR local chama o processamento pesado no thread da interface (`desktop_app.py:2780`); a contingência pode solicitar novamente o pipeline SAR dentro do loop de fitofisionomias (`desktop_app.py:498–502`); o teste de handoff usa resultados de fixture e não prova execução real do core (`tests/test_core_to_dashboard_handoff.py`); a contingência IFN atualmente cobre apenas domínio específico de Amazônia/Floresta Estacional Sempre-Verde em MT (`ifn_carbon_fallback.py:51–89`); e o estado agregado deve distinguir indisponibilidade, ausência, não execução e sucesso (`desktop_app.py:2927–2936`).
+
+A revisão é preliminar, não exaustiva. A execução integral do KML da Fazenda Maria Eduarda até o dashboard continua sem comprovação; a homologação científica segue reprovada por falta de medições independentes. Manter o status pré-campo experimental. Ver `AUDITORIA_ARQUITETURAL_PRELIMINAR_V88_57.md` no pacote para gatilhos, impactos e próximos passos. Não declarar os achados corrigidos até haver commits e regressões que os cubram.
