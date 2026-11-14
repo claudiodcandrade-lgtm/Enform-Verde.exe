@@ -1,4 +1,4 @@
-# Enform Verde v3.26.36 — pacote pré-campo experimental
+# Enform Verde v3.26.36-PRECAMPO-EXPERIMENTAL
 
 - Código-fonte: commit `7e999022759fcbb540acbc7340dcc0036385c58e` na branch `patches-3.26.6` (PR #51 em rascunho).
 - Build Windows: aprovado no workflow [43642362176](https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/43642362176).
