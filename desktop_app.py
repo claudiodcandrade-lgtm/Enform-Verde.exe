@@ -22,7 +22,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.36-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.37-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -2326,7 +2326,7 @@ class App(tk.Tk):
                "Estado da etapa no pipeline: "+str(((self.project.get("pipeline_audit") or {}).get("stages") or {}).get("land_use",{}).get("status",land.get("status","N/D"))),
                "Método: "+str(land.get("method","não informado")),
                "Prioridade de fontes: "+str(land.get("priority","não informada")),
-               "Incerteza da área/classificação: "+str(land.get("area_uncertainty") or "não quantificada"),
+               "Incerteza da área/classificação: "+str(land.get("area_uncertainty") or "incerteza não mensurável — classificação/área"),
                "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
                "Avisos:"]+[str(x) for x in land.get("warnings",[]) or ["nenhum"]]
         audit.extend(["","Classes, fontes e metadados:"])

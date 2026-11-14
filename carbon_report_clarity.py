@@ -7,7 +7,8 @@ def format_pt(value, decimals=2):
     return f"{value:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 def uncertainty_display(stock_tc_ha, *, uncertainty_tc_ha=None, product_sd_mg_ha=None,
-                        carbon_fraction=None, spatial_sd_tc_ha=None, ci95_tc_ha=None):
+                        carbon_fraction=None, spatial_sd_tc_ha=None, ci95_tc_ha=None,
+                        uncertainty_note=None):
     """Return uncertainty in tC/ha and percent, retaining its statistical type."""
     if uncertainty_tc_ha is not None:
         amount, kind = float(uncertainty_tc_ha), "Incerteza informada"
@@ -23,7 +24,8 @@ def uncertainty_display(stock_tc_ha, *, uncertainty_tc_ha=None, product_sd_mg_ha
                 format_pt((high / stock_tc_ha - 1) * 100) + "%"
                 if stock_tc_ha > 0 else "IC95%: percentual indisponível")
     else:
-        return "Incerteza: não quantificada em tC/ha e %"
+        note=(f": {uncertainty_note}" if uncertainty_note else "")
+        return "incerteza não mensurável — estimativa mantida"+note+" (parâmetro de incerteza sem quantificação em tC/ha e %)"
     if amount < 0:
         raise ValueError("Incerteza negativa")
     return (kind + ": ±" + format_pt(amount) + " tC/ha (" +
@@ -51,7 +53,8 @@ def render_stratum(name, area_ha, compartments, provenance=None):
             product_sd_mg_ha=data.get('product_sd_mg_ha'),
             carbon_fraction=data.get('carbon_fraction'),
             spatial_sd_tc_ha=data.get('spatial_sd_tc_ha'),
-            ci95_tc_ha=data.get('ci95_tc_ha')))
+            ci95_tc_ha=data.get('ci95_tc_ha'),
+            uncertainty_note=data.get('uncertainty_note')))
         if data.get('product_sd_mg_ha') is not None:
             lines.append(f"  Incerteza do produto: {format_pt(data['product_sd_mg_ha'])} Mg biomassa/ha"
                          " (não equivale a IC95% do total)")

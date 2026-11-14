@@ -333,3 +333,8 @@ A revisão V88.49 cobriu cache CCI por análise, retentativas e persistência da
 ## V88.59 — sincronização documental do pacote (14/11/2026)
 
 Esta versão sincroniza a especificação do solo com a candidata de software 3.26.36 e as correções arquiteturais SAR registradas no prompt e na especificação técnica. Não altera fontes, profundidade, métodos, cálculos, incertezas ou interpretação do carbono/fertilidade do solo.
+
+
+## V88.63 — correção da exibição de incerteza
+
+Requisito arquitetural já estabelecido: se o valor estimado de carbono tiver suporte, mas a incerteza de algum parâmetro não puder ser mensurada, manter o resultado e exibir exatamente “incerteza não mensurável”, identificando parâmetro, motivo e fonte. N/D somente quando o próprio valor não tiver suporte. Conferir painel, relatório, mapas, planilhas e exportações. A candidata 3.26.37 aguarda CI integral, build Windows do mesmo SHA, execução ponta a ponta da Fazenda Maria Eduarda e validação independente; manter pré-campo experimental.

@@ -33,7 +33,7 @@ def litter_dashboard_summaries(native):
             source_url=component.get("source_url") or component.get("url")
             method=component.get("metodo") or component.get("method")
             uncertainty=(component.get("uncertainty_kind") or
-                         component.get("uncertainty") or "incerteza não quantificada")
+                         component.get("uncertainty") or "incerteza não mensurável")
             note=(f"Área: {area:.4f} ha; fonte: {source}; "
                   f"método: {method or 'N/D'}; incerteza: {uncertainty}; "
                   f"URL/fontes: {source_url or 'N/D'}")
@@ -71,7 +71,7 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
         # Published dry-mass bounds can be converted only when a documented C fraction is supplied.
         fraction=row.get("carbon_fraction")
         if not isinstance(fraction,(int,float)) or not 0<fraction<=1:
-            return {"absolute_tc_ha":None,"percent":None,"kind":"IC em massa seca disponível, mas fração de carbono específica não documentada"}
+            return {"absolute_tc_ha":None,"percent":None,"kind":"incerteza não mensurável — IC em massa seca disponível, mas fração de carbono específica não documentada"}
         lo,hi=(x*fraction for x in dry)
         if lo<=hi:
             return {"absolute_tc_ha":(hi-lo)/2,"percent":100*(hi-lo)/(2*value),
@@ -81,7 +81,7 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
     if isinstance(sd,(int,float)) and sd>=0:
         fraction=row.get("carbon_fraction",carbon_fraction)
         if not isinstance(fraction,(int,float)) or not 0<fraction<=1:
-            return {"absolute_tc_ha":None,"percent":None,"kind":"fração de carbono da AGB não documentada"}
+            return {"absolute_tc_ha":None,"percent":None,"kind":"incerteza não mensurável — fração de carbono da AGB não documentada"}
         absolute=sd*fraction
         return {"absolute_tc_ha":absolute,"percent":100*absolute/value,
                 "kind":"incerteza do produto AGB (Mg/ha) convertida a tC/ha; NÃO é IC95%"}
@@ -90,7 +90,7 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
         return {"absolute_tc_ha":spatial,"percent":100*spatial/value,
                 "kind":("desvio-padrão espacial zero na amostra/mapa; NÃO significa incerteza de predição zero" if spatial==0 else "desvio-padrão espacial; NÃO é erro de predição nem IC95%")}
     return {"absolute_tc_ha":None,"percent":None,
-            "kind":"erro residual/transferência não quantificado"}
+            "kind":"incerteza não mensurável — erro residual/transferência não quantificado"}
 
 def executive_carbon_lines(native, fmt):
     area=native.get("native_area_ha") or 0
@@ -142,8 +142,8 @@ def executive_carbon_lines(native, fmt):
         pool_results[pool]=(density,unc_abs)
         table.append("| "+pool+" | "+fmt(density) if density is not None else "| "+pool+" | N/D")
         table[-1]+=" | "+fmt(density*44/12) if density is not None else " | N/D"
-        table[-1]+=" | "+fmt(unc_abs) if unc_abs is not None else " | N/D"
-        table[-1]+=" | "+fmt(unc_pct)+"% |" if unc_pct is not None else " | N/D |"
+        table[-1]+=" | "+fmt(unc_abs) if unc_abs is not None else (" | incerteza não mensurável" if stock is not None else " | N/D")
+        table[-1]+=" | "+fmt(unc_pct)+"% |" if unc_pct is not None else (" | incerteza não mensurável |" if stock is not None else " | N/D |")
     total_uncertainty_rule=None
     if complete and area>0 and known is not None:
         total_density=known/area
@@ -172,8 +172,8 @@ def executive_carbon_lines(native, fmt):
     table.append("+-----------------------------------------------+")
     table.append("| "+total_label+" | "+(fmt(total_density) if total_density is not None else "N/D")+
                  " | "+(fmt(total_density*44/12) if total_density is not None else "N/D")+
-                 " | "+(fmt(total_unc_abs) if total_unc_abs is not None else "N/D")+
-                 " | "+(fmt(total_unc_pct)+"%" if total_unc_pct is not None else "N/D")+" |")
+                 " | "+(fmt(total_unc_abs) if total_unc_abs is not None else ("incerteza não mensurável" if known is not None else "N/D"))+
+                 " | "+(fmt(total_unc_pct)+"%" if total_unc_pct is not None else ("incerteza não mensurável" if known is not None else "N/D"))+" |")
     table.append("+-----------------------------------------------+")
     biodiversity=native.get("biodiversity_references") or []
     biodiversity_lines=["PERSPECTIVA DE BIODIVERSIDADE E ESTRUTURA — INVENTÁRIOS REGIONAIS",
@@ -235,7 +235,7 @@ def executive_carbon_lines(native, fmt):
            "INCERTEZA POR COMPARTIMENTO — quadro executivo (estoques em tC/ha e tCO₂e/ha; incertezas em tCO₂e/ha e %):",
            *table,
            ("Incerteza do total: "+total_uncertainty_rule+"." if total_uncertainty_rule else
-            "Incertezas entre estratos só são combinadas quando sua independência está explicitamente documentada; total exige incerteza em todos os compartimentos. Sem isso, N/D.")]
+            ("Incerteza do total: incerteza não mensurável — covariância/transferência não permite quantificação." if known is not None else "Incerteza do total: N/D — estoque total sem suporte.")]
     for st in native.get("strata",[]):
         if not st.get("area_ha"):
             continue
@@ -252,10 +252,11 @@ def executive_carbon_lines(native, fmt):
             abs_u=u["absolute_tc_ha"]
             error=(fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | "+fmt(u["percent"])+"%" if abs_u is not None and u["percent"] is not None else
                    (fmt(abs_u)+" tC/ha | "+fmt(abs_u*44/12)+" tCO₂e/ha | N/D" if abs_u is not None else
-                    "N/D tC/ha | N/D tCO₂e/ha | N/D % — incerteza não quantificada"))
+                    "incerteza não mensurável"))
             pool_name=(row["parametro"]+" — CENÁRIO EXPERIMENTAL (fora do estoque conhecido)"
                        if row.get("origem")=="EXPERIMENTAL_FISICO" else row["parametro"])
-            lines.append("  "+pool_name+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | incerteza: "+error)
+            uncertainty_label=(error if error.startswith("incerteza não mensurável") else "incerteza: "+error)
+            lines.append("  "+pool_name+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | "+uncertainty_label)
             lines.append("    Natureza: "+u["kind"])
             if row["parametro"] == "Serapilheira":
                 lines.append("    Fonte/método gravimétrico: "+str(row.get("fonte") or "N/D")+" | "+str(row.get("metodo") or "N/D"))

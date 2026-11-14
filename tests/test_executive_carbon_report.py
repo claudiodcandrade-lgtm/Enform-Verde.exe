@@ -53,5 +53,15 @@ class ExecutiveCarbonReportTests(unittest.TestCase):
         self.assertIn("preditivo 90%",rows[0]["note"])
         self.assertIn("https://example.org/data",rows[0]["note"])
 
+    def test_supported_carbon_value_keeps_value_when_uncertainty_is_not_measurable(self):
+        native={"area_aoi_ha":10,"native_area_ha":10,"known_total_tc":50,"complete":False,
+                "strata":[{"class_name":"FESV","area_ha":10,"components":[
+                    {"parametro":"Biomassa aérea","tc":5,"total_tc":50,"quantified_area_ha":10}]}]}
+        lines=executive_carbon_lines(native,lambda x:f"{x:.2f}" if x is not None else "N/D")
+        joined="\\n".join(lines)
+        self.assertIn("5.00 tC/ha",joined)
+        self.assertIn("incerteza não mensurável",joined)
+        self.assertNotIn("N/D tC/ha | N/D tCO₂e/ha | N/D % — incerteza",joined)
+
 if __name__=="__main__":
     unittest.main()

@@ -334,3 +334,8 @@ Na consulta de publicação, a suíte dashboard e o build Windows deste commit a
 ## V88.59 — sincronização pós-regressões (14/11/2026)
 
 O commit de código/teste `a52b9818ba8c31ba62a238d30a54f0a280d0c0c5` mantém a candidata `3.26.36-PRECAMPO-EXPERIMENTAL`. A suíte completa do dashboard passou com 1.158 testes; o guard documental falhou porque exigia que prompt, especificação técnica e especificação de solo fossem alterados após o último commit de teste. Este checkpoint sincroniza esses documentos. O build Windows ainda estava em execução; a CI do commit documental seguinte precisa confirmar a suíte, o guard e o artefato. A homologação científica continua reprovada pela falta de medições de campo, e o KML integral da Fazenda Maria Eduarda até o painel segue pendente.
+
+
+## V88.63 — correção da exibição de incerteza
+
+Requisito arquitetural já estabelecido: se o valor estimado de carbono tiver suporte, mas a incerteza de algum parâmetro não puder ser mensurada, manter o resultado e exibir exatamente “incerteza não mensurável”, identificando parâmetro, motivo e fonte. N/D somente quando o próprio valor não tiver suporte. Conferir painel, relatório, mapas, planilhas e exportações. A candidata 3.26.37 aguarda CI integral, build Windows do mesmo SHA, execução ponta a ponta da Fazenda Maria Eduarda e validação independente; manter pré-campo experimental.
