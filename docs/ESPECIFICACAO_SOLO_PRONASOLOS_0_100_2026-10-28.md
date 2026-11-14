@@ -1691,3 +1691,14 @@ No Windows CI #2726 (SHA `8334643eadb4d82366c06eed789c9e659c752b09`), VV/VH rece
 ## Atualização V88.47 — build Windows concluído
 
 O executável da candidata 3.26.31 foi construído e passou os smokes de Windows, paridade de módulos, padrão visual, rede TLS e aceite SAR do KMZ de teste Tapajós. Isso confirma a operacionalidade de empacotamento, não acrescenta evidência ao estoque SOC. O carbono do solo 0–100 cm continua sujeito aos dados oficiais, interseção, incerteza e auditoria especificados acima. O teste integral da Fazenda Maria Eduarda até o dashboard e a validação científica independente seguem pendentes; manter como experimental e não homologado.
+
+
+---
+
+## V88.48 — previsões experimentais de campo no painel (14/11/2026)
+
+- Versão em desenvolvimento: `3.26.32-PRECAMPO-EXPERIMENTAL`. O painel de carbono agora expõe cada valor numérico que o manifesto pré-campo conseguiu derivar, por formação e compartimento: densidade, área-base, estoque associado, faixa disponível, tipo de incerteza, modelo, fonte, ID e hash de rastreio. Previsões de produtividade elegíveis mostram t/ha, produção-base, área, faixa, modelo, fonte e rastreio.
+- Resultados incompatíveis ou sem fonte/método continuam N/D com o motivo; nenhuma média sintética é introduzida. A previsão experimental permanece fora do total conhecido/consolidado quando assim classificada. JSON e CSV mantêm previsões separadas de observações de campo; medições, parcelas e coordenadas ficam em branco até coleta independente.
+- A regressão do handoff ganhou biomassa aérea numérica de fixture e valida que a previsão, o identificador de rastreio e a separação previsão/medição chegam ao painel. No commit executado antes desta sincronização, os testes direcionados passaram; a suíte completa executou 1.150 casos e falhou somente porque o Word ainda não continha a versão 3.26.32. Essa especificação e os documentos de continuidade foram sincronizados; repetir suíte completa e build Windows no novo SHA.
+- A homologação científica independente continua reprovada por ausência de observações de campo e validação compatível. Não chamar o resultado de homologado. O teste integral do KML Fazenda Maria Eduarda até o dashboard permanece pendente.
+- Esta alteração apresenta valores já calculados pelo manifesto existente; não modifica equações, calibra modelos, transforma Sentinel-1 C-band isolado em AGB nem garante resultado numérico para toda AOI. Onde não houver dado/modelo compatível, permanece N/D.
