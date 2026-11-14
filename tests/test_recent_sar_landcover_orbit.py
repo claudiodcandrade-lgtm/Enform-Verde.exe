@@ -1,7 +1,8 @@
 """Contract tests for orbit selection, redaction and missing evidence."""
 import unittest
 from datetime import datetime,timedelta,timezone
-from recent_sar_landcover import _select_orbit_series,_safe_reason
+from recent_sar_landcover import (_select_orbit_series,_safe_reason,
+                                  _retryable_pixel_read_failure)
 class OrbitSelectionTests(unittest.TestCase):
     def test_complete_alternate_orbit_beats_single_latest_scene(self):
         t=datetime(2026,11,4,tzinfo=timezone.utc)
@@ -28,4 +29,10 @@ class OrbitSelectionTests(unittest.TestCase):
         reason=_safe_reason(ValueError("GDAL: https://asset.example/rtc.tif?sig=SECRET&sv=3"))
         self.assertNotIn("SECRET",reason)
         self.assertNotIn("https://",reason)
+    def test_deterministic_empty_or_outside_aoi_errors_do_not_retry_transports(self):
+        self.assertFalse(_retryable_pixel_read_failure(ValueError("SAR_SCENE_NO_VALID_PIXELS_IN_AOI")))
+        self.assertFalse(_retryable_pixel_read_failure(ValueError("SAR asset does not intersect AOI")))
+    def test_transport_and_decoder_errors_keep_alternate_routes(self):
+        self.assertTrue(_retryable_pixel_read_failure(OSError("TLS connection reset")))
+        self.assertTrue(_retryable_pixel_read_failure(UnicodeError("invalid response text")))
 if __name__=="__main__":unittest.main()

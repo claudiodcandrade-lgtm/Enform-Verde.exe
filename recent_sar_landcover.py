@@ -128,6 +128,27 @@ def _safe_reason(error):
     return result[:200]
 
 
+def _retryable_pixel_read_failure(error):
+    """Retry alternate transports only for failures that may be transient.
+
+    A fixed set of local eligibility/geometry errors cannot improve by opening
+    the same scene through another HTTP/GDAL strategy. Keep transport, TLS,
+    authorization, and decoder errors eligible for the existing fallbacks.
+    """
+    if not isinstance(error, ValueError):
+        return True
+    reason = str(error).casefold()
+    deterministic = (
+        "sar_scene_no_valid_pixels_in_aoi",
+        "missing georeferencing in sar source",
+        "sar aoi exceeds memory-bounded raster window",
+        "sar source window exceeds bounded pixel limit",
+        "sar asset does not intersect aoi",
+        "sar_scene_incomplete_vv_vh_pair",
+    )
+    return not any(marker in reason for marker in deterministic)
+
+
 @contextmanager
 def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=None,
                                request_get=None, request_post=None, item_id=None,
@@ -442,6 +463,11 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                              "attempt":attempt+1,"recovered":False}
                         provider_errors.append(row)
                         provider_diag["failed_scene_count"]+=1
+                        if not _retryable_pixel_read_failure(exc):
+                            # Preserve the scene-level diagnostic and continue
+                            # with the next acquisition/provider; another
+                            # transport cannot fix an empty/nonintersecting AOI.
+                            break
                         if attempt==0 and provider=="MPC":
                             try:
                                 provider_token=(token_fn or get_runtime_sas_token)()
