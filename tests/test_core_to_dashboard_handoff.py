@@ -190,6 +190,10 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             self.assertIn(acquisition, crop_widget.value)
             self.assertIn("INPE RTC", crop_audit_widget.value)
             self.assertIn('"vv_vh_valid_pixels": 256', crop_audit_widget.value)
+            self.assertIn("PREVISÃO EXPERIMENTAL PARA AFERIÇÃO EM CAMPO", carbon_widget.value)
+            self.assertIn("Biomassa aérea", carbon_widget.value)
+            self.assertIn("hash de rastreio:", carbon_widget.value)
+            self.assertIn("previsões e observações permanecem separadas", carbon_widget.value)
             self.assertIn("candidato SAR experimental", crop_widget.value)
             self.assertIn("cultura N/D", crop_widget.value)
 
