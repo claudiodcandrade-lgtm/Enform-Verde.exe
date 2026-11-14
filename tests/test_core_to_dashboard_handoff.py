@@ -10,7 +10,7 @@ from unittest.mock import patch
 import geopandas as gpd
 from shapely.geometry import box
 
-from desktop_app import App
+from desktop_app import App, native_carbon_analysis
 from analysis_pipeline_contract import geometry_hash
 
 
@@ -209,6 +209,87 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             self.assertIn("previsões e observações permanecem separadas", carbon_widget.value)
             self.assertIn("candidato SAR experimental", crop_widget.value)
             self.assertIn("cultura N/D", crop_widget.value)
+
+
+    def test_local_sar_runs_in_worker_and_reaches_both_core_stages(self):
+        aoi = gpd.GeoDataFrame(geometry=[box(0, 0, 100, 100)], crs="EPSG:6933")
+        sar_paths = ["local-sentinel1-vv.tif", "local-sentinel1-vh.tif"]
+        land = {"status": "SAR_REAL", "vector_path": "land.geojson",
+                "classes": [], "recent_sar_cover": {"pixel_state": "PROCESSADO"}}
+        native = {"area_aoi_ha": 1.0, "strata": [], "components": [],
+                  "known_total_tc": None, "status": "N/D"}
+        app = SimpleNamespace(
+            _analysis_running=False, _ibge_pending=False, gdf=aoi,
+            car=SimpleNamespace(get=lambda: ""), ccir=SimpleNamespace(get=lambda: ""),
+            active_source=None, active_input_id=None, sar_paths=sar_paths,
+            land_use_config=None, inventory_evidence_data=None,
+            inventory_evidence_manifest=None, biodiversity_inventory_records=None,
+            ibge_physiognomy_gdf=None, ibge_class_field="legenda_1",
+            biome=SimpleNamespace(get=lambda: "Amazônia"),
+            esa_token=SimpleNamespace(get=lambda: ""), edl_token=SimpleNamespace(get=lambda: ""),
+            edl_user=SimpleNamespace(get=lambda: ""), edl_password=SimpleNamespace(get=lambda: ""),
+            cdse_token=SimpleNamespace(get=lambda: ""),
+            cdse_client_id=SimpleNamespace(get=lambda: ""),
+            cdse_client_secret=SimpleNamespace(get=lambda: ""),
+            _analysis_generation=0, _analysis_queue=queue.Queue(),
+            pipeline_btn=SimpleNamespace(state=lambda *_: None),
+            global_execute_btn=SimpleNamespace(state=lambda *_: None),
+            status=SimpleNamespace(set=lambda *_: None), after=lambda *_: None,
+            _execute_main=lambda *_args, **_kwargs: self.fail("local SAR must not run on Tk thread"),
+        )
+        worker_threads = []
+        class InlineThread:
+            def __init__(self, target, **_kwargs):
+                self.target = target
+                worker_threads.append(self)
+            def start(self):
+                self.target()
+
+        import sys
+        import types
+        pedology_module = types.ModuleType("soil_pedology_embrapa")
+        pedology_module.analyze_embrapa_pedology = lambda *_args, **_kwargs: ({"status": "OK"}, [])
+        fertility_module = types.ModuleType("soil_fertility_zonal")
+        fertility_module.analyze_fertility = lambda *_args, **_kwargs: {"status": "OK"}
+        with patch("desktop_app.threading.Thread", InlineThread), \
+             patch("desktop_app.load_ibge_land_use_reference", return_value=(None, "legenda_1")), \
+             patch("desktop_app.run_land_use", return_value=land) as land_use, \
+             patch("desktop_app.native_carbon_analysis", return_value=native) as carbon, \
+             patch.dict(sys.modules, {"soil_pedology_embrapa": pedology_module,
+                                      "soil_fertility_zonal": fertility_module}):
+            App.execute(app)
+        self.assertEqual(len(worker_threads), 1)
+        land_use.assert_called_once()
+        self.assertEqual(land_use.call_args.kwargs["sar_paths"], sar_paths)
+        carbon.assert_called_once()
+        self.assertEqual(carbon.call_args.kwargs["sar_paths"], sar_paths)
+        run_id, kind, payload = app._analysis_queue.get_nowait()
+        self.assertEqual((run_id, kind), (1, "ok"))
+        self.assertEqual(payload["land_use"], land)
+
+    def test_inventory_fallback_reuses_one_aoi_wide_sar_result(self):
+        aoi = gpd.GeoDataFrame(geometry=[box(-55.0, -4.0, -54.99, -3.99)], crs="EPSG:4326")
+        land = {
+            "vector_path": "land.geojson",
+            "validation": {},
+            "potential_physiognomy_intersections": [
+                {"name": "Floresta teste A", "area_ha": 1.0},
+                {"name": "Floresta teste B", "area_ha": 2.0},
+            ],
+        }
+        native = {"known_total_tc": None, "area_aoi_ha": 3.0, "strata": [], "components": []}
+        sar_result = {"status": "SAR_NAO_PROCESSADO", "reason": "fixture"}
+        with patch("geopandas.read_file", return_value=aoi), \
+             patch("desktop_app.summarize_native_carbon", return_value=native), \
+             patch("sar_pipeline.biomass_l2b_search", return_value=([], {"queries": [], "errors": []})), \
+             patch("desktop_app.automatic_pipeline", return_value=sar_result) as pipeline, \
+             patch("ifn_carbon_fallback.estimate_inventory_carbon_scenario",
+                   return_value={"status": "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR"}) as scenario:
+            result = native_carbon_analysis(aoi, land, "Amazônia")
+        self.assertEqual(pipeline.call_count, 1)
+        self.assertEqual(scenario.call_count, 2)
+        self.assertTrue(all(call.kwargs["sar_result"] is sar_result for call in scenario.call_args_list))
+        self.assertEqual(len(result["conditional_inventory_scenarios"]), 2)
 
 
 if __name__ == "__main__":

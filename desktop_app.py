@@ -22,7 +22,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.35-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.36-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -490,21 +490,34 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     if result.get('known_total_tc') is None:
         from ifn_carbon_fallback import estimate_inventory_carbon_scenario
         scenarios=[]
+        potential_rows=[]
         for potential in land.get('potential_physiognomy_intersections') or []:
             physiognomy=str(potential.get('name') or '')
             if not physiognomy or physiognomy == 'Sem cobertura IBGE':
                 continue
+            potential_rows.append((potential,physiognomy))
+        # The no-scene certificate is AOI-wide. Acquire/process SAR once and
+        # reuse the result for each potential-physiognomy scenario.
+        fallback_sar_result=None
+        fallback_sar_error=None
+        if potential_rows:
             try:
-                sar_result=sar_estimator(aoi,biome,physiognomy)
+                fallback_sar_result=sar_estimator(aoi,biome,potential_rows[0][1])
+            except Exception as exc:
+                fallback_sar_error=exc
+        for potential,physiognomy in potential_rows:
+            try:
+                if fallback_sar_error is not None:
+                    raise fallback_sar_error
                 scenario=estimate_inventory_carbon_scenario(
                     biome=biome,physiognomy=physiognomy,
                     area_ha=float(potential.get('area_ha') or 0),
-                    sar_result=sar_result,
+                    sar_result=fallback_sar_result,
                     aoi=aoi,
                     centroid_lon=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.x),
                     centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
-                scenario['sar_status']=sar_result.get('status') if isinstance(sar_result,dict) else None
-                scenario['sar_reason']=sar_result.get('reason') if isinstance(sar_result,dict) else None
+                scenario['sar_status']=fallback_sar_result.get('status') if isinstance(fallback_sar_result,dict) else None
+                scenario['sar_reason']=fallback_sar_result.get('reason') if isinstance(fallback_sar_result,dict) else None
                 if scenario.get('status')=='CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR':
                     scenarios.append(scenario)
             except Exception as exc:
@@ -2777,9 +2790,10 @@ class App(tk.Tk):
             self._pending_execute=True; self.status.set("Perímetro resolvido. A análise começará após o diagnóstico territorial do IBGE.")
             return
         if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR, CCIR ou carregue um arquivo vetorial; depois pressione EXECUTAR ANÁLISE.")
-        if self.sar_paths:return self._execute_main(event)
+        # All pixel acquisition and model execution, including local SAR files, stays off the Tk thread.
         # Snapshot every Tk variable on the GUI thread before starting the worker.
         land_config=self.land_use_config
+        sar_paths=list(self.sar_paths or [])
         inventory_evidence=(list(self.inventory_evidence_data)
                             if self.inventory_evidence_data is not None else None)
         biodiversity_inventory_records=(list(self.biodiversity_inventory_records)
@@ -2806,13 +2820,13 @@ class App(tk.Tk):
                 if reference is None:
                     try:reference,reference_field=load_ibge_land_use_reference(gdf)
                     except Exception:pass
-                land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))
+                land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field,sar_paths=sar_paths)
                 options={"offline_token":token,"edl_user":edl_user,"edl_password":edl_password,"edl_token":edl_token,
                          "cdse_token":cdse_token,"cdse_client_id":cdse_client_id,"cdse_client_secret":cdse_client_secret,
                          "inventory_evidence":inventory_evidence,
                          "biodiversity_inventory_records":biodiversity_inventory_records,
                          "inventory_evidence_manifest":inventory_manifest}
-                native=native_carbon_analysis(gdf,land,biome,options)
+                native=native_carbon_analysis(gdf,land,biome,options,sar_paths=sar_paths)
                 from soil_pedology_embrapa import analyze_embrapa_pedology
                 pedology,zones=analyze_embrapa_pedology(gdf,with_zones=True)
                 try:
