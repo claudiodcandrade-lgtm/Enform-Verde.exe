@@ -586,13 +586,14 @@ jobs:
           assert out["status"]=="SAR_PROCESSADO_SEM_MODELO_AGB",out
           assert out.get("agb_mg_ha") is None,out
           lit=out.get("literature_reference")
-          assert lit is not None and lit.get("available") is True,out
-          assert lit.get("sar_processed") is False and lit.get("sar_pixel_audit")==[],lit
-          assert lit.get("data_origin") in {"LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"},lit
+          assert lit is None,out
+          regional=(out.get("audit",{}).get("national_route_matrix",{}).get("regional_numeric_fallback") or {})
+          assert regional.get("available") is True,out
           assert out.get("data_origin")=="SAR_ATRIBUTOS_ESTRATIFICADORES",out
-          assert out["inventory_fallback_gate"].get("eligible") is True,out
+          assert out["inventory_fallback_gate"].get("eligible") is False,out
+          assert "pixels sar" in out["inventory_fallback_gate"].get("reason","").casefold(),out
           assert out.get("sar_attempted_first") is True,out
-          print("AUTOMATIC_SAR_SEPARATE_INVENTORY_CONTINGENCY_OK")
+          print("PROCESSED_SAR_BLOCKS_INVENTORY_SUBSTITUTION_OK")
           '@ | Set-Content fallback_flow_test.py -Encoding UTF8
           python fallback_flow_test.py
           python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
