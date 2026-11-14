@@ -235,7 +235,7 @@ def executive_carbon_lines(native, fmt):
            "INCERTEZA POR COMPARTIMENTO — quadro executivo (estoques em tC/ha e tCO₂e/ha; incertezas em tCO₂e/ha e %):",
            *table,
            ("Incerteza do total: "+total_uncertainty_rule+"." if total_uncertainty_rule else
-            ("Incerteza do total: incerteza não mensurável — covariância/transferência não permite quantificação." if known is not None else "Incerteza do total: N/D — estoque total sem suporte.")]
+            ("Incerteza do total: incerteza não mensurável — covariância/transferência não permite quantificação." if known is not None else "Incerteza do total: N/D — estoque total sem suporte.") )]
     for st in native.get("strata",[]):
         if not st.get("area_ha"):
             continue
