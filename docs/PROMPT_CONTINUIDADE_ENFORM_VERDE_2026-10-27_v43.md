@@ -2164,3 +2164,19 @@ Rotas independentes e estado: INPE RTC público e CDSE autenticado já são tent
 A correção de código está na candidata `3.26.31-PRECAMPO-EXPERIMENTAL`. A suíte local completa passou: 1.150 testes aprovados e 1 ignorado por ausência de display gráfico. Esse resultado não testa acesso live no Windows. O token SAS de coleção ainda precisa provar leitura VV/VH, e o build/dashboard no SHA final e a execução do KML integral Maria Eduarda continuam pendentes. A V88.43 falhou em Petrolina com 429 no signer MPC e sem cenas no catálogo INPE naquele recorte; isso não prova indisponibilidade de todos os provedores nem de todo o Brasil. Manter a versão pré-campo experimental e não homologada até evidência operacional e observacional independente.
 
 Fontes oficiais de acesso e alternativas constam em `docs/spec_updates/2026-11-13_v88_45_mpc_collection_token_sar_recovery.md`.
+
+
+# V88.46 — validação Windows ao vivo da contingência SAR (13/11/2026)
+
+No SHA `8334643eadb4d82366c06eed789c9e659c752b09`, o Windows CI #2726 leu VV e VH reais da mesma aquisição Sentinel-1 GRD em 8/8 AOIs amostrais de 6 biomas, usando `COLLECTION_SAS_TOKEN`; aquisições tinham 0,65–10,62 dias, 128.484–196.249 pixels válidos por banda, sem HTTP 429. Isso comprova o contorno operacional do 429 na amostra, não cobertura contínua nacional. O catálogo INPE RTC retornou zero cenas compatíveis nos oito recortes, com paginação completa.
+
+Dashboard dual #3448, contratos rápidos #805, máscaras experimentais SAR Sinop #207, leitura SAR no KMZ de teste Tapajós, sondagens ópticas brasileiras e abertura no canvas de Sinop passaram. O build Windows #2726 ainda estava em andamento nos contratos de equações/recalibração quando o checkpoint foi escrito. O KML integral da Fazenda Maria Eduarda até o dashboard continua sem comprovação ponta a ponta. A homologação científica independente #3035 reprovou por falta de evidência observacional independente. Manter `3.26.31-PRECAMPO-EXPERIMENTAL`; não homologar, não afirmar cobertura wall-to-wall, e não derivar AGB de C-band isolada. Relatório por AOI: `inpe_sentinel1_rtc_live.json`; status do gate: `PASS_DISTRIBUTED_SAMPLE`.
+
+
+# V88.47 — build Windows e aceite do executável concluídos (14/11/2026)
+
+O workflow Windows #2726 concluiu com sucesso no SHA `8334643eadb4d82366c06eed789c9e659c752b09`. O executável `3.26.31-PRECAMPO-EXPERIMENTAL` passou autoteste em pasta limpa, paridade Python/Windows, smoke de interface, verificação visual e checagem de rede com TLS ativo. A leitura do executável confirmou CBERS-4A/WFI e Sentinel-1 VV/VH; rede HTTPS local confirmou 169.168 pixels válidos por banda. A aceitação do KMZ de teste Tapajós retornou `SAR_PROCESSADO`, 1.290,688 ha, 302.348 pixels e três cenas com `data_origin=SAR_DERIVED_CCI`; `fallback_agb_mg_ha=null`, portanto não relatar como nova AGB diretamente derivada da banda C.
+
+O gate distribuído #2726 teve VV/VH legíveis por SAS de coleção em 8/8 AOIs amostrais de seis biomas sem 429. INPE RTC retornou zero cenas nesses recortes; não generalizar para a disponibilidade nacional. Dashboard #3448, contrato rápido #805 e máscara SAR experimental Sinop #207 passaram. O gate científico #3035 reprovou por falta de evidência observacional independente. O KML integral Fazenda Maria Eduarda até o dashboard ainda não foi executado/comprovado.
+
+Artefato Actions ID `14087567135` (531.996.993 bytes). SHA-256 ZIP `1ad43f1281171b2eb49678bbc6ca5631587eef8f9b8ba69fa00904df1e2b9e77`; SHA-256 EXE `b7743a0d046390c14d3bdb97332fd15aeb82c8f72af85b07a0331e6db927264c`. Manter `PRECAMPO-EXPERIMENTAL`, sem declarar homologação.

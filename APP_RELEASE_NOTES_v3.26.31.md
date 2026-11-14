@@ -10,4 +10,6 @@
 
 **Verificação local:** 1.150 testes passaram; 1 foi ignorado por ausência de display gráfico.
 
+**Evidência live Windows (SHA `8334643`):** 8/8 AOIs amostrais de seis biomas tiveram pixels VV/VH recentes lidos com o SAS de coleção MPC, sem HTTP 429. INPE RTC não retornou cenas compatíveis nesses recortes. Gate: `PASS_DISTRIBUTED_SAMPLE`, sem garantia wall-to-wall. Dashboard, contrato rápido, máscara SAR Sinop, SAR no KMZ de teste Tapajós e smokes ópticos passaram. O workflow Windows #2726 concluiu com sucesso: EXE em pasta limpa, paridade Python/Windows, smoke da GUI, padrão visual, TLS, pixels CBERS-4A/WFI e Sentinel-1 VV/VH. O aceite SAR do KMZ de teste Tapajós passou, com `SAR_DERIVED_CCI` e sem fallback de AGB. Artifact ID `14087567135`; ZIP SHA-256 `1ad43f1281171b2eb49678bbc6ca5631587eef8f9b8ba69fa00904df1e2b9e77`; EXE SHA-256 `b7743a0d046390c14d3bdb97332fd15aeb82c8f72af85b07a0331e6db927264c`. A análise integral da Fazenda Maria Eduarda até o dashboard permanece pendente. Homologação científica independente: reprovada.
+
 **Status:** candidata pré-campo experimental, não homologada. A leitura live da rota de token no Windows, o diagnóstico nacional e o build no SHA final ainda precisam ser concluídos. Não há garantia de cobertura em toda coordenada/data do Brasil.

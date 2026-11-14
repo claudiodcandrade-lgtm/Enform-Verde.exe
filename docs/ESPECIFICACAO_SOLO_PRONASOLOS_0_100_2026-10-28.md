@@ -1681,3 +1681,13 @@ Permitir a compilação experimental após o gate SAR reprovado não significa q
 Para separar a limitação do assinador de indisponibilidade dos dados, a candidata `3.26.31-PRECAMPO-EXPERIMENTAL` usa primeiro o SAS token de coleção MPC para a coleção GRD em VV/VH; o token fica somente em memória e a auditoria registra a rota. O signer por ativo é fallback limitado e interrompe solicitações após HTTP 429. Rotas já disponíveis no core incluem INPE RTC público e CDSE autenticado. ASF OPERA RTC-S1 (Earthdata) e AWS Sentinel-1 GRD COG foram identificados como alternativas técnicas, mas não estão integrados à leitura de pixels desta candidata; ESA MAAP não é acesso Sentinel-1 e continua servindo a rota ESA Biomass para carbono/altura.
 
 Uma falha local no MPC ou ausência de cenas INPE em uma AOI não prova indisponibilidade nacional. Sem par recente VV/VH lido na mesma cena, o painel mantém N/D/ERRO e não converte C-band em AGB. A suíte local completa passou: 1.150 testes aprovados e 1 ignorado por ausência de display gráfico. O teste Windows da rota SAS de coleção, o build no SHA final, a execução integral do KML Maria Eduarda até o painel e a validação independente continuam gates pendentes. Não homologar.
+
+
+## Atualização V88.46 — evidência SAR de Windows
+
+No Windows CI #2726 (SHA `8334643eadb4d82366c06eed789c9e659c752b09`), VV/VH recentes foram lidos em 8/8 AOIs representativas de seis biomas por SAS de coleção MPC, sem HTTP 429. Isso confirma a rota SAR na amostra, mas não é evidência de carbono de solo nem de cobertura nacional contínua. A estimativa de SOC 0–100 cm permanece sujeita aos seus próprios requisitos de dados oficiais, cobertura, incerteza e auditoria. O build e a análise integral da Fazenda Maria Eduarda ainda não estavam concluídos no checkpoint; a homologação científica foi reprovada por falta de evidência independente.
+
+
+## Atualização V88.47 — build Windows concluído
+
+O executável da candidata 3.26.31 foi construído e passou os smokes de Windows, paridade de módulos, padrão visual, rede TLS e aceite SAR do KMZ de teste Tapajós. Isso confirma a operacionalidade de empacotamento, não acrescenta evidência ao estoque SOC. O carbono do solo 0–100 cm continua sujeito aos dados oficiais, interseção, incerteza e auditoria especificados acima. O teste integral da Fazenda Maria Eduarda até o dashboard e a validação científica independente seguem pendentes; manter como experimental e não homologado.
