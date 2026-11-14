@@ -33,7 +33,7 @@ class CarbonPresentationRegression(unittest.TestCase):
         result="\n".join(executive_carbon_lines(report,pt))
         self.assertIn("±", "±")
         self.assertIn("2,00 tC/ha | 7,33 tCO₂e/ha | 10,00%",result)
-        self.assertIn("N/D tC/ha | N/D tCO₂e/ha | N/D %",result)
+        self.assertIn("incerteza não mensurável",result)
         self.assertIn("Natureza:",result)
 
 

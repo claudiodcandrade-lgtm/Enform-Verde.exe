@@ -31,12 +31,12 @@ class DeclaredCorrelationTotal(unittest.TestCase):
         self.assertNotIn(f"{simple_sum:.2f}", total_line)
         self.assertIn("correlação declarada", text)
 
-    def test_missing_pool_uncertainty_keeps_total_nd(self):
+    def test_missing_pool_uncertainty_is_labeled_nonmeasurable(self):
         rows = [comp("Biomassa aérea", 60, 50, 70), {"parametro": "Solo 0–100 cm", "tc": 80, "total_tc": 8000,
                                                       "quantified_area_ha": 100.0}]
         text = "\n".join(executive_carbon_lines(native(rows), lambda x, nd=2: f"{x:.2f}"))
         total_line = next(l for l in text.splitlines() if l.startswith("| TOTAL"))
-        self.assertIn("| N/D | N/D |", total_line)
+        self.assertIn("| incerteza não mensurável | incerteza não mensurável |", total_line)
 
 
 if __name__ == "__main__":
