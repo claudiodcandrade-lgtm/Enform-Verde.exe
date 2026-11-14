@@ -1839,7 +1839,33 @@ def _earthaccess_requests_session(edl_user="",edl_password="",edl_token=""):
     except Exception as e:
         return None,{"available":False,"reason":type(e).__name__+": "+str(e)[:240],"source":"earthaccess"}
 
-def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret="",biomass_catalog_items=None,biomass_search_audit=None):
+def _cci_history_for_analysis(gdf,cache,offline_token=None,route_cache=None):
+    """Share one CCI tile/year discovery per analysis, then zonal-sample per stratum.
+
+    CCI files cover fixed 10-degree tiles. A single AOI analysis may contain
+    several native strata in the same tile; repeating every year/host probe for
+    each stratum multiplies failed HTTP requests without changing the result.
+    This cache is analysis-scoped, never process-global, and keyed by tile IDs.
+    """
+    if route_cache is None:
+        return cci_history(gdf,cache,offline_token)
+    key=("cci_history_v7",tuple(_cci_v7_tile_ids(gdf)))
+    if key not in route_cache:
+        route_cache[key]=cci_history(gdf,cache,offline_token)
+    return dict(route_cache[key])
+
+
+def _record_sentinel1_public_route(audit,provider,row):
+    """Keep route-level diagnostics and a stable first-success compatibility summary."""
+    routes=audit.setdefault("sentinel1_provider_routes",{})
+    routes[str(provider)]=dict(row)
+    current=audit.get("sentinel1_public")
+    if not current or current.get("pixel_state")!="PROCESSADO":
+        audit["sentinel1_public"]=dict(row)
+    return routes[str(provider)]
+
+
+def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret="",biomass_catalog_items=None,biomass_search_audit=None,pipeline_route_cache=None):
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     from datetime import datetime, timezone
     audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI",
@@ -2060,8 +2086,14 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     pc=None
     try:
         pc=planetary_sentinel1_cog(gdf,Path(cache)/"sentinel1_public")
+        pc_route={"route":"Microsoft Planetary Computer signed COG",
+            "catalogued":pc.get("items",0),"scene_ids":pc.get("scene_ids",[]),
+            "pixel_state":"PROCESSADO" if pc.get("stats") else
+                ("ERRO_TECNICO" if pc.get("errors") else "SEM_PIXELS_COMPATIVEIS"),
+            "stats":pc.get("stats",[]),"rate_limited":bool(pc.get("rate_limited",False)),
+            "errors":pc.get("errors",[])[:6]}
+        _record_sentinel1_public_route(audit,"MPC",pc_route)
         if pc.get("stats"):
-            audit["sentinel1_public"]={"route":"Microsoft Planetary Computer signed COG","catalogued":pc.get("items",0),"scene_ids":pc.get("scene_ids",[]),"pixel_state":"PROCESSADO","stats":pc.get("stats",[])}
             audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C","provider":pc.get("provider"),"paths":pc.get("paths",[]),"stats":pc.get("stats",[])})
             audit["warnings"].append("Sentinel-1 C-band: pixels reais processados. AGB não é inferida de C-band isolada em floresta densa sem modelo validado.")
         else:
@@ -2095,10 +2127,18 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     try:
         if cdse_client_id and cdse_client_secret:
             c=cdse_sentinel1_process(gdf,Path(cache)/"sentinel1_cdse",client_id=cdse_client_id,client_secret=cdse_client_secret)
-            audit["sentinel1_public"]={"route":"Sentinel Hub Process API","downloaded":len(c.get("paths",[])),"pixel_state":"PROCESSADO","time_range":c.get("time_range"),"processing":c.get("processing")}
+            cdse_route={"route":"Sentinel Hub Process API","downloaded":len(c.get("paths",[])),
+                "pixel_state":"PROCESSADO" if c.get("stats") else "SEM_PIXELS_COMPATIVEIS",
+                "time_range":c.get("time_range"),"processing":c.get("processing"),
+                "stats":c.get("stats",[])}
         else:
             c=public_sentinel1_cog(gdf,Path(cache)/"sentinel1_cdse",cdse_token=cdse_token)
-            audit["sentinel1_public"]={"route":"catalogue/direct asset fallback","catalogued":c.get("items",0),"downloaded":len(c.get("paths",[])),"scene_ids":c.get("scene_ids",[])}
+            cdse_route={"route":"catalogue/direct asset fallback","catalogued":c.get("items",0),
+                "downloaded":len(c.get("paths",[])),"scene_ids":c.get("scene_ids",[]),
+                "pixel_state":"PROCESSADO" if c.get("stats") else
+                    ("ERRO_TECNICO" if c.get("errors") else "SEM_PIXELS_COMPATIVEIS"),
+                "stats":c.get("stats",[]),"errors":c.get("errors",[])[:6]}
+        _record_sentinel1_public_route(audit,"CDSE",cdse_route)
         if c.get("stats"):
             audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C","provider":c.get("provider"),"paths":c.get("paths",[]),"stats":c.get("stats",[])})
             audit["warnings"].append("Sentinel-1 C-band processado, mas sem modelo AGB calibrado/validado compatível; busca SAR continua.")
@@ -2106,7 +2146,7 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
 
     # 5 — CCI derived AGB is last quantitative fallback, never ahead of raw P/L processing.
     try:
-        cci=cci_history(gdf,Path(cache)/"cci",offline_token or None)
+        cci=_cci_history_for_analysis(gdf,Path(cache)/"cci",offline_token or None,pipeline_route_cache)
         audit["cci"]={"count":cci.get("items",0),"downloaded":len(cci.get("paths",[])),
                       "version":cci.get("version"),"year":cci.get("year"),
                       "resolution_m":cci.get("resolution_m"),"tiles":cci.get("tiles",[]),
