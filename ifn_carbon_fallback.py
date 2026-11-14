@@ -29,25 +29,23 @@ def _norm(value):
 
 
 def no_valid_sar_pixels(sar_result):
-    """Allow inventory AGB only after every biomass route is exhausted.
-
-    Technical failures are retained as failures, never relabelled as catalogue
-    absence. They can still trigger the inventory contingency after the audit
-    confirms that configured routes ran and no SAR pixel/height was processed.
-    """
+    """Allow inventory AGB only after a complete, error-free no-scene certificate."""
     if not isinstance(sar_result, dict) or sar_result.get("status") not in (
             "SAR_NAO_PROCESSADO", "SAR_PROCESSADO_SEM_MODELO_AGB"):
         return False
     audit = sar_result.get("audit") or {}
     gate = sar_result.get("inventory_fallback_gate") or audit.get("inventory_fallback_gate") or {}
+    certificate=audit.get("scene_absence_certificate") or {}
     if (gate.get("eligible") is not True
+            or gate.get("status") != "SAR_AUSENCIA_CENAS_CONFIRMADA"
+            or certificate.get("eligible") is not True
+            or certificate.get("status") != "SAR_AUSENCIA_CENAS_CONFIRMADA"
             or audit.get("sar_sources_exhausted") is not True
+            or audit.get("processed_without_agb")
             or audit.get("biomass_height", {}).get("zonal_height")
             or audit.get("gtdx_height", {}).get("available") is True):
         return False
-    return audit.get("sar_pixel_processing_status") in (
-        "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS",
-        "PIXELS_AUXILIARES_PROCESSADOS_SEM_AGB_OU_ALTURA_QUANTITATIVA")
+    return audit.get("sar_pixel_processing_status") == "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS"
 
 
 def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,

@@ -23,7 +23,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.33-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.34-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -537,6 +537,36 @@ def load_ibge_land_use_reference(project):
     field=_field(layer.columns,["legenda_1"])
     if not field:raise ValueError("Camada oficial IBGE sem legenda_1.")
     return layer,field
+
+def _sar_dashboard_payload(native, land=None):
+    """Preserve per-stratum SAR processing evidence at AOI/dashboard level."""
+    strata=[]
+    for item in (native or {}).get("strata",[]) or []:
+        details=item.get("sar_details") or {}
+        audit=item.get("sar_audit") or {}
+        if details or audit:
+            strata.append({"physiognomy":item.get("physiognomy") or item.get("class_name"),
+                           "class_name":item.get("class_name"),"area_ha":item.get("area_ha"),
+                           "source":item.get("source"),"status":details.get("status"),
+                           "data_origin":details.get("data_origin"),"provider":details.get("source"),
+                           "stats":details.get("stats") or [],"agb_mg_ha":details.get("agb_mg_ha"),
+                           "height_mean_m":details.get("height_mean_m"),
+                           "height_n_valid_pixels":details.get("height_n_valid_pixels"),
+                           "audit":audit,"details":details})
+    cover=(land or {}).get("recent_sar_cover") or {}
+    pixels_processed=any(row.get("stats") or row.get("height_n_valid_pixels",0)>0
+                         or row.get("agb_mg_ha") is not None for row in strata)
+    pixels_processed=pixels_processed or cover.get("pixel_state")=="PROCESSADO"
+    status=("SAR_PROCESSADO" if pixels_processed
+            else cover.get("status") or (land or {}).get("status") or "SAR_N/D")
+    return {"status":status,"strata":strata,"recent_sar_cover":cover,
+            "land_use_status":(land or {}).get("status"),
+            "land_use_reason":(land or {}).get("reason"),
+            "fitofisionomia_raster_stats":{
+                row["physiognomy"]:row["stats"] for row in strata if row.get("stats")},
+            "height_absence_certificate":(native or {}).get("height_absence_certificate"),
+            "source":"SAR por interseção nativa; preservado do core para painel e auditoria"}
+
 
 def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     import geopandas as gpd
@@ -2940,7 +2970,8 @@ class App(tk.Tk):
                 except Exception as exc:
                     fertility={"status":"N/D","reason":"Falha controlada: "+type(exc).__name__,
                                "units":{},"layers":[]}
-                self._analysis_queue.put((run_id,"ok",{"sar":{},"soil":{},"land_use":land,
+                sar_payload=_sar_dashboard_payload(native,land)
+                self._analysis_queue.put((run_id,"ok",{"sar":sar_payload,"soil":{},"land_use":land,
                                                       "native_carbon":native,"pedology":pedology,
                                                       "fertility":fertility,"aoi_hash":aoi_hash}))
             except Exception:self._analysis_queue.put((run_id,"error",traceback.format_exc()))
@@ -3013,6 +3044,11 @@ class App(tk.Tk):
                             "biodiversity_inventory_records":self.biodiversity_inventory_records,
                         },
                         sar_paths=self.sar_paths))
+            # The SAR computation is performed per native stratum. Preserve
+            # that exact result instead of dropping it at the worker/dashboard
+            # boundary (the historical payload used an empty dict here).
+            self.project["sar_result"]=(precomputed_sar if isinstance(precomputed_sar,dict) and precomputed_sar
+                                         else _sar_dashboard_payload(native,land))
             if precomputed_pedology is not None:
                 pedology=precomputed_pedology
                 fertility=precomputed_fertility

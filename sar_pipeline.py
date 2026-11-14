@@ -55,6 +55,7 @@ def discover_asf(gdf,limit=25):
             params.update(extra)
             r=requests.get(ASF_SEARCH,params=params,timeout=(5,15)); r.raise_for_status()
             js=r.json(); fs=js.get("features",[])
+            pagination_complete=not any(l.get("rel")=="next" for l in (js.get("links") or []))
             # Defensive GCOV filter because catalogue parameter behavior can vary.
             if label.startswith("NISAR"):
                 gc=[x for x in fs if "GCOV" in (str(x.get("properties",{}))+" "+str(x.get("id",""))).upper()]
@@ -79,9 +80,12 @@ def discover_asf(gdf,limit=25):
                               "polarizations":pols,"full_pol_candidate":full_pol})
             items=_newest_first(items)
             out.append({"provider":"ASF/NASA","dataset":label,"band":band,"count":len(fs),"items":items,
+                        "catalog_search_complete":True,"pagination_complete":pagination_complete,
+                        "technical_error_count":0,
                         "eligibility":"candidato; elegibilidade final depende de produto/polarização/interseção/modelo"})
         except Exception as e:
-            out.append({"provider":"ASF/NASA","dataset":label,"band":band,"count":0,"items":[],"error":str(e)})
+            out.append({"provider":"ASF/NASA","dataset":label,"band":band,"count":0,"items":[],"error":str(e),
+                        "catalog_search_complete":False,"pagination_complete":False,"technical_error_count":1})
     return out
 def discover_cdse(gdf,limit=25):
     geom=gdf.to_crs(4326).geometry.union_all().__geo_interface__
@@ -1106,7 +1110,8 @@ def cci_history(gdf,cache,offline_token=None):
     if not items:
         return {"available":False,"paths":[],"items":0,"collections_tried":collections_tried,
                 "version":"7.0","tiles":_cci_v7_tile_ids(gdf),"attempted_urls":attempted,
-                "errors":errors[:8]}
+                "errors":errors[:8],"catalog_search_complete":bool(attempted),
+                "pagination_complete":True,"technical_error_count":len(errors)}
     token=maap_access_token(offline_token) if offline_token else None
     paths=[]
     for it in items:
@@ -1380,7 +1385,8 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
           "datetime":(now-timedelta(days=30)).isoformat().replace("+00:00","Z")+"/"+now.isoformat().replace("+00:00","Z"),
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
     r=requests.post(CDSE_STAC,json=body,timeout=(5,15)); r.raise_for_status()
-    items=r.json().get("features",[])
+    payload=r.json(); items=payload.get("features",[])
+    pagination_complete=not any(l.get("rel")=="next" for l in (payload.get("links") or []))
     items=_newest_first(items)
     Path(cache).mkdir(parents=True,exist_ok=True)
     paths=[]; scene_ids=[]; errors=[]
@@ -1402,7 +1408,9 @@ def public_sentinel1_cog(gdf,cache,limit=12,cdse_token=""):
             z=_zonal(gdf,p); z["path"]=p; z["role"]=role(p); stats.append(z)
         except Exception as e: errors.append(Path(p).name+": "+str(e))
     return {"available":bool(items),"paths":paths,"items":len(items),"scene_ids":scene_ids,"stats":stats,
-            "provider":"Copernicus Data Space Ecosystem catalogue/direct asset fallback","errors":errors}
+            "provider":"Copernicus Data Space Ecosystem catalogue/direct asset fallback","errors":errors,
+            "catalog_search_complete":True,"pagination_complete":pagination_complete,
+            "technical_error_count":len(errors)}
 
 def inpe_sentinel1_rtc(gdf,*,days=30,limit=6):
     """Read actual public INPE Sentinel-1 RTC VV/VH COG pixels over an AOI.
@@ -1424,7 +1432,8 @@ def inpe_sentinel1_rtc(gdf,*,days=30,limit=6):
     if not scenes:
         return {"available":False,"provider":"INPE Sentinel-1 RTC COG","collection":found.get("collection"),
                 "catalogued":0,"scene_ids":[],"stats":[],"errors":[],"pixel_state":"SEM_CENAS_COMPATIVEIS",
-                "pagination_complete":found.get("pagination_complete",False)}
+                "catalog_search_complete":found.get("pagination_complete") is True,
+                "pagination_complete":found.get("pagination_complete",False),"technical_error_count":0}
     import rasterio
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
@@ -1463,7 +1472,9 @@ def inpe_sentinel1_rtc(gdf,*,days=30,limit=6):
     return {"available":bool(stats),"provider":"INPE Sentinel-1 RTC COG","collection":found.get("collection"),
             "catalogued":len(scenes),"scene_ids":scene_ids,"stats":stats,"errors":errors,
             "pixel_state":"PROCESSADO" if stats else "CATALOGO_OK_PIXEL_READ_FAILED",
+            "catalog_search_complete":found.get("pagination_complete") is True,
             "pagination_complete":found.get("pagination_complete",False),
+            "technical_error_count":len(errors),
             "warning":"INPE Sentinel-1 RTC VV/VH C-band pixels are ancillary evidence, not AGB estimates."}
 
 def _jaxa_mosaic_gamma0_db(dn,cf=-83.0):
@@ -1535,7 +1546,8 @@ def planetary_alos_palsar(gdf,cache,limit=12):
     try:
         rr=requests.post(api,json=body,timeout=(5,15))
         rr.raise_for_status()
-        items=rr.json().get("features",[])
+        payload=rr.json(); items=payload.get("features",[])
+        pagination_complete=not any(l.get("rel")=="next" for l in (payload.get("links") or []))
     except requests.exceptions.RequestException as exc:
         # A catalog 401/403 is not evidence of missing SAR or zero biomass.
         # Return an auditable data-access failure so alternative calibrated
@@ -1546,6 +1558,7 @@ def planetary_alos_palsar(gdf,cache,limit=12):
                 "asset_keys_by_scene":[],"missing_polarizations":["HH","HV"],
                 "provider":"JAXA ALOS/PALSAR Annual Mosaic via Microsoft Planetary Computer",
                 "band":"L","pixel_state":"NAO_PROCESSADO",
+                "catalog_search_complete":False,"pagination_complete":False,"technical_error_count":1,
                 "access_status":"AUTH_REQUIRED" if code in (401,403) else "REMOTE_UNAVAILABLE"}
     import rasterio
     from rasterio.mask import mask
@@ -1578,6 +1591,8 @@ def planetary_alos_palsar(gdf,cache,limit=12):
     from sar_acquisition_time import annotate_acquisition
     selected=annotate_acquisition(selected_item) if selected_item else {}
     return {"available":bool(items),"items":len(items),"scene_ids":scene_ids,
+            "catalog_search_complete":True,"pagination_complete":pagination_complete,
+            "technical_error_count":len(errors),
             "selected_scene_id":selected_item.get("id") if selected_item else None,
             "selected_acquisition_utc":selected.get("acquisition_utc"),
             "selected_acquisition_brasilia":selected.get("acquisition_brasilia"),
@@ -1642,7 +1657,8 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             # transient failures with bounded backoff while keeping TLS on.
             rr=requests.post(api,json=body,timeout=(15,45))
             rr.raise_for_status()
-            items=rr.json().get("features",[])
+            payload=rr.json(); items=payload.get("features",[])
+            pagination_complete=not any(l.get("rel")=="next" for l in (payload.get("links") or []))
             break
         except requests.exceptions.RequestException as exc:
             code=getattr(getattr(exc,'response',None),'status_code',None)
@@ -1651,7 +1667,9 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             if not transient or attempt>=2:
                 raise
             time.sleep(2*(attempt+1))
-    if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":["sem cenas Sentinel-1 GRD no AOI"]}
+    if not items:return {"available":False,"paths":[],"items":0,"stats":[],"errors":[],
+        "catalog_search_complete":True,"pagination_complete":pagination_complete,
+        "technical_error_count":0,"pixel_state":"SEM_CENAS_COMPATIVEIS"}
     items=_newest_first(items)
     Path(cache).mkdir(parents=True,exist_ok=True); stats=[]; paths=[]; errors=[]; scene_ids=[]
     mpc_token=None
@@ -1730,6 +1748,8 @@ def planetary_sentinel1_cog(gdf,cache,limit=8):
             "catalog_acquisition":[dict(id=x.get("id"), acquisition_utc=annotate_acquisition(x)["acquisition_utc"]) for x in items[:limit]],
             "stats":stats,"partial_stats":partial_stats,"partial_paths":partial_paths,
             "provider":"Microsoft Planetary Computer / Sentinel-1 GRD COG","errors":errors,
+            "catalog_search_complete":True,"pagination_complete":pagination_complete,
+            "technical_error_count":len(errors),
             "access_route":access_route,
             "rate_limited":rate_limited,
             "pixel_state":"PROCESSADO" if stats else "VV_VH_PAIR_INCOMPLETE" if partial_stats else "NAO_PROCESSADO"}
@@ -1863,6 +1883,68 @@ def _record_sentinel1_public_route(audit,provider,row):
     if not current or current.get("pixel_state")!="PROCESSADO":
         audit["sentinel1_public"]=dict(row)
     return routes[str(provider)]
+
+
+def _scene_absence_certificate(audit):
+    """Fail-closed AOI certificate: every configured scene route must be complete and empty."""
+    rows=[]
+    def add(name,complete,paginated,count,errors):
+        try: count=int(count)
+        except (TypeError,ValueError): count=None
+        try: errors=int(errors)
+        except (TypeError,ValueError): errors=None
+        rows.append({"route":name,"catalog_search_complete":complete is True,
+            "pagination_complete":paginated is True,"candidate_scene_count":count,
+            "technical_error_count":errors,
+            "coverage_absence_confirmed":complete is True and paginated is True
+                and count==0 and errors==0})
+
+    bio=audit.get("biomass_search_audit") or {}; queries=bio.get("queries") or []
+    bio_ok=bool(queries) and all(q.get("catalog_search_complete") is True and
+        q.get("pagination_complete") is True for q in queries)
+    add("ESA_BIOMASS",bio_ok,bio_ok,
+        sum(int(q.get("matching_product_count") or 0) for q in queries) if queries else None,
+        sum(int(q.get("technical_error_count") or 0) for q in queries)+len(bio.get("errors") or []))
+
+    gtdx=audit.get("gtdx_height") or {}
+    add("GTDX_GEDI_TANDEM_X",gtdx.get("catalog_search_complete"),
+        gtdx.get("pagination_complete"),gtdx.get("cmr_hits"),
+        gtdx.get("technical_error_count"))
+
+    alos=audit.get("alos_palsar_public") or {}
+    add("ALOS_PALSAR_PUBLIC",alos.get("catalog_search_complete"),
+        alos.get("pagination_complete"),alos.get("catalogued"),
+        alos.get("technical_error_count"))
+
+    asf=audit.get("asf") or []
+    if isinstance(asf,list) and asf:
+        add("ASF_ALOS_NISAR_SENTINEL1",
+            all(x.get("catalog_search_complete") is True for x in asf),
+            all(x.get("pagination_complete") is True for x in asf),
+            sum(int(x.get("count") or 0) for x in asf),
+            sum(int(x.get("technical_error_count") or 0) for x in asf))
+    else:add("ASF_ALOS_NISAR_SENTINEL1",False,False,None,None)
+
+    mpc=(audit.get("sentinel1_provider_routes") or {}).get("MPC") or {}
+    add("SENTINEL1_MPC",mpc.get("catalog_search_complete"),
+        mpc.get("pagination_complete"),mpc.get("catalogued"),
+        mpc.get("technical_error_count"))
+    inpe=audit.get("sentinel1_inpe") or {}
+    add("SENTINEL1_INPE",inpe.get("catalog_search_complete"),
+        inpe.get("pagination_complete"),inpe.get("catalogued"),
+        inpe.get("technical_error_count"))
+    cdse=(audit.get("sentinel1_provider_routes") or {}).get("CDSE") or {}
+    add("SENTINEL1_CDSE",cdse.get("catalog_search_complete"),
+        cdse.get("pagination_complete"),cdse.get("catalogued"),
+        cdse.get("technical_error_count"))
+    cci=audit.get("cci") or {}
+    add("ESA_CCI_SAR_DERIVED_PRODUCT",cci.get("catalog_search_complete"),
+        cci.get("pagination_complete"),len(cci.get("paths") or []),
+        cci.get("technical_error_count"))
+    confirmed=bool(rows) and all(x["coverage_absence_confirmed"] for x in rows)
+    return {"status":"SAR_AUSENCIA_CENAS_CONFIRMADA" if confirmed else "SAR_AUSENCIA_CENAS_NAO_COMPROVADA",
+        "eligible":confirmed,"scope":"AOI e rotas SAR configuradas no pipeline de carbono",
+        "routes":rows,"rule":"qualquer cena, pixel, busca incompleta ou erro técnico bloqueia contingência de inventário"}
 
 
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret="",biomass_catalog_items=None,biomass_search_audit=None,pipeline_route_cache=None):
@@ -2002,7 +2084,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # 2 — Public L-band first: ALOS/PALSAR annual mosaic, no user credentials.
     try:
         al=planetary_alos_palsar(gdf,Path(cache)/"alos_palsar")
-        audit["alos_palsar_public"]={"catalogued":al.get("items",0),"scene_ids":al.get("scene_ids",[]),"pixel_state":al.get("pixel_state"),"stats":al.get("stats",[]),"errors":al.get("errors",[])[:4]}
+        audit["alos_palsar_public"]={"catalogued":al.get("items",0),"scene_ids":al.get("scene_ids",[]),"pixel_state":al.get("pixel_state"),"stats":al.get("stats",[]),"errors":al.get("errors",[])[:4],
+            "catalog_search_complete":al.get("catalog_search_complete"),"pagination_complete":al.get("pagination_complete"),
+            "technical_error_count":al.get("technical_error_count")}
         if al.get("stats"):
             prior=(audit.get("national_route_matrix") or {}).get("regional_numeric_fallback") or {}
             ldiag=lband_dualpol_diagnostic(al.get("stats",[]),biome,phys,prior.get("agb_mg_ha"))
@@ -2091,7 +2175,8 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             "pixel_state":"PROCESSADO" if pc.get("stats") else
                 ("ERRO_TECNICO" if pc.get("errors") else "SEM_PIXELS_COMPATIVEIS"),
             "stats":pc.get("stats",[]),"rate_limited":bool(pc.get("rate_limited",False)),
-            "errors":pc.get("errors",[])[:6]}
+            "errors":pc.get("errors",[])[:6],"catalog_search_complete":pc.get("catalog_search_complete"),
+            "pagination_complete":pc.get("pagination_complete"),"technical_error_count":pc.get("technical_error_count")}
         _record_sentinel1_public_route(audit,"MPC",pc_route)
         if pc.get("stats"):
             audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C","provider":pc.get("provider"),"paths":pc.get("paths",[]),"stats":pc.get("stats",[])})
@@ -2112,7 +2197,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             "scene_ids":s1inpe.get("scene_ids",[]),"pixel_state":s1inpe.get("pixel_state"),
             "latest_pixel_acquisition_utc":max(inpe_dates) if inpe_dates else None,
             "stats":inpe_stats,"errors":s1inpe.get("errors",[]),
-            "pagination_complete":s1inpe.get("pagination_complete")}
+            "pagination_complete":s1inpe.get("pagination_complete"),
+            "catalog_search_complete":s1inpe.get("catalog_search_complete"),
+            "technical_error_count":s1inpe.get("technical_error_count")}
         if inpe_stats:
             audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C",
                 "provider":s1inpe.get("provider"),"stats":inpe_stats})
@@ -2137,7 +2224,10 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 "downloaded":len(c.get("paths",[])),"scene_ids":c.get("scene_ids",[]),
                 "pixel_state":"PROCESSADO" if c.get("stats") else
                     ("ERRO_TECNICO" if c.get("errors") else "SEM_PIXELS_COMPATIVEIS"),
-                "stats":c.get("stats",[]),"errors":c.get("errors",[])[:6]}
+                "stats":c.get("stats",[]),"errors":c.get("errors",[])[:6],
+                "catalog_search_complete":c.get("catalog_search_complete"),
+                "pagination_complete":c.get("pagination_complete"),
+                "technical_error_count":c.get("technical_error_count")}
         _record_sentinel1_public_route(audit,"CDSE",cdse_route)
         if c.get("stats"):
             audit.setdefault("processed_without_agb",[]).append({"source":"Sentinel-1 C","provider":c.get("provider"),"paths":c.get("paths",[]),"stats":c.get("stats",[])})
@@ -2150,7 +2240,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         audit["cci"]={"count":cci.get("items",0),"downloaded":len(cci.get("paths",[])),
                       "version":cci.get("version"),"year":cci.get("year"),
                       "resolution_m":cci.get("resolution_m"),"tiles":cci.get("tiles",[]),
-                      "source":cci.get("source"),"errors":cci.get("errors",[])[:8]}
+                      "source":cci.get("source"),"errors":cci.get("errors",[])[:8],
+                      "paths":cci.get("paths",[]),
+                      "catalog_search_complete":cci.get("catalog_search_complete"),
+                      "pagination_complete":cci.get("pagination_complete"),
+                      "technical_error_count":cci.get("technical_error_count")}
         if cci.get("paths"):
             pr=process_real_sar(gdf,cci["paths"],biome,phys)
             pr["audit"]=audit; pr["paths"]=cci["paths"]; pr["historical"]=True
@@ -2171,23 +2265,27 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             return _preserve_sar_canopy_height(pr,sar_height,audit)
     except Exception as e: audit["cci"]={"error":str(e)}
 
-    # Mark the end of every configured live/direct route reached above. A
-    # technical failure is not scene absence: preserve it in the audit, but
-    # permit a separately labelled inventory contingency only when all
-    # configured biomass routes completed without a quantitative AGB/height product.
+    # Mark the end of every configured route. A scene or any SAR pixel blocks
+    # inventory substitution; technical failures and incomplete searches are
+    # never evidence that no scenes exist.
     audit["sar_sources_exhausted"]=True
-    # Only biomass-quantitative AGB or an eligible canopy-height product
-    # blocks an inventory contingency. Ancillary SAR pixels (e.g. Sentinel-1
-    # C-band screening) are retained in the audit but are not an AGB estimate.
-    sar_processed=bool(sar_height)
+    sar_processed=bool(sar_height or audit.get("processed_without_agb"))
     audit["sar_pixel_processing_status"]=(
         "ALTURA_SAR_PROCESSADA_SEM_MODELO_AGB" if sar_height else
         "PIXELS_AUXILIARES_PROCESSADOS_SEM_AGB_OU_ALTURA_QUANTITATIVA" if audit.get("processed_without_agb") else
         "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS")
+    certificate=_scene_absence_certificate(audit)
+    audit["scene_absence_certificate"]=certificate
     fallback_gate=inventory_fallback_gate(
         sar_processed,audit.get("warnings",[]),
         sources_exhausted=bool(audit.get("sar_sources_exhausted")),
-        height_processed=bool(sar_height))
+        height_processed=bool(sar_height),
+        coverage_absence_confirmed=certificate.get("eligible") is True,
+        scenes_found=bool(audit.get("biomass_l2b",{}).get("count")
+            or audit.get("alos_palsar_public",{}).get("catalogued")
+            or sum(int(x.get("count") or 0) for x in audit.get("asf",[]) if isinstance(x,dict))
+            or audit.get("sentinel1_inpe",{}).get("catalogued")
+            or sum(int(x.get("catalogued") or 0) for x in (audit.get("sentinel1_provider_routes") or {}).values())))
     audit["inventory_fallback_gate"]=fallback_gate
     lit=None
     if fallback_gate["eligible"]:

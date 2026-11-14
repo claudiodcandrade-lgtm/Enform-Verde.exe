@@ -60,35 +60,32 @@ _NO_COVERAGE_MARKERS = (
 )
 
 def inventory_fallback_gate(sar_processed, warnings=(), *, sources_exhausted=False,
-                            height_processed=False):
-    """Permit a clearly conditional inventory estimate after configured SAR routes.
+                            height_processed=False, coverage_absence_confirmed=False,
+                            scenes_found=False):
+    """Permit inventory estimates only after a complete, error-free no-scene audit.
 
-    A technical read/access failure is never described as proof that scenes or
-    valid pixels do not exist. Once every biomass-quantitative route has run,
-    and no quantitative AGB or canopy-height SAR was produced, the inventory
-    estimate may proceed as an explicit contingency. Ancillary C-band pixels
-    (for example Sentinel-1 screening) are not an AGB measurement and must not
-    suppress that contingency. Their processing and technical failures remain
-    in the audit; this does not assert that SAR scenes are absent.
+    Any SAR pixels or catalogued scenes mean the result must continue to use
+    the SAR evidence and compatible SAR model; inventory estimates cannot
+    replace it. A connection/read error is not proof of scene absence.
     """
     warning_list=[str(w) for w in (warnings or ())]
-    if sar_processed or height_processed:
-        return {"eligible":False,"reason":"Já há AGB quantitativa derivada de SAR ou altura SAR utilizável; contingência de inventário não pode substituí-la.",
-                "unresolved_warnings":[],"evidence":"observável SAR quantitativo para biomassa processado"}
+    if sar_processed or height_processed or scenes_found:
+        return {"eligible":False,"reason":"Cenas ou pixels SAR foram encontrados/processados; contingência de inventário não pode substituí-los.",
+                "unresolved_warnings":[],"evidence":"CENAS_OU_PIXELS_SAR_PRESENTES"}
     if not sources_exhausted:
         return {"eligible":False,"reason":"rotas SAR configuradas ainda não foram todas tentadas; ausência não confirmada.",
                 "unresolved_warnings":warning_list,"evidence":"ROTAS_PENDENTES"}
     unresolved=[w for w in warning_list
                 if not any(marker in w.casefold() for marker in _NO_COVERAGE_MARKERS)]
     if unresolved:
-        return {"eligible":True,
-                "status":"SAR_INDISPONIVEL_APOS_ESGOTAMENTO_COM_FALHAS_TECNICAS",
-                "reason":"rotas SAR quantitativas de biomassa foram esgotadas sem AGB/altura utilizável; pixels de outras bandas podem existir e falhas técnicas permanecem explícitas, sem afirmar ausência de cenas no catálogo.",
-                "unresolved_warnings":unresolved,
-                "evidence":"ROTAS_CONFIGURADAS_ESGOTADAS_SEM_PIXELS; FALHA_TECNICA_NAO_EQUIVALE_A_AUSENCIA_DE_COBERTURA"}
-    return {"eligible":True,"reason":"rotas SAR quantitativas de biomassa esgotadas sem observável AGB/altura utilizável.",
-            "status":"SEM_OBSERVAVEL_SAR_QUANTITATIVO_PARA_BIOMASSA_APOS_ESGOTAMENTO",
-            "unresolved_warnings":[],"evidence":"rotas de AGB/altura SAR esgotadas; bandas auxiliares podem ter pixels processados"}
+        return {"eligible":False,"reason":"erro técnico SAR não comprova ausência de cenas; corrigir/repetir a rota.",
+                "unresolved_warnings":unresolved,"evidence":"ERRO_TECNICO_NAO_E_AUSENCIA_DE_CENAS"}
+    if coverage_absence_confirmed is not True:
+        return {"eligible":False,"reason":"ausência de cenas não foi certificada por buscas completas em todas as rotas exigidas.",
+                "unresolved_warnings":[],"evidence":"CERTIFICADO_DE_AUSENCIA_DE_CENAS_AUSENTE"}
+    return {"eligible":True,"reason":"todas as rotas SAR exigidas concluíram sem erro e certificaram ausência de cenas.",
+            "status":"SAR_AUSENCIA_CENAS_CONFIRMADA",
+            "unresolved_warnings":[],"evidence":"BUSCAS_COMPLETAS_SEM_CENAS_E_SEM_ERROS"}
 
 def national_agb_fallback(biome, physiognomy, aoi=None):
     """Return a mandatory modelled AGB estimate for the four scoped Brazilian biomes.

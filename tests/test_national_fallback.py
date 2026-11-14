@@ -11,13 +11,17 @@ import sar_pipeline as sar
 class NationalFallbackTests(unittest.TestCase):
     def test_inventory_fallback_gate_requires_confirmed_sar_unavailability(self):
         self.assertFalse(inventory_fallback_gate(False,[])['eligible'])
-        self.assertTrue(inventory_fallback_gate(False,["Sentinel-1: sem pixels processados"],sources_exhausted=True)["eligible"])
+        self.assertTrue(inventory_fallback_gate(False,["Sentinel-1: sem cenas"],sources_exhausted=True,
+            coverage_absence_confirmed=True)["eligible"])
         failed=inventory_fallback_gate(False,["SELECTED_SCENES_PIXEL_READ_FAILED"],sources_exhausted=True)
-        self.assertTrue(failed["eligible"])
-        self.assertEqual(failed["status"],"SAR_INDISPONIVEL_APOS_ESGOTAMENTO_COM_FALHAS_TECNICAS")
+        self.assertFalse(failed["eligible"])
         self.assertIn("SELECTED_SCENES_PIXEL_READ_FAILED",failed["unresolved_warnings"])
         self.assertFalse(inventory_fallback_gate(True,[])['eligible'])
         self.assertFalse(inventory_fallback_gate(False,["Earthdata authentication rejected"])['eligible'])
+        self.assertFalse(inventory_fallback_gate(False,[],sources_exhausted=True,
+            coverage_absence_confirmed=True,scenes_found=True)["eligible"])
+        self.assertFalse(inventory_fallback_gate(False,["SELECTED_SCENES_PIXEL_READ_FAILED"],
+            sources_exhausted=True,coverage_absence_confirmed=True)["eligible"])
 
     def test_all_scoped_biomes_always_return_agb_and_uncertainty(self):
         cases=[
@@ -58,7 +62,7 @@ class NationalFallbackTests(unittest.TestCase):
         self.assertIn("não é produtividade/queda anual",components["Serapilheira — estoque no piso florestal"]["method"])
 
     @unittest.skipUnless(gpd and box,"geospatial dependencies required")
-    def test_auxiliary_sar_pixels_do_not_block_inventory_carbon_contingency(self):
+    def test_any_processed_sar_pixels_block_inventory_carbon_contingency(self):
         g=gpd.GeoDataFrame(geometry=[box(-47.96,-15.98,-47.94,-15.96)],crs="EPSG:4326")
         real=(sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history)
         try:
@@ -70,9 +74,9 @@ class NationalFallbackTests(unittest.TestCase):
             sar.cci_history=lambda *a,**k:{"items":0,"paths":[]}
             out=sar.automatic_pipeline(g,"Cerrado","Savana Arborizada",cache="test_cache_national")
             self.assertEqual(out["status"],"SAR_PROCESSADO_SEM_MODELO_AGB")
-            self.assertIsNotNone(out["literature_reference"])
+            self.assertIsNone(out["literature_reference"])
             self.assertIsNone(out["agb_mg_ha"])
-            self.assertTrue(out["inventory_fallback_gate"]["eligible"])
+            self.assertFalse(out["inventory_fallback_gate"]["eligible"])
             self.assertIn("pixels sar auxiliares",out["message"].casefold())
         finally:
             sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history=real

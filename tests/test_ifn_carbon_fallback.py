@@ -8,8 +8,9 @@ class IfnCarbonFallbackTests(unittest.TestCase):
         self.no_pixels = {
             "status": "SAR_NAO_PROCESSADO",
             "audit": {"warnings": [], "sar_sources_exhausted": True,
+                      "scene_absence_certificate":{"eligible":True,"status":"SAR_AUSENCIA_CENAS_CONFIRMADA"},
                       "sar_pixel_processing_status": "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS"},
-            "inventory_fallback_gate": {"eligible": True},
+            "inventory_fallback_gate": {"eligible": True,"status":"SAR_AUSENCIA_CENAS_CONFIRMADA"},
         }
 
 
@@ -41,17 +42,17 @@ class IfnCarbonFallbackTests(unittest.TestCase):
         self.assertEqual(result["calculation_trace"]["selected_ua_count"], 5)
         self.assertEqual(result["estimate_label"], "estimativa com incerteza não mensurada")
 
-    def test_technical_read_failure_stays_visible_but_does_not_block_inventory_contingency(self):
+    def test_technical_read_failure_and_processed_pixels_block_inventory_contingency(self):
         technical = {**self.no_pixels,
                      "audit": {**self.no_pixels["audit"], "warnings": ["SELECTED_SCENES_PIXEL_READ_FAILED"]},
                      "inventory_fallback_gate": {"eligible": True,
                          "status": "SAR_INDISPONIVEL_APOS_ESGOTAMENTO_COM_FALHAS_TECNICAS",
                          "unresolved_warnings": ["SELECTED_SCENES_PIXEL_READ_FAILED"]}}
-        self.assertTrue(no_valid_sar_pixels(technical))
+        self.assertFalse(no_valid_sar_pixels(technical))
         estimate=estimate_fesv_state_scenario(
             biome="Amazônia", physiognomy="Floresta Estacional Sempre-Verde",
             area_ha=10, sar_result=technical, centroid_lon=-55.19, centroid_lat=-11.87)
-        self.assertEqual(estimate["status"], "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR")
+        self.assertEqual(estimate["status"], "BLOQUEADO")
         self.assertIn("SELECTED_SCENES_PIXEL_READ_FAILED", technical["inventory_fallback_gate"]["unresolved_warnings"])
         processed = {"status":"SAR_PROCESSADO_SEM_MODELO_AGB",
                      "audit":{"warnings":[],"sar_sources_exhausted":True,
@@ -59,11 +60,11 @@ class IfnCarbonFallbackTests(unittest.TestCase):
                         "processed_without_agb":[{"source":"S1"}],
                         "biomass_height":{"zonal_height":None}},
                      "inventory_fallback_gate":{"eligible":True}}
-        self.assertTrue(no_valid_sar_pixels(processed))
+        self.assertFalse(no_valid_sar_pixels(processed))
         self.assertEqual(estimate_fesv_state_scenario(
             biome="Amazônia", physiognomy="Floresta Estacional Sempre-Verde",
             area_ha=10, sar_result=processed,
-            centroid_lon=-55.19, centroid_lat=-11.87)["status"], "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR")
+            centroid_lon=-55.19, centroid_lat=-11.87)["status"], "BLOQUEADO")
 
     def test_no_generalization_to_other_physiognomies(self):
         result = estimate_fesv_state_scenario(

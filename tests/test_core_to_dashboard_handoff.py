@@ -126,6 +126,8 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             self.assertEqual(app.project["pipeline_audit"]["overall_status"], "PARCIAL_COM_ERRO_TECNICO")
             self.assertEqual(app.project["pipeline_audit"]["stages"]["land_use"]["status"], "ERRO_TECNICO")
             self.assertEqual(app.project["native_carbon"]["known_total_tc"], 12.5)
+            self.assertEqual(app.project["sar_result"], sar_result,
+                             "SAR pré-computado não pode ser descartado antes do dashboard")
             audit_path = Path(tmp) / "carbono_formacoes_nativas.json"
             self.assertEqual(json.loads(audit_path.read_text(encoding="utf-8"))["known_total_tc"], 12.5)
 
