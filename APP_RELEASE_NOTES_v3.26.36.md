@@ -1,9 +1,9 @@
 # Enform Verde v3.26.36-PRECAMPO-EXPERIMENTAL
 
-Data: 14/11/2026. Esta versão inicia a correção dos achados preliminares da revisão arquitetural V88.57.
+Data: 14/11/2026. Candidata V88.59.
 
-- Todo processamento SAR, inclusive arquivos SAR locais, é encaminhado ao worker em segundo plano; a interface Tk não executa o pipeline de pixels no thread principal.
-- A contingência por inventário reutiliza uma única leitura/processamento SAR e o certificado AOI-wide entre interseções de fitofisionomia, evitando repetir aquisições equivalentes.
-- Foram acrescentados contratos de regressão para o caminho SAR local no worker e para a reutilização do resultado SAR no fallback.
+- Todo processamento SAR, inclusive arquivos locais, executa no worker em segundo plano; os caminhos SAR chegam às etapas de uso do solo e carbono.
+- A contingência por inventário reutiliza uma única análise SAR/certificado AOI-wide para as fitofisionomias potenciais.
+- Regressões dos dois fluxos, compilação dos módulos e suíte completa de 1.158 testes passaram no commit a52b9818ba8c31ba62a238d30a54f0a280d0c0c5. O dashboard falhou apenas no guard de sincronização documental; esta revisão atualizou os documentos exigidos. Build Windows do código continua pendente.
 
-Status de evidência: as alterações aguardam CI Windows e suíte de dashboard neste commit. O KML integral da Fazenda Maria Eduarda até o dashboard não está incluído nesta verificação. A homologação científica independente permanece reprovada por falta de medições de campo. Manter pré-campo experimental; não homologado.
+O KML integral da Fazenda Maria Eduarda até o painel e a validação de campo não foram comprovados. Manter versão experimental pré-campo, não homologada.
