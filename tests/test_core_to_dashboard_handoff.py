@@ -236,6 +236,7 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             pipeline_btn=SimpleNamespace(state=lambda *_: None),
             global_execute_btn=SimpleNamespace(state=lambda *_: None),
             status=SimpleNamespace(set=lambda *_: None), after=lambda *_: None,
+            _poll_analysis=lambda: None,
             _execute_main=lambda *_args, **_kwargs: self.fail("local SAR must not run on Tk thread"),
         )
         worker_threads = []
