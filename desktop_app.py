@@ -3206,6 +3206,45 @@ class App(tk.Tk):
                 "Planilha em branco para medições independentes: "+
                 str(evidence_files["field_template_csv"]),
                 "As faixas dos modelos não são IC95% de campo. Nenhuma medição observada foi criada."])
+            # Put each modelled value on the visible carbon dashboard as well as
+            # the JSON/Excel evidence. This is a field-test prediction, never a
+            # certified stock or a measured observation.
+            for prediction in prefield.get("predictions", []):
+                compartment=str(prediction.get("compartment") or prediction.get("crop") or "Resultado")
+                prediction_id=str(prediction.get("prediction_id") or "ID N/D")
+                if prediction.get("status") == "PROJECAO_EXPERIMENTAL_PARA_VALIDACAO":
+                    if prediction.get("kind") == "carbono_nativo":
+                        value=prediction.get("density_predicted_tc_ha")
+                        unit=prediction.get("unit") or "tC/ha"
+                        stock=prediction.get("stock_predicted_tC")
+                        estimate=(format_ptbr(value,3)+" "+unit if isinstance(value,(int,float)) else "N/D")
+                        if isinstance(stock,(int,float)):
+                            estimate += "; estoque-base "+format_ptbr(stock,2)+" tC ("+format_ptbr(stock*44/12,2)+" tCO₂e)"
+                        area_basis=prediction.get("area_basis_ha")
+                    else:
+                        value=prediction.get("predicted_t_ha")
+                        unit=prediction.get("unit") or "t/ha"
+                        stock=prediction.get("predicted_production_t")
+                        estimate=(format_ptbr(value,3)+" "+unit if isinstance(value,(int,float)) else "N/D")
+                        if isinstance(stock,(int,float)):
+                            estimate += "; produção-base "+format_ptbr(stock,2)+" t"
+                        area_basis=prediction.get("area_basis_ha")
+                    line=("  PREVISÃO EXPERIMENTAL PARA AFERIÇÃO EM CAMPO — "+compartment+
+                          ": "+estimate+"; área-base "+format_ptbr(area_basis,2)+" ha; "+prediction_id)
+                    interval=(prediction.get("density_range_tc_ha") or
+                              prediction.get("prediction_range_t_ha"))
+                    if isinstance(interval,(list,tuple)) and len(interval)==2:
+                        line += "; faixa da fonte/modelo "+format_ptbr(interval[0],3)+"–"+format_ptbr(interval[1],3)+" "+unit
+                    line += "; incerteza: "+str(prediction.get("uncertainty_kind") or "N/D")
+                    line += "; método: "+str(prediction.get("model") or "N/D")
+                    line += "; fonte: "+str(prediction.get("source") or "N/D")
+                    line += "; hash de rastreio: "+str(prediction.get("trace_sha256") or "N/D")
+                    lines.append(line)
+                else:
+                    lines.append("  RESULTADO PARA CAMPO — "+compartment+
+                                 ": N/D; "+str(prediction.get("reason") or "modelo compatível indisponível")+
+                                 "; "+prediction_id)
+            lines.append("  Aferição: preencher somente medições independentes na planilha CSV; previsões e observações permanecem separadas.")
         except Exception as exc:
             self.project["modeled_field_predictions"]={"status":"N/D",
                 "reason":type(exc).__name__+": "+str(exc)[:160]}
