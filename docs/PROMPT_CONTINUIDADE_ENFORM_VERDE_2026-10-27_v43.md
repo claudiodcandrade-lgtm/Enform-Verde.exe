@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 128183)
-Total output lines: 2241
+Warning: truncated output (original token count: 134064)
+Total output lines: 2347
 
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
 ## V88.16 — resultado nacional com incerteza e estado auditável (12/11/2026)
@@ -11,7 +11,7 @@ Ausência SAR só pode ser certificada depois de busca/paginação/leitura compl
 
 No Excel, a aba Gráficos contém linha de fustes/ha por DAP, parâmetros/tabela de área basal média, linha de altura SAR (ou média de inventário da mesma fitofisionomia apenas com ausência certificada) e barras das dez espécies dominantes; todas as fontes, unidade, período e condição observada/fallback. Bloquear regressão de sobreposição dos dados auxiliares DAP com a área D:E do painel de altura. O dashboard valida run_id/hash, aceita estados por módulo e mostra divergência de áreas como não reconciliada, sem atribuí-la a uma classe ou carbono.
 
-Estado do PR #51: branch patches-3.26.6, HEAD 88b463813665dfb6b82071b39c24913864af37b4, draft/não mesclado. A correção do teste de separação DAP/altura passou nos seis testes direcionados locais; no último status, dashboard e build Windows estavam em execução, smoke semântico SAR e contrato rápido passaram, gate científico falhou. O código declara 3.26.21, mas descrição do PR continua 3.26.16. A Fazenda Maria Eduarda integral, ciclo app→dashboard, áreas raster-vetor e validação nacional permanecem pendentes. Não afirmar conclusão ou homologação até evidência no mesmo SHA e AOI integral.
+ESTADO VIGENTE (13/11/2026, checkpoint V88.36): candidata `3.26.25-PRECAMPO-EXPERIMENTAL`. O workflow Windows anterior falhou no teste do EXE ao tentar baixar um COG Sentinel-1 de 2 GiB pelo caminho HTTPS local; isso é erro de transporte/tamanho, não ausência SAR. A correção agora direciona COGs grandes, falhas de assinatura, interrupção HTTP e respostas inválidas à rota de recorte limitado da AOI pelo Planetary Computer, preservando TLS e auditoria sem URLs assinadas. Suíte local completa: 1.135 aprovados, 1 ignorado por ausência de display; incluem testes simulados de COG grande, assinatura e transporte. O recorte real no Windows ainda precisa passar no workflow do SHA final; simulações locais não comprovam a rota live. Não há novo artefato Windows aprovado neste checkpoint. PR #51 permanece draft. A leitura do KML integral no aplicativo até o dashboard e a homologação científica independente continuam pendentes; resultados mantêm caráter experimental e incerteza declarada.
 
 
 <!-- V87_95_FINAL_WINDOWS_BUILD -->
@@ -135,18 +135,7 @@ Estado do PR #51: branch patches-3.26.6, HEAD 88b463813665dfb6b82071b39c24913864
 ## V87.77 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
 - V87.77 — build 3.26.10 no SHA e77310ba falhou: regressao geral 1037 testes com 3 falhas e 1 erro, e build Windows reprovou teste nativo; portanto ZIP NAO liberado. Corrigidos contrato de identidade atual vs anual, fixtures de ausencia de modelo SAR, e campo scenario_intervals_are_not_CI95 no modulo hidrico.
-- CLASSIFICACAO ATUAL vs EXPERIMENTAL RETROSPECTIVA: crops_in_land_result retorna exclusivamente SAR_VALIDADO; experimental_crops_in_land_result retorna exclusivamente SAR_EXPERIMENTAL_MODELO. monitoring_forecast utiliza estimativa historica apenas para PREVISAO CONDICIONAL, nunca identifica cultura atual com ela. Origem e incerteza de transferencia aparecem no relatorio.
-- TESTE CI: tests/test_curren…113183 tokens truncated…ence to invalid character number`. O erro ocorre antes da descoberta das dez camadas (limite inferior/superior para cinco horizontes). Ele caracteriza conteúdo de resposta inválido para XML 1.0, não ausência de serviço ou credencial. Não zerar incerteza nem eliminar o estoque já calculado por esse erro secundário.
-
-## Correção de software
-
-Antes do `ElementTree.fromstring`, inspecionar referências numéricas XML e remover somente aquelas cujo código Unicode não pertence à produção `Char` do XML 1.0. Preservar referências válidas e todo o restante da resposta. O hash SHA-256 da resposta WCS original e a quantidade de referências removidas entram na proveniência. Respostas truncadas, estruturalmente inválidas ou sem as dez camadas continuam como `ERRO_TECNICO`/N/D; nunca são interpretadas como ausência confirmada.
-
-Após a descoberta, manter os contratos existentes: baixar limites inferior e superior para os cinco horizontes, validar formato GeoTIFF, CRS, resolução, NoData, grade alinhada, cobertura da AOI e conteúdo dos rasters. Repetir somente falhas transitórias com tentativas limitadas e TLS validado. Enquanto qualquer requisito falhar, manter estoque SOC quando disponível e exibir sua incerteza como N/D com motivo específico. O envelope marginal publicado não deve ser rotulado como IC95% conjunto.
-
-## Teste e limites
-
-Teste de regressão: referência inválida `&#x0;` é removida, referência XML legal `&#x20;` permanece, e o identificador de cobertura reparado é descoberto. A suíte completa e os workflows devem ser reportados pelo SHA exato antes de atualizar o branch. A candidata 3.26.26-PRECAMPO-EXPERIMENTAL continua pré-campo experimental, não homologada; não declarar resultado de incerteza até leitura de dados reais passar no runtime.
+- CLASSIFI…119064 tokens truncated…ontinua pré-campo experimental, não homologada; não declarar resultado de incerteza até leitura de dados reais passar no runtime.
 
 # V88.40 — parsing resiliente do XML de capacidades PronaSolos
 
@@ -256,11 +245,20 @@ Artefato Actions ID `14087567135` (531.996.993 bytes). SHA-256 ZIP `1ad43f128117
 
 ## V88.49 — auditoria de eficiência e retentativas SAR (14/11/2026)
 
-A candidata passa a `3.26.33-PRECAMPO-EXPERIMENTAL` no código `3a7086011c61caf0a19dc8763a3276783d2e7b23`. O cache ESA CCI v7 é compartilhado apenas dentro da análise corrente e por telhas; estatísticas são recalculadas na geometria de cada estrato. A auditoria preserva separadamente as rotas Sentinel-1 MPC e CDSE. O módulo agrícola não repete tentativas de transporte para uma lista explícita de erros determinísticos da cena/AOI; falhas potencialmente recuperáveis mantêm a contingência. A suíte completa do SHA `ee42b631f3ce69de3f78aaebbb366acfa4e82599` passou, mas o guard documental falhou; esta alteração requer novo CI e build Windows. Não há aferição ponta a ponta da Fazenda Maria Eduarda nem homologação científica independente. Não compartilhar estoques entre geometrias e não transformar Sentinel-1 C-band isolada em AGB.
+- Versão da candidata: `3.26.33-PRECAMPO-EXPERIMENTAL`. Código no commit `3a7086011c61caf0a19dc8763a3276783d2e7b23`.
+- O cache ESA CCI v7 é limitado a uma análise e à combinação de telhas de 10°. Evita repetir descoberta/download entre estratos que compartilham telhas; cada estatística zonal continua usando a geometria exata do estrato. Nenhuma estimativa científica é reutilizada entre propriedades ou execuções.
+- A auditoria Sentinel-1 conserva MPC e CDSE em `sentinel1_provider_routes`; o resumo legado mantém a primeira rota que processou pixels, e a rota secundária não apaga a trilha primária.
+- No monitoramento agrícola, falhas determinísticas de geometria/validade (sem pixels válidos, sem interseção, janela acima do limite ou par VV/VH incompleto) deixam de repetir transportes sobre a mesma cena. Falhas de TLS, conexão, decodificação e outros erros potencialmente transitórios mantêm as rotas alternativas.
+- Não foi feita reescrita ampla nem cache de estoques por estrato. O perfil ponta a ponta ainda deve medir número de leituras COG, bytes, latência por provedor e tempo por AOI. Otimização futura pode compartilhar ativos/janelas verificados, mas sempre recalcula estatísticas por geometria.
+- No SHA anterior `ee42b631f3ce69de3f78aaebbb366acfa4e82599`, a suíte completa passou (1.150 testes); falhou apenas o guard que exigia sincronizar Word e prompt. Novo CI e build Windows são necessários para o SHA `3a7086011c61caf0a19dc8763a3276783d2e7b23`.
+- Expor previsões numéricas experimentais sempre que existirem dados, domínio de aplicação e método rastreáveis; N/D permanece quando a ausência de suporte ou falha está identificada. Não estimar AGB com Sentinel-1 C-band isolada. Seguem pendentes a execução integral da Fazenda Maria Eduarda até o dashboard e validação científica externa; não homologar.
 
 ## V88.50 — restauração da integridade do código-fonte (14/11/2026)
 
-A auditoria encontrou bytes inválidos em `desktop_app.py` no SHA `3a7086011c61caf0a19dc8763a3276783d2e7b23`. O arquivo foi restaurado a partir do pai íntegro, preservando `3.26.33-PRECAMPO-EXPERIMENTAL`; a correção está no SHA `0f1cb66313bb0e989a8966dde3bc183b357128e2`. `py_compile` e seis testes direcionados via `unittest` passaram localmente. Regressão completa, build Windows, fluxo Maria Eduarda → dashboard e validação científica independente permanecem pendentes. Não homologar.
+- A auditoria encontrou bytes binários inválidos em trechos de `desktop_app.py` no commit `3a7086011c61caf0a19dc8763a3276783d2e7b23`; o arquivo não compilava. O arquivo foi restaurado do pai íntegro, mantendo a versão `3.26.33-PRECAMPO-EXPERIMENTAL` e as alterações SAR já contidas em outros módulos.
+- Correção publicada no commit `0f1cb66313bb0e989a8966dde3bc183b357128e2` da branch `patches-3.26.6`, sem merge. A árvore remota do commit foi conferida idêntica à árvore local revisada.
+- Verificação local no conteúdo corrigido: `py_compile` passou em `desktop_app.py` e `recent_sar_landcover.py`; seis testes direcionados de órbita, redação de URL e política de retry passaram via `unittest`; `git diff --check` passou. A suíte completa, build Windows e novo relatório CI ainda devem executar no SHA atual.
+- Atualizar artefatos e documentação para o SHA `0f1cb66313bb0e989a8966dde3bc183b357128e2`. Não atribuir o teste local nem futura compilação ao SHA corrompido. O fluxo KML Fazenda Maria Eduarda → dashboard e a validação científica independente continuam pendentes; manter status experimental e não homologado.
 
 ## V88.51 — estimativas obrigatórias e entrega SAR ao dashboard (14/11/2026)
 
@@ -326,3 +324,9 @@ A revisão V88.49 cobriu cache CCI por análise, retentativas e persistência da
 A primeira leitura estática da arquitetura foi feita no SHA `417e93141ec035d5bb414abb620224d490580927`. Ela identificou riscos que ainda precisam de correção e regressão: o caminho com SAR local chama o processamento pesado no thread da interface (`desktop_app.py:2780`); a contingência pode solicitar novamente o pipeline SAR dentro do loop de fitofisionomias (`desktop_app.py:498–502`); o teste de handoff usa resultados de fixture e não prova execução real do core (`tests/test_core_to_dashboard_handoff.py`); a contingência IFN atualmente cobre apenas domínio específico de Amazônia/Floresta Estacional Sempre-Verde em MT (`ifn_carbon_fallback.py:51–89`); e o estado agregado deve distinguir indisponibilidade, ausência, não execução e sucesso (`desktop_app.py:2927–2936`).
 
 A revisão é preliminar, não exaustiva. A execução integral do KML da Fazenda Maria Eduarda até o dashboard continua sem comprovação; a homologação científica segue reprovada por falta de medições independentes. Manter o status pré-campo experimental. Ver `AUDITORIA_ARQUITETURAL_PRELIMINAR_V88_57.md` no pacote para gatilhos, impactos e próximos passos. Não declarar os achados corrigidos até haver commits e regressões que os cubram.
+
+## V88.58 — correções arquiteturais em validação (14/11/2026)
+
+Candidata `3.26.36-PRECAMPO-EXPERIMENTAL`, commit de código `2eda195edf89986381e2cf55651f0de16ab4edef`. O caminho de SAR local foi encaminhado ao worker em segundo plano, com os caminhos SAR capturados na thread da interface e fornecidos a uso do solo e carbono. A contingência por inventário agora reutiliza uma única execução SAR e o certificado AOI-wide entre as fitofisionomias potenciais. Foram acrescentados testes de regressão para ambos os fluxos.
+
+Na consulta de publicação, a suíte dashboard e o build Windows deste commit ainda estavam em execução; não presumir aprovação antes de consultar os resultados do próprio SHA. O teste de pixels ESA BIOMASS FH e o contrato pré-campo tinham passado em workflows associados, e a máscara SAR semântica ainda estava em execução. O KML completo da Fazenda Maria Eduarda até o painel não foi executado. Gate científico independente reprovado; manter experimental e não homologado.
