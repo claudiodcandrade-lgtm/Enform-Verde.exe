@@ -548,6 +548,10 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     inventory_manifest=options.pop("inventory_evidence_manifest",None)
     biodiversity_inventory_records=options.pop("biodiversity_inventory_records",None)
     catalog_cache={}
+    # Shared only across strata in this single property analysis. CCI discovery
+    # is tile-based, so reuse its year/host result while recalculating zonal
+    # statistics against each exact native-stratum geometry.
+    pipeline_route_cache={}
     def sar_estimator(frame,b,p):
         if sar_paths:return process_real_sar(frame,sar_paths,b,p)
         # Search official BIOMASS collections once against the full AOI, then
@@ -570,7 +574,8 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
                     "technical_error":type(exc).__name__+": "+str(exc)[:180]})
         items,audit=catalog_cache["biomass_catalog"]
         return automatic_pipeline(frame,b,p,biomass_catalog_items=items,
-                                  biomass_search_audit=audit,**options)
+                                  biomass_search_audit=audit,
+                                  pipeline_route_cache=pipeline_route_cache,**options)
     def estimator(frame,phys):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
