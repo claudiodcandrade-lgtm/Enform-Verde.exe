@@ -173,7 +173,18 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                     "pixel_state": "PROCESSADO",
                     "n": 256,
                 }]},
-                "components": [],
+                "components": [{
+                    "parametro": "Biomassa aérea",
+                    "tc": 12.5,
+                    "area_ha": 1.0,
+                    "area_basis_ha": 1.0,
+                    "origem": "SAR_EXPERIMENTAL_MODELO",
+                    "fonte": "Modelo de fixture",
+                    "metodo": "Equação experimental de fixture",
+                    "include_in_total": True,
+                    "total_tc": 12.5,
+                    "quantified_area_ha": 1.0,
+                }],
             }]
             carbon_widget.value = crop_widget.value = crop_audit_widget.value = ""
             app.project = {"version": "test"}
