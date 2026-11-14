@@ -1,4 +1,4 @@
-# Enform Verde 3.26.34 — pré-campo experimental
+# Enform Verde v3.26.34-PRECAMPO-EXPERIMENTAL
 
 - Corrige o handoff do resultado SAR por estrato até `project['sar_result']`, preservando proveniência e auditoria para os painéis.
 - Corrige erro sintático na trilha pública ALOS/PALSAR do pipeline SAR.
