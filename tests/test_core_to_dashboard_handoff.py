@@ -226,6 +226,7 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             inventory_evidence_manifest=None, biodiversity_inventory_records=None,
             ibge_physiognomy_gdf=None, ibge_class_field="legenda_1",
             biome=SimpleNamespace(get=lambda: "Amazônia"),
+            phys=SimpleNamespace(get=lambda: "Floresta teste"),
             esa_token=SimpleNamespace(get=lambda: ""), edl_token=SimpleNamespace(get=lambda: ""),
             edl_user=SimpleNamespace(get=lambda: ""), edl_password=SimpleNamespace(get=lambda: ""),
             cdse_token=SimpleNamespace(get=lambda: ""),
