@@ -99,7 +99,7 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
                           (app.cbers4a_wfi_preview,"expanded_scenes")):
             src=inspect.getsource(fn)
             self.assertIn(marker,src)
-            self.assertIn("for strategy in range(3)",src)
+            self.assertIn("range(3) if index==0 else (0,)",src)
             self.assertIn('GDAL_HTTP_MULTIPLEX',src)
 
     def test_optical_provider_errors_are_saved_and_redacted(self):

@@ -30,7 +30,7 @@ class OpticalStatusIsolationTests(unittest.TestCase):
 
     def test_map_success_and_failure_are_labeled_visual_only(self):
         finish = self._method("_finish_satellite_map")
-        self.assertIn("não altera a análise quantitativa", finish)
+        self.assertIn("A análise segue independente do fundo", finish)
         self.assertIn("não alimenta cálculos", finish)
         start = self._method("show_google_map")
         self.assertIn("self.map_status.set(", start)
