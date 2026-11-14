@@ -339,3 +339,8 @@ O commit de código/teste `a52b9818ba8c31ba62a238d30a54f0a280d0c0c5` mantém a c
 ## V88.63 — correção da exibição de incerteza
 
 Requisito arquitetural já estabelecido: se o valor estimado de carbono tiver suporte, mas a incerteza de algum parâmetro não puder ser mensurada, manter o resultado e exibir exatamente “incerteza não mensurável”, identificando parâmetro, motivo e fonte. N/D somente quando o próprio valor não tiver suporte. Conferir painel, relatório, mapas, planilhas e exportações. A candidata 3.26.37 aguarda CI integral, build Windows do mesmo SHA, execução ponta a ponta da Fazenda Maria Eduarda e validação independente; manter pré-campo experimental.
+
+
+## V88.63 — sincronização das regressões da candidata 3.26.37
+
+O teste integral da revisão anterior executou 1.160 testes; as regressões agora exigem “incerteza não mensurável” para estoques suportados sem incerteza quantificável. A nova revisão deve repetir CI e build Windows no mesmo SHA; manter resultado experimental pré-campo até esses gates e as validações de campo.
