@@ -309,3 +309,8 @@ A versão candidata permanece `3.26.33-PRECAMPO-EXPERIMENTAL`, agora identificad
 ## Atualização operacional V88.55 (14/11/2026)
 
 Esta alteração de imagem não modifica os métodos de carbono do solo, as profundidades nem as fontes de dados da especificação. Para contexto operacional do produto: CBERS-4A/WFI é o fundo óptico prioritário e Sentinel-2 L2A a alternativa. A evidência Windows observou cobertura CBERS em 11/11 janelas representativas e exibição em canvas Tk numa janela ao redor do centroide de Sinop; não foi executado o KML integral da Fazenda Maria Eduarda. A suíte completa do dashboard teve 1.156 testes aprovados; o job foi bloqueado exclusivamente pelo guard de sincronização documental. Permanecem necessários novo CI após esta atualização, execução ponta a ponta da AOI integral e validação de campo. O estado segue pré-campo experimental, não homologado.
+
+
+# REVISÃO V87.1 — 05/11/2026 — CORREÇÃO CIENTÍFICA V87.1: limites marginais do SOC 0–100 cm
+
+Preservar, para os horizontes 0–5, 5–15, 15–30, 30–60 e 60–100 cm, a soma ponderada dos limites marginais oficiais e a rastreabilidade por horizonte. Identificar o resultado como envelope marginal oficial (`marginal_envelope_available=true`); manter `predictive_uncertainty_quantified=false`, pois a soma dos limites não representa intervalo conjunto de confiança de 95% e não inclui correlação, transferência, viés ou incerteza total da propriedade. Ausência/erro de serviço permanece N/D com motivo. O estoque central recuperado não deve desaparecer apenas porque os limites marginais não estão disponíveis. Esta regra não altera as fontes oficiais Embrapa/PronaSolos nem a profundidade de 0–100 cm.
