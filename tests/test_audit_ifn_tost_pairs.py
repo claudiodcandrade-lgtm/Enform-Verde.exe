@@ -1,0 +1,90 @@
+import hashlib
+import tempfile
+import unittest
+from pathlib import Path
+from openpyxl import Workbook
+from tools.audit_ifn_tost_pairs import audit, pair_decision
+
+HEADER = "bioma,tipologia,equacao_1,equacao_2,reject_intercept,reject_slope,equivalente\n"
+ROWS = (HEADER + "Amazônia,FOD,A,B,True,True,Equivalente\n"
+        + "Amazônia,FOD,B,C,True,True,Equivalente\n"
+        + "Amazônia,FOD,A,C,False,True,Não Equivalente\n")
+
+class IFNTOSTAuditTests(unittest.TestCase):
+    def _run(self, data, sha=None):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "tost.csv"
+            contents = data.encode()
+            path.write_bytes(contents)
+            return audit(path, sha or hashlib.sha256(contents).hexdigest())
+
+    def test_equivalence_not_transitive(self):
+        result = self._run(ROWS)
+        self.assertEqual(result["comparisons"], 3)
+        self.assertEqual(pair_decision(result, "Amazônia", "FOD", "A", "B"), "equivalent_pairwise")
+        self.assertEqual(pair_decision(result, "Amazônia", "FOD", "B", "C"), "equivalent_pairwise")
+        self.assertEqual(pair_decision(result, "Amazônia", "FOD", "A", "C"), "not_equivalent_pairwise")
+        self.assertEqual(pair_decision(result, "Cerrado", "FOD", "A", "B"), "not_assessed")
+
+    def test_unknown_pair_is_not_equivalent(self):
+        result = self._run(HEADER + "Amazônia,FOD,A,B,True,True,Equivalente\n")
+        self.assertEqual(pair_decision(result, "Amazônia", "FOD", "A", "C"), "not_assessed")
+
+    def test_mislabeled_comparison_fails(self):
+        with self.assertRaisesRegex(ValueError, "conflicts"):
+            self._run(HEADER + "Amazônia,FOD,A,B,False,True,Equivalente\n")
+
+    def test_source_digest_must_match(self):
+        with self.assertRaisesRegex(ValueError, "checksum"):
+            self._run(ROWS, sha="0" * 64)
+
+    def test_identical_duplicate_is_not_independent_evidence(self):
+        with self.assertRaisesRegex(ValueError, "duplicate pair"):
+            self._run(ROWS + "Amazônia,FOD,B,A,True,True,Equivalente\n")
+
+    def test_unicode_alias_duplicate_is_not_independent_evidence(self):
+        with self.assertRaisesRegex(ValueError, "duplicate pair"):
+            self._run(ROWS + "Amazônia,FOD,Ａ,Ｂ,True,True,Equivalente\n")
+
+    def test_unicode_equation_alias_lookup(self):
+        result = self._run(ROWS)
+        self.assertEqual(pair_decision(result, "AMAZÔNIA", "fod", "Ａ", "b"), "equivalent_pairwise")
+
+    def test_duplicate_csv_headers_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "duplicate headers"):
+            self._run(ROWS.replace("equacao_2,reject_intercept", "equacao_2,equacao_2,reject_intercept"))
+
+    def test_semicolon_delimited_official_export(self):
+        data = ("bioma;tipologia;equacao_1;equacao_2;reject_intercept;reject_slope;equivalente\\n"
+                "Cerrado;Savana;Eq1;Eq2;Sim;Sim;Equivalente\\n")
+        result = self._run(data.replace("\\n", "\n"))
+        self.assertEqual(result["comparisons"], 1)
+        self.assertEqual(pair_decision(result, "Cerrado", "Savana", "Eq1", "Eq2"),
+                         "equivalent_pairwise")
+
+    def test_quoted_commas_do_not_confuse_semicolon_delimiter(self):
+        data = ("bioma;tipologia;equacao_1;equacao_2;reject_intercept;reject_slope;equivalente\\n"
+                'Cerrado;Savana;"log(DAP,altura)";Eq2;1;1;Sim\\n')
+        result = self._run(data.replace("\\n", "\n"))
+        self.assertEqual(pair_decision(result, "Cerrado", "Savana", "log(DAP,altura)", "Eq2"),
+                         "equivalent_pairwise")
+
+    def test_sfb_xlsx_payload_with_csv_filename(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.append(HEADER.strip().split(","))
+        sheet.append(["Amazônia", "FOD", "A", "B", True, True, "Equivalente"])
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "resource.csv"
+            workbook.save(path)
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            result = audit(path, digest)
+        self.assertEqual(result["distinct_pairs"], 1)
+        self.assertEqual(pair_decision(result, "Amazônia", "FOD", "A", "B"), "equivalent_pairwise")
+
+    def test_conflicting_duplicate_fails(self):
+        with self.assertRaisesRegex(ValueError, "contradictory"):
+            self._run(ROWS + "Amazônia,FOD,B,A,False,True,Não Equivalente\n")
+
+if __name__ == "__main__":
+    unittest.main()

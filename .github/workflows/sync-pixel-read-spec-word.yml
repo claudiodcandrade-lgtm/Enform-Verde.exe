@@ -1,0 +1,67 @@
+name: Sync Word specification from V88.16 checkpoint
+on:
+  push:
+    branches:
+      - patches-3.26.6
+    paths:
+      - docs/spec_updates/2026-11-12_v88_16_national_results_uncertainty.md
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: enform-word-spec-v88-05-sync
+  cancel-in-progress: false
+jobs:
+  update-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Append V88.16 checkpoint to complete Word specification
+        run: |
+          if python - <<'PY'
+          from zipfile import ZipFile
+          with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as z:
+              xml=z.read('word/document.xml').decode('utf-8')
+          raise SystemExit(0 if 'V88.16' in xml else 1)
+          PY
+          then
+            echo 'V88.16 já está sincronizado no DOCX.'
+          else
+            python tools/update_spec_docx.py \
+              --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+              --entry docs/spec_updates/2026-11-12_v88_16_national_results_uncertainty.md \
+              --baseline "Enform Verde 3.26.21-PRECAMPO-EXPERIMENTAL (V88.16 runtime geoespacial e regressão integral)" \
+              --head-sha "${{ github.sha }}" \
+              --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
+              --date "12 de novembro de 2026" \
+              --footer-label "V88.16 · 3.26.21 experimental · AOI integral pendente" \
+              --footer-date "12/11/2026"
+          fi
+      - name: Validate Word archive and version marker
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          p=Path('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx')
+          with ZipFile(p) as z:
+              assert z.testzip() is None
+              xml=z.read('word/document.xml').decode('utf-8')
+              assert len(xml)>10000
+              assert '3.26.21-PRECAMPO-EXPERIMENTAL' in xml
+              assert 'V88.16' in xml
+          print('Word specification synchronized and validated for 3.26.20/V88.16')
+          PY
+      - name: Commit synchronized Word specification
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
+          git diff --cached --quiet || git commit -m "docs: sync Word specification for V88.16 national uncertainty checkpoint"
+          git push origin HEAD:patches-3.26.6

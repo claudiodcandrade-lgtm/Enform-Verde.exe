@@ -1,0 +1,60 @@
+name: Synchronize V87.77 release documentation
+
+on:
+  push:
+    branches: [patches-3.26.6]
+    paths: ['tools/sync_release_docs_v87_60.py', '.github/workflows/sync-release-docs-v87-60.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enform-v87-60-docsync
+  cancel-in-progress: false
+
+jobs:
+  sync-documents:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 5
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install DOCX dependency
+        run: python -m pip install python-docx
+      - name: Update both continuity prompts, soil specification and Word specification
+        run: python tools/sync_release_docs_v87_60.py
+      - name: Check required documents are updated
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from docx import Document
+          root=Path('.')
+          names=['docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md',
+                 'docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md',
+                 'docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md']
+          for name in names:
+              assert 'ENFORM_CHECKPOINT_V87_77_WINDOWS_REGRESSION' in (root/name).read_text(encoding='utf-8'), name
+          assert any('ENFORM_CHECKPOINT_V87_77_WINDOWS_REGRESSION' in p.text for p in
+                     Document('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx').paragraphs[:40])
+          print('ALL_FOUR_RELEASE_DOCUMENTS_UPDATED')
+          PY
+      - name: Commit synchronized documentation to release branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
+          if git diff --cached --quiet; then
+            echo "Documentation already synchronized"
+          else
+            git commit -m "docs: sync V87.77 ESA MAAP checkpoint to all four required docs"
+            git push origin HEAD:patches-3.26.6
+          fi

@@ -1,0 +1,5 @@
+# ATUALIZAÇÃO V87.41 — 8 DE NOVEMBRO DE 2026 — ROTEIRO ÚNICO DE CORREÇÕES E REGRAS PARA AGENTES (3.26.6)
+- Causa das falhas recorrentes: dois agentes editando a mesma branch e mudanças de comportamento sem atualização de testes (24 testes quebrados em V87.37–V87.38), além de mudanças de política (limiar de acurácia) sem decisão do proprietário.
+- docs/ROTEIRO_CORRECOES_ENFORM_VERDE_2026-11-08.md: itens A (processo), B (dados orbitais e mapeamento SAR), C (fundo óptico), D (carbono), E (agricultura: identificador SAR, altura validada, vigor 3 classes, séries PAM longas desde 1974 — verificado no SIDRA 5457 —, ZARC, calor na floração), F (validação), cada um com critério de aceite.
+- AGENTS.md e CLAUDE.md na raiz com as mesmas regras obrigatórias para qualquer agente.
+- Lógica de previsão de safra registrada para alinhamento: identificação SAR validada → vigor 3 classes datado (altura validada, uniformidade, rugosidade) → modelo de painel calibrado na PAM microrregional (tendência + β·RY do balanço hídrico FAO-56/FAO-33) → vigor posiciona no terço correspondente dos erros históricos → Monte Carlo com dependências; sem identificação ou vigor, N/D.

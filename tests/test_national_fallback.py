@@ -5,10 +5,20 @@ try:
 except ImportError:
     gpd=box=None
 
-from national_fallback import national_agb_fallback
+from national_fallback import national_agb_fallback, inventory_fallback_gate
 import sar_pipeline as sar
 
 class NationalFallbackTests(unittest.TestCase):
+    def test_inventory_fallback_gate_requires_confirmed_sar_unavailability(self):
+        self.assertFalse(inventory_fallback_gate(False,[])['eligible'])
+        self.assertTrue(inventory_fallback_gate(False,["Sentinel-1: sem pixels processados"],sources_exhausted=True)["eligible"])
+        failed=inventory_fallback_gate(False,["SELECTED_SCENES_PIXEL_READ_FAILED"],sources_exhausted=True)
+        self.assertTrue(failed["eligible"])
+        self.assertEqual(failed["status"],"SAR_INDISPONIVEL_APOS_ESGOTAMENTO_COM_FALHAS_TECNICAS")
+        self.assertIn("SELECTED_SCENES_PIXEL_READ_FAILED",failed["unresolved_warnings"])
+        self.assertFalse(inventory_fallback_gate(True,[])['eligible'])
+        self.assertFalse(inventory_fallback_gate(False,["Earthdata authentication rejected"])['eligible'])
+
     def test_all_scoped_biomes_always_return_agb_and_uncertainty(self):
         cases=[
           ("Amazônia","Floresta Ombrófila Aberta"),
@@ -36,7 +46,19 @@ class NationalFallbackTests(unittest.TestCase):
         self.assertNotEqual(semidec["agb_mg_ha"],secondary["agb_mg_ha"])
 
     @unittest.skipUnless(gpd and box,"geospatial dependencies required")
-    def test_pipeline_uses_national_fallback_after_processed_sar_without_model(self):
+    def test_tapajos_necromass_not_inferred_from_literature_or_mixed_roots(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.95,-3.07,-54.94,-3.06)],crs="EPSG:4326")
+        r=sar.literature_fallback("Amazônia","Floresta Ombrófila Densa",aoi=aoi)
+        self.assertTrue(r and r["available"])
+        components=r.get("regional_components") or {}
+        self.assertNotIn("Biomassa subterrânea",components)
+        self.assertFalse(any(name.startswith("Necromassa") for name in components))
+        self.assertIn("Serapilheira — estoque no piso florestal",components)
+        self.assertIn("forest floor",components["Serapilheira — estoque no piso florestal"]["method"].lower())
+        self.assertIn("não é produtividade/queda anual",components["Serapilheira — estoque no piso florestal"]["method"])
+
+    @unittest.skipUnless(gpd and box,"geospatial dependencies required")
+    def test_auxiliary_sar_pixels_do_not_block_inventory_carbon_contingency(self):
         g=gpd.GeoDataFrame(geometry=[box(-47.96,-15.98,-47.94,-15.96)],crs="EPSG:4326")
         real=(sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history)
         try:
@@ -47,12 +69,11 @@ class NationalFallbackTests(unittest.TestCase):
             sar.public_sentinel1_cog=lambda *a,**k:{"items":0,"paths":[],"stats":[],"errors":[],"provider":"test"}
             sar.cci_history=lambda *a,**k:{"items":0,"paths":[]}
             out=sar.automatic_pipeline(g,"Cerrado","Savana Arborizada",cache="test_cache_national")
-            lit=out["literature_reference"]
             self.assertEqual(out["status"],"SAR_PROCESSADO_SEM_MODELO_AGB")
-            self.assertTrue(lit["sar_processed"])
-            self.assertEqual(lit["data_origin"],"MODELAGEM_LITERATURA_HIERARQUICA")
-            self.assertGreater(lit["agb_mg_ha"],0)
-            self.assertEqual(len(lit["agb_range_mg_ha"]),2)
+            self.assertIsNotNone(out["literature_reference"])
+            self.assertIsNone(out["agb_mg_ha"])
+            self.assertTrue(out["inventory_fallback_gate"]["eligible"])
+            self.assertIn("pixels sar auxiliares",out["message"].casefold())
         finally:
             sar.maap_search,sar.discover_asf,sar.planetary_alos_palsar,sar.planetary_sentinel1_cog,sar.public_sentinel1_cog,sar.cci_history=real
 

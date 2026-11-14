@@ -21,11 +21,19 @@ class SarCalibrationTests(unittest.TestCase):
         d=pd.DataFrame({"agb_ref_mg_ha":agb,"site_id":np.repeat([f"site_{i}" for i in range(5)],10),
             "basal_area_m2_ha":ba,"mean_dbh_cm":dbh,"stems_ha":stems,"height_sar_m":h,
             "agb_label_provenance":"allometry: illustrative fixture"})
+        shares=rng.dirichlet(np.ones(6),size=n)
+        for col,values in zip(("dbh_5_10_cm","dbh_10_20_cm","dbh_20_30_cm",
+            "dbh_30_40_cm","dbh_40_60_cm","dbh_60_plus_cm"),(shares*ba[:,None]).T):
+            d[col]=values
         out=calibrate_height_structure_agb(d)
         self.assertEqual(out["status"],"EXPLORATORY_SPATIAL_CV_ONLY")
         self.assertFalse(out["deployable"])
         self.assertEqual(out["n_pairs"],50)
         self.assertEqual(out["independent_sites"],5)
         self.assertIn("estrutura_mais_altura_SAR",out["comparison"])
+        distribution=out["comparison"]["altura_SAR_mais_distribuicao_diametrica"]
+        self.assertIn("basal_area_total_m2_ha",distribution["predictors"])
+        self.assertTrue(any(name.startswith("share_dbh_") for name in distribution["predictors"]))
+        self.assertEqual(out["diameter_distribution_candidate_model"]["status"],"EXPLORATORY_NOT_DEPLOYABLE")
 
 if __name__=="__main__": unittest.main()
