@@ -2,7 +2,7 @@
 
 ## Candidata
 
-Enform Verde `3.26.44-PRECAMPO-EXPERIMENTAL`. Suíte integral local aprovada: 1.182 testes, 1 ignorado; compilação Python e coleta de 174 módulos aprovadas. Build Windows, workflows do commit final e execução do KML privado da Fazenda Maria Eduarda continuam pendentes.
+Enform Verde `3.26.44-PRECAMPO-EXPERIMENTAL`, código SHA `f797c6320baa9713cbcba6c199cb05357f0c5de8`. Suíte integral local aprovada: 1.182 testes, 1 ignorado; compilação Python e coleta de 174 módulos aprovadas. Build Windows, workflows do commit final e execução do KML privado da Fazenda Maria Eduarda continuam pendentes.
 
 ## Correções no relatório Tapajós
 
