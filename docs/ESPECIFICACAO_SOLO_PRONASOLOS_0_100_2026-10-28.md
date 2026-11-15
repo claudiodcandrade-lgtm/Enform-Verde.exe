@@ -422,3 +422,8 @@ A versão 3.26.41 corrige apenas a coerência dos avisos de estado SAR: ausênci
 Código candidato V88.72: `f1171c24cc0c3c835819f537344d4ad1804aae46`. A alteração em `land_use_sar` não modifica cálculo de carbono do solo.
 
 SHA da árvore candidata remota de código: `273297ee097d7f45f1a9d55ba45695aa8a813273`; alteração SAR não modifica o método do solo.
+
+
+## Checkpoint V88.72 — candidata 3.26.41 (15/11/2026)
+
+V88.72 — validação final da candidata 3.26.41 (15/11/2026). No commit remoto 5ba46b2763155054e8b026399be1ce37503f0ecd, a suíte integral do dashboard passou; o handoff SAR live de Sinop amostral e Tapajós passou; a leitura real ESA BIOMASS FH em Sinop passou; a matriz óptica de amostra nacional passou; Sentinel-2 real no Tapajós e envio da imagem ao canvas Tk do Windows em Sinop passaram. Os smokes SAR live em Tapajós e nos seis biomas, consultas IBGE/SICAR e contratos quantitativos também passaram. O EXE 3.26.41 foi compilado, executado em pasta limpa e publicado no artefato Enform-Verde-Windows-v3.26.41-PRECAMPO-EXPERIMENTAL (197.815.436 bytes; digest SHA-256 do artefato GitHub: 08a7199eea857668bf582ed7d05f2dc472a9ace57c6d633fd35503fa547fd619). Esses testes demonstram o fluxo nos AOIs públicos/amostrais definidos na CI, não a execução do KML privado integral da Fazenda Maria Eduarda. Carbono pode permanecer parcial/N/D e a incerteza deve continuar declarada por compartimento. O gate científico de homologação segue reprovado por falta de validação independente de campo; manter experimental, sem declarar homologação nacional.
