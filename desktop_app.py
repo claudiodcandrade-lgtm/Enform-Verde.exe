@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.43-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.44-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -541,6 +541,7 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     inventory_manifest=options.pop("inventory_evidence_manifest",None)
     biodiversity_inventory_records=options.pop("biodiversity_inventory_records",None)
     catalog_cache={}
+    soil_source_cache={}
     # Shared only across strata in this single property analysis. CCI discovery
     # is tile-based, so reuse its year/host result while recalculating zonal
     # statistics against each exact native-stratum geometry.
@@ -570,7 +571,11 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
                                   biomass_search_audit=audit,
                                   pipeline_route_cache=pipeline_route_cache,**options)
     def estimator(frame,phys):
-        return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
+        if "prepared" not in soil_source_cache:
+            soil_source_cache["prepared"]=_prepare_pronasolos_sources(aoi)
+        def soil_estimator(stratum):
+            return pronasolos_soc_profiles(stratum,prepared=soil_source_cache["prepared"])
+        return estimate_native_components(frame,phys,biome,sar_estimator,soil_estimator,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
     result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
     annual_scope=(land.get("annual_sar_classification") or {})
@@ -724,32 +729,91 @@ def _attach_embrapa_official_soc_bounds(gdf, stock_result, stock_paths):
     return stock_result
 
 
-def pronasolos_soc_profiles(gdf,max_points=36):
+def _prepare_pronasolos_sources(gdf):
+    """Acquire soil rasters/bounds once for the whole AOI, then reuse locally.
+
+    The previous per-stratum calls caused each SAR class to request the same
+    five WCS horizons and prediction-bound capabilities again. Preparation is
+    AOI-scoped; all later carbon values still use exact stratum×pixel overlays.
+    """
+    from soil_pronasolos_zonal import verified_local_horizons
+    prepared={"paths":None,"provenance":None,"official_paths":None,
+              "official_provenance":None,"local_audit":None,"wcs_audit":None,
+              "official_audit":None}
+    try:
+        prepared["paths"]=verified_local_horizons()
+    except Exception as exc:
+        prepared["local_audit"]={"status":"LOCAL_SOIL_CACHE_ERROR",
+                                  "reason":type(exc).__name__+": "+str(exc)[:240]}
+    if prepared["paths"] is None:
+        try:
+            from pronasolos_wcs import fetch_horizons
+            acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
+            prepared["paths"]=acquired["paths"]
+            prepared["provenance"]=acquired["provenance"]
+        except Exception as exc:
+            prepared["wcs_audit"]={"target_status":"WCS_INDISPONIVEL",
+                "reason":type(exc).__name__+": "+str(exc)[:300]}
+    try:
+        from soil_soc_official_uncertainty import fetch_official_bounds
+        bounds=fetch_official_bounds(gdf.to_crs(4326).geometry.union_all())
+        prepared["official_paths"]=bounds["paths"]
+        prepared["official_provenance"]=bounds["provenance"]
+    except Exception as exc:
+        prepared["official_audit"]={"status":"N/D",
+            "reason":type(exc).__name__+": "+str(exc).split("https://")[0][:240],
+            "predictive_uncertainty_quantified":False}
+    return prepared
+
+
+def pronasolos_soc_profiles(gdf,max_points=36,prepared=None):
     """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha).
     Exact polygon × raw-raster intersection is preferred. Identify-point
     sampling is a last resort and only accepted as a complete, single-service
     sample over the whole AOI × physiognomy stratum."""
     from soil_pronasolos_zonal import verified_local_horizons, mapped_soil_0_100_on_polygon
-    local_paths=verified_local_horizons()
-    local_audit=None
-    if local_paths:
-        local_result=mapped_soil_0_100_on_polygon(gdf,local_paths)
-        if local_result.get("0–100 cm",{}).get("tc_ha") is not None:
-            return _attach_embrapa_official_soc_bounds(gdf,local_result,local_paths)
-        local_audit=local_result.get("_diagnostic")
-    wcs_audit=None
-    try:
-        from pronasolos_wcs import fetch_horizons
-        acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
-        wcs_result=mapped_soil_0_100_on_polygon(
-            gdf,acquired["paths"],
-            source_label="Embrapa Solos/PronaSolos 90 m v2021 — rasters brutos via WCS GeoInfo")
-        wcs_result.setdefault("_diagnostic",{})["wcs_provenance"]=acquired["provenance"]
-        if wcs_result.get("0–100 cm",{}).get("tc_ha") is not None:
-            return _attach_embrapa_official_soc_bounds(gdf,wcs_result,acquired["paths"])
-        wcs_audit=wcs_result.get("_diagnostic")
-    except Exception as exc:
-        wcs_audit={"target_status":"WCS_INDISPONIVEL","reason":type(exc).__name__+": "+str(exc)[:300]}
+    local_audit=None;wcs_audit=None
+    if prepared is not None:
+        local_paths=prepared.get("paths")
+        local_audit=prepared.get("local_audit")
+        wcs_audit=prepared.get("wcs_audit")
+        if local_paths:
+            source_label=("Embrapa Solos/PronaSolos 90 m v2021 — cache local verificado"
+                          if prepared.get("provenance") is None else
+                          "Embrapa Solos/PronaSolos 90 m v2021 — WCS baixado uma vez para a AOI")
+            result=mapped_soil_0_100_on_polygon(gdf,local_paths,source_label=source_label,
+                official_bound_paths=prepared.get("official_paths"),
+                official_provenance=prepared.get("official_provenance"))
+            result.setdefault("_diagnostic",{})["wcs_provenance"]=prepared.get("provenance")
+            if prepared.get("official_audit"):
+                result.setdefault("_diagnostic",{})["official_uncertainty"]=prepared["official_audit"]
+                if result.get("0–100 cm"):
+                    result["0–100 cm"]["official_uncertainty"]=prepared["official_audit"]
+            if result.get("0–100 cm",{}).get("tc_ha") is not None:
+                return result
+            if local_paths and prepared.get("provenance") is None:
+                local_audit=result.get("_diagnostic")
+            else:
+                wcs_audit=result.get("_diagnostic")
+    else:
+        local_paths=verified_local_horizons()
+        if local_paths:
+            local_result=mapped_soil_0_100_on_polygon(gdf,local_paths)
+            if local_result.get("0–100 cm",{}).get("tc_ha") is not None:
+                return _attach_embrapa_official_soc_bounds(gdf,local_result,local_paths)
+            local_audit=local_result.get("_diagnostic")
+        try:
+            from pronasolos_wcs import fetch_horizons
+            acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
+            wcs_result=mapped_soil_0_100_on_polygon(
+                gdf,acquired["paths"],
+                source_label="Embrapa Solos/PronaSolos 90 m v2021 — rasters brutos via WCS GeoInfo")
+            wcs_result.setdefault("_diagnostic",{})["wcs_provenance"]=acquired["provenance"]
+            if wcs_result.get("0–100 cm",{}).get("tc_ha") is not None:
+                return _attach_embrapa_official_soc_bounds(gdf,wcs_result,acquired["paths"])
+            wcs_audit=wcs_result.get("_diagnostic")
+        except Exception as exc:
+            wcs_audit={"target_status":"WCS_INDISPONIVEL","reason":type(exc).__name__+": "+str(exc)[:300]}
     import requests
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
     minx,miny,maxx,maxy=geom.bounds

@@ -99,6 +99,33 @@ class SoilMappedAttributesContractTests(unittest.TestCase):
                                box(-0.01,-0.01,0.01,0.01),destination)
             self.assertEqual(len(downloaded),3)
 
+    def test_large_wcs_coverage_keeps_source_tiles_and_caches_indexed_vrt(self):
+        from unittest.mock import Mock
+        from soil_fertility_zonal import _download_coverage
+        destination=self.root/"fertility.tif"
+        bounds=(-0.001,-0.001,0.002,0.001)
+        tile_bounds=[(-0.001,-0.001,0.0005,0.001),(0.0005,-0.001,0.002,0.001)]
+        downloaded=[]
+        def save(url,dest,session,timeout,attempts=2):
+            downloaded.append(url)
+            idx=len(downloaded)-1
+            with rasterio.open(dest,"w",driver="GTiff",width=2,height=2,count=1,
+                    dtype="float32",crs="EPSG:4326",
+                    transform=from_origin(idx*2/1200,2/1200,1/1200,1/1200),nodata=-9999) as ds:
+                ds.write(np.full((2,2),idx+1,dtype="float32"),1)
+        with (patch("pronasolos_wcs._window_bounds",return_value=bounds),
+              patch("pronasolos_wcs._tiles",return_value=tile_bounds),
+              patch("pronasolos_wcs._download",side_effect=save)):
+            _download_coverage(Mock(),"geonode__br_90m_ph_0_5cm_v2",box(0,0,0.001,0.001),destination)
+            vrt=destination.with_suffix(".vrt")
+            self.assertTrue(vrt.is_file())
+            with rasterio.open(vrt) as src:
+                self.assertEqual(src.read(1).shape,(2,4))
+                np.testing.assert_array_equal(src.read(1),np.array([[1,1,2,2],[1,1,2,2]],dtype="float32"))
+            self.assertTrue((self.root/"fertility_tile0.tif").is_file())
+            _download_coverage(Mock(),"geonode__br_90m_ph_0_5cm_v2",box(0,0,0.001,0.001),destination)
+        self.assertEqual(len(downloaded),2)
+
     def test_bound_cache_rejects_stale_coverage_identifier(self):
         from unittest.mock import Mock
         from soil_soc_official_uncertainty import fetch_official_bounds

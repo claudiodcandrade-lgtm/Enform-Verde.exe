@@ -74,7 +74,15 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
     if str(biome or "").strip().casefold() not in ("amazônia", "amazonia"):
         return None
     p=str(physiognomy or "").casefold()
-    if "floresta ombrófila densa" not in p and "floresta ombrofila densa" not in p:
+    detailed_match=("floresta ombrófila densa" in p or "floresta ombrofila densa" in p)
+    # SAR currently emits a broad native-forest stratum when IBGE legend_1
+    # cannot be intersected. In this one microlocal study domain, the source
+    # itself describes closed-canopy evergreen lowland forest. Permit the
+    # broad label only under the strict spatial geofence below; keep the
+    # transfer explicit and experimental instead of silently dropping the
+    # published gravimetric reference.
+    broad_forest_match=("formação florestal" in p or "formacao florestal" in p)
+    if not (detailed_match or broad_forest_match):
         return None
     if aoi is None:
         return None
@@ -104,15 +112,19 @@ def tapajos_litter_stock_component(biome, physiognomy, aoi):
     se=pooled_sd/math.sqrt(n)
     # t(0.975, df=5)=2.5706; clamp the lower stock bound at zero.
     margin=2.5706*se
+    transfer_note=("IBGE compatível: Floresta Ombrófila Densa. " if detailed_match else
+                   "Fitofisionomia SAR ampla ('Formação florestal'); subtipo IBGE não confirmado. "
+                   "Aplicação experimental restrita à geocerca da referência local. ")
     return {
         "mean_dry_mg_ha":mean,
         "range_dry_mg_ha":[max(0.0,mean-margin),mean+margin],
-        "method":"média gravimétrica do estoque de forest floor em parcelas-controle na FLONA Tapajós, abril/1999, antes de intervenção; duas classes de solo interdigitadas, n=3 parcelas independentes por classe (n total=6). IC95% t bilateral, gl=5, reconstruído das médias e erros-padrão publicados. Não é medição direta da AOI; não é produtividade/queda anual; transferência espacial limitada a 15 km e à classe IBGE Floresta Ombrófila Densa.",
+        "method":transfer_note+"média gravimétrica do estoque de forest floor em parcelas-controle na FLONA Tapajós, abril/1999, antes de intervenção; duas classes de solo interdigitadas, n=3 parcelas independentes por classe (n total=6). IC95% t bilateral, gl=5, reconstruído das médias e erros-padrão publicados. Não é medição direta da AOI; não é produtividade/queda anual; transferência espacial limitada a 15 km.",
         "source":"McGroddy et al. (2008), Journal of Geophysical Research: Biogeosciences 113, G04012, Tabela 5",
         "url":"https://doi.org/10.1029/2008JG000756",
-        "status":"ESTOQUE GRAVIMÉTRICO DE REFERÊNCIA — MESMA CLASSE E MICRORREGIÃO",
+        "status":"ESTOQUE GRAVIMÉTRICO DE REFERÊNCIA — MICRORREGIÃO TAPAJÓS; TRANSFERÊNCIA LOCAL EXPERIMENTAL",
         "origin":"INVENTARIO_DIRETO_MICRORREGIONAL",
-        "uncertainty_kind":"IC95% t da média entre seis parcelas independentes; não incorpora erro de transferência para a AOI",
+        "uncertainty_kind":"IC95% t da média entre seis parcelas independentes; erro de transferência para a AOI/subtipo SAR não quantificado",
+        "physiognomy_match":"IBGE_FOD" if detailed_match else "SAR_BROAD_FOREST_WITHIN_TAPAJOS_GEOFENCE",
         "n_independent_units":n,
         "standard_error_dry_mg_ha":se,
         "degrees_of_freedom":5,

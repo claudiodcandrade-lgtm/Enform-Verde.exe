@@ -277,7 +277,11 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
             from root_allometry_uncertainty import cairns_root_prediction
             root_calibration=selected.get('root_uncertainty_calibration')
             root_note='Erro residual/transferência alométrica não quantificado; sem IC total.'
-            root_estimate=cairns_root_prediction(float(agb))
+            try:
+                root_agb_sd=float(selected.get('uncertainty_mg_ha'))
+                if not math.isfinite(root_agb_sd) or root_agb_sd<0:root_agb_sd=None
+            except (TypeError,ValueError):root_agb_sd=None
+            root_estimate=cairns_root_prediction(float(agb),agb_sd_mg_ha=root_agb_sd)
             if root_calibration is not None:
                 # Only externally validated, physiognomy-exact AGB mean-error
                 # and allometry parameters can enable a conditional interval.
@@ -294,9 +298,12 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
             roots={'parametro':'Biomassa subterrânea','tc':root_estimate['mean_model_tc_ha'],
                    'origem':'MODELAGEM_ALOMETRIA','fonte':'Cairns et al. (1997), doi:10.1007/s004420050201',
                    'source_url':'https://doi.org/10.1007/s004420050201',
-                   'metodo':'BGB=exp(-1,0587+0,8836 ln AGB); floresta tropical de terras altas, referência generalizada',
+                   'metodo':'BGB total de raízes (vivas + mortas na base original)=exp(-1,0587+0,8836 ln AGB); referência global generalizada; não separa necromassa subterrânea',
                    'obs':root_note,
-                   'root_uncertainty_status':root_estimate['uncertainty_status']}
+                   'root_uncertainty_status':root_estimate['uncertainty_status'],
+                   'root_pool_scope':'TOTAL_ROOTS_LIVE_AND_DEAD; não somar novamente raízes mortas',
+                   'sensitivity_tc_ha':root_estimate.get('agb_input_sensitivity_tc_ha'),
+                   'sensitivity_kind':root_estimate.get('agb_input_sensitivity_kind')}
             if root_estimate.get('conditional_prediction_interval_tc_ha') is not None:
                 roots['root_prediction_interval_tc_ha']=root_estimate['conditional_prediction_interval_tc_ha']
                 roots['root_uncertainty_source']=root_estimate['source']
@@ -366,6 +373,7 @@ def estimate_native_components(aoi, physiognomy, biome, sar_estimator, soil_esti
                      'fonte':c.get('source'),'metodo':c.get('method'),'obs':c.get('uncertainty_kind'),
                      'include_in_total':c.get('include_in_total',True),
                      'range_tc_ha':c.get('range_tc_ha'),'range_dry_mg_ha':c.get('range_dry_mg_ha'),
+                     'carbon_fraction':0.47 if key=='Serapilheira' and c.get('mean_dry_mg_ha') is not None else c.get('carbon_fraction'),
                      'source_url':c.get('source_url') or c.get('url'),
                      'source_sha256':c.get('source_sha256') or c.get('dataset_sha256')})
     if litter_audit is not None and not any(r.get('parametro')=='Serapilheira' for r in rows):

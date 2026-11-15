@@ -470,3 +470,13 @@ A captura inicial com `AOI_LOCAL_FALLBACK` somente prova que o canvas não está
 ## V88.82 — contrato de entrega ponta a ponta (15/11/2026)
 
 Toda etapa publicada deve ter o mesmo `analysis_run_id` e hash da AOI. Altura SAR só é exposta se pixels numéricos válidos foram lidos; a saída preserva contagem, métrica/unidade, produto, fonte, banda, cenas, distribuição e natureza da dispersão. O painel e o Excel devem apresentar o valor por estrato ou N/D com causa, sem converter SD espacial em IC95. O arquivo `proveniencia_sar_painel.json` registra o payload recebido com run ID e hash. O carbono derivado de raízes e do solo permanece compartimentado e não pode usar altura quando o produto de altura não chegou à etapa consumidora.
+
+## V88.83 — fragmentação, cache e consulta por estrato (15/11/2026)
+
+A aquisição de horizontes PronaSolos e limites oficiais de carbono deve ser feita uma vez por AOI e reutilizada nas interseções de cada estrato. As consultas zonais preservam o recorte espacial e não repetem chamadas WCS por polígono temático. Cache só é reutilizado quando produto, manifesto, hash do mosaico e hashes de todos os tiles-fonte conferem.
+
+Janelas WCS são subdivididas em tiles de até 1024×1024 pixels; uma requisição 2048×2048 torna-se quatro quadrantes. Os tiles mantêm os pixels originais e são expostos por um VRT indexado. O cálculo lê janelas do VRT e não cria array integral adicional. CRS, resolução, nodata, tipo e alinhamento precisam ser compatíveis; caso contrário, a cobertura falha com diagnóstico. Coberturas de tile único seguem GeoTIFF. Esta estratégia reduz memória de pico e escrita duplicada; a quantidade total de pixels e a resolução não diminuem.
+
+Para o carbono de Tapajós, a fonte gravimétrica de serapilheira pode corresponder a rótulo amplo `Formação florestal` somente dentro da geocerca publicada, com subtipo IBGE não confirmado e incerteza de transferência explicitada. A equação de Cairns estima raízes totais vivas e mortas. Sensibilidade devida à AGB é componente parcial; não deve ser intitulada IC95 ou incerteza total. Não somar raízes mortas novamente. Incerteza combinada permanece N/D/“incerteza não mensurável” sem erros completos e dependência/covariância adequados.
+
+Validação local da candidata 3.26.44: 54 testes direcionados e 1.182 testes da suíte integral aprovados; um teste ignorado; coleta de 174 módulos e compilação Python aprovadas. Build Windows/workflows do commit final e KML privado integral da Fazenda Maria Eduarda permanecem pendentes; a candidata não está homologada.

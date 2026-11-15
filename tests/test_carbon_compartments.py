@@ -81,6 +81,17 @@ class CarbonCompartmentTests(unittest.TestCase):
         self.assertIsNone(tapajos_litter_stock_component("Amazônia","Savana Arborizada",local))
 
     @unittest.skipUnless(gpd and box, "geospatial dependencies required")
+    def test_tapajos_broad_sar_forest_label_uses_local_reference_only_inside_geofence(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-54.984,-3.068,-54.982,-3.065)],crs="EPSG:4326")
+        result=tapajos_litter_stock_component("Amazônia","Formação florestal",aoi)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["physiognomy_match"],"SAR_BROAD_FOREST_WITHIN_TAPAJOS_GEOFENCE")
+        self.assertIn("subtipo IBGE não confirmado",result["method"])
+        self.assertIn("erro de transferência",result["uncertainty_kind"])
+        outside=gpd.GeoDataFrame(geometry=[box(-54.96,-3.31,-54.94,-3.29)],crs="EPSG:4326")
+        self.assertIsNone(tapajos_litter_stock_component("Amazônia","Formação florestal",outside))
+
+    @unittest.skipUnless(gpd and box, "geospatial dependencies required")
     def test_tapajos_acceptance_polygon_without_declared_crs_still_resolves_litter(self):
         # KML readers can preserve longitude/latitude coordinates without CRS metadata.
         aoi=gpd.GeoDataFrame(geometry=[box(-54.965,-3.05,-54.93,-3.02)])

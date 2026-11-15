@@ -47,6 +47,12 @@ def uncertainty_for_pool(row, carbon_fraction=0.47):
     value=row.get("tc")
     if not isinstance(value,(int,float)) or value<=0:
         return {"absolute_tc_ha":None,"percent":None,"kind":"não quantificada"}
+    sensitivity=row.get("sensitivity_tc_ha")
+    if isinstance(sensitivity,(int,float)) and sensitivity>=0:
+        return {"absolute_tc_ha":float(sensitivity),
+                "percent":100*float(sensitivity)/value,
+                "kind":str(row.get("sensitivity_kind") or "sensibilidade parcial; não é incerteza total"),
+                "scope":"sensitivity"}
     interval=row.get("range_tc_ha")
     # A hypothetical physical endpoint envelope is NOT an observed error, a
     # published CI, nor a transferable AOI prediction interval. Keep its
@@ -118,7 +124,8 @@ def executive_carbon_lines(native, fmt):
         row_unc=[]
         for r in quantified:
             u=uncertainty_for_pool(r)
-            if u.get("absolute_tc_ha") is not None and u.get("percent") is not None:
+            if (u.get("scope") != "sensitivity"
+                    and u.get("absolute_tc_ha") is not None and u.get("percent") is not None):
                 row_unc.append((float(u["absolute_tc_ha"]),float(u["percent"])))
         if density is not None and row_unc and len(row_unc)==len(quantified):
             # A single stratum needs no cross-stratum covariance. Multiple
@@ -257,7 +264,11 @@ def executive_carbon_lines(native, fmt):
                     "incerteza não mensurável"))
             pool_name=(row["parametro"]+" — CENÁRIO EXPERIMENTAL (fora do estoque conhecido)"
                        if row.get("origem")=="EXPERIMENTAL_FISICO" else row["parametro"])
-            uncertainty_label=(error if error.startswith("incerteza não mensurável") else "incerteza: "+error)
+            if u.get("scope")=="sensitivity":
+                uncertainty_label=("sensibilidade parcial da entrada: "+error+
+                                   " (incerteza total não mensurável)")
+            else:
+                uncertainty_label=(error if error.startswith("incerteza não mensurável") else "incerteza: "+error)
             lines.append("  "+pool_name+": "+fmt(v)+" tC/ha | "+fmt(v*44/12)+" tCO₂e/ha | "+uncertainty_label)
             lines.append("    Natureza: "+u["kind"])
             if row["parametro"] == "Serapilheira":

@@ -20,6 +20,13 @@ class RootUncertaintyTests(unittest.TestCase):
         self.assertIsNone(r["conditional_prediction_interval_tc_ha"])
         self.assertFalse(r["coverage_validated"])
 
+    def test_agb_product_spread_is_reported_only_as_partial_input_sensitivity(self):
+        r=cairns_root_prediction(264.0,agb_sd_mg_ha=126.9)
+        self.assertGreater(r["agb_input_sensitivity_tc_ha"],0)
+        self.assertIn("sensibilidade parcial",r["agb_input_sensitivity_kind"])
+        self.assertIsNone(r["conditional_prediction_interval_tc_ha"])
+        self.assertEqual(r["uncertainty_status"],"not_quantified")
+
     def test_conditional_interval_is_nonnegative_and_reproducible(self):
         first=cairns_root_prediction(100,calibration=self.calibration,draws=1200)
         second=cairns_root_prediction(100,calibration=self.calibration,draws=1200)

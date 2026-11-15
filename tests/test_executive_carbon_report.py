@@ -26,6 +26,20 @@ class ExecutiveCarbonReportTests(unittest.TestCase):
     def test_unknown_error_is_not_zero(self):
         u=uncertainty_for_pool({"tc":22.42})
         self.assertIsNone(u["absolute_tc_ha"])
+
+    def test_root_input_sensitivity_is_visible_but_not_promoted_to_full_uncertainty(self):
+        u=uncertainty_for_pool({"tc":22.48,"sensitivity_tc_ha":9.5,
+            "sensitivity_kind":"sensibilidade parcial à AGB"})
+        self.assertEqual(u["scope"],"sensitivity")
+        native={"area_aoi_ha":10,"native_area_ha":10,"known_total_tc":224.8,"complete":False,
+            "strata":[{"class_name":"Formação florestal","area_ha":10,"components":[
+                {"parametro":"Biomassa subterrânea","tc":22.48,"total_tc":224.8,
+                 "quantified_area_ha":10,"sensitivity_tc_ha":9.5,
+                 "sensitivity_kind":"sensibilidade parcial à AGB; erro alométrico e transferência N/D"}]}]}
+        lines="\n".join(executive_carbon_lines(native,lambda x:f"{x:.2f}" if x is not None else "N/D"))
+        self.assertIn("sensibilidade parcial da entrada",lines)
+        self.assertIn("incerteza total não mensurável",lines)
+        self.assertIn("incerteza não mensurável",lines)
     def test_executive_panel_precedes_details(self):
         native={"area_aoi_ha":1290.69,"native_area_ha":1290.69,
                 "known_total_tc":262202,"complete":False,

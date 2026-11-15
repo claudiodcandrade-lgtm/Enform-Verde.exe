@@ -50,7 +50,7 @@ SOURCE = {
     "known_limitations": ("O mapa contém erros e pixels sem valor; solos rasos, afloramentos, "
                           "dunas, áreas urbanas e corpos d'água não foram excluídos (nota Embrapa)."),
 }
-MAX_TILE_PX = 2048
+MAX_TILE_PX = 1024
 
 
 class WcsAcquisitionError(RuntimeError):
@@ -153,7 +153,6 @@ def fetch_horizons(geom_4326, cache_dir=None, session=None, timeout=(10, 120)):
     """
     import requests
     import rasterio
-    from rasterio.merge import merge
 
     if geom_4326 is None or geom_4326.is_empty:
         raise WcsAcquisitionError("geometria vazia")
@@ -168,6 +167,9 @@ def fetch_horizons(geom_4326, cache_dir=None, session=None, timeout=(10, 120)):
             paths = {int(k): root / v["file"] for k, v in manifest["layers"].items()}
             if (set(paths) == set(COVERAGES)
                     and all(p.is_file() and _sha256(p) == manifest["layers"][str(k)]["sha256"]
+                            and all((root / item["file"]).is_file()
+                                    and _sha256(root / item["file"]) == item["sha256"]
+                                    for item in manifest["layers"][str(k)].get("source_tiles",[]))
                             for k, p in paths.items())):
                 manifest["cache_reused"] = True
                 return {"paths": paths, "provenance": manifest}
@@ -186,26 +188,20 @@ def fetch_horizons(geom_4326, cache_dir=None, session=None, timeout=(10, 120)):
             tile_paths.append(tp)
             urls.append(url)
         out = root / f"{cov}.tif"
+        source_tiles=[]
         if len(tile_paths) == 1:
             tile_paths[0].replace(out)
         else:
-            srcs = [rasterio.open(p) for p in tile_paths]
-            try:
-                arr, transform = merge(srcs, nodata=NODATA)
-                profile = srcs[0].profile
-            finally:
-                for s in srcs:
-                    s.close()
-            profile.update(height=arr.shape[1], width=arr.shape[2], transform=transform,
-                           nodata=NODATA, compress="deflate")
-            with rasterio.open(out, "w", **profile) as dst:
-                dst.write(arr)
-            for p in tile_paths:
-                p.unlink(missing_ok=True)
+            from raster_tile_mosaic import build_vrt_mosaic
+            out=root/f"{cov}.vrt"
+            source_tiles=[{"file":p.name,"sha256":_sha256(p)} for p in tile_paths]
+            build_vrt_mosaic(tile_paths,out)
         grid = validate_tile(out)
         grids.add((grid["width"], grid["height"], tuple(round(v, 12) for v in grid["transform"])))
         layers[str(lid)] = {"coverage_id": cov, "file": out.name, "sha256": _sha256(out),
-                            "bytes": out.stat().st_size, "request_urls": urls}
+                            "bytes": out.stat().st_size, "request_urls": urls,
+                            "source_tiles":source_tiles,
+                            "mosaic_strategy":"indexed_vrt_no_full_array_merge" if source_tiles else "single_tile"}
     if len(grids) != 1:
         raise WcsAcquisitionError("os cinco horizontes não vieram na mesma grade; perfil não pareável")
     manifest = dict(SOURCE, endpoint=WCS_ENDPOINT, protocol="OGC WCS 2.0.1 GetCoverage",

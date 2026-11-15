@@ -23,7 +23,7 @@ def _finite_positive(value, label, allow_zero=False):
     return number
 
 
-def cairns_root_prediction(agb_mg_ha, *, calibration=None, draws=12000, seed=42):
+def cairns_root_prediction(agb_mg_ha, *, agb_sd_mg_ha=None, calibration=None, draws=12000, seed=42):
     """Return predicted live roots (tC/ha) and conditional uncertainty if supported.
 
     AGB is live aboveground dry biomass (Mg/ha), NOT carbon. Full uncertainty
@@ -43,7 +43,18 @@ def cairns_root_prediction(agb_mg_ha, *, calibration=None, draws=12000, seed=42)
         "uncertainty_status": "not_quantified",
         "coverage_validated": False,
         "limitations": "No coefficient covariance, residual error and AGB error verified together",
+        "agb_input_sensitivity_tc_ha": None,
+        "agb_input_sensitivity_kind": None,
     }
+    # A product-provided AGB spread can be propagated locally through the
+    # allometric derivative. This is only input sensitivity: it is not the
+    # root-model prediction error, AOI standard error, or total uncertainty.
+    if agb_sd_mg_ha is not None:
+        sd_agb = _finite_positive(agb_sd_mg_ha, "AGB SD", allow_zero=True)
+        output["agb_input_sensitivity_tc_ha"] = abs(b1 * point_dry / agb * sd_agb * CARBON_FRACTION)
+        output["agb_input_sensitivity_kind"] = (
+            "sensibilidade parcial (delta method) à dispersão informada da AGB; "
+            "não inclui resíduo/coeficientes da alometria, transferência nem covariância espacial")
     if calibration is None:
         return output
     if not isinstance(calibration, dict):

@@ -101,7 +101,6 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
     """
     import requests
     import rasterio
-    from rasterio.merge import merge
     from pronasolos_wcs import (_window_bounds,_tiles,coverage_url,validate_tile,
                                  _download,NODATA)
     session=session or requests.Session()
@@ -133,7 +132,8 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
     for side in ("lower","upper"):
         for lid,d in enumerate(DEPTHS,start=2):
             cov=coverage_ids[(side,d)]
-            dest=root/f"{side}_{d.replace('-','_')}.tif"
+            stem=f"{side}_{d.replace('-','_')}"
+            dest=root/(stem+(".tif" if len(tiles)==1 else ".vrt"))
             reuse=False
             manifest=dest.with_suffix(".provenance.json")
             if dest.is_file() and manifest.is_file():
@@ -142,7 +142,10 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
                     validate_tile(dest)
                     reuse=(meta.get("coverage_id")==cov and
                            meta.get("source")==SOURCE and
-                           meta.get("sha256")==_sha256(dest))
+                           meta.get("sha256")==_sha256(dest) and
+                           all((root/item["file"]).is_file()
+                               and _sha256(root/item["file"])==item["sha256"]
+                               for item in meta.get("source_tiles",[])))
                 except (OSError,TypeError,ValueError,json.JSONDecodeError):
                     reuse=False
             if not reuse:
@@ -154,21 +157,17 @@ def fetch_official_bounds(geom_4326, *, session=None, cache_root=None, max_tiles
                     _download(coverage_url(cov,tile),p,session,(10,120),attempts=2)
                     validate_tile(p)
                     tpaths.append(p)
+                source_tiles=[]
                 if len(tpaths)==1:tpaths[0].replace(dest)
                 else:
-                    datasets=[rasterio.open(p) for p in tpaths]
-                    try:
-                        arr,transform=merge(datasets,nodata=NODATA)
-                        profile=datasets[0].profile.copy()
-                    finally:
-                        for ds in datasets:ds.close()
-                    profile.update(transform=transform,height=arr.shape[1],
-                        width=arr.shape[2],nodata=NODATA,compress="deflate")
-                    with rasterio.open(dest,"w",**profile) as ds:ds.write(arr)
-                    for p in tpaths:p.unlink(missing_ok=True)
+                    from raster_tile_mosaic import build_vrt_mosaic
+                    source_tiles=[{"file":p.name,"sha256":_sha256(p)} for p in tpaths]
+                    build_vrt_mosaic(tpaths,dest)
                 manifest.write_text(json.dumps({
                     "coverage_id":cov,"source":SOURCE,
                     "sha256":_sha256(dest),
+                    "source_tiles":source_tiles,
+                    "mosaic_strategy":"indexed_vrt_no_full_array_merge" if source_tiles else "single_tile",
                     "interval_meaning":"published marginal predictive bound"
                 },ensure_ascii=False,indent=2),encoding="utf-8")
             paths[side][lid]=dest

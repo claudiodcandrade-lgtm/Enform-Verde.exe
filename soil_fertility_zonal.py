@@ -33,7 +33,15 @@ UNAVAILABLE = ("Fósforo disponível (P)", "Potássio trocável (K)",
                "Alumínio trocável (Al)", "Saturação por bases (V%)",
                "Matéria orgânica laboratorial")
 MAX_CELLS = 1_000_000
-MAX_TILES = 6
+MAX_TILES = 64
+
+
+def _sha256_file(path):
+    digest=hashlib.sha256()
+    with Path(path).open("rb") as src:
+        for chunk in iter(lambda:src.read(1 << 20),b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _norm(value):
@@ -195,28 +203,31 @@ def zonal_raster(gdf, raster_path, *, attribute, depth, max_cells=MAX_CELLS):
 def _download_coverage(session, coverage_id, geom, path, max_tiles=MAX_TILES):
     """Fetch raw TIFF through the official Embrapa WCS, not MapServer export."""
     import rasterio
-    from rasterio.merge import merge
     from pronasolos_wcs import (_window_bounds, _tiles, coverage_url,
                                  validate_tile, _download, NODATA)
     bounds = _window_bounds(geom)
-    tiles = list(_tiles(bounds))
+    tiles = list(_tiles(bounds, max_px=1024))
     if len(tiles)>max_tiles:
         raise ValueError("AOI grande: cobertura dividida em mais blocos que o limite operacional")
     path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path = path.with_suffix(".provenance.json")
-    if path.is_file() and manifest_path.is_file():
+    out = path if len(tiles) == 1 else path.with_suffix(".vrt")
+    manifest_path = out.with_suffix(".provenance.json")
+    if out.is_file() and manifest_path.is_file():
         try:
             recorded = json.loads(manifest_path.read_text(encoding="utf-8"))
-            validate_tile(path)
-            cached_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+            validate_tile(out)
+            cached_sha = _sha256_file(out)
             if (recorded.get("coverage_id") == coverage_id and
                     recorded.get("source") == WCS and
-                    recorded.get("sha256") == cached_sha):
+                    recorded.get("sha256") == cached_sha and
+                    all((out.parent/item["file"]).is_file() and
+                        _sha256_file(out.parent/item["file"])==item["sha256"]
+                        for item in recorded.get("source_tiles", []))):
                 return cached_sha
         except (OSError, ValueError, TypeError, json.JSONDecodeError):
             pass
     # Do not trust stale TIFFs without matching product identity and hash.
-    path.unlink(missing_ok=True)
+    out.unlink(missing_ok=True)
     manifest_path.unlink(missing_ok=True)
     tmpfiles = []
     for i,tile in enumerate(tiles):
@@ -225,25 +236,17 @@ def _download_coverage(session, coverage_id, geom, path, max_tiles=MAX_TILES):
         validate_tile(tmp)
         tmpfiles.append(tmp)
     if len(tmpfiles) == 1:
-        tmpfiles[0].replace(path)
+        tmpfiles[0].replace(out)
     else:
-        datasets = [rasterio.open(p) for p in tmpfiles]
-        try:
-            arr,transform = merge(datasets, nodata=NODATA)
-            profile = datasets[0].profile.copy()
-        finally:
-            for ds in datasets: ds.close()
-        profile.update(transform=transform, height=arr.shape[1],
-                       width=arr.shape[2], nodata=NODATA, compress="deflate")
-        with rasterio.open(path, "w", **profile) as out: out.write(arr)
-        for p in tmpfiles: p.unlink(missing_ok=True)
-    validate_tile(path)
-    h = hashlib.sha256()
-    with path.open("rb") as src:
-        for chunk in iter(lambda:src.read(1024*1024), b""): h.update(chunk)
-    digest = h.hexdigest()
+        from raster_tile_mosaic import build_vrt_mosaic
+        build_vrt_mosaic(tmpfiles, out)
+    validate_tile(out)
+    digest = _sha256_file(out)
     manifest_path.write_text(json.dumps({
         "coverage_id":coverage_id, "source":WCS, "sha256":digest,
+        "source_tiles":[{"file":p.name,"sha256":_sha256_file(p)}
+                         for p in tmpfiles] if len(tmpfiles)>1 else [],
+        "mosaic_strategy":"indexed_vrt_no_full_array_merge" if len(tmpfiles)>1 else "single_tile",
         "retrieval_kind":"numerical WCS GetCoverage, not MapServer render",
         "downloaded_utc":datetime.now(timezone.utc).isoformat()
     }, ensure_ascii=False, indent=2),encoding="utf-8")
@@ -308,11 +311,12 @@ def analyze_fertility(aoi, *, units=None, session=None, coverages=None,
                 out = root / (attr+"_"+depth.replace("-","_")+".tif")
                 try:
                     digest=_download_coverage(session,cov,geom,out)
-                    layer.update({"sha256":digest,"file":str(out),"source":WCS})
+                    raster_path=out if out.is_file() else out.with_suffix(".vrt")
+                    layer.update({"sha256":digest,"file":str(raster_path),"source":WCS})
                     mapped_property = False
                     for key,zone in geometry_units:
                         try:
-                            stats=zonal_raster(zone,out,attribute=attr,depth=depth,max_cells=max_cells)
+                            stats=zonal_raster(zone,raster_path,attribute=attr,depth=depth,max_cells=max_cells)
                         except (ValueError,RuntimeError) as exc:
                             stats={"status":"N/D","reason":str(exc)[:160]}
                         if key == geometry_units[0][0] and stats.get("mean") is not None:
