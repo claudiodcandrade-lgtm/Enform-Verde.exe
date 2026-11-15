@@ -63,6 +63,29 @@ class LemplusModelTests(unittest.TestCase):
         report="\n".join(report_lines(result))
         self.assertIn("Gatilho: PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE",report)
 
+    def test_applied_lemplus_result_does_not_report_no_sar_classifier(self):
+        import tempfile
+        from unittest.mock import patch
+        ib=AOI.copy();ib["legenda_1"]="Floresta Estacional Sempre-Verde"
+        recent={"status":"N/D_SEM_PIXELS_SAR","scene_count":0,"vector_path":None,
+                "raster_path":None,"provider_processing_diagnostics":[],"failed_scene_reads":[]}
+        with tempfile.TemporaryDirectory() as d, \
+             patch("sar_model_discovery.discover_installed_sar_configs",return_value=([],[
+                 "Identificadores SAR não instalados no diretório /tmp/modelos_sar.",
+                 "Nenhum identificador SAR executável compatível instalado; usar mapa de cobertura atual."])), \
+             patch("sar_landcover_lemplus.classify_aoi",return_value=fake_result()), \
+             patch("recent_sar_landcover.run_recent_sar_screen",return_value=recent), \
+             patch("radar_contingency.run_alternative_radar_screen",return_value={"status":"NOT_NEEDED"}), \
+             patch("native_sar_experimental.run_sentinel1_native_screen",return_value={"status":"N/D"}), \
+             patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency",return_value={"status":"N/D"}):
+            result=run_land_use(AOI,d,ibge=ib)
+        self.assertTrue(result["sar_classifier_lemplus"]["result_applied_to_current_aoi"])
+        warnings="\n".join(result.get("warnings",[]))
+        self.assertNotIn("Nenhum identificador SAR semântico operacional foi aplicado",warnings)
+        self.assertNotIn("Nenhum identificador SAR executável compatível instalado",warnings)
+        self.assertNotIn("Identificadores SAR não instalados no diretório",warnings)
+        self.assertIn("SAR EXPERIMENTAL",warnings)
+
     def test_manifest_hash_metrics_and_labels(self):
         man = json.loads(sl.MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(hashlib.sha256(sl.MODEL.read_bytes()).hexdigest(), man["sha256"])

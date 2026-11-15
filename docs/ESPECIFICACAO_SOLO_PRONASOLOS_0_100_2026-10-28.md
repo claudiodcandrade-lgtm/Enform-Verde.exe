@@ -414,3 +414,9 @@ A atualização 3.26.40 não altera o método de carbono do solo. Esta nota sinc
 ### Registro de regressão de fixture Windows
 
 O gate da interface rejeitou corretamente uma imagem de teste uniformemente colorida. O fixture foi atualizado para textura espacial e o teste de interface foi reforçado. O método do solo não mudou; o gate científico continua independente da aprovação do executável.
+
+### Checkpoint documental V88.72 (15/11/2026)
+
+A versão 3.26.41 corrige apenas a coerência dos avisos de estado SAR: ausência de configuração externa deixa de contradizer a aplicação experimental do LEM+ embarcado. A metodologia de carbono do solo não mudou; cobertura, estoque parcial e incerteza do mapa continuam apresentados separadamente, sem extrapolação para a área sem pixels nem conversão de desvio espacial em IC95%.
+
+Código candidato V88.72: `f1171c24cc0c3c835819f537344d4ad1804aae46`. A alteração em `land_use_sar` não modifica cálculo de carbono do solo.

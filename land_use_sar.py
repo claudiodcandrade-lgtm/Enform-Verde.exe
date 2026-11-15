@@ -720,19 +720,6 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
         except Exception as exc:
             warnings.append('Identificador SAR recusado ['+str(candidate)+']: '
                             +type(exc).__name__+': '+str(exc)[:250])
-    if not layers:
-        from international_crop_model_sources import installation_diagnostic
-        international = installation_diagnostic()
-        warnings.append('Nenhum identificador SAR operacional nesta AOI. '
-                        'MapBiomas é referência ANUAL HISTÓRICA; NÃO comprova uso atual. '
-                        'IBGE somente denomina fitofisionomias; sem inferência SAR '
-                        'validada, a cultura atual permanece N/D.')
-        warnings.append('Rota global prioritária: ESA WorldCereal (S1+S2; '
-                        'openEO/CDSE, modelos por cultura/estação). '
-                        'Base treinável: WorldCereal RDM e Radiant MLHub. '
-                        'Instalação/modelo/calibração brasileiros ainda NÃO comprovados. '
-                        'Ver international_crop_model_sources.py; head WorldCereal local: '+
-                        ('presente' if international['worldcereal_custom_head_file_present'] else 'ausente')+'.')
     from native_carbon import native_class
     raw_layers=list(layers)
     # MapBiomas is deliberately not queried in the current-classification path.
@@ -824,6 +811,13 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                     'model_sha256':res.get('model_sha256'),
                     'geographic_domain_status':domain_msg}
                 active_sar_config='sar_landcover_lemplus:'+str(res.get('model_id'))
+                # Discovery diagnostics describe only externally installed
+                # model configurations. Once the bundled experimental model
+                # has applied classes, remove messages that would falsely say
+                # no SAR classification ran for this AOI.
+                warnings=[w for w in warnings if not (
+                    w.startswith('Identificadores SAR não instalados no diretório ') or
+                    w.startswith('Nenhum identificador SAR executável compatível instalado;'))]
                 warnings.append('Máscaras e áreas de modelo SAR EXPERIMENTAL para safra '+
                     str(res.get('season'))+'; NÃO representam confirmação de campo nem cobertura do mês atual. '+
                     domain_msg)
@@ -838,6 +832,19 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                 'execution_scope':'AOI_INTEGRAL_DA_EXECUCAO_ATUAL',
                 'reason':type(exc).__name__+': '+str(exc)[:200]}
             warnings.append('Classificador SAR LEM+ indisponível: '+lemplus_audit['reason'])
+    if not active_sar_config:
+        from international_crop_model_sources import installation_diagnostic
+        international = installation_diagnostic()
+        warnings.append('Nenhum identificador SAR semântico operacional foi aplicado nesta AOI. '
+                        'Pixels/candidatos semânticos não substituem classificação; MapBiomas é '
+                        'referência ANUAL HISTÓRICA; IBGE apenas denomina fitofisionomias. '
+                        'Classes de cultura permanecem N/D.')
+        warnings.append('Rota global prioritária: ESA WorldCereal (S1+S2; '
+                        'openEO/CDSE, modelos por cultura/estação). '
+                        'Base treinável: WorldCereal RDM e Radiant MLHub. '
+                        'Instalação/modelo/calibração brasileiros ainda NÃO comprovados. '
+                        'Ver international_crop_model_sources.py; head WorldCereal local: '+
+                        ('presente' if international['worldcereal_custom_head_file_present'] else 'ausente')+'.')
     if layers and reference is not None and not reference.empty:
         # Current native presence comes ONLY from modelled/validated SAR masks.
         # IBGE names that SAR geometry by exact AOI-polygon intersection.

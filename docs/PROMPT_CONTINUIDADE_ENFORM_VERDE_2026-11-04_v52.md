@@ -482,3 +482,10 @@ O modelo LEM+ continua experimental, sem validação local independente. Se falt
 Sincronização documental em `e4bca50`: a primeira suíte completa encontrou apenas contrato legado de retries (agora atualizado para quatro tentativas gerais e quinta via HTTPS MPC). A execução completa está em andamento; não considerar build/canvas reais aprovados por testes locais.
 
 Atualização do gate Windows V88.71: o smoke GUI rejeitou uma imagem sintética uniforme (fixture antigo de cor sólida), de acordo com o filtro de textura. O workflow foi corrigido para gerar RGB espacialmente variável e há regressão que verifica essa textura. Reexecutar CI completo, canvas live, SAR live e build no novo SHA; o primeiro resultado não libera EXE.
+
+## Checkpoint V88.72 — estado do relatório SAR após handoff live (15/11/2026)
+
+O relatório live V88.71 revelou contradição: máscaras LEM+ experimentais aplicadas, porém warnings prévios de descoberta diziam que nenhum classificador tinha sido aplicado. A 3.26.41 move a declaração genérica de ausência para depois da execução semântica e a condiciona ao estado final; remove diagnósticos genéricos de configuração ausente quando o modelo LEM+ embarcado aplicou a máscara, preservando erros específicos e o rótulo experimental. Regressão cobre exatamente esse fluxo. A 3.26.40 passou dashboard integral, smoke óptico nacional (11/11 pontos com CBERS-4A), envio real ao canvas Windows em Sinop e handoff SAR para Sinop amostral/Tapajós. Testes direcionados: 44 aprovados; suíte integral local: 1.170 aprovados e 1 ignorado. Todos os gates live/Windows serão reexecutados no SHA da 3.26.41; versão não liberada até a rodada final. O teste integral da fazenda Maria Eduarda segue privado e pendente; carbono e transferência científica mantêm N/D/“incerteza não mensurável” quando não sustentados.
+
+
+Sincronização V88.72: código local da candidata 3.26.41 no commit `f1171c24cc0c3c835819f537344d4ad1804aae46`; suíte integral local 1.170 aprovados (um ignorado), 44 testes direcionados aprovados. CI/Windows/live no SHA de release ainda pendentes.
