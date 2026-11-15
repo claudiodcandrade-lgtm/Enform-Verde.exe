@@ -402,3 +402,11 @@ Código validado: SHA af64ae3b85188c5180192a92469fbe4313453025, candidata Enform
 - O carbono chegou ao painel, mas está incompleto (complete=false): em ambos os AOIs, necromassa e serapilheira ficaram não estimadas; erros de transferência alométrica, erro de mapa e covariâncias não foram quantificados; não há IC95% do total. Valores parciais não são estoque total. As classes SAR são experimentais e sem validação local independente; o gate científico continua reprovado e a versão não é homologada.
 
 Status: candidata experimental operacionalmente validada para os cenários e AOIs de teste descritos; pendem execução do KML integral de Maria Eduarda, completar suporte de dados e incertezas de todos os compartimentos e validação de campo antes de homologação.
+
+
+## Nota de integração V88.71 — preservar fluxo independente do solo
+A correção da entrega SAR/óptica não altera as fontes nem os métodos do compartimento solo. Carbono 0–100 cm e fertilidade continuam independentes da classificação semântica SAR; falha de provedor SAR não autoriza imputação de solo, e falha PronaSolos não deve descartar resultados válidos de SAR/uso do solo. Cada módulo mantém seu próprio estado, fonte, cobertura e incerteza, vinculados ao mesmo run_id/hash da AOI.
+
+### Sincronização documental V88.71 (15/11/2026)
+
+A atualização 3.26.40 não altera o método de carbono do solo. Esta nota sincroniza a especificação de solos com o checkpoint do fluxo óptico/SAR: falha de imagem ou de classificação SAR não pode preencher compartimentos de solo, e resultados de carbono continuam dependentes de fonte, profundidade, cobertura e incerteza documentadas. A candidata permanece não homologada até CI, build Windows e validação ponta a ponta no ambiente-alvo.

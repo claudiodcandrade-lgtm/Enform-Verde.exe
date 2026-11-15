@@ -63,6 +63,30 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         self.assertIn("_fetch_stac_features_paged",src)
         self.assertNotIn("_draw_offline_brazil_basemap",body)
 
+    def test_black_or_blank_optical_pixels_are_rejected_before_canvas_delivery(self):
+        src=SOURCE.read_text(encoding="utf-8")
+        self.assertIn("def _require_visible_optical_image(image,provider):",src)
+        self.assertIn("p99<12.0 or spread<1.5 or visible_fraction<0.05",src)
+        tree=ast.parse(src)
+        fn=next(n for n in ast.walk(tree)
+                if isinstance(n,ast.FunctionDef) and n.name=="show_google_map")
+        body=ast.get_source_segment(src,fn)
+        self.assertIn("_require_visible_optical_image(p.get(\"image\")",body)
+        for call in ("cbers4a_wfi_preview(","sentinel2_earthsearch_preview(",
+                     "sentinel2_preview(","nasa_gibs_preview("):
+            pos=body.index(call)
+            self.assertIn("_require_visible_optical_image",body[pos:pos+350],call)
+
+    def test_black_optical_image_is_rejected_and_visible_image_is_accepted(self):
+        from PIL import Image
+        from desktop_app import _require_visible_optical_image
+        with self.assertRaisesRegex(RuntimeError,"preta/em branco"):
+            _require_visible_optical_image(Image.new("RGB",(32,32),(0,0,0)),"CBERS test")
+        visible=Image.new("RGB",(32,32),(45,82,57))
+        for x in range(16,32):
+            for y in range(32):visible.putpixel((x,y),(150,175,95))
+        self.assertIs(_require_visible_optical_image(visible,"CBERS test"),visible)
+
     def test_preview_reads_are_split_into_bounded_quadrants(self):
         from desktop_app import OPTICAL_COG_TILE_SIZE,_iter_optical_quadrants
         self.assertEqual(OPTICAL_COG_TILE_SIZE,512)

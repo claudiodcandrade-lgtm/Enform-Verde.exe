@@ -22,7 +22,23 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.39-PRECAMPO-EXPERIMENTAL"
+def _require_visible_optical_image(image,provider):
+    """Reject blank/black imagery before caching or declaring the map loaded."""
+    if image is None or not hasattr(image,"convert"):
+        raise RuntimeError(str(provider)+" retornou imagem óptica inválida")
+    pixels=np.asarray(image.convert("RGB"),dtype=np.uint8)
+    if pixels.ndim!=3 or pixels.shape[2]!=3 or pixels.shape[0]<2 or pixels.shape[1]<2:
+        raise RuntimeError(str(provider)+" retornou imagem óptica sem dimensões válidas")
+    luminance=pixels.astype(np.float32).mean(axis=2)
+    p99=float(np.percentile(luminance,99))
+    spread=float(np.std(luminance))
+    visible_fraction=float(np.mean(luminance>8.0))
+    if p99<12.0 or spread<1.5 or visible_fraction<0.05:
+        raise RuntimeError(str(provider)+" retornou imagem óptica preta/em branco; fallback ativado")
+    return image
+
+
+APP_VERSION="3.26.40-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1602,11 +1618,19 @@ class App(tk.Tk):
             cached_image,cached_meta=cached_preview
             cached_provider=str(cached_meta.get("provider") or "")
             if "CBERS" in cached_provider.upper() or "SENTINEL-2" in cached_provider.upper():
-                cached_optical=(cached_image,cached_meta,cached_provider)
-                credit="Imagem óptica em cache • fonte original: "+cached_provider
-                self._finish_satellite_map(generation,cached_image,cached_meta.get("polygons") or [],
-                                           "CACHE ÓPTICO • "+cached_provider,None,credit,None)
-                self.map_status.set("Exibindo imagem óptica em cache enquanto atualiza CBERS-4A e Sentinel-2…")
+                try:
+                    _require_visible_optical_image(cached_image,"cache "+cached_provider)
+                    cached_optical=(cached_image,cached_meta,cached_provider)
+                    credit="Imagem óptica em cache • fonte original: "+cached_provider
+                    self._finish_satellite_map(generation,cached_image,cached_meta.get("polygons") or [],
+                                               "CACHE ÓPTICO • "+cached_provider,None,credit,None)
+                    self.map_status.set("Exibindo imagem óptica em cache enquanto atualiza CBERS-4A e Sentinel-2…")
+                except Exception:
+                    # A cache entry from an earlier build must never resurrect
+                    # a blank canvas or prevent the live provider failover.
+                    for bad_path in _satellite_preview_cache_paths(g,extent_factor,w,h):
+                        try:bad_path.unlink(missing_ok=True)
+                        except OSError:pass
         if not refresh:self.map_status.set("Carregando CBERS-4A/WFI; Sentinel-2 será tentado em seguida.")
         self.update_idletasks()
 
@@ -1674,6 +1698,7 @@ class App(tk.Tk):
                 return
             try:
                 p=cbers4a_wfi_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","CBERS-4A/WFI"))
                 dr=p.get("date_range") or [p.get("datetime") or "",p.get("datetime") or ""]
                 cloud_note=" • nuvens em lacunas" if p.get("cloud_pixels_included") else " • pixels claros"
                 copyright=f"CBERS-4A/WFI • INPE • 55 m • {dr[0]}–{dr[1]}{cloud_note}"
@@ -1684,6 +1709,7 @@ class App(tk.Tk):
             except Exception as e:errors.append("CBERS-4A/WFI INPE: "+str(e))
             try:
                 p=sentinel2_earthsearch_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","Sentinel-2 Earth Search"))
                 copyright=f"Sentinel-2 L2A • Earth Search/AWS • {(p.get('datetime') or '')[:10]} • nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
                 self._save_optical_diagnostic(generation,p["provider"],errors)
@@ -1692,6 +1718,7 @@ class App(tk.Tk):
             except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
             try:
                 p=sentinel2_preview(g,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","Sentinel-2 MPC"))
                 copyright=f"Sentinel-2 L2A • Planetary Computer • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
@@ -1709,6 +1736,7 @@ class App(tk.Tk):
             # it never feeds classification, vigor, or carbon calculations.
             try:
                 p=nasa_gibs_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","NASA GIBS"))
                 copyright=f"NASA GIBS • VIIRS SNPP • imagem de {p.get('datetime','')} • contexto visual"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p.get("polygons") or [],p["provider"],copyright)
                 self._save_optical_diagnostic(generation,p["provider"],errors)
@@ -1720,6 +1748,7 @@ class App(tk.Tk):
             # Do not use it for classifying SAR land cover or deriving carbon.
             try:
                 im=esri_export(rs,service="World_Imagery")
+                _require_visible_optical_image(im,"Esri World Imagery")
                 copyright="Esri World Imagery • mosaico óptico de referência • data e sensor N/D"
                 _store_satellite_preview_cache(g,extent_factor,w,h,im,[],"ESRI_WORLD_IMAGERY",copyright)
                 self._save_optical_diagnostic(generation,"ESRI_WORLD_IMAGERY",errors)
@@ -1747,6 +1776,11 @@ class App(tk.Tk):
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
         if generation!=self._map_generation or self.gdf is None:return
+        if not error:
+            try:
+                _require_visible_optical_image(view,provider)
+            except Exception as exc:
+                error="imagem rejeitada pelo controle de pixels visíveis: "+str(exc)[:180]
         if error:
             # Keep the last accepted optical image when a refresh fails.
             if not getattr(self,'_satellite_map_visible',False):
@@ -1799,6 +1833,7 @@ class App(tk.Tk):
         """Render the AOI in a local metric projection and fit it to the live canvas."""
         if self.gdf is None:return
         self._satellite_map_visible=False
+        self.map_canvas.configure(bg="#EAF0EC")
         g=self.gdf.to_crs(4326); union=g.geometry.union_all(); center=union.centroid
         from pyproj import CRS
         local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")

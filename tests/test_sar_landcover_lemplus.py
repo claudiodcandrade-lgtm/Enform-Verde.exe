@@ -3,6 +3,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from pathlib import Path
 from datetime import date
 from unittest.mock import patch
 
@@ -26,6 +27,42 @@ def fake_result():
 
 
 class LemplusModelTests(unittest.TestCase):
+    def test_primary_classifier_has_binary_mpc_aoi_cog_fallback(self):
+        source=Path(sl.__file__).read_text(encoding="utf-8")
+        body=source[source.index("def _monthly_features"):source.index("def _safe_error_detail")]
+        self.assertIn('range(5 if provider=="MPC" else 4)',body)
+        self.assertIn("_open_signed_cog_via_https(",body)
+        self.assertIn('"HTTPS_BINARY_AOI_CROP"',body)
+        self.assertIn("max_bytes=128*1024*1024",body)
+        self.assertIn("max_crop_bytes=128*1024*1024",body)
+
+    def test_contingency_runs_when_recent_s1_pixels_exist_but_semantic_model_fails(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        recent={"status":"SAR_REAL_EXPERIMENTAL_CANDIDATES","scene_count":12,
+                "readable_scene_count":12,"vector_path":None,"raster_path":None,
+                "provider_processing_diagnostics":[{"provider":"MPC","readable_scene_count":12}],
+                "failed_scene_reads":[]}
+        alternative={"status":"ALTERNATIVE_RADAR_PIXELS_PROCESSED",
+                     "classification_status":"N/D_VALIDACAO"}
+        ib=AOI.copy();ib["legenda_1"]="Floresta Ombrófila Densa"
+        with tempfile.TemporaryDirectory() as d, \
+             patch("sar_model_discovery.discover_installed_sar_configs",return_value=([],[])), \
+             patch("sar_landcover_lemplus.classify_aoi",return_value={
+                 "status":"ERRO_TECNICO_LEITURA_SAR","reason":"UnicodeDecodeError"}), \
+             patch("recent_sar_landcover.run_recent_sar_screen",return_value=recent), \
+             patch("radar_contingency.run_alternative_radar_screen",return_value=alternative) as contingency, \
+             patch("native_sar_experimental.run_sentinel1_native_screen",return_value={"status":"N/D"}), \
+             patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency",return_value={"status":"N/D"}):
+            result=run_land_use(AOI,d,ibge=ib)
+        contingency.assert_called_once()
+        self.assertEqual(result["alternative_radar_screen"]["status"],"ALTERNATIVE_RADAR_PIXELS_PROCESSED")
+        self.assertEqual(result["alternative_radar_screen"]["trigger_reason"],
+                         "PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE")
+        report="\n".join(report_lines(result))
+        self.assertIn("Gatilho: PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE",report)
+
     def test_manifest_hash_metrics_and_labels(self):
         man = json.loads(sl.MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(hashlib.sha256(sl.MODEL.read_bytes()).hexdigest(), man["sha256"])

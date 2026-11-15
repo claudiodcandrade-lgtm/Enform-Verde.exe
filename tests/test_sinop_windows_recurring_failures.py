@@ -43,7 +43,8 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
         self.assertIn("range(5 if provider==\"MPC\" else 4)",src)
         self.assertIn("_open_signed_cog_via_https(",src)
         self.assertIn("HTTPS_STREAM_OR_MPC_AOI_CROP",src)
-        self.assertIn("for attempt in range(4):",inspect.getsource(sar_landcover_lemplus._monthly_features))
+        self.assertIn("range(5 if provider==\"MPC\" else 4)",inspect.getsource(sar_landcover_lemplus._monthly_features))
+        self.assertIn("HTTPS_BINARY_AOI_CROP",inspect.getsource(sar_landcover_lemplus._monthly_features))
         for fn in (recent_sar_landcover.run_recent_sar_screen,
                    sar_landcover_lemplus._monthly_features):
             src=inspect.getsource(fn)

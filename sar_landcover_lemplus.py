@@ -155,7 +155,7 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
             # Atomic scene: commit both polarizations or neither.
             pair={}
             read_stage = "asset_authorization"
-            for attempt in range(4):
+            for attempt in range(5 if provider=="MPC" else 4):
                 try:
                     for pol in ("vv","vh"):
                         gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
@@ -169,12 +169,30 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                         if attempt==3:
                             gdal_opts["GDAL_HTTP_MULTIPLEX"]="NO"
                         with rasterio.Env(**gdal_opts):
-                            read_href=(asset_href_for_read_attempt(
-                                feat["assets"][pol]["href"],attempt=attempt,token=token,
-                                token_fn=token_fn or get_runtime_sas_token)
-                                if provider=="MPC" else feat["assets"][pol]["href"])
+                            asset_href=feat["assets"][pol]["href"]
+                            if provider=="MPC" and attempt==4:
+                                # GDAL's Windows /vsicurl/ stack can surface a
+                                # non-UTF-8 provider/proxy error as UnicodeDecodeError.
+                                # Reuse the proven bounded binary HTTPS/AOI-crop
+                                # reader from the recent-SAR route as an independent
+                                # final transport; the model still receives real
+                                # VV/VH pixels from the same scene and orbit.
+                                from recent_sar_landcover import _open_signed_cog_via_https
+                                source_context=_open_signed_cog_via_https(
+                                    asset_href,rasterio=rasterio,token=token,
+                                    token_fn=token_fn or get_runtime_sas_token,
+                                    item_id=feat.get("id"),asset_key=pol,
+                                    geometry=mapping(geom),collection="sentinel-1-rtc",
+                                    max_bytes=128*1024*1024,
+                                    max_crop_bytes=128*1024*1024)
+                            else:
+                                read_href=(asset_href_for_read_attempt(
+                                    asset_href,attempt=attempt,token=token,
+                                    token_fn=token_fn or get_runtime_sas_token)
+                                    if provider=="MPC" else asset_href)
+                                source_context=rasterio.open(read_href)
                             read_stage="open_cog"
-                            with rasterio.open(read_href) as src:
+                            with source_context as src:
                                 if src.crs is None:raise ValueError("SAR_COG_MISSING_CRS")
                                 read_stage="read_pixel_window"
                                 local=shape(transform_geom("EPSG:4326",src.crs,mapping(geom)))
@@ -208,7 +226,9 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                                    "stage":read_stage,"detail":_safe_error_detail(exc),
                                    "read_strategy":("MULTIRANGE_DEFAULT" if attempt==0 else
                                      "SERIAL_RANGE_HTTP11" if attempt==1 else
-                                     "SINGLE_GET_HTTP11" if attempt==2 else "SERIAL_NO_MULTIPLEX_HTTP11")})
+                                     "SINGLE_GET_HTTP11" if attempt==2 else
+                                     "SERIAL_NO_MULTIPLEX_HTTP11" if attempt==3 else
+                                     "HTTPS_BINARY_AOI_CROP")})
                     pair={}
                     if attempt==0 and not token:
                         try:token=(token_fn or get_runtime_sas_token)()

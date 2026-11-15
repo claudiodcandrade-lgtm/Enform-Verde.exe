@@ -889,15 +889,27 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             except Exception as exc:
                 warnings.append('Pixels SAR lidos, mas unidades experimentais não puderam ser vetorizadas: '+
                                 type(exc).__name__+': '+str(exc)[:180])
-    alternative_radar_screen={'status':'NOT_NEEDED_SENTINEL1_PIXELS_AVAILABLE',
-                              'classification_status':'N/D_VALIDACAO'}
-    if recent_sar_cover.get('status')!='SAR_REAL_EXPERIMENTAL_CANDIDATES':
+    # Pixel availability is not semantic-classifier success. If no primary
+    # model produced classes for this AOI, invoke the independent radar route
+    # even when Sentinel-1 experimental pixels were read successfully.
+    primary_semantic_applied=bool(active_sar_config)
+    alternative_radar_screen={
+        'status':('NOT_NEEDED_PRIMARY_SEMANTIC_CLASSIFICATION_APPLIED'
+                  if primary_semantic_applied else 'NOT_STARTED'),
+        'classification_status':'N/D_VALIDACAO',
+        'trigger_reason':('PRIMARY_SEMANTIC_CLASSIFICATION_APPLIED'
+                          if primary_semantic_applied else
+                          'PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE')}
+    if not primary_semantic_applied:
         try:
             from radar_contingency import run_alternative_radar_screen
             alternative_radar_screen=run_alternative_radar_screen(aoi,outdir)
+            alternative_radar_screen.setdefault(
+                'trigger_reason','PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE')
         except Exception as exc:
             alternative_radar_screen={'status':'ERRO_TECNICO',
                                       'reason':type(exc).__name__+': '+str(exc)[:200],
+                                      'trigger_reason':'PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE',
                                       'classification_status':'N/D_VALIDACAO'}
     polygons, summary = partition_land_use(aoi,layers)
     summary['original_source_distributions']=source_distributions
@@ -1101,6 +1113,7 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
                      '; CRS: '+str(orbital.get('committed_grid_crs','N/D')))
     alt=summary.get('alternative_radar_screen') or {}
     lines.append('CONTINGÊNCIA RADAR L/X/NISAR — '+str(alt.get('status','N/D'))+'; identificação semântica permanece N/D até validação específica.')
+    if alt.get('trigger_reason'):lines.append('  Gatilho: '+str(alt.get('trigger_reason')))
     if alt.get('reason'):lines.append('  '+str(alt.get('reason'))[:220])
     validation=summary.get('validation') or {}
     for level,report in [('classe',validation),('grupo',validation.get('parent_validation',{}))]:
