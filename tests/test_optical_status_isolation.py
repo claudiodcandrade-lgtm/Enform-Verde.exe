@@ -35,6 +35,11 @@ class OpticalStatusIsolationTests(unittest.TestCase):
         start = self._method("show_google_map")
         self.assertIn("self.map_status.set(", start)
 
+    def test_failed_refresh_preserves_previously_accepted_optical_image(self):
+        finish = self._method("_finish_satellite_map")
+        self.assertIn("if not getattr(self,'_satellite_map_visible',False)", finish)
+        self.assertIn("última imagem óptica válida mantida", finish)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,7 +22,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.38-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.39-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -546,28 +546,21 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
             if not physiognomy or physiognomy == 'Sem cobertura IBGE':
                 continue
             potential_rows.append((potential,physiognomy))
-        # The no-scene certificate is AOI-wide. Acquire/process SAR once and
-        # reuse the result for each potential-physiognomy scenario.
-        fallback_sar_result=None
-        fallback_sar_error=None
-        if potential_rows:
-            try:
-                fallback_sar_result=sar_estimator(aoi,biome,potential_rows[0][1])
-            except Exception as exc:
-                fallback_sar_error=exc
+        # Reuse SAR evidence already collected in this analysis; conditional inventory never reruns SAR.
+        fallback_sar_result=next(((st.get('sar_details') or {}) for st in native_strata
+                                  if isinstance(st.get('sar_details'),dict)),{})
+        fallback_sar_result=dict(fallback_sar_result)
+        fallback_sar_result.setdefault('status','SAR_RESULTADO_NAO_PROPAGADO')
         for potential,physiognomy in potential_rows:
             try:
-                if fallback_sar_error is not None:
-                    raise fallback_sar_error
                 scenario=estimate_inventory_carbon_scenario(
                     biome=biome,physiognomy=physiognomy,
                     area_ha=float(potential.get('area_ha') or 0),
-                    sar_result=fallback_sar_result,
-                    aoi=aoi,
+                    sar_result=fallback_sar_result,conditional_only=True,aoi=aoi,
                     centroid_lon=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.x),
                     centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
-                scenario['sar_status']=fallback_sar_result.get('status') if isinstance(fallback_sar_result,dict) else None
-                scenario['sar_reason']=fallback_sar_result.get('reason') if isinstance(fallback_sar_result,dict) else None
+                scenario['sar_status']=fallback_sar_result.get('status')
+                scenario['sar_reason']=fallback_sar_result.get('reason')
                 if scenario.get('status')=='CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR':
                     scenarios.append(scenario)
             except Exception as exc:
@@ -1729,9 +1722,11 @@ class App(tk.Tk):
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
         if generation!=self._map_generation or self.gdf is None:return
         if error:
-            self._satellite_map_visible=False
-            self._draw_aoi_outline("Imagem CBERS-4A/Sentinel-2 indisponível — perímetro mantido")
-            self.map_status.set("CBERS-4A e Sentinel-2 não forneceram pixels para esta AOI; o perímetro permanece visível. A análise segue independente do fundo.")
+            # Keep the last accepted optical image when a refresh fails.
+            if not getattr(self,'_satellite_map_visible',False):
+                self._draw_aoi_outline("Imagem CBERS-4A/Sentinel-2 indisponível — perímetro mantido")
+            kept=getattr(self,'_satellite_map_visible',False)
+            self.map_status.set("Atualização óptica indisponível; "+("última imagem óptica válida mantida. " if kept else "perímetro mantido. ")+"A análise segue independente do fundo.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
