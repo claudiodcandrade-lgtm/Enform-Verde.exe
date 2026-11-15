@@ -496,3 +496,8 @@ Commit final validado: `5ba46b2763155054e8b026399be1ce37503f0ecd`. Gate científ
 ## Checkpoint V88.73 — revisão baseada nos relatórios reais (15/11/2026)
 
 Os relatórios da Fazenda Maria Eduarda e do Tapajós demonstraram que os gates da V88.72 eram insuficientes: a verificação óptica anterior não avaliava os pixels do canvas; LEM+ da safra anual 2025/26 era descrito como resultado atual e suprimia a contingência; a triagem SAR de 150 dias aparecia no mesmo particionamento; raízes, necromassa e serapilheira com suporte parcial ficavam escondidas na tabela executiva; cenas SAR repetiam tentativas GDAL lentas. A candidata 3.26.42 separa períodos, explicita cobertura parcial, limita tentativas e mede pixels reais no smoke Windows. A CI do commit 2777341199cd93d711e36a26fc2af8841d84e2cc falhou no título da nota de versão; a correção do título está no commit ca7c80d099f09ced9418848f85dd369711ceeabc. A validação funcional da candidata corrigida está pendente. O KML integral privado não foi testado pela CI e a validação de campo continua pendente.
+
+
+## Checkpoint V88.74 — ajuste dos gates ponta a ponta (15/11/2026)
+
+A primeira rodada de validação do código 3.26.42 encontrou um teste textual obsoleto e um smoke live que exigia incorretamente que o mapa sazonal fosse aplicado como classificação atual. Os gates foram ajustados para exigir mapa anual explícito ou máscara realmente atual, testar o envio de classes SAR para o resumo de uso do solo, carbono e dashboard, registrar safra/escopo e também exigir que a contingência atual seja auditada. O primeiro teste rápido de contrato passou; o teste completo, o canvas Windows e o novo handoff SAR seguem pendentes no SHA mais recente. Não considerar a alteração concluída até todos os jobs finalizarem.

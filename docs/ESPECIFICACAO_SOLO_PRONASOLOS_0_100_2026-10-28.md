@@ -432,3 +432,8 @@ V88.72 — validação final da candidata 3.26.41 (15/11/2026). No commit remoto
 ## Nota de integração V88.73 — camada temporal e cobertura quantificada
 
 A cartografia IBGE de fitofisionomia continua exclusivamente potencial, de referência e visual; não confirma cobertura atual. O relatório de carbono deve declarar o período da máscara espacial usada. Resultados por compartimento são calculados sobre hectares efetivamente quantificados e mostram cobertura (ha e %); não projetar para estratos sem suporte. O estoque total continua parcial/N/D se faltar compartimento ou cobertura. O modelo LEM+ que representa o último ano agrícola completo é um produto anual e não substitui a classificação semântica atual nem bloqueia a contingência atual. Candidatos orbitais recentes ficam num produto próprio. A imagem óptica é visual; na indisponibilidade, desenhar camada IBGE potencial já carregada e AOI, com aviso, sem bloquear a análise.
+
+
+## Nota V88.74 — gates de handoff temporal
+
+O teste de fluxo SAR até carbono/dashboard deve validar explicitamente safra e escopo do mapa anual e não exigir que esse produto seja declarado atual. A rota de contingência precisa ser testada quando a máscara semântica atual estiver indisponível. O painel de carbono deve informar o período da máscara espacial. O smoke visual Windows deve verificar pixels do canvas.

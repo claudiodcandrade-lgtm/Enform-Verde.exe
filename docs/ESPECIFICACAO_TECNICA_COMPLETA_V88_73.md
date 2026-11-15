@@ -19,3 +19,8 @@ Para cada cena COG, uma leitura normal e uma alternativa binária recortada à A
 ## Evidência e gates
 
 Os testes precisam passar no commit de código e no commit documental final: suíte integral, regressões de escopo anual/atual e densidade parcial, smoke de pixels de canvas Windows, SAR live e build Windows. O KML integral da Fazenda Maria Eduarda requer teste em ambiente Windows local; a fixture pública no centroide de Sinop não o substitui. Sem validação de campo, todos os modelos pertinentes permanecem pré-campo/experimentais, com incerteza explícita ou “incerteza não mensurável”.
+
+
+## V88.74 — ajuste de gate
+
+O teste de integração deve registrar annual_map_applied, safra, escopo temporal, current_semantic_result_applied e status/gatilho da rota de contingência. Mapa anual pode ser transferido aos módulos de carbono e dashboard apenas como produto experimental daquele período; o estado semântico atual permanece em campo separado.

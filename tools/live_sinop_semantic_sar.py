@@ -89,9 +89,20 @@ def _run_full_handoff(label, aoi):
     report["land_use"]={k:land.get(k) for k in
         ("status","current_sar_crop_identification","sar_model_config","sar_selection",
          "area_aoi_ha","classes","warnings","sar_classifier_lemplus")}
-    if not (land.get("sar_classifier_lemplus") or {}).get("result_applied_to_current_aoi"):
-        raise RuntimeError(label+": CLASSIFICADOR_SAR_REAL_NAO_APLICADO: "+
-                           str((land.get("sar_classifier_lemplus") or {}).get("reason")))
+    lemplus_audit=land.get("sar_classifier_lemplus") or {}
+    annual_applied=bool(lemplus_audit.get("result_applied_to_annual_map"))
+    current_applied=bool(lemplus_audit.get("result_applied_to_current_aoi"))
+    if not (annual_applied or current_applied):
+        raise RuntimeError(label+": CLASSIFICADOR_SAR_NAO_PRODUZIU_MAPA_ANUAL_NEM_ATUAL: "+
+                           str(lemplus_audit.get("reason")))
+    report["sar_temporal_handoff"]={
+        "annual_map_applied":annual_applied,
+        "annual_season":lemplus_audit.get("season"),
+        "annual_scope":lemplus_audit.get("temporal_scope"),
+        "current_semantic_result_applied":current_applied,
+        "current_semantic_status":land.get("current_semantic_classification_status"),
+        "alternative_radar_status":(land.get("alternative_radar_screen") or {}).get("status"),
+        "alternative_radar_trigger":(land.get("alternative_radar_screen") or {}).get("trigger_reason")}
     classes=land.get("classes") or []
     semantic=[r for r in classes if str(r.get("source") or "").startswith(
         ("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO"))]

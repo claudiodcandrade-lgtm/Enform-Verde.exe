@@ -5,7 +5,8 @@ on:
       - feature/agricultural-identification-native-carbon
       - patches-3.26.6
     paths:
-      - docs/spec_updates/2026-11-15_v88_73_architecture.md
+      - docs/spec_updates/2026-11-15_v88_74_handoff_gates.md
+      - docs/spec_updates/2026-11-15_v88_74_handoff_gates.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -24,16 +25,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Append V88.73 architecture review preserving full Word history
+      - name: Append V88.74 architecture review preserving full Word history
         run: |
           python tools/update_spec_docx.py \
             --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-            --entry docs/spec_updates/2026-11-15_v88_73_architecture.md \
-            --baseline "Enform Verde 3.26.41-PRECAMPO-EXPERIMENTAL (V88.72 CI aprovada em AOIs de teste; falhas reais relatadas em Sinop e Tapajós)" \
+            --entry docs/spec_updates/2026-11-15_v88_74_handoff_gates.md \
+            --baseline "Enform Verde 3.26.41-PRECAMPO-EXPERIMENTAL (V88.73 candidate: temporal separation and dashboard tests found an outdated current-classification gate)" \
             --head-sha "${{ github.sha }}" \
             --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
             --date "15 de novembro de 2026" \
-            --footer-label "V88.73 · experimental 3.26.42 · revisão temporal, painel de carbono e gate visual do canvas" \
+            --footer-label "V88.74 · experimental 3.26.42 · revisão temporal, painel de carbono e gate visual do canvas" \
             --footer-date "15/11/2026"
       - name: Verify DOCX archive and current checkpoint
         run: |
@@ -45,7 +46,7 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert len(xml) > 10000
-              assert 'V88.73' in xml and '3.26.42-PRECAMPO-EXPERIMENTAL' in xml
+              assert 'V88.74' in xml and '3.26.42-PRECAMPO-EXPERIMENTAL' in xml
           print('Word specification updated with v88.68 checkpoint and archive validated')
           PY
       - name: Commit DOCX to the same feature branch
