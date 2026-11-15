@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 100565)
-Total output lines: 1747
-
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
 ## V88.16 — resultado nacional com incerteza e estado auditável (12/11/2026)
 Objetivo obrigatório: para qualquer AOI do Brasil, concluir cada módulo com o melhor resultado cientificamente sustentado ou estado N/D/ERRO_TECNICO, sempre com fonte, período, cobertura, método e incerteza. Quantificar incerteza quando suportada por dados/desenho amostral; caso contrário declarar “incerteza não quantificada” e motivo, sem inventar precisão ou converter N/D em zero.
@@ -447,3 +444,8 @@ O campo execution_scope do LEM+ deve declarar o AOI integral e o último ano agr
 ## V88.76 — mapa de contingência visual
 
 A camada IBGE de fitofisionomia deve ser carregada de modo assíncrono após falha de imagem óptica, quando CBERS, Sentinel-2 e demais fundos visuais não responderem. Seu uso é exclusivamente cartográfico e potencial. O limite da AOI precisa permanecer visível imediatamente. Disponibilidade de fundo óptico/cartográfico não bloqueia a execução de análise nem altera cálculos de carbono ou uso atual.
+
+
+<!-- V88_77_OPTICAL_SMOKE_SYNTAX_FIX -->
+## V88.77 — gate de compilação do smoke óptico
+O script de auditoria de cobertura óptica precisa compilar no runtime Windows antes de executar. Foi corrigida a docstring não terminada em `tools/live_optical_coverage_brazil.py`; a quebra impedia a compilação integral e o build Windows, ainda que os testes unitários e de regressão passassem. A compilação corrigida deve ser reexecutada e confirmada no commit final.
