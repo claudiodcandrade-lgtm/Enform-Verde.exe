@@ -11,7 +11,7 @@
 
 ## Estado de validação
 
-Esta alteração é uma candidata. Build Windows, suíte de regressão e teste live do canvas precisam passar sobre o commit exato para publicar o pacote como executável validado. A execução do KML privado original da Fazenda Maria Eduarda não é reproduzida pela fixture pública Sinop. Não há homologação de campo; safras, candidatos e compartimentos experimentais continuam rotulados com período, fonte e incerteza.
+Build operacional aprovado no SHA `8551bcaf84586af71ae574abda8a6e37e467f4d3`: 1.173 testes, build Windows e handoff SAR live para amostra pública Sinop/Tapajós passaram. O artefato Windows foi testado em pasta limpa com smoke de UI, módulos, paridade Python/EXE, rede e aceitação Tapajós. 11/11 locais amostrais carregaram pixels CBERS. O teste de canvas passou com fallback AOI local visível. A versão continua pré-campo/experimental: KML privado Maria Eduarda não testado, classificação atual semântica N/D, resultados SAR de uso da terra são anuais e experimentais, carbono parcial e sem IC total; não há homologação de campo.
 
 
 ## V88.74 handoff-gate adjustment
@@ -27,3 +27,12 @@ CBERS/Sentinel-2 são opcionais e não bloqueiam a análise. A UI mantém um fun
 ## V88.76 fundo visual de contingência
 
 A imagem óptica é opcional. A UI desenha a AOI imediatamente, tenta CBERS/Sentinel-2 e demais fundos em worker, e ao esgotá-los tenta carregar a camada potencial IBGE. O IBGE fica rotulado como referência; não confirma cobertura atual. Se o IBGE falhar, o mapa local da AOI e o aviso permanecem. Indisponibilidade óptica não bloqueia o build; o canvas smoke exige pixels visíveis do mapa ou fallback.
+
+
+## Evidência do artefato Windows
+
+- Run: https://github.com/claudiodcandrade-lgtm/Enform-Verde.exe/actions/runs/43731184717
+- ZIP do build: `Enform-Verde-Windows-v3.26.42-PRECAMPO-EXPERIMENTAL`
+- SHA-256 do executável: `796561975818f2e6a6db8d7858875f6d080b926d523885583bf9907c5c7fff35`
+- SHA-256 do ZIP: `31653bc1c2edb1b066b5ccb3e1056858c8114bbcca91b82872bdd6aa70849312`
+- Código exato: `8551bcaf84586af71ae574abda8a6e37e467f4d3`
