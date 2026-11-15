@@ -513,3 +513,8 @@ Imagem óptica é visual e não bloqueia a análise. A UI deve desenhar imediata
 <!-- V88_77_OPTICAL_SMOKE_SYNTAX_FIX -->
 ## V88.77 — integridade do smoke óptico
 A auditoria do SHA `c24e441e396ea3f19bd8ec4d0845e52e3245ee43` encontrou e corrigiu um delimitador de docstring ausente em `tools/live_optical_coverage_brazil.py`, que impedia a compilação do módulo e bloqueava o build antes do empacotamento. Exigir `compileall` no smoke nacional e executar novamente suíte integral, smoke Windows e build após essa correção. A correção do teste não comprova disponibilidade óptica nacional; em falha, manter o fundo cartográfico IBGE/AOI e informar a contingência.
+
+
+<!-- V88_78_DOC_AUDIT_WINDOW -->
+## V88.78 — janela do guard documental após ajuste de workflow
+Após a correção do script de cobertura óptica e ajuste do workflow de sincronização Word, prompt e especificação de solos foram reaplicados após a última mudança efetiva de configuração, para satisfazer o guard de documentação em ordem cronológica. O resultado válido é o do commit final, que ainda deve passar novamente pela suíte integral e pelo build Windows.
