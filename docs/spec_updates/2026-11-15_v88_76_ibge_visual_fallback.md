@@ -56,3 +56,10 @@ Código testado: `8551bcaf84586af71ae574abda8a6e37e467f4d3`. Aplicação: `3.26.
 - Pacote EXE: SHA-256 `796561975818f2e6a6db8d7858875f6d080b926d523885583bf9907c5c7fff35`; ZIP do artifact SHA-256 `31653bc1c2edb1b066b5ccb3e1056858c8114bbcca91b82872bdd6aa70849312`.
 
 **Pendências e interpretação:** o SAR transmitido e aplicado é mapa experimental do último ano agrícola completo 2025/2026, não monitoramento semântico atual; classificação atual N/D e rota radar alternativa `ACESSO_RESTRITO`. Estoque de carbono entregue é parcial/incompleto, com compartimentos sem suporte e incertezas não quantificáveis explicitamente. A amostra pública Sinop não é o KML privado integral Fazenda Maria Eduarda. Homologação científica/campo não passou. A entrega pode ser chamada de build operacional testado no escopo descrito, não de versão homologada ou garantia universal.
+
+
+## V88.80 — smoke da GUI aguarda conclusão do worker
+
+A inspeção do artefato V88.79 confirmou que o teste anterior terminava assim que aparecia o fallback AOI local, antes do resultado assíncrono CBERS/Sentinel-2/IBGE. O caso mostrava canvas não preto, mas não era prova de imagem entregue à janela. O smoke foi ajustado para esperar o worker deixar o estado de carregamento/atualização e validar somente o provider terminal e pixels visíveis. Aguardando CI/build no SHA final para confirmar `PASS_CBERS`, `PASS_SENTINEL2_FALLBACK`, `PASS_IBGE_FALLBACK` ou, somente se todos indisponíveis, `PASS_AOI_FALLBACK` após erro terminal.
+
+Essa correção do teste melhora a validade da evidência; o aplicativo já mantém fallback imediato para impedir tela preta. A imagem óptica não é insumo analítico. Não marcar IBGE como exibido se o estado final for somente `AOI_LOCAL_FALLBACK`.
