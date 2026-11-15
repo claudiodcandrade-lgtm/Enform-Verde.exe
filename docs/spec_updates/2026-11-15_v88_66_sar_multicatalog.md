@@ -18,3 +18,9 @@ Aceite:
 6. Smokes ópticos de cobertura nacional continuam amostrais. Em falta de cena/erro, preservar a última imagem óptica válida e exibir diagnóstico explícito; não substituir silenciosamente por raster IBGE ou tela preta.
 
 Estado antes da CI deste commit: alterações preparadas; aceitação live ampliada e testes Windows/dashboard ainda pendentes. Manter estado experimental pré-campo e não homologado até os resultados serem verificados.
+
+
+
+
+## Registro corretivo da integração e dos gates (15/11/2026)
+A suíte integral no commit d95542c executou 1.164 testes e encontrou duas falhas de contrato, não falhas de processamento: o teste documental ainda exigia editar o arquivo histórico V43, embora o guard de produção considere V43 imutável; e o workflow de SAR não repetia a declaração explícita `scikit-learn==1.8.0` exigida pelo teste de pinagem, apesar de a dependência já constar em requirements_desktop.txt. Ambas as exigências foram corrigidas no commit 70e7460aa5d7e9a0e479f0a7e155c72443b5c24f. A suíte, o build e o fluxo live para Sinop e Tapajós precisam ser aprovados no SHA final. Não declarar versão funcional até isso ocorrer.

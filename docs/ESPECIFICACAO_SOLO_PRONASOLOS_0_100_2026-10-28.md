@@ -384,3 +384,7 @@ Na candidata 3.26.39 (commit `3172277b02dd59de24861c8dd8abfc8e5159d49a`), a CI e
 ## Registro V88.68 — integração até os painéis
 
 A mudança de handoff SAR em validação acrescenta ao payload executivo as máscaras semânticas e a identidade da execução. Ela não altera a metodologia de carbono do solo. Os estoques 0–100 cm continuam dependendo de interseção/leituras válidas de fontes Embrapa/PronaSolos e dos respectivos parâmetros; uma máscara SAR, por si só, não gera nem valida carbono do solo. Exibir N/D, motivo e “incerteza não mensurável” quando não houver suporte.
+
+
+## Registro corretivo da integração e dos gates (15/11/2026)
+A suíte integral no commit d95542c executou 1.164 testes e encontrou duas falhas de contrato, não falhas de processamento: o teste documental ainda exigia editar o arquivo histórico V43, embora o guard de produção considere V43 imutável; e o workflow de SAR não repetia a declaração explícita `scikit-learn==1.8.0` exigida pelo teste de pinagem, apesar de a dependência já constar em requirements_desktop.txt. Ambas as exigências foram corrigidas no commit 70e7460aa5d7e9a0e479f0a7e155c72443b5c24f. A suíte, o build e o fluxo live para Sinop e Tapajós precisam ser aprovados no SHA final. Não declarar versão funcional até isso ocorrer.
