@@ -461,3 +461,8 @@ A especificação foi atualizada após o ajuste do workflow Word, junto com o pr
 O build Windows `3.26.42-PRECAMPO-EXPERIMENTAL` passou no SHA `8551bcaf84586af71ae574abda8a6e37e467f4d3`. Suíte integral: 1.173 testes. Build limpo: UI smoke, verificação de módulos/paridade Python-EXE, rede e aceitação do KMZ Tapajós passaram. Pixels CBERS-4A foram lidos com cobertura 100% em 11/11 pontos amostrais; smoke do canvas Windows passou mantendo AOI visível como fallback. Integração live Sentinel-1 para amostra pública de Sinop e Tapajós entregou saídas SAR, uso da terra, carbono e payload de dashboard.
 
 Esta evidência comprova transmissão ponta a ponta somente nos AOIs de teste. Não comprova execução do KML privado Fazenda Maria Eduarda nem validação local. O SAR aplicado é experimental e referente à safra completa 2025/2026; a classificação semântica atual continua N/D. Carbono é parcial, compartimentos ausentes não são zero, e nenhuma incerteza total é inventada. Ausência de suporte de solo/compartimento deve permanecer explicitamente N/D/“incerteza não mensurável”, conforme o caso. O gate científico permanece reprovado até validação independente de campo.
+
+
+<!-- V88_80_GUI_WORKER_TERMINAL_GATE -->
+## V88.80 — prova visual terminal da janela
+A captura inicial com `AOI_LOCAL_FALLBACK` somente prova que o canvas não está preto; como o AOI é renderizado antes de iniciar consultas, ela não confirma o término do worker óptico/IBGE. O smoke agora espera o estado terminal, após pixels CBERS/Sentinel-2 ou fallback cartográfico final. O novo smoke/build deve passar antes de confirmar a integração visual. A camada IBGE permanece rotulada como potencial e, em falha também do IBGE, o perímetro local é último fallback com aviso.
