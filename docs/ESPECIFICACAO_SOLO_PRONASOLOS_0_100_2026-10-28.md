@@ -449,3 +449,8 @@ A camada IBGE de fitofisionomia deve ser carregada de modo assíncrono após fal
 <!-- V88_77_OPTICAL_SMOKE_SYNTAX_FIX -->
 ## V88.77 — gate de compilação do smoke óptico
 O script de auditoria de cobertura óptica precisa compilar no runtime Windows antes de executar. Foi corrigida a docstring não terminada em `tools/live_optical_coverage_brazil.py`; a quebra impedia a compilação integral e o build Windows, ainda que os testes unitários e de regressão passassem. A compilação corrigida deve ser reexecutada e confirmada no commit final.
+
+
+<!-- V88_78_DOC_AUDIT_WINDOW -->
+## V88.78 — sincronização cronológica do gate
+A especificação foi atualizada após o ajuste do workflow Word, junto com o prompt canônico, para que a auditoria documental reconheça os documentos dentro da janela posterior à última mudança efetiva. O gate deve ser executado sobre este commit ou posterior; a correção do smoke de compilação continua pendente de confirmação final pelo build integral.
