@@ -501,3 +501,8 @@ Os relatórios da Fazenda Maria Eduarda e do Tapajós demonstraram que os gates 
 ## Checkpoint V88.74 — ajuste dos gates ponta a ponta (15/11/2026)
 
 A primeira rodada de validação do código 3.26.42 encontrou um teste textual obsoleto e um smoke live que exigia incorretamente que o mapa sazonal fosse aplicado como classificação atual. Os gates foram ajustados para exigir mapa anual explícito ou máscara realmente atual, testar o envio de classes SAR para o resumo de uso do solo, carbono e dashboard, registrar safra/escopo e também exigir que a contingência atual seja auditada. O primeiro teste rápido de contrato passou; o teste completo, o canvas Windows e o novo handoff SAR seguem pendentes no SHA mais recente. Não considerar a alteração concluída até todos os jobs finalizarem.
+
+
+## Checkpoint V88.75 — fechamento das regressões de arquitetura
+
+Os testes do pacote completo revelaram contratos de texto ainda presos ao comportamento anterior. O mapa sazonal LEM+ agora informa escopo AOI do último ano agrícola completo, mantém result_applied_to_current_aoi=false e usa uma bandeira separada para o mapa anual. As regressões foram ajustadas para testar essa semântica, o critério de pixels do canvas e as duas estratégias SAR limitadas. Este checkpoint aguarda a suíte integral, handoff live Sinop/Tapajós e build no SHA final. O teste local da fazenda privada continua necessário para confirmar o fluxo real naquela geometria.

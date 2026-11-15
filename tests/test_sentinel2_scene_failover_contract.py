@@ -66,7 +66,8 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
     def test_black_or_blank_optical_pixels_are_rejected_before_canvas_delivery(self):
         src=SOURCE.read_text(encoding="utf-8")
         self.assertIn("def _require_visible_optical_image(image,provider):",src)
-        self.assertIn("p99<12.0 or spread<1.5 or visible_fraction<0.05",src)
+        self.assertIn("p99<20.0 or spread<5.0 or visible_fraction<0.15",src)
+        self.assertIn("optical_pixels=pixels[~overlay]",src)
         tree=ast.parse(src)
         fn=next(n for n in ast.walk(tree)
                 if isinstance(n,ast.FunctionDef) and n.name=="show_google_map")

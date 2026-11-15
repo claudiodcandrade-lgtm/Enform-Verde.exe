@@ -768,7 +768,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
             lemplus_audit['domain']=domain_msg
             lemplus_audit['model_call_attempted']=True
             lemplus_audit['result_applied_to_current_aoi']=False
-            lemplus_audit['execution_scope']='AOI_INTEGRAL_DA_EXECUCAO_ATUAL'
+            lemplus_audit['execution_scope']='AOI_INTEGRAL_ULTIMO_ANO_AGRICOLA_COMPLETO'
             polys=res.get('polygons_6933')
             if domain_ok and res.get('status')=='SAR_CLASSIFICADOR_EXPERIMENTAL' and polys is not None and not polys.empty:
                 lay=polys.copy()

@@ -437,3 +437,8 @@ A cartografia IBGE de fitofisionomia continua exclusivamente potencial, de refer
 ## Nota V88.74 — gates de handoff temporal
 
 O teste de fluxo SAR até carbono/dashboard deve validar explicitamente safra e escopo do mapa anual e não exigir que esse produto seja declarado atual. A rota de contingência precisa ser testada quando a máscara semântica atual estiver indisponível. O painel de carbono deve informar o período da máscara espacial. O smoke visual Windows deve verificar pixels do canvas.
+
+
+## Nota V88.75 — escopo temporal da auditoria LEM+
+
+O campo execution_scope do LEM+ deve declarar o AOI integral e o último ano agrícola completo usado. result_applied_to_annual_map e result_applied_to_current_aoi são flags distintas; o mapa anual não pode ser registrado como resultado semântico atual. Os testes de imagem devem avaliar pixels reais do canvas e os testes SAR devem afirmar o limite de tentativas por cena.

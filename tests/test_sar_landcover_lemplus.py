@@ -178,11 +178,17 @@ class LandUseIntegrationTests(unittest.TestCase):
         self.assertFalse(any(str(c["source"]).startswith("MAPBIOMAS") for c in r["classes"]))
         audit=r["sar_classifier_lemplus"]
         self.assertTrue(audit["model_call_attempted"])
-        self.assertTrue(audit["result_applied_to_current_aoi"])
-        self.assertEqual(audit["execution_scope"],"AOI_INTEGRAL_DA_EXECUCAO_ATUAL")
+        self.assertFalse(audit["result_applied_to_current_aoi"])
+        self.assertTrue(audit["result_applied_to_annual_map"])
+        self.assertFalse(audit["current_semantic_classification"])
+        self.assertEqual(audit["temporal_scope"],
+                         "ULTIMO_ANO_AGRICOLA_COMPLETO; NÃO REPRESENTA COBERTURA ATUAL")
+        self.assertEqual(audit["execution_scope"],"AOI_INTEGRAL_ULTIMO_ANO_AGRICOLA_COMPLETO")
         self.assertAlmostEqual(audit["aoi_area_ha"],r["area_aoi_ha"],places=5)
         self.assertTrue(audit["aoi_sha256_wgs84"])
-        self.assertIn("resultado aplicado=True","\n".join(report_lines(r)))
+        self.assertIn("mapa anual aplicado=True","\n".join(report_lines(r)))
+        self.assertEqual(r["alternative_radar_screen"]["trigger_reason"],
+                         "PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE")
 
     def test_existing_sar_classifier_records_lemplus_as_not_executed(self):
         predicted = gpd.GeoDataFrame(

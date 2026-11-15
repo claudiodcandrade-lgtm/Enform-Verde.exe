@@ -40,10 +40,10 @@ class SinopWindowsRecurrenceTests(unittest.TestCase):
 
     def test_sar_has_transport_retries_and_an_independent_https_reader(self):
         src=inspect.getsource(recent_sar_landcover.run_recent_sar_screen)
-        self.assertIn("range(5 if provider==\"MPC\" else 4)",src)
+        self.assertIn("for attempt in ((0,4) if provider==\"MPC\" else (0,1))",src)
         self.assertIn("_open_signed_cog_via_https(",src)
         self.assertIn("HTTPS_STREAM_OR_MPC_AOI_CROP",src)
-        self.assertIn("range(5 if provider==\"MPC\" else 4)",inspect.getsource(sar_landcover_lemplus._monthly_features))
+        self.assertIn("for attempt in ((0,4) if provider==\"MPC\" else (0,1))",inspect.getsource(sar_landcover_lemplus._monthly_features))
         self.assertIn("HTTPS_BINARY_AOI_CROP",inspect.getsource(sar_landcover_lemplus._monthly_features))
         for fn in (recent_sar_landcover.run_recent_sar_screen,
                    sar_landcover_lemplus._monthly_features):

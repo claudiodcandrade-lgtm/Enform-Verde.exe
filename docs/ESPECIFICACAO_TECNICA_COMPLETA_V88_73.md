@@ -24,3 +24,8 @@ Os testes precisam passar no commit de código e no commit documental final: su�
 ## V88.74 — ajuste de gate
 
 O teste de integração deve registrar annual_map_applied, safra, escopo temporal, current_semantic_result_applied e status/gatilho da rota de contingência. Mapa anual pode ser transferido aos módulos de carbono e dashboard apenas como produto experimental daquele período; o estado semântico atual permanece em campo separado.
+
+
+## V88.75 — contratos de teste
+
+A trilha de auditoria do LEM+ registra o AOI integral e a safra completa, com flags separadas de aplicação anual e classificação atual. A suíte de regressão protege explicitamente esse contrato, a rejeição de pixels pretos no canvas e duas tentativas bounded por cena Sentinel-1.
