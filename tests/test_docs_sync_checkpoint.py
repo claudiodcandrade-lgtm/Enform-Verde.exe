@@ -1,13 +1,13 @@
 """Document gate contract: each substantive code change must keep three living specs in sync."""
 import unittest
 from tools.check_docs_updated import (
-    check, latest_change_window, SPEC, PROMPT, HISTORICAL_PROMPT, SOIL_SPEC,
+    check, latest_change_window, SPEC, PROMPT, SOIL_SPEC,
 )
 
 class WordSyncGateTests(unittest.TestCase):
     P = "docs/spec_updates/2026-11-05_v87_2_ci_contracts.md"
     WORKFLOW = "- " + P + "\n--entry " + P
-    REQUIRED_DOCS = {PROMPT, HISTORICAL_PROMPT, SOIL_SPEC}
+    REQUIRED_DOCS = {PROMPT, SOIL_SPEC}
 
     def test_original_code_commit_may_use_active_word_bot(self):
         changed = {"desktop_app.py", self.P} | self.REQUIRED_DOCS
@@ -32,14 +32,14 @@ class WordSyncGateTests(unittest.TestCase):
     def test_later_documentation_satisfies_latest_code_change(self):
         commits = [
             {"desktop_app.py"},
-            {PROMPT, HISTORICAL_PROMPT, SOIL_SPEC, self.P},
+            {PROMPT, SOIL_SPEC, self.P},
         ]
         changed = latest_change_window(commits)
         self.assertEqual(check(changed, workflow_text=self.WORKFLOW, word_exists=True)[1], [])
 
     def test_older_documents_do_not_certify_new_code(self):
         commits = [
-            {PROMPT, HISTORICAL_PROMPT, SOIL_SPEC, self.P, SPEC},
+            {PROMPT, SOIL_SPEC, self.P, SPEC},
             {"desktop_app.py"},
         ]
         changed = latest_change_window(commits)
@@ -52,7 +52,7 @@ class WordSyncGateTests(unittest.TestCase):
     def test_another_code_change_requires_newer_documentation(self):
         changed = latest_change_window([
             {"desktop_app.py"},
-            {PROMPT, HISTORICAL_PROMPT, SOIL_SPEC, self.P},
+            {PROMPT, SOIL_SPEC, self.P},
             {"tests/test_car_kml_map_setup_regression.py"},
         ])
         self.assertIn(SOIL_SPEC, check(changed, workflow_text=self.WORKFLOW, word_exists=True)[1])
