@@ -4,16 +4,22 @@ from tools.live_gui_optical_sinop import rendered_optical_status
 
 
 class TestLiveGuiOpticalSinop(unittest.TestCase):
+    QUALITY={"p99_luminance":120,"std_luminance":28,"visible_fraction":0.72}
+
+    def test_black_canvas_does_not_pass_even_when_photo_item_exists(self):
+        self.assertIsNone(rendered_optical_status("CBERS-4A/WFI",True,(900,420),1,
+            {"p99_luminance":0,"std_luminance":0,"visible_fraction":0}))
+
     def test_cbers_image_rendered_on_canvas_passes(self):
         self.assertEqual(
-            rendered_optical_status("CBERS-4A/WFI • INPE", True, (900, 420), 1),
+            rendered_optical_status("CBERS-4A/WFI • INPE", True, (900, 420), 1, self.QUALITY),
             "PASS_CBERS",
         )
 
     def test_sentinel2_image_rendered_on_canvas_passes_as_fallback(self):
         self.assertEqual(
             rendered_optical_status(
-                "Sentinel-2 L2A / Earth Search AWS public COGs", True, (900, 420), 1
+                "Sentinel-2 L2A / Earth Search AWS public COGs", True, (900, 420), 1, self.QUALITY
             ),
             "PASS_SENTINEL2_FALLBACK",
         )
@@ -21,7 +27,7 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
     def test_cache_passes_only_when_source_is_optical(self):
         self.assertEqual(
             rendered_optical_status(
-                "CACHE ÓPTICO • Sentinel-2 L2A", True, (900, 420), 1
+                "CACHE ÓPTICO • Sentinel-2 L2A", True, (900, 420), 1, self.QUALITY
             ),
             "PASS_SENTINEL2_FALLBACK",
         )

@@ -197,7 +197,7 @@ def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=Non
         post=request_post or requests.post
         try:
             response=post(url,json=feature,headers={"Accept":"image/tiff; application=geotiff"},
-                          timeout=(15,180),verify=True,stream=True)
+                          timeout=(8,30),verify=True,stream=True)
         except requests.RequestException as exc:
             raise RuntimeError("MPC AOI crop request failed: "+type(exc).__name__) from None
         with response:
@@ -249,7 +249,7 @@ def _open_signed_cog_via_https(asset_href, *, rasterio, token=None, token_fn=Non
         too_large=False
         try:
             with getter(signed,headers={"Accept-Encoding":"identity"},
-                        timeout=(15,180),stream=True,verify=True) as response:
+                        timeout=(8,30),stream=True,verify=True) as response:
                 if int(response.status_code)!=200:
                     raise RuntimeError("HTTPS COG download returned HTTP "+str(response.status_code))
                 content_type=str(response.headers.get("Content-Type","")).lower()
@@ -366,7 +366,9 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                     provider_diag["token_error_count"]+=1
             for dt,scene in provider_selected:
                 scene_ok=False
-                for attempt in range(5 if provider=="MPC" else 4):
+                # One normal read and one bounded binary AOI crop; do not repeat
+                # equivalent GDAL modes after the same auth/decoding failure.
+                for attempt in ((0,4) if provider=="MPC" else (0,1)):
                     provider_diag["pixel_read_attempt_count"]+=1
                     read_stage="asset_authorization"
                     try:
@@ -381,7 +383,7 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                             # default multiplexing, serial ranges, single GET,
                             # and serial ranges without HTTP/2 multiplexing.
                             gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
-                                       "GDAL_HTTP_TIMEOUT":"45","GDAL_HTTP_MAX_RETRY":"3",
+                                       "GDAL_HTTP_TIMEOUT":"12","GDAL_HTTP_MAX_RETRY":"1",
                                        "GDAL_HTTP_RETRY_DELAY":"1",**gdal_env()}
                             if attempt>=1:
                                 gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",

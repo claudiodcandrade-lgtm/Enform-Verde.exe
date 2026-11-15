@@ -9,16 +9,19 @@ from __future__ import annotations
 
 import json
 import sys
+import numpy as np
 import time
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 
-def rendered_optical_status(provider, visible, photo_size, canvas_image_count):
-    """Return PASS only for a CBERS/Sentinel-2 photo actually drawn on canvas."""
+def rendered_optical_status(provider, visible, photo_size, canvas_image_count, pixel_quality=None):
+    """Pass only if actual canvas pixels contain visible texture, not a blank PhotoImage."""
     provider=str(provider or "").strip().casefold()
     if not visible or not photo_size or min(photo_size)<=0 or canvas_image_count<1:
+        return None
+    if not isinstance(pixel_quality,dict) or pixel_quality.get("p99_luminance",0)<20 or pixel_quality.get("std_luminance",0)<5 or pixel_quality.get("visible_fraction",0)<0.15:
         return None
     if "cbers-4a/wfi" in provider:
         return "PASS_CBERS"
@@ -55,11 +58,16 @@ def main(timeout=180):
             photo=getattr(window,"google_map_photo",None)
             photo_size=(photo.width(),photo.height()) if photo is not None else None
             image_count=sum(window.map_canvas.type(item)=="image" for item in canvas_items)
-            passed=rendered_optical_status(provider,visible,photo_size,image_count)
+            from PIL import ImageGrab
+            x0,y0=window.map_canvas.winfo_rootx(),window.map_canvas.winfo_rooty()
+            pixels=np.asarray(ImageGrab.grab(bbox=(x0,y0,x0+window.map_canvas.winfo_width(),y0+window.map_canvas.winfo_height())).convert("RGB"),dtype=np.uint8)
+            luminance=pixels.astype("float32").mean(axis=2)
+            pixel_quality={"p99_luminance":float(np.percentile(luminance,99)),"std_luminance":float(luminance.std()),"visible_fraction":float((luminance>8).mean())}
+            passed=rendered_optical_status(provider,visible,photo_size,image_count,pixel_quality)
             if passed:
-                result.update(status=passed,provider=provider,
-                              canvas_items=len(canvas_items),canvas_image_items=image_count,
-                              image_width=photo_size[0],image_height=photo_size[1])
+                result.update(status=passed,provider=provider,canvas_items=len(canvas_items),
+                              canvas_image_items=image_count,image_width=photo_size[0],image_height=photo_size[1],
+                              canvas_pixel_quality=pixel_quality)
                 break
             time.sleep(0.12)
         else:

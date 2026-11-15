@@ -24,6 +24,20 @@ class CarbonPresentationRegression(unittest.TestCase):
         self.assertNotIn("VEGETAÇÃO NATIVA MAPEADA: 0,00 ha", result)
         self.assertIn("OUTROS USOS (não entram no estoque nativo): N/D", result)
 
+    def test_partial_pool_density_is_shown_with_coverage_without_extrapolation(self):
+        report={"area_aoi_ha":469.58,"native_area_ha":469.58,"unknown_cover_area_ha":0,
+                "known_total_tc":91483.0,"complete":False,
+                "strata":[{"class_name":"Floresta Estacional Sempre-Verde","area_ha":469.58,
+                  "components":[
+                    {"parametro":"Biomassa subterrânea","tc":16.31,"total_tc":7600.0,"quantified_area_ha":466.38},
+                    {"parametro":"Serapilheira","tc":3.08,"total_tc":1434.0,"quantified_area_ha":466.38}]}]}
+        result="\\n".join(executive_carbon_lines(report,pt))
+        self.assertIn("16,30",result)
+        self.assertIn("466,38 ha / 99,32%",result)
+        self.assertIn("3,08",result)
+        self.assertIn("TOTAL — parcial / incompleto",result)
+        self.assertIn("N/D",result)
+
     def test_three_units_and_provenance_of_uncertainty_kind(self):
         report={"area_aoi_ha":1, "native_area_ha":1, "unknown_cover_area_ha":0,
                 "known_total_tc":20, "complete":False,

@@ -155,11 +155,12 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
             # Atomic scene: commit both polarizations or neither.
             pair={}
             read_stage = "asset_authorization"
-            for attempt in range(5 if provider=="MPC" else 4):
+            # One normal read then one bounded binary AOI crop.
+            for attempt in ((0,4) if provider=="MPC" else (0,1)):
                 try:
                     for pol in ("vv","vh"):
                         gdal_opts={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",
-                                   "GDAL_HTTP_TIMEOUT":"45","GDAL_HTTP_MAX_RETRY":"3",
+                                   "GDAL_HTTP_TIMEOUT":"12","GDAL_HTTP_MAX_RETRY":"1",
                                    "GDAL_HTTP_RETRY_DELAY":"1",**tls_setup.gdal_env()}
                         if attempt>=1:
                             gdal_opts.update({"CPL_VSIL_CURL_USE_HEAD":"NO",

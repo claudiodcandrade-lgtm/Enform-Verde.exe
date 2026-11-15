@@ -30,7 +30,8 @@ class LemplusModelTests(unittest.TestCase):
     def test_primary_classifier_has_binary_mpc_aoi_cog_fallback(self):
         source=Path(sl.__file__).read_text(encoding="utf-8")
         body=source[source.index("def _monthly_features"):source.index("def _safe_error_detail")]
-        self.assertIn('range(5 if provider=="MPC" else 4)',body)
+        self.assertIn('for attempt in ((0,4) if provider=="MPC" else (0,1))',body)
+        self.assertNotIn('"GDAL_HTTP_TIMEOUT":"45"',body)
         self.assertIn("_open_signed_cog_via_https(",body)
         self.assertIn('"HTTPS_BINARY_AOI_CROP"',body)
         self.assertIn("max_bytes=128*1024*1024",body)
@@ -79,7 +80,12 @@ class LemplusModelTests(unittest.TestCase):
              patch("native_sar_experimental.run_sentinel1_native_screen",return_value={"status":"N/D"}), \
              patch("crop_mapbiomas_pam_fallback.build_mapbiomas_pam_contingency",return_value={"status":"N/D"}):
             result=run_land_use(AOI,d,ibge=ib)
-        self.assertTrue(result["sar_classifier_lemplus"]["result_applied_to_current_aoi"])
+        self.assertFalse(result["sar_classifier_lemplus"]["result_applied_to_current_aoi"])
+        self.assertTrue(result["sar_classifier_lemplus"]["result_applied_to_annual_map"])
+        self.assertEqual(result["sar_classifier_lemplus"]["current_semantic_classification"],False)
+        self.assertEqual(result["alternative_radar_screen"]["trigger_reason"],
+                         "PRIMARY_SEMANTIC_CLASSIFICATION_UNAVAILABLE")
+        self.assertIn("último ano agrícola completo", "\n".join(report_lines(result)))
         warnings="\n".join(result.get("warnings",[]))
         self.assertNotIn("Nenhum identificador SAR semântico operacional foi aplicado",warnings)
         self.assertNotIn("Nenhum identificador SAR executável compatível instalado",warnings)

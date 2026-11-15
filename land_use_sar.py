@@ -748,6 +748,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     # Always preserve an explicit per-run state. A result produced by a
     # separate CI fixture is not an application result; the app must either
     # execute this classifier for the loaded AOI or say why it did not.
+    annual_lemplus_layer=False
     lemplus_audit={
         'status':'NOT_EXECUTED',
         'model_call_attempted':False,
@@ -786,7 +787,11 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                 lay['source']=model_source
                 lay['taxonomy']='SAR RF experimental, ano agrícola '+str(res.get('season'))
                 layers.append(lay[['class_name','source','taxonomy','geometry']])
-                lemplus_audit['result_applied_to_current_aoi']=True
+                annual_lemplus_layer=True
+                lemplus_audit['temporal_scope']='ULTIMO_ANO_AGRICOLA_COMPLETO; NÃO REPRESENTA COBERTURA ATUAL'
+                lemplus_audit['current_semantic_classification']=False
+                lemplus_audit['result_applied_to_current_aoi']=False
+                lemplus_audit['result_applied_to_annual_map']=True
                 lemplus_audit['reason']=None
                 class_metadata={
                     'Formação savânica':{'parent':'vegetação natural'},
@@ -875,7 +880,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     except Exception as exc:
         recent_sar_cover={'status':'ERRO_TECNICO',
                           'reason':type(exc).__name__+': '+str(exc)[:200]}
-    if not any(str(row.get('source','')).startswith('SAR_VALIDADO') for layer in layers
+    if not annual_lemplus_layer and not any(str(row.get('source','')).startswith('SAR_VALIDADO') for layer in layers
                for _,row in layer.iterrows()):
         vector_path=(recent_sar_cover or {}).get('vector_path')
         if vector_path and Path(vector_path).is_file():
@@ -899,7 +904,7 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     # Pixel availability is not semantic-classifier success. If no primary
     # model produced classes for this AOI, invoke the independent radar route
     # even when Sentinel-1 experimental pixels were read successfully.
-    primary_semantic_applied=bool(active_sar_config)
+    primary_semantic_applied=bool(active_sar_config and not annual_lemplus_layer)
     alternative_radar_screen={
         'status':('NOT_NEEDED_PRIMARY_SEMANTIC_CLASSIFICATION_APPLIED'
                   if primary_semantic_applied else 'NOT_STARTED'),
@@ -923,6 +928,16 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
     summary['mapbiomas_failure']=mapbiomas_failure
     summary['mapbiomas_historical_reference']=mapbiomas_reference
     summary['sar_classifier_lemplus']=lemplus_audit
+    summary['annual_sar_classification']={
+        'status':lemplus_audit.get('status'),'season':lemplus_audit.get('season'),
+        'model_id':lemplus_audit.get('model_id'),'applied':bool(annual_lemplus_layer),
+        'temporal_scope':lemplus_audit.get('temporal_scope'),
+        'current_semantic_classification':False if annual_lemplus_layer else None}
+    summary['current_semantic_classification_status']=(
+        'N/D — mapa LEM+ representa o último ano completo, não a data atual'
+        if annual_lemplus_layer and not primary_semantic_applied else
+        'CLASSIFICADO_POR_SAR_ATUAL' if primary_semantic_applied else
+        'N/D — classificador semântico SAR atual indisponível')
     summary['second_crop_detection']=second_crop_detection
     summary['second_crop_source']=second_crop_source
     summary['second_crop_status']=second_crop_status
@@ -941,9 +956,10 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
                             for layer in layers for source in _layer_sources(layer))
     has_experimental_sar = any(source.startswith("SAR_EXPERIMENTAL_MODELO")
                             for layer in layers for source in _layer_sources(layer))
+    has_current_experimental_sar=has_experimental_sar and not annual_lemplus_layer
     summary['current_sar_crop_identification'] = (
         'CLASSIFICACAO_SAR_VALIDADA' if has_validated_sar else
-        'CLASSIFICACAO_SAR_EXPERIMENTAL_SEM_VALIDACAO_LOCAL' if has_experimental_sar else
+        'CLASSIFICACAO_SAR_EXPERIMENTAL_SEM_VALIDACAO_LOCAL' if has_current_experimental_sar else
         'N/D_SEM_MODELO_EXECUTAVEL_VALIDADO')
     summary['worldwide_candidate_sources'] = (
         ['ESA WorldCereal/Presto', 'agroimpacts LSTM/CNN',
@@ -1043,15 +1059,22 @@ def run_land_use(aoi, output_dir, config_path=None, mapbiomas_path=None, ibge=No
 
 
 def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
-    lines=['USO E COBERTURA — CLASSIFICAÇÃO SAR E INTERSEÇÃO ESPACIAL', summary['priority'], summary['method']]
+    lines=['USO E COBERTURA — CLASSIFICAÇÃO SAR E INTERSEÇÃO ESPACIAL',
+           'Estado semântico atual: '+str(summary.get('current_semantic_classification_status','N/D')),
+           summary['priority'], summary['method']]
     for row in summary['classes']:
         lines.append(f"  {row['class_name']}: {fmt(row['area_ha'])} ha ({fmt(row['area_pct'])}%) — {row['source']} / {row['taxonomy']}")
+    annual=summary.get('annual_sar_classification') or {}
+    if annual.get('applied'):
+        lines.append('MAPA SAR ANUAL — safra '+str(annual.get('season') or 'N/D')+
+                     '; classes abaixo referem-se a esse período, não à cobertura atual.')
     lines.append('Identificador SAR utilizado: '+str(summary.get('sar_model_config') or 'NENHUM; classes semânticas atuais N/D.'))
     lines.append('Seleção SAR: '+str(summary.get('sar_selection') or 'não especificada'))
     lemplus=summary.get('sar_classifier_lemplus') or {}
-    lines.append('CLASSIFICADOR SAZONAL SENTINEL-1 LEM+: '+str(lemplus.get('status','N/D'))+
+    lines.append('MAPA SAR ANUAL (último ano agrícola completo; não representa o estado atual): '+str(lemplus.get('status','N/D'))+
                  '; tentativa na AOI integral='+str(bool(lemplus.get('model_call_attempted',False)))+
-                 '; resultado aplicado='+str(bool(lemplus.get('result_applied_to_current_aoi',False))))
+                 '; mapa anual aplicado='+str(bool(lemplus.get('result_applied_to_annual_map',False)))+
+                 '; classificação semântica atual='+str(bool(lemplus.get('result_applied_to_current_aoi',False))))
     if lemplus.get('season'):
         lines.append('  Safra='+str(lemplus.get('season'))+'; cenas='+str(lemplus.get('scenes_used','N/D'))+
                      '; pixels='+str(lemplus.get('pixels','N/D'))+'; domínio='+str(lemplus.get('domain','N/D')))

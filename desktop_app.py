@@ -29,16 +29,21 @@ def _require_visible_optical_image(image,provider):
     pixels=np.asarray(image.convert("RGB"),dtype=np.uint8)
     if pixels.ndim!=3 or pixels.shape[2]!=3 or pixels.shape[0]<2 or pixels.shape[1]<2:
         raise RuntimeError(str(provider)+" retornou imagem óptica sem dimensões válidas")
-    luminance=pixels.astype(np.float32).mean(axis=2)
+    # Orange AOI styling must not make an otherwise black raster pass.
+    overlay=(pixels[:,:,0]>150)&(pixels[:,:,1]>65)&(pixels[:,:,1]<190)&(pixels[:,:,2]<110)
+    optical_pixels=pixels[~overlay]
+    if optical_pixels.size<3*max(16,int(pixels.shape[0]*pixels.shape[1]*0.05)):
+        raise RuntimeError(str(provider)+" retornou somente o contorno AOI, sem pixels ópticos verificáveis")
+    luminance=optical_pixels.astype(np.float32).mean(axis=1)
     p99=float(np.percentile(luminance,99))
     spread=float(np.std(luminance))
     visible_fraction=float(np.mean(luminance>8.0))
-    if p99<12.0 or spread<1.5 or visible_fraction<0.05:
+    if p99<20.0 or spread<5.0 or visible_fraction<0.15:
         raise RuntimeError(str(provider)+" retornou imagem óptica preta/em branco; fallback ativado")
     return image
 
 
-APP_VERSION="3.26.41-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.42-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -549,6 +554,13 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         return estimate_native_components(frame,phys,biome,sar_estimator,pronasolos_soc_profiles,
                                           property_aoi=aoi,inventory_evidence=inventory_evidence)
     result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
+    annual_scope=(land.get("annual_sar_classification") or {})
+    result["land_cover_period"]=(
+        "safra anual "+str(annual_scope.get("season"))+
+        " — máscara experimental; não representa cobertura atual"
+        if annual_scope.get("applied") else
+        "classificação semântica SAR atual" if land.get("current_semantic_classification_status")=="CLASSIFICADO_POR_SAR_ATUAL"
+        else "cobertura nativa atual não confirmada por classificador semântico SAR")
     native_strata=[st for st in result.get("strata",[]) if float(st.get("area_ha") or 0)>0]
     height_certs=[(st.get("sar_details") or {}).get("height_absence_certificate") for st in native_strata]
     height_certs=[c for c in height_certs if isinstance(c,dict)]
@@ -1784,9 +1796,9 @@ class App(tk.Tk):
         if error:
             # Keep the last accepted optical image when a refresh fails.
             if not getattr(self,'_satellite_map_visible',False):
-                self._draw_aoi_outline("Imagem CBERS-4A/Sentinel-2 indisponível — perímetro mantido")
+                self._draw_aoi_outline("Imagem óptica indisponível — fundo cartográfico de contingência / perímetro da AOI")
             kept=getattr(self,'_satellite_map_visible',False)
-            self.map_status.set("Atualização óptica indisponível; "+("última imagem óptica válida mantida. " if kept else "perímetro mantido. ")+"A análise segue independente do fundo.")
+            self.map_status.set("Imagem CBERS/Sentinel-2 indisponível; "+("última imagem óptica válida mantida. " if kept else "fundo de contingência exibido. ")+"A análise segue independente do fundo.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
@@ -1850,13 +1862,42 @@ class App(tk.Tk):
         self.map_canvas.create_text(w-14,14,anchor="ne",text="N",fill="#24382D",font=("Segoe UI",10,"bold"))
         self.map_canvas.create_line(w-20,48,w-20,24,fill="#24382D",width=2,arrow="first")
         def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
+        # Use the already-loaded official IBGE phytophysiognomy layer as a
+        # cartographic-only fallback when optical providers fail. This is a
+        # potential-formation reference, never current-cover evidence.
+        ibge_drawn=False
+        ibge_layer=getattr(self,"ibge_physiognomy_gdf",None)
+        if ibge_layer is not None and not getattr(ibge_layer,"empty",True):
+            try:
+                ibge_local=ibge_layer.to_crs(local)
+                bounds=ibge_local.geometry.bounds
+                visible=(bounds.maxx>=minx)&(bounds.minx<=maxx)&(bounds.maxy>=miny)&(bounds.miny<=maxy)
+                nearby=ibge_local.loc[visible].head(120)
+                colors=("#DCE8D8","#E8E6CF","#D7E2EA","#E9D8C9")
+                from shapely.geometry import box as _box
+                view_box=_box(minx,miny,maxx,maxy)
+                for idx,geom in enumerate(nearby.geometry):
+                    if geom is None or geom.is_empty:continue
+                    clipped=geom.intersection(view_box)
+                    parts=list(clipped.geoms) if clipped.geom_type=="MultiPolygon" else ([clipped] if clipped.geom_type=="Polygon" else [])
+                    for poly in parts:
+                        coords=[xy(x,y) for x,y in poly.exterior.coords]
+                        pts=[v for point in coords for v in point]
+                        if len(pts)>=6:
+                            self.map_canvas.create_polygon(*pts,fill=colors[idx%len(colors)],
+                                                           outline="#AAB9A7",width=1)
+                            ibge_drawn=True
+            except Exception:
+                ibge_drawn=False
         for geom in projected.geometry:
             polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
             for poly in polys:
                 pts=[]
                 for coord in poly.exterior.coords:pts.extend(xy(coord[0],coord[1]))
                 if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
-        self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
+        fallback_label=("FUNDO CARTOGRÁFICO IBGE — fitofisionomia potencial; não representa cobertura atual"
+                        if ibge_drawn else label+" — cartografia IBGE indisponível nesta execução")
+        self.map_canvas.create_text(12,12,anchor="nw",text=fallback_label,fill="#24382D",font=("Segoe UI",10,"bold"))
         # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
         bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
         self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)

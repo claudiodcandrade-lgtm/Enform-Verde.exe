@@ -101,10 +101,9 @@ def executive_carbon_lines(native, fmt):
     pct=(100*area/aoi_ha) if aoi_ha>0 else None
     others=float(native.get("excluded_other_uses_ha") or 0)
     cover_complete=(native.get("cover_completeness")=="COMPLETE")
-    # Compact, bounded stock table. Aggregate each pool by summed stock and
-    # only publish a per-area density when the pool covers the full native area.
+    # Show density over measured area; complete total remains coverage-gated.
     table=["+-----------------------------------------------+",
-           "| COMPARTIMENTO / TOTAL | tC/ha | tCO2e/ha | INCERTEZA tCO2e/ha | INCERTEZA % |",
+           "| COMPARTIMENTO / TOTAL | tC/ha (área quantificada) | tCO2e/ha | INCERTEZA tCO2e/ha | INCERTEZA % | COBERTURA (ha / % nativa) |",
            "+-----------------------------------------------+"]
     all_components=[c for st in native.get("strata",[]) for c in st.get("components",[])]
     pool_results={}
@@ -115,8 +114,7 @@ def executive_carbon_lines(native, fmt):
                     and isinstance(r.get("tc"),(int,float))]
         covered=sum(float(r.get("quantified_area_ha",r.get("area_ha") or 0)) for r in quantified)
         stock=sum(float(r["total_tc"]) for r in quantified) if quantified else None
-        density=(stock/area if stock is not None and area>0 and
-                 abs(covered-area)<=max(1e-6,area*1e-8) else None)
+        density=(stock/covered if stock is not None and covered>0 else None)
         row_unc=[]
         for r in quantified:
             u=uncertainty_for_pool(r)
@@ -132,7 +130,7 @@ def executive_carbon_lines(native, fmt):
                 sigma=row_unc[0][0]
             elif independent:
                 sigma=math.sqrt(sum((float(r.get("quantified_area_ha",r.get("area_ha")))*u[0])**2
-                                    for r,u in zip(quantified,row_unc)))/area
+                                    for r,u in zip(quantified,row_unc)))/covered
             else:
                 sigma=None
             unc_abs=(sigma*44/12 if sigma is not None else None)
@@ -143,7 +141,9 @@ def executive_carbon_lines(native, fmt):
         table.append("| "+pool+" | "+fmt(density) if density is not None else "| "+pool+" | N/D")
         table[-1]+=" | "+fmt(density*44/12) if density is not None else " | N/D"
         table[-1]+=" | "+fmt(unc_abs) if unc_abs is not None else (" | incerteza não mensurável" if stock is not None else " | N/D")
-        table[-1]+=" | "+fmt(unc_pct)+"% |" if unc_pct is not None else (" | incerteza não mensurável |" if stock is not None else " | N/D |")
+        table[-1]+=" | "+fmt(unc_pct)+"%" if unc_pct is not None else (" | incerteza não mensurável" if stock is not None else " | N/D")
+        coverage_pct=(100*covered/area if area>0 else None)
+        table[-1]+=" | "+(fmt(covered)+" ha / "+fmt(coverage_pct)+"%" if coverage_pct is not None else "N/D")+" |"
     total_uncertainty_rule=None
     if complete and area>0 and known is not None:
         total_density=known/area
@@ -173,7 +173,8 @@ def executive_carbon_lines(native, fmt):
     table.append("| "+total_label+" | "+(fmt(total_density) if total_density is not None else "N/D")+
                  " | "+(fmt(total_density*44/12) if total_density is not None else "N/D")+
                  " | "+(fmt(total_unc_abs) if total_unc_abs is not None else ("incerteza não mensurável" if known is not None else "N/D"))+
-                 " | "+(fmt(total_unc_pct)+"%" if total_unc_pct is not None else ("incerteza não mensurável" if known is not None else "N/D"))+" |")
+                 " | "+(fmt(total_unc_pct)+"%" if total_unc_pct is not None else ("incerteza não mensurável" if known is not None else "N/D"))+
+                 " | "+(fmt(area)+" ha / 100,00%" if complete else "cobertura incompleta")+" |")
     table.append("+-----------------------------------------------+")
     biodiversity=native.get("biodiversity_references") or []
     biodiversity_lines=["PERSPECTIVA DE BIODIVERSIDADE E ESTRUTURA — INVENTÁRIOS REGIONAIS",
@@ -212,6 +213,7 @@ def executive_carbon_lines(native, fmt):
             biodiversity_lines.append("Fontes: "+"; ".join(ref.get("institutions") or [])+
                 " — "+"; ".join(ref.get("source_urls") or []))
     lines=["PAINEL EXECUTIVO — ESTOQUES DE CARBONO",
+           "Base espacial: "+str(native.get("land_cover_period") or "período não informado"),
            "ÁREA TOTAL ANALISADA: "+fmt(aoi_ha)+" ha (100%)",
            "VEGETAÇÃO NATIVA MAPEADA: "+
                (fmt(area)+" ha"+(" ("+fmt(pct)+"% da AOI)" if pct is not None else "")
