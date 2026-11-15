@@ -12,3 +12,8 @@
 ## Estado de validação
 
 Esta alteração é uma candidata. Build Windows, suíte de regressão e teste live do canvas precisam passar sobre o commit exato para publicar o pacote como executável validado. A execução do KML privado original da Fazenda Maria Eduarda não é reproduzida pela fixture pública Sinop. Não há homologação de campo; safras, candidatos e compartimentos experimentais continuam rotulados com período, fonte e incerteza.
+
+
+## V88.74 handoff-gate adjustment
+
+The Windows and SAR integration smokes now distinguish an annual experimental map from a current semantic classification. The next complete validation run is on the synchronized code and Word-specification head; no functional pass is inferred from earlier pending or canceled workflows.
