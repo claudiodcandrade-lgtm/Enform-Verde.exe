@@ -434,3 +434,7 @@ A correção em andamento conecta a busca anual aos catálogos RTC MPC+INPE, sel
 A mudança também fecha duas falhas secundárias: o cenário de inventário não repete a consulta SAR e a falha de refresh óptico conserva a última imagem válida. Esses ajustes não substituem o aceite da rota principal.
 
 Validação ainda pendente: regressões no CI, busca live anual e build Windows no mesmo SHA; depois, KML integral da Fazenda Maria Eduarda até classificação, painéis e relatórios vinculados pelo mesmo run_id/hash. A versão continua pré-campo experimental e não homologada.
+
+## Prova live concluída, execução integral pendente (15/11/2026)
+
+O workflow 43667205598 executou o modelo ENFORM_SAR_BRASIL_RF_V2 com pixels Sentinel-1 RTC reais no recorte de 0,03° perto do centroide de Sinop: 30 cenas, 12 meses da safra 2025/2026, 1.692 pixels e polígonos experimentais. O recorte foi 1.084,73 ha, não o KML integral de 1.459,91 ha. Classes experimentais incluíram soja, floresta nativa, área antrópica e cobertura úmida. Prova confirma que MPC+INPE fornece a série temporal e a inferência do modelo opera no recorte; não comprova o mapa integral, carbono no dashboard, nem imagem óptica na tela. Build Windows e dashboard no SHA mais recente ainda pendentes.

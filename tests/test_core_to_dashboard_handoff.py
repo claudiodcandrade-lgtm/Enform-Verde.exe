@@ -290,10 +290,10 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         }
         native = {"known_total_tc": None, "area_aoi_ha": 3.0,
                   "strata": [{"area_ha": 1.0, "sar_details": sar_result}], "components": []}
-        with patch("geopandas.read_file", return_value=aoi), \\
-             patch("desktop_app.summarize_native_carbon", return_value=native), \\
-             patch("sar_pipeline.biomass_l2b_search", return_value=([], {"queries": [], "errors": []})), \\
-             patch("desktop_app.automatic_pipeline") as pipeline, \\
+        with patch("geopandas.read_file", return_value=aoi), \
+             patch("desktop_app.summarize_native_carbon", return_value=native), \
+             patch("sar_pipeline.biomass_l2b_search", return_value=([], {"queries": [], "errors": []})), \
+             patch("desktop_app.automatic_pipeline") as pipeline, \
              patch("ifn_carbon_fallback.estimate_inventory_carbon_scenario",
                    return_value={"status": "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR"}) as scenario:
             result = native_carbon_analysis(aoi, land, "Amazônia")

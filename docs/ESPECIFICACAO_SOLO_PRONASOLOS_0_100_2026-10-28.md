@@ -375,3 +375,8 @@ No commit de código dc79606d4073da23cf5c83aed54a23d500f1ef1a, dashboard e build
 ## Nota V88.66 — sincronização do pipeline
 
 Esta revisão não altera os métodos de carbono do solo, PronaSolos ou fertilidade. O estado e a auditoria SAR continuam vinculados à execução/hash da AOI; etapas pedológicas permanecem independentes de falhas do classificador SAR.
+
+
+## Prova live concluída, execução integral pendente (15/11/2026)
+
+O workflow 43667205598 executou o modelo ENFORM_SAR_BRASIL_RF_V2 com pixels Sentinel-1 RTC reais no recorte de 0,03° perto do centroide de Sinop: 30 cenas, 12 meses da safra 2025/2026, 1.692 pixels e polígonos experimentais. O recorte foi 1.084,73 ha, não o KML integral de 1.459,91 ha. Classes experimentais incluíram soja, floresta nativa, área antrópica e cobertura úmida. Prova confirma que MPC+INPE fornece a série temporal e a inferência do modelo opera no recorte; não comprova o mapa integral, carbono no dashboard, nem imagem óptica na tela. Build Windows e dashboard no SHA mais recente ainda pendentes.

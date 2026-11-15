@@ -1,19 +1,7 @@
-# Auditoria funcional V88.66
+# Auditoria funcional V88.66 — atualização live
 
-Data: 15/11/2026. Candidata 3.26.39-PRECAMPO-EXPERIMENTAL. AOI relatada: Fazenda Maria Eduarda, Sinop/MT. A versão 3.26.38 passou CI/build, mas o relatório de execução posterior demonstrou falha real; as aprovações anteriores não comprovam esse percurso.
+A conexão principal foi corrigida no classificador anual: a busca RTC MPC+INPE encontrou pares VV/VH para a janela agrícola completa. No workflow live 43667205598, recorte de 0,03° próximo ao centroide de Sinop (não KML integral): 30 cenas, doze meses da safra 2025/2026, 1.692 pixels; modelo ENFORM_SAR_BRASIL_RF_V2 gerou polígonos experimentais. Classificou áreas experimentais de soja, floresta nativa, área antrópica/corte raso e úmida. A área do recorte foi 1.084,73 ha, inferior à AOI reportada de 1.459,91 ha. Sem validação de campo; incerteza de transferência para a fazenda não mensurável.
 
-## Causa confirmada
+A prova confirma o mecanismo da falha anterior e que a rota principal opera num recorte real. Ainda não confirma processamento do KML integral, entrega de máscaras a carbono/agricultura/dashboard na execução do usuário, imagem óptica persistente, ou build Windows final. O dashboard CI detectou erro de sintaxe no fixture do teste de contingência (dupla barra de continuação); teste corrigido e precisa ser repetido. O build Windows também barrou a ausência de APP_RELEASE_NOTES_v3.26.39.md; arquivo incluído. CI após ambos os ajustes é obrigatória.
 
-O modelo ENFORM_SAR_BRASIL_RF_V2 já está no pacote e exige pares VV/VH por 12 meses agrícolas. O classificador anual consultava somente Microsoft Planetary Computer; a triagem recente usava MPC e INPE e por isso lia cenas que não chegavam ao vetor de atributos do classificador. A triagem gerava candidatos experimentais, mas não classe semântica. O carbono só processava estratos nativos classificados, então a falha semântica também deixava compartimentos N/D.
-
-## Correção da rota principal
-
-A busca anual usa agora MPC e INPE. Escolhe uma única fonte e órbita com maior cobertura mensal, prioriza MPC apenas em empate e lê assets INPE diretamente. Não mistura provedores. Se a janela ainda não tiver 12 pares lidos, abstem-se e registra provedor, órbita e meses faltantes, sem fabricar máscara. O teste local usa GeoTIFFs sintéticos.
-
-## Correções secundárias
-
-A contingência de inventário não relança SAR e pode executar cenário condicional, sempre separado do estoque medido. Falha ao atualizar fundo mantém a última imagem óptica válida. Nenhum desses itens substitui a classificação principal.
-
-## Situação
-
-CI anterior falhou porque um teste esperava a segunda execução SAR. O teste foi atualizado para exigir reutilização das evidências da execução corrente. A CI da busca anual MPC+INPE e o live de Sinop ainda estão pendentes. O teste sintético não é prova de disponibilidade real. Não distribuir como funcional nem homologado até todos os gates aceitarem o mesmo commit e o KML integral chegar aos painéis/relatórios com o mesmo run_id/hash.
+Status: 3.26.39-PRECAMPO-EXPERIMENTAL em validação; não homologado. Não liberar como final até dashboard, build Windows e processamento ponta a ponta da AOI real passarem no mesmo SHA.
