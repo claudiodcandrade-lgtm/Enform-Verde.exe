@@ -42,3 +42,17 @@ CBERS/Sentinel-2 são opcionais e não bloqueiam a análise. A UI mantém um fun
 ## V88.77 — correção do smoke de compilação
 
 No SHA `c24e441e396ea3f19bd8ec4d0845e52e3245ee43`, a CI identificou uma docstring não encerrada no script `tools/live_optical_coverage_brazil.py`. Isso interrompia o `compileall` e impedia o build Windows antes do empacotamento, apesar dos testes unitários e regressivos passarem. A docstring foi fechada no commit corretivo. É obrigatório repetir compilação, suíte, smoke óptico/cartográfico, smoke de pixels do canvas, SAR live e build no SHA final. A correção do teste não prova cobertura óptica nacional; a UI deve manter a contingência IBGE/AOI.
+
+
+## V88.79 — validação do build e handoff SAR (15/11/2026)
+
+Código testado: `8551bcaf84586af71ae574abda8a6e37e467f4d3`. Aplicação: `3.26.42-PRECAMPO-EXPERIMENTAL`.
+
+- CI dashboard: suíte integral 1.173 testes e guard documental aprovados.
+- Build Windows: concluído; UI smoke em pasta limpa, teste de módulos e paridade Python/EXE, leitura real de rede e aceitação do KMZ Tapajós aprovados.
+- CBERS-4A/WFI: 11/11 AOIs de amostra com pixels e cobertura de 100%; isso não é prova exaustiva de todo o território.
+- Tela Windows: `PASS_AOI_FALLBACK`; o perímetro e canvas não ficam pretos, mas este smoke específico não capturou imagem CBERS nem fundo IBGE dentro da janela.
+- Sentinel-1: handoff ponta a ponta passou em amostra pública Sinop e KMZ Tapajós: processamento → uso da terra → carbono → payload dashboard. Artefatos registram `BOTH_AOIS_END_TO_END_HANDOFF_PASSED`.
+- Pacote EXE: SHA-256 `796561975818f2e6a6db8d7858875f6d080b926d523885583bf9907c5c7fff35`; ZIP do artifact SHA-256 `31653bc1c2edb1b066b5ccb3e1056858c8114bbcca91b82872bdd6aa70849312`.
+
+**Pendências e interpretação:** o SAR transmitido e aplicado é mapa experimental do último ano agrícola completo 2025/2026, não monitoramento semântico atual; classificação atual N/D e rota radar alternativa `ACESSO_RESTRITO`. Estoque de carbono entregue é parcial/incompleto, com compartimentos sem suporte e incertezas não quantificáveis explicitamente. A amostra pública Sinop não é o KML privado integral Fazenda Maria Eduarda. Homologação científica/campo não passou. A entrega pode ser chamada de build operacional testado no escopo descrito, não de versão homologada ou garantia universal.
