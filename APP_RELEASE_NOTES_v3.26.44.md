@@ -18,3 +18,8 @@ Esta é uma candidata experimental até a suíte integral, os workflows, o build
 O push da branch `patches-3.26.6` foi confirmado no commit documental `df114b6b3424605397156a7079beb0b012b27297`, associado ao código `f797c6320baa9713cbcba6c199cb05357f0c5de8`. Os testes SAR live/dashboard, a prova real ESA BIOMASS FH e o smoke Windows do worker óptico até o canvas em Sinop passaram. Os builds Windows completos `43756793415` e `43756788960` ainda estavam em andamento na última consulta; a liberação do executável depende de conclusão verde e verificação do artefato.
 
 A otimização de solo já está incluída: reuso de dados preparados por AOI e leitura de mosaicos em tiles/VRT indexado. Reduz trabalho repetido e memória de pico; o tempo total ainda não foi quantificado por benchmark comparável.
+
+
+## Atualização V88.85 — builds Windows concluídos
+
+Os builds Windows do código `3.26.44-PRECAMPO-EXPERIMENTAL` terminaram com sucesso nos runs `43756793415` e `43756788960`. O artefato `Enform-Verde-Windows-v3.26.44-PRECAMPO-EXPERIMENTAL` tem 197.844.115 bytes; SHA-256 do ZIP: `3ca6a9e41219a931668b40a701401b99714be8a1ea6a83a9fe87fb3a50e315a9`. O workflow não publicou GitHub Release (`publish-release` ignorado); o arquivo está disponível como artefato de Actions. Smokes ópticos, canvas Windows, SAR live e autoteste do EXE passaram nos cenários indicados, sem representar teste do KML privado integral da Fazenda Maria Eduarda ou homologação científica de campo. O ganho de tempo da otimização ainda não foi quantificado.
