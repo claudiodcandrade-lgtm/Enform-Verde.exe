@@ -54,4 +54,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
           git diff --cached --quiet || git commit -m "docs: synchronize Word with v88.66 SAR route checkpoint"
-          git push origin HEAD:feature/agricultural-identification-native-carbon
+          git push origin HEAD:${{ github.ref_name }}
