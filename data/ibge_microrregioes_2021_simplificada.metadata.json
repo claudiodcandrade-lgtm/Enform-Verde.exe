@@ -1,0 +1,16 @@
+{
+  "source_agency": "IBGE",
+  "product": "Malha de Microrregiões Geográficas 2021 (BR_Microrregioes_2021)",
+  "source_url": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2021/Brasil/BR/BR_Microrregioes_2021.zip",
+  "source_zip_sha256": "cf32bd3ec9a91ea7e6bd39e971414cdb932cb9e8c9aab6243cb3676d7fdb81c5",
+  "processing": "reprojetada SIRGAS 2000 (EPSG:4674) -> EPSG:4326; simplify(0.003 grau, preserve_topology=True); GeoJSON gzip mtime=0",
+  "purpose": "localizar a microrregião N9 (558 códigos da PAM/SIDRA tabela 5457) que contém o talhão; não usar para área",
+  "fields": [
+    "CD_MICRO",
+    "NM_MICRO",
+    "SIGLA"
+  ],
+  "features": 560,
+  "sha256": "1d8a48b938911831cc29b7c86af7e62f2ab8f762bd64d868a11b7e206f150bbc",
+  "retrieved_at_utc": "2026-11-03"
+}
