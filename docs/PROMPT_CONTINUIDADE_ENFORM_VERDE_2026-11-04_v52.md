@@ -416,3 +416,10 @@ Para a Fazenda Maria Eduarda, a aprovação exige uma única execução reproduz
 ### Status
 
 A candidata 3.26.38-PRECAMPO-EXPERIMENTAL está em validação. Sintaxe Python das alterações preparada e compilada localmente; a suíte completa, o dashboard, o build Windows e o teste integral do KML ainda precisam terminar sobre o mesmo SHA. Não declarar nova versão validada, artefato pronto ou funcionamento na Fazenda Maria Eduarda antes da evidência desses gates. A validação científica independente de campo continua pendente.
+
+
+## V88.65 — validação dos workflows da candidata 3.26.38 (14/11/2026)
+
+A candidata 3.26.38-PRECAMPO-EXPERIMENTAL foi validada por CI/build no commit de código dc79606d4073da23cf5c83aed54a23d500f1ef1a. Dashboard 43659083027: 1.160 testes aprovados, incluindo descoberta integral e guard documental. Build Windows 43659082998: aprovado, incluindo build e autoteste do executável em cópia limpa; smokes ópticos, leitura live Sentinel-1 nos seis biomas, leitura SAR real no Tapajós, fonte/classificação IBGE, teste SICAR e prova real ESA BIOMASS FH em Sinop. Artefato Windows Enform-Verde-Windows-v3.26.38-PRECAMPO-EXPERIMENTAL: 197.808.715 bytes; SHA-256 ZIP e85085a2085453cfd8a54e9a601fc85c2e237434c39146a83b4cc0f829f93c2a.
+
+A prova live de pixels e os smokes nacionais comprovam os respectivos módulos e localidades, não o percurso integral do KML privado da Fazenda Maria Eduarda até o dashboard. Esse percurso segue sem evidência ponta a ponta no mesmo run_id/hash. O gate de homologação científica permanece reprovado por ausência dessa execução completa e de validação de campo. A versão continua experimental pré-campo; não declarar homologação.

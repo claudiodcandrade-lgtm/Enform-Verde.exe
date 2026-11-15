@@ -365,3 +365,8 @@ Estado: candidata experimental pré-campo. A homologação científica independe
 A etapa de pedologia/PronaSolos não pode apagar resultados SAR, uso da terra ou carbono que já tenham sido calculados. Falhas de pedologia e fertilidade devem ser declaradas por módulo, com motivo e estado N/D/ERRO_TECNICO; os módulos anteriores permanecem vinculados à mesma execução e AOI. O status do solo não altera as fontes oficiais, a profundidade de 0–100 cm, nem autoriza imputação de carbono ou fertilidade. Um checkpoint de auditoria é complementar à apresentação do resultado; se falhar, registrar a falha sem descartar saídas válidas.
 
 A candidata 3.26.38 ainda precisa passar suíte, dashboard e build Windows no mesmo commit. Esta alteração arquitetural não comprova cobertura PronaSolos nem execução integral da Fazenda Maria Eduarda.
+
+
+## V88.65 — validação do pipeline e preservação dos estados de solo
+
+No commit de código dc79606d4073da23cf5c83aed54a23d500f1ef1a, dashboard e build Windows passaram; a candidata preserva resultados SAR/uso da terra quando uma etapa posterior de carbono, pedologia ou fertilidade falha e apresenta estado e motivo por módulo. O build incluiu fontes live e autoteste do EXE. Isso não comprova cobertura PronaSolos em toda AOI nem substitui a execução integral do KML privado de Sinop até o painel. Carbono do solo permanece 0–100 cm e fontes de solo continuam oficiais; não imputar valores.
