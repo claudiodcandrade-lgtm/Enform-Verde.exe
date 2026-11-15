@@ -71,6 +71,53 @@ def current_sar_cultivated_candidate_geometry(land):
     return gpd.GeoDataFrame(geometry=geoms, crs=crs)
 
 
+def current_candidate_vigor_blocks(candidates, *, max_blocks=18,
+                                   min_block_area_ha=2.0,
+                                   target_block_area_ha=16.0,
+                                   max_targets=6,
+                                   min_reference_blocks=6):
+    """Split a dissolved current SAR-candidate mask into disjoint target and
+    internal-reference blocks.
+
+    The blocks are spatial diagnostics, not independent fields or validation
+    observations. Returning N/D when the footprint cannot supply the existing
+    six-reference minimum prevents pixel fragments being counted as fields.
+    """
+    import geopandas as gpd
+    from shapely.ops import unary_union
+
+    if candidates is None or candidates.empty or candidates.crs is None:
+        return {"status": "N/D", "reason": "máscara de candidatos SAR vazia ou sem CRS",
+                "target_blocks": [], "reference_gdf": None}
+    shapes = [g for g in candidates.geometry if g is not None and not g.is_empty]
+    if not shapes:
+        return {"status": "N/D", "reason": "máscara de candidatos SAR sem geometrias válidas",
+                "target_blocks": [], "reference_gdf": None}
+    footprint = gpd.GeoDataFrame(geometry=[unary_union(shapes)], crs=candidates.crs)
+    blocks = sample_crop_patches(footprint, max_patches=max_blocks,
+                                 min_area_ha=min_block_area_ha,
+                                 target_patch_ha=target_block_area_ha,
+                                 min_purity=.90)
+    if len(blocks) < min_reference_blocks + 1:
+        return {"status": "N/D", "reason": (
+                    f"máscara SAR candidata permite apenas {len(blocks)} blocos internos; "
+                    f"vigor relativo exige 1 alvo e ao menos {min_reference_blocks} blocos de referência"),
+                "target_blocks": [], "reference_gdf": None,
+                "blocks_available": len(blocks)}
+    n_targets = min(max_targets, len(blocks) - min_reference_blocks)
+    target_blocks = blocks[:n_targets]
+    reference_blocks = blocks[n_targets:]
+    reference_gdf = gpd.GeoDataFrame(
+        geometry=[block.geometry.iloc[0] for block in reference_blocks],
+        crs=reference_blocks[0].crs)
+    return {"status": "ok", "target_blocks": target_blocks,
+            "reference_gdf": reference_gdf,
+            "blocks_available": len(blocks),
+            "target_block_count": len(target_blocks),
+            "reference_block_count": len(reference_blocks),
+            "block_area_ha": target_block_area_ha}
+
+
 def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
                         target_patch_ha=64.0, min_purity=.90):
     """Deterministic representative interior patches, using equal-area metres.
@@ -124,10 +171,13 @@ def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
 
 def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
                            max_patches=6, require_scene_evidence=False,
-                           min_area_ha=12.0, target_patch_ha=64.0):
-    patches = sample_crop_patches(crop_gdf, max_patches=max_patches,
-                                  min_area_ha=min_area_ha,
-                                  target_patch_ha=target_patch_ha)
+                           min_area_ha=12.0, target_patch_ha=64.0,
+                           patches=None):
+    # Callers with a designed sample/reference split can supply the target
+    # blocks. Otherwise preserve the existing deterministic patch selection.
+    patches = patches if patches is not None else sample_crop_patches(
+        crop_gdf, max_patches=max_patches, min_area_ha=min_area_ha,
+        target_patch_ha=target_patch_ha)
     if not patches:
         return {"status": "N/D", "reason": "sem parcelas internas suficientemente homogêneas no mapa anual",
                 "patches_evaluated": 0, "patches_valid": 0}
@@ -153,6 +203,7 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
                          "composite_boot_p05_p95": result.get("composite_boot_p05_p95"),
                          "n_bootstrap": result.get("n_bootstrap"),
                          "reference_fields": result.get("reference_fields"),
+                         "reference_blocks": result.get("reference_blocks"),
                          "size_basis": result.get("size_basis"),
                          "probabilities": result.get("probabilities"),
                          "uncertainty_scope": result.get("uncertainty_scope"),
@@ -194,5 +245,5 @@ def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
             "sample_audit": attempts, "accepted_scenes": accepted_scenes,
             "acquisition_period_utc": [min(x["acquisition_utc"] for x in accepted_scenes),
                                        max(x["acquisition_utc"] for x in accepted_scenes)] if accepted_scenes else None,
-            "source": "Sentinel-1 RTC + classes MapBiomas, amostragem espacial dirigida",
+            "source": "Sentinel-1 RTC VV/VH + geometria SAR fornecida, amostragem espacial dirigida",
             "uncertainty_warning": "Probabilidades descritivas das amostras, NÃO calibradas para todo o município; erro de transferência e seleção não quantificado"}

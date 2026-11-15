@@ -9,8 +9,12 @@ status when the newer forecast itself is not available.
 from __future__ import annotations
 
 
-def remove_superseded_yield_placeholders(chunks):
-    """Return a copy of text chunks without contradictory provisional lines."""
+def remove_superseded_yield_placeholders(chunks, *, replace_yield_results=False):
+    """Return text chunks without superseded yield lines.
+
+    When a later crop-specific panel has run, replace every earlier yield and
+    production line so a stale cartographic fallback cannot contradict it.
+    """
     out = []
     for chunk in chunks:
         text = str(chunk)
@@ -20,6 +24,10 @@ def remove_superseded_yield_placeholders(chunks):
             is_productivity = (clean.startswith("Produtividade provável:") or
                                clean.startswith("Produtividade estimada no momento dessa análise:"))
             is_production = clean.startswith("Produção provável:")
+            is_yield_note = (clean.startswith("Nota: a área de 2025 é hipótese de cenário") or
+                             clean.startswith("Limite: classe MapBiomas anual"))
+            if replace_yield_results and (is_productivity or is_production or is_yield_note):
+                continue
             provisional = (
                 ("BLOQUEADA" in clean or "INDISPONÍVEL" in clean)
                 and (is_productivity or is_production)

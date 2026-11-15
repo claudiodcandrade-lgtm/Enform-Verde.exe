@@ -28,6 +28,16 @@ class SinopExecutiveConsistencyTest(unittest.TestCase):
         text = "Produtividade estimada no momento dessa análise: BLOQUEADA — modelo insuficiente\n"
         self.assertEqual(remove_superseded_yield_placeholders([text]), [""])
 
+    def test_successful_panel_replaces_stale_mapbiomas_yield_scenario(self):
+        text=("Produtividade estimada no momento dessa análise: ESTIMATIVA antiga\n"
+              "Produção provável: CENÁRIO sobre área cartográfica MapBiomas 2025\n"
+              "Nota: a área de 2025 é hipótese de cenário\n"
+              "Limite: classe MapBiomas anual\nCarbono nativo: separado\n")
+        out="".join(remove_superseded_yield_placeholders([text],replace_yield_results=True))
+        self.assertNotIn("MapBiomas",out)
+        self.assertNotIn("Produção provável:",out)
+        self.assertIn("Carbono nativo",out)
+
 
 class ExecutiveCoverDistributionTests(unittest.TestCase):
     def test_every_disjoint_cover_class_has_area_percent_and_reconciliation(self):

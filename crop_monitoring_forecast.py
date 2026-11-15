@@ -5,7 +5,7 @@ Pure function (no tkinter) so it is testable and runs in a worker thread.
 """
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from crop_identifier_consolidated import CROPS, REGISTRY, attribute_unseparated
 CANONICAL_CROPS = {name.casefold(): name for name in CROPS}
@@ -64,7 +64,8 @@ def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
     a conditional Sentinel-1 diagnostic, never for current crop confirmation
     or crop-specific yield conditioning.
     """
-    from crop_spatial_monitoring import current_sar_cultivated_candidate_geometry
+    from crop_spatial_monitoring import (current_sar_cultivated_candidate_geometry,
+                                         current_candidate_vigor_blocks)
     orbital=(land or {}).get("recent_sar_cover") or {}
     if orbital.get("status") == "ERRO_TECNICO":
         return {"status":"ERRO_TECNICO",
@@ -80,16 +81,54 @@ def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
         return {"status": "N/D", "reason": "a série SAR atual foi lida, mas não há polígonos candidatos cultivados suficientes/representados no vetor ou raster",
                 "crop_confirmed": False, "scope": "CURRENT_CULTIVATED_CANDIDATE"}
     try:
-        from shapely.ops import unary_union
         import geopandas as gpd
-        merged = unary_union(list(candidates.geometry))
-        if merged is None or merged.is_empty:
+        from shapely.ops import unary_union
+        footprint = unary_union(list(candidates.geometry))
+        if footprint is None or footprint.is_empty:
             raise ValueError("máscara candidata SAR vazia")
-        target = gpd.GeoDataFrame(geometry=[merged], crs=candidates.crs)
+        target = gpd.GeoDataFrame(geometry=[footprint], crs=candidates.crs)
+        block_design = current_candidate_vigor_blocks(candidates)
+        if block_design.get("status") != "ok":
+            return {"status": "N/D", "reason": block_design.get("reason"),
+                    "patches_evaluated": block_design.get("blocks_available", 0),
+                    "patches_valid": 0,
+                    "crop_confirmed": False, "scope": "CURRENT_CULTIVATED_CANDIDATE"}
+        target_blocks = block_design["target_blocks"]
+        references = block_design["reference_gdf"]
+
+        # Discover the current scene once for the AOI, then reuse that exact
+        # acquisition and runtime token across sample blocks. This avoids up to
+        # 6 repeated MPC/INPE catalog searches while preserving per-block pixel
+        # and age checks in automatic_vigor.
+        use_live_vigor = getattr(vigor_fn, "__name__", "") == "automatic_vigor"
+        search_result = None
+        token_cache = {"value": None}
+
+        def cached_token():
+            if token_cache["value"] is None:
+                from sentinel1_mpc import get_runtime_sas_token
+                token_cache["value"] = get_runtime_sas_token()
+            return token_cache["value"]
+
+        if use_live_vigor:
+            from shapely.geometry import box as _box, mapping as _mapping
+            from sentinel1_sources import search_sentinel1_sources
+            end = datetime.combine(as_of, datetime.max.time()).replace(tzinfo=timezone.utc)
+            start = end - timedelta(days=30)
+            search_result = search_sentinel1_sources(
+                _mapping(_box(*target.to_crs(4326).geometry.iloc[0].bounds)),
+                start_utc=start, end_utc=end)
 
         def candidate_scene_vigor(patch, day, label):
-            if getattr(vigor_fn, "__name__", "") == "automatic_vigor":
-                return vigor_fn(patch, day, label, reference_gdf=candidates)
+            if use_live_vigor:
+                result = vigor_fn(
+                    patch, day, label, reference_gdf=references,
+                    reference_mode="sar_candidate_blocks",
+                    search=lambda *_a, **_kw: search_result,
+                    token_fn=cached_token)
+                if isinstance(result, dict):
+                    result["source"] = "Sentinel-1 RTC VV/VH real, acquisition dated; blocks from current cultivated-area candidates SAR; crop identity unconfirmed"
+                return result
             return vigor_fn(patch, day, label)
 
         result = sampled_fn(
@@ -98,13 +137,19 @@ def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
             require_scene_evidence=True,
             min_area_ha=2.0,
             target_patch_ha=16.0,
+            patches=target_blocks,
         )
         result.update({"crop_confirmed": False, "scope": "CURRENT_CULTIVATED_CANDIDATE"})
+        result["reference_block_design"] = {
+            "target_blocks": block_design["target_block_count"],
+            "reference_blocks": block_design["reference_block_count"],
+            "block_area_ha": block_design["block_area_ha"],
+            "interpretation": "blocos espaciais diagnósticos da mesma máscara SAR; não são talhões independentes nem validação de campo"}
         if result.get("status") in ("experimental", "validated"):
             result.update({
                 "classification": "CONDITIONAL_EXPERIMENTAL",
                 "source": "máscara de candidato cultivado Sentinel-1 em janela móvel de até 150 dias + pixels VV/VH de aquisição com até 30 dias",
-                "reference_definition": "outros polígonos da classe SAR candidata 2, mesma AOI e aquisição; cultura não identificada",
+                "reference_definition": "blocos espaciais não sobrepostos amostrados da máscara SAR candidata cultivada da mesma AOI e aquisição; cultura não identificada",
                 "interpretation_limit": "indicador relativo de estrutura/retroespalhamento SAR; não confirma cultura, sanidade nem vigor agronômico absoluto",
             })
         else:
@@ -121,7 +166,7 @@ def _append_candidate_vigor_lines(lines, result):
         distribution = ", ".join(f"{k} {100*float(v):.0f}%" for k, v in probs.items())
         lines.append("• Vigor SAR RELATIVO — CONDICIONAL/EXPERIMENTAL em área cultivada candidata; cultura não identificada: "
                      + str(result.get("class", "N/D")) + (" (" + distribution + ")" if distribution else "") + ".")
-        lines.append("  A classe compara pixels/candidatos SAR da mesma AOI na mesma aquisição; não confirma cultivo atual, espécie, fitossanidade ou vigor absoluto.")
+        lines.append("  A classe compara blocos espaciais SAR candidatos da mesma AOI e aquisição; é assinatura estrutural relativa, não vigor agronômico validado, cultura, fitossanidade ou produtividade.")
         lines.append("  Máscara de candidatos: série temporal móvel de até 150 dias; vigor calculado apenas com VV/VH de cena datada dentro de 30 dias.")
         lines.append("  Amostras SAR válidas: " + str(result.get("patches_valid", 0)) + "/" + str(result.get("patches_evaluated", 0)) +
                      "; área de candidatos coberta: " + format(float(result.get("sar_sample_coverage_fraction", 0))*100, ".1f") + "%.")
@@ -142,8 +187,10 @@ def _append_candidate_vigor_lines(lines, result):
                     metrics_line.append(f"{label} {float(value):.3f}{suffix}")
                 if metrics_line:
                     lines.append("  Indicadores SAR: " + "; ".join(metrics_line) + ".")
-                if sample.get("reference_fields") is not None:
-                    lines.append("  Referências SAR contemporâneas da mesma classe candidata: " + str(sample.get("reference_fields")) + "; composição de referências indicada na auditoria.")
+                if sample.get("reference_blocks") is not None:
+                    lines.append("  Blocos SAR contemporâneos usados como referência interna: " + str(sample.get("reference_blocks")) + "; não são talhões independentes nem amostras de validação.")
+                elif sample.get("reference_fields") is not None:
+                    lines.append("  Talhões SAR contemporâneos de referência: " + str(sample.get("reference_fields")) + "; proveniência indicada na auditoria.")
         lines.append("  Bootstrap espacial e probabilidades medem estabilidade interna, não acurácia validada em campo; altura em metros não é inferida de VV/VH.")
         for sample in result.get("sample_audit") or []:
             if sample.get("scene_id") and sample.get("acquisition_utc"):
@@ -382,6 +429,25 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                                     "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
                                   as_of=as_of)
                 lines += ["  " + l for l in forecast_lines(rep)]
+                forecast_inputs = {
+                    "crop_mask_source": crop_source,
+                    "crop_mask_season": model_season if annual_experimental else None,
+                    "crop_area_ha": float(area),
+                    "yield_model": rep.get("model_label") or rep.get("model"),
+                    "yield_history": "IBGE PAM N9, escala microrregional",
+                    "weather_and_water_balance": "NASA POWER + FAO-56/FAO-33; fonte/período no relatório de previsão",
+                    "current_crop_specific_sar_vigor_used": bool(
+                        vigor_usable and forecast_vigor is vig and not annual_experimental),
+                    "current_candidate_vigor_status": candidate_vigor.get("status"),
+                    "current_candidate_vigor_interpretation": "assinatura estrutural SAR relativa; não identifica cultura nem substitui vigor agronômico calibrado",
+                    "area_transfer_uncertainty": "NAO_QUANTIFICADA" if annual_experimental else None,
+                }
+                entry["forecast_inputs"] = forecast_inputs
+                lines.append("  Entradas da previsão: produtividade pelo painel PAM + clima/balanço hídrico; máscara/área de cultura por "
+                             + ("SAR experimental retrospectivo da safra " + str(model_season or "N/D")
+                                if annual_experimental else "SAR classificado para a área da cultura")
+                             + ("; vigor SAR atual não incorporado à produtividade." if not forecast_inputs["current_crop_specific_sar_vigor_used"]
+                                else "; vigor SAR datado sobre máscara SAR da cultura incorporado conforme modelo."))
                 if annual_experimental:
                     lines.append("  PREVISÃO CONDICIONAL: área e cultura da safra anterior; transferência para "
                                  "a safra corrente NÃO quantificada; usar para aferição experimental, "
@@ -390,6 +456,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 entry["transfer_uncertainty"]="NAO_QUANTIFICADA" if annual_experimental else None
                 entry["forecast_model"] = rep.get("model")
                 entry["forecast"] = {k: v for k, v in rep.items() if k in ("production", "fields", "model_label", "status") }
+                entry["forecast"]["input_provenance"] = forecast_inputs
             except Exception as exc:
                 lines.append("  Previsão de safra: N/D — " + type(exc).__name__ + ": " + str(exc)[:160])
         else:

@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.44-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.45-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -2708,7 +2708,19 @@ class App(tk.Tk):
                     t = p.get("production_t")
                     if isinstance(v, dict) and isinstance(t, dict):
                         from crop_report_consistency import remove_superseded_yield_placeholders
-                        executive = remove_superseded_yield_placeholders(executive)
+                        executive = remove_superseded_yield_placeholders(
+                            executive, replace_yield_results=True)
+                        inputs = panel_entry.get("forecast_inputs") or {}
+                        mask_source = str(inputs.get("crop_mask_source") or panel_entry.get("identification_source") or "N/D")
+                        mask_season = str(inputs.get("crop_mask_season") or "N/D")
+                        crop_area = float(inputs.get("crop_area_ha") or panel_entry.get("area_ha") or 0.0)
+                        if mask_source == "SAR_EXPERIMENTAL_ANUAL":
+                            area_basis = ("área da máscara SAR experimental da safra " + mask_season +
+                                          " (" + format_ptbr(crop_area, 2) + " ha); persistência para a safra projetada é hipótese")
+                        elif mask_source == "SAR_VALIDADO":
+                            area_basis = "área da máscara SAR aceita para a cultura (" + format_ptbr(crop_area, 2) + " ha)"
+                        else:
+                            area_basis = "área da cultura N/D; base: " + mask_source
                         executive += [
                             "Produtividade estimada no momento dessa análise: ESTIMATIVA EXPERIMENTAL regional — "
                             + format_ptbr(v["median"] / 1000, 2) + " t/ha (intervalo 90%: "
@@ -2725,14 +2737,18 @@ class App(tk.Tk):
                                if str(crop_name).strip().casefold() == "soja" and v["median"] > 0
                                else ("; incerteza relativa: N/D (mediana igual a zero)"
                                      if str(crop_name).strip().casefold() == "soja" else "")),
-                            "Produção provável: CENÁRIO EXPERIMENTAL CONDICIONAL sobre área cartográfica MapBiomas 2025 (assumindo área e cultura mantidas na safra projetada) — "
+                            "Produção provável: CENÁRIO EXPERIMENTAL CONDICIONAL — "
                             + format_ptbr(t["median"], 2) + " t (intervalo 90%: "
                             + format_ptbr(t["p05"], 2) + "–"
-                            + format_ptbr(t["p95"], 2) + " t)",
-                            "Nota: a área de 2025 é hipótese de cenário, NÃO comprova hectares de soja plantados/colhidos em 2027; "
-                            "quantis de produção não abrangem o erro de classificação da máscara agrícola.",
-                            "Limite: classe MapBiomas anual, não confirmação de plantio atual; "
-                            "incertezas de classificação, manejo e transferência espacial não necessariamente quantificadas."]
+                            + format_ptbr(t["p95"], 2) + " t); área aplicada: " + area_basis,
+                            "Base de produtividade: painel histórico PAM + clima/balanço hídrico. "
+                            + ("Vigor SAR atual não foi incorporado: não há máscara semântica atual de "
+                               "cultura compatível; veja o diagnóstico estrutural SAR relativo em separado."
+                               if not inputs.get("current_crop_specific_sar_vigor_used") else
+                               "Vigor SAR datado sobre máscara de cultura foi incorporado conforme o contrato do modelo."),
+                            "Transferência da máscara/área retrospectiva para a safra projetada: "
+                            + str(inputs.get("area_transfer_uncertainty") or "não aplicável")
+                            + "; incerteza de classificação/transferência não incluída no intervalo de produtividade."]
                 executive+=fc_lines
                 audit_text+=["","PREVISÃO DE SAFRA — AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
             except Exception as exc:

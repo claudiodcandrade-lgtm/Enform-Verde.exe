@@ -61,6 +61,11 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
             self.assertEqual(called["fields"][0]["crop"],"Soja")
             self.assertEqual(called["fields"][0]["vigor"]["status"],"N/D")
             self.assertEqual(audit["crops"]["Soja"]["transfer_uncertainty"],"NAO_QUANTIFICADA")
+            inputs=audit["crops"]["Soja"]["forecast_inputs"]
+            self.assertEqual(inputs["crop_mask_source"],"SAR_EXPERIMENTAL_ANUAL")
+            self.assertEqual(inputs["crop_mask_season"],"2025/2026")
+            self.assertEqual(inputs["yield_history"],"IBGE PAM N9, escala microrregional")
+            self.assertFalse(inputs["current_crop_specific_sar_vigor_used"])
             rendered="\n".join(lines)
             self.assertIn("previsão SEM VIGOR",rendered)
             self.assertIn("PREVISÃO CONDICIONAL",rendered)

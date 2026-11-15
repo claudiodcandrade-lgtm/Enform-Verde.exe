@@ -32,7 +32,7 @@ def _scene(field_4326, as_of, window_days, search):
 
 def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=8.0,
                     window_days=30, search=None, token_fn=None, height_provider=None,
-                    max_px=2500):
+                    max_px=2500, reference_mode="validated_crop_fields"):
     import rasterio
     from rasterio.enums import Resampling
     from rasterio.features import geometry_mask
@@ -142,11 +142,15 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
                 peer_labels.append(str(getattr(row,"class_name",crop_name)))
             except ValueError:
                 continue
+    candidate_blocks = reference_mode == "sar_candidate_blocks"
     if used < MIN_REFERENCE_BLOCKS:
+        reference_label = "blocos espaciais SAR candidatos" if candidate_blocks else "talhões SAR independentes"
         return {"status":"N/D",
-                "reason":f"só {used} talhões SAR independentes da mesma classe/cultura no raio de {ring_km} km; vigor relativo requer {MIN_REFERENCE_BLOCKS}",
+                "reason":f"só {used} {reference_label} no raio de {ring_km} km; vigor relativo requer {MIN_REFERENCE_BLOCKS}",
                 "scene_id":scene["id"],"acquisition_utc":scene["acquisition_utc"],
-                "reference_fields":used,"reference_source":"classes atuais do classificador SAR validado"}
+                "reference_fields":None if candidate_blocks else used,
+                "reference_blocks":used if candidate_blocks else None,
+                "reference_source":"blocos não sobrepostos da máscara SAR atual experimental" if candidate_blocks else "classes atuais do classificador SAR validado"}
     height_array=None; height_audit={"eligible":False,"reasons":["modelo de altura não configurado"]}
     if height_provider is not None:
         try:
@@ -162,13 +166,20 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
             height_audit={"eligible":False,"reasons":[type(exc).__name__+": "+str(exc)[:160]]}
     partial_metrics=field_metrics(fvh,fvv,height_m=height_array)
     out=classify_vigor(fvh,fvv,refs,height_m=height_array,n_boot=200)
+    reference_definition = (
+        "blocos espaciais não sobrepostos da máscara de candidatos cultivados SAR da mesma AOI e aquisição; cultura não identificada"
+        if candidate_blocks else
+        "talhões de cultura em geometrias independentes classificadas pelo mesmo modelo SAR aceito; pixels fora do talhão-alvo, mesma cena e janela")
     out.update({"scene_id":scene["id"],"acquisition_utc":scene["acquisition_utc"],
                 "scene_age_days":round(age_days,2),"search_window_days":window_days,
-                "reference_fields":used,
-                "reference_definition":"talhões de cultura em geometrias independentes classificadas pelo mesmo modelo SAR aceito; pixels fora do talhão-alvo, mesma cena e janela",
+                "reference_fields":None if candidate_blocks else used,
+                "reference_blocks":used if candidate_blocks else None,
+                "reference_definition":reference_definition,
                 "reference_labels":peer_labels,
                 "height_audit":height_audit,
                 "partial_metrics":partial_metrics,
                 "crop":crop_name,
-                "source":"Sentinel-1 RTC VV/VH atual + máscara SAR validada; MapBiomas não utilizado"})
+                "source":("Sentinel-1 RTC VV/VH atual + máscara de candidatos SAR experimental; não confirma cultura"
+                          if candidate_blocks else
+                          "Sentinel-1 RTC VV/VH atual + máscara SAR validada; MapBiomas não utilizado")})
     return out

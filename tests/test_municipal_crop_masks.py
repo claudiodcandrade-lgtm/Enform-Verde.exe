@@ -7,10 +7,23 @@ import geopandas as gpd
 from shapely.geometry import box
 
 from crop_monitoring_forecast import crops_in_land_result, monitoring_forecast
-from crop_spatial_monitoring import crop_geometry, sample_crop_patches, sampled_sentinel_vigor
+from crop_spatial_monitoring import (crop_geometry, sample_crop_patches,
+                                     sampled_sentinel_vigor,
+                                     current_candidate_vigor_blocks)
 
 
 class MunicipalCropMaskTests(unittest.TestCase):
+    def test_current_sar_candidate_pixels_are_dissolved_into_disjoint_reference_blocks(self):
+        from shapely.geometry import box
+        mask=gpd.GeoDataFrame(geometry=[box(0,0,4000,4000)],crs=6933)
+        design=current_candidate_vigor_blocks(mask)
+        self.assertEqual(design["status"],"ok")
+        self.assertEqual(len(design["target_blocks"]),6)
+        self.assertGreaterEqual(len(design["reference_gdf"]),6)
+        for target in design["target_blocks"]:
+            for reference in design["reference_gdf"].geometry:
+                self.assertFalse(target.geometry.iloc[0].intersects(reference))
+
     def setUp(self):
         self.tmp=TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
