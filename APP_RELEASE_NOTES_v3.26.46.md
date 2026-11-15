@@ -13,5 +13,5 @@
 
 - Compilação Python aprovada.
 - `tests.test_executive_panels`: 2 testes aprovados; verifica quadro nas seis abas e separação das áreas de detalhes.
-- `ui_visual_standard.py` não executou porque falta `requests` no ambiente; build Windows e smoke visual são necessários antes de liberar o executável.
+- `tools/check_test_collection.py` inspecionou 175 módulos, mas não concluiu por falta de dependências geoespaciais; `ui_visual_standard.py` não executou porque falta `requests`. Build Windows e smoke visual são necessários antes de liberar o executável.
 - KML privado integral da Fazenda Maria Eduarda e validação científica de campo continuam pendentes. Candidata pré-campo experimental, não homologada.
