@@ -37,3 +37,8 @@ Nenhum código garante disponibilidade contínua dos provedores remotos, leitura
 ## Checkpoint V88.76 — fallback visual IBGE não bloqueante
 
 CBERS/Sentinel-2 são opcionais e não bloqueiam a análise. A UI mantém um fundo de contingência visível e, após falhas ópticas, carrega a camada IBGE de fitofisionomia em worker assíncrono. A camada é rotulada como formação potencial e não entra em mapas de cobertura atual, carbono ou cultura. Se o dado IBGE também falhar, a AOI permanece visível com aviso. O smoke nacional registra locais sem óptica sem reprovar o build; o smoke de canvas mede pixels reais e aceita apenas imagem visível ou cartografia de contingência, nunca uma tela preta.
+
+
+## V88.77 — correção do smoke de compilação
+
+No SHA `c24e441e396ea3f19bd8ec4d0845e52e3245ee43`, a CI identificou uma docstring não encerrada no script `tools/live_optical_coverage_brazil.py`. Isso interrompia o `compileall` e impedia o build Windows antes do empacotamento, apesar dos testes unitários e regressivos passarem. A docstring foi fechada no commit corretivo. É obrigatório repetir compilação, suíte, smoke óptico/cartográfico, smoke de pixels do canvas, SAR live e build no SHA final. A correção do teste não prova cobertura óptica nacional; a UI deve manter a contingência IBGE/AOI.
