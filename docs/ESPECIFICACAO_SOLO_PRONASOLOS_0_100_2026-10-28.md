@@ -454,3 +454,10 @@ O script de auditoria de cobertura óptica precisa compilar no runtime Windows a
 <!-- V88_78_DOC_AUDIT_WINDOW -->
 ## V88.78 — sincronização cronológica do gate
 A especificação foi atualizada após o ajuste do workflow Word, junto com o prompt canônico, para que a auditoria documental reconheça os documentos dentro da janela posterior à última mudança efetiva. O gate deve ser executado sobre este commit ou posterior; a correção do smoke de compilação continua pendente de confirmação final pelo build integral.
+
+
+<!-- V88_79_OPERATIONAL_VALIDATION_2026_11_15 -->
+## V88.79 — evidência operacional e limites (15/11/2026)
+O build Windows `3.26.42-PRECAMPO-EXPERIMENTAL` passou no SHA `8551bcaf84586af71ae574abda8a6e37e467f4d3`. Suíte integral: 1.173 testes. Build limpo: UI smoke, verificação de módulos/paridade Python-EXE, rede e aceitação do KMZ Tapajós passaram. Pixels CBERS-4A foram lidos com cobertura 100% em 11/11 pontos amostrais; smoke do canvas Windows passou mantendo AOI visível como fallback. Integração live Sentinel-1 para amostra pública de Sinop e Tapajós entregou saídas SAR, uso da terra, carbono e payload de dashboard.
+
+Esta evidência comprova transmissão ponta a ponta somente nos AOIs de teste. Não comprova execução do KML privado Fazenda Maria Eduarda nem validação local. O SAR aplicado é experimental e referente à safra completa 2025/2026; a classificação semântica atual continua N/D. Carbono é parcial, compartimentos ausentes não são zero, e nenhuma incerteza total é inventada. Ausência de suporte de solo/compartimento deve permanecer explicitamente N/D/“incerteza não mensurável”, conforme o caso. O gate científico permanece reprovado até validação independente de campo.
