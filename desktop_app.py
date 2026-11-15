@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.45-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.46-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1463,6 +1463,8 @@ class App(tk.Tk):
         s.configure(".",font=("Segoe UI",10),foreground=TEXT)
         s.configure("Title.TLabel",font=("Segoe UI",20,"bold"),foreground=ORANGE)
         s.configure("H.TLabel",font=("Segoe UI",12,"bold"),foreground=FOREST)
+        s.configure("Exec.TLabelframe",padding=8)
+        s.configure("Exec.TLabelframe.Label",font=("Segoe UI",10,"bold"),foreground=FOREST)
         s.configure("Run.TButton",font=("Segoe UI",10,"bold"),padding=10)
         s.configure("TButton",padding=7)
     def _ui(self):
@@ -1537,6 +1539,31 @@ class App(tk.Tk):
         ttk.Label(footer,textvariable=self.status,anchor="center").pack(side="left",fill="x",expand=True)
         ttk.Label(footer,text="Sistema de Estimativa de Estoques de Carbono em Vegetação Nativa").pack(side="right")
 
+    def _executive_card(self,parent,title,initial,*,wraplength=1040):
+        """Create the same clearly bordered executive-summary box in each tab."""
+        box=ttk.LabelFrame(parent,text=title,style="Exec.TLabelframe",padding=(10,7))
+        value=tk.StringVar(value=initial)
+        label=ttk.Label(box,textvariable=value,justify="left",anchor="w",wraplength=wraplength,
+                        foreground=TEXT)
+        label.pack(fill="x",expand=True)
+        def resize(event):
+            label.configure(wraplength=max(320,event.width-28))
+        box.bind("<Configure>",resize)
+        return box,value
+
+    @staticmethod
+    def _executive_excerpt(report,labels,*,limit=5):
+        """Pick decision lines for the framed card; leave full report below."""
+        lines=[line.strip() for line in str(report or "").splitlines() if line.strip()]
+        selected=[]
+        for label in labels:
+            line=next((x for x in lines if x.casefold().startswith(label.casefold())),None)
+            if line and line not in selected:
+                selected.append(line)
+            if len(selected)>=limit:
+                break
+        return "\n".join(selected) if selected else "Dados executivos ainda indisponíveis; consulte a auditoria para o motivo."
+
     def _project(self):
         f=self.tabs[0]; ttk.Label(f,text="Abrir análise",style="H.TLabel").grid(row=0,column=0,columnspan=4,sticky="w")
         self.name=tk.StringVar(value="Projeto Enform Verde"); self.car=tk.StringVar(); self.ccir=tk.StringVar()
@@ -1550,6 +1577,10 @@ class App(tk.Tk):
         ttk.Label(f,text="KML • KMZ • SHP • GeoJSON • GPKG",foreground="#666").grid(row=5,column=2,sticky="w")
         self.vector_status=tk.StringVar(value="Nenhum arquivo vetorial carregado.")
         ttk.Label(f,textvariable=self.vector_status,foreground="#155D43",wraplength=900).grid(row=6,column=1,columnspan=3,sticky="w",padx=10,pady=(2,8))
+        self.property_exec_box,self.property_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — PROPRIEDADE",
+            "Perímetro: aguardando arquivo, CAR ou CCIR. A análise começa após validar a geometria.")
+        self.property_exec_box.grid(row=7,column=0,columnspan=4,sticky="ew",pady=(12,4))
         f.columnconfigure(1,weight=1)
 
     def _spatial(self):
@@ -1566,6 +1597,10 @@ class App(tk.Tk):
         f.bind("<Configure>",sync_scroll); tab_canvas.bind("<Configure>",sync_scroll)
 
         ttk.Label(f,text="Perímetro, diagnóstico e solo",style="H.TLabel").pack(anchor="w")
+        self.spatial_exec_box,self.spatial_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — ÁREA E REFERÊNCIAS",
+            "Área, bioma e referências IBGE serão resumidos após carregar o perímetro.")
+        self.spatial_exec_box.pack(fill="x",pady=(6,4))
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         ttk.Button(row,text="Baixar raster COS 0–30 cm (auxiliar)",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
@@ -1628,7 +1663,7 @@ class App(tk.Tk):
         self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
         self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
 
-        spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
+        spatial_box=ttk.LabelFrame(f,text="Detalhes do perímetro e diagnóstico",style="Exec.TLabelframe"); spatial_box.pack(fill="x",pady=4)
         self.spatial_text=tk.Text(spatial_box,height=7,wrap="none",
             yscrollcommand=lambda *a:spatial_scroll.set(*a),
             xscrollcommand=lambda *a:spatial_hscroll.set(*a))
@@ -2077,6 +2112,10 @@ class App(tk.Tk):
 
     def _remote(self):
         f=self.tabs[2]
+        self.sar_exec_box,self.sar_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — SAR / AGB",
+            "Estado: aguardando análise. O quadro distinguirá pixels lidos, produto aplicado e limitações.")
+        self.sar_exec_box.pack(fill="x",pady=(0,8))
         steps=ttk.Frame(f); steps.pack(fill="x",pady=(0,10))
         for j,t in enumerate(["1. Dados e Catálogos","2. Download e Pré-processamento","3. Modelagem e AGB","4. Resultados SAR"]):
             lab=tk.Label(steps,text=t,bg=("#08733F" if j==0 else "#EEF2F3"),fg=("white" if j==0 else "#233B49"),font=("Segoe UI",10,"bold"),padx=14,pady=9,bd=1,relief="solid")
@@ -2145,7 +2184,7 @@ class App(tk.Tk):
                   wraplength=800).pack(side="left",padx=8)
         self.sar_paths=[]; self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
         self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
-        remote_box=ttk.Frame(f); remote_box.pack(fill="both",expand=True,pady=8)
+        remote_box=ttk.LabelFrame(f,text="Detalhes técnicos e proveniência SAR / AGB",style="Exec.TLabelframe"); remote_box.pack(fill="both",expand=True,pady=8)
         self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
         remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
         self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
@@ -2176,6 +2215,9 @@ class App(tk.Tk):
         self.inventory_evidence_state.set(
             str(len(package["records"]))+" registros — "+package["filename"]+
             " — estimativas secundárias experimentais; validação independente pendente.")
+        if hasattr(self,"science_exec_var"):
+            self.science_exec_var.set(f"Inventário anexado: {len(package['records'])} registros.\n"
+                "Uso secundário e experimental; compatibilidade e incerteza são avaliadas por estrato.")
         self.status.set("Evidências externas carregadas com checksum; apenas classes compatíveis serão consideradas.")
 
     def pick_biodiversity_inventory(self):
@@ -2191,6 +2233,9 @@ class App(tk.Tk):
         self.biodiversity_inventory_records=rows
         self.biodiversity_inventory_state.set(str(len(rows))+" árvores licenciadas — "+Path(filename).name+
             "; será filtrado por bioma, fitofisionomia e microrregião.")
+        if hasattr(self,"science_exec_var"):
+            self.science_exec_var.set(f"Inventário fitossociológico carregado: {len(rows)} árvores.\n"
+                "Será filtrado por bioma, fitofisionomia e microrregião; é referência regional, não medição da propriedade.")
         self.status.set("Inventário fitossociológico carregado; referência regional, não medição da propriedade.")
 
     def pick_land_use_config(self):
@@ -2229,6 +2274,12 @@ class App(tk.Tk):
             for key in ("native_carbon","analysis_rows","total_tc_ha","total_tco2_ha","sar_result","total_uncertainty"):
                 self.project.pop(key,None)
             self.project["land_use"]=result
+            if hasattr(self,"carbon_exec_var"):
+                self.carbon_exec_var.set("Uso/cobertura recebido: "+str(result.get("status","N/D"))+".\n"
+                    "O cálculo de carbono ainda exige a etapa de compartimentos; veja áreas, fontes e limitações no relatório detalhado.")
+            if hasattr(self,"sar_exec_var"):
+                self.sar_exec_var.set("Classificação concluída: "+str(result.get("status","N/D"))+".\n"
+                    "Consulte os detalhes para separar mapa anual, leitura SAR atual, candidatos e contingências.")
             if not self.project.get("analysis_rows"):self.project["area_ha"]=result["area_aoi_ha"]
             text="\n".join(land_use_report_lines(result,lambda v:format_ptbr(v,2)))
             self.project["last_result"]=text
@@ -2268,7 +2319,12 @@ class App(tk.Tk):
                 else:
                     txt.append("  Sem data/hora de aquisição verificável no retorno do catálogo.")
             txt += ["","Para uso quantitativo, o produto ainda precisa ser elegível, baixado, pré-processado e associado a modelo/produto AGB compatível."]
-            self._set(self.remote_text,"\n".join(txt)); self.status.set("Descoberta SAR concluída.")
+            self._set(self.remote_text,"\n".join(txt))
+            if hasattr(self,"sar_exec_var"):
+                scene_count=sum(int(x.get("count") or 0) for x in cov if not x.get("error"))
+                self.sar_exec_var.set(f"Catálogos consultados: {len(cov)} | Registros retornados: {scene_count}.\n"
+                    "Catálogo não significa pixel lido ou produto aplicado. Veja abaixo datas, tentativas e diagnósticos.")
+            self.status.set("Descoberta SAR concluída.")
         except Exception as e:self.status.set("Falha na descoberta SAR."); messagebox.showerror("SAR",str(e))
 
     def pick_sar(self):
@@ -2276,6 +2332,8 @@ class App(tk.Tk):
         if not ps:return
         self.sar_paths=list(ps); self.project["sar_paths"]=list(ps)
         self._set(self.remote_text,"Produtos selecionados:\n"+"\n".join(self.sar_paths)+"\n\nClique em EXECUTAR ANÁLISE.")
+        if hasattr(self,"sar_exec_var"):
+            self.sar_exec_var.set(f"Produtos locais selecionados: {len(ps)}.\nAinda não processados; execute a análise para verificar leitura, pixels válidos e aplicação no modelo.")
         self.status.set(f"{len(ps)} produto(s) SAR selecionado(s).")
 
     def pick_ibge_physiognomy(self):
@@ -2304,7 +2362,11 @@ class App(tk.Tk):
 
     def _results(self):
         f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
-        result_box=ttk.Frame(f); result_box.pack(fill="both",expand=True,pady=8)
+        self.carbon_exec_box,self.carbon_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — CARBONO NATIVO",
+            "Estoque, cobertura, compartimentos ausentes e incerteza serão resumidos após a análise.")
+        self.carbon_exec_box.pack(fill="x",pady=(6,2))
+        result_box=ttk.LabelFrame(f,text="Relatório detalhado e auditoria",style="Exec.TLabelframe"); result_box.pack(fill="both",expand=True,pady=8)
         self.res=tk.Text(result_box,height=23,wrap="word",yscrollcommand=lambda *a:result_scroll.set(*a))
         result_scroll=ttk.Scrollbar(result_box,orient="vertical",command=self.res.yview)
         self.res.pack(side="left",fill="both",expand=True); result_scroll.pack(side="right",fill="y")
@@ -2317,12 +2379,16 @@ class App(tk.Tk):
         ttk.Label(f,text="Detecção de áreas cultivadas primeiro; identificação da cultura somente quando a evidência e a validação permitirem.",
                   wraplength=1000).pack(anchor="w",pady=(4,8))
         ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — CLIMA DINÂMICO NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
+        self.crop_exec_box,self.crop_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — AGRICULTURA, VIGOR E SAFRA",
+            "Aguardando análise. Classes atuais, cenário de safra, fontes e incerteza aparecerão resumidos aqui.")
+        self.crop_exec_box.pack(fill="x",pady=(0,8))
         views=ttk.Notebook(f);views.pack(fill="both",expand=True)
         exec_frame=ttk.Frame(views);audit_frame=ttk.Frame(views)
         views.add(exec_frame,text="Painel executivo")
         views.add(audit_frame,text="Auditoria técnica")
-        exec_box=ttk.Frame(exec_frame);exec_box.pack(fill="both",expand=True)
-        audit_box=ttk.Frame(audit_frame);audit_box.pack(fill="both",expand=True)
+        exec_box=ttk.LabelFrame(exec_frame,text="Resumo e indicadores executivos",style="Exec.TLabelframe");exec_box.pack(fill="both",expand=True)
+        audit_box=ttk.LabelFrame(audit_frame,text="Rastreabilidade, fontes e diagnósticos",style="Exec.TLabelframe");audit_box.pack(fill="both",expand=True)
         self.crop_res=tk.Text(exec_box,height=20,wrap="word",yscrollcommand=lambda *a:exec_scroll.set(*a))
         exec_scroll=ttk.Scrollbar(exec_box,orient="vertical",command=self.crop_res.yview)
         self.crop_res.pack(side="left",fill="both",expand=True);exec_scroll.pack(side="right",fill="y")
@@ -2358,6 +2424,9 @@ class App(tk.Tk):
         if not has_cultivated_area(classes) and complete_coverage and land.get("status")=="SAR_ELEGIVEL":
             self._crop_monitoring_base_report="sem cultivos detectados\n"+native_summary
             self._crop_monitoring_audit_base="Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n"+native_summary+"\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
+            if hasattr(self,"crop_exec_var"):
+                self.crop_exec_var.set("Cobertura SAR: classificação elegível em toda a AOI.\n"
+                    "Cultivos identificados: nenhum.\n"+native_summary)
             self._set(self.crop_res,self._crop_monitoring_base_report)
             self._set(self.crop_audit,self._crop_monitoring_audit_base)
             generation=self._weather_query_generation
@@ -2610,6 +2679,10 @@ class App(tk.Tk):
         audit.extend(["","Distribuições originais das fontes:",json.dumps(land.get("original_source_distributions",[]),ensure_ascii=False,indent=2,default=str)])
         self._crop_monitoring_base_report="\n".join(executive)
         self._crop_monitoring_audit_base="\n".join(audit)
+        if hasattr(self,"crop_exec_var"):
+            self.crop_exec_var.set(self._executive_excerpt(self._crop_monitoring_base_report,
+                ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:",
+                 "Produtividade estimada no momento dessa análise:","Produção provável:")))
         self._set(self.crop_res,self._crop_monitoring_base_report)
         self._set(self.crop_audit,self._crop_monitoring_audit_base)
         generation=self._weather_query_generation
@@ -2756,6 +2829,10 @@ class App(tk.Tk):
             def present():
                 if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
                     return
+                if hasattr(self,"crop_exec_var"):
+                    self.crop_exec_var.set(self._executive_excerpt("\n".join(executive),
+                        ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:",
+                         "Produtividade estimada no momento dessa análise:","Produção provável:")))
                 self._set(self.crop_res,"\n".join(executive))
                 self._set(self.crop_audit,"\n".join(audit_text))
             self.after(0,present)
@@ -2763,10 +2840,14 @@ class App(tk.Tk):
 
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
+        self.science_exec_box,self.science_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — BASE CIENTÍFICA",
+            "Modelos e inventários: consulte o estado de disponibilidade e compatibilidade antes de interpretar resultados.")
+        self.science_exec_box.pack(fill="x",pady=(6,4))
         ttk.Button(f,text="RESUMIR INVENTÁRIO (DAP + ÁREA BASAL)",command=self.summarize_inventory_ui).pack(anchor="w",pady=(6,2))
         ttk.Button(f,text="AMPLIAR BIBLIOTECA — INSTITUIÇÕES, PNLA E SINAFLO",command=self.harvest_official_inventory_ui).pack(anchor="w",pady=2)
         ttk.Label(f,text="Busca bases abertas institucionais e oficiais, baixa recursos do REDAPE e do Sinaflor e abre o PNLA para localizar estudos públicos por processo. Inventários privados só entram no último nível e com margem de erro publicada.",wraplength=1000).pack(anchor="w",pady=(0,6))
-        source_box=ttk.Frame(f); source_box.pack(fill="both",expand=True,pady=8)
+        source_box=ttk.LabelFrame(f,text="Métodos, fontes e limites de aplicação",style="Exec.TLabelframe"); source_box.pack(fill="both",expand=True,pady=8)
         self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
         source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
         self.src.pack(side="left",fill="both",expand=True); source_scroll.pack(side="right",fill="y")
@@ -2792,6 +2873,9 @@ class App(tk.Tk):
         except Exception as exc:
             txt+="\nCatálogo externo de modelos indisponível: "+str(exc)
         self._set(self.src,txt)
+        if hasattr(self,"science_exec_var"):
+            self.science_exec_var.set("Hierarquia: inventário compatível por fitofisionomia e região; dados primários e parcelas abertas têm prioridade.\n"
+                "Cada estimativa deve informar fonte, domínio, método e incerteza; consulte os detalhes e limites abaixo.")
 
     def harvest_official_inventory_ui(self):
         base=filedialog.askdirectory(title="Escolha a pasta da biblioteca ampliada de inventários")
@@ -2877,6 +2961,15 @@ class App(tk.Tk):
         self._weather_query_generation+=1
         self._crop_monitoring_base_report=""
         self._crop_monitoring_audit_base=""
+        for name,message in (
+            ("property_exec_var","Perímetro: aguardando arquivo, CAR ou CCIR."),
+            ("spatial_exec_var","Área, bioma e referências IBGE serão resumidos após carregar o perímetro."),
+            ("sar_exec_var","Estado: aguardando análise SAR/AGB."),
+            ("carbon_exec_var","Estoque, cobertura, compartimentos e incerteza serão resumidos após a análise."),
+            ("crop_exec_var","Aguardando análise agrícola e meteorológica."),
+        ):
+            var=getattr(self,name,None)
+            if var is not None:var.set(message)
         if hasattr(self,"crop_res"):
             self._set(self.crop_res,"Aguardando nova análise.")
         if hasattr(self,"crop_audit"):
@@ -2966,6 +3059,13 @@ class App(tk.Tk):
 
     def _show_geom(self,src):
         m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
+        area_txt=format_ptbr(m['area_ha'],2)+" ha"
+        if hasattr(self,"property_exec_var"):
+            self.property_exec_var.set("Perímetro carregado: "+str(src)+"\nÁrea: "+area_txt+
+                " (EPSG:6933). Estado: geometria validada para análise; uso/cobertura ainda não classificado.")
+        if hasattr(self,"spatial_exec_var"):
+            self.spatial_exec_var.set("Área da AOI: "+area_txt+"\nBioma e fitofisionomia: aguardando interseção oficial IBGE.\n"
+                "Fundo do mapa é referência visual; não determina uso atual nem entra no cálculo.")
         if hasattr(self,"aoi_area_display"):
             from property_physiognomy_display import equal_area_aoi_ha
             self.aoi_area_display.set(f"{format_ptbr(equal_area_aoi_ha(self.gdf),2)} ha (EPSG:6933; base dos percentuais)")
@@ -2999,6 +3099,8 @@ class App(tk.Tk):
         self._ibge_pending=False
         if kind!="ok":
             self.project["ibge_diagnosis_error"]=value
+            if hasattr(self,"spatial_exec_var"):
+                self.spatial_exec_var.set("Área carregada; consulta IBGE falhou.\nBioma/fitofisionomia: N/D — "+str(value)[:170])
             if hasattr(self,"ibge_phys_display"):
                 self.ibge_phys_display.set("Não determinada — falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
             self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
@@ -3008,6 +3110,12 @@ class App(tk.Tk):
         d=value; self.project["ibge_diagnosis"]=d
         if d.get("biomas"):self.biome.set(d["biomas"][0][0])
         primary=primary_ibge_physiognomy(d)
+        if hasattr(self,"spatial_exec_var"):
+            area_text=format_ptbr(geom_metrics(self.gdf)["area_ha"],2)+" ha" if self.gdf is not None else "N/D"
+            bioma=(d.get("biomas") or [["Não determinado"]])[0][0]
+            self.spatial_exec_var.set("Área da AOI: "+area_text+" | Bioma IBGE: "+str(bioma)+"\n"
+                "Fitofisionomia potencial: "+str(primary or "não determinada")+
+                "; requer confirmação independente de cobertura nativa atual.")
         if primary:self.phys.set(primary)
         elif d.get("vegetacao_error"):self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
         if hasattr(self,"ibge_biome_display"):
@@ -3533,7 +3641,19 @@ class App(tk.Tk):
                           type(exc).__name__+": "+str(exc)[:160]])
         text="\n".join(lines)
         self.project["last_result"]=text
+        if hasattr(self,"carbon_exec_var"):
+            self.carbon_exec_var.set(self._executive_excerpt(text,
+                ("ÁREA TOTAL ANALISADA:","VEGETAÇÃO NATIVA MAPEADA:",
+                 "COMPARTIMENTOS DE CARBONO:","Estoque parcial conhecido:",
+                 "Estoque conhecido:","Incerteza do total:")))
         self._set(self.res,text);self.nb.select(self.tabs[3])
+        if hasattr(self,"sar_exec_var"):
+            sar=self.project.get("sar_result") or {}
+            heights=sar.get("height_products") or []
+            height_line=(f"Altura SAR entregue ao painel: {len(heights)} produto(s)."
+                         if heights else "Altura SAR entregue ao painel: N/D.")
+            self.sar_exec_var.set("Processamento concluído. "+height_line+
+                " AGB, fonte e aplicação estão discriminadas nos detalhes técnicos.")
         self.status.set("Carbono por formação nativa concluído; lacunas e outros usos indicados separadamente.")
         # Store serializable class-level results beside spatial provenance.
         audit=Path(land["vector_path"]).parent/"carbono_formacoes_nativas.json"
