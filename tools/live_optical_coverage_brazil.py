@@ -4,6 +4,7 @@
 This is a distributed sample, not a national guarantee. Optical imagery is
 visual-only; unavailable sites are reported for cartographic fallback and do
 not block analysis or the Windows build.
+"""
 from __future__ import annotations
 
 import json
