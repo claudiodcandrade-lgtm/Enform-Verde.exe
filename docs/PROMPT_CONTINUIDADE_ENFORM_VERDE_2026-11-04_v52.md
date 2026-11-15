@@ -518,3 +518,10 @@ A auditoria do SHA `c24e441e396ea3f19bd8ec4d0845e52e3245ee43` encontrou e corrig
 <!-- V88_78_DOC_AUDIT_WINDOW -->
 ## V88.78 — janela do guard documental após ajuste de workflow
 Após a correção do script de cobertura óptica e ajuste do workflow de sincronização Word, prompt e especificação de solos foram reaplicados após a última mudança efetiva de configuração, para satisfazer o guard de documentação em ordem cronológica. O resultado válido é o do commit final, que ainda deve passar novamente pela suíte integral e pelo build Windows.
+
+
+<!-- V88_79_OPERATIONAL_VALIDATION_2026_11_15 -->
+## V88.79 — validação operacional registrada (15/11/2026)
+Candidata `3.26.42-PRECAMPO-EXPERIMENTAL`, código SHA `8551bcaf84586af71ae574abda8a6e37e467f4d3`. CI: suíte integral 1.173 testes aprovada; compilação de módulos aprovada; smoke de imagem CBERS-4A com cobertura completa em 11/11 locais amostrais; captura Windows do canvas passou como `PASS_AOI_FALLBACK`; build Windows passou, incluindo UI smoke, paridade módulos Python/EXE, verificação de rede e aceitação do KMZ Tapajós em pasta limpa. SAR live percorreu Sentinel-1 → uso/terra → carbono → payload do dashboard para amostra pública Sinop e KMZ Tapajós, ambos `SAR_TO_LAND_USE_TO_CARBON_TO_DASHBOARD_HANDOFF_PASSED`.
+
+**Limites que permanecem:** teste Sinop usou amostra pública centrada no local, não o KML privado Fazenda Maria Eduarda. A máscara SAR aplicada é do último ano agrícola completo 2025/2026 e experimental; semântica SAR atual ficou N/D/sem modelo atual validado, e a fonte radar alternativa aparece `ACESSO_RESTRITO`. Carbono foi parcial/incompleto, com serapilheira/necromassa sem fonte compatível em estratos e incerteza total não mensurável. Tela canvas passou com `AOI_LOCAL_FALLBACK` (não com pixels CBERS/IBGE visíveis na GUI); imagens CBERS, contudo, passaram leitura de pixels em 11 locais amostrais. Logo, houve validação operacional da transmissão no escopo testado, mas não homologação de campo nem garantia para o KML privado ou qualquer AOI.
