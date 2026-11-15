@@ -420,3 +420,5 @@ O gate da interface rejeitou corretamente uma imagem de teste uniformemente colo
 A versão 3.26.41 corrige apenas a coerência dos avisos de estado SAR: ausência de configuração externa deixa de contradizer a aplicação experimental do LEM+ embarcado. A metodologia de carbono do solo não mudou; cobertura, estoque parcial e incerteza do mapa continuam apresentados separadamente, sem extrapolação para a área sem pixels nem conversão de desvio espacial em IC95%.
 
 Código candidato V88.72: `f1171c24cc0c3c835819f537344d4ad1804aae46`. A alteração em `land_use_sar` não modifica cálculo de carbono do solo.
+
+SHA da árvore candidata remota de código: `273297ee097d7f45f1a9d55ba45695aa8a813273`; alteração SAR não modifica o método do solo.

@@ -489,3 +489,5 @@ O relatório live V88.71 revelou contradição: máscaras LEM+ experimentais apl
 
 
 Sincronização V88.72: código local da candidata 3.26.41 no commit `f1171c24cc0c3c835819f537344d4ad1804aae46`; suíte integral local 1.170 aprovados (um ignorado), 44 testes direcionados aprovados. CI/Windows/live no SHA de release ainda pendentes.
+
+Código fonte publicado na árvore candidata remota: `273297ee097d7f45f1a9d55ba45695aa8a813273`. O commit documental seguinte atualizará o SHA na especificação Word; workflows começarão no SHA final da branch após essa sincronização.
