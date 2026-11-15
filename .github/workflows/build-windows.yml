@@ -296,13 +296,19 @@ jobs:
           # Deterministic UI plumbing test: live coverage/pixel validity is tested
           # separately below and must not be hidden by a mocked provider here.
           from PIL import Image
+          import numpy as np
           app._store_satellite_preview_cache=lambda *args,**kwargs: None
-          app.cbers4a_wfi_preview=lambda gdf,out_w=1000,out_h=560,extent_factor=1.36: {
-              "image":Image.new("RGB",(int(out_w),int(out_h)),(34,104,71)),
+          def synthetic_optical_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+              yy,xx=np.indices((int(out_h),int(out_w)))
+              rgb=np.stack((35+(xx%180)//2,55+(yy%120)//2,
+                            40+((xx+yy)%100)//3),axis=2).astype(np.uint8)
+              return {
+              "image":Image.fromarray(rgb),
               "datetime":"2026-11-09T00:00:00Z","date_range":["2026-11-09","2026-11-09"],
               "scene_ids":["SYNTHETIC_UI_FIXTURE_ONLY"],"provider":"CBERS-4A/WFI SYNTHETIC UI FIXTURE ONLY",
               "resolution_m":55,"pixel_count":int(out_w)*int(out_h),
               "aoi_coverage_fraction":1.0,"cloud_pixels_included":False,"polygons":[]}
+          app.cbers4a_wfi_preview=synthetic_optical_preview
           import time
           ui.google_maps_key.set("")
           ui.show_google_map()

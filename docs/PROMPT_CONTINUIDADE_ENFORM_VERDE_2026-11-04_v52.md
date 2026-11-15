@@ -480,3 +480,5 @@ A candidata 3.26.40 dispara a contingência sempre que a classificação semânt
 O modelo LEM+ continua experimental, sem validação local independente. Se faltar mês/cena ou o serviço seguir indisponível, preservar o erro técnico e `N/D` com motivo; não converter triagem heurística em vegetação/cultura confirmada nem afirmar zero. A contingência de sensores alternativos é separada da rota principal e não confirma classes sem modelo compatível.
 
 Sincronização documental em `e4bca50`: a primeira suíte completa encontrou apenas contrato legado de retries (agora atualizado para quatro tentativas gerais e quinta via HTTPS MPC). A execução completa está em andamento; não considerar build/canvas reais aprovados por testes locais.
+
+Atualização do gate Windows V88.71: o smoke GUI rejeitou uma imagem sintética uniforme (fixture antigo de cor sólida), de acordo com o filtro de textura. O workflow foi corrigido para gerar RGB espacialmente variável e há regressão que verifica essa textura. Reexecutar CI completo, canvas live, SAR live e build no novo SHA; o primeiro resultado não libera EXE.

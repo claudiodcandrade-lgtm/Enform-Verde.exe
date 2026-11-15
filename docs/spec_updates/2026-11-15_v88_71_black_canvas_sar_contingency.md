@@ -8,3 +8,4 @@
 - A AOI privada integral da Fazenda Maria Eduarda ainda requer execução local até o painel, sem publicar geometria. Tapajós e Sinop amostral não a substituem. Todas as medições de carbono mantêm fonte, incerteza e status experimental.
 
 - A primeira execução integral revelou uma regressão no próprio teste legado, que fixava quatro tentativas para a rota anual. A expectativa foi ajustada para quatro estratégias gerais e uma quinta estratégia HTTPS MPC; a suíte integral será repetida.
+- O primeiro smoke gráfico Windows confirmou que o novo filtro de pixels rejeita corretamente uma imagem sintética uniforme; o fixture legado era uma cor sólida. O fixture foi alterado para um padrão espacial com textura e foi adicionada regressão para evitar a repetição. O filtro de produção permanece; o gate Windows e os smokes live serão repetidos no novo SHA.

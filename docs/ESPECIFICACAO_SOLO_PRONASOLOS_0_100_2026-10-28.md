@@ -410,3 +410,7 @@ A correção da entrega SAR/óptica não altera as fontes nem os métodos do com
 ### Sincronização documental V88.71 (15/11/2026)
 
 A atualização 3.26.40 não altera o método de carbono do solo. Esta nota sincroniza a especificação de solos com o checkpoint do fluxo óptico/SAR: falha de imagem ou de classificação SAR não pode preencher compartimentos de solo, e resultados de carbono continuam dependentes de fonte, profundidade, cobertura e incerteza documentadas. A candidata permanece não homologada até CI, build Windows e validação ponta a ponta no ambiente-alvo.
+
+### Registro de regressão de fixture Windows
+
+O gate da interface rejeitou corretamente uma imagem de teste uniformemente colorida. O fixture foi atualizado para textura espacial e o teste de interface foi reforçado. O método do solo não mudou; o gate científico continua independente da aprovação do executável.

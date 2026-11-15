@@ -87,6 +87,15 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
             for y in range(32):visible.putpixel((x,y),(150,175,95))
         self.assertIs(_require_visible_optical_image(visible,"CBERS test"),visible)
 
+    def test_windows_gui_fixture_has_spatial_texture_required_by_pixel_gate(self):
+        workflow=(SOURCE.parent/".github"/"workflows"/"build-windows.yml").read_text(encoding="utf-8")
+        start=workflow.index("def synthetic_optical_preview(gdf,out_w=1000")
+        end=workflow.index("app.cbers4a_wfi_preview=synthetic_optical_preview",start)
+        fixture=workflow[start:end]
+        self.assertIn("Image.fromarray",fixture)
+        self.assertIn("np.indices",fixture)
+        self.assertNotIn('Image.new("RGB",(int(out_w),int(out_h)),(34,104,71))',fixture)
+
     def test_preview_reads_are_split_into_bounded_quadrants(self):
         from desktop_app import OPTICAL_COG_TILE_SIZE,_iter_optical_quadrants
         self.assertEqual(OPTICAL_COG_TILE_SIZE,512)
