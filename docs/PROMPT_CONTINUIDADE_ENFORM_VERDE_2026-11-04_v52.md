@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 134064)
-Total output lines: 2347
-
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
 ## V88.16 — resultado nacional com incerteza e estado auditável (12/11/2026)
 Objetivo obrigatório: para qualquer AOI do Brasil, concluir cada módulo com o melhor resultado cientificamente sustentado ou estado N/D/ERRO_TECNICO, sempre com fonte, período, cobertura, método e incerteza. Quantificar incerteza quando suportada por dados/desenho amostral; caso contrário declarar “incerteza não quantificada” e motivo, sem inventar precisão ou converter N/D em zero.
@@ -511,3 +508,8 @@ Os testes do pacote completo revelaram contratos de texto ainda presos ao compor
 ## Checkpoint V88.76 — contingência de mapa sem tela preta
 
 Imagem óptica é visual e não bloqueia a análise. A UI deve desenhar imediatamente perímetro e fundo disponível, buscar camada oficial IBGE em worker assíncrono após esgotar CBERS/Sentinel-2/rotas visuais, e rotular IBGE como referência potencial. Se IBGE falhar, manter AOI local e aviso. Os testes live devem capturar pixels de verdade e aceitar somente imagem visível ou fallback cartográfico visível. A matriz nacional de óptica registra indisponibilidade sem reprovar o build.
+
+
+<!-- V88_77_OPTICAL_SMOKE_SYNTAX_FIX -->
+## V88.77 — integridade do smoke óptico
+A auditoria do SHA `c24e441e396ea3f19bd8ec4d0845e52e3245ee43` encontrou e corrigiu um delimitador de docstring ausente em `tools/live_optical_coverage_brazil.py`, que impedia a compilação do módulo e bloqueava o build antes do empacotamento. Exigir `compileall` no smoke nacional e executar novamente suíte integral, smoke Windows e build após essa correção. A correção do teste não comprova disponibilidade óptica nacional; em falha, manter o fundo cartográfico IBGE/AOI e informar a contingência.
