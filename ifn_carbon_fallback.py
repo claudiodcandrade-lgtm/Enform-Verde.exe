@@ -141,7 +141,8 @@ def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
 
 
 def estimate_inventory_carbon_scenario(*, biome, physiognomy, area_ha, sar_result,
-                                       aoi=None, centroid_lon=None, centroid_lat=None,\n                                       conditional_only=False):
+                                       aoi=None, centroid_lon=None, centroid_lat=None,
+                                       conditional_only=False):
     """Use open IFN plots first, then the existing regional/national literature hierarchy.
 
     The returned number is a conditional AGB-derived carbon scenario on the
