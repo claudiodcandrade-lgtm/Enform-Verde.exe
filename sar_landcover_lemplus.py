@@ -81,8 +81,8 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
     from rasterio.transform import from_origin
     from shapely.geometry import mapping, shape
     from datetime import datetime, timezone
-    from sentinel1_mpc import (asset_href_for_read_attempt, get_runtime_sas_token,
-                               search_sentinel1_rtc)
+    from sentinel1_mpc import (asset_href_for_read_attempt, get_runtime_sas_token)
+    from sentinel1_sources import search_sentinel1_sources
     import tls_setup
     tls_setup.configure()
     geom = aoi_4326.geometry.union_all()
@@ -98,10 +98,9 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
     import calendar
     end = f"{ey}-{em:02d}-{calendar.monthrange(ey,em)[1]:02d}"
     if search_fn is None:
-        found = search_sentinel1_rtc(mapping(geom),
+        found = search_sentinel1_sources(mapping(geom),
             start_utc=datetime.fromisoformat(start+"T00:00:00+00:00"),
-            end_utc=datetime.fromisoformat(end+"T23:59:59+00:00"),
-            max_pages=30, page_limit=100)
+            end_utc=datetime.fromisoformat(end+"T23:59:59+00:00"))
         feats = found["scenes"]
         pagination_complete = found["pagination_complete"]
     else:
@@ -123,22 +122,29 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
         p=f.get("properties") or {}
         return (p.get("sat:relative_orbit") or f.get("relative_orbit"),
                 p.get("sat:orbit_state") or f.get("orbit_state"))
+    def provider_of(f):
+        return str(f.get("provider") or f.get("source") or "MPC").upper()
     month_set=set(months)
     feats=[f for f in feats if ym_of(f) in month_set]
+    # Select one provider/orbit with greatest monthly coverage; never mix RTC
+    # providers in a single feature vector.
     orbits=defaultdict(set)
-    for feat in feats:orbits[orb_of(feat)].add(ym_of(feat))
+    for feat in feats:orbits[(provider_of(feat),orb_of(feat))].add(ym_of(feat))
     if not orbits:
         return None, {"reason":"CENAS_FORA_DA_JANELA_AGRICOLA"}
-    orbit=max(orbits,key=lambda k:(len(orbits[k]),sum(orb_of(f)==k for f in feats)))
+    orbit_key=max(orbits,key=lambda k:(len(orbits[k]),k[0]=="MPC",
+                                      sum((provider_of(f),orb_of(f))==k for f in feats),str(k[1])))
+    provider,orbit=orbit_key
     grouped=defaultdict(list)
     for feat in feats:
-        if orb_of(feat)==orbit:grouped[ym_of(feat)].append(feat)
+        if (provider_of(feat),orb_of(feat))==orbit_key:
+            grouped[ym_of(feat)].append(feat)
     # Newest first, with fallback on read errors from individual assets.
     for group in grouped.values():
         group.sort(key=lambda f:str((f.get("properties") or {}).get("datetime")
                                     or f.get("acquisition_utc") or ""),reverse=True)
     try:
-        token=(token_fn or get_runtime_sas_token)()
+        token=(token_fn or get_runtime_sas_token)() if provider=="MPC" else ""
     except Exception:
         # Independent per-asset signing can still recover actual RTC pixels.
         token=""
@@ -163,9 +169,10 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
                         if attempt==3:
                             gdal_opts["GDAL_HTTP_MULTIPLEX"]="NO"
                         with rasterio.Env(**gdal_opts):
-                            read_href=asset_href_for_read_attempt(
+                            read_href=(asset_href_for_read_attempt(
                                 feat["assets"][pol]["href"],attempt=attempt,token=token,
                                 token_fn=token_fn or get_runtime_sas_token)
+                                if provider=="MPC" else feat["assets"][pol]["href"])
                             read_stage="open_cog"
                             with rasterio.open(read_href) as src:
                                 if src.crs is None:raise ValueError("SAR_COG_MISSING_CRS")
@@ -228,6 +235,7 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
              {tuple(map(int,x.split("-"))) for x in observed_months}]
     if missing:
         return None, {"reason":"MESES_RTC_SEM_PARES_VV_VH",
+            "provider":provider,"orbit":orbit,
             "status":("ERRO_TECNICO_LEITURA_SAR" if failed else "N/D_SEM_PIXELS_SAR"),
             "observed_months":observed_months,"missing_months":missing,
             "scenes_used":len(used),"monthly_pair_counts":monthly_pair_counts,
@@ -239,7 +247,7 @@ def _monthly_features(aoi_4326, months, search_fn=None, token_fn=None):
             vvd,vhd=10*np.log10(vv),10*np.log10(vh)
         bands += [vvd,vhd,vhd-vvd]
     return (np.stack(bands,-1),dst_tr,(H,W)),{
-        "orbit":orbit,"scenes_used":len(used),
+        "provider":provider,"orbit":orbit,"scenes_used":len(used),
         "observed_months":observed_months,
         "monthly_pair_counts":monthly_pair_counts,
         "pixel_read_errors":failed[:12],

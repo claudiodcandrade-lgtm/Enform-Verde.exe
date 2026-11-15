@@ -423,3 +423,14 @@ A candidata 3.26.38-PRECAMPO-EXPERIMENTAL está em validação. Sintaxe Python d
 A candidata 3.26.38-PRECAMPO-EXPERIMENTAL foi validada por CI/build no commit de código dc79606d4073da23cf5c83aed54a23d500f1ef1a. Dashboard 43659083027: 1.160 testes aprovados, incluindo descoberta integral e guard documental. Build Windows 43659082998: aprovado, incluindo build e autoteste do executável em cópia limpa; smokes ópticos, leitura live Sentinel-1 nos seis biomas, leitura SAR real no Tapajós, fonte/classificação IBGE, teste SICAR e prova real ESA BIOMASS FH em Sinop. Artefato Windows Enform-Verde-Windows-v3.26.38-PRECAMPO-EXPERIMENTAL: 197.808.715 bytes; SHA-256 ZIP e85085a2085453cfd8a54e9a601fc85c2e237434c39146a83b4cc0f829f93c2a.
 
 A prova live de pixels e os smokes nacionais comprovam os respectivos módulos e localidades, não o percurso integral do KML privado da Fazenda Maria Eduarda até o dashboard. Esse percurso segue sem evidência ponta a ponta no mesmo run_id/hash. O gate de homologação científica permanece reprovado por ausência dessa execução completa e de validação de campo. A versão continua experimental pré-campo; não declarar homologação.
+
+
+## V88.66 / candidata 3.26.39 — prioridade da rota principal SAR (15/11/2026)
+
+O relatório real da Fazenda Maria Eduarda mostrou 12 cenas VV/VH lidas e áreas candidatas, mas a classe semântica anual permaneceu N/D. Causa encontrada no código: o modelo brasileiro ENFORM_SAR_BRASIL_RF_V2 requer 12 pares mensais VV/VH; sar_landcover_lemplus.py consultava apenas o catálogo MPC, enquanto recent_sar_landcover.py já consultava MPC e INPE. A leitura de cenas e a série do classificador estavam desacopladas.
+
+A correção em andamento conecta a busca anual aos catálogos RTC MPC+INPE, seleciona uma única origem e órbita com maior cobertura mensal, prioriza MPC somente em empate e lê COG público INPE diretamente. Não mistura provedores. Se faltar qualquer mês, a classificação se abstém e informa a origem e os meses; não inventa pares ou máscaras. O modelo segue experimental, com transferência local e incerteza declaradas.
+
+A mudança também fecha duas falhas secundárias: o cenário de inventário não repete a consulta SAR e a falha de refresh óptico conserva a última imagem válida. Esses ajustes não substituem o aceite da rota principal.
+
+Validação ainda pendente: regressões no CI, busca live anual e build Windows no mesmo SHA; depois, KML integral da Fazenda Maria Eduarda até classificação, painéis e relatórios vinculados pelo mesmo run_id/hash. A versão continua pré-campo experimental e não homologada.

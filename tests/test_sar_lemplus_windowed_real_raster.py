@@ -41,21 +41,23 @@ class FullSeasonRTCReaderTest(unittest.TestCase):
                     feats.append({"id":"bad-first-scene",
                         "properties":{"datetime":f"{year}-{month:02d}-27T00:00:00Z",
                             "sat:relative_orbit":40,"sat:orbit_state":"ascending"},
-                        "assets":{"vv":paths["vv"],"vh":{"href":str(root/"missing_vh.tif")}}})
+                        "assets":{"vv":paths["vv"],"vh":{"href":str(root/"missing_vh.tif")}}, "provider":"INPE"})
                 feats.append({"id":f"valid-{i}","properties":{
                     "datetime":f"{year}-{month:02d}-15T00:00:00Z",
                     "sat:relative_orbit":40,"sat:orbit_state":"ascending"},
-                    "assets":paths})
-            def search(*args):return feats
-            with patch("sentinel1_mpc._signed_href",side_effect=lambda href,token:href):
+                    "assets":paths,"provider":"INPE"})
+            def search_sources(geom, *, start_utc, end_utc):
+                return {"scenes":feats,"pagination_complete":True}
+            with patch("sentinel1_sources.search_sentinel1_sources",side_effect=search_sources):
                 values, audit=sl._monthly_features(
-                    aoi,months,search_fn=search,token_fn=lambda:"fixture")
+                    aoi,months,token_fn=lambda:(_ for _ in ()).throw(AssertionError("INPE must not request MPC token")))
             self.assertIsNotNone(values,str(audit))
             features,transform,shape=values
             self.assertEqual(features.shape[2],36)
             self.assertGreater(np.isfinite(features).all(-1).sum(),0)
             self.assertEqual(len(audit["observed_months"]),12)
             self.assertEqual(audit["scenes_used"],12)
+            self.assertEqual(audit["provider"],"INPE")
             self.assertTrue(audit["pixel_read_errors"])
             self.assertLess(shape[0]*shape[1],50000)
 

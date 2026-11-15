@@ -277,8 +277,9 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         self.assertEqual(payload["land_use"]["analysis_run_id"], payload["analysis_run_id"])
         checkpoint.assert_called_once()
 
-    def test_inventory_fallback_reuses_one_aoi_wide_sar_result(self):
+    def test_conditional_inventory_reuses_existing_sar_without_second_pipeline(self):
         aoi = gpd.GeoDataFrame(geometry=[box(-55.0, -4.0, -54.99, -3.99)], crs="EPSG:4326")
+        sar_result = {"status": "SAR_PROCESSADO_SEM_MODELO_AGB", "reason": "pixels existentes"}
         land = {
             "vector_path": "land.geojson",
             "validation": {},
@@ -287,19 +288,21 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                 {"name": "Floresta teste B", "area_ha": 2.0},
             ],
         }
-        native = {"known_total_tc": None, "area_aoi_ha": 3.0, "strata": [], "components": []}
-        sar_result = {"status": "SAR_NAO_PROCESSADO", "reason": "fixture"}
-        with patch("geopandas.read_file", return_value=aoi), \
-             patch("desktop_app.summarize_native_carbon", return_value=native), \
-             patch("sar_pipeline.biomass_l2b_search", return_value=([], {"queries": [], "errors": []})), \
-             patch("desktop_app.automatic_pipeline", return_value=sar_result) as pipeline, \
+        native = {"known_total_tc": None, "area_aoi_ha": 3.0,
+                  "strata": [{"area_ha": 1.0, "sar_details": sar_result}], "components": []}
+        with patch("geopandas.read_file", return_value=aoi), \\
+             patch("desktop_app.summarize_native_carbon", return_value=native), \\
+             patch("sar_pipeline.biomass_l2b_search", return_value=([], {"queries": [], "errors": []})), \\
+             patch("desktop_app.automatic_pipeline") as pipeline, \\
              patch("ifn_carbon_fallback.estimate_inventory_carbon_scenario",
                    return_value={"status": "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR"}) as scenario:
             result = native_carbon_analysis(aoi, land, "Amazônia")
-        self.assertEqual(pipeline.call_count, 1)
+        self.assertEqual(pipeline.call_count, 0)
         self.assertEqual(scenario.call_count, 2)
-        self.assertTrue(all(call.kwargs["sar_result"] is sar_result for call in scenario.call_args_list))
+        self.assertTrue(all(call.kwargs["sar_result"] == sar_result for call in scenario.call_args_list))
+        self.assertTrue(all(call.kwargs["conditional_only"] is True for call in scenario.call_args_list))
         self.assertEqual(len(result["conditional_inventory_scenarios"]), 2)
+
 
 
 if __name__ == "__main__":

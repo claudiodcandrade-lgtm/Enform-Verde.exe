@@ -370,3 +370,8 @@ A candidata 3.26.38 ainda precisa passar suíte, dashboard e build Windows no me
 ## V88.65 — validação do pipeline e preservação dos estados de solo
 
 No commit de código dc79606d4073da23cf5c83aed54a23d500f1ef1a, dashboard e build Windows passaram; a candidata preserva resultados SAR/uso da terra quando uma etapa posterior de carbono, pedologia ou fertilidade falha e apresenta estado e motivo por módulo. O build incluiu fontes live e autoteste do EXE. Isso não comprova cobertura PronaSolos em toda AOI nem substitui a execução integral do KML privado de Sinop até o painel. Carbono do solo permanece 0–100 cm e fontes de solo continuam oficiais; não imputar valores.
+
+
+## Nota V88.66 — sincronização do pipeline
+
+Esta revisão não altera os métodos de carbono do solo, PronaSolos ou fertilidade. O estado e a auditoria SAR continuam vinculados à execução/hash da AOI; etapas pedológicas permanecem independentes de falhas do classificador SAR.
