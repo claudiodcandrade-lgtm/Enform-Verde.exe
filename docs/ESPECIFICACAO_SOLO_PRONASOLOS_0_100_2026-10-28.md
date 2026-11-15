@@ -371,12 +371,16 @@ A candidata 3.26.38 ainda precisa passar suíte, dashboard e build Windows no me
 
 No commit de código dc79606d4073da23cf5c83aed54a23d500f1ef1a, dashboard e build Windows passaram; a candidata preserva resultados SAR/uso da terra quando uma etapa posterior de carbono, pedologia ou fertilidade falha e apresenta estado e motivo por módulo. O build incluiu fontes live e autoteste do EXE. Isso não comprova cobertura PronaSolos em toda AOI nem substitui a execução integral do KML privado de Sinop até o painel. Carbono do solo permanece 0–100 cm e fontes de solo continuam oficiais; não imputar valores.
 
+## Nota de sincronização V88.66
 
-## Nota V88.66 — sincronização do pipeline
-
-Esta revisão não altera os métodos de carbono do solo, PronaSolos ou fertilidade. O estado e a auditoria SAR continuam vinculados à execução/hash da AOI; etapas pedológicas permanecem independentes de falhas do classificador SAR.
+Nesta revisão foram priorizadas as rotas Sentinel-1 de uso do solo e carbono nativo. Não houve mudança nos métodos de carbono do solo, PronaSolos ou fertilidade. A estimativa pedológica continua independente do status de classificação SAR. O pipeline geral mantém o estado técnico e a evidência de cobertura SAR vinculados ao mesmo run_id/hash da AOI.
 
 
-## Prova live concluída, execução integral pendente (15/11/2026)
+## Registro V88.67 de sincronização documental
 
-O workflow 43667205598 executou o modelo ENFORM_SAR_BRASIL_RF_V2 com pixels Sentinel-1 RTC reais no recorte de 0,03° perto do centroide de Sinop: 30 cenas, 12 meses da safra 2025/2026, 1.692 pixels e polígonos experimentais. O recorte foi 1.084,73 ha, não o KML integral de 1.459,91 ha. Classes experimentais incluíram soja, floresta nativa, área antrópica e cobertura úmida. Prova confirma que MPC+INPE fornece a série temporal e a inferência do modelo opera no recorte; não comprova o mapa integral, carbono no dashboard, nem imagem óptica na tela. Build Windows e dashboard no SHA mais recente ainda pendentes.
+Na candidata 3.26.39 (commit `3172277b02dd59de24861c8dd8abfc8e5159d49a`), a CI e o build Windows passaram; essa evidência não modifica nem valida por si só as estimativas de carbono do solo. O módulo PronaSolos 0–100 cm continua condicionado à interseção e leitura de perfis reais, profundidade efetiva e cobertura; incerteza não suportada deve aparecer como “incerteza não mensurável”. O handoff live SAR até máscara de carbono e dashboard ainda não foi comprovado na AOI integral da Fazenda Maria Eduarda. O estoque de carbono do solo não deve ser inferido da aprovação do build ou da prova de pixels SAR.
+
+
+## Registro V88.68 — integração até os painéis
+
+A mudança de handoff SAR em validação acrescenta ao payload executivo as máscaras semânticas e a identidade da execução. Ela não altera a metodologia de carbono do solo. Os estoques 0–100 cm continuam dependendo de interseção/leituras válidas de fontes Embrapa/PronaSolos e dos respectivos parâmetros; uma máscara SAR, por si só, não gera nem valida carbono do solo. Exibir N/D, motivo e “incerteza não mensurável” quando não houver suporte.

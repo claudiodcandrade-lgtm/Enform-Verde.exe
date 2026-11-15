@@ -424,17 +424,30 @@ A candidata 3.26.38-PRECAMPO-EXPERIMENTAL foi validada por CI/build no commit de
 
 A prova live de pixels e os smokes nacionais comprovam os respectivos módulos e localidades, não o percurso integral do KML privado da Fazenda Maria Eduarda até o dashboard. Esse percurso segue sem evidência ponta a ponta no mesmo run_id/hash. O gate de homologação científica permanece reprovado por ausência dessa execução completa e de validação de campo. A versão continua experimental pré-campo; não declarar homologação.
 
+## Atualização V88.66 — rota principal SAR
 
-## V88.66 / candidata 3.26.39 — prioridade da rota principal SAR (15/11/2026)
+Relatório de 15/11/2026 da Fazenda Maria Eduarda: 12 cenas VV/VH foram lidas e geraram candidatos, mas a máscara semântica e os módulos dependentes não receberam a classificação anual. A causa encontrada foi a busca do classificador anual somente no MPC, enquanto a triagem que leu cenas consultava MPC e INPE. O modelo brasileiro ENFORM_SAR_BRASIL_RF_V2 requer pares mensais VV/VH nos 12 meses do ano agrícola.
 
-O relatório real da Fazenda Maria Eduarda mostrou 12 cenas VV/VH lidas e áreas candidatas, mas a classe semântica anual permaneceu N/D. Causa encontrada no código: o modelo brasileiro ENFORM_SAR_BRASIL_RF_V2 requer 12 pares mensais VV/VH; sar_landcover_lemplus.py consultava apenas o catálogo MPC, enquanto recent_sar_landcover.py já consultava MPC e INPE. A leitura de cenas e a série do classificador estavam desacopladas.
+A candidata 3.26.39 conecta o classificador à descoberta RTC MPC+INPE. Seleciona um único provedor/orbita com maior cobertura mensal, usa MPC apenas para desempate e lê ativos INPE sem assinatura MPC. A regressão sintética cobre a janela de doze meses. O resultado live no KML ainda é pendente; se houver meses sem pares reais, classificador deve abster-se, registrar provedor/meses e não imputar máscara.
 
-A correção em andamento conecta a busca anual aos catálogos RTC MPC+INPE, seleciona uma única origem e órbita com maior cobertura mensal, prioriza MPC somente em empate e lê COG público INPE diretamente. Não mistura provedores. Se faltar qualquer mês, a classificação se abstém e informa a origem e os meses; não inventa pares ou máscaras. O modelo segue experimental, com transferência local e incerteza declaradas.
+Também corrige o handoff do cenário de inventário condicional sem repetir SAR e preserva a última imagem óptica válida em falha de refresh. Esses dois itens são secundários à rota principal. Sem a CI final e execução integral da AOI, manter status experimental pré-campo, não homologado.
 
-A mudança também fecha duas falhas secundárias: o cenário de inventário não repete a consulta SAR e a falha de refresh óptico conserva a última imagem válida. Esses ajustes não substituem o aceite da rota principal.
 
-Validação ainda pendente: regressões no CI, busca live anual e build Windows no mesmo SHA; depois, KML integral da Fazenda Maria Eduarda até classificação, painéis e relatórios vinculados pelo mesmo run_id/hash. A versão continua pré-campo experimental e não homologada.
+# Checkpoint V88.67 — 15/11/2026
 
-## Prova live concluída, execução integral pendente (15/11/2026)
+Candidata 3.26.39-PRECAMPO-EXPERIMENTAL, commit `3172277b02dd59de24861c8dd8abfc8e5159d49a`: dashboard verde (1.158 testes) e build Windows verde, incluindo EXE em pasta limpa, smokes ópticos amostrais nacionais e no canvas de Sinop, SAR real em Tapajós e pixels ESA BIOMASS FH em Sinop. Artefato Windows: run `43667839142`, ID `14143645489`, 197.810.187 bytes, digest SHA-256 `f88d1cfbd886d8519691f4208683c6b5fec62d35e61eded88cabcd4be16ae576`.
 
-O workflow 43667205598 executou o modelo ENFORM_SAR_BRASIL_RF_V2 com pixels Sentinel-1 RTC reais no recorte de 0,03° perto do centroide de Sinop: 30 cenas, 12 meses da safra 2025/2026, 1.692 pixels e polígonos experimentais. O recorte foi 1.084,73 ha, não o KML integral de 1.459,91 ha. Classes experimentais incluíram soja, floresta nativa, área antrópica e cobertura úmida. Prova confirma que MPC+INPE fornece a série temporal e a inferência do modelo opera no recorte; não comprova o mapa integral, carbono no dashboard, nem imagem óptica na tela. Build Windows e dashboard no SHA mais recente ainda pendentes.
+Causa principal da falha SAR anterior: o classificador anual `ENFORM_SAR_BRASIL_RF_V2` procurava apenas MPC, enquanto a triagem recente encontrava cenas também no catálogo INPE. A correção busca MPC+INPE, seleciona provedor/órbita com maior cobertura mensal e lê COGs públicos INPE sem assinatura SAS. Prova real em Sinop: 30 cenas, 12 meses, 1.692 pixels; recorte de 1.084,73 ha, diferente do KML integral de 1.459,91 ha. Máscaras experimentais não validadas em campo.
+
+GAP OBRIGATÓRIO: o script live grava polígonos SAR e termina com `ready_for_property_transfer=false`; ele ainda não executou esses pixels através de `run_land_use → native_carbon_analysis → _sar_dashboard_payload` em uma única execução com mesmo `analysis_run_id` e hash. Contratos do dashboard com fixtures passaram, mas isso não equivale à prova live. A próxima alteração deve estender a aceitação live para esse handoff e, depois, executar o KML integral local da Fazenda Maria Eduarda sem enviar seus limites a repositório/artefato público. Preservar N/D e incerteza quando não sustentados. Não declarar o aceite ponta a ponta ou homologação de campo.
+
+Fundo óptico: os smokes de amostras nacionais e envio ao canvas do Windows em Sinop passaram neste commit. Isso não garante cada coordenada/data. Em falha, mostrar diagnóstico e preservar última imagem óptica válida; jamais deixar canvas preto sem motivo nem usar raster IBGE como se fosse imagem óptica.
+
+
+# Checkpoint V88.68 — teste SAR de ponta a ponta em Sinop e Tapajós
+
+A correção da rota anual MPC+INPE da 3.26.39 já passou CI, mas a evidência live anterior terminava na gravação de polígonos. Esta etapa amplia o teste de aceitação para executar `run_land_use`, ler a máscara final, entregá-la ao cálculo de carbono nativo e produzir o payload do dashboard com as classes semânticas SAR, fonte/modelo, área, `analysis_run_id` e hash da AOI. O mesmo contrato será exercitado em (1) recorte público amostral perto de Sinop e (2) KML/KMZ público de aceitação do Tapajós. Nenhum KML da Fazenda Maria Eduarda será enviado ao repositório ou a artefatos públicos.
+
+A aceitação deverá separar dois resultados: a máscara experimental SAR chega ao carbono/painel com identidade e áreas consistentes; e cada compartimento de carbono retorna um valor sustentado ou N/D/ERRO_TECNICO com causa e incerteza. O teste não pode substituir estimador por valor sintético nem converter ausência de dado em zero. A Fazenda Maria Eduarda integral continua a exigir execução local em seu KML privado; o recorte de Sinop não a representa.
+
+A mudança de payload do dashboard acrescenta as classes semânticas SAR experimentais/validadas que já estavam no resumo `land_use`, mais modelo, safra, validação local, `analysis_run_id` e hash. Isso evita que o resultado fique só no vetor ou se perca na transição do core para os painéis. O histórico V43 é arquivo de referência e permanece imutável; a documentação corrente e a especificação de solos recebem o checkpoint. CI e prova live deste checkpoint ainda pendentes.

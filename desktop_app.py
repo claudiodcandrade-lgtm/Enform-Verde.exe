@@ -386,7 +386,7 @@ def load_ibge_land_use_reference(project):
     return layer,field
 
 def _sar_dashboard_payload(native, land=None):
-    """Preserve per-stratum SAR processing evidence at AOI/dashboard level."""
+    """Preserve carbon SAR details and annual semantic masks at dashboard level."""
     strata=[]
     for item in (native or {}).get("strata",[]) or []:
         details=item.get("sar_details") or {}
@@ -400,20 +400,46 @@ def _sar_dashboard_payload(native, land=None):
                            "height_mean_m":details.get("height_mean_m"),
                            "height_n_valid_pixels":details.get("height_n_valid_pixels"),
                            "audit":audit,"details":details})
-    cover=(land or {}).get("recent_sar_cover") or {}
+    land=land or {}
+    cover=land.get("recent_sar_cover") or {}
     pixels_processed=any(row.get("stats") or row.get("height_n_valid_pixels",0)>0
                          or row.get("agb_mg_ha") is not None for row in strata)
     pixels_processed=pixels_processed or cover.get("pixel_state")=="PROCESSADO"
     status=("SAR_PROCESSADO" if pixels_processed
-            else cover.get("status") or (land or {}).get("status") or "SAR_N/D")
+            else cover.get("status") or land.get("status") or "SAR_N/D")
+    semantic_sources=("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO")
+    semantic_classes=[]
+    for row in land.get("classes") or []:
+        source=str(row.get("source") or "")
+        if source.startswith(semantic_sources):
+            semantic_classes.append({
+                "class_name":row.get("class_name"),"area_ha":row.get("area_ha"),
+                "area_pct":row.get("area_pct"),"source":source,
+                "taxonomy":row.get("taxonomy"),"native_status":row.get("native_status"),
+                "land_use_group":row.get("land_use_group")})
+    validation=land.get("validation") or {}
+    lemplus=land.get("sar_classifier_lemplus") or {}
+    semantic_status=(land.get("current_sar_crop_identification")
+                     or ("CLASSIFICACAO_SAR_PRESENTE" if semantic_classes else
+                         "N/D_SEM_MASCARA_SEMANTICA_SAR"))
     return {"status":status,"strata":strata,"recent_sar_cover":cover,
-            "land_use_status":(land or {}).get("status"),
-            "land_use_reason":(land or {}).get("reason"),
+            "land_use_status":land.get("status"),
+            "land_use_reason":land.get("reason"),
+            "semantic_land_use":{
+                "status":semantic_status,"classes":semantic_classes,
+                "model_id":validation.get("model_id") or lemplus.get("model_id"),
+                "model_sha256":validation.get("model_sha256") or lemplus.get("model_sha256"),
+                "observed_season":validation.get("observed_season") or lemplus.get("season"),
+                "local_validation_status":validation.get("local_validation_status") or "NAO_REALIZADA",
+                "validation_scope":validation.get("validation_scope") or lemplus.get("domain"),
+                "class_count":len(semantic_classes),
+                "area_ha":sum(float(r.get("area_ha") or 0.0) for r in semantic_classes)},
+            "analysis_run_id":land.get("analysis_run_id") or (native or {}).get("analysis_run_id"),
+            "aoi_hash_sha256":land.get("aoi_hash_sha256") or (native or {}).get("aoi_hash_sha256"),
             "fitofisionomia_raster_stats":{
                 row["physiognomy"]:row["stats"] for row in strata if row.get("stats")},
             "height_absence_certificate":(native or {}).get("height_absence_certificate"),
-            "source":"SAR por interseção nativa; preservado do core para painel e auditoria"}
-
+            "source":"máscaras SAR e parcelas nativas preservadas do core para painel e auditoria"}
 
 
 def _native_carbon_failure_result(aoi, exc):

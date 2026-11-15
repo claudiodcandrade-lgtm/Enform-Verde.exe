@@ -10,7 +10,7 @@ from unittest.mock import patch
 import geopandas as gpd
 from shapely.geometry import box
 
-from desktop_app import App, native_carbon_analysis
+from desktop_app import App, native_carbon_analysis, _sar_dashboard_payload
 from analysis_pipeline_contract import geometry_hash
 
 
@@ -303,6 +303,39 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         self.assertTrue(all(call.kwargs["conditional_only"] is True for call in scenario.call_args_list))
         self.assertEqual(len(result["conditional_inventory_scenarios"]), 2)
 
+
+    def test_semantic_sar_masks_and_aoi_identity_reach_dashboard_payload(self):
+        land = {
+            "status": "SAR_MODELO_EXPERIMENTAL",
+            "current_sar_crop_identification": "CLASSIFICACAO_SAR_EXPERIMENTAL_SEM_VALIDACAO_LOCAL",
+            "analysis_run_id": "RUN-SINOP-01",
+            "aoi_hash_sha256": "a" * 64,
+            "validation": {
+                "model_id": "ENFORM_SAR_BRASIL_RF_V2",
+                "model_sha256": "b" * 64,
+                "observed_season": "2025/2026",
+                "local_validation_status": "NAO_REALIZADA",
+                "validation_scope": "EXTRAPOLACAO_NACIONAL_EXPERIMENTAL",
+            },
+            "classes": [
+                {"class_name": "Formação florestal", "area_ha": 3.2, "area_pct": 32.0,
+                 "source": "SAR_EXPERIMENTAL_MODELO", "taxonomy": "RF 2025/2026",
+                 "native_status": True, "land_use_group": "Vegetação nativa"},
+                {"class_name": "Lavoura de soja", "area_ha": 2.1, "area_pct": 21.0,
+                 "source": "SAR_EXPERIMENTAL_MODELO", "taxonomy": "RF 2025/2026",
+                 "native_status": False, "land_use_group": "Uso agropecuário/cultivado"},
+            ],
+        }
+        payload = _sar_dashboard_payload({"strata": []}, land)
+        semantic = payload["semantic_land_use"]
+        self.assertEqual(payload["analysis_run_id"], "RUN-SINOP-01")
+        self.assertEqual(payload["aoi_hash_sha256"], "a" * 64)
+        self.assertEqual(semantic["status"], "CLASSIFICACAO_SAR_EXPERIMENTAL_SEM_VALIDACAO_LOCAL")
+        self.assertEqual(semantic["model_id"], "ENFORM_SAR_BRASIL_RF_V2")
+        self.assertEqual(semantic["observed_season"], "2025/2026")
+        self.assertEqual(semantic["class_count"], 2)
+        self.assertAlmostEqual(semantic["area_ha"], 5.3)
+        self.assertEqual(semantic["classes"][1]["class_name"], "Lavoura de soja")
 
 
 if __name__ == "__main__":

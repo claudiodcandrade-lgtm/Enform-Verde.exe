@@ -28,7 +28,7 @@ def check(changed, *, workflow_text=None, word_exists=None):
     if not eff:return eff,[]
     missing=[]
     if PROMPT not in changed:missing.append(PROMPT)
-    if HISTORICAL_PROMPT not in changed:missing.append(HISTORICAL_PROMPT)
+    # The V43 prompt is an immutable history archive; the current V52 prompt carries new checkpoints.
     if SOIL_SPEC not in changed:missing.append(SOIL_SPEC)
     if SPEC not in changed:
         if workflow_text is None:
