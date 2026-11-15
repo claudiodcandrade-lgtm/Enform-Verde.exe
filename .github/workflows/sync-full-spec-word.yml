@@ -5,7 +5,7 @@ on:
       - feature/agricultural-identification-native-carbon
       - patches-3.26.6
     paths:
-      - docs/spec_updates/2026-11-15_v88_76_ibge_visual_fallback.md
+      - docs/spec_updates/2026-11-15_v88_82_sar_handoff_and_forecast.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -24,17 +24,56 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Append V88.80 architecture review preserving full Word history
+      - name: Append V88.82 handoff contract preserving full Word history
         run: |
-          python tools/update_spec_docx.py \
-            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-            --entry docs/spec_updates/2026-11-15_v88_76_ibge_visual_fallback.md \
-            --baseline "Enform Verde 3.26.42-PRECAMPO-EXPERIMENTAL (V88.79 operational validation and GUI wait correction)" \
-            --head-sha "${{ github.sha }}" \
-            --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
-            --date "15 de novembro de 2026" \
-            --footer-label "V88.80 · experimental 3.26.42 · smoke GUI óptico aguardando worker terminal" \
-            --footer-date "15/11/2026"
+          if python - <<'PY'
+          from zipfile import ZipFile
+          with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as z:
+              xml=z.read('word/document.xml').decode('utf-8')
+          raise SystemExit(0 if 'V88.82' in xml else 1)
+          PY
+          then
+            python - <<'PY'
+          import os
+          import tempfile
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          path = Path('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx')
+          sha = os.environ['GITHUB_SHA']
+          with ZipFile(path) as source:
+              entries = [(item, source.read(item.filename)) for item in source.infolist()]
+          document = next(data for item, data in entries if item.filename == 'word/document.xml')
+          xml = document.decode('utf-8')
+          if 'WORKTREE-' in xml:
+              import re
+              xml, count = re.subn(r'WORKTREE-[A-Za-z0-9_-]+', sha, xml)
+              if count != 1:
+                  raise SystemExit(f'Expected one temporary SHA marker, found {count}')
+              fd, temporary = tempfile.mkstemp(suffix='.docx', dir=path.parent)
+              os.close(fd)
+              try:
+                  with ZipFile(temporary, 'w') as target:
+                      for item, data in entries:
+                          target.writestr(item, xml.encode('utf-8') if item.filename == 'word/document.xml' else data)
+                  Path(temporary).replace(path)
+              finally:
+                  Path(temporary).unlink(missing_ok=True)
+          print('V88.82 already present; finalized its SHA metadata.')
+          PY
+          else
+            python tools/update_spec_docx.py \
+              --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+              --entry docs/spec_updates/2026-11-15_v88_82_sar_handoff_and_forecast.md \
+              --baseline "Enform Verde 3.26.43-PRECAMPO-EXPERIMENTAL (V88.82 SAR result handoff)" \
+              --head-sha "${{ github.sha }}" \
+              --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
+              --date "15 de novembro de 2026" \
+              --footer-label "V88.82 · experimental 3.26.43 · SAR handoff rastreável" \
+              --footer-date "15/11/2026"
+          fi
+        env:
+          GITHUB_SHA: ${{ github.sha }}
       - name: Verify DOCX archive and current checkpoint
         run: |
           python - <<'PY'
@@ -45,13 +84,13 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert len(xml) > 10000
-              assert 'V88.80' in xml and '3.26.42-PRECAMPO-EXPERIMENTAL' in xml
-          print('Word specification updated with V88.80 checkpoint and archive validated')
+              assert 'V88.82' in xml and '3.26.43-PRECAMPO-EXPERIMENTAL' in xml
+          print('Word specification updated with V88.82 checkpoint and archive validated')
           PY
       - name: Commit DOCX to the same feature branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.80 visual fallback"
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.82 SAR handoff"
           git push origin HEAD:${{ github.ref_name }}

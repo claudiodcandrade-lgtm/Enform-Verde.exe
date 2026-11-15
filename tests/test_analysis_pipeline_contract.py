@@ -2,7 +2,8 @@
 import unittest
 import geopandas as gpd
 from shapely.geometry import Polygon
-from analysis_pipeline_contract import geometry_hash, validate_result_for_publication
+from analysis_pipeline_contract import (geometry_hash, validate_result_for_publication,
+                                        validate_pipeline_handoff)
 
 
 class AnalysisPipelineContractTests(unittest.TestCase):
@@ -49,6 +50,17 @@ class AnalysisPipelineContractTests(unittest.TestCase):
             validate_result_for_publication(
                 self.fingerprint,self.aoi,{**result,"error":"internal exception"},
                 required_keys=("vector_path",),allow_declared_error_status=True)
+
+    def test_worker_handoff_requires_same_run_and_aoi_on_every_stage(self):
+        stages={name:{"analysis_run_id":"RUN-1","aoi_hash_sha256":self.fingerprint}
+                for name in ("land_use","native_carbon","sar_dashboard")}
+        self.assertTrue(validate_pipeline_handoff("RUN-1",self.fingerprint,stages))
+        with self.assertRaisesRegex(ValueError,"HANDOFF_RUN_ID_DIVERGENTE"):
+            validate_pipeline_handoff("RUN-1",self.fingerprint,
+                {**stages,"sar_dashboard":{**stages["sar_dashboard"],"analysis_run_id":"RUN-OLD"}})
+        with self.assertRaisesRegex(ValueError,"HANDOFF_HASH_AOI_DIVERGENTE"):
+            validate_pipeline_handoff("RUN-1",self.fingerprint,
+                {**stages,"native_carbon":{**stages["native_carbon"],"aoi_hash_sha256":"0"*64}})
 
 
 if __name__ == "__main__":

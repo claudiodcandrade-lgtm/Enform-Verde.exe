@@ -49,3 +49,28 @@ def validate_result_for_publication(start_hash, current_frame, result, *, requir
     if missing:
         raise ValueError("SAIDA_INCOMPLETA — campos ausentes: " + ", ".join(missing))
     return True
+
+
+def validate_pipeline_handoff(run_id, aoi_hash, stages):
+    """Fail closed if a worker/core/UI handoff mixes runs or loses AOI identity.
+
+    ``stages`` is a mapping of stage name to its serializable result dict. This
+    contract deliberately validates identity, not scientific validity: pixels
+    and estimates retain their own provenance and uncertainty fields.
+    """
+    if not isinstance(run_id, str) or not run_id.strip():
+        raise ValueError("HANDOFF_SEM_RUN_ID — execução sem identidade.")
+    if not isinstance(aoi_hash, str) or len(aoi_hash) != 64:
+        raise ValueError("HANDOFF_SEM_HASH_AOI — hash da geometria ausente ou inválido.")
+    if not isinstance(stages, dict) or not stages:
+        raise ValueError("HANDOFF_SEM_ETAPAS — nenhum resultado foi entregue.")
+    for name, result in stages.items():
+        if not isinstance(result, dict):
+            raise ValueError(f"HANDOFF_RESULTADO_INVALIDO — etapa {name} não retornou objeto.")
+        stage_run = result.get("analysis_run_id")
+        stage_hash = result.get("aoi_hash_sha256", result.get("aoi_hash"))
+        if stage_run != run_id:
+            raise ValueError(f"HANDOFF_RUN_ID_DIVERGENTE — etapa {name} pertence a outra execução.")
+        if stage_hash != aoi_hash:
+            raise ValueError(f"HANDOFF_HASH_AOI_DIVERGENTE — etapa {name} pertence a outra geometria.")
+    return True

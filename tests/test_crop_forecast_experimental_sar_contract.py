@@ -4,10 +4,12 @@ conditional scenarios, but never misrepresented as current verified fields.
 import tempfile
 from pathlib import Path
 import unittest
+from datetime import date
+from unittest.mock import patch
 import geopandas as gpd
 from shapely.geometry import box
 from crop_monitoring_forecast import (crops_in_land_result,experimental_crops_in_land_result,
-                                     canonical_crop,_append_candidate_vigor_lines)
+                                     canonical_crop,_append_candidate_vigor_lines,monitoring_forecast)
 from crop_spatial_monitoring import crop_geometry,current_sar_cultivated_candidate_geometry
 
 
@@ -35,6 +37,34 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
             self.assertIsNotNone(geoms)
             self.assertEqual(len(geoms),1)
             self.assertGreater(float(geoms.to_crs(6933).geometry.area.sum()),0)
+
+    def test_annual_sar_mask_reaches_calibrated_model_as_conditional_scenario(self):
+        frame=gpd.GeoDataFrame({"class_name":["Lavoura de Soja"],
+            "source":["SAR_EXPERIMENTAL_MODELO"]},
+            geometry=[box(-55.20,-11.89,-55.19,-11.88)],crs=4326)
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"annual.geojson";frame.to_file(path,driver="GeoJSON")
+            land={"vector_path":str(path),"classes":[{"class_name":"Lavoura de Soja",
+                "source":"SAR_EXPERIMENTAL_MODELO","area_ha":1.0}],
+                "validation":{"observed_season":"2025/2026"}}
+            called={}
+            def forecast(fields,as_of):
+                called["fields"]=fields
+                return {"model":"panel","model_label":"painel teste","fields":{},
+                    "production":{"fields_kg_ha":{},"production_t":{"median":0,"p05":0,"p95":0,
+                    "interval_note":"fixture"}}}
+            with patch("crop_panel_yield_model.load_artifact",return_value={"crops":{"Soja":{}}}):
+                lines,audit=monitoring_forecast(
+                    frame,land,as_of=date(2026,11,15),forecast_fn=forecast,
+                    micro_fn=lambda _g:{"dominant":{"code":"51006","name":"Alto Teles Pires"}})
+            self.assertIn("fields",called,"máscara SAR anual não pode ser bloqueada antes do modelo")
+            self.assertEqual(called["fields"][0]["crop"],"Soja")
+            self.assertEqual(called["fields"][0]["vigor"]["status"],"N/D")
+            self.assertEqual(audit["crops"]["Soja"]["transfer_uncertainty"],"NAO_QUANTIFICADA")
+            rendered="\n".join(lines)
+            self.assertIn("previsão SEM VIGOR",rendered)
+            self.assertIn("PREVISÃO CONDICIONAL",rendered)
+            self.assertIn("NÃO quantificada",rendered)
 
     def test_unverified_cartographic_classes_never_enable_forecast(self):
         land={"classes":[

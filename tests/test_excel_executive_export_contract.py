@@ -16,6 +16,8 @@ class ExcelExecutiveContract(unittest.TestCase):
     def test_summary_precedes_all_existing_tabs(self):
         self.assertIn('create_sheet(\'PAINEL EXECUTIVO\', 0)',self.src)
         self.assertIn('create_sheet(\'Totais tCO2e\')',self.src)
+        self.assertIn('create_sheet(\'Handoff SAR\')',self.src)
+        self.assertIn('height_products',self.src)
 
     def test_total_uses_stock_not_multiplication_by_full_aoi(self):
         self.assertIn("self.project.get('total_tco2e')",self.src)

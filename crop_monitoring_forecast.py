@@ -278,15 +278,19 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     "reason": type(exc).__name__ + ": " + str(exc)[:180]}
                 lines.append("  SAR ATUAL: ERRO TÉCNICO — "+
                              audit["live_sar_probe"]["reason"])
-        if crop in art.get("crops", {}) and not annual_experimental:
-            # Both target and peer masks must be current, accepted SAR crop labels.
-            # No annual map-code or cartographic class selects the peer fields.
+        if crop in art.get("crops", {}):
+            # For a current accepted mask, vigor can condition the model.
+            # An annual experimental SAR mask may still run the calibrated
+            # climate+PAM model as a prior-season scenario, never as current
+            # production; its transfer uncertainty is explicitly unquantified.
             def scene_vigor(patch, day, _crop_label):
                 if vigor_fn is automatic_vigor:
                     return vigor_fn(patch, day, crop, reference_gdf=crop_gdf)
                 return vigor_fn(patch, day, crop)
             try:
-                if crop_gdf is not None and municipal_scale:
+                if annual_experimental:
+                    vig = dict(entry["crop_specific_vigor"])
+                elif crop_gdf is not None and municipal_scale:
                     vig = sampled_sentinel_vigor(crop_gdf, as_of, crop, scene_vigor, require_scene_evidence=(vigor_fn is automatic_vigor))
                 elif municipal_scale:
                     vig = {"status": "N/D", "reason": "sem polígono de cultura disponível; proibido usar AOI municipal multiclasse para vigor"}

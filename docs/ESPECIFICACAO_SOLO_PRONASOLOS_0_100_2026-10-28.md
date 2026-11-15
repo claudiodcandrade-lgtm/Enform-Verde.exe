@@ -466,3 +466,7 @@ Esta evidência comprova transmissão ponta a ponta somente nos AOIs de teste. N
 <!-- V88_80_GUI_WORKER_TERMINAL_GATE -->
 ## V88.80 — prova visual terminal da janela
 A captura inicial com `AOI_LOCAL_FALLBACK` somente prova que o canvas não está preto; como o AOI é renderizado antes de iniciar consultas, ela não confirma o término do worker óptico/IBGE. O smoke agora espera o estado terminal, após pixels CBERS/Sentinel-2 ou fallback cartográfico final. O novo smoke/build deve passar antes de confirmar a integração visual. A camada IBGE permanece rotulada como potencial e, em falha também do IBGE, o perímetro local é último fallback com aviso.
+
+## V88.82 — contrato de entrega ponta a ponta (15/11/2026)
+
+Toda etapa publicada deve ter o mesmo `analysis_run_id` e hash da AOI. Altura SAR só é exposta se pixels numéricos válidos foram lidos; a saída preserva contagem, métrica/unidade, produto, fonte, banda, cenas, distribuição e natureza da dispersão. O painel e o Excel devem apresentar o valor por estrato ou N/D com causa, sem converter SD espacial em IC95. O arquivo `proveniencia_sar_painel.json` registra o payload recebido com run ID e hash. O carbono derivado de raízes e do solo permanece compartimentado e não pode usar altura quando o produto de altura não chegou à etapa consumidora.

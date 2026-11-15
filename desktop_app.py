@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.42-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.43-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -409,18 +409,36 @@ def load_ibge_land_use_reference(project):
 def _sar_dashboard_payload(native, land=None):
     """Preserve carbon SAR details and annual semantic masks at dashboard level."""
     strata=[]
+    height_products=[]
     for item in (native or {}).get("strata",[]) or []:
         details=item.get("sar_details") or {}
         audit=item.get("sar_audit") or {}
         if details or audit:
-            strata.append({"physiognomy":item.get("physiognomy") or item.get("class_name"),
+            row={"physiognomy":item.get("physiognomy") or item.get("class_name"),
                            "class_name":item.get("class_name"),"area_ha":item.get("area_ha"),
                            "source":item.get("source"),"status":details.get("status"),
                            "data_origin":details.get("data_origin"),"provider":details.get("source"),
                            "stats":details.get("stats") or [],"agb_mg_ha":details.get("agb_mg_ha"),
                            "height_mean_m":details.get("height_mean_m"),
                            "height_n_valid_pixels":details.get("height_n_valid_pixels"),
-                           "audit":audit,"details":details})
+                           "audit":audit,"details":details}
+            strata.append(row)
+            try:height_pixel_count=int(details.get("height_n_valid_pixels") or 0)
+            except (TypeError,ValueError):height_pixel_count=0
+            try:height_mean=float(details.get("height_mean_m"))
+            except (TypeError,ValueError):height_mean=float("nan")
+            if height_pixel_count > 0 and math.isfinite(height_mean) and height_mean > 0:
+                height_products.append({"physiognomy":row["physiognomy"],
+                    "height_mean_m":height_mean,
+                    "height_sd_m":details.get("height_sd_m"),
+                    "height_n_valid_pixels":height_pixel_count,
+                    "height_metric":details.get("height_metric"),
+                    "height_error_kind":details.get("height_error_kind"),
+                    "height_route_status":details.get("height_route_status"),
+                    "product":details.get("product"),"sensor":details.get("sensor"),
+                    "band":details.get("band"),"source":details.get("source"),
+                    "scene_ids":details.get("scene_ids"),"paths":details.get("paths"),
+                    "height_pixel_distribution":details.get("height_pixel_distribution")})
     land=land or {}
     cover=land.get("recent_sar_cover") or {}
     pixels_processed=any(row.get("stats") or row.get("height_n_valid_pixels",0)>0
@@ -443,7 +461,8 @@ def _sar_dashboard_payload(native, land=None):
     semantic_status=(land.get("current_sar_crop_identification")
                      or ("CLASSIFICACAO_SAR_PRESENTE" if semantic_classes else
                          "N/D_SEM_MASCARA_SEMANTICA_SAR"))
-    return {"status":status,"strata":strata,"recent_sar_cover":cover,
+    return {"status":status,"strata":strata,"height_products":height_products,
+            "recent_sar_cover":cover,
             "land_use_status":land.get("status"),
             "land_use_reason":land.get("reason"),
             "semantic_land_use":{
@@ -2991,6 +3010,17 @@ class App(tk.Tk):
         def worker():
             land=None; native=None; pedology=None; fertility=None; sar_payload=None
             checkpoint_path=None; stage_errors=[]
+            def validate_worker_handoff(land_result,native_result,sar_result):
+                from analysis_pipeline_contract import validate_pipeline_handoff
+                try:
+                    validate_pipeline_handoff(analysis_run_id,aoi_hash,
+                        {"land_use":land_result,"native_carbon":native_result,
+                         "sar_dashboard":sar_result})
+                    return True
+                except Exception as exc:
+                    self._analysis_queue.put((run_id,"error",
+                        "HANDOFF_VALIDATION_FAILED — "+type(exc).__name__+": "+str(exc)))
+                    return False
             try:
                 reference=land_ibge;reference_field=land_field
                 if reference is None:
@@ -3033,6 +3063,7 @@ class App(tk.Tk):
                         stage_errors.append({"stage":"fertility","status":"ERRO_TECNICO",
                                              "error_type":type(exc).__name__,"reason":str(exc)[:300]})
                 sar_payload=_sar_dashboard_payload(native,land)
+                if not validate_worker_handoff(land,native,sar_payload):return
                 try:
                     checkpoint_path=_write_analysis_stage_checkpoint(
                         analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors)
@@ -3059,6 +3090,7 @@ class App(tk.Tk):
                     fertility={"status":"N/D","reason":"Etapa não concluída após falha técnica: "+type(exc).__name__,
                                "units":{},"layers":[]}
                 sar_payload=_sar_dashboard_payload(native,land)
+                if not validate_worker_handoff(land,native,sar_payload):return
                 try:
                     checkpoint_path=_write_analysis_stage_checkpoint(
                         analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors)
@@ -3121,6 +3153,19 @@ class App(tk.Tk):
         self.project["analysis_aoi_hash"]=run_aoi_hash
         self.project["analysis_aoi_crs"]=str(self.gdf.crs)
         self.project["analysis_app_version"]=APP_VERSION
+        # The worker result is an immutable envelope. Validate identity across
+        # all transferred stages before any panel or export can publish it.
+        if precomputed_land is not None or precomputed_native is not None or precomputed_sar is not None:
+            try:
+                from analysis_pipeline_contract import validate_pipeline_handoff
+                transfer={}
+                if isinstance(precomputed_land,dict): transfer["land_use"]=precomputed_land
+                if isinstance(precomputed_native,dict): transfer["native_carbon"]=precomputed_native
+                if isinstance(precomputed_sar,dict): transfer["sar_dashboard"]=precomputed_sar
+                validate_pipeline_handoff(self.project["analysis_run_id"],run_aoi_hash,transfer)
+            except Exception as exc:
+                self.status.set("Handoff bloqueado — resultado não pertence à execução/AOI atual.")
+                return messagebox.showerror("Análise",str(exc))
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
@@ -3262,6 +3307,22 @@ class App(tk.Tk):
         lines = (executive_carbon_lines(native,format_ptbr) +
                  pedology_report_lines(pedology or {},format_ptbr) +
                  fertility_report_lines(fertility or {},format_ptbr) + lines)
+        height_rows=(self.project.get("sar_result") or {}).get("height_products") or []
+        if height_rows:
+            lines.extend(["", "ALTURA DE DOSSEL SAR — pixels realmente lidos e entregues ao painel"])
+            for h in height_rows:
+                lines.append("  "+str(h.get("physiognomy") or "Estrato N/D")+": "+
+                    format_ptbr(h.get("height_mean_m"),2)+" m; n="+
+                    str(h.get("height_n_valid_pixels"))+" pixels válidos; métrica "+
+                    str(h.get("height_metric") or "conforme produto")+
+                    "; produto "+str(h.get("product") or "N/D")+"; fonte "+
+                    str(h.get("source") or "N/D")+
+                    "; SD espacial="+format_ptbr(h.get("height_sd_m"),2)+
+                    " m (não é erro de mensuração).")
+        else:
+            cert=(self.project.get("sar_result") or {}).get("height_absence_certificate") or {}
+            lines.extend(["", "ALTURA DE DOSSEL SAR: N/D — nenhum pixel de altura chegou ao painel; "+
+                          str(cert.get("status") or "ausência não certificada; consultar auditoria SAR")+"."])
         for scenario in native.get("conditional_inventory_scenarios",[]):
             lines += ["", "CENÁRIO CONDICIONAL DE CARBONO — INVENTÁRIO/REFERÊNCIA REGIONAL (não é cobertura atual confirmada)",
                       "Estado: "+str(scenario.get("status")),
@@ -3397,6 +3458,12 @@ class App(tk.Tk):
         # Store serializable class-level results beside spatial provenance.
         audit=Path(land["vector_path"]).parent/"carbono_formacoes_nativas.json"
         audit.write_text(json.dumps(native,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        sar_audit=Path(land["vector_path"]).parent/"proveniencia_sar_painel.json"
+        sar_audit.write_text(json.dumps({
+            "analysis_run_id":self.project.get("analysis_run_id"),
+            "aoi_hash_sha256":self.project.get("analysis_aoi_hash"),
+            "sar_dashboard_payload":self.project.get("sar_result") or {},
+        },ensure_ascii=False,indent=2,default=str),encoding="utf-8")
         # Separate pedology from carbon stocks in exported calculation evidence.
         pedo_audit=Path(land["vector_path"]).parent/"pedologia_embrapa_auditoria.json"
         pedo_audit.write_text(json.dumps(pedology or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
@@ -3619,6 +3686,29 @@ class App(tk.Tk):
         put(sh,[["Sensor","ESA Biomass — banda P",None,None,"Preferencial","PolSAR/PolInSAR/TomoSAR","ESA","Primeiro SAR orbital em banda P; usar somente quando produto efetivamente processado."],
                 ["Sensor","ALOS/PALSAR / ALOS-2",None,None,"Histórico/complementar","banda L","JAXA","Séries históricas para atributos estruturais."],
                 ["Sensor","TerraSAR-X / TanDEM-X / COSMO-SkyMed",None,None,"Complementar","banda X","Operadores","Textura e estrutura do dossel; não é banda do satélite Biomass."]])
+        sh=wb.create_sheet("Handoff SAR")
+        setup(sh,"Enform Verde — pixels SAR entregues ao relatório e à exportação")
+        sar_result=self.project.get("sar_result") or {}
+        handoff_rows=[["Execução/AOI",self.project.get("analysis_run_id"),None,None,
+                       "estado SAR",sar_result.get("status"),"origem","core → dashboard → exportação"],
+                      ["Hash AOI",self.project.get("analysis_aoi_hash"),None,None,
+                       "produtos de altura",len(sar_result.get("height_products") or []),
+                       "status","não confundir altura com AGB"]]
+        for h in sar_result.get("height_products") or []:
+            handoff_rows.append(["Altura SAR",h.get("physiognomy"),h.get("height_route_status"),
+                h.get("height_mean_m"),"m; n pixels válidos="+str(h.get("height_n_valid_pixels")),
+                h.get("height_sd_m"),h.get("source"),json.dumps({k:h.get(k) for k in
+                    ("height_metric","height_error_kind","product","sensor","band","scene_ids",
+                     "paths","height_pixel_distribution")},ensure_ascii=False,default=str)])
+        if not sar_result.get("height_products"):
+            handoff_rows.append(["Altura SAR","N/D",(sar_result.get("height_absence_certificate") or {}).get("status"),
+                None,"N/D",None,"sem pixels numéricos de altura no payload",json.dumps({
+                    "reason":(sar_result.get("height_absence_certificate") or {}).get("reason"),
+                    "analysis_run_id":sar_result.get("analysis_run_id"),
+                    "aoi_hash_sha256":sar_result.get("aoi_hash_sha256")},ensure_ascii=False)])
+        put(sh,handoff_rows)
+        sh["A2"]="Valores, contagem de pixels, fonte, cena, distribuição e identidade da mesma execução. SD espacial não é erro de mensuração nem IC95%."
+        sh.merge_cells("A2:H2");sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
         sh=wb.create_sheet("Modelos e QA"); setup(sh,"Enform Verde — Modelos, QA e incerteza")
         put(sh,[["QA","Mensuração SAR",None,None,"REGRA","controle metodológico","Enform","Não declarar mensuração SAR sem produto efetivamente processado."],
                 ["Modelo","Conversão C→CO₂e",None,None,"Aplicado","tC × 44/12","estequiometria","Todas as estimativas de carbono são exibidas em tC/ha e tCO₂e/ha."],

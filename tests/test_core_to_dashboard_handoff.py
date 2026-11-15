@@ -29,6 +29,8 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                 "status": "ERRO_TECNICO_LEITURA_SAR",
                 "reason": "INPE_E_MPC_INDISPONIVEIS_NO_FIXTURE",
                 "latest_acquisition_utc": "2026-11-12T10:30:00Z",
+                "analysis_run_id": "RUN-HANDOFF-1",
+                "aoi_hash_sha256": geometry_hash(aoi),
             }
             land = {
                 "status": sar_result["status"],
@@ -42,6 +44,8 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                 "recent_sar_cover": sar_result,
                 "sar_classifier_lemplus": {"status": "N/D", "reason": sar_result["reason"]},
                 "validation": None,
+                "analysis_run_id": "RUN-HANDOFF-1",
+                "aoi_hash_sha256": geometry_hash(aoi),
             }
             native = {
                 "area_aoi_ha": 1.0,
@@ -62,6 +66,8 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                     "known_total_tc": 12.5,
                 }],
                 "strata": [],
+                "analysis_run_id": "RUN-HANDOFF-1",
+                "aoi_hash_sha256": geometry_hash(aoi),
             }
             pedology = {"status": "N/D", "reason": "fixture"}
             fertility = {"status": "N/D", "reason": "fixture"}
@@ -73,6 +79,7 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                 "pedology": pedology,
                 "fertility": fertility,
                 "aoi_hash": geometry_hash(aoi),
+                "analysis_run_id": "RUN-HANDOFF-1",
             }
 
             carbon_widget, crop_widget, crop_audit_widget = TextBuffer(), TextBuffer(), TextBuffer()
@@ -167,7 +174,15 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                 "source": "Fixture de integração",
                 "physiognomy": "Floresta de fixture",
                 "physiognomy_resolution": "fixture controlado",
-                "sar_details": {"stats": [{
+                "sar_details": {"height_mean_m": 31.0,"height_sd_m": 4.2,
+                    "height_n_valid_pixels": 8,"height_metric":"H100",
+                    "height_error_kind":"spatial standard deviation",
+                    "height_route_status":"ALTURA_SAR_PROCESSADA",
+                    "product":"FP_FH__L2A","sensor":"ESA BIOMASS","band":"P",
+                    "source":"ESA BIOMASS FH",
+                    "height_pixel_distribution":{"status":"SAR_PIXELS_HISTOGRAMMED",
+                        "bins":[{"label":"25–30 m","pixel_count":3},{"label":"30–35 m","pixel_count":5}]},
+                    "stats": [{
                     "scene": "S1_INPE_FIXTURE_001",
                     "path": "S1_INPE_FIXTURE_001_VV_VH.tif",
                     "acquisition_utc": acquisition,
@@ -188,6 +203,11 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                     "quantified_area_ha": 1.0,
                 }],
             }]
+            native["analysis_run_id"] = "RUN-HANDOFF-1"
+            native["aoi_hash_sha256"] = geometry_hash(aoi)
+            land["analysis_run_id"] = "RUN-HANDOFF-1"
+            land["aoi_hash_sha256"] = geometry_hash(aoi)
+            payload["sar"] = _sar_dashboard_payload(native,land)
             carbon_widget.value = crop_widget.value = crop_audit_widget.value = ""
             app.project = {"version": "test"}
             app._analysis_generation = 8
@@ -209,6 +229,16 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             self.assertIn("previsões e observações permanecem separadas", carbon_widget.value)
             self.assertIn("candidato SAR experimental", crop_widget.value)
             self.assertIn("cultura N/D", crop_widget.value)
+            self.assertEqual(app.project["sar_result"]["height_products"][0]["height_mean_m"],31.0)
+            self.assertEqual(app.project["sar_result"]["height_products"][0]["height_n_valid_pixels"],8)
+            self.assertIn('"height_mean_m": 31.0',carbon_widget.value)
+            self.assertIn("ALTURA DE DOSSEL SAR",carbon_widget.value)
+            carbon_audit=json.loads(audit_path.read_text(encoding="utf-8"))
+            self.assertEqual(carbon_audit["strata"][0]["sar_details"]["height_n_valid_pixels"],8)
+            sar_audit=json.loads((Path(tmp)/"proveniencia_sar_painel.json").read_text(encoding="utf-8"))
+            self.assertEqual(sar_audit["analysis_run_id"],"RUN-HANDOFF-1")
+            self.assertEqual(sar_audit["aoi_hash_sha256"],geometry_hash(aoi))
+            self.assertEqual(sar_audit["sar_dashboard_payload"]["height_products"][0]["height_mean_m"],31.0)
 
 
     def test_local_sar_runs_in_worker_and_reaches_both_core_stages(self):
