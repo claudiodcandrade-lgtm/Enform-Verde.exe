@@ -24,3 +24,17 @@ Estado antes da CI deste commit: alterações preparadas; aceitação live ampli
 
 ## Registro corretivo da integração e dos gates (15/11/2026)
 A suíte integral no commit d95542c executou 1.164 testes e encontrou duas falhas de contrato, não falhas de processamento: o teste documental ainda exigia editar o arquivo histórico V43, embora o guard de produção considere V43 imutável; e o workflow de SAR não repetia a declaração explícita `scikit-learn==1.8.0` exigida pelo teste de pinagem, apesar de a dependência já constar em requirements_desktop.txt. Ambas as exigências foram corrigidas no commit 70e7460aa5d7e9a0e479f0a7e155c72443b5c24f. A suíte, o build e o fluxo live para Sinop e Tapajós precisam ser aprovados no SHA final. Não declarar versão funcional até isso ocorrer.
+
+
+## V88.70 — resultado final de CI e handoff (15/11/2026)
+Código validado: SHA af64ae3b85188c5180192a92469fbe4313453025, candidata Enform Verde 3.26.39-PRECAMPO-EXPERIMENTAL.
+
+- Suíte integral do dashboard: 1.164 testes aprovados, run 43672912037. Contrato pré-campo aprovado, run 43672912023.
+- Handoff real Sentinel-1 → classificação de uso → máscaras de carbono → payload do dashboard aprovado em amostra de Sinop e AOI/KMZ público do Tapajós, run 43672912011. Sinop amostral: 1.084,73 ha; 30 cenas, 12 meses, 1.692 pixels. Tapajós: 1.290,69 ha; 29 cenas, 12 meses, 2.016 pixels. O mesmo analysis_run_id e hash da AOI foi preservado no payload.
+- Build Windows e autoteste do executável em cópia limpa aprovados, run 43672912029. Artefato Enform-Verde-Windows-v3.26.39-PRECAMPO-EXPERIMENTAL, 197.812.692 bytes, SHA-256 0180af23e8ca4a4bf2b7a5ed2056eb7f5f7725d5687e98a8c823ba5dcde13c4c.
+- Smokes do fundo óptico, cobertura amostral em biomas/extremos e envio ao canvas Windows em Sinop aprovados. Leitura Sentinel-1 RTC em sítios representativos dos seis biomas aprovada. Essas amostras não demonstram toda coordenada/data do Brasil.
+- A causa confirmada foi o uso de catálogos diferentes: a classificação anual buscava MPC, enquanto a triagem Sentinel-1 recente também consultava INPE. A atualização usa MPC+INPE e propaga as máscaras e a identidade da análise até o painel.
+- O KML integral privado da Fazenda Maria Eduarda (1.459,91 ha) NÃO foi usado: Sinop foi testada em uma AOI pública de 1.084,73 ha. Fazer o teste integral da fazenda em ambiente controlado e manter o arquivo fora de repositórios, logs e artefatos públicos.
+- O carbono chegou ao painel, mas está incompleto (complete=false): em ambos os AOIs, necromassa e serapilheira ficaram não estimadas; erros de transferência alométrica, erro de mapa e covariâncias não foram quantificados; não há IC95% do total. Valores parciais não são estoque total. As classes SAR são experimentais e sem validação local independente; o gate científico continua reprovado e a versão não é homologada.
+
+Status: candidata experimental operacionalmente validada para os cenários e AOIs de teste descritos; pendem execução do KML integral de Maria Eduarda, completar suporte de dados e incertezas de todos os compartimentos e validação de campo antes de homologação.

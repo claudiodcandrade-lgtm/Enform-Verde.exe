@@ -29,11 +29,11 @@ jobs:
           python tools/update_spec_docx.py \
             --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
             --entry docs/spec_updates/2026-11-15_v88_66_sar_multicatalog.md \
-            --baseline "Enform Verde 3.26.39-PRECAMPO-EXPERIMENTAL (V88.68 handoff SAR até carbono e dashboard)" \
+            --baseline "Enform Verde 3.26.39-PRECAMPO-EXPERIMENTAL (V88.70 SAR, carbono e dashboard validados em AOIs de teste)" \
             --head-sha "${{ github.sha }}" \
             --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
             --date "15 de novembro de 2026" \
-            --footer-label "V88.68 · experimental 3.26.39 · integração SAR live pendente" \
+            --footer-label "V88.70 · experimental 3.26.39 · handoff e build aprovados nas AOIs de teste" \
             --footer-date "15/11/2026"
       - name: Verify DOCX archive and current checkpoint
         run: |
@@ -45,7 +45,7 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert len(xml) > 10000
-              assert 'V88.68' in xml and '3.26.39-PRECAMPO-EXPERIMENTAL' in xml
+              assert 'V88.70' in xml and '3.26.39-PRECAMPO-EXPERIMENTAL' in xml
           print('Word specification updated with v88.68 checkpoint and archive validated')
           PY
       - name: Commit DOCX to the same feature branch
