@@ -11,3 +11,10 @@
 ## Estado de validação
 
 Esta é uma candidata experimental até a suíte integral, os workflows, o build/execução Windows do mesmo commit e a verificação do artefato terminarem. O KML privado integral da Fazenda Maria Eduarda e a validação científica independente de campo não são declarados como testados. Resultados que não tenham suporte continuam N/D; incertezas totais não mensuráveis não são substituídas por dispersão espacial.
+
+
+## Atualização V88.84 — 15/11/2026
+
+O push da branch `patches-3.26.6` foi confirmado no commit documental `df114b6b3424605397156a7079beb0b012b27297`, associado ao código `f797c6320baa9713cbcba6c199cb05357f0c5de8`. Os testes SAR live/dashboard, a prova real ESA BIOMASS FH e o smoke Windows do worker óptico até o canvas em Sinop passaram. Os builds Windows completos `43756793415` e `43756788960` ainda estavam em andamento na última consulta; a liberação do executável depende de conclusão verde e verificação do artefato.
+
+A otimização de solo já está incluída: reuso de dados preparados por AOI e leitura de mosaicos em tiles/VRT indexado. Reduz trabalho repetido e memória de pico; o tempo total ainda não foi quantificado por benchmark comparável.

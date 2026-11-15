@@ -438,3 +438,9 @@ Validação ainda pendente: regressões no CI, busca live anual e build Windows 
 ## Prova live concluída, execução integral pendente (15/11/2026)
 
 O workflow 43667205598 executou o modelo ENFORM_SAR_BRASIL_RF_V2 com pixels Sentinel-1 RTC reais no recorte de 0,03° perto do centroide de Sinop: 30 cenas, 12 meses da safra 2025/2026, 1.692 pixels e polígonos experimentais. O recorte foi 1.084,73 ha, não o KML integral de 1.459,91 ha. Classes experimentais incluíram soja, floresta nativa, área antrópica e cobertura úmida. Prova confirma que MPC+INPE fornece a série temporal e a inferência do modelo opera no recorte; não comprova o mapa integral, carbono no dashboard, nem imagem óptica na tela. Build Windows e dashboard no SHA mais recente ainda pendentes.
+
+## V88.84 — estado do CI, fundo óptico e otimização (15/11/2026)
+
+O proprietário concluiu o push da branch `patches-3.26.6`; o commit documental remoto é `df114b6b3424605397156a7079beb0b012b27297` e contém o código `f797c6320baa9713cbcba6c199cb05357f0c5de8`. Os testes SAR live/dashboard e a prova real ESA BIOMASS FH foram aprovados. O smoke Windows do worker óptico até o canvas também passou em Sinop, após aguardar estado terminal; os builds Windows completos `43756793415` e `43756788960` ainda estavam em andamento na última consulta. Essa evidência cobre o cenário testado, não garante todo ponto do país nem substitui o teste do KML privado integral da Fazenda Maria Eduarda. Não declarar o executável liberado antes do build completo e da verificação do artefato.
+
+A candidata 3.26.44 já inclui otimização de processamento do solo: preparação única por AOI reaproveitada entre estratos e mosaicos WCS em tiles de 1024×1024 acessados por VRT indexado, reduzindo chamadas repetidas, cópias e memória de pico. Resolução e cobertura espacial são preservadas. Ainda não há benchmark Windows comparável para quantificar o ganho de tempo total; não divulgar percentual de aceleração sem medição.
