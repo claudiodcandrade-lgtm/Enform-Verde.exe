@@ -250,15 +250,16 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         import sys
         import types
         pedology_module = types.ModuleType("soil_pedology_embrapa")
-        pedology_module.analyze_embrapa_pedology = lambda *_args, **_kwargs: ({"status": "OK"}, [])
+        pedology_module.analyze_embrapa_pedology = lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("fixture soil failure"))
         fertility_module = types.ModuleType("soil_fertility_zonal")
         fertility_module.analyze_fertility = lambda *_args, **_kwargs: {"status": "OK"}
         with patch("desktop_app.threading.Thread", InlineThread), \
              patch("desktop_app.load_ibge_land_use_reference", return_value=(None, "legenda_1")), \
              patch("desktop_app.run_land_use", return_value=land) as land_use, \
-             patch("desktop_app.native_carbon_analysis", return_value=native) as carbon, \
+             patch("desktop_app.native_carbon_analysis", side_effect=RuntimeError("fixture carbon failure")) as carbon, \
              patch.dict(sys.modules, {"soil_pedology_embrapa": pedology_module,
-                                      "soil_fertility_zonal": fertility_module}):
+                                      "soil_fertility_zonal": fertility_module}), \
+             patch("desktop_app._write_analysis_stage_checkpoint", return_value="checkpoint-test") as checkpoint:
             App.execute(app)
         self.assertEqual(len(worker_threads), 1)
         land_use.assert_called_once()
@@ -267,7 +268,14 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         self.assertEqual(carbon.call_args.kwargs["sar_paths"], sar_paths)
         run_id, kind, payload = app._analysis_queue.get_nowait()
         self.assertEqual((run_id, kind), (1, "ok"))
-        self.assertEqual(payload["land_use"], land)
+        self.assertEqual(payload["land_use"]["status"], land["status"])
+        self.assertEqual(payload["sar"]["status"], "SAR_PROCESSADO")
+        self.assertEqual(payload["native_carbon"]["status"], "ERRO_TECNICO_CARBONO")
+        self.assertEqual(payload["pedology"]["status"], "ERRO_TECNICO_SOLO")
+        self.assertTrue(payload["stage_errors"])
+        self.assertEqual(payload["checkpoint_path"], "checkpoint-test")
+        self.assertEqual(payload["land_use"]["analysis_run_id"], payload["analysis_run_id"])
+        checkpoint.assert_called_once()
 
     def test_inventory_fallback_reuses_one_aoi_wide_sar_result(self):
         aoi = gpd.GeoDataFrame(geometry=[box(-55.0, -4.0, -54.99, -3.99)], crs="EPSG:4326")

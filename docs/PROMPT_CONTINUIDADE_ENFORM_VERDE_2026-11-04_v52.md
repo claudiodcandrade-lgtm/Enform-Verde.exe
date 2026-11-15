@@ -325,22 +325,94 @@ A primeira leitura estática da arquitetura foi feita no SHA `417e93141ec035d5bb
 
 A revisão é preliminar, não exaustiva. A execução integral do KML da Fazenda Maria Eduarda até o dashboard continua sem comprovação; a homologação científica segue reprovada por falta de medições independentes. Manter o status pré-campo experimental. Ver `AUDITORIA_ARQUITETURAL_PRELIMINAR_V88_57.md` no pacote para gatilhos, impactos e próximos passos. Não declarar os achados corrigidos até haver commits e regressões que os cubram.
 
-## V88.58 — correções arquiteturais em validação (14/11/2026)
 
-Candidata `3.26.36-PRECAMPO-EXPERIMENTAL`, commit de código `2eda195edf89986381e2cf55651f0de16ab4edef`. O caminho de SAR local foi encaminhado ao worker em segundo plano, com os caminhos SAR capturados na thread da interface e fornecidos a uso do solo e carbono. A contingência por inventário agora reutiliza uma única execução SAR e o certificado AOI-wide entre as fitofisionomias potenciais. Foram acrescentados testes de regressão para ambos os fluxos.
+## Atualização de continuidade V88.60 — 14/11/2026
 
-Na consulta de publicação, a suíte dashboard e o build Windows deste commit ainda estavam em execução; não presumir aprovação antes de consultar os resultados do próprio SHA. O teste de pixels ESA BIOMASS FH e o contrato pré-campo tinham passado em workflows associados, e a máscara SAR semântica ainda estava em execução. O KML completo da Fazenda Maria Eduarda até o painel não foi executado. Gate científico independente reprovado; manter experimental e não homologado.
+A versão `3.26.36-PRECAMPO-EXPERIMENTAL` foi compilada no Windows e aprovada no self-test em pasta limpa. O código-fonte está no commit `7e999022759fcbb540acbc7340dcc0036385c58e`, branch `patches-3.26.6`, PR #51 ainda em rascunho. O artefato, tamanho, SHA-256 e workflow estão em `APP_RELEASE_NOTES_v3.26.36.md`.
 
-## V88.59 — sincronização pós-regressões (14/11/2026)
+Os smokes live do build passaram nos cenários de imagem óptica CBERS-4A/Sentinel-2, Sentinel-1 RTC/INPE em seis biomas, classificação IBGE no Tapajós e cobertura BIOMASS FH sobre AOIs com inventário. Isso comprova somente os cenários observados no workflow; serviços externos podem variar. A execução independente no computador do usuário e a análise da Fazenda Maria Eduarda até o dashboard não foram realizadas nesta sessão.
 
-O commit de código/teste `a52b9818ba8c31ba62a238d30a54f0a280d0c0c5` mantém a candidata `3.26.36-PRECAMPO-EXPERIMENTAL`. A suíte completa do dashboard passou com 1.158 testes; o guard documental falhou porque exigia que prompt, especificação técnica e especificação de solo fossem alterados após o último commit de teste. Este checkpoint sincroniza esses documentos. O build Windows ainda estava em execução; a CI do commit documental seguinte precisa confirmar a suíte, o guard e o artefato. A homologação científica continua reprovada pela falta de medições de campo, e o KML integral da Fazenda Maria Eduarda até o painel segue pendente.
+**Status científico:** versão experimental/pré-campo. O gate de homologação continua reprovado pela ausência de observações independentes de campo. Não declarar homologado nem tratar os smokes de CI como validação científica nacional.
 
 
-## V88.63 — correção da exibição de incerteza
+## V88.61 — prioridade de fontes de inventários florestais brasileiros (14/11/2026)
 
-Requisito arquitetural já estabelecido: se o valor estimado de carbono tiver suporte, mas a incerteza de algum parâmetro não puder ser mensurada, manter o resultado e exibir exatamente “incerteza não mensurável”, identificando parâmetro, motivo e fonte. N/D somente quando o próprio valor não tiver suporte. Conferir painel, relatório, mapas, planilhas e exportações. A candidata 3.26.37 aguarda CI integral, build Windows do mesmo SHA, execução ponta a ponta da Fazenda Maria Eduarda e validação independente; manter pré-campo experimental.
+### Regra obrigatória para estimativas baseadas em inventários
+
+O IFN é uma fonte utilizável, não exclusiva nem hierarquicamente dominante por padrão. O universo admissível inclui inventários florestais publicados no Brasil por instituições reconhecidas e documentos técnicos verificáveis de licenciamento ambiental e planos de manejo, além de Embrapa (suas unidades), INPA, universidades, órgãos públicos e repositórios científicos/institucionais. A prioridade máxima é para inventários publicados por instituições reconhecidas, na mesma fitofisionomia e na mesma microrregião/região da AOI. Entre esses inventários igualmente compatíveis, priorizar aqueles com dados primários de parcelas abertas, coordenadas ou identificação espacial suficiente, medições e metadados. Em seguida, considerar outras fontes publicadas de fitofisionomias/regiões progressivamente menos específicas, com penalização de transferência e incerteza declaradas. IFN é fonte utilizável, sem exclusividade; deve receber a mesma avaliação de compatibilidade e qualidade. IFN pode preencher lacuna quando compatível; nunca é filtro exclusivo.
+
+### Descoberta e acesso às fontes
+
+- Consultar PNLA e processos/licenças de órgãos federais, estaduais e distrital; consultar dados abertos e documentos ambientais públicos associados. O PNLA é um índice/portal de informações de licenciamento, não garantia de que cada inventário esteja anexado, aberto ou em formato tabular.
+- Consultar SINAFLOR/IBAMA: cadastros de PMFS e POA, planilhas padrão de Inventário Florestal 100%, recursos abertos e documentos públicos do processo. Os conjuntos públicos de autorizações/volumes não equivalem necessariamente às planilhas primárias de parcelas. Distinguir metadado de plano, inventário primário, volume declarado/explorado e dado inacessível. Respeitar restrições de acesso, sigilo e termos de uso; não contornar autenticação.
+- Buscar literatura e repositórios de Embrapa, INPA, universidades, órgãos ambientais, periódicos, teses/dissertações e relatórios técnicos. IFN/SNIF permanece no catálogo como mais uma fonte, com domínio e desenho amostral próprios.
+- Registrar por fonte: instituição/autoria, título, ano, DOI/URL ou identificador do processo, fitofisionomia, bioma, local/microrregião, coordenadas/área, desenho e esforço amostral, condição aberta dos dados primários, variáveis, unidades, critérios de inclusão, equações, estágio de conservação/manejo, licença/permite reutilização, data de acesso, checksum do arquivo e transformações aplicadas.
+
+### Elegibilidade e uso
+
+Compatibilidade ecológica com a fitofisionomia IBGE e contexto regional prevalece sobre proximidade geométrica isolada. Exigir compatibilidade de compartimento, definição de árvore/limiar de DAP, unidades, época/condição do inventário, método e domínio da equação. Não misturar inventário de floresta manejada, plantada ou área autorizada de supressão com estoque de floresta nativa intacta sem justificativa ecológica e sem rotular o domínio. Parcelas abertas com dados primários têm prioridade para recalcular distribuições diamétricas, área basal, densidade/abundância, composição e estatísticas; inventário publicado só em médias/resumos pode ser usado apenas no nível de agregação que sustenta, sem fabricar microdados. Deduplicar versões e parcelas repetidas.
+
+Cada resultado deve permitir rastrear a contribuição das fontes e o motivo de elegibilidade/exclusão. Separar observação primária, estatística publicada, dado derivado e parâmetro transferido; propagar incerteza amostral e de transferência. Não selecionar apenas o estudo que produz valor desejado. Quando não houver fonte compatível ou acesso aos dados necessários, informar N/D e motivo; não preencher lacuna com zero, IFN distante ou média nacional. Inventários históricos apoiam parâmetros estruturais, não confirmam cobertura atual, que permanece dependente de sensoriamento e validação adequados.
+
+### Fontes oficiais verificadas para descoberta (não equivalem a dados de parcela já ingestados)
+
+PNLA/MMA reúne informações básicas de processos de licenciamento; IBAMA/SINAFLOR publica bases de PMFS por região, planilhas padrão de Inventário Florestal 100% e dados de volumes explorados. A cobertura e a disponibilidade dos arquivos primários variam, inclusive por integração estadual. Antes de declarar uma fonte ingerida, registrar consulta, arquivo efetivamente obtido, parsing, validação de campos e teste de elegibilidade.
+
+### Gates de implementação
+
+1. Catálogo versionado de inventários com esquema de proveniência e critérios de qualidade.
+2. Conectores de descoberta/download legal para PNLA/órgãos, SINAFLOR/IBAMA e repositórios; aquisição automatizada deve falhar com estado tipado e preservar URL/identificador, nunca mascarar ausência como sucesso.
+3. Parsers testados para CSV/XLSX/PDF/GPKG/SHP quando aplicável, com fila de revisão manual para tabelas digitalizadas/ambíguas.
+4. Deduplicação espacial/temporal e auditoria dos registros de parcela.
+5. Testes por fitofisionomia/região, com fontes primárias abertas priorizadas; cobertura não comprovada continua N/D.
+6. Só declarar recurso operacional após commit, testes, CI e execução reproduzível com uma fonte realmente ingerida. Esta regra documental não prova que os conectores estejam implementados.
+
+
+## V88.62 — incerteza obrigatória e serrapilheira (14/11/2026)
+
+### Regra transversal para carbono
+
+Toda estimativa de carbono deve apresentar sua incerteza junto ao valor, por compartimento e para o total, em unidades interpretáveis (tC/ha e %, e estoque total quando aplicável). Informar método de propagação, componentes incluídos, cobertura amostral, período, fonte e limitações. Incerteza estatística, erro de modelo, transferência espacial/temporal e qualidade dos dados devem ser distinguidos; não chamar amplitude de sensibilidade de IC95%. Quando houver base para IC95%, declarar como foi calculado. Se a incerteza for parcial, quantificar a parte sustentada e nomear o que ficou de fora. Se o valor estimado tiver suporte, mas não for possível mensurar a incerteza de um parâmetro ou do resultado, apresentar o valor e exibir exatamente “incerteza não mensurável”, identificando parâmetro, motivo e fonte consultada. Não substituir esse valor por N/D nem ocultar a lacuna. Usar N/D somente quando o próprio valor estimado não tiver suporte suficiente. Aplicar à biomassa acima/abaixo do solo, necromassa, serrapilheira e carbono do solo, em todas as saídas, planilhas, mapas, painéis e exportações.
+
+### Compartimento serrapilheira
+
+Incluir serrapilheira na estimativa de carbono de formações nativas com base prioritária nos melhores inventários e estudos gravimétricos publicados que sejam compatíveis com a fitofisionomia e a microrregião/região da AOI; privilegiar instituições reconhecidas e, entre estudos equivalentes, dados primários abertos de parcelas. O IFN é referência válida quando o desenho, variáveis, localização e domínio ecológico forem adequados, inclusive como contingência; não é fonte exclusiva. Também podem ser usados estudos de Embrapa, INPA, universidades, órgãos ambientais, dissertações, teses e artigos com método verificável.
+
+Registrar massa seca por área, protocolo de coleta/secagem, período/estação, parcelas e esforço amostral, fração de carbono e método/fonte da fração, coordenadas ou nível espacial, condição de manejo e conversões. Não confundir massa úmida com massa seca, serrapilheira acumulada com necromassa, nem carbono orgânico do solo com carbono da serrapilheira. Aplicar fator de carbono somente quando documentado; propagar sua incerteza. Distinguir observação local, estatística publicada e transferência. Não reconstruir parcelas a partir de médias. Sem massa seca ou fator de carbono compatível, se houver um valor estimado que ainda possa ser apresentado com base explicitada, mantê-lo e marcar “incerteza não mensurável” para o componente sem suporte; se o estoque em si não puder ser estimado, apresentar N/D com motivo. Nunca preencher com zero ou média nacional.
+
+### Gate de implementação e evidência
+
+A regra documental não comprova que todas as telas, arquivos exportados ou cálculos do executável já cumpram o contrato. Implementação só é aceita após auditoria de cada saída de carbono, testes de presença/formato/unidades da incerteza e testes de serrapilheira com dados gravimétricos efetivamente obtidos, com a fonte e licença registradas. A versão 3.26.36 permanece pré-campo experimental até esses gates, a execução integral da AOI de Sinop e validação científica independente.
+
+
+## V88.63 — correção do rótulo de incerteza nas saídas
+
+Requisito arquitetural já estabelecido: para todo valor de carbono sustentado, declarar a incerteza. Se não for possível mensurar a incerteza de um parâmetro, preservar o valor e rotular exatamente “incerteza não mensurável”, identificando parâmetro e motivo; não substituir por N/D. N/D fica reservado ao valor sem suporte. Conferir relatório, painel, mapa, planilha e exportação, incluindo total e compartimentos. Próximo candidato: 3.26.37-PRECAMPO-EXPERIMENTAL, sujeito à CI integral e build Windows do mesmo SHA.
 
 
 ## V88.63 — sincronização das regressões da candidata 3.26.37
 
 O teste integral da revisão anterior executou 1.160 testes; as regressões agora exigem “incerteza não mensurável” para estoques suportados sem incerteza quantificável. A nova revisão deve repetir CI e build Windows no mesmo SHA; manter resultado experimental pré-campo até esses gates e as validações de campo.
+
+## Evidência de validação da candidata 3.26.37
+
+Commit validado: `9c4c60c76ce5cd88ec6ff29420db36c2d631c8e2`. Dashboard: 1.160 testes aprovados e guard documental sem pendências (execução 43652675732). Build Windows: aprovado, incluindo smoke óptico nacional, leitura no canvas Tk, SAR real e autoteste do EXE em pasta limpa (execução 43652675738). Provas independentes reais ESA BIOMASS FH e Sentinel-1 Sinop também aprovadas. Artefato `Enform-Verde-Windows-v3.26.37-PRECAMPO-EXPERIMENTAL`: 197.799.200 bytes; SHA-256 do pacote: `sha256:65b49f7980f3058bd5b8c55fdbd806d62188b1a931e1e37bbdc28e1062832232`.
+
+Estado: candidata experimental pré-campo. A homologação científica independente permanece reprovada por ausência de validação de campo e de execução ponta a ponta do KML completo da Fazenda Maria Eduarda até o painel; não usar estes gates como comprovação de homologação ou desempenho de campo.
+
+
+## V88.64 — preservar resultados SAR quando uma etapa posterior falha (14/11/2026)
+
+### Diagnóstico e correção proposta na candidata 3.26.38
+
+A ocorrência de processamento SAR não prova que o fluxo do aplicativo terminou. A auditoria do worker identificou que a execução de uso da terra, carbono nativo, pedologia e fertilidade estava acoplada a um tratamento amplo de exceções: quando uma etapa posterior falhava, a fila recebia apenas o erro e os resultados SAR/uso da terra já obtidos não eram apresentados. Isso explica o padrão “pixels processados, programa aparentemente sem funcionar” sem concluir que essa é a única causa de toda falha observada.
+
+A candidata 3.26.38 preserva as etapas válidas, informa cada erro por módulo, mantém N/D com motivo para carbono não calculável, liga os dados ao mesmo analysis_run_id e hash da AOI e tenta gravar um checkpoint local antes de entregar os resultados ao dashboard. Falha de checkpoint também deve ser registrada sem ocultar os resultados já calculados. A correção não pode converter ausência de confirmação nativa em zero nem apresentar valor de carbono sem suporte.
+
+### Critério obrigatório de ponta a ponta
+
+Para a Fazenda Maria Eduarda, a aprovação exige uma única execução reproduzível do KML integral até a interface e auditoria: hash e área da AOI; cenas, datas e pixels realmente lidos; classes/áreas ou erro SAR com causa; resultado de carbono ou N/D/ERRO_TECNICO por compartimento; painel e relatório com o mesmo run_id/hash; reconciliação de área explícita. O KML e seus limites não devem ser incluídos no repositório público nem em logs/artefatos públicos. A validação passada de SAR em etapa isolada não substitui esse aceite.
+
+### Status
+
+A candidata 3.26.38-PRECAMPO-EXPERIMENTAL está em validação. Sintaxe Python das alterações preparada e compilada localmente; a suíte completa, o dashboard, o build Windows e o teste integral do KML ainda precisam terminar sobre o mesmo SHA. Não declarar nova versão validada, artefato pronto ou funcionamento na Fazenda Maria Eduarda antes da evidência desses gates. A validação científica independente de campo continua pendente.

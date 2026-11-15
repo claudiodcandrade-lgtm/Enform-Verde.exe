@@ -334,12 +334,34 @@ A revisão V88.49 cobriu cache CCI por análise, retentativas e persistência da
 
 Esta versão sincroniza a especificação do solo com a candidata de software 3.26.36 e as correções arquiteturais SAR registradas no prompt e na especificação técnica. Não altera fontes, profundidade, métodos, cálculos, incertezas ou interpretação do carbono/fertilidade do solo.
 
+## Nota de sincronização V88.60
 
-## V88.63 — correção da exibição de incerteza
+O build Windows `3.26.36-PRECAMPO-EXPERIMENTAL` passou no self-test em pasta limpa (workflow `43642362176`). Esta atualização registra o estado da versão e não altera as exigências técnicas de carbono do solo 0–100 cm. O resultado de build não representa validação de campo nem homologação científica.
 
-Requisito arquitetural já estabelecido: se o valor estimado de carbono tiver suporte, mas a incerteza de algum parâmetro não puder ser mensurada, manter o resultado e exibir exatamente “incerteza não mensurável”, identificando parâmetro, motivo e fonte. N/D somente quando o próprio valor não tiver suporte. Conferir painel, relatório, mapas, planilhas e exportações. A candidata 3.26.37 aguarda CI integral, build Windows do mesmo SHA, execução ponta a ponta da Fazenda Maria Eduarda e validação independente; manter pré-campo experimental.
+
+## V88.62 — incerteza transversal para estimativas de carbono
+
+O carbono do solo 0–100 cm deve apresentar incerteza junto ao resultado em tC/ha e %, método, horizontes/atributos incluídos, cobertura, fonte e limitações. Distinguir incerteza amostral, de mapeamento/modelo e transferência; envelopes marginais por horizonte não devem ser rotulados IC95% conjunto. Se parcial, explicitar componentes e lacunas. Quando o valor estimado tiver suporte, mas a incerteza de algum parâmetro não puder ser mensurada, apresentar o resultado e rotular exatamente “incerteza não mensurável”, identificando o parâmetro e o motivo. N/D aplica-se ao valor somente quando ele próprio não tiver suporte. Esta regra integra o contrato comum a todos os compartimentos de carbono e não altera as fontes oficiais de solo ou a profundidade estabelecida.
+
+
+## V88.63 — rótulo quando a incerteza não puder ser mensurada
+
+Para o estoque de carbono do solo 0–100 cm, quando o valor tiver suporte mas a incerteza de um ou mais parâmetros não puder ser quantificada, manter a estimativa e apresentar exatamente “incerteza não mensurável”, com parâmetro, motivo e fonte consultada. N/D é reservado ao próprio estoque sem suporte. Distinguir limitações dos horizontes, envelope marginal, incerteza amostral e erro de transferência.
 
 
 ## V88.63 — sincronização das regressões da candidata 3.26.37
 
 O teste integral da revisão anterior executou 1.160 testes; as regressões agora exigem “incerteza não mensurável” para estoques suportados sem incerteza quantificável. A nova revisão deve repetir CI e build Windows no mesmo SHA; manter resultado experimental pré-campo até esses gates e as validações de campo.
+
+## Evidência de validação da candidata 3.26.37
+
+Commit validado: `9c4c60c76ce5cd88ec6ff29420db36c2d631c8e2`. Dashboard: 1.160 testes aprovados e guard documental sem pendências (execução 43652675732). Build Windows: aprovado, incluindo smoke óptico nacional, leitura no canvas Tk, SAR real e autoteste do EXE em pasta limpa (execução 43652675738). Provas independentes reais ESA BIOMASS FH e Sentinel-1 Sinop também aprovadas. Artefato `Enform-Verde-Windows-v3.26.37-PRECAMPO-EXPERIMENTAL`: 197.799.200 bytes; SHA-256 do pacote: `sha256:65b49f7980f3058bd5b8c55fdbd806d62188b1a931e1e37bbdc28e1062832232`.
+
+Estado: candidata experimental pré-campo. A homologação científica independente permanece reprovada por ausência de validação de campo e de execução ponta a ponta do KML completo da Fazenda Maria Eduarda até o painel; não usar estes gates como comprovação de homologação ou desempenho de campo.
+
+
+## V88.64 — continuidade do pipeline quando a etapa de solo falha
+
+A etapa de pedologia/PronaSolos não pode apagar resultados SAR, uso da terra ou carbono que já tenham sido calculados. Falhas de pedologia e fertilidade devem ser declaradas por módulo, com motivo e estado N/D/ERRO_TECNICO; os módulos anteriores permanecem vinculados à mesma execução e AOI. O status do solo não altera as fontes oficiais, a profundidade de 0–100 cm, nem autoriza imputação de carbono ou fertilidade. Um checkpoint de auditoria é complementar à apresentação do resultado; se falhar, registrar a falha sem descartar saídas válidas.
+
+A candidata 3.26.38 ainda precisa passar suíte, dashboard e build Windows no mesmo commit. Esta alteração arquitetural não comprova cobertura PronaSolos nem execução integral da Fazenda Maria Eduarda.

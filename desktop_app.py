@@ -22,7 +22,7 @@ from mapbiomas_zonal import mapbiomas_class_percentages
 from land_use_sar import run_land_use, report_lines as land_use_report_lines
 from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.26.37-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.38-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -413,6 +413,56 @@ def _sar_dashboard_payload(native, land=None):
                 row["physiognomy"]:row["stats"] for row in strata if row.get("stats")},
             "height_absence_certificate":(native or {}).get("height_absence_certificate"),
             "source":"SAR por interseção nativa; preservado do core para painel e auditoria"}
+
+
+
+def _native_carbon_failure_result(aoi, exc):
+    """Represent unavailable carbon without erasing successful SAR/land-use stages."""
+    area=float(geom_metrics(aoi).get("area_ha") or 0.0)
+    reason=type(exc).__name__+": "+str(exc)[:300]
+    return {
+        "status":"ERRO_TECNICO_CARBONO","reason":reason,
+        "area_aoi_ha":area,"native_area_ha":0.0,
+        "unknown_cover_area_ha":area,"excluded_other_uses_ha":0.0,
+        "unmapped_aoi_area_ha":area,"cover_completeness":"NOT_VERIFIED",
+        "method":"Carbono não estimado por falha técnica; cobertura nativa não confirmada; sem imputação.",
+        "known_total_tc":None,"complete":False,
+        "uncertainty_note":"N/D — carbono não estimado por falha técnica: "+reason,
+        "components":[],"strata":[],
+    }
+
+
+def _write_analysis_stage_checkpoint(run_id,aoi_hash,land,native,pedology,fertility,sar,stage_errors):
+    """Persist an AOI-linked stage summary without storing geometry or credentials."""
+    root=Path.home()/".enform_verde"/"analysis_runs"
+    root.mkdir(parents=True,exist_ok=True)
+    path=root/(str(run_id)+".json")
+    classes=[]
+    for row in (land or {}).get("classes") or []:
+        if isinstance(row,dict):
+            classes.append({k:row.get(k) for k in ("class_name","area_ha","area_pct","source","native_status")})
+    strata=[]
+    for row in (native or {}).get("strata") or []:
+        if isinstance(row,dict):
+            strata.append({k:row.get(k) for k in ("class_name","physiognomy","area_ha","area_pct","source","sar_details","components")})
+    payload={
+        "analysis_run_id":str(run_id),"aoi_hash_sha256":str(aoi_hash),
+        "created_utc":datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "status":"PARCIAL_COM_ERRO_TECNICO" if stage_errors else "CONCLUIDA_COM_ESTADOS_DECLARADOS",
+        "sar":sar or {},
+        "land_use":{"status":(land or {}).get("status"),"reason":(land or {}).get("reason"),
+                    "area_aoi_ha":(land or {}).get("area_aoi_ha"),"classes":classes},
+        "native_carbon":{"status":(native or {}).get("status"),"reason":(native or {}).get("reason"),
+                         "area_aoi_ha":(native or {}).get("area_aoi_ha"),
+                         "native_area_ha":(native or {}).get("native_area_ha"),
+                         "known_total_tc":(native or {}).get("known_total_tc"),"strata":strata},
+        "pedology":{"status":(pedology or {}).get("status"),"reason":(pedology or {}).get("reason")},
+        "fertility":{"status":(fertility or {}).get("status"),"reason":(fertility or {}).get("reason")},
+        "stage_errors":stage_errors,
+    }
+    with path.open("w",encoding="utf-8") as stream:
+        json.dump(payload,stream,ensure_ascii=False,indent=2,default=str)
+    return str(path)
 
 
 def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
@@ -2814,32 +2864,90 @@ class App(tk.Tk):
         self._analysis_generation+=1; run_id=self._analysis_generation
         self._analysis_running=True; self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando e processando SAR em segundo plano…")
+        analysis_run_id=uuid.uuid4().hex[:12].upper()
         def worker():
+            land=None; native=None; pedology=None; fertility=None; sar_payload=None
+            checkpoint_path=None; stage_errors=[]
             try:
                 reference=land_ibge;reference_field=land_field
                 if reference is None:
                     try:reference,reference_field=load_ibge_land_use_reference(gdf)
                     except Exception:pass
                 land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field,sar_paths=sar_paths)
+                land["analysis_run_id"]=analysis_run_id
+                land["aoi_hash_sha256"]=aoi_hash
                 options={"offline_token":token,"edl_user":edl_user,"edl_password":edl_password,"edl_token":edl_token,
                          "cdse_token":cdse_token,"cdse_client_id":cdse_client_id,"cdse_client_secret":cdse_client_secret,
                          "inventory_evidence":inventory_evidence,
                          "biodiversity_inventory_records":biodiversity_inventory_records,
                          "inventory_evidence_manifest":inventory_manifest}
-                native=native_carbon_analysis(gdf,land,biome,options,sar_paths=sar_paths)
-                from soil_pedology_embrapa import analyze_embrapa_pedology
-                pedology,zones=analyze_embrapa_pedology(gdf,with_zones=True)
                 try:
-                    from soil_fertility_zonal import analyze_fertility
-                    fertility=analyze_fertility(gdf,units=zones)
+                    native=native_carbon_analysis(gdf,land,biome,options,sar_paths=sar_paths)
                 except Exception as exc:
-                    fertility={"status":"N/D","reason":"Falha controlada: "+type(exc).__name__,
+                    native=_native_carbon_failure_result(gdf,exc)
+                    stage_errors.append({"stage":"native_carbon","status":"ERRO_TECNICO",
+                                         "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                native["analysis_run_id"]=analysis_run_id
+                native["aoi_hash_sha256"]=aoi_hash
+                try:
+                    from soil_pedology_embrapa import analyze_embrapa_pedology
+                    pedology,zones=analyze_embrapa_pedology(gdf,with_zones=True)
+                except Exception as exc:
+                    pedology={"status":"ERRO_TECNICO_SOLO","reason":type(exc).__name__+": "+str(exc)[:240]}
+                    zones=[]
+                    stage_errors.append({"stage":"pedology","status":"ERRO_TECNICO",
+                                         "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                if str(pedology.get("status","")).startswith("ERRO"):
+                    fertility={"status":"N/D","reason":"PronaSolos zonal não executado porque a etapa pedológica falhou.",
                                "units":{},"layers":[]}
+                else:
+                    try:
+                        from soil_fertility_zonal import analyze_fertility
+                        fertility=analyze_fertility(gdf,units=zones)
+                    except Exception as exc:
+                        fertility={"status":"ERRO_TECNICO_FERTILIDADE","reason":type(exc).__name__+": "+str(exc)[:240],
+                                   "units":{},"layers":[]}
+                        stage_errors.append({"stage":"fertility","status":"ERRO_TECNICO",
+                                             "error_type":type(exc).__name__,"reason":str(exc)[:300]})
                 sar_payload=_sar_dashboard_payload(native,land)
+                try:
+                    checkpoint_path=_write_analysis_stage_checkpoint(
+                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors)
+                except Exception as exc:
+                    stage_errors.append({"stage":"analysis_checkpoint","status":"ERRO_TECNICO",
+                                         "error_type":type(exc).__name__,"reason":str(exc)[:300]})
                 self._analysis_queue.put((run_id,"ok",{"sar":sar_payload,"soil":{},"land_use":land,
                                                       "native_carbon":native,"pedology":pedology,
-                                                      "fertility":fertility,"aoi_hash":aoi_hash}))
-            except Exception:self._analysis_queue.put((run_id,"error",traceback.format_exc()))
+                                                      "fertility":fertility,"aoi_hash":aoi_hash,
+                                                      "analysis_run_id":analysis_run_id,
+                                                      "stage_errors":stage_errors,
+                                                      "checkpoint_path":checkpoint_path}))
+            except Exception as exc:
+                if not isinstance(land,dict):
+                    self._analysis_queue.put((run_id,"error",traceback.format_exc()))
+                    return
+                stage_errors.append({"stage":"post_land_use","status":"ERRO_TECNICO",
+                                     "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                if not isinstance(native,dict):
+                    native=_native_carbon_failure_result(gdf,exc)
+                if not isinstance(pedology,dict):
+                    pedology={"status":"N/D","reason":"Etapa não concluída após falha técnica: "+type(exc).__name__}
+                if not isinstance(fertility,dict):
+                    fertility={"status":"N/D","reason":"Etapa não concluída após falha técnica: "+type(exc).__name__,
+                               "units":{},"layers":[]}
+                sar_payload=_sar_dashboard_payload(native,land)
+                try:
+                    checkpoint_path=_write_analysis_stage_checkpoint(
+                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors)
+                except Exception as checkpoint_exc:
+                    stage_errors.append({"stage":"analysis_checkpoint","status":"ERRO_TECNICO",
+                                         "error_type":type(checkpoint_exc).__name__,"reason":str(checkpoint_exc)[:300]})
+                self._analysis_queue.put((run_id,"ok",{"sar":sar_payload,"soil":{},"land_use":land,
+                                                      "native_carbon":native,"pedology":pedology,
+                                                      "fertility":fertility,"aoi_hash":aoi_hash,
+                                                      "analysis_run_id":analysis_run_id,
+                                                      "stage_errors":stage_errors,
+                                                      "checkpoint_path":checkpoint_path}))
         threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
         self.after(120,self._poll_analysis)
 
@@ -2856,12 +2964,12 @@ class App(tk.Tk):
             log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
             self.status.set("Falha controlada — programa permanece responsivo.")
             return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
-        self.status.set("SAR consultado; calculando carbono…")
-        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility"),expected_aoi_hash=p.get("aoi_hash")) if rid==self._analysis_generation else None)
+        self.status.set("Resultados recebidos; apresentando as etapas concluídas e os erros específicos.")
+        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility"),expected_aoi_hash=p.get("aoi_hash"),precomputed_analysis_run_id=p.get("analysis_run_id"),precomputed_stage_errors=p.get("stage_errors"),precomputed_checkpoint_path=p.get("checkpoint_path")) if rid==self._analysis_generation else None)
 
-    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None,expected_aoi_hash=None):
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None,expected_aoi_hash=None,precomputed_analysis_run_id=None,precomputed_stage_errors=None,precomputed_checkpoint_path=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
-        self.project["analysis_run_id"]=uuid.uuid4().hex[:12].upper()
+        self.project["analysis_run_id"]=str(precomputed_analysis_run_id or uuid.uuid4().hex[:12].upper())
         self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
         for k in ("analysis_aoi_hash","analysis_aoi_crs","pipeline_audit","analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility","modeled_field_predictions","modeled_field_files"):
             self.project.pop(k,None)
@@ -2886,6 +2994,7 @@ class App(tk.Tk):
         except Exception as exc:
             self.status.set("Análise bloqueada por identidade inconsistente da AOI.")
             return messagebox.showerror("Análise",str(exc))
+        self.project["analysis_run_id"]=str(precomputed_analysis_run_id or self.project.get("analysis_run_id") or uuid.uuid4().hex[:12].upper())
         self.project["analysis_aoi_hash"]=run_aoi_hash
         self.project["analysis_aoi_crs"]=str(self.gdf.crs)
         self.project["analysis_app_version"]=APP_VERSION
@@ -2943,10 +3052,12 @@ class App(tk.Tk):
             land_failed=land_status.startswith(("ERRO","FAILED","FAILURE"))
             native_status=str(native.get("status") or "N/D").upper()
             native_failed=native_status.startswith(("ERRO","FAILED","FAILURE"))
-            partial=land_failed or native_failed
+            partial=land_failed or native_failed or bool(precomputed_stage_errors)
             self.project["pipeline_audit"]={
                 "analysis_run_id":self.project["analysis_run_id"],
                 "aoi_hash":run_aoi_hash,
+                "checkpoint_path":precomputed_checkpoint_path,
+                "stage_errors":list(precomputed_stage_errors or []),
                 "overall_status":"PARCIAL_COM_ERRO_TECNICO" if partial else "CONCLUIDA_COM_ESTADOS_DECLARADOS",
                 "stages":{
                     "land_use":{"status":"ERRO_TECNICO" if land_failed else land_status,
@@ -2965,7 +3076,7 @@ class App(tk.Tk):
             if partial:
                 reason=(recent_sar.get("reason") or land.get("reason") or
                         native.get("reason") or "falha técnica registrada na auditoria da etapa")
-                self.status.set("Análise parcial — SAR com erro técnico; classes atuais permanecem N/D. "+str(reason)[:180])
+                self.status.set("Análise parcial — etapas concluídas preservadas; falha registrada por módulo. "+str(reason)[:180])
             else:
                 self.status.set("Análise concluída com estados e lacunas declarados; consulte a trilha de auditoria.")
             return
