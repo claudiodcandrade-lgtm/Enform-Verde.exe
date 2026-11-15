@@ -50,6 +50,7 @@ def main(timeout=180):
             "mode":"CBERS/Sentinel-2 when available; otherwise IBGE cartography/AOI fallback on Tk canvas",
             "accepted_sources":["CBERS-4A/WFI","Sentinel-2","IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK"],
             "optical_retrieval_is_not_landcover_classification":True}
+    initial_fallback_visible=False
     try:
         window.update()
         window.gdf=test_aoi
@@ -59,9 +60,19 @@ def main(timeout=180):
         while time.monotonic()<deadline:
             window.update()
             provider=str(getattr(window,"_map_provider","") or "")
+            map_status=str(window.map_status.get())
+            # The AOI outline is drawn synchronously before the remote worker
+            # starts. It prevents a black canvas while loading, but is not proof
+            # that the worker delivered an image or completed the IBGE fallback.
+            if provider == "AOI_LOCAL_FALLBACK":
+                initial_fallback_visible=True
+            pending=(map_status.startswith("Carregando CBERS-4A/WFI") or
+                     "enquanto atualiza CBERS-4A" in map_status)
+            if pending:
+                time.sleep(0.12)
+                continue
             visible=bool(getattr(window,"_satellite_map_visible",False))
-            fallback_provider=str(getattr(window,"_map_provider","") or "")
-            visible=visible or fallback_provider in ("IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK")
+            visible=visible or provider in ("IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK")
             canvas_items=window.map_canvas.find_all()
             photo=getattr(window,"google_map_photo",None)
             photo_size=(photo.width(),photo.height()) if photo is not None else None
@@ -77,7 +88,9 @@ def main(timeout=180):
                               canvas_image_items=image_count,image_width=photo_size[0] if photo_size else None,
                               image_height=photo_size[1] if photo_size else None,
                               canvas_pixel_quality=pixel_quality,
-                              optical_attempt_status=str(window.map_status.get())[:220])
+                              optical_attempt_status=map_status[:220],
+                              worker_terminal_state_observed=True,
+                              initial_nonblack_fallback_seen=initial_fallback_visible)
                 break
             time.sleep(0.12)
         else:
