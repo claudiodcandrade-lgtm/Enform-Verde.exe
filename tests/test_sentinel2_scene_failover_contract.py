@@ -68,6 +68,8 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         self.assertIn("def _require_visible_optical_image(image,provider):",src)
         self.assertIn("p99<20.0 or spread<5.0 or visible_fraction<0.15",src)
         self.assertIn("optical_pixels=pixels[~overlay]",src)
+        self.assertIn("IBGE_POTENTIAL_FALLBACK",src)
+        self.assertIn("load_ibge_land_use_reference(g)",src)
         tree=ast.parse(src)
         fn=next(n for n in ast.walk(tree)
                 if isinstance(n,ast.FunctionDef) and n.name=="show_google_map")

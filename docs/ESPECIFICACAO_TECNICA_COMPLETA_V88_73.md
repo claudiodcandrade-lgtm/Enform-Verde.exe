@@ -29,3 +29,8 @@ O teste de integração deve registrar annual_map_applied, safra, escopo tempora
 ## V88.75 — contratos de teste
 
 A trilha de auditoria do LEM+ registra o AOI integral e a safra completa, com flags separadas de aplicação anual e classificação atual. A suíte de regressão protege explicitamente esse contrato, a rejeição de pixels pretos no canvas e duas tentativas bounded por cena Sentinel-1.
+
+
+## Checkpoint V88.76 — fallback visual IBGE não bloqueante
+
+CBERS/Sentinel-2 são opcionais e não bloqueiam a análise. A UI mantém um fundo de contingência visível e, após falhas ópticas, carrega a camada IBGE de fitofisionomia em worker assíncrono. A camada é rotulada como formação potencial e não entra em mapas de cobertura atual, carbono ou cultura. Se o dado IBGE também falhar, a AOI permanece visível com aviso. O smoke nacional registra locais sem óptica sem reprovar o build; o smoke de canvas mede pixels reais e aceita apenas imagem visível ou cartografia de contingência, nunca uma tela preta.

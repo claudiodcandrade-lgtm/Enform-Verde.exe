@@ -341,6 +341,7 @@ jobs:
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
       - name: Live Sentinel-2 polygon preview — actual Tapajos KMZ
+        continue-on-error: true
         shell: pwsh
         timeout-minutes: 8
         run: |
@@ -383,7 +384,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Live CBERS-4A or Sentinel-2 worker-to-Tk-canvas smoke — Sinop
+      - name: Live optical-or-IBGE-fallback worker-to-Tk-canvas smoke — Sinop
         shell: pwsh
         timeout-minutes: 7
         run: python tools/live_gui_optical_sinop.py

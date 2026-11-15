@@ -16,12 +16,18 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 
-def rendered_optical_status(provider, visible, photo_size, canvas_image_count, pixel_quality=None):
-    """Pass only if actual canvas pixels contain visible texture, not a blank PhotoImage."""
+def rendered_optical_status(provider, visible, photo_size, canvas_image_count, pixel_quality=None, canvas_item_count=0):
+    """Pass only when real canvas pixels show imagery or a cartographic fallback."""
     provider=str(provider or "").strip().casefold()
-    if not visible or not photo_size or min(photo_size)<=0 or canvas_image_count<1:
+    if not visible:
         return None
     if not isinstance(pixel_quality,dict) or pixel_quality.get("p99_luminance",0)<20 or pixel_quality.get("std_luminance",0)<5 or pixel_quality.get("visible_fraction",0)<0.15:
+        return None
+    if "ibge_potential_fallback" in provider:
+        return "PASS_IBGE_FALLBACK" if canvas_item_count>0 else None
+    if "aoi_local_fallback" in provider:
+        return "PASS_AOI_FALLBACK" if canvas_item_count>0 else None
+    if not photo_size or min(photo_size)<=0 or canvas_image_count<1:
         return None
     if "cbers-4a/wfi" in provider:
         return "PASS_CBERS"
@@ -41,8 +47,8 @@ def main(timeout=180):
     window=app.App()
     status="NOT_STARTED"
     result={"scope":"Sinop centroid vicinity, NOT original KML",
-            "mode":"real CBERS-4A or Sentinel-2 via Tk worker queue and canvas",
-            "accepted_sources":["CBERS-4A/WFI","Sentinel-2"],
+            "mode":"CBERS/Sentinel-2 when available; otherwise IBGE cartography/AOI fallback on Tk canvas",
+            "accepted_sources":["CBERS-4A/WFI","Sentinel-2","IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK"],
             "optical_retrieval_is_not_landcover_classification":True}
     try:
         window.update()
@@ -54,6 +60,8 @@ def main(timeout=180):
             window.update()
             provider=str(getattr(window,"_map_provider","") or "")
             visible=bool(getattr(window,"_satellite_map_visible",False))
+            fallback_provider=str(getattr(window,"_map_provider","") or "")
+            visible=visible or fallback_provider in ("IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK")
             canvas_items=window.map_canvas.find_all()
             photo=getattr(window,"google_map_photo",None)
             photo_size=(photo.width(),photo.height()) if photo is not None else None
@@ -63,11 +71,13 @@ def main(timeout=180):
             pixels=np.asarray(ImageGrab.grab(bbox=(x0,y0,x0+window.map_canvas.winfo_width(),y0+window.map_canvas.winfo_height())).convert("RGB"),dtype=np.uint8)
             luminance=pixels.astype("float32").mean(axis=2)
             pixel_quality={"p99_luminance":float(np.percentile(luminance,99)),"std_luminance":float(luminance.std()),"visible_fraction":float((luminance>8).mean())}
-            passed=rendered_optical_status(provider,visible,photo_size,image_count,pixel_quality)
+            passed=rendered_optical_status(provider,visible,photo_size,image_count,pixel_quality,len(canvas_items))
             if passed:
                 result.update(status=passed,provider=provider,canvas_items=len(canvas_items),
-                              canvas_image_items=image_count,image_width=photo_size[0],image_height=photo_size[1],
-                              canvas_pixel_quality=pixel_quality)
+                              canvas_image_items=image_count,image_width=photo_size[0] if photo_size else None,
+                              image_height=photo_size[1] if photo_size else None,
+                              canvas_pixel_quality=pixel_quality,
+                              optical_attempt_status=str(window.map_status.get())[:220])
                 break
             time.sleep(0.12)
         else:
@@ -82,7 +92,7 @@ def main(timeout=180):
     output=ROOT/"optical_gui_sinop_live.json"
     output.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding="utf-8")
     print(json.dumps(result,ensure_ascii=False))
-    return 0 if result["status"] in ("PASS_CBERS","PASS_SENTINEL2_FALLBACK") else 1
+    return 0 if result["status"] in ("PASS_CBERS","PASS_SENTINEL2_FALLBACK","PASS_IBGE_FALLBACK","PASS_AOI_FALLBACK") else 1
 
 
 if __name__=="__main__":

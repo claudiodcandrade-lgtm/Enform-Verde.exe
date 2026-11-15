@@ -1610,6 +1610,8 @@ class App(tk.Tk):
     def show_google_map(self,refresh=False,prefer_public=False):
         """Visual-only CBERS-4A/WFI primary backdrop; Sentinel-2 fallback; never an analytical input."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
+        if not getattr(self,"_satellite_map_visible",False):
+            self._draw_aoi_outline("Carregando imagem óptica — fundo cartográfico de contingência ativo")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()
         viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
@@ -1767,8 +1769,22 @@ class App(tk.Tk):
                 self._map_queue.put((generation,im,[],"ESRI_WORLD_IMAGERY",None,copyright,None))
                 return
             except Exception as e:errors.append("Esri World Imagery: "+type(e).__name__+": "+str(e)[:180])
+            # Optical imagery is visual-only and must never leave a black panel.
+            # Load the official IBGE phytophysiognomy reference asynchronously;
+            # the AOI fallback is already visible while this download is pending.
+            try:
+                ibge_layer,ibge_field=load_ibge_land_use_reference(g)
+                self.ibge_physiognomy_gdf=ibge_layer
+                self.ibge_class_field=ibge_field
+                self._save_optical_diagnostic(generation,"IBGE_POTENTIAL_FALLBACK",errors)
+                self._map_queue.put((generation,None,[],"IBGE_POTENTIAL_FALLBACK",None,
+                    "IBGE vegetação 2026 — referência potencial; não representa cobertura atual",
+                    "CBERS/Sentinel-2 e outros fundos ópticos indisponíveis; fundo IBGE carregado."))
+                return
+            except Exception as e:
+                errors.append("IBGE fallback: "+type(e).__name__+": "+str(e)[:180])
             self._save_optical_diagnostic(generation,"NO_OPTICAL_IMAGE",errors)
-            self._map_queue.put((generation,None,[],"CBERS-4A/Sentinel-2",None,None," | ".join(errors)))
+            self._map_queue.put((generation,None,[],"AOI_LOCAL_FALLBACK",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
         self.after(80,self._poll_map_queue)
@@ -1783,6 +1799,12 @@ class App(tk.Tk):
             # A prior satellite request can finish after a new AOI/zoom request.
             # Discard its image but KEEP polling for the current request.
             if self.gdf is not None:self.after(100,self._poll_map_queue)
+            return
+        if provider=="IBGE_POTENTIAL_FALLBACK":
+            self._draw_aoi_outline("Imagem óptica indisponível — fundo cartográfico IBGE potencial")
+            self.map_status.set("CBERS/Sentinel-2 indisponíveis; fundo IBGE exibido como referência potencial.")
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+
+                      "\n\nImagem óptica indisponível; fundo IBGE é referência potencial e não determina uso/cobertura atual.")
             return
         self._finish_satellite_map(generation,view,polygons,provider,zoom,copyright,error)
 
@@ -1898,6 +1920,10 @@ class App(tk.Tk):
         fallback_label=("FUNDO CARTOGRÁFICO IBGE — fitofisionomia potencial; não representa cobertura atual"
                         if ibge_drawn else label+" — cartografia IBGE indisponível nesta execução")
         self.map_canvas.create_text(12,12,anchor="nw",text=fallback_label,fill="#24382D",font=("Segoe UI",10,"bold"))
+        self._map_provider=("IBGE_POTENTIAL_FALLBACK" if ibge_drawn else "AOI_LOCAL_FALLBACK")
+        if hasattr(self,"map_status"):
+            self.map_status.set("Fundo cartográfico IBGE potencial — apenas referência visual." if ibge_drawn
+                                else "Imagem óptica indisponível; perímetro AOI visível, camada IBGE não carregada.")
         # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
         bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
         self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)

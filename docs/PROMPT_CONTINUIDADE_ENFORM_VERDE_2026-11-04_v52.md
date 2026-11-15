@@ -506,3 +506,8 @@ A primeira rodada de validação do código 3.26.42 encontrou um teste textual o
 ## Checkpoint V88.75 — fechamento das regressões de arquitetura
 
 Os testes do pacote completo revelaram contratos de texto ainda presos ao comportamento anterior. O mapa sazonal LEM+ agora informa escopo AOI do último ano agrícola completo, mantém result_applied_to_current_aoi=false e usa uma bandeira separada para o mapa anual. As regressões foram ajustadas para testar essa semântica, o critério de pixels do canvas e as duas estratégias SAR limitadas. Este checkpoint aguarda a suíte integral, handoff live Sinop/Tapajós e build no SHA final. O teste local da fazenda privada continua necessário para confirmar o fluxo real naquela geometria.
+
+
+## Checkpoint V88.76 — contingência de mapa sem tela preta
+
+Imagem óptica é visual e não bloqueia a análise. A UI deve desenhar imediatamente perímetro e fundo disponível, buscar camada oficial IBGE em worker assíncrono após esgotar CBERS/Sentinel-2/rotas visuais, e rotular IBGE como referência potencial. Se IBGE falhar, manter AOI local e aviso. Os testes live devem capturar pixels de verdade e aceitar somente imagem visível ou fallback cartográfico visível. A matriz nacional de óptica registra indisponibilidade sem reprovar o build.

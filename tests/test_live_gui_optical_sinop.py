@@ -6,6 +6,14 @@ from tools.live_gui_optical_sinop import rendered_optical_status
 class TestLiveGuiOpticalSinop(unittest.TestCase):
     QUALITY={"p99_luminance":120,"std_luminance":28,"visible_fraction":0.72}
 
+    def test_ibge_cartographic_fallback_passes_only_with_visible_canvas_pixels(self):
+        self.assertEqual(rendered_optical_status(
+            "IBGE_POTENTIAL_FALLBACK",True,None,0,self.QUALITY,canvas_item_count=5),
+            "PASS_IBGE_FALLBACK")
+        self.assertIsNone(rendered_optical_status(
+            "IBGE_POTENTIAL_FALLBACK",True,None,0,
+            {"p99_luminance":0,"std_luminance":0,"visible_fraction":0},canvas_item_count=5))
+
     def test_black_canvas_does_not_pass_even_when_photo_item_exists(self):
         self.assertIsNone(rendered_optical_status("CBERS-4A/WFI",True,(900,420),1,
             {"p99_luminance":0,"std_luminance":0,"visible_fraction":0}))

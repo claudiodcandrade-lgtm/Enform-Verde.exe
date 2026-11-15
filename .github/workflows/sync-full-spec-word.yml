@@ -5,9 +5,7 @@ on:
       - feature/agricultural-identification-native-carbon
       - patches-3.26.6
     paths:
-      - docs/spec_updates/2026-11-15_v88_75_regression_contracts.md
-      - docs/spec_updates/2026-11-15_v88_75_regression_contracts.md
-      - docs/spec_updates/2026-11-15_v88_75_regression_contracts.md
+      - docs/spec_updates/2026-11-15_v88_76_ibge_visual_fallback.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -26,16 +24,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Append V88.75 architecture review preserving full Word history
+      - name: Append V88.76 architecture review preserving full Word history
         run: |
           python tools/update_spec_docx.py \
             --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-            --entry docs/spec_updates/2026-11-15_v88_75_regression_contracts.md \
-            --baseline "Enform Verde 3.26.41-PRECAMPO-EXPERIMENTAL (V88.74 candidate: integration gates distinguish annual and current semantics)" \
+            --entry docs/spec_updates/2026-11-15_v88_76_ibge_visual_fallback.md \
+            --baseline "Enform Verde 3.26.42-PRECAMPO-EXPERIMENTAL (V88.75 temporal, pixel and bounded-read contracts)" \
             --head-sha "${{ github.sha }}" \
             --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
             --date "15 de novembro de 2026" \
-            --footer-label "V88.75 · experimental 3.26.42 · revisão temporal, painel de carbono e gate visual do canvas" \
+            --footer-label "V88.76 · experimental 3.26.42 · fallback IBGE assíncrono e imagem não bloqueante" \
             --footer-date "15/11/2026"
       - name: Verify DOCX archive and current checkpoint
         run: |
@@ -47,13 +45,13 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert len(xml) > 10000
-              assert 'V88.75' in xml and '3.26.42-PRECAMPO-EXPERIMENTAL' in xml
-          print('Word specification updated with v88.68 checkpoint and archive validated')
+              assert 'V88.76' in xml and '3.26.42-PRECAMPO-EXPERIMENTAL' in xml
+          print('Word specification updated with V88.76 checkpoint and archive validated')
           PY
       - name: Commit DOCX to the same feature branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: synchronize Word with v88.68 SAR handoff checkpoint"
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.76 visual fallback"
           git push origin HEAD:${{ github.ref_name }}
