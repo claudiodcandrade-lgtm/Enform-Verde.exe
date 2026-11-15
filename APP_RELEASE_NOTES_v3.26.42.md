@@ -1,4 +1,4 @@
-# Enform Verde 3.26.42 — candidata pré-campo
+# Enform Verde v3.26.42
 
 ## Correções desta revisão
 
