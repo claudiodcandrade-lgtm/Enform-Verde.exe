@@ -551,3 +551,7 @@ A CI V88.99 aprovou dashboard, SAR integrado, ESA BIOMASS FH e cobertura óptica
 
 ## V88.101 — visibilidade do mapa (16/11/2026)
 A falha do canvas na V88.100 foi causada por teste na aba errada: CBERS estava carregado em um canvas não visível. O smoke agora abre a página Mapas e limites e verifica `winfo_viewable()` e pixels reais. A disponibilidade óptica nacional e o processamento SAR integrado passaram; a confirmação visual precisa ser repetida no novo build. Carbono da Fazenda Maria Eduarda continua parcial e não validado em campo.
+
+
+## V88.102 — sincronização documental (16/11/2026)
+A correção V88.102 trata apenas a captura visual do canvas Tk em Windows com escala DPI. Não altera a aquisição, o processamento, os parâmetros, as equações nem a incerteza do carbono do solo. Esta especificação foi sincronizada para manter o conjunto documental da candidata no mesmo ciclo de correção.
