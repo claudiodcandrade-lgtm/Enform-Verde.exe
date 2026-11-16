@@ -50,6 +50,18 @@ def rendered_optical_status(provider, visible, photo_size, canvas_image_count, p
     return None
 
 
+def scale_canvas_bbox(root_x, root_y, width, height, tk_screen_size, screenshot_size):
+    """Convert Tk logical screen coordinates to ImageGrab physical pixels."""
+    tk_width, tk_height = (max(1, int(value)) for value in tk_screen_size)
+    shot_width, shot_height = (max(1, int(value)) for value in screenshot_size)
+    sx, sy = shot_width / tk_width, shot_height / tk_height
+    left = round(int(root_x) * sx)
+    top = round(int(root_y) * sy)
+    right = round((int(root_x) + max(1, int(width))) * sx)
+    bottom = round((int(root_y) + max(1, int(height))) * sy)
+    return left, top, max(left + 1, right), max(top + 1, bottom)
+
+
 def main(timeout=180):
     import desktop_app as app
     import geopandas as gpd
@@ -63,6 +75,8 @@ def main(timeout=180):
             "accepted_sources":["CBERS-4A/WFI","Sentinel-2","IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK"],
             "optical_retrieval_is_not_landcover_classification":True}
     initial_fallback_visible=False
+    screen=None
+    capture_bbox=None
     try:
         # Hosted Windows runners can leave the Tk root behind another desktop
         # window; ImageGrab then measures the obscuring window instead of the
@@ -104,7 +118,11 @@ def main(timeout=180):
             image_count=sum(window.map_canvas.type(item)=="image" for item in canvas_items)
             from PIL import ImageGrab
             x0,y0=window.map_canvas.winfo_rootx(),window.map_canvas.winfo_rooty()
-            pixels=np.asarray(ImageGrab.grab(bbox=(x0,y0,x0+window.map_canvas.winfo_width(),y0+window.map_canvas.winfo_height())).convert("RGB"),dtype=np.uint8)
+            screen=ImageGrab.grab()
+            capture_bbox=scale_canvas_bbox(
+                x0,y0,window.map_canvas.winfo_width(),window.map_canvas.winfo_height(),
+                (window.winfo_screenwidth(),window.winfo_screenheight()),screen.size)
+            pixels=np.asarray(screen.crop(capture_bbox).convert("RGB"),dtype=np.uint8)
             luminance=pixels.astype("float32").mean(axis=2)
             pixel_quality={"p99_luminance":float(np.percentile(luminance,99)),"std_luminance":float(luminance.std()),"visible_fraction":float((luminance>8).mean())}
             last_observation={
@@ -113,6 +131,9 @@ def main(timeout=180):
                 "window_viewable":bool(window.winfo_viewable()),
                 "canvas_viewable":bool(window.map_canvas.winfo_viewable()),
                 "canvas_size":[int(window.map_canvas.winfo_width()),int(window.map_canvas.winfo_height())],
+                "photo_size":list(photo_size) if photo_size else None,
+                "tk_screen_size":[int(window.winfo_screenwidth()),int(window.winfo_screenheight())],
+                "captured_screen_size":list(screen.size),"capture_bbox":list(capture_bbox),
                 "canvas_bg":str(window.map_canvas.cget("bg")),
                 "canvas_items":len(canvas_items),"canvas_image_items":image_count,
                 "pixel_quality":pixel_quality,"fallback_seen":initial_fallback_visible,
@@ -141,6 +162,9 @@ def main(timeout=180):
         result.update(status="ERROR",error_type=type(exc).__name__,
                       message=str(exc)[:300])
     finally:
+        if result.get("status") not in ("PASS_CBERS","PASS_SENTINEL2_FALLBACK","PASS_IBGE_FALLBACK","PASS_AOI_FALLBACK") and screen is not None:
+            try:screen.crop(capture_bbox).save(ROOT/"optical_gui_sinop_canvas_debug.png")
+            except Exception:pass
         try:window.destroy()
         except Exception:pass
     output=ROOT/"optical_gui_sinop_live.json"

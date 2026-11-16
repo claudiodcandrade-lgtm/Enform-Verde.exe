@@ -1,10 +1,22 @@
 import unittest
 
-from tools.live_gui_optical_sinop import rendered_optical_status
+from tools.live_gui_optical_sinop import rendered_optical_status, scale_canvas_bbox
 
 
 class TestLiveGuiOpticalSinop(unittest.TestCase):
     QUALITY={"p99_luminance":120,"std_luminance":28,"visible_fraction":0.72}
+
+    def test_tk_canvas_bbox_scales_to_physical_desktop_pixels(self):
+        self.assertEqual(
+            scale_canvas_bbox(100,80,300,200,(1280,720),(1920,1080)),
+            (150,120,600,420),
+        )
+
+    def test_tk_canvas_bbox_preserves_coordinates_without_dpi_scaling(self):
+        self.assertEqual(
+            scale_canvas_bbox(100,80,300,200,(1920,1080),(1920,1080)),
+            (100,80,400,280),
+        )
 
     def test_ibge_cartographic_fallback_passes_only_with_visible_canvas_pixels(self):
         self.assertEqual(rendered_optical_status(
