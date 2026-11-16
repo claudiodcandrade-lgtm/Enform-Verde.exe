@@ -16,6 +16,7 @@ SOIL_SPEC = "docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md"
 SYNC_WORKFLOWS = (
     ".github/workflows/sync-full-spec-word.yml",
     ".github/workflows/sync-pixel-read-spec-word.yml",
+    ".github/workflows/sync-v88-124-word.yml",
 )
 
 def effective(path):

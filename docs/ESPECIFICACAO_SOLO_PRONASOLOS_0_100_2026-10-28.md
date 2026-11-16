@@ -617,3 +617,7 @@ O ajuste matemático de posição da viewport Tk não altera fontes, profundidad
 - O resumo de carbono abandona a tabela larga e passa a listar cada compartimento em linhas responsivas, com estoque conhecido em tC e tCO₂e, densidade, incerteza disponível e área de cobertura quantificada.
 - A soma de estoques conhecidos é mostrada em destaque. Quando há compartimentos ou cobertura ausentes, rotular como parcial; o total completo e a densidade não defensável permanecem N/D. Ausência não equivale a zero e cenários experimentais ficam excluídos.
 - A alteração é de apresentação e acessibilidade; não altera as rotas SAR, os parâmetros de inventário, a propagação de incerteza nem os gates científicos. Foi adicionada regressão automatizada para a soma parcial. A candidata aguarda confirmação do workflow Windows e continua experimental.
+
+
+### Registro de sincronização documental V88.124
+A especificação Word completa é atualizada pelo workflow de sincronização acionado por `docs/spec_updates/V88.124_INTERFACE_RELATORIOS.md`; a tarefa verifica a integridade do DOCX e a inclusão do checkpoint V88.124 antes de registrar a revisão. O SHA do código e os resultados dos gates permanecem sujeitos à execução do CI.
