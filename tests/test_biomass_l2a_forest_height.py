@@ -68,6 +68,22 @@ class BiomassL2aTests(unittest.TestCase):
             self.assertIn("_i_fh.tiff", result["paths"][0])
             self.assertNotIn("quality", result["paths"][0])
 
+    def test_successful_direct_height_raster_skips_redundant_product_zip(self):
+        obj=item("BIO_FP_FH__L2A_X","FP_FH__L2A")
+        obj["_product_type"]="FP_FH__L2A"
+        obj["_stage"]="OPERATIONAL_L2A"
+        calls=[]
+        def fake_download(url,target,token=None):
+            calls.append(url)
+            Path(target).write_bytes(b"mock-direct-fh-raster")
+            return str(target)
+        with tempfile.TemporaryDirectory() as td, patch.object(sp,"_download",side_effect=fake_download):
+            result=sp.download_maap_height(None,None,td,items=[obj])
+        self.assertTrue(result["available"])
+        self.assertEqual(len(result["paths"]),1)
+        self.assertEqual(len(calls),1)
+        self.assertTrue(calls[0].endswith("i_fh.tiff"))
+
 
 if __name__ == "__main__":
     unittest.main()

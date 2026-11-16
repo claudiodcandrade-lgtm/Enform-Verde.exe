@@ -14,6 +14,14 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
             "IBGE_POTENTIAL_FALLBACK",True,None,0,
             {"p99_luminance":0,"std_luminance":0,"visible_fraction":0},canvas_item_count=5))
 
+    def test_aoi_fallback_is_accepted_while_remote_worker_is_pending(self):
+        # The Tk canvas has an immediate non-black AOI fallback while remote
+        # optical providers load. The live smoke must inspect that canvas
+        # before waiting for the network worker's terminal state.
+        self.assertEqual(rendered_optical_status(
+            "AOI_LOCAL_FALLBACK",True,None,0,self.QUALITY,canvas_item_count=8),
+            "PASS_AOI_FALLBACK")
+
     def test_black_canvas_does_not_pass_even_when_photo_item_exists(self):
         self.assertIsNone(rendered_optical_status("CBERS-4A/WFI",True,(900,420),1,
             {"p99_luminance":0,"std_luminance":0,"visible_fraction":0}))

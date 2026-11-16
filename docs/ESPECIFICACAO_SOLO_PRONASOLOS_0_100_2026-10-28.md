@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 23673)
+Total output lines: 544
+
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
 ## V88.16 — resultado nacional com incerteza e estado auditável (12/11/2026)
 Objetivo obrigatório: para qualquer AOI do Brasil, concluir cada módulo com o melhor resultado cientificamente sustentado ou estado N/D/ERRO_TECNICO, sempre com fonte, período, cobertura, método e incerteza. Quantificar incerteza quando suportada por dados/desenho amostral; caso contrário declarar “incerteza não quantificada” e motivo, sem inventar precisão ou converter N/D em zero.
@@ -200,85 +203,7 @@ Limite científico: Sentinel-1 banda C é evidência para cobertura/monitorament
 
 # V88.42 — handoff ponta a ponta do core para os dashboards (13/11/2026)
 
-A verificação do fluxo worker → fila → `_execute_main` → painéis encontrou duas lacunas: a auditoria agrícola não preservava explicitamente a proveniência SAR recebida do core, e o painel de carbono podia ocultar a data quando recebia `acquisition_utc` sem o campo derivado de Brasília. A auditoria agora registra ID da execução, estado da etapa do pipeline e proveniência SAR com datas, cenas, pixels, provedor e diagnósticos; o painel de carbono deriva a apresentação UTC−03:00 do timestamp de aquisição confirmado. Nenhuma data é inferida de nome de arquivo ou horário de download.
-
-As rotas públicas agora fazem repetição limitada de consultas transitórias (MPC/INPE, até três tentativas com backoff); a chamada STAC de pixels MPC usa timeout (15 s de conexão, 45 s de leitura). Nenhuma rota transforma timeout em ausência confirmada.
-
-Regressão de integração: `tests/test_core_to_dashboard_handoff.py` atravessa a fila assíncrona, executa o caminho principal real e os dois apresentadores reais, com fixtures determinísticas. Verifica carbono e data de cena no painel de carbono, candidatos VV/VH com data/provedor/pixels no painel e auditoria agrícola sem convertê-los em área de cultura validada, propagação de falha SAR/status parcial e persistência JSON. A prova live de acesso consulta MPC e INPE em oito AOIs distribuídas nos seis biomas, incluindo Sinop e o perímetro de aceitação do Tapajós; cada AOI exige que pelo menos uma rota pública leia VV/VH da mesma cena, aquisição de até 30 dias e ao menos 100 pixels válidos por polarização. A rota sem cena ou com erro fica registrada, e o gate só reprova quando ambas não fornecem pixels. Isso testa conectividade em pontos representativos, não uma garantia wall-to-wall em cada coordenada ou época; cada AOI real continua auditada e pode declarar N/D/ERRO.
-
-Resultado live neste ambiente (13/11): a busca de catálogo MPC encontrou cenas de até 30 dias para Manaus, Sinop e Brasília; o catálogo INPE não retornou cenas nesses recortes. A tentativa live de ler pixels no primeiro recorte falhou por `ReadTimeout` no MPC e erro HTTP transitório no INPE. Portanto, ainda não há evidência live de pixel lido nesta execução, e o teste permanece obrigatório no CI/Windows; não marcar conexão como resolvida até essa evidência passar.
-
-A suíte completa passou localmente: 1.141 testes aprovados e 1 ignorado por ausência de display; coleta: 168 módulos. Build/CI, consulta live no SHA final, execução completa do KML Maria Eduarda no Windows e validação científica de campo permanecem gates separados. Candidata 3.26.28-PRECAMPO-EXPERIMENTAL; não homologada.
-
-# V88.43 — integridade do par SAR e status operacional (13/11/2026)
-
-Uma leitura isolada de VV podia ser registrada como processamento SAR concluído mesmo quando a leitura VH da mesma aquisição falhava. A rota MPC agora publica resultados completos somente quando VV e VH são lidos da mesma cena; leituras parciais ficam separadas em `partial_stats`/`partial_paths`, com estado `VV_VH_PAIR_INCOMPLETE`, e `available=false`. Isso impede que o dashboard ou os módulos seguintes interpretem uma polarização isolada como par SAR processado.
-
-O teste `test_mpc_single_polarization_is_partial_not_processed` reproduz falha de VH após VV válido. Verificação local concluída: 1.145 testes passaram, 1 foi ignorado por ausência de display; a coleta inspecionou 168 módulos. O contrato do assinador MPC também foi ajustado para exercer até três tentativas transitórias; o teste de 429 agora comprova limite de três chamadas e encerramento fechado. Nenhuma tentativa ignora TLS, Retry-After ou limites configurados.
-
-A candidata é `3.26.29-PRECAMPO-EXPERIMENTAL`. O ensaio local mede contratos, não demonstra conectividade remota. Catálogo encontrado não equivale a pixels decodificados: só declarar acesso operacional após leitura VV/VH real, recente (≤30 dias) e auditada no SHA final. A cobertura amostral em oito AOIs distribuídas nos seis biomas não é garantia para toda coordenada/época do Brasil; cada AOI deve preservar N/D/ERRO quando aplicável.
-
-A atualização do prompt, da especificação de solo e da especificação técnica registra o estado de testes, build Windows, leitura live e ensaio do KML como gates independentes. A checagem visual local não pôde abrir Tk por falta de display; requer CI/Windows. Não declarar homologação científica sem validação observacional independente.
-
-# V88.44 — diagnóstico nacional SAR e pacote pré-campo auditável (13/11/2026)
-
-## Resultado confirmado no SHA V88.43
-
-No commit `431833f1cec7693d8892d5a615cdaac02eb8a879`, os testes do dashboard, contratos pré-campo e máscara semântica SAR experimental Sinop passaram. A leitura ESA BIOMASS FH real em Sinop também passou. O build Windows chegou à sondagem nacional de pixels e reprovou em Petrolina: havia cenas recentes no catálogo MPC, mas o assinador devolveu HTTP 429 em VV/VH; a coleção RTC do INPE retornou zero cenas nesse recorte. O relatório de oito áreas não foi salvo porque a sondagem parou no primeiro ponto sem par legível. O gate de homologação científica reprovou por falta de evidência independente e artefato final.
-
-## Ajustes na candidata 3.26.30
-
-- Ao receber HTTP 429 do assinador MPC, interromper a busca por cenas antigas no mesmo provedor/AOI e registrar `rate_limited`; não ampliar a carga no serviço enquanto a limitação estiver ativa.
-- A sondagem distribuída executa todos os oito AOIs (seis biomas), salva o resultado incrementalmente, sanitiza URLs e devolve código de saída reprovado se qualquer área não tiver par VV/VH recente com pixels válidos. A falha gera relatório por AOI/provedor, não desaparece nem vira sucesso.
-- O gate SAR distribuído não bloqueia a compilação do pacote pré-campo. O relatório `DIAGNOSTICO_SAR_NACIONAL.json` e `STATUS_GATE_SAR_NACIONAL.txt` seguem dentro do ZIP portátil, e o LEIA-ME declara que não há garantia de cobertura em toda coordenada/data do Brasil.
-- A regressão automatizada verifica que uma resposta 429 interrompe o fan-out por cenas e que uma polarização isolada continua parcial, nunca `PROCESSADO`.
-
-## Limites e aceitação
-
-Permitir a compilação experimental após o gate SAR reprovado não significa que o acesso nacional foi solucionado. Os resultados por AOI precisam ser lidos no diagnóstico do pacote; cada área sem par VV/VH recente mantém N/D/ERRO. A passagem em amostras de Sinop, Tapajós ou outro ponto não prova cobertura em qualquer local do Brasil. O monitoramento de lavouras e a estimativa de carbono devem manter seus limites científicos e não converter banda C isolada em AGB. A versão continua pré-campo experimental, sem homologação. Build, dashboard, sondagem e gate científico serão novamente avaliados no SHA 3.26.30.
-
-# V88.45 — contingência ao HTTP 429 no acesso Sentinel-1
-
-Para separar a limitação do assinador de indisponibilidade dos dados, a candidata `3.26.31-PRECAMPO-EXPERIMENTAL` usa primeiro o SAS token de coleção MPC para a coleção GRD em VV/VH; o token fica somente em memória e a auditoria registra a rota. O signer por ativo é fallback limitado e interrompe solicitações após HTTP 429. Rotas já disponíveis no core incluem INPE RTC público e CDSE autenticado. ASF OPERA RTC-S1 (Earthdata) e AWS Sentinel-1 GRD COG foram identificados como alternativas técnicas, mas não estão integrados à leitura de pixels desta candidata; ESA MAAP não é acesso Sentinel-1 e continua servindo a rota ESA Biomass para carbono/altura.
-
-Uma falha local no MPC ou ausência de cenas INPE em uma AOI não prova indisponibilidade nacional. Sem par recente VV/VH lido na mesma cena, o painel mantém N/D/ERRO e não converte C-band em AGB. A suíte local completa passou: 1.150 testes aprovados e 1 ignorado por ausência de display gráfico. O teste Windows da rota SAS de coleção, o build no SHA final, a execução integral do KML Maria Eduarda até o painel e a validação independente continuam gates pendentes. Não homologar.
-
-
-## Atualização V88.46 — evidência SAR de Windows
-
-No Windows CI #2726 (SHA `8334643eadb4d82366c06eed789c9e659c752b09`), VV/VH recentes foram lidos em 8/8 AOIs representativas de seis biomas por SAS de coleção MPC, sem HTTP 429. Isso confirma a rota SAR na amostra, mas não é evidência de carbono de solo nem de cobertura nacional contínua. A estimativa de SOC 0–100 cm permanece sujeita aos seus próprios requisitos de dados oficiais, cobertura, incerteza e auditoria. O build e a análise integral da Fazenda Maria Eduarda ainda não estavam concluídos no checkpoint; a homologação científica foi reprovada por falta de evidência independente.
-
-
-## Atualização V88.47 — build Windows concluído
-
-O executável da candidata 3.26.31 foi construído e passou os smokes de Windows, paridade de módulos, padrão visual, rede TLS e aceite SAR do KMZ de teste Tapajós. Isso confirma a operacionalidade de empacotamento, não acrescenta evidência ao estoque SOC. O carbono do solo 0–100 cm continua sujeito aos dados oficiais, interseção, incerteza e auditoria especificados acima. O teste integral da Fazenda Maria Eduarda até o dashboard e a validação científica independente seguem pendentes; manter como experimental e não homologado.
-
-
----
-
-## V88.48 — previsões experimentais de campo no painel (14/11/2026)
-
-- Versão em desenvolvimento: `3.26.32-PRECAMPO-EXPERIMENTAL`. O painel de carbono agora expõe cada valor numérico que o manifesto pré-campo conseguiu derivar, por formação e compartimento: densidade, área-base, estoque associado, faixa disponível, tipo de incerteza, modelo, fonte, ID e hash de rastreio. Previsões de produtividade elegíveis mostram t/ha, produção-base, área, faixa, modelo, fonte e rastreio.
-- Resultados incompatíveis ou sem fonte/método continuam N/D com o motivo; nenhuma média sintética é introduzida. A previsão experimental permanece fora do total conhecido/consolidado quando assim classificada. JSON e CSV mantêm previsões separadas de observações de campo; medições, parcelas e coordenadas ficam em branco até coleta independente.
-- A regressão do handoff ganhou biomassa aérea numérica de fixture e valida que a previsão, o identificador de rastreio e a separação previsão/medição chegam ao painel. No commit executado antes desta sincronização, os testes direcionados passaram; a suíte completa executou 1.150 casos e falhou somente porque o Word ainda não continha a versão 3.26.32. Essa especificação e os documentos de continuidade foram sincronizados; repetir suíte completa e build Windows no novo SHA.
-- A homologação científica independente continua reprovada por ausência de observações de campo e validação compatível. Não chamar o resultado de homologado. O teste integral do KML Fazenda Maria Eduarda até o dashboard permanece pendente.
-- Esta alteração apresenta valores já calculados pelo manifesto existente; não modifica equações, calibra modelos, transforma Sentinel-1 C-band isolado em AGB nem garante resultado numérico para toda AOI. Onde não houver dado/modelo compatível, permanece N/D.
-
-## V88.49 — desempenho e fluxo de resultados experimentais (14/11/2026)
-
-A versão de código da candidata é `3.26.33-PRECAMPO-EXPERIMENTAL` (`3a7086011c61caf0a19dc8763a3276783d2e7b23`). As alterações não modificam o modelo de SOC, profundidades, camadas, incerteza ou conversão de unidades. O compartilhamento da rota CCI ocorre somente dentro da análise e por telhas; o cálculo zonal continua usando a geometria de cada estrato. Falhas SAR determinísticas de geometria/pixel não provocam repetição desnecessária de transportes; falhas técnicas recuperáveis preservam contingências. Estoques de carbono e SOC nunca são reutilizados entre estratos. O teste completo do novo SHA e o build Windows seguem pendentes; a execução integral da Fazenda Maria Eduarda no dashboard e a validação externa também não estão comprovadas. Manter status experimental e não homologado.
-
-## V88.50 — integridade da versão de código (14/11/2026)
-
-A versão candidata permanece `3.26.33-PRECAMPO-EXPERIMENTAL`, agora identificada pelo SHA `0f1cb66313bb0e989a8966dde3bc183b357128e2`. O código-fonte principal foi restaurado após a auditoria detectar conteúdo binário inválido no commit anterior; a restauração não altera o modelo de carbono do solo nem as suas profundidades e incertezas. `py_compile` e seis testes direcionados passaram localmente; CI completo, build Windows e execução ponta a ponta continuam pendentes. Não homologar.
-
-## V88.51 — estimativas obrigatórias e entrega SAR ao dashboard (14/11/2026)
-
-- Regra do produto: todos os compartimentos de carbono aplicáveis devem apresentar estimativa experimental rastreável e incerteza compatível com a fonte. As únicas exceções de saída são necromassa acima do solo e necromassa abaixo do solo, para as quais não há equações alométricas aplicáveis; mostrar explicitamente “não estimada — sem equação alométrica aplicável”, sem inserir zero. Biomassa aérea, biomassa subterrânea, serapilheira e carbono do solo 0–100 cm não podem desaparecer silenciosamente do painel. Se houver suporte publicado/inventário compatível, aplicar a hierarquia microrregional/regional com extrapolação estatística declarada; toda saída permanece pré-campo e não homologada.
-- Prioridade de proveniência: quando houver cenas e pixels SAR utilizáveis, a estimativa SAR/modelo compatível deve permanecer a origem do resultado e ser distinguida de qualquer referência de inventário. A contingência de inventário só pode preencher a estimativa quando todas as rotas configuradas concluírem buscas completas, sem erros e com certificado verificável de ausência de cenas. Cena encontrada, pixels auxiliares, falha de leitura, autenticação, HTTP, TLS, paginação incompleta ou rota sem auditoria bloqueiam a contingência. Esses estados precisam chegar ao dashboard como motivo rastreável, não como ausência de dados.
-- Defeito de handoff identificado: o worker enviava `sar: {}`; `_execute_main` apagava `project['sar_result']` e não consumia `precomputed_sar`; os painéis ainda consultavam `project['sar_result']`. A alteração 3.26.34 deriva um pacote AOI de SAR a partir das auditorias/detalhes por estrato nativo e da cobertura SAR agrícola e o preserva em `project['sar_result']`, mantendo cenas, estatísticas, origem, motivo e certificado de altura. O teste de integração foi ampliado para impedir que o payload SAR pré-computado seja descartado.
-- A auditoria local também encontrou erro de indentação em `sar_pipeline.py`, impedindo a importação do pipeline; corrigido. `py_compile` passou nos cinco módulos alterados. Os testes direcionados não puderam ser executados neste ambiente: faltam `requests` e `geopandas`; não registrar esses casos como aprovados.
-- Esta sincronização de código e documentação é candidata pré-campo, versão 3.26.34. CI completo, build Windows, teste real da AOI até o dashboard, estimativas numéricas de todos os compartimentos em AOIs brasileiras e homologação científica independente ainda não foram comprovados. Não chamar de homologado nem prometer cobertura numérica universal sem esses resultados.
+A verificação do fluxo worker → fila → `_execute_main` → painéis encontrou duas lacunas: a auditoria agrícola não preservava explicitamente a proveniência SAR recebida do core, e o painel de carbono podia ocultar a data quando recebia `acquisition_utc` sem o campo derivado de Brasília. A auditoria agora registra ID da execução, estado da etapa do pipeline e proveniência SAR com datas, cenas, pixels, provedor e diagnósticos; o painel de carbono deriva a apresentação UTC−03:00 do timestamp de aquisição confirmado. Nenhuma data é inferida de nome de arquivo ou…3673 tokens truncated…os os compartimentos em AOIs brasileiras e homologação científica independente ainda não foram comprovados. Não chamar de homologado nem prometer cobertura numérica universal sem esses resultados.
 
 ## V88.52 — CI Windows e sincronização documental (14/11/2026)
 
@@ -539,3 +464,6 @@ O fechamento explícito de conexão corrige o cleanup da fixture de teste de inv
 
 ## V88.97 — fixture de teste SAR
 O acréscimo das métricas exigidas no fixture de teste SAR não altera o processamento, as fontes ou a incerteza de SOC.
+
+## V88.98 — transferência experimental da Fazenda Maria Eduarda
+No KML integral de 1.459,91 ha, os estratos nativos SAR anuais 2025/2026 chegaram ao cálculo de carbono e ao payload do dashboard com o mesmo identificador e hash da AOI. O resultado teve 2 estratos, 90.822,16 tC conhecidos e `complete=False`; não deve ser interpretado como estoque total completo nem como medição de campo. A leitura ESA BIOMASS-FH permaneceu indisponível neste ensaio sem token (HTTP 401); nenhum valor de altura foi usado ou inventado. A preparação PronaSolos continua independente das classes agrícolas, e incertezas não quantificáveis permanecem declaradas. O teste frio levou 292 s, sem evidência de redução de tempo total nesta revisão.

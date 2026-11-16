@@ -68,9 +68,6 @@ def main(timeout=180):
                 initial_fallback_visible=True
             pending=(map_status.startswith("Carregando CBERS-4A/WFI") or
                      "enquanto atualiza CBERS-4A" in map_status)
-            if pending:
-                time.sleep(0.12)
-                continue
             visible=bool(getattr(window,"_satellite_map_visible",False))
             visible=visible or provider in ("IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK")
             canvas_items=window.map_canvas.find_all()
@@ -89,9 +86,14 @@ def main(timeout=180):
                               image_height=photo_size[1] if photo_size else None,
                               canvas_pixel_quality=pixel_quality,
                               optical_attempt_status=map_status[:220],
-                              worker_terminal_state_observed=True,
+                              worker_terminal_state_observed=not pending,
+                              worker_pending_at_visible_fallback=bool(pending and passed in (
+                                  "PASS_IBGE_FALLBACK","PASS_AOI_FALLBACK")),
                               initial_nonblack_fallback_seen=initial_fallback_visible)
                 break
+            if pending:
+                time.sleep(0.12)
+                continue
             time.sleep(0.12)
         else:
             result["status"]="TIMEOUT"
