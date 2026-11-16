@@ -64,11 +64,19 @@ def main(timeout=180):
             "optical_retrieval_is_not_landcover_classification":True}
     initial_fallback_visible=False
     try:
+        # Hosted Windows runners can leave the Tk root behind another desktop
+        # window; ImageGrab then measures the obscuring window instead of the
+        # canvas. Make the live test surfaceable before capturing its pixels.
+        window.deiconify()
+        window.lift()
+        try:window.attributes("-topmost",True)
+        except Exception:pass
         window.update()
         window.gdf=test_aoi
         window._map_extent_factor=1.36
         window.show_google_map(refresh=False,prefer_public=True)
         deadline=time.monotonic()+timeout
+        last_observation={}
         while time.monotonic()<deadline:
             window.update()
             provider=str(getattr(window,"_map_provider","") or "")
@@ -91,6 +99,16 @@ def main(timeout=180):
             pixels=np.asarray(ImageGrab.grab(bbox=(x0,y0,x0+window.map_canvas.winfo_width(),y0+window.map_canvas.winfo_height())).convert("RGB"),dtype=np.uint8)
             luminance=pixels.astype("float32").mean(axis=2)
             pixel_quality={"p99_luminance":float(np.percentile(luminance,99)),"std_luminance":float(luminance.std()),"visible_fraction":float((luminance>8).mean())}
+            last_observation={
+                "provider":provider,"map_status":map_status[:220],
+                "window_state":str(window.state()),
+                "window_viewable":bool(window.winfo_viewable()),
+                "canvas_viewable":bool(window.map_canvas.winfo_viewable()),
+                "canvas_size":[int(window.map_canvas.winfo_width()),int(window.map_canvas.winfo_height())],
+                "canvas_bg":str(window.map_canvas.cget("bg")),
+                "canvas_items":len(canvas_items),"canvas_image_items":image_count,
+                "pixel_quality":pixel_quality,"fallback_seen":initial_fallback_visible,
+            }
             passed=rendered_optical_status(provider,visible,photo_size,image_count,pixel_quality,len(canvas_items))
             if passed:
                 result.update(status=passed,provider=provider,canvas_items=len(canvas_items),
@@ -109,6 +127,7 @@ def main(timeout=180):
             time.sleep(0.12)
         else:
             result["status"]="TIMEOUT"
+            result["last_canvas_observation"]=last_observation
         result["last_ui_status"]=str(window.status.get())[:350]
     except Exception as exc:
         result.update(status="ERROR",error_type=type(exc).__name__,

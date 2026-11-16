@@ -485,3 +485,6 @@ O KML integral privado foi processado localmente até o payload do dashboard com
 
 ## Checkpoint V88.99 (16/11/2026)
 O build V88.98 falhou no smoke do canvas por falso negativo: o fundo cartográfico claro de fallback tinha baixo contraste apesar de estar visível. O smoke agora usa critérios separados para fallback cartográfico e imagem óptica; canvas preto continua reprovado. O teste local específico e a CI no novo SHA precisam passar antes de liberar EXE. A integração SAR Sinop/Tapajós, a suíte dashboard, a cobertura óptica nacional e a leitura real de pixels BIOMASS FH passaram na V88.98. Carbono da Fazenda Maria Eduarda está parcial; o fluxo não está homologado em campo.
+
+## Checkpoint V88.100 (16/11/2026)
+No Windows, a fonte óptica nacional e o restante do build passaram, mas o smoke Tk continuou em timeout após a correção de limiar. O novo teste traz a janela para frente e registra geometria, status, itens e pixels do canvas no timeout, permitindo localizar a falha em vez de inferi-la. Não liberar executável até o smoke visual passar. SAR real Sinop/Tapajós passou handoff ao dashboard; ESA BIOMASS FH pixel proof passou. Carbono incompleto e nenhuma validação de campo.

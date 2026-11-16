@@ -644,3 +644,8 @@ O Windows build `43794816489` do SHA V88.97 falhou no smoke do canvas porque o s
 - Separar critérios: imagem óptica exige pixels, dimensões, cobertura e contraste; fallback claro exige item no canvas, luminância p99 ≥20 e pixels visíveis ≥15%, sem exigir contraste de satélite. Canvas preto não passa. O novo teste cobre fundo claro uniforme e fundo preto.
 - Repetir a suíte completa e o build/smokes Windows no SHA novo. Sem EXE liberável até esses gates passarem. Preservar a evidência de disponibilidade nacional e não declarar que o canvas final passou antes da rodada nova.
 - O handoff SAR→carbono→painel da Fazenda Maria Eduarda foi observado localmente com `analysis_run_id` e hash da AOI preservados; carbono parcial. O teste sem token ESA recebeu 401, mas a prova live de BIOMASS FH no CI leu pixels reais. Nenhum resultado implica validação de campo.
+
+## V88.100 — diagnóstico de visibilidade do canvas Windows (16/11/2026)
+- A correção V88.99 separou o limiar óptico do cartográfico, mas o smoke Tk ainda terminou em timeout no runner Windows. Não declarar tela corrigida nem EXE aprovado. O dashboard, handoff SAR Sinop/Tapajós, ESA BIOMASS FH real e fontes ópticas nacionais passaram na rodada V88.99.
+- A próxima rodada força janela Tk para primeiro plano e guarda, no timeout, status/provedor do mapa, `winfo_viewable`, dimensões e cor do canvas, quantidade de itens e métricas reais dos pixels capturados. Usar o artefato para identificar se o widget não mapeou, se não foi desenhado ou se a captura está escura/oculta.
+- Exigir a CI completa, o smoke de canvas e o EXE com o SHA exato antes de liberar. O carbono Maria Eduarda segue parcial e experimental.

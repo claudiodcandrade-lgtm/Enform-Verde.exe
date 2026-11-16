@@ -18,3 +18,6 @@ Candidata pré-campo experimental. A suíte e o build Windows do novo SHA ainda 
 
 ## V88.99 — correção do smoke de canvas (16/11/2026)
 A primeira CI da V88.98 passou o dashboard, integração SAR de Sinop/Tapajós, leitura live de pixels ESA BIOMASS FH e cobertura nacional óptica. O build Windows falhou no smoke visual por exigir contraste de satélite do fallback claro AOI/IBGE. O critério foi corrigido e ganhou regressão para fallback claro e contraprova de tela preta. Reexecutar CI e build no novo SHA; não houve EXE liberado na V88.98.
+
+## V88.100 — diagnóstico adicional do smoke Tk (16/11/2026)
+A V88.99 manteve timeout no canvas Windows apesar de a cobertura nacional óptica passar. O smoke agora eleva a janela e registra status do provedor, visibilidade/dimensões do widget, itens e luminância/fração visível, para separar falha de desenho da captura encoberta. A versão continua pré-campo; nenhum EXE liberável até novo smoke Windows.
