@@ -1,7 +1,10 @@
 """Coverage contracts for the owner's priority production systems."""
+import gzip
 import io
 import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from priority_production_models import (TARGETS, PAM_CLIMATE_SCENARIO_CROPS,
@@ -59,8 +62,14 @@ class PriorityProductionModelContracts(unittest.TestCase):
                  {"D3N":"2023","D3C":"2023","V":"4200"},
                  {"D3N":"2024","D3C":"2024","V":"4400"}]
         response=io.BytesIO(json.dumps(payload).encode("utf-8"))
-        with patch("urllib.request.urlopen",return_value=response) as opened:
-            values=load_microregion_yields("Algodão","51006")
+        # Give the loader an explicitly empty bundle so this contract tests
+        # the SIDRA fallback even when the production package ships newer PAM data.
+        with tempfile.TemporaryDirectory() as tmp:
+            pam_path=Path(tmp)/"empty_pam.csv.gz"
+            with gzip.open(pam_path,"wt",encoding="utf-8",newline="") as stream:
+                stream.write("product_key,territory_code,variable_code,observation_status,year,value_numeric\\n")
+            with patch("urllib.request.urlopen",return_value=response) as opened:
+                values=load_microregion_yields("Algodão","51006",path=pam_path)
         self.assertEqual(values,{2023:4200.0,2024:4400.0})
         self.assertIn("n9/51006/v/112/p/2015-2024/c782/40099",opened.call_args.args[0].full_url)
 
