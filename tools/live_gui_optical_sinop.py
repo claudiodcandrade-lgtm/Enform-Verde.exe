@@ -74,6 +74,12 @@ def main(timeout=180):
         window.update()
         window.gdf=test_aoi
         window._map_extent_factor=1.36
+        # The map canvas lives on notebook tab 1; Tk reports its canvas as
+        # non-viewable until that page is selected. A successful worker result
+        # on a hidden tab is not a visible GUI result.
+        window.nb.select(window.tabs[1])
+        window.update_idletasks()
+        window.update()
         window.show_google_map(refresh=False,prefer_public=True)
         deadline=time.monotonic()+timeout
         last_observation={}
@@ -88,8 +94,10 @@ def main(timeout=180):
                 initial_fallback_visible=True
             pending=(map_status.startswith("Carregando CBERS-4A/WFI") or
                      "enquanto atualiza CBERS-4A" in map_status)
-            visible=bool(getattr(window,"_satellite_map_visible",False))
-            visible=visible or provider in ("IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK")
+            canvas_viewable=bool(window.map_canvas.winfo_viewable())
+            visible=canvas_viewable and bool(
+                getattr(window,"_satellite_map_visible",False)
+                or provider in ("IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK"))
             canvas_items=window.map_canvas.find_all()
             photo=getattr(window,"google_map_photo",None)
             photo_size=(photo.width(),photo.height()) if photo is not None else None

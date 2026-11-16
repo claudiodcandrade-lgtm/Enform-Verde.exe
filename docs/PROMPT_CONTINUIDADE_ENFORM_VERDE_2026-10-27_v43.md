@@ -488,3 +488,6 @@ O build V88.98 falhou no smoke do canvas por falso negativo: o fundo cartográfi
 
 ## Checkpoint V88.100 (16/11/2026)
 No Windows, a fonte óptica nacional e o restante do build passaram, mas o smoke Tk continuou em timeout após a correção de limiar. O novo teste traz a janela para frente e registra geometria, status, itens e pixels do canvas no timeout, permitindo localizar a falha em vez de inferi-la. Não liberar executável até o smoke visual passar. SAR real Sinop/Tapajós passou handoff ao dashboard; ESA BIOMASS FH pixel proof passou. Carbono incompleto e nenhuma validação de campo.
+
+## Checkpoint V88.101 (16/11/2026)
+A causa do smoke Tk falhar foi identificada: a página do mapa do Notebook permanecia oculta, embora CBERS estivesse carregado no widget; `winfo_viewable=false`. O teste agora seleciona Mapas e limites e requer widget visível e pixels. Executar novamente CI completa antes do release. Nenhum EXE homologado ainda.

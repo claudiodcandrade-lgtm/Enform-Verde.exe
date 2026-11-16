@@ -649,3 +649,8 @@ O Windows build `43794816489` do SHA V88.97 falhou no smoke do canvas porque o s
 - A correção V88.99 separou o limiar óptico do cartográfico, mas o smoke Tk ainda terminou em timeout no runner Windows. Não declarar tela corrigida nem EXE aprovado. O dashboard, handoff SAR Sinop/Tapajós, ESA BIOMASS FH real e fontes ópticas nacionais passaram na rodada V88.99.
 - A próxima rodada força janela Tk para primeiro plano e guarda, no timeout, status/provedor do mapa, `winfo_viewable`, dimensões e cor do canvas, quantidade de itens e métricas reais dos pixels capturados. Usar o artefato para identificar se o widget não mapeou, se não foi desenhado ou se a captura está escura/oculta.
 - Exigir a CI completa, o smoke de canvas e o EXE com o SHA exato antes de liberar. O carbono Maria Eduarda segue parcial e experimental.
+
+## V88.101 — corrige tab oculta no smoke Tk (16/11/2026)
+- A CI V88.100 provou a causa do timeout: CBERS carregou no canvas, mas `canvas_viewable=false`; o smoke nunca saía da primeira página do Notebook. O screenshot mediu a janela atrás do mapa oculto. Isto não era falha da fonte óptica; o widget não estava visível.
+- O smoke seleciona `window.tabs[1]` (Mapas e limites) antes do worker e exige `winfo_viewable()` junto aos pixels reais. Imagem em aba oculta não passa. Manter critérios diferenciados para fallback claro, satélite e tela preta.
+- Repetir CI completa; não liberar até o canvas visível, build e autoteste do EXE passarem no mesmo SHA. V88.100 dashboard suite, SAR integrado Sinop/Tapajós, prova ESA BIOMASS FH e cobertura óptica nacional passaram; só canvas falhou.

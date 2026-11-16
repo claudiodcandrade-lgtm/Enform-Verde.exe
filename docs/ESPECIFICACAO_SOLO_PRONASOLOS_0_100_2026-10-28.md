@@ -548,3 +548,6 @@ O pipeline de carbono/dash da Fazenda Maria Eduarda foi exercitado localmente co
 
 ## V88.100 — diagnóstico de canvas (16/11/2026)
 A CI V88.99 aprovou dashboard, SAR integrado, ESA BIOMASS FH e cobertura óptica nacional, mas o teste do canvas Tk Windows continuou em timeout. V88.100 acrescenta estado e métrica da superfície ao artefato e força a janela ao primeiro plano. Sem leitura efetiva de altura FH integrada aos cálculos, não afirmar altura usada; carbono da AOI Maria Eduarda permanece parcial. O executável segue bloqueado pelo gate visual até o novo build.
+
+## V88.101 — visibilidade do mapa (16/11/2026)
+A falha do canvas na V88.100 foi causada por teste na aba errada: CBERS estava carregado em um canvas não visível. O smoke agora abre a página Mapas e limites e verifica `winfo_viewable()` e pixels reais. A disponibilidade óptica nacional e o processamento SAR integrado passaram; a confirmação visual precisa ser repetida no novo build. Carbono da Fazenda Maria Eduarda continua parcial e não validado em campo.

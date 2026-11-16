@@ -21,3 +21,6 @@ A primeira CI da V88.98 passou o dashboard, integração SAR de Sinop/Tapajós, 
 
 ## V88.100 — diagnóstico adicional do smoke Tk (16/11/2026)
 A V88.99 manteve timeout no canvas Windows apesar de a cobertura nacional óptica passar. O smoke agora eleva a janela e registra status do provedor, visibilidade/dimensões do widget, itens e luminância/fração visível, para separar falha de desenho da captura encoberta. A versão continua pré-campo; nenhum EXE liberável até novo smoke Windows.
+
+## V88.101 — seleciona a página do mapa no smoke (16/11/2026)
+A saída CBERS estava carregada, mas a página Mapas e limites permanecia oculta no smoke do Tk. O teste agora seleciona essa página e exige visibilidade do widget, além de pixels. Repetir CI completa; a V88.100 não gerou EXE liberável.
