@@ -603,3 +603,6 @@ A candidata 3.26.60 mantém inalterados os parâmetros, fontes, profundidade e c
 
 ## V88.121 — escopo do solo mantido (16/11/2026)
 O ajuste do smoke visual Tk acomoda o teste de interface ao desktop compacto e não altera fontes, profundidade, parâmetros, consultas ou cálculos do carbono orgânico do solo 0–100 cm. Fertilidade continua fora da produtividade; sem recalibração ou nova estimativa de solo nesta correção.
+
+## V88.122 — escopo do solo mantido (16/11/2026)
+A rolagem da aba “Mapas e limites” para expor o canvas no desktop do runner não altera fontes, profundidade, parâmetros, consultas ou cálculos de carbono orgânico do solo 0–100 cm. Fertilidade permanece fora da produtividade; nenhum resultado de solo foi recalibrado.

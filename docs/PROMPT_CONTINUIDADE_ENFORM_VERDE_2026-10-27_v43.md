@@ -569,4 +569,4 @@ Aceitação SAR real adicional no AOI público Tapajós retornou `SAR_PROCESSADO
 
 
 ## Ponte para checkpoint atual
-Versão candidata corrente: 3.26.60-PRECAMPO-EXPERIMENTAL, checkpoint V88.121 (16/11/2026). A documentação canônica e os critérios de validação ficam no prompt v52 e na especificação técnica vigente. O smoke do canvas foi corrigido para a resolução mínima do runner; não declarar EXE liberado antes do build Windows integral verde no SHA final.
+Versão candidata corrente: 3.26.60-PRECAMPO-EXPERIMENTAL, checkpoint V88.122 (16/11/2026). A documentação canônica e os critérios de validação ficam no prompt v52 e na especificação técnica vigente. O smoke de canvas considera a rolagem da página espacial; não declarar EXE liberado antes do build Windows integral verde no SHA final.
