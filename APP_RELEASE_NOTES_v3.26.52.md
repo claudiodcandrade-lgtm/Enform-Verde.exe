@@ -28,3 +28,5 @@ A saída CBERS estava carregada, mas a página Mapas e limites permanecia oculta
 
 ## V88.102 — correção da captura visual do canvas
 O smoke Windows de V88.101 detectou canvas visível e imagem Sentinel-2, mas a captura reportou apenas 4,98% de pixels claros. V88.102 converte coordenadas Tk para pixels físicos do ImageGrab em telas escaladas, registra dimensões e anexa captura de diagnóstico em caso de falha. A causa DPI ainda é hipótese até confirmação pela nova CI. Doze testes focados passaram localmente; gates Windows pendentes.
+
+Desempenho: esta alteração trata somente a captura visual; não houve otimização nem medição de redução do tempo de análise. Referência disponível: 292 s em execução fria na Fazenda Maria Eduarda; repetição com cache não concluiu em 180 s.
