@@ -86,8 +86,11 @@ class NationalInventoryDatabaseTests(unittest.TestCase):
                 {"id":"ifn-test","title":"Inventário florestal","url":"https://example.test/data"}])
             self.assertEqual(added,1)
             import sqlite3
-            with sqlite3.connect(db) as conn:
+            conn = sqlite3.connect(db)
+            try:
                 row=conn.execute("SELECT harvest_status,evidence_status,model_eligible FROM inventory_records WHERE record_id='SFB_IFN:ifn-test'").fetchone()
+            finally:
+                conn.close()
             self.assertEqual(row,("METADADO_DESCOBERTO_NAO_BAIXADO","NAO_TRIADO_NAO_ELEGIVEL",0))
 
 

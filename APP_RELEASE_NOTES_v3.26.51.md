@@ -23,3 +23,6 @@ A primeira CI Windows materializou 150.660 registros oficiais PAM/SIDRA e encont
 ## Supressão de nomes de culturas fora do domínio — V88.95
 
 A execução ponta a ponta real provou que o SAR alcançou os painéis em Sinop-amostra e Tapajós, mas expôs rótulos específicos de soja/café ainda presentes no Tapajós fora da área de treinamento. O bloqueio agora é aplicado aos pixels antes das classes e polígonos. Teste de integração incluído no gate Windows. A primeira rodada V88.94 não liberou executável por falha do teste de cardinalidade PAM; o novo build e a execução do teste de supressão ainda precisam passar. A amostra de Sinop não é o KML privado da Fazenda Maria Eduarda.
+## Compatibilidade de teste Windows — V88.96
+
+Corrigido o cleanup de uma conexão SQLite aberta pela fixture de teste. O resultado anterior passou 1.221 testes, mas falhou ao apagar o banco temporário bloqueado no Windows. A conexão agora é fechada explicitamente. É necessária nova suíte e novo build no SHA atualizado.

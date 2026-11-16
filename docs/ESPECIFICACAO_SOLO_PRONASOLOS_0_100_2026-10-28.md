@@ -533,3 +533,6 @@ A correção do contrato de contagem do materializador PAM faz a verificação a
 
 ## V88.95 — supressão de nomes SAR fora do envelope
 A correção V88.95 só altera o nome de classes agrícolas experimentais fora da região de treinamento: conserva “área cultivada” sem cultura específica. Não altera o cálculo do solo, suas fontes, profundidade ou incerteza, nem permite usar classe de cultura extrapolada para selecionar um estoque de carbono.
+
+## V88.96 — limpeza do teste SQLite Windows
+O fechamento explícito de conexão corrige o cleanup da fixture de teste de inventários em Windows; não altera tabelas, fontes, observações nem cálculos do carbono do solo.
