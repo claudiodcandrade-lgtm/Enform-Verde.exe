@@ -606,3 +606,6 @@ O ajuste do smoke visual Tk acomoda o teste de interface ao desktop compacto e n
 
 ## V88.122 — escopo do solo mantido (16/11/2026)
 A rolagem da aba “Mapas e limites” para expor o canvas no desktop do runner não altera fontes, profundidade, parâmetros, consultas ou cálculos de carbono orgânico do solo 0–100 cm. Fertilidade permanece fora da produtividade; nenhum resultado de solo foi recalibrado.
+
+## V88.123 — escopo do solo mantido (16/11/2026)
+O ajuste matemático de posição da viewport Tk não altera fontes, profundidade, parâmetros, consultas ou cálculos de carbono orgânico do solo 0–100 cm. Fertilidade permanece fora da produtividade e nenhum cálculo foi recalibrado.

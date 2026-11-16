@@ -801,7 +801,15 @@ O EIA/RIMA “Região Gandarela”, de 1995 (Ambiente Consultoria; Santa Bárbar
 - O estado de ciência não muda: candidata 3.26.60 experimental, sem homologação; o teste live integral da Fazenda Maria Eduarda, handoff carbono→dashboard e benchmark comparável de tempo permanecem pendentes. Não afirmar redução de processamento.
 
 ### Continuidade V88.121
-Versão corrente: `3.26.60-PRECAMPO-EXPERIMENTAL`, checkpoint V88.122, em branch de desenvolvimento. Validar o workflow Windows integral no SHA final, incluindo canvas óptico, compilação, `--module-check`, `--visual-check`, `--network-check` e aceite Tapajós. Se qualquer gate falhar, corrigir e repetir. Não publicar `main`, não chamar de homologada e não declarar EXE pronto antes de CI verde. Maria Eduarda exige o KML integral; ensaio público no entorno do centroide não o substitui.
+Versão corrente: `3.26.60-PRECAMPO-EXPERIMENTAL`, checkpoint V88.123, em branch de desenvolvimento. Validar o workflow Windows integral no SHA final, incluindo canvas óptico, compilação, `--module-check`, `--visual-check`, `--network-check` e aceite Tapajós. Se qualquer gate falhar, corrigir e repetir. Não publicar `main`, não chamar de homologada e não declarar EXE pronto antes de CI verde. Maria Eduarda exige o KML integral; ensaio público no entorno do centroide não o substitui.
+
+## V88.123 — posicionamento preciso na página espacial rolável (16/11/2026)
+
+- O build V88.122 confirmou CBERS carregado e pixels visíveis, mas `yview_moveto(1.0)` levou o canvas a y=−85. Esse gate também reprovou corretamente: a imagem existia, porém o canvas estava acima da captura. Não é falha da fonte óptica.
+- O smoke calcula a fração de rolagem a partir do y real do mapa, do início da viewport, do scrollregion e da posição desejada; reajusta depois de reduzir a altura para caber simultaneamente na janela e na tela. A captura continua exigindo canvas inteiro dentro dos limites e pixels visíveis com contraste/cobertura compatíveis.
+- Adicionados testes da fração de rolagem e do limite de altura. Depois da alteração: smoke focado 16/16, suíte completa 1.249 testes OK e 1 skip headless; `check_test_collection.py` inspecionou 183 módulos; `compileall` e `git diff --check` passaram. O padrão visual não pôde ser executado localmente porque este container não possui display; a decisão visual segue no gate Windows.
+- O workflow Windows V88.122 falhou somente no teste do canvas e não produziu EXE. O novo smoke e build precisam ser concluídos no SHA final. A aprovação técnica da interface não equivale a homologação científica.
+- Permanecem experimentais os resultados de carbono/produção; handoff integral carbono→dashboard, KML privado integral Maria Eduarda, validação de campo e benchmark comparável de tempo seguem pendentes. Sem benchmark, não afirmar redução quantitativa do processamento.
 
 ## V88.122 — rolagem para o canvas na aba de mapas (16/11/2026)
 
