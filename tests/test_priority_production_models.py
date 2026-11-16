@@ -67,7 +67,7 @@ class PriorityProductionModelContracts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             pam_path=Path(tmp)/"empty_pam.csv.gz"
             with gzip.open(pam_path,"wt",encoding="utf-8",newline="") as stream:
-                stream.write("product_key,territory_code,variable_code,observation_status,year,value_numeric\\n")
+                stream.write("")
             with patch("urllib.request.urlopen",return_value=response) as opened:
                 values=load_microregion_yields("Algodão","51006",path=pam_path)
         self.assertEqual(values,{2023:4200.0,2024:4400.0})
