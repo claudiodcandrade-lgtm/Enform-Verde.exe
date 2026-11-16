@@ -38,6 +38,19 @@ class _Session:
         raise AssertionError(f"unhandled mocked source request: {url} {params}")
 
 
+class _ICMBIOSession(_Session):
+    def get(self, url, params=None, timeout=None):
+        if "gov.br/icmbio/pt-br/assuntos/unidade-de-conservacao/planos-de-manejo" in url:
+            return _Response(content=(
+                b'<a href="/icmbio/pt-br/assuntos/unidade-de-conservacao/flona-tapajos">'
+                b'Floresta Nacional do Tapajos</a>'
+                b'<a href="/icmbio/pt-br/assuntos/unidade-de-conservacao/flona-tapajos/plano-de-manejo">'
+                b'Plano de Manejo - Flona do Tapajos</a>'
+                b'<a href="https://example.org/inventario.pdf">Inventario florestal</a>'
+            ))
+        return super().get(url, params=params, timeout=timeout)
+
+
 class InventorySourceAccessTests(unittest.TestCase):
     def test_collector_writes_links_manifest_and_searchable_catalog_without_promoting_leads(self):
         with tempfile.TemporaryDirectory() as td:
@@ -70,6 +83,16 @@ class InventorySourceAccessTests(unittest.TestCase):
                                               microregion="Santarém")
         self.assertEqual([r["record_id"] for r in regional], ["regional"])
         self.assertEqual(regional[0]["geographic_scope"], "REGIONAL_FALLBACK")
+
+    def test_icmbio_official_plan_pages_are_discovered_as_nonquantitative_leads(self):
+        with tempfile.TemporaryDirectory() as td:
+            manifest=collect_hierarchical_sources(Path(td),session=_ICMBIOSession())
+        rows=[r for r in manifest["records"]
+              if r.get("source_id")=="ICMBIO_PLANOS_UC" and r.get("record_type")=="catalog_lead"]
+        self.assertEqual(len(rows),2)
+        self.assertTrue(all(r["usable_for_estimation"] is False for r in rows))
+        self.assertTrue(all("gov.br/icmbio/" in r["url"] for r in rows))
+        self.assertTrue(all("example.org" not in r["url"] for r in rows))
 
 
 if __name__ == "__main__":

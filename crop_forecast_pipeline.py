@@ -32,7 +32,8 @@ def _panel_season_year(crop, lat, as_of):
 
 
 def forecast_fields(fields, *, as_of=None, season=None, weather_fetcher=fetch_power_daily,
-                    first_reference_year=2000, n_mc=5000, model="auto", artifact=None, awc_fetcher=None):
+                    first_reference_year=2000, n_mc=5000, model="auto", artifact=None, awc_fetcher=None,
+                    allow_no_vigor_contingency=False):
     """fields: [{id, gdf, crop, identification{label_allowed,...}, vigor{status,probabilities},
     area_ha, area_sd_ha?}] — all of the same crop calendar.
 
@@ -56,7 +57,9 @@ def forecast_fields(fields, *, as_of=None, season=None, weather_fetcher=fetch_po
             report["fields"][rid] = {"status": "N/D", "reason": "cultura não identificada por identificador utilizável"}
             continue
         vig = f.get("vigor") or {}
-        if vig.get("status") not in ("experimental", "validated"):
+        vigor_ok=(vig.get("status") in ("experimental", "validated") and
+                  isinstance(vig.get("probabilities"),dict))
+        if not vigor_ok and not allow_no_vigor_contingency:
             report["fields"][rid] = {"status": "N/D", "reason": "vigor N/D: " + str(vig.get("reason", ""))}
             continue
         micro = microregion_of(f["gdf"])["dominant"]
@@ -77,10 +80,13 @@ def forecast_fields(fields, *, as_of=None, season=None, weather_fetcher=fetch_po
         hc = hindcast_errors(yields, {y + offset: v for y, v in fav["reference_F_by_year"].items()})
         ready.append({"id": rid, "crop": crop, "micro_code": micro["code"], "area_ha": f["area_ha"],
                       "area_sd_ha": f.get("area_sd_ha"), "yields": yields,
-                      "vigor_probs": vig["probabilities"], "climate_probs": fav["probabilities"],
+                      "vigor_probs": vig["probabilities"] if vigor_ok else None,
+                      "climate_probs": fav["probabilities"],
                       "hindcast": hc, "transfer_sd_kg_ha": f.get("transfer_sd_kg_ha")})
         report["fields"][rid] = {"status": "experimental", "microregion": micro, "pam_years": sorted(yields),
-                                 "vigor": vig, "climate": fav, "hindcast": hc,
+                                 "vigor": vig if vigor_ok else None,
+                                 "no_vigor_contingency": not vigor_ok,
+                                 "climate": fav, "hindcast": hc,
                                  "scenarios": scenario_table(yields, harvest_year),
                                  "harvest_year": harvest_year, "weather_source": wx.get("source_url")}
     if not ready:

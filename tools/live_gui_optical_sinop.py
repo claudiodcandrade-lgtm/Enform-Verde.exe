@@ -62,6 +62,26 @@ def scale_canvas_bbox(root_x, root_y, width, height, tk_screen_size, screenshot_
     return left, top, max(left + 1, right), max(top + 1, bottom)
 
 
+def fit_window_geometry(screen_size, desired_width=900, desired_height=680, margin=24):
+    """Return a centered Tk geometry that fits inside the reported screen."""
+    screen_width, screen_height = (max(1, int(value)) for value in screen_size)
+    margin = max(0, int(margin))
+    width = min(max(1, int(desired_width)), max(1, screen_width - 2 * margin))
+    height = min(max(1, int(desired_height)), max(1, screen_height - 2 * margin))
+    left = max(0, (screen_width - width) // 2)
+    top = max(0, (screen_height - height) // 2)
+    return f"{width}x{height}+{left}+{top}"
+
+
+def capture_bbox_is_visible(bbox, screenshot_size):
+    """Require the entire canvas crop to lie inside captured desktop pixels."""
+    if not isinstance(bbox, (tuple, list)) or len(bbox) != 4:
+        return False
+    width, height = (max(1, int(value)) for value in screenshot_size)
+    left, top, right, bottom = (int(value) for value in bbox)
+    return 0 <= left < right <= width and 0 <= top < bottom <= height
+
+
 def main(timeout=180):
     import desktop_app as app
     import geopandas as gpd
@@ -85,6 +105,8 @@ def main(timeout=180):
         window.lift()
         try:window.attributes("-topmost",True)
         except Exception:pass
+        window.geometry(fit_window_geometry((window.winfo_screenwidth(),window.winfo_screenheight())))
+        window.update_idletasks()
         window.update()
         window.gdf=test_aoi
         window._map_extent_factor=1.36
@@ -122,6 +144,7 @@ def main(timeout=180):
             capture_bbox=scale_canvas_bbox(
                 x0,y0,window.map_canvas.winfo_width(),window.map_canvas.winfo_height(),
                 (window.winfo_screenwidth(),window.winfo_screenheight()),screen.size)
+            capture_bbox_visible=capture_bbox_is_visible(capture_bbox,screen.size)
             pixels=np.asarray(screen.crop(capture_bbox).convert("RGB"),dtype=np.uint8)
             luminance=pixels.astype("float32").mean(axis=2)
             pixel_quality={"p99_luminance":float(np.percentile(luminance,99)),"std_luminance":float(luminance.std()),"visible_fraction":float((luminance>8).mean())}
@@ -134,11 +157,12 @@ def main(timeout=180):
                 "photo_size":list(photo_size) if photo_size else None,
                 "tk_screen_size":[int(window.winfo_screenwidth()),int(window.winfo_screenheight())],
                 "captured_screen_size":list(screen.size),"capture_bbox":list(capture_bbox),
+                "capture_bbox_fully_visible":capture_bbox_visible,
                 "canvas_bg":str(window.map_canvas.cget("bg")),
                 "canvas_items":len(canvas_items),"canvas_image_items":image_count,
                 "pixel_quality":pixel_quality,"fallback_seen":initial_fallback_visible,
             }
-            passed=rendered_optical_status(provider,visible,photo_size,image_count,pixel_quality,len(canvas_items))
+            passed=rendered_optical_status(provider,visible and capture_bbox_visible,photo_size,image_count,pixel_quality,len(canvas_items))
             if passed:
                 result.update(status=passed,provider=provider,canvas_items=len(canvas_items),
                               canvas_image_items=image_count,image_width=photo_size[0] if photo_size else None,

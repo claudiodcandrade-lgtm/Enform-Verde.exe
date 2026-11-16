@@ -1,6 +1,7 @@
 """End-to-end handoff contract: worker queue -> core result -> app dashboards."""
 import json
 import queue
+import threading
 import tempfile
 import unittest
 from pathlib import Path
@@ -270,12 +271,20 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             _execute_main=lambda *_args, **_kwargs: self.fail("local SAR must not run on Tk thread"),
         )
         worker_threads = []
+        real_thread = threading.Thread
         class InlineThread:
             def __init__(self, target, **_kwargs):
+                self._background = real_thread(target=target, **_kwargs) if _kwargs.get("name") == "EnformSoilStages" else None
                 self.target = target
                 worker_threads.append(self)
             def start(self):
-                self.target()
+                if self._background is not None:
+                    self._background.start()
+                else:
+                    self.target()
+            def join(self):
+                if self._background is not None:
+                    self._background.join()
 
         import sys
         import types
@@ -291,7 +300,7 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
                                       "soil_fertility_zonal": fertility_module}), \
              patch("desktop_app._write_analysis_stage_checkpoint", return_value="checkpoint-test") as checkpoint:
             App.execute(app)
-        self.assertEqual(len(worker_threads), 1)
+        self.assertEqual(len(worker_threads), 2)
         land_use.assert_called_once()
         self.assertEqual(land_use.call_args.kwargs["sar_paths"], sar_paths)
         carbon.assert_called_once()
@@ -304,6 +313,10 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         self.assertEqual(payload["pedology"]["status"], "ERRO_TECNICO_SOLO")
         self.assertTrue(payload["stage_errors"])
         self.assertEqual(payload["checkpoint_path"], "checkpoint-test")
+        self.assertIn("worker_wall_seconds", payload["performance"])
+        self.assertIn("soil_pipeline_wall_seconds", payload["performance"])
+        self.assertIn("pedology_seconds", payload["performance"])
+        self.assertIn("fertility_seconds", payload["performance"])
         self.assertEqual(payload["land_use"]["analysis_run_id"], payload["analysis_run_id"])
         checkpoint.assert_called_once()
 

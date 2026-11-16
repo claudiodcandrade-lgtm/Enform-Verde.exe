@@ -15,6 +15,26 @@ from crop_spatial_monitoring import (crop_geometry,current_sar_cultivated_candid
 
 
 class ExperimentalCropForecastContracts(unittest.TestCase):
+    def test_proven_absence_contingency_estimate_is_exposed_in_dashboard_audit(self):
+        frame=gpd.GeoDataFrame(geometry=[box(-55.20,-11.89,-55.19,-11.88)],crs=4326)
+        contingency={"status":"FALLBACK_HISTORICO_MAPBIOMAS_PAM",
+            "classes":[{"label":"Soja","area_ha":40.0,"pam_year_count":10,
+                "conditional_reference_production_t":138.0,
+                "conditional_reference_production_p05_p95_t":[120.0,156.0],
+                "climate_adjusted_forecast":{"status":"experimental","harvest_year":2026,
+                    "model":"PAM_CLIMATE_SCENARIO",
+                    "production_t":{"median":132.0,"p05":101.0,"p95":164.0}}}]}
+        land={"status":"N/D_SEM_COBERTURA_SAR","classes":[],
+              "agriculture_historical_contingency":contingency}
+        lines,audit=monitoring_forecast(frame,land,as_of=date(2026,11,16))
+        rendered="\n".join(lines)
+        self.assertIn("ESTIMATIVA CONTINGENCIAL PAM",rendered)
+        self.assertIn("Reserva histórica: 138.00 t",rendered)
+        self.assertIn("PREVISÃO EXPERIMENTAL PAM×CLIMA SEM VIGOR — 132.00 t",rendered)
+        self.assertIn("não confirma cultura ou área atuais",rendered)
+        self.assertEqual(audit["yield_contingency"]["status"],"ESTIMATIVA_HISTORICA_DISPONIVEL")
+        self.assertFalse(audit["yield_contingency"]["current_crop_or_area_confirmed"])
+
     def test_experimental_sar_soy_polygon_can_be_used_conditionally(self):
         frame=gpd.GeoDataFrame({
             "class_name":["Lavoura de Soja","Formação florestal"],

@@ -555,3 +555,48 @@ A falha do canvas na V88.100 foi causada por teste na aba errada: CBERS estava c
 
 ## V88.102 — sincronização documental (16/11/2026)
 A correção V88.102 trata apenas a captura visual do canvas Tk em Windows com escala DPI. Não altera a aquisição, o processamento, os parâmetros, as equações nem a incerteza do carbono do solo. Esta especificação foi sincronizada para manter o conjunto documental da candidata no mesmo ciclo de correção.
+
+## V88.104 — paralelismo da análise (16/11/2026)
+
+A etapa de pedologia/fertilidade passa a executar em worker separado em paralelo com uso da terra e carbono/SAR (máximo de duas etapas simultâneas). A mudança busca reduzir tempo total sem alterar fontes, profundidade, resolução, filtros, parâmetros ou cálculos de carbono do solo. A auditoria registra os tempos por etapa e do worker. O ganho ainda não foi medido em execução comparável; manter a incerteza e a disponibilidade de SOC inalteradas, e só declarar aceleração após benchmark com mesma AOI, fontes, parâmetros e saídas.
+
+A prioridade geral de inventários publicada em fontes institucionais e de anexos ambientais com aceite comprovado é independente do SOC; tais bases estruturais não substituem as fontes analíticas e pedológicas exigidas para estoque de carbono do solo 0–100 cm.
+
+## V88.105 — escopo de inventários aprovados e bases de pesquisa (16/11/2026)
+
+A nova regra do proprietário aceita inventários subjacentes a PMFS SINAFLOR ou licenciamentos ambientais efetivamente aprovados, desde que o processo esteja comprovado em fonte oficial. Para estimativas numéricas é necessário recuperar o anexo/inventário exato, associar ao processo e registrar URL, SHA-256, método, unidade, domínio e licença. Essa ampliação não altera fontes, profundidades, cálculos, elegibilidade ou incerteza de carbono do solo 0–100 cm; bases florestais estruturais não substituem os dados pedológicos/analíticos de SOC.
+
+## V88.106 — camada de acesso ao catálogo de inventários
+
+As consultas a inventários são pontuais e read-only, com filtros SQL parametrizados, limite de retorno e índices compostos. A aplicação pula a leitura completa das sementes quando seu hash SHA-256 não mudou; consultas repetidas podem ser atendidas por cache LRU controlado pelo estado físico do banco. Esta otimização cobre apenas metadados do catálogo: não modifica análises, cálculos, parâmetros, fontes pedológicas ou estimativas de carbono orgânico do solo 0–100 cm. A mudança de tempo total da análise não está quantificada.
+
+## V88.107 — referência de inventário florestal Gandarela
+Foi registrada a decisão de usar o inventário do EIA/RIMA da Região Gandarela (1995) como referência estrutural regional para Floresta Estacional Semidecidual na região central de MG, após recuperação e harmonização do documento. Essa referência não altera os dados, profundidade, parâmetros ou cálculos do compartimento de carbono orgânico do solo 0–100 cm.
+
+Na mesma atualização, foi incorporado ao catálogo um inventário publicado da FLONA Tapajós (campanha 2012), disponível como resultados agregados por duas áreas, sem microdados por árvore. A inclusão de inventários de UCs não altera os parâmetros, fontes ou cálculos do compartimento de carbono do solo.
+
+## V88.108 — acesso a documentos de UCs
+A descoberta automatizada de links do ICMBio serve somente à localização de documentos. Não altera fontes de solo, profundidades, parâmetros, nem a regra de carbono do solo 0–100 cm.
+
+## V88.109 — validação local do ambiente
+O ambiente isolado de testes foi reconstruído a partir de `requirements_desktop.txt`; suíte completa local: 1.239 testes OK com um skip headless. O gate visual foi executado em desktop gráfico e retornou `PADRAO_VISUAL_OK`. Esta validação de software não altera fonte, profundidade, parâmetros ou cálculos de carbono orgânico do solo 0–100 cm.
+
+
+## V88.110 — modelo agrícola mantido
+A revisão paraleliza a execução do painel de vigor/safra com consultas meteorológicas do dashboard. Mantém as equações anteriores e não utiliza fertilidade do solo como covariável de produtividade; parâmetros e cálculos do carbono orgânico do solo 0–100 cm permanecem inalterados.
+
+
+## V88.111 — contingência agrícola
+A contingência de safra não modifica o modelo nem os dados de fertilidade/solo: sua estimativa histórica é área MapBiomas anual × mediana PAM microrregional. Nenhuma camada de fertilidade é usada como covariável de produtividade.
+
+
+## V88.112 — gate de vigor/SAR
+A contingência do dashboard só é liberada por certificado completo de ausência de cenas Sentinel-1 VV/VH utilizáveis para vigor ou pelo gate de ausência SAR previamente definido. Não altera nenhum dado ou cálculo de solo. Fertilidade não é covariável de produtividade.
+
+
+## V88.113 — modelo contingencial agrícola
+A rota agrícola passa a aplicar o modelo PAM×clima sem vigor somente após certificado de ausência de cenas Sentinel-1 VV/VH. Isso não altera os dados ou cálculos de carbono do solo 0–100 cm. Fertilidade não é covariável de produtividade.
+
+
+## V88.120 — preservação do escopo do módulo de solo
+A candidata 3.26.60 mantém inalterados os parâmetros, fontes, profundidade e cálculos de carbono orgânico do solo 0–100 cm. Fertilidade não é covariável de produtividade agrícola. A atualização desta versão trata de controle de versão, consulta ao catálogo de inventários e verificação do pacote; nenhum resultado de carbono do solo foi recalibrado.

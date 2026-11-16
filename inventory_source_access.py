@@ -8,11 +8,14 @@ separate access/evidence states for later scientific review.
 from __future__ import annotations
 
 import csv
+import hashlib
 import html
 import json
 import re
 import time
 import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
+from urllib.parse import urljoin, urlparse
 from pathlib import Path
 
 try:
@@ -28,6 +31,9 @@ SEARCH_TERMS = (
     '"inventário florestal"', 'fitossociologia parcelas',
     'parcelas permanentes floresta', 'estrutura diamétrica floresta',
     'área basal inventário floresta', 'biomassa inventário florestal',
+    'mata ciliar inventário parcelas', 'vegetação ripária estrutura parcelas',
+    'inventário florestal várzea', 'Caatinga parcelas fitossociologia',
+    'Inventário Florestal de Minas Gerais distribuição diamétrica',
 )
 MATCH = re.compile(r"invent.rio|fitossoci|parcelas?|floresta|biomassa|diam.tr", re.I)
 
@@ -38,6 +44,10 @@ MACHINE_SOURCES = {
         "queries": ("inventário florestal", "unidades amostrais IFN", "parcelas IFN")},
     "IBAMA_SINAFLOR": {"adapter": "ckan", "tier": 4,
         "queries": ("inventário florestal", "plano de manejo", "PMFS", "POA")},
+    "IBAMA_LICENCIAMENTO": {"adapter": "ckan", "tier": 4,
+        "queries": ("inventário florestal", "EIA RIMA", "estudo ambiental", "autorização supressão")},
+    "ICMBIO_PLANOS_UC": {"adapter": "govbr_html", "tier": 5,
+        "queries": SEARCH_TERMS},
     "EMBRAPA_REDAPE": {"adapter": "dataverse", "tier": 1,
         "queries": SEARCH_TERMS},
     "EMBRAPA_ALICE": {"adapter": "oai", "tier": 1,
@@ -69,7 +79,7 @@ MACHINE_SOURCES = {
 TIER_LABELS = {
     1: "INSTITUCIONAL_ABERTO_PARCELAS_OU_DADOS_PRIMARIOS",
     2: "INSTITUCIONAL_PUBLICADO_TOTALIZADO_COM_ESTATISTICA",
-    3: "INVENTARIO_ANEXO_COM_ACEITE_EXPRESSO_COMPROVADO",
+    3: "INVENTARIO_VINCULADO_A_PROCESSO_AMBIENTAL_APROVADO_COM_DOCUMENTO_OFICIAL",
     4: "BASE_OFICIAL_OU_ADMINISTRATIVA_PARA_TRIAGEM",
     5: "PORTAL_LOCALIZADOR_SEM_API_DE_COLETA_CONFIRMADA",
 }
@@ -233,6 +243,59 @@ def _dspace_source(source_id, portal, cfg, session):
     return list(out.values())
 
 
+class _GovbrAnchorParser(HTMLParser):
+    """Extract anchor text and href without adding an HTML-parser dependency."""
+    def __init__(self):
+        super().__init__()
+        self.links = []
+        self._href = None
+        self._text = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.casefold() == "a":
+            self._href = dict(attrs).get("href")
+            self._text = []
+
+    def handle_data(self, data):
+        if self._href is not None:
+            self._text.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.casefold() == "a" and self._href is not None:
+            self.links.append((self._href, " ".join(self._text).strip()))
+            self._href = None
+            self._text = []
+
+
+def _govbr_html_source(source_id, portal, cfg, session):
+    """Discover official ICMBio plan/document links; never treat them as data."""
+    response = session.get(_source_url(portal), timeout=(10, 60))
+    response.raise_for_status()
+    parser = _GovbrAnchorParser()
+    parser.feed(response.content.decode("utf-8", errors="replace"))
+    out, seen = [], set()
+    for href, title in parser.links:
+        url = urljoin(_source_url(portal), html.unescape(href or "")).split("#", 1)[0]
+        parsed = urlparse(url)
+        if parsed.scheme != "https" or parsed.hostname != "www.gov.br":
+            continue
+        if "/icmbio/" not in parsed.path or url in seen:
+            continue
+        haystack = f"{title} {url}"
+        if not re.search(r"plano|manejo|invent.rio|diagn.stico|veget|floresta|flona|parque|reserva", haystack, re.I):
+            continue
+        seen.add(url)
+        rid = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
+        out.append({"record_id": f"{source_id}:{rid}", "source_id": source_id,
+            "title": title or url.rsplit("/", 1)[-1], "url": url,
+            "description": "Link público localizado na página oficial de planos do ICMBio; abrir o documento e verificar se contém inventário florestal.",
+            "record_type": "catalog_lead",
+            "access_state": "PUBLIC_UC_PLAN_OR_DOCUMENT_INVENTORY_CONTENT_TO_VERIFY"})
+        if len(out) >= 500:
+            break
+    return out
+
+
 def _write_html_index(path, records, runs):
     groups = {}
     for row in records:
@@ -276,7 +339,8 @@ def collect_hierarchical_sources(destination, *, session=None, max_oai_pages=30)
     portals = _portal_map()
     found, runs = [], []
     adapters = {"ckan": _ckan_source, "dataverse": _dataverse_source,
-                "zenodo": _zenodo_source, "dspace": _dspace_source}
+                "zenodo": _zenodo_source, "dspace": _dspace_source,
+                "govbr_html": _govbr_html_source}
     for source_id, cfg in MACHINE_SOURCES.items():
         portal = portals.get(source_id)
         if not portal:

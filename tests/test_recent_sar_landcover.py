@@ -24,6 +24,19 @@ class CurrentRadarScreenTests(unittest.TestCase):
         r=run_recent_sar_screen(a,"unused",search=lambda *a,**k:{"scenes":[]})
         self.assertEqual(r["status"],"N/D_DADOS")
         self.assertFalse(r["native_confirmed"]);self.assertFalse(r["crop_confirmed"])
+
+    def test_complete_empty_vv_vh_search_issues_vigor_absence_certificate(self):
+        import geopandas as gpd
+        from shapely.geometry import box
+        a=gpd.GeoDataFrame(geometry=[box(-55.8,-12.6,-55.7,-12.5)],crs=4326)
+        found={"scenes":[],"scene_count":0,"pagination_complete":True,
+               "providers":[{"provider":"MPC","status":"OK","scene_count":0,"pagination_complete":True},
+                            {"provider":"INPE","status":"OK","scene_count":0,"pagination_complete":True}]}
+        r=run_recent_sar_screen(a,"unused",search=lambda *a,**k:found)
+        cert=r["vigor_scene_absence_certificate"]
+        self.assertEqual(cert["status"],"AUSENCIA_COMPROVADA_CENAS_VV_VH_PARA_VIGOR")
+        self.assertTrue(cert["catalog_search_complete"] and cert["pagination_complete"])
+        self.assertEqual(cert["compatible_scene_count"],0)
     def test_missing_observations_are_not_valid_land_cover(self):
         a=np.ones((1,12,12))
         with self.assertRaises(ValueError):classify_temporal(a,a,np.ones((12,12),bool))

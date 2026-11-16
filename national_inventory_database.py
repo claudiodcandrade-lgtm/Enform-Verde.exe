@@ -7,11 +7,13 @@ pixel pairing or model fitting merely because its catalog record exists.
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 import sqlite3
 import time
 import unicodedata
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
@@ -49,6 +51,15 @@ CREATE TABLE IF NOT EXISTS inventory_records (
 CREATE INDEX IF NOT EXISTS idx_inventory_compatibility
  ON inventory_records(biome,physiognomy,microregion,open_data,model_eligible);
 CREATE INDEX IF NOT EXISTS idx_inventory_source ON inventory_records(source_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_filter
+ ON inventory_records(biome,physiognomy,record_type,source_priority);
+CREATE INDEX IF NOT EXISTS idx_inventory_access
+ ON inventory_records(source_id,data_level,model_eligible,open_data,georeferenced);
+CREATE INDEX IF NOT EXISTS idx_inventory_region
+ ON inventory_records(uf,microregion,biome);
+CREATE TABLE IF NOT EXISTS catalog_meta (
+ key TEXT PRIMARY KEY, value TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS harvest_runs (
  run_id INTEGER PRIMARY KEY AUTOINCREMENT, source_id TEXT NOT NULL,
  started_utc TEXT NOT NULL, finished_utc TEXT, status TEXT NOT NULL,
@@ -87,12 +98,53 @@ def _portal_map(conn):
     return {r["source_id"]:dict(r) for r in conn.execute("SELECT * FROM portals")}
 
 
+_SEED_FILES=(PORTAL_REGISTRY, DATA/"structural_inventory_sources_v1.csv",
+    DATA/"structural_aggregate_evidence_v1.csv",DATA/"national_inventory_datasets_v1.csv",
+    DATA/"national_inventory_source_metrics_v1.json",DATA/"tapajos_ornl1552_structure_v1.csv",
+    DATA/"microdados_inventarios_harmonizados_v1.csv",
+    DATA/"ifn_fesv_mato_grosso_agb_candidates_v1.csv",DATA/"ifn_necromass_biome_uf_v1.csv")
+
+def _seed_fingerprint():
+    digest=hashlib.sha256()
+    for file in _SEED_FILES:
+        digest.update(file.name.encode()); digest.update(b"\0")
+        if file.exists():
+            digest.update(file.read_bytes())
+        else:
+            digest.update(b"<missing>")
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _catalog_revision(conn):
+    row=conn.execute("SELECT value FROM catalog_meta WHERE key='seed_fingerprint'").fetchone()
+    return row[0] if row else "unversioned"
+
+
 def _source_for_inventory(source_id, institution, url, source_ids):
     """Map a bibliography row to its actual repository/journal, not a default."""
     sid=_norm(source_id); inst=_norm(institution); link=_norm(url)
     if "ifn" in sid or "sfb" in inst:return "SFB_IFN"
+    # _norm removes punctuation, including underscores and hyphens, so both
+    # SEMA_MT identifiers and SEMA-MT institution names normalize to "semamt".
+    if "semamt" in sid or "semamt" in inst:return "SEMA_MT_GESTAO_FLORESTAL"
     if "ornl" in sid or "daacornl" in link:return "ORNL_DAAC"
+    if "icmbio" in sid or "icmbio" in inst or "govbr/icmbio" in link:
+        return "ICMBIO_PLANOS_UC"
+    if "dryad" in sid or "dryad" in link:return "DRYAD"
+    if "embrapa" in sid:
+        if "pantanal" in sid:return "EMBRAPA_PANTANAL"
+        if "cerrados" in sid:return "EMBRAPA_CERRADOS"
+        if "semiarido" in sid:return "EMBRAPA_SEMIARIDO"
+        if "florestas" in sid:return "EMBRAPA_FLORESTAS"
+        if "amazonia oriental" in sid or "aomft" in sid:return "EMBRAPA_AMAZONIA_ORIENTAL"
     if "embrapa" in inst or "cnptiaembrapa" in link:return "EMBRAPA_REDAPE"
+    if "sif" in sid or "sociedade de investigacoes florestais" in inst:return "SIF_UFV"
+    if "jbrj" in sid or "jardim botanico do rio de janeiro" in inst:return "JBRJ_RESEARCH"
+    if "vale" in sid or "vale" in inst:return "VALE_RESERVA_NATURAL"
+    if "ief" in sid or "ief" in inst:return "IEF_MG_INVENTARIO"
+    if "esalq" in sid or "esalq" in inst or "tese.usp.br" in link:return "USP_ESALQ"
+    if "unesp" in sid or "unesp" in inst or "unesp.br" in link:return "UNESP_REPOSITORY"
     if "inpa" in inst or "inpa" in link:return "INPA_REPOSITORY"
     if "ufv" in inst or "locusufv" in link:return "UFV_LOCUS"
     if "ufra" in inst or "ufra" in link:return "UFRA_RIUFRA"
@@ -126,7 +178,10 @@ def initialize_database(path=DEFAULT_DB, *, seed=True):
        api_url=excluded.api_url,method=excluded.method,source_type=excluded.source_type,
        access_status=excluded.access_status,inventory_role=excluded.inventory_role,
        notes=excluded.notes""",portals)
-    if seed:
+    seed_fingerprint=_seed_fingerprint() if seed else None
+    saved_fingerprint=conn.execute("SELECT value FROM catalog_meta WHERE key='seed_fingerprint'").fetchone()
+    needs_seed=bool(seed and (not saved_fingerprint or saved_fingerprint[0]!=seed_fingerprint))
+    if needs_seed:
         source_ids={r[0] for r in conn.execute("SELECT source_id FROM portals")}
         now=_now()
         def insert(row):
@@ -154,7 +209,26 @@ def initialize_database(path=DEFAULT_DB, *, seed=True):
                model_eligible=excluded.model_eligible,source_priority=excluded.source_priority,
                uncertainty_note=excluded.uncertainty_note,metadata_json=excluded.metadata_json,
                structural_metrics_json=excluded.structural_metrics_json,updated_utc=excluded.updated_utc""",row)
+        official_ifn_stats={}
+        official_ifn_db=DATA/"national_inventory_microdata_v1.sqlite"
+        if official_ifn_db.is_file():
+            try:
+                with sqlite3.connect(f"file:{official_ifn_db.resolve()}?mode=ro",uri=True) as ifn_conn:
+                    official_ifn_stats={"tree_record_count":ifn_conn.execute(
+                        "SELECT count(*) FROM ifn_dap10_observation").fetchone()[0],
+                        "plot_count":ifn_conn.execute(
+                        "SELECT count(*) FROM ifn_sampling_unit_summary").fetchone()[0]}
+            except sqlite3.Error:
+                official_ifn_stats={}
         for r in _read_csv(DATA/"structural_inventory_sources_v1.csv"):
+            if r["source_id"] in {"MX_SANTO_AMBROSIO_PROJECT_167","CE_JALAPAO_PROJECT_10"}:
+                # These are separately registered owner-provided local records,
+                # not public repository candidates or institutional datasets.
+                continue
+            # The IFN DAP10 dataset is represented once below by its harvested
+            # dataset record, avoiding a duplicate candidate in on-demand queries.
+            if r["source_id"]=="SFB_IFN_DAP10_SET2025" and official_ifn_stats:
+                continue
             src=_source_for_inventory(r["source_id"],r["institution"],r.get("url"),source_ids)
             if src not in source_ids:src="EMBRAPA_REDAPE"
             level=r.get("data_level") or "candidate"
@@ -201,18 +275,35 @@ def initialize_database(path=DEFAULT_DB, *, seed=True):
                 structural_metrics_json=json.dumps(metrics,ensure_ascii=False),updated_utc=now))
         # Curated government/institutional datasets are first-class catalogue
         # records. Listed/open does not mean downloaded or scientifically used.
+        repository_ids={
+            "DRYAD_UFRA_EMBRAPA_INPE":"DRYAD",
+            "NASA_ORNL_DAAC":"ORNL_DAAC",
+        }
         for r in _read_csv(DATA/"national_inventory_datasets_v1.csv"):
             observed_status=r.get("current_harvest_status") or "listed_not_downloaded"
+            is_loaded_ifn=(r["dataset_id"]=="SFB_IFN_DAP10_SET2025" and bool(official_ifn_stats))
+            if is_loaded_ifn:
+                observed_status="BAIXADO_HARMONIZADO_LOCAL"
+            repository_source=repository_ids.get(r["source_id"],r["source_id"])
+            if repository_source not in source_ids:
+                # Keep the original source label in metadata, but satisfy the
+                # catalog FK with the canonical repository registered above.
+                repository_source=_source_for_inventory(
+                    r["source_id"],r.get("title"),r.get("dataset_url"),source_ids)
             evidence=("DADOS_AGREGADOS_DE_FONTE_OFICIAL_COM_HASH; NAO_SAO_PARCELAS_INDEPENDENTES"
                       if observed_status=="downloaded_sanitized_summary" else
+                      "MICRODADOS_PRIMARIOS_IFN; 27 ARQUIVOS UF DE UM PROGRAMA; UAS NAO SAO POSICOES DE ARVORES"
+                      if is_loaded_ifn else
                       "METADADO_DE_BASE; REQUER_DOWNLOAD_DOCUMENTO_E_AUDITORIA")
-            insert(dict(record_id="dataset:"+r["dataset_id"],source_id=r["source_id"],
+            insert(dict(record_id="dataset:"+r["dataset_id"],source_id=repository_source,
                 title=r["title"],record_type="public_dataset_catalog",data_level=r.get("data_grain"),
                 biome=None,uf=None,microregion=None,physiognomy=None,longitude=None,latitude=None,
-                period_start=None,period_end=None,plot_count=None,tree_record_count=None,
+                period_start=None,period_end=None,plot_count=official_ifn_stats.get("plot_count") if is_loaded_ifn else None,
+                tree_record_count=official_ifn_stats.get("tree_record_count") if is_loaded_ifn else None,
                 open_data=int(r.get("access_type") in {"open_dataset","open_or_terms","public_reports"}),
                 georeferenced=0,variables_json="[]",license=r.get("license_note"),
-                dataset_url=r.get("dataset_url"),local_path=("data/national_inventory_source_metrics_v1.json"
+                dataset_url=r.get("dataset_url"),local_path=("data/national_inventory_microdata_v1.sqlite"
+                    if is_loaded_ifn else "data/national_inventory_source_metrics_v1.json"
                     if observed_status=="downloaded_sanitized_summary" else None),
                 harvest_status=observed_status,evidence_status=evidence,model_eligible=0,
                 source_priority=1 if r.get("access_type")=="open_dataset" else 3,
@@ -241,7 +332,7 @@ def initialize_database(path=DEFAULT_DB, *, seed=True):
         # rows/unique plots, not to independent regional inventory campaigns.
         tap_rows=_read_csv(DATA/"tapajos_ornl1552_structure_v1.csv")
         tap_plots={r.get("plot") for r in tap_rows if r.get("plot")}
-        insert(dict(record_id="local:ORNL_1552_TAPAJOS",source_id="EMBRAPA_REDAPE",
+        insert(dict(record_id="local:ORNL_1552_TAPAJOS",source_id="ORNL_DAAC",
             title="ORNL DAAC 1552 — resumos estruturais por parcela, FLONA Tapajós",
             record_type="harmonized_plot_level_dataset",data_level="primary_plot",
             biome="Amazônia",uf="PA",microregion="FLONA Tapajós",physiognomy="Floresta Ombrófila Densa",
@@ -254,6 +345,42 @@ def initialize_database(path=DEFAULT_DB, *, seed=True):
             model_eligible=1,source_priority=1,uncertainty_note="Calibração H100×G restrita aos suportes cadastrados em Tapajós.",
             metadata_json=json.dumps({"csv_rows":len(tap_rows),"unique_plots":len(tap_plots),"record_grain":"uma linha por parcela"},ensure_ascii=False),
             structural_metrics_json=json.dumps({"fields_in_file":["n_trees","stems_ha","basal_area_m2_ha","h100_field_m","agb_chave2014_mg_ha"],"diameter_distribution":"not_present"},ensure_ascii=False),updated_utc=now))
+        # Project-history microdata are included as local structural evidence,
+        # with geolocation and sampling-area limits preserved in the catalog.
+        from inventory_microdata_library import summarize_inventory_microdata
+        microbase=summarize_inventory_microdata(DATA/"microdados_inventarios_harmonizados_v1.csv")
+        for inventory_id,details in microbase["inventories"].items():
+            mexiana=inventory_id=="MX_SANTO_AMBROSIO_2025"
+            insert(dict(record_id="local:"+inventory_id,source_id="PROJECT_INVENTORY_LIBRARY",
+                title=("Inventário florestal — Ilha Mexiana / Fazenda Santo Ambrósio" if mexiana
+                       else "Inventário florestal — Jalapão"),
+                record_type="harmonized_plot_level_dataset" if mexiana else "harmonized_tree_level_dataset_unscaled",
+                data_level="primary_plot" if mexiana else "primary_tree",
+                biome=details["biome"],uf=("PA" if mexiana else "TO"),
+                microregion=("Ilha Mexiana / foz do Amazonas" if mexiana else None),
+                physiognomy=details["physiognomy_scope"],longitude=None,latitude=None,
+                period_start=None,period_end=None,plot_count=details["plot_count"],
+                tree_record_count=details["tree_record_count"],open_data=0,georeferenced=0,
+                variables_json=json.dumps(["DAP_cm","height_m","species","plot_id","status","allometric_biomass"],ensure_ascii=False),
+                license="Dados de inventário fornecidos no histórico do projeto; licença de redistribuição não declarada.",
+                dataset_url=None,local_path="data/microdados_inventarios_harmonizados_v1.csv",
+                harvest_status="MICRODADOS_HARMONIZADOS_LOCAL_SEM_GEOREFERENCIA" if mexiana else "MICRODADOS_HARMONIZADOS_LOCAL_SEM_AREA_DE_PARCELA",
+                evidence_status="INVENTARIO_PRIMARIO_AGREGADO_REGIONAL_SEM_PAREAMENTO_SAR" if mexiana else "INVENTARIO_PRIMARIO_SEM_AREA_PARCELA_E_SEM_CLASSE_IBGE_CONFIRMADA",
+                model_eligible=0,source_priority=1 if mexiana else 2,
+                uncertainty_note=details["limitation"],
+                metadata_json=json.dumps({"inventory_id":inventory_id,"site":details["site"],
+                    "distinct_plots":details["plot_count"],"tree_record_count":details["tree_record_count"],
+                    "source_dataset_sha256":microbase["source_dataset_sha256"],
+                    "area_normalized_metrics_available":details["area_normalized_metrics_available"],
+                    "regional_reference_scope":details["regional_reference_scope"],
+                    "plot_area_evidence":details["plot_area_evidence"]},ensure_ascii=False),
+                structural_metrics_json=json.dumps({"tree_sample_mean_dbh_cm":details["diameter_sample_mean_cm"],
+                    "tree_sample_mean_height_m":details["height_sample_mean_m"],
+                    "mean_plot_stems_ha":details["mean_plot_stems_ha"],
+                    "mean_plot_basal_area_m2_ha":details["mean_plot_basal_area_m2_ha"],
+                    "mean_plot_agb_allometric_mg_ha":details["mean_plot_agb_allometric_mg_ha"],
+                    "agb_kind":details["agb_kind"],"top10_species_by_stem_count":details["top10_species_by_stem_count"],
+                    "source_dataset_sha256":microbase["source_dataset_sha256"]},ensure_ascii=False),updated_utc=now))
         for filename,title,kind,rows_count,note in (
             ("ifn_fesv_mato_grosso_agb_candidates_v1.csv","IFN MT — candidatos AGB FESV","ifn_candidate",37,"Equação Chave e transferência não validadas; cenário condicional restrito."),
             ("ifn_necromass_biome_uf_v1.csv","IFN — resumos de necromassa por bioma/UF","thematic_aggregate",43,"Agregados por UF/bioma; não são parcelas primárias harmonizadas.")):
@@ -267,6 +394,8 @@ def initialize_database(path=DEFAULT_DB, *, seed=True):
                 evidence_status="AGREGADO_OU_CANDIDATO_NAO_HARMONIZADO",model_eligible=0,
                 source_priority=2,uncertainty_note=note,metadata_json=json.dumps({"row_count":count},ensure_ascii=False),
                 structural_metrics_json=json.dumps({"row_count":count},ensure_ascii=False),updated_utc=now))
+        conn.execute("INSERT INTO catalog_meta(key,value) VALUES('seed_fingerprint',?) "
+                     "ON CONFLICT(key) DO UPDATE SET value=excluded.value",(seed_fingerprint,))
     conn.commit()
     result=database_summary(conn)
     conn.close()
@@ -280,6 +409,9 @@ def database_summary(conn_or_path=DEFAULT_DB):
         "catalog_record_count":conn.execute("SELECT count(*) FROM inventory_records").fetchone()[0],
         "open_plot_candidates":conn.execute("SELECT count(*) FROM inventory_records WHERE open_data=1 AND data_level LIKE 'primary_%'").fetchone()[0],
         "locally_harmonized_plot_level_datasets":conn.execute("SELECT count(*) FROM inventory_records WHERE harvest_status='BAIXADO_HARMONIZADO_LOCAL'").fetchone()[0],
+        "locally_harmonized_project_inventory_datasets":conn.execute("SELECT count(*) FROM inventory_records WHERE harvest_status LIKE 'MICRODADOS_HARMONIZADOS_LOCAL_%'").fetchone()[0],
+        "locally_usable_primary_inventory_datasets":conn.execute("SELECT count(*) FROM inventory_records WHERE harvest_status='BAIXADO_HARMONIZADO_LOCAL' OR harvest_status LIKE 'MICRODADOS_HARMONIZADOS_LOCAL_%'").fetchone()[0],
+        "locally_usable_research_or_official_primary_datasets":conn.execute("SELECT count(*) FROM inventory_records WHERE harvest_status='BAIXADO_HARMONIZADO_LOCAL' AND source_id IN ('ORNL_DAAC','SFB_IFN','EMBRAPA_REDAPE')").fetchone()[0],
         "published_aggregate_records":conn.execute("SELECT count(*) FROM inventory_records WHERE record_type='published_aggregate'").fetchone()[0],
         "curated_public_dataset_records":conn.execute("SELECT count(*) FROM inventory_records WHERE record_type='public_dataset_catalog'").fetchone()[0],
         "source_count_snapshots":conn.execute("SELECT count(*) FROM inventory_records WHERE record_type='source_inventory_count_snapshot'").fetchone()[0],
@@ -297,15 +429,57 @@ def database_summary(conn_or_path=DEFAULT_DB):
     return summary
 
 
+@lru_cache(maxsize=128)
+def _cached_inventory_query(db_path, db_mtime_ns, db_size, biome, physiognomy,
+                            uf, microregion, limit):
+    """Bounded read-only SQL lookup; cache key tracks every catalog write."""
+    path=Path(db_path).resolve()
+    uri=path.as_uri()+"?mode=ro"
+    conn=sqlite3.connect(uri,uri=True,timeout=2.0)
+    conn.row_factory=sqlite3.Row
+    conn.execute("PRAGMA query_only=ON")
+    where=[]; params=[]
+    for column,value in (("biome",biome),("physiognomy",physiognomy),
+                         ("uf",uf),("microregion",microregion)):
+        if value:
+            where.append(f"({column} IS NULL OR {column}=?)"); params.append(value)
+    sql="SELECT * FROM inventory_records"
+    if where: sql+=" WHERE "+" AND ".join(where)
+    sql+=" ORDER BY source_priority IS NULL,source_priority,record_id LIMIT ?"
+    params.append(limit)
+    rows=[dict(row) for row in conn.execute(sql,params)]
+    conn.close()
+    return tuple(rows)
+
+
+def query_inventory_candidates(path=DEFAULT_DB, *, biome=None, physiognomy=None,
+                               uf=None, microregion=None, limit=50):
+    """Fetch a small, relevant catalog slice on demand (never a carbon estimate).
+
+    This API is intentionally read-only. It returns source records for review;
+    numeric use still requires the evidence and eligibility checks above.
+    """
+    db=Path(path).resolve()
+    if not db.is_file(): return []
+    limit=max(1,min(int(limit),200))
+    values=tuple(str(v).strip() if v else None for v in
+                 (biome,physiognomy,uf,microregion))
+    stat=db.stat()
+    rows=_cached_inventory_query(str(db),stat.st_mtime_ns,stat.st_size,*values,limit)
+    return [dict(row) for row in rows]
+
+
 def rank_inventory_candidates(candidates:Iterable[dict], *, biome:str, physiognomy:str,
                               longitude:float|None=None, latitude:float|None=None,
                               microregion:str|None=None, region:str|None=None):
     """Rank exact-physiognomy sources by evidence quality and proximity.
 
     Open institutionally recognized plots lead, followed by recognized published
-    aggregates. An agency inventory is a last resort only when the attachment
-    itself, its hash, and explicit acceptance in an official decision are
-    verified. Approval of a permit or management plan alone never qualifies.
+    aggregates. An agency inventory is a last resort when the attachment,
+    source hash, method/units, and acceptance evidence are verified. By owner
+    decision, an approved SINAFLOR PMFS establishes acceptance of its
+    underlying inventory; the exact source document and approval reference
+    must still be retrievable. Administrative summaries are never plot data.
     Agency records are never promoted to SAR calibration.
     """
     b,p=_norm(biome),_norm(physiognomy)
@@ -335,10 +509,27 @@ def rank_inventory_candidates(candidates:Iterable[dict], *, biome:str, physiogno
         trusted_aggregate=aggregate and bool(row.get("institution_recognized")) and center_ok
         checks=row.get("checks") if isinstance(row.get("checks"),dict) else {}
         method_verified=bool(row.get("method_and_units_verified") or checks.get("metodo_e_unidades_verificados"))
-        accepted_agency=(bool(row.get("agency_inventory_acceptance_verified")) and center_ok
-            and bool(row.get("inventory_document_url")) and bool(row.get("inventory_document_sha256"))
-            and bool(row.get("acceptance_evidence_url")) and method_verified
-            and bool(checks.get("aceite_expresso_do_inventario_anexo", True)))
+        sinaflor_pmfs_accepted=(
+            str(row.get("source_id") or "")=="IBAMA_SINAFLOR"
+            and bool(row.get("pmfs_approval_verified"))
+            and bool(row.get("plan_approval_evidence_url"))
+        )
+        explicit_attachment_acceptance=bool(row.get("agency_inventory_acceptance_verified"))
+        approved_license_inventory=(
+            bool(row.get("environmental_approval_verified"))
+            and bool(row.get("approval_evidence_url"))
+            and bool(row.get("approval_source_official_verified"))
+        )
+        approved_process_acceptance=sinaflor_pmfs_accepted or approved_license_inventory
+        acceptance_evidence=(bool(row.get("acceptance_evidence_url"))
+            or approved_process_acceptance)
+        document_hash=str(row.get("inventory_document_sha256") or "").strip().lower()
+        document_hash_ok=(len(document_hash)==64 and all(c in "0123456789abcdef" for c in document_hash))
+        official_inventory_repository=bool(row.get("inventory_document_official_repository_verified"))
+        accepted_agency=((explicit_attachment_acceptance or approved_process_acceptance) and center_ok
+            and bool(row.get("inventory_document_url")) and document_hash_ok and official_inventory_repository
+            and acceptance_evidence and method_verified
+            and (approved_process_acceptance or bool(checks.get("aceite_expresso_do_inventario_anexo", True))))
         use=("PARCELA_ABERTA_PARA_ESTRUTURA" if open_plot else
              "MEDIA_PUBLICADA_TOTALIZADA_REFERENCIA_REGIONAL" if trusted_aggregate else
              "INVENTARIO_ANEXO_ACEITO_REFERENCIA_DE_ULTIMO_NIVEL" if accepted_agency else

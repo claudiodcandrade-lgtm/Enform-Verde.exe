@@ -46,6 +46,27 @@ def sar_routes_exhausted(land):
                                                        "SAR_CURRENT_EXPERIMENTAL")) for row in classes):
         return {"eligible": False, "reason": "MASCARA_OU_UNIDADES_SAR_PRESENTES"}
     recent = land.get("recent_sar_cover")
+    vigor_absence=(recent or {}).get("vigor_scene_absence_certificate") if isinstance(recent,dict) else None
+    if isinstance(vigor_absence,dict):
+        providers=vigor_absence.get("providers") or []
+        valid_certificate=(
+            vigor_absence.get("status")=="AUSENCIA_COMPROVADA_CENAS_VV_VH_PARA_VIGOR"
+            and vigor_absence.get("catalog_search_complete") is True
+            and vigor_absence.get("pagination_complete") is True
+            and int(vigor_absence.get("compatible_scene_count") if vigor_absence.get("compatible_scene_count") is not None else -1)==0
+            and int(vigor_absence.get("technical_error_count") if vigor_absence.get("technical_error_count") is not None else -1)==0
+            and int(vigor_absence.get("lookback_days") or 0)>=30
+            and int(vigor_absence.get("vigor_max_age_days") or 0)==30
+            and bool(providers)
+            and all(x.get("status")=="OK" and x.get("pagination_complete") is True
+                    for x in providers)
+        )
+        if valid_certificate:
+            return {"eligible":True,
+                    "reason":"AUSENCIA_COMPROVADA_DE_CENAS_SENTINEL1_VV_VH_COMPATIVEIS_COM_VIGOR",
+                    "vigor_scene_absence_certificate":vigor_absence,
+                    "scope":"apenas disponibilidade de cenas VV/VH para vigor; não certifica ausência de outros sensores SAR"}
+        return {"eligible":False,"reason":"CERTIFICADO_DE_AUSENCIA_DE_CENAS_PARA_VIGOR_INVALIDO"}
     seasonal = land.get("sar_classifier_lemplus")
     alternative = land.get("alternative_radar_screen")
     native = land.get("native_sar_experimental")
@@ -85,8 +106,9 @@ def sar_routes_exhausted(land):
 
 
 def build_mapbiomas_pam_contingency(aoi, land, *, map_reader=None,
-                                    micro_fn=None, yields_fn=None):
-    """Build a historical reference only after every configured SAR route fails."""
+                                    micro_fn=None, yields_fn=None, forecast_fn=None,
+                                    climate_weather_fetcher=None, as_of=None):
+    """Build PAM reference and no-vigor PAM×climate forecast after SAR absence."""
     gate = sar_routes_exhausted(land)
     if not gate.get("eligible"):
         return {"status": "BLOQUEADO_ATE_ESGOTAR_SAR", "sar_gate": gate}
@@ -149,17 +171,78 @@ def build_mapbiomas_pam_contingency(aoi, land, *, map_reader=None,
         else:
             row["pam_status"] = "CULTURA_NAO_IDENTIFICADA_NA_LEGENDA_MAPBIOMAS"
         rows.append(row)
+    # The contingency is deliberately reached only after the SAR absence gate.
+    # Use the existing crop model with PAM + weather and no vigor; preserve the
+    # historical PAM estimate above as a transparent reserve if climate inputs
+    # or a crop-specific model are unavailable.
+    climate_forecasts=[]
+    forecast_rows=[row for row in rows if row.get("pam_crop") and
+                   int(row.get("pam_year_count") or 0)>=6]
+    if forecast_rows:
+        try:
+            import geopandas as gpd
+            from datetime import date, timedelta
+            from crop_climate_favorability import fetch_power_daily
+            forecast_fn=forecast_fn or __import__("crop_forecast_pipeline").forecast_fields
+            climate_weather_fetcher=climate_weather_fetcher or fetch_power_daily
+            point=aoi.to_crs("EPSG:4326").geometry.union_all().centroid
+            weather_cache={}
+            def cached_weather(lat,lon,start,end):
+                key=(round(float(lat),5),round(float(lon),5),str(start),str(end))
+                if key not in weather_cache:
+                    weather_cache[key]=climate_weather_fetcher(lat,lon,start,end)
+                return weather_cache[key]
+            forecast_as_of=as_of or (date.today()-timedelta(days=3))
+            for index,row in enumerate(forecast_rows):
+                crop=row["pam_crop"]
+                field_id="contingency_"+str(row["class_code"])
+                field={"id":field_id,"gdf":aoi,
+                       "crop":crop,"identification":{"label_allowed":True,
+                           "source":"MAPBIOMAS_ANUAL_HISTORICO_CONDICIONAL"},
+                       "vigor":{"status":"N/D","reason":"ausência certificada de cenas VV/VH para vigor"},
+                       "area_ha":float(row["area_ha"])}
+                report=forecast_fn([field],as_of=forecast_as_of,
+                    first_reference_year=2015,weather_fetcher=cached_weather,
+                    allow_no_vigor_contingency=True)
+                field_report=(report.get("fields") or {}).get(field_id) or {}
+                prod=(report.get("production") or {}).get("production_t")
+                yield_summary=((report.get("production") or {}).get("fields_kg_ha") or {}).get(field_id)
+                climate_result={"status":report.get("status"),
+                    "model":report.get("model_label") or report.get("model") or "PAM×CLIMA",
+                    "harvest_year":field_report.get("harvest_year"),
+                    "productivity_kg_ha":yield_summary,"production_t":prod,
+                    "climate":field_report.get("climate"),
+                    "vigor_mode":((report.get("production") or {}).get("vigor_mode") or
+                                  (field_report.get("no_vigor_reason") and "painel PAM×FAO sem vigor SAR")),
+                    "forecast_inputs":{"source_area":"MapBiomas anual histórico",
+                        "yield_history":"PAM N9 2015–2024",
+                        "weather_source":field_report.get("weather_source"),
+                        "current_crop_or_area_confirmed":False}}
+                if not prod and report.get("status")=="N/D":
+                    climate_result["reason"]=field_report.get("reason") or "série climática/modelo insuficiente"
+                row["climate_adjusted_forecast"]=climate_result
+                climate_forecasts.append({"class_code":row["class_code"],"crop":crop,
+                                          "status":climate_result.get("status"),
+                                          "model":climate_result.get("model")})
+        except Exception as exc:
+            for row in forecast_rows:
+                row["climate_adjusted_forecast"]={"status":"ERRO_TECNICO_CLIMA_MODELO",
+                    "reason":type(exc).__name__+": "+_safe_exception_detail(exc),
+                    "historical_pam_reference_retained":True}
+            climate_forecasts=[{"status":"ERRO_TECNICO_CLIMA_MODELO",
+                                "reason":type(exc).__name__}]
     return {"status": "FALLBACK_HISTORICO_MAPBIOMAS_PAM" if rows else "N/D_SEM_CLASSES_AGRICOLAS_MAPBIOMAS",
             "current_crop_cover_confirmed": False,
             "classification_role": "contingência histórica após exaustão das rotas SAR configuradas; nunca classificação atual SAR",
             "mapbiomas_collection": mapped.get("collection"), "mapbiomas_year": mapped.get("year"),
             "mapped_area_ha": mapped.get("mapped_area_ha"), "mapbiomas_source": mapped.get("source_url"),
             "pam_microregion": micro, "classes": rows, "sar_gate": gate,
+            "climate_adjusted_forecasts":climate_forecasts,
             "uncertainty": "estimativa com incerteza não mensurada para área local; PAM informa dispersão temporal regional, que não é incerteza de transferência nem IC95% da propriedade",
             "calculation_trace": {"area": "interseção dos pixels anuais MapBiomas dentro da AOI",
-                                  "yield": "estatísticas descritivas dos anos PAM 2015–2024 na microrregião IBGE dominante",
-                                  "production": "área MapBiomas histórica × mediana PAM regional (kg/ha) ÷ 1000",
-                                  "prohibited_inference": "não chamar de área atual, cultura observada por SAR, previsão de safra ou validação de campo"}}
+                                  "yield": "previsão principal pela equação experimental PAM×clima/vigor sem vigor (envelope amplo); referência de reserva pela mediana PAM 2015–2024",
+                                  "production": "área MapBiomas histórica × distribuição de produtividade PAM×clima ÷ 1000; se falhar, manter referência PAM mediana",
+                                  "prohibited_inference": "não chamar de área atual, cultura observada por SAR ou previsão validada em campo"}}
 
 
 def _safe_exception_detail(exc):

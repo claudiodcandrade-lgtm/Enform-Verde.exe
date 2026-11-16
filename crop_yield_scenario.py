@@ -225,8 +225,20 @@ def forecast_production(fields, target_year, *, n_mc=5000, seed=20261103):
             c = rng.choice(3, p=pc)
             shared = (rng.choice(errs) if len(errs) else 0.0) + (rng.normal(0, tsd) if tsd else 0.0)
             for f in members:
-                v = rng.choice(3, p=_probs(f["vigor_probs"], VIGOR))
-                y = max(0.0, float(np.quantile(det, QUANTILE_MATRIX[v, c])) + shared)
+                vigor_probs=f.get("vigor_probs")
+                if vigor_probs:
+                    v = rng.choice(3, p=_probs(vigor_probs, VIGOR))
+                    q=float(QUANTILE_MATRIX[v,c])
+                else:
+                    # Contingency without a usable SAR scene: retain climate
+                    # conditioning, but span the full PAM quantile envelope
+                    # represented by the three vigor rows. This is an
+                    # explicit exploratory uncertainty envelope, not an
+                    # inferred vigor class or calibrated probability.
+                    q=float(rng.uniform(float(QUANTILE_MATRIX[:,c].min()),
+                                        float(QUANTILE_MATRIX[:,c].max())))
+                    quantified["vigor"] = False
+                y = max(0.0, float(np.quantile(det, q)) + shared)
                 sd = f.get("area_sd_ha")
                 area = max(0.0, rng.normal(f["area_ha"], sd)) if sd else f["area_ha"]
                 per_field[f["id"]][m] = y
@@ -243,6 +255,8 @@ def forecast_production(fields, target_year, *, n_mc=5000, seed=20261103):
             "production_t": summary(total_t), "n_mc": n_mc,
             "uncertainty_sources_included": [k for k, ok in quantified.items() if ok],
             "uncertainty_sources_NOT_quantified": missing,
+            "vigor_mode": ("probabilidade SAR usada" if quantified["vigor"] else
+                           "sem cena utilizável: envelope dos quantis das três classes de vigor; não atribui classe"),
             "interval_note": ("Intervalo 90% (p05–p95) de Monte Carlo com dependências; "
                               + ("NÃO inclui: " + ", ".join(missing) + ". " if missing else "")
                               + "Não é IC calibrado até haver colheitas observadas.")}

@@ -296,8 +296,48 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                          ((" ("+labels+")") if labels else "")+
                          "; não usada para identificar cultura atual, vigor ou safra.")
         _append_candidate_vigor_lines(lines, candidate_vigor)
-        lines.append("• Produtividade e produção da propriedade: N/D — exigem identificador SAR atual e vigor com cenas datadas.")
-        audit["forecast_block_reason"] = "sem classe de cultura SAR validada"
+        contingency=land.get("agriculture_historical_contingency") or {}
+        if contingency.get("status")=="FALLBACK_HISTORICO_MAPBIOMAS_PAM":
+            rows=[row for row in contingency.get("classes",[])
+                  if isinstance(row,dict) and isinstance(row.get("conditional_reference_production_t"),(int,float))]
+            if rows:
+                lines.append("• ESTIMATIVA CONTINGENCIAL PAM — referência histórica, habilitada após ausência SAR comprovada; não confirma cultura ou área atuais nem equivale a previsão observada da safra.")
+                for row in rows:
+                    name=row.get("label") or "Cultura não identificada"
+                    prod=float(row["conditional_reference_production_t"])
+                    bounds=row.get("conditional_reference_production_p05_p95_t") or []
+                    interval=("; faixa histórica P05–P95: "+format(float(bounds[0]),".2f")+"–"+
+                              format(float(bounds[1]),".2f")+" t" if len(bounds)==2 else "; intervalo: N/D")
+                    climate=row.get("climate_adjusted_forecast") or {}
+                    climate_production=climate.get("production_t") or {}
+                    if isinstance(climate_production,dict) and climate_production.get("median") is not None:
+                        lines.append("  "+str(name)+": PREVISÃO EXPERIMENTAL PAM×CLIMA SEM VIGOR — "+
+                            format(float(climate_production["median"]),".2f")+" t (P05–P95: "+
+                            format(float(climate_production.get("p05",0)),".2f")+"–"+
+                            format(float(climate_production.get("p95",0)),".2f")+" t); safra "+
+                            str(climate.get("harvest_year") or "N/D")+
+                            "; área/cultura transferidas de MapBiomas histórico, não confirmadas na safra atual.")
+                    else:
+                        lines.append("  "+str(name)+": previsão PAM×clima N/D — "+
+                            str(climate.get("reason") or climate.get("status") or "sem insumos climáticos suficientes")+".")
+                    lines.append("    Reserva histórica: "+format(prod,".2f")+
+                                 " t sobre "+format(float(row.get("area_ha") or 0),".2f")+
+                                 " ha anuais MapBiomas × mediana PAM"+interval+
+                                 "; PAM "+str(row.get("pam_year_count","N/D"))+" anos; não é produção atual observada.")
+                audit["yield_contingency"]={"status":"ESTIMATIVA_HISTORICA_DISPONIVEL",
+                    "trigger":"ausência SAR comprovada pelo gate do core",
+                    "model":"previsão de contingência PAM×clima sem vigor; referência de reserva MapBiomas anual × mediana PAM",
+                    "current_crop_or_area_confirmed":False,"climate_adjustment_applied":False,
+                    "classes":rows,"source_audit":contingency}
+            else:
+                lines.append("• Estimativa contingencial: N/D — ausência de cenas confirmada, mas nenhuma classe dispõe de rendimento PAM suficiente para produzir valor numérico.")
+                audit["forecast_block_reason"]="contingência habilitada sem classe com PAM suficiente"
+                audit["yield_contingency"]={"status":"N/D_PAM_INSUFICIENTE","source_audit":contingency}
+        else:
+            lines.append("• Produtividade e produção da propriedade: N/D — não há máscara SAR atual nem certificado completo de ausência de cenas que habilite a contingência.")
+            audit["forecast_block_reason"]="sem máscara SAR atual ou certificado de ausência que libere contingência"
+            audit["yield_contingency"]={"status":"BLOQUEADA_OU_NAO_ELEGIVEL",
+                                        "source_audit":contingency}
         return lines, audit
     art = load_artifact() or {"crops": {}}
     micro = micro_fn(gdf)["dominant"]

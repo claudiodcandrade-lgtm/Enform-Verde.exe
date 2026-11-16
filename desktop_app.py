@@ -1,4 +1,4 @@
-import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid
+import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid, time
 import tls_setup  # V87.39: one TLS trust store for requests AND GDAL (Windows store + certifi + OS)
 tls_setup.configure()
 from datetime import datetime, timezone
@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.52-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.60-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -498,7 +498,7 @@ def _native_carbon_failure_result(aoi, exc):
     }
 
 
-def _write_analysis_stage_checkpoint(run_id,aoi_hash,land,native,pedology,fertility,sar,stage_errors):
+def _write_analysis_stage_checkpoint(run_id,aoi_hash,land,native,pedology,fertility,sar,stage_errors,performance=None):
     """Persist an AOI-linked stage summary without storing geometry or credentials."""
     root=Path.home()/".enform_verde"/"analysis_runs"
     root.mkdir(parents=True,exist_ok=True)
@@ -524,11 +524,43 @@ def _write_analysis_stage_checkpoint(run_id,aoi_hash,land,native,pedology,fertil
                          "known_total_tc":(native or {}).get("known_total_tc"),"strata":strata},
         "pedology":{"status":(pedology or {}).get("status"),"reason":(pedology or {}).get("reason")},
         "fertility":{"status":(fertility or {}).get("status"),"reason":(fertility or {}).get("reason")},
+        "performance":performance or {},
         "stage_errors":stage_errors,
     }
     with path.open("w",encoding="utf-8") as stream:
         json.dump(payload,stream,ensure_ascii=False,indent=2,default=str)
     return str(path)
+
+
+def _analyze_soil_stages(aoi):
+    """Run independent pedology/fertility work and retain stage-specific failures."""
+    errors=[]; timings={}
+    started=time.perf_counter()
+    try:
+        from soil_pedology_embrapa import analyze_embrapa_pedology
+        pedology,zones=analyze_embrapa_pedology(aoi,with_zones=True)
+    except Exception as exc:
+        pedology={"status":"ERRO_TECNICO_SOLO","reason":type(exc).__name__+": "+str(exc)[:240]}
+        zones=[]
+        errors.append({"stage":"pedology","status":"ERRO_TECNICO",
+                       "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+    timings["pedology_seconds"]=round(time.perf_counter()-started,3)
+    if str(pedology.get("status"," ")).startswith("ERRO"):
+        fertility={"status":"N/D","reason":"PronaSolos zonal não executado porque a etapa pedológica falhou.",
+                   "units":{},"layers":[]}
+        timings["fertility_seconds"]=0.0
+    else:
+        started=time.perf_counter()
+        try:
+            from soil_fertility_zonal import analyze_fertility
+            fertility=analyze_fertility(aoi,units=zones)
+        except Exception as exc:
+            fertility={"status":"ERRO_TECNICO_FERTILIDADE","reason":type(exc).__name__+": "+str(exc)[:240],
+                       "units":{},"layers":[]}
+            errors.append({"stage":"fertility","status":"ERRO_TECNICO",
+                           "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+        timings["fertility_seconds"]=round(time.perf_counter()-started,3)
+    return pedology,fertility,errors,timings
 
 
 def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
@@ -2716,6 +2748,17 @@ class App(tk.Tk):
         self._set(self.crop_audit,(audit_base+"\n\n" if audit_base else "")+
                   "Consulta meteorológica pendente; resultados detalhados aparecerão aqui.")
         def worker():
+            # Start crop vigor/yield processing before climate display lookups.
+            # The forecast has its own NASA POWER/FAO inputs and must not wait
+            # for the separate executive weather feeds below.
+            from concurrent.futures import ThreadPoolExecutor
+            crop_executor=ThreadPoolExecutor(max_workers=1,thread_name_prefix="crop-vigor-yield")
+            crop_gdf=self.gdf.copy()
+            crop_land=dict(getattr(self,"_last_land",None) or {})
+            def calculate_crop_forecast():
+                from crop_monitoring_forecast import monitoring_forecast
+                return monitoring_forecast(crop_gdf,crop_land)
+            crop_future=crop_executor.submit(calculate_crop_forecast)
             from inmet_weather_client import weather_executive_lines
             power_summary=None
             forecast_summary=None
@@ -2760,11 +2803,10 @@ class App(tk.Tk):
             executive=([base_report,""] if base_report else [])+dashboard
             audit_text=([audit_base,""] if audit_base else [])+details
             # Consolidated crop identification + automatic Sentinel-1 vigor +
-            # calibrated yield forecast (experimental). Never blocks the panel.
+            # calibrated yield forecast (experimental), computed in parallel
+            # with the independent NASA POWER/CPTEC dashboard requests.
             try:
-                from crop_monitoring_forecast import monitoring_forecast
-                land=getattr(self,"_last_land",None) or {}
-                fc_lines,fc_audit=monitoring_forecast(self.gdf.copy(),land)
+                fc_lines,fc_audit=crop_future.result()
                 # Do not keep a stale "BLOQUEADA" headline after the calibrated
                 # experimental panel has returned a numeric result. Carbon
                 # presentation and native-stock routines are untouched.
@@ -2830,6 +2872,8 @@ class App(tk.Tk):
                 audit_text+=["","PREVISÃO DE SAFRA — AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
             except Exception as exc:
                 executive+=["","Previsão de safra: INDISPONÍVEL — "+type(exc).__name__+": "+str(exc)[:200]]
+            finally:
+                crop_executor.shutdown(wait=False, cancel_futures=False)
             def present():
                 if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
                     return
@@ -3223,6 +3267,7 @@ class App(tk.Tk):
         def worker():
             land=None; native=None; pedology=None; fertility=None; sar_payload=None
             checkpoint_path=None; stage_errors=[]
+            worker_started=time.perf_counter(); phase_durations={}; soil_result={}; soil_thread=None; soil_thread_started=False
             def validate_worker_handoff(land_result,native_result,sar_result):
                 from analysis_pipeline_contract import validate_pipeline_handoff
                 try:
@@ -3235,11 +3280,21 @@ class App(tk.Tk):
                         "HANDOFF_VALIDATION_FAILED — "+type(exc).__name__+": "+str(exc)))
                     return False
             try:
+                # Soil zoning depends only on the AOI. Run it beside land-use
+                # and SAR/carbon work, keeping the same inputs and calculations.
+                soil_started=time.perf_counter()
+                soil_thread=threading.Thread(
+                    target=lambda: soil_result.setdefault("value",_analyze_soil_stages(gdf)),
+                    name="EnformSoilStages",daemon=True)
+                soil_thread.start()
+                soil_thread_started=True
                 reference=land_ibge;reference_field=land_field
                 if reference is None:
                     try:reference,reference_field=load_ibge_land_use_reference(gdf)
                     except Exception:pass
+                land_started=time.perf_counter()
                 land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field,sar_paths=sar_paths)
+                phase_durations["land_use_seconds"]=round(time.perf_counter()-land_started,3)
                 land["analysis_run_id"]=analysis_run_id
                 land["aoi_hash_sha256"]=aoi_hash
                 options={"offline_token":token,"edl_user":edl_user,"edl_password":edl_password,"edl_token":edl_token,
@@ -3247,39 +3302,28 @@ class App(tk.Tk):
                          "inventory_evidence":inventory_evidence,
                          "biodiversity_inventory_records":biodiversity_inventory_records,
                          "inventory_evidence_manifest":inventory_manifest}
+                native_started=time.perf_counter()
                 try:
                     native=native_carbon_analysis(gdf,land,biome,options,sar_paths=sar_paths)
                 except Exception as exc:
                     native=_native_carbon_failure_result(gdf,exc)
                     stage_errors.append({"stage":"native_carbon","status":"ERRO_TECNICO",
                                          "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                phase_durations["native_carbon_seconds"]=round(time.perf_counter()-native_started,3)
                 native["analysis_run_id"]=analysis_run_id
                 native["aoi_hash_sha256"]=aoi_hash
-                try:
-                    from soil_pedology_embrapa import analyze_embrapa_pedology
-                    pedology,zones=analyze_embrapa_pedology(gdf,with_zones=True)
-                except Exception as exc:
-                    pedology={"status":"ERRO_TECNICO_SOLO","reason":type(exc).__name__+": "+str(exc)[:240]}
-                    zones=[]
-                    stage_errors.append({"stage":"pedology","status":"ERRO_TECNICO",
-                                         "error_type":type(exc).__name__,"reason":str(exc)[:300]})
-                if str(pedology.get("status","")).startswith("ERRO"):
-                    fertility={"status":"N/D","reason":"PronaSolos zonal não executado porque a etapa pedológica falhou.",
-                               "units":{},"layers":[]}
-                else:
-                    try:
-                        from soil_fertility_zonal import analyze_fertility
-                        fertility=analyze_fertility(gdf,units=zones)
-                    except Exception as exc:
-                        fertility={"status":"ERRO_TECNICO_FERTILIDADE","reason":type(exc).__name__+": "+str(exc)[:240],
-                                   "units":{},"layers":[]}
-                        stage_errors.append({"stage":"fertility","status":"ERRO_TECNICO",
-                                             "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                soil_thread.join()
+                pedology,fertility,soil_errors,soil_timings=soil_result["value"]
+                phase_durations.update(soil_timings)
+                phase_durations["soil_pipeline_wall_seconds"]=round(time.perf_counter()-soil_started,3)
+                stage_errors.extend(soil_errors)
+                phase_durations["worker_wall_seconds"]=round(time.perf_counter()-worker_started,3)
+                phase_durations["execution_mode"]="solo_pedologia_em_paralelo_com_uso_da_terra_e_carbono"
                 sar_payload=_sar_dashboard_payload(native,land)
                 if not validate_worker_handoff(land,native,sar_payload):return
                 try:
                     checkpoint_path=_write_analysis_stage_checkpoint(
-                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors)
+                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors,phase_durations)
                 except Exception as exc:
                     stage_errors.append({"stage":"analysis_checkpoint","status":"ERRO_TECNICO",
                                          "error_type":type(exc).__name__,"reason":str(exc)[:300]})
@@ -3288,8 +3332,17 @@ class App(tk.Tk):
                                                       "fertility":fertility,"aoi_hash":aoi_hash,
                                                       "analysis_run_id":analysis_run_id,
                                                       "stage_errors":stage_errors,
+                                                      "performance":phase_durations,
                                                       "checkpoint_path":checkpoint_path}))
             except Exception as exc:
+                if soil_thread is not None and soil_thread_started:
+                    soil_thread.join()
+                    if "value" in soil_result:
+                        pedology,fertility,soil_errors,soil_timings=soil_result["value"]
+                        phase_durations.update(soil_timings)
+                        stage_errors.extend(soil_errors)
+                    phase_durations["worker_wall_seconds"]=round(time.perf_counter()-worker_started,3)
+                    phase_durations["execution_mode"]="solo_pedologia_em_paralelo_com_uso_da_terra_e_carbono"
                 if not isinstance(land,dict):
                     self._analysis_queue.put((run_id,"error",traceback.format_exc()))
                     return
@@ -3306,7 +3359,7 @@ class App(tk.Tk):
                 if not validate_worker_handoff(land,native,sar_payload):return
                 try:
                     checkpoint_path=_write_analysis_stage_checkpoint(
-                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors)
+                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors,phase_durations)
                 except Exception as checkpoint_exc:
                     stage_errors.append({"stage":"analysis_checkpoint","status":"ERRO_TECNICO",
                                          "error_type":type(checkpoint_exc).__name__,"reason":str(checkpoint_exc)[:300]})
@@ -3315,6 +3368,7 @@ class App(tk.Tk):
                                                       "fertility":fertility,"aoi_hash":aoi_hash,
                                                       "analysis_run_id":analysis_run_id,
                                                       "stage_errors":stage_errors,
+                                                      "performance":phase_durations,
                                                       "checkpoint_path":checkpoint_path}))
         threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
         self.after(120,self._poll_analysis)
@@ -3333,9 +3387,9 @@ class App(tk.Tk):
             self.status.set("Falha controlada — programa permanece responsivo.")
             return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
         self.status.set("Resultados recebidos; apresentando as etapas concluídas e os erros específicos.")
-        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility"),expected_aoi_hash=p.get("aoi_hash"),precomputed_analysis_run_id=p.get("analysis_run_id"),precomputed_stage_errors=p.get("stage_errors"),precomputed_checkpoint_path=p.get("checkpoint_path")) if rid==self._analysis_generation else None)
+        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility"),expected_aoi_hash=p.get("aoi_hash"),precomputed_analysis_run_id=p.get("analysis_run_id"),precomputed_stage_errors=p.get("stage_errors"),precomputed_checkpoint_path=p.get("checkpoint_path"),precomputed_performance=p.get("performance")) if rid==self._analysis_generation else None)
 
-    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None,expected_aoi_hash=None,precomputed_analysis_run_id=None,precomputed_stage_errors=None,precomputed_checkpoint_path=None):
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None,expected_aoi_hash=None,precomputed_analysis_run_id=None,precomputed_stage_errors=None,precomputed_checkpoint_path=None,precomputed_performance=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
         self.project["analysis_run_id"]=str(precomputed_analysis_run_id or uuid.uuid4().hex[:12].upper())
         self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -3366,6 +3420,8 @@ class App(tk.Tk):
         self.project["analysis_aoi_hash"]=run_aoi_hash
         self.project["analysis_aoi_crs"]=str(self.gdf.crs)
         self.project["analysis_app_version"]=APP_VERSION
+        if isinstance(precomputed_performance,dict):
+            self.project["analysis_performance"]=dict(precomputed_performance)
         # The worker result is an immutable envelope. Validate identity across
         # all transferred stages before any panel or export can publish it.
         if precomputed_land is not None or precomputed_native is not None or precomputed_sar is not None:
@@ -3438,6 +3494,7 @@ class App(tk.Tk):
                 "analysis_run_id":self.project["analysis_run_id"],
                 "aoi_hash":run_aoi_hash,
                 "checkpoint_path":precomputed_checkpoint_path,
+                "performance":dict(precomputed_performance or {}),
                 "stage_errors":list(precomputed_stage_errors or []),
                 "overall_status":"PARCIAL_COM_ERRO_TECNICO" if partial else "CONCLUIDA_COM_ESTADOS_DECLARADOS",
                 "stages":{

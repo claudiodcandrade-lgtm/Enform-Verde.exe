@@ -1,6 +1,11 @@
 import unittest
 
-from tools.live_gui_optical_sinop import rendered_optical_status, scale_canvas_bbox
+from tools.live_gui_optical_sinop import (
+    capture_bbox_is_visible,
+    fit_window_geometry,
+    rendered_optical_status,
+    scale_canvas_bbox,
+)
 
 
 class TestLiveGuiOpticalSinop(unittest.TestCase):
@@ -17,6 +22,15 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
             scale_canvas_bbox(100,80,300,200,(1920,1080),(1920,1080)),
             (100,80,400,280),
         )
+
+    def test_live_window_geometry_is_centered_inside_desktop(self):
+        self.assertEqual(fit_window_geometry((1024, 768)), "900x680+62+44")
+        self.assertEqual(fit_window_geometry((800, 600)), "752x552+24+24")
+
+    def test_capture_rejects_canvas_partially_outside_desktop(self):
+        self.assertTrue(capture_bbox_is_visible((10, 20, 900, 700), (1024, 768)))
+        self.assertFalse(capture_bbox_is_visible((327, 740, 1000, 1302), (1024, 768)))
+        self.assertFalse(capture_bbox_is_visible((-1, 0, 100, 100), (1024, 768)))
 
     def test_ibge_cartographic_fallback_passes_only_with_visible_canvas_pixels(self):
         self.assertEqual(rendered_optical_status(

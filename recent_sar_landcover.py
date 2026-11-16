@@ -327,6 +327,25 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
                            "provider_diagnostics":found.get("providers",[]),
                            "catalog_scene_count":int(found.get("scene_count",0)), "selected_scene_count":0,
                            "readable_scene_count":0})
+            providers=found.get("providers") or []
+            complete=(found.get("pagination_complete") is True and bool(providers) and
+                      all(row.get("pagination_complete") is True and row.get("status") == "OK"
+                          for row in providers))
+            if complete:
+                # This certificate is deliberately limited to scenes usable
+                # by the vigor route (recent Sentinel-1 RTC with both VV/VH).
+                # It is not emitted for transport/auth/read failures or an
+                # incomplete provider pagination.
+                result["vigor_scene_absence_certificate"]={
+                    "status":"AUSENCIA_COMPROVADA_CENAS_VV_VH_PARA_VIGOR",
+                    "catalog_search_complete":True,"pagination_complete":True,
+                    "compatible_scene_count":0,"catalog_scene_count":int(found.get("scene_count",0)),
+                    "lookback_days":150,"vigor_max_age_days":30,
+                    "technical_error_count":0,
+                    "providers":[{"provider":row.get("provider"),
+                                  "status":row.get("status"),
+                                  "pagination_complete":row.get("pagination_complete"),
+                                  "scene_count":row.get("scene_count",0)} for row in providers]}
             return result
         grid=None
         data=[]

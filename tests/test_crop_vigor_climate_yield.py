@@ -175,6 +175,18 @@ class YieldScenarioTests(unittest.TestCase):
         self.assertIn("model_error", r["uncertainty_sources_NOT_quantified"])
         self.assertIn("transfer", r["uncertainty_sources_NOT_quantified"])
 
+    def test_no_vigor_contingency_uses_climate_and_full_vigor_quantile_envelope(self):
+        f={"id":"N","crop":"Sorgo","micro_code":"X","area_ha":20,
+           "yields":self.Y,"vigor_probs":None,
+           "climate_probs":{"desfavorável":.1,"neutro":.2,"favorável":.7},
+           "hindcast":{"errors_kg_ha":[-100,0,100]}}
+        result=cys.forecast_production([f],2027,n_mc=500,seed=5)
+        self.assertEqual(result["status"],"experimental")
+        self.assertIn("vigor",result["uncertainty_sources_NOT_quantified"])
+        self.assertIn("sem cena utilizável",result["vigor_mode"])
+        self.assertGreater(result["fields_kg_ha"]["N"]["p95"],
+                           result["fields_kg_ha"]["N"]["p05"])
+
     def test_shared_climate_makes_fields_dependent(self):
         mk = lambda i: {"id": i, "crop": "Soja", "micro_code": "X", "area_ha": 100, "area_sd_ha": 1,
                         "yields": self.Y, "vigor_probs": {"vigor adequado": 1},

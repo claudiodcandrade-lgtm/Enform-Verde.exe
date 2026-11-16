@@ -1,0 +1,105 @@
+{
+  "retrieved_at_utc": "2026-11-16T17:05:39.585448+00:00",
+  "database": "data/national_inventory_microdata_v1.sqlite",
+  "database_sha256": "9f5f8e90bdd905eb156382e15f66a2a832405befce4c64b8fb0aa9daa0453091",
+  "database_size_bytes": 484196352,
+  "ifn": {
+    "observation_rows": 841387,
+    "sampling_units": 8951,
+    "units_summary_rows": 8951,
+    "source_sha256_by_state": {
+      "IFN_DAP10_Acre_disp-set2025.xlsx": "b42b23337e6938da2971eda10b9c39d3ed1f1c4ea4949c86aa5b63084468227f",
+      "IFN_DAP10_Alagoas_disp-set2025.xlsx": "c559e574d136dc40c3698dd8a9227d4bff97e76ce97e54de08ab826fa40f7bc8",
+      "IFN_DAP10_Amapa_disp-set2025.xlsx": "b7740dfeb4a140ba0531a8eb9963be752940f9355eda39ba1f103233cd250117",
+      "IFN_DAP10_Amazonas_disp-set2025.xlsx": "28eacc6c99247d24ed891f08a1dde86211e477d7b7930f35242f4b3dcbd2c7df",
+      "IFN_DAP10_Bahia_disp-set2025.xlsx": "cd5f41faf293cdf00813508b5a5ec57e23ed078f404e9bc925a0416d28af5a49",
+      "IFN_DAP10_Ceara_disp-set2025.xlsx": "b381a0a0695c280d63bca515d5ac6c3f5f41793de225d0cf873774e0810ba69c",
+      "IFN_DAP10_Distrito_Federal_disp-set2025.xlsx": "60390787271f87d620c4cb6e33ee67748bc00a60a06bb3e64baf8509137aa7be",
+      "IFN_DAP10_Espirito_Santo_disp-set2025.xlsx": "e4250203dd0c5780da7a5c8b83c3151b53622537eae89c9916e7ec5dcd88775e",
+      "IFN_DAP10_Goias_disp-set2025.xlsx": "344678dbb35a7c0bfcc52b9670e4c680c4799a5b795f51b4475d861df080249e",
+      "IFN_DAP10_Maranhao_disp-set2025.xlsx": "870b916d3c36891d4dceb3e18c97c9ec62eb3706abfb1b3b5e38eb39d1bf5e27",
+      "IFN_DAP10_Mato_Grosso_disp-set2025.xlsx": "6314272eda8898f76d4510a6a8db6de5313ac39a1b7715dc348998f726200bf2",
+      "IFN_DAP10_Mato_Grosso_do_Sul_disp-set2025.xlsx": "1e8228c03618b977aea06b7bf990386c860ba33a24febf97b736f34b732fb074",
+      "IFN_DAP10_Minas_Gerais_disp-set2025.xlsx": "754d628383ceffbab430e0a43e3d8435ec3061093f81917444e584fa3992fa95",
+      "IFN_DAP10_Para_disp-set2025.xlsx": "0b6fff8c1aa905c805609f4fa7bc7555ac27c7fd5785f6327ad6f724ff867863",
+      "IFN_DAP10_Paraiba_disp-set2025.xlsx": "3c315cf4de9de7abb20bc03a13370fd1e0351537d8e3ab44cadaa6c5c38113f4",
+      "IFN_DAP10_Parana_disp-set2025.xlsx": "43cdb87161c883766b4e614ce11b8dbd46f36cd982921733df99e7a3dc489add",
+      "IFN_DAP10_Pernambuco_disp-set2025.xlsx": "0b78888c5370f1ccff72fd939d7b81220f6361660f4ea272a908ae75eb82bdf4",
+      "IFN_DAP10_Piaui_disp-set2025.xlsx": "ed484bd2cd004d9f5bee78573b645ef0a6db2fd8b38baaa019e2584c8f410f1d",
+      "IFN_DAP10_Rio_Grande_do_Norte_disp-set2025.xlsx": "87c6757e6b92af6173ccafbda972ebf9eb9b583a5fce1d80e7b841be1080f69d",
+      "IFN_DAP10_Rio_Grande_do_Sul_disp-set2025.xlsx": "c82c115e643495381198e2477331108ba8706a66a57dc37e3cde0bd811e62ab6",
+      "IFN_DAP10_Rio_de_Janeiro_disp-set2025.xlsx": "400395b90dca8a41dd612a87e29daeaca2d97b0d92373b91ac4de4268524de78",
+      "IFN_DAP10_Rondonia_disp-set2025.xlsx": "9fe7b20414801a6c38399f3b97968bcc8973b57a91884a9ef4d36c7fc6c8fe54",
+      "IFN_DAP10_Roraima_disp-set2025.xlsx": "c94dc48578a078844eebee8558a2873ff47f9f0964ae29984e823506157dadc1",
+      "IFN_DAP10_Santa_Catarina_disp-set2025.xlsx": "4c11c2432b38d411224546b4f836bf36880c9301439b053de29bc8d188fbea8a",
+      "IFN_DAP10_Sao_Paulo_disp-set2025.xlsx": "8ceec3670196736c1c7893a18706bf7e62ce5b8f54acd9052105243832e7c037",
+      "IFN_DAP10_Sergipe_disp-set2025.xlsx": "8bd37481bfedd54252a4ddcc0d28dbaf166a6fe14a620189764860489def4cc3",
+      "IFN_DAP10_Tocantins_disp-set2025.xlsx": "263e1776c31a8dd48d2355368a931aeb63daac0c4a06269f635bbf2d2452ade9"
+    },
+    "biome_summary": [
+      {
+        "biome": "Amazônia",
+        "sampling_units": 2249,
+        "observation_rows": 319586
+      },
+      {
+        "biome": "Caatinga",
+        "sampling_units": 2048,
+        "observation_rows": 101328
+      },
+      {
+        "biome": "Cerrado",
+        "sampling_units": 3076,
+        "observation_rows": 239430
+      },
+      {
+        "biome": "Mata Atlântica",
+        "sampling_units": 1372,
+        "observation_rows": 158670
+      },
+      {
+        "biome": "Pampa",
+        "sampling_units": 198,
+        "observation_rows": 21842
+      },
+      {
+        "biome": "Pantanal",
+        "sampling_units": 8,
+        "observation_rows": 531
+      }
+    ]
+  },
+  "sinaflor_poa": {
+    "rows": 2883,
+    "distinct_authorizations": 1096,
+    "distinct_register_ids": 1095,
+    "distinct_linked_pmfs": 509,
+    "rows_by_situation": {
+      "Autorização Vencida": 2250,
+      "Autorização Emitida": 582,
+      "Autorização Suspensa": 51
+    },
+    "distinct_authorizations_by_situation": {
+      "Autorização Vencida": 848,
+      "Autorização Emitida": 233,
+      "Autorização Suspensa": 15
+    },
+    "raw_source_sha256": "1a2b99665f9716acc85fe8b1d1451a40d2c5521870baaffc83a69788eb93f4bf",
+    "sanitized_csv": "data/sinaflor_poa_outros_biomas_sanitized_v1.csv",
+    "pii_columns_removed": [
+      "CPF_CNPJ_DETENTOR",
+      "IMOVEL_RURAL_VINCULADO",
+      "NATUREZA_JURIDICA",
+      "NOME_DETENTOR",
+      "NOME_DO_RT",
+      "NOME_EMPREENDIMENTO_VINC",
+      "NRO_ART",
+      "NRO_CAR_IMOVEL_RURAL"
+    ]
+  },
+  "interpretation": "The IFN adds hundreds of thousands of primary DAP/height/species records in one nationally designed inventory program, not one separate inventory per UF. SINAFLOR adds process-linked species/volume aggregates and leads to underlying approved studies, not tree-level inventory data.",
+  "ief_mg_2008_equations": {
+    "equation_count": 18,
+    "source_pdf_sha256": "b7cd1d2579623b89d4e23b4ce870a86e41cc8804808d0026c03c9a775527052a"
+  }
+}
