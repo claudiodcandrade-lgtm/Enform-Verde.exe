@@ -126,9 +126,19 @@ def main(timeout=180):
         window.nb.select(window.tabs[1])
         window.update_idletasks()
         window.update()
+        # The Spatial page is intentionally vertically scrollable: its IBGE
+        # summary and controls precede the map. Move that outer page to the
+        # map area before measuring the canvas; merely selecting the tab can
+        # leave a real, viewable canvas below the fold of a 768 px desktop.
+        spatial_scroll=next((child for child in window.tabs[1].winfo_children()
+                             if isinstance(child,app.tk.Canvas)),None)
+        if spatial_scroll is not None:
+            spatial_scroll.yview_moveto(1.0)
+            window.update_idletasks()
+            window.update()
         # The canvas has a 560 px design request. On compact Windows runners,
-        # fit its requested height to the actual visible desktop while keeping
-        # the live pixel capture and full-bounds visibility gate intact.
+        # fit its requested height to the visible desktop after scrolling to
+        # the map, while keeping full-bounds and pixel visibility gates intact.
         available_canvas_height=(int(screen_size[1])-int(window.map_canvas.winfo_rooty())-36)
         available_canvas_width=(int(screen_size[0])-int(window.map_canvas.winfo_rootx())-12)
         if available_canvas_width>=220:
@@ -175,6 +185,8 @@ def main(timeout=180):
                 "window_origin":[int(window.winfo_rootx()),int(window.winfo_rooty())],
                 "window_size":[int(window.winfo_width()),int(window.winfo_height())],
                 "canvas_origin":[int(window.map_canvas.winfo_rootx()),int(window.map_canvas.winfo_rooty())],
+                "spatial_yview":list(spatial_scroll.yview()) if spatial_scroll is not None else None,
+                "spatial_scrollregion":str(spatial_scroll.cget("scrollregion")) if spatial_scroll is not None else None,
                 "window_viewable":bool(window.winfo_viewable()),
                 "canvas_viewable":bool(window.map_canvas.winfo_viewable()),
                 "canvas_size":[int(window.map_canvas.winfo_width()),int(window.map_canvas.winfo_height())],
