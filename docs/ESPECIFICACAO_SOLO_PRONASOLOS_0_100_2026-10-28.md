@@ -527,3 +527,6 @@ A extensão dos modelos para algodão, arroz, sorgo, cana, café, feijão, citro
 A ordenação revisada das fontes de inventário também não altera o módulo de SOC: bases oficiais medidas têm prioridade sobre anexos de licenciamento, e estes só podem ser referência estrutural secundária quando o aceite do próprio inventário for comprovado; nenhuma dessas referências substitui os requisitos pedológicos e analíticos de carbono do solo definidos neste documento.
 
 O gate de leitura live Sentinel-1 VV/VH foi incluído no workflow de build, mas não altera as fontes, os cálculos nem a incerteza de SOC. A leitura real validada nesta rodada limita-se a 9 pixels por polarização num recorte pontual de Sinop; não corresponde a observação de solo nem confirma cobertura de toda a propriedade.
+
+## V88.94 — integridade da série PAM no Windows
+A correção do contrato de contagem do materializador PAM faz a verificação acompanhar o manifesto live (150.660 linhas/nove produtos no build de 16/11/2026), em vez de fixar o snapshot antigo. Ela não altera valores, fontes, processamento ou incerteza do carbono orgânico do solo.

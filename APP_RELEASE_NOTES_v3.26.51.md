@@ -16,3 +16,7 @@
 ## Estado
 
 Candidata experimental/pré-campo. A leitura live foi comprovada somente em um recorte pontual de Sinop; não prova máscara semântica, execução com o KML integral, passagem até todos os painéis nem cobertura nacional. Build Windows/CI remota, consulta live à SIDRA, validação independente de campo e homologação ainda pendem. Pastagens, silvicultura e sistemas integrados retornam N/D se medições de manejo/inventário não forem fornecidas. A série PAM empacotada ainda não contém algodão; a rota SIDRA exige conectividade para completar a microrregião.
+
+## Correção de CI Windows — V88.94
+
+A primeira CI Windows materializou 150.660 registros oficiais PAM/SIDRA e encontrou um teste que ainda fixava o total histórico de 133.920. O contrato de teste agora confere contagem, checksum e completude com os metadados da execução, mantendo validação de unicidade, produtos, anos e variáveis. Os dois testes focados passaram localmente. O novo build Windows, os smokes, o handoff SAR até os painéis e o executável ainda precisam passar no SHA corrigido antes da distribuição.
