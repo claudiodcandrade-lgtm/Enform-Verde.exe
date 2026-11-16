@@ -2,8 +2,10 @@ import unittest
 
 from tools.live_gui_optical_sinop import (
     capture_bbox_is_visible,
+    canvas_height_fitting_window,
     fit_window_geometry,
     rendered_optical_status,
+    scroll_fraction_for_target,
     scale_canvas_bbox,
 )
 
@@ -31,6 +33,17 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
         self.assertTrue(capture_bbox_is_visible((10, 20, 900, 700), (1024, 768)))
         self.assertFalse(capture_bbox_is_visible((327, 740, 1000, 1302), (1024, 768)))
         self.assertFalse(capture_bbox_is_visible((-1, 0, 100, 100), (1024, 768)))
+
+    def test_outer_scroll_positions_map_below_window_top(self):
+        # Before scrolling the map is below the fold (y=714); after reaching
+        # the bottom it overshoots above the screen (y=-85). Recompute the
+        # actual scroll fraction from measured coordinates to land at y=340.
+        fraction=scroll_fraction_for_target(-85,322,799/1132,1132,334)
+        self.assertAlmostEqual(fraction,0.336,places=3)
+
+    def test_map_height_fits_window_and_desktop_bounds(self):
+        self.assertEqual(canvas_height_fitting_window(711,768,334),353)
+        self.assertEqual(canvas_height_fitting_window(711,768,714),0)
 
     def test_ibge_cartographic_fallback_passes_only_with_visible_canvas_pixels(self):
         self.assertEqual(rendered_optical_status(

@@ -87,6 +87,23 @@ def capture_bbox_is_visible(bbox, screenshot_size):
     return 0 <= left < right <= width and 0 <= top < bottom <= height
 
 
+def scroll_fraction_for_target(map_root_y, scroll_root_y, current_fraction,
+                               scrollregion_height, target_root_y):
+    """Return an outer Tk-canvas yview fraction that brings the map to a target."""
+    total=max(1,int(scrollregion_height))
+    offset=min(total,max(0,round(float(current_fraction)*total)))
+    map_content_y=int(map_root_y)-int(scroll_root_y)+offset
+    wanted_offset=map_content_y-(int(target_root_y)-int(scroll_root_y))
+    return max(0.0,min(1.0,wanted_offset/total))
+
+
+def canvas_height_fitting_window(window_bottom, screen_bottom, canvas_root_y,
+                                 requested=560, margin=24, minimum=180):
+    """Fit canvas inside both the app window and captured desktop, or return 0."""
+    available=min(int(window_bottom),int(screen_bottom))-int(margin)-int(canvas_root_y)
+    return min(max(0,int(requested)),available) if available>=int(minimum) else 0
+
+
 def main(timeout=180):
     import desktop_app as app
     import geopandas as gpd
@@ -132,21 +149,36 @@ def main(timeout=180):
         # leave a real, viewable canvas below the fold of a 768 px desktop.
         spatial_scroll=next((child for child in window.tabs[1].winfo_children()
                              if isinstance(child,app.tk.Canvas)),None)
-        if spatial_scroll is not None:
-            spatial_scroll.yview_moveto(1.0)
+        def place_map_in_scroll_view():
+            if spatial_scroll is None:
+                return
+            region=spatial_scroll.bbox("all")
+            if not region:
+                return
+            total=max(1,int(region[3])-int(region[1]))
+            yview=spatial_scroll.yview()
+            outer_y=int(spatial_scroll.winfo_rooty())
+            target_y=outer_y+12
+            fraction=scroll_fraction_for_target(
+                window.map_canvas.winfo_rooty(),outer_y,yview[0],total,target_y)
+            spatial_scroll.yview_moveto(fraction)
             window.update_idletasks()
             window.update()
-        # The canvas has a 560 px design request. On compact Windows runners,
-        # fit its requested height to the visible desktop after scrolling to
-        # the map, while keeping full-bounds and pixel visibility gates intact.
-        available_canvas_height=(int(screen_size[1])-int(window.map_canvas.winfo_rooty())-36)
+        place_map_in_scroll_view()
+        # The canvas has a 560 px design request. Fit it within both the
+        # visible desktop and the actual top-level window, then reposition it
+        # once more because shrinking the canvas changes the outer scrollrange.
+        window_bottom=int(window.winfo_rooty())+int(window.winfo_height())
+        available_canvas_height=canvas_height_fitting_window(
+            window_bottom,int(screen_size[1]),int(window.map_canvas.winfo_rooty()))
         available_canvas_width=(int(screen_size[0])-int(window.map_canvas.winfo_rootx())-12)
         if available_canvas_width>=220:
             window.map_canvas.configure(width=min(900,available_canvas_width))
         if available_canvas_height>=180:
-            window.map_canvas.configure(height=min(560,available_canvas_height))
+            window.map_canvas.configure(height=available_canvas_height)
             window.update_idletasks()
             window.update()
+            place_map_in_scroll_view()
         window.show_google_map(refresh=False,prefer_public=True)
         deadline=time.monotonic()+timeout
         last_observation={}
@@ -187,6 +219,7 @@ def main(timeout=180):
                 "canvas_origin":[int(window.map_canvas.winfo_rootx()),int(window.map_canvas.winfo_rooty())],
                 "spatial_yview":list(spatial_scroll.yview()) if spatial_scroll is not None else None,
                 "spatial_scrollregion":str(spatial_scroll.cget("scrollregion")) if spatial_scroll is not None else None,
+                "window_bottom":int(window.winfo_rooty())+int(window.winfo_height()),
                 "window_viewable":bool(window.winfo_viewable()),
                 "canvas_viewable":bool(window.map_canvas.winfo_viewable()),
                 "canvas_size":[int(window.map_canvas.winfo_width()),int(window.map_canvas.winfo_height())],
