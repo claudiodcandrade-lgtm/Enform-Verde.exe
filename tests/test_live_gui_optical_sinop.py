@@ -23,9 +23,9 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
             (100,80,400,280),
         )
 
-    def test_live_window_geometry_is_centered_inside_desktop(self):
-        self.assertEqual(fit_window_geometry((1024, 768)), "900x680+62+44")
-        self.assertEqual(fit_window_geometry((800, 600)), "752x552+24+24")
+    def test_live_window_geometry_respects_application_minimum_width(self):
+        self.assertEqual(fit_window_geometry((1024, 768)), "1024x680+0+0")
+        self.assertEqual(fit_window_geometry((800, 600)), "800x600+0+0")
 
     def test_capture_rejects_canvas_partially_outside_desktop(self):
         self.assertTrue(capture_bbox_is_visible((10, 20, 900, 700), (1024, 768)))

@@ -62,14 +62,19 @@ def scale_canvas_bbox(root_x, root_y, width, height, tk_screen_size, screenshot_
     return left, top, max(left + 1, right), max(top + 1, bottom)
 
 
-def fit_window_geometry(screen_size, desired_width=900, desired_height=680, margin=24):
-    """Return a centered Tk geometry that fits inside the reported screen."""
+def fit_window_geometry(screen_size, desired_width=1024, desired_height=680, margin=0):
+    """Return a desktop-filling Tk geometry without exceeding screen bounds.
+
+    The application itself has a 1024 px minimum width. Keeping the test
+    window narrower than that makes Tk silently expand it around the requested
+    origin, which can place the canvas outside a 1024 px hosted desktop.
+    """
     screen_width, screen_height = (max(1, int(value)) for value in screen_size)
     margin = max(0, int(margin))
     width = min(max(1, int(desired_width)), max(1, screen_width - 2 * margin))
     height = min(max(1, int(desired_height)), max(1, screen_height - 2 * margin))
-    left = max(0, (screen_width - width) // 2)
-    top = max(0, (screen_height - height) // 2)
+    left = margin
+    top = margin
     return f"{width}x{height}+{left}+{top}"
 
 
@@ -105,7 +110,12 @@ def main(timeout=180):
         window.lift()
         try:window.attributes("-topmost",True)
         except Exception:pass
-        window.geometry(fit_window_geometry((window.winfo_screenwidth(),window.winfo_screenheight())))
+        screen_size=(window.winfo_screenwidth(),window.winfo_screenheight())
+        # App.__init__ applies a desktop-oriented minimum size. The CI runner
+        # can be exactly 1024x768, so let the live smoke use all available
+        # desktop pixels and allow its map canvas to contract with the window.
+        window.minsize(800,600)
+        window.geometry(fit_window_geometry(screen_size))
         window.update_idletasks()
         window.update()
         window.gdf=test_aoi
@@ -116,6 +126,17 @@ def main(timeout=180):
         window.nb.select(window.tabs[1])
         window.update_idletasks()
         window.update()
+        # The canvas has a 560 px design request. On compact Windows runners,
+        # fit its requested height to the actual visible desktop while keeping
+        # the live pixel capture and full-bounds visibility gate intact.
+        available_canvas_height=(int(screen_size[1])-int(window.map_canvas.winfo_rooty())-36)
+        available_canvas_width=(int(screen_size[0])-int(window.map_canvas.winfo_rootx())-12)
+        if available_canvas_width>=220:
+            window.map_canvas.configure(width=min(900,available_canvas_width))
+        if available_canvas_height>=180:
+            window.map_canvas.configure(height=min(560,available_canvas_height))
+            window.update_idletasks()
+            window.update()
         window.show_google_map(refresh=False,prefer_public=True)
         deadline=time.monotonic()+timeout
         last_observation={}
@@ -151,6 +172,9 @@ def main(timeout=180):
             last_observation={
                 "provider":provider,"map_status":map_status[:220],
                 "window_state":str(window.state()),
+                "window_origin":[int(window.winfo_rootx()),int(window.winfo_rooty())],
+                "window_size":[int(window.winfo_width()),int(window.winfo_height())],
+                "canvas_origin":[int(window.map_canvas.winfo_rootx()),int(window.map_canvas.winfo_rooty())],
                 "window_viewable":bool(window.winfo_viewable()),
                 "canvas_viewable":bool(window.map_canvas.winfo_viewable()),
                 "canvas_size":[int(window.map_canvas.winfo_width()),int(window.map_canvas.winfo_height())],
