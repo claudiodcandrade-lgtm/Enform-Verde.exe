@@ -582,3 +582,7 @@ Versão candidata corrente: 3.26.60-PRECAMPO-EXPERIMENTAL, checkpoint V88.123 (1
 
 ### Registro de sincronização documental V88.124
 A especificação Word completa é atualizada pelo workflow de sincronização acionado por `docs/spec_updates/V88.124_INTERFACE_RELATORIOS.md`; a tarefa verifica a integridade do DOCX e a inclusão do checkpoint V88.124 antes de registrar a revisão. O SHA do código e os resultados dos gates permanecem sujeitos à execução do CI.
+
+
+#### Ajuste da suíte completa
+A suíte revelou expectativas de formatação vinculadas à tabela antiga. Elas foram atualizadas para verificar o novo formato responsivo, incluindo a soma, a propagação estatística declarada e a sinalização de incerteza não mensurável; os critérios de conteúdo permanecem.

@@ -26,7 +26,7 @@ class DeclaredCorrelationTotal(unittest.TestCase):
         bio = (10 + 3 + 1 + .2) * k
         expected = math.sqrt(bio ** 2 + (2 * k) ** 2 + (10 * k) ** 2)
         simple_sum = (10 + 3 + 1 + .2 + 2 + 10) * k
-        total_line = next(l for l in text.splitlines() if l.startswith("| TOTAL"))
+        total_line = next(l for l in text.splitlines() if l.startswith("SOMA DOS ESTOQUES"))
         self.assertIn(f"{expected:.2f}", total_line)
         self.assertNotIn(f"{simple_sum:.2f}", total_line)
         self.assertIn("correlação declarada", text)
@@ -35,8 +35,8 @@ class DeclaredCorrelationTotal(unittest.TestCase):
         rows = [comp("Biomassa aérea", 60, 50, 70), {"parametro": "Solo 0–100 cm", "tc": 80, "total_tc": 8000,
                                                       "quantified_area_ha": 100.0}]
         text = "\n".join(executive_carbon_lines(native(rows), lambda x, nd=2: f"{x:.2f}"))
-        total_line = next(l for l in text.splitlines() if l.startswith("| TOTAL"))
-        self.assertIn("| incerteza não mensurável | incerteza não mensurável |", total_line)
+        total_line = next(l for l in text.splitlines() if l.startswith("SOMA DOS ESTOQUES"))
+        self.assertIn("incerteza combinada não mensurável", total_line)
 
 
 if __name__ == "__main__":

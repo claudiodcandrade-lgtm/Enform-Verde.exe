@@ -99,11 +99,11 @@ class CarbonExecutiveTable(unittest.TestCase):
                     "range_tc_ha": [0.08, 0.12]}]}]},
             lambda x: f"{x:.2f}")
         text = "\n".join(lines)
-        self.assertIn("COMPARTIMENTO / TOTAL", text)
+        self.assertIn("ESTOQUES POR COMPARTIMENTO", text)
         for name in ("Biomassa aérea", "Biomassa subterrânea", "Necromassa aérea",
                      "Necromassa subterrânea", "Serapilheira", "Solo 0–100 cm"):
             self.assertIn(name, text)
-        self.assertIn("TOTAL — soma dos compartimentos", text)
+        self.assertIn("SOMA DOS ESTOQUES — cobertura completa", text)
         self.assertIn("0.10", text)
         self.assertIn("N/D", text)
 
