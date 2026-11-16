@@ -369,6 +369,11 @@ def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
         # majority of the forest votes (max probability < 0.5); this is a
         # decision rule, not an accuracy.
         clab[pc.max(1) < CROP_MAJORITY] = UNIDENTIFIED_CROP
+        # Keep the spatial-domain gate on the actual per-pixel predictions,
+        # not only in the audit metadata. Outside the training envelope the
+        # classifier may still estimate generic cultivated area, but crop
+        # names must not flow into class totals, vectors, forecasts or reports.
+        clab = _crop_labels_with_domain_guard(clab, in_domain)
         tmp = names[ok]; tmp[crop_mask] = np.array([CROP_NAMES.get(c, "Lavoura de " + c) for c in clab], dtype=object)
         names[ok] = tmp
     val = man["validation"]

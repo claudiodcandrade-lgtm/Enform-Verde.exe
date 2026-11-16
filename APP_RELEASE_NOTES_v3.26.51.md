@@ -20,3 +20,6 @@ Candidata experimental/pré-campo. A leitura live foi comprovada somente em um r
 ## Correção de CI Windows — V88.94
 
 A primeira CI Windows materializou 150.660 registros oficiais PAM/SIDRA e encontrou um teste que ainda fixava o total histórico de 133.920. O contrato de teste agora confere contagem, checksum e completude com os metadados da execução, mantendo validação de unicidade, produtos, anos e variáveis. Os dois testes focados passaram localmente. O novo build Windows, os smokes, o handoff SAR até os painéis e o executável ainda precisam passar no SHA corrigido antes da distribuição.
+## Supressão de nomes de culturas fora do domínio — V88.95
+
+A execução ponta a ponta real provou que o SAR alcançou os painéis em Sinop-amostra e Tapajós, mas expôs rótulos específicos de soja/café ainda presentes no Tapajós fora da área de treinamento. O bloqueio agora é aplicado aos pixels antes das classes e polígonos. Teste de integração incluído no gate Windows. A primeira rodada V88.94 não liberou executável por falha do teste de cardinalidade PAM; o novo build e a execução do teste de supressão ainda precisam passar. A amostra de Sinop não é o KML privado da Fazenda Maria Eduarda.

@@ -1,5 +1,7 @@
 import unittest
+import importlib.util
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import sar_landcover_lemplus as sar
 
@@ -51,6 +53,46 @@ class SarCropDomainPolicyTests(unittest.TestCase):
 
     def test_80m_pixel_area_explains_064_ha_label_granularity(self):
         self.assertEqual(sar.PIXEL_M * sar.PIXEL_M / 10_000, 0.64)
+
+    @unittest.skipUnless(importlib.util.find_spec("geopandas") and
+                         importlib.util.find_spec("rasterio"),
+                         "geospatial dependencies are installed in the Windows CI")
+    def test_classifier_applies_crop_name_guard_to_classes_and_polygons(self):
+        import numpy as np
+        import geopandas as gpd
+        from rasterio.transform import from_bounds
+        from shapely.geometry import box
+
+        class _Classifier:
+            def __init__(self, classes, probabilities):
+                self.classes_ = np.asarray(classes)
+                self.probabilities = np.asarray(probabilities, dtype=float)
+
+            def predict_proba(self, features):
+                return np.tile(self.probabilities, (len(features), 1))
+
+        aoi = gpd.GeoDataFrame(
+            {"id": [1]}, geometry=[box(-55.20, -3.20, -55.10, -3.10)], crs="EPSG:4326")
+        projected = aoi.to_crs(6933).total_bounds
+        h = w = 4
+        features = np.ones((h, w, 2), dtype=float)
+        data = (features, from_bounds(*projected, width=w, height=h), (h, w))
+        models = {
+            "landcover": _Classifier(["Cultivo agrícola"], [1.0]),
+            "crop": _Classifier(["Soja", "Café"], [0.7, 0.3]),
+        }
+        manifest = {"model_id": "fixture", "sha256": "fixture",
+                    "validation": {"landcover": {"per_class": {}}, "crop": {"per_class": {}}},
+                    "training_labels": [], "domain": {"transfer_note": "outside-domain test"}}
+        with patch.object(sar, "load", return_value=(models, manifest)), \
+                patch.object(sar, "_monthly_features", return_value=(data, {"scenes_used": 12})):
+            result = sar.classify_aoi(aoi, as_of=__import__("datetime").date(2026, 11, 16))
+
+        self.assertEqual(result["crop_label_policy"], "SPECIFIC_CROP_SUPPRESSED_OUTSIDE_TRAINING_ENVELOPE")
+        self.assertTrue(result["classes"])
+        self.assertEqual({row["class_name"] for row in result["classes"]}, {sar.UNIDENTIFIED_CROP})
+        self.assertIsNotNone(result["polygons_6933"])
+        self.assertEqual(set(result["polygons_6933"]["class_name"]), {sar.UNIDENTIFIED_CROP})
 
 
 if __name__ == "__main__":

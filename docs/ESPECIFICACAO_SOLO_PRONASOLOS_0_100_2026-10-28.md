@@ -530,3 +530,6 @@ O gate de leitura live Sentinel-1 VV/VH foi incluído no workflow de build, mas 
 
 ## V88.94 — integridade da série PAM no Windows
 A correção do contrato de contagem do materializador PAM faz a verificação acompanhar o manifesto live (150.660 linhas/nove produtos no build de 16/11/2026), em vez de fixar o snapshot antigo. Ela não altera valores, fontes, processamento ou incerteza do carbono orgânico do solo.
+
+## V88.95 — supressão de nomes SAR fora do envelope
+A correção V88.95 só altera o nome de classes agrícolas experimentais fora da região de treinamento: conserva “área cultivada” sem cultura específica. Não altera o cálculo do solo, suas fontes, profundidade ou incerteza, nem permite usar classe de cultura extrapolada para selecionar um estoque de carbono.
