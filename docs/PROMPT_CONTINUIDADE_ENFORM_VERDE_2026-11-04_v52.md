@@ -818,3 +818,11 @@ Versão corrente: `3.26.60-PRECAMPO-EXPERIMENTAL`, checkpoint V88.123, em branch
 - Suíte completa depois da correção: 1.247 testes OK, 1 skip headless; testes focados do smoke 14/14; coleta 183 módulos; `git diff --check` e compilação dos arquivos ajustados passaram. O novo workflow Windows precisa comprovar o resultado live.
 - Estado do build anterior V88.121: cobertura óptica regional passou; smoke do canvas falhou pelo scroll não aplicado e impediu a compilação. A homologação científica permanece reprovada por falta de evidência independente. Nenhum EXE foi produzido nessa tentativa.
 - Manter versão `3.26.60-PRECAMPO-EXPERIMENTAL`, sem alegação de aceleração quantificada. A última mudança trata somente do ensaio/interação com a aba rolável; benchmarks de processamento, KML integral Maria Eduarda, integração completa carbono→dashboard e validação de campo continuam pendentes.
+
+
+## V88.124 — interface dos relatórios (16/11/2026)
+
+- Corrigida a apresentação das abas de monitoramento agrícola e carbono com rolagem vertical da página, mantendo as barras internas dos relatórios. Em telas menores, o usuário consegue descer até os controles, as subabas e todo o texto.
+- O resumo de carbono abandona a tabela larga e passa a listar cada compartimento em linhas responsivas, com estoque conhecido em tC e tCO₂e, densidade, incerteza disponível e área de cobertura quantificada.
+- A soma de estoques conhecidos é mostrada em destaque. Quando há compartimentos ou cobertura ausentes, rotular como parcial; o total completo e a densidade não defensável permanecem N/D. Ausência não equivale a zero e cenários experimentais ficam excluídos.
+- A alteração é de apresentação e acessibilidade; não altera as rotas SAR, os parâmetros de inventário, a propagação de incerteza nem os gates científicos. Foi adicionada regressão automatizada para a soma parcial. A candidata aguarda confirmação do workflow Windows e continua experimental.

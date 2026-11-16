@@ -570,3 +570,11 @@ Aceitação SAR real adicional no AOI público Tapajós retornou `SAR_PROCESSADO
 
 ## Ponte para checkpoint atual
 Versão candidata corrente: 3.26.60-PRECAMPO-EXPERIMENTAL, checkpoint V88.123 (16/11/2026). A documentação canônica e os critérios de validação ficam no prompt v52 e na especificação técnica vigente. O smoke calcula a posição do mapa na página espacial rolável e exige canvas integralmente visível; não declarar EXE liberado antes do build Windows integral verde no SHA final.
+
+
+## V88.124 — interface dos relatórios (16/11/2026)
+
+- Corrigida a apresentação das abas de monitoramento agrícola e carbono com rolagem vertical da página, mantendo as barras internas dos relatórios. Em telas menores, o usuário consegue descer até os controles, as subabas e todo o texto.
+- O resumo de carbono abandona a tabela larga e passa a listar cada compartimento em linhas responsivas, com estoque conhecido em tC e tCO₂e, densidade, incerteza disponível e área de cobertura quantificada.
+- A soma de estoques conhecidos é mostrada em destaque. Quando há compartimentos ou cobertura ausentes, rotular como parcial; o total completo e a densidade não defensável permanecem N/D. Ausência não equivale a zero e cenários experimentais ficam excluídos.
+- A alteração é de apresentação e acessibilidade; não altera as rotas SAR, os parâmetros de inventário, a propagação de incerteza nem os gates científicos. Foi adicionada regressão automatizada para a soma parcial. A candidata aguarda confirmação do workflow Windows e continua experimental.

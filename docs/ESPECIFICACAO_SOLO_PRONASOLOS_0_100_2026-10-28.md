@@ -609,3 +609,11 @@ A rolagem da aba “Mapas e limites” para expor o canvas no desktop do runner 
 
 ## V88.123 — escopo do solo mantido (16/11/2026)
 O ajuste matemático de posição da viewport Tk não altera fontes, profundidade, parâmetros, consultas ou cálculos de carbono orgânico do solo 0–100 cm. Fertilidade permanece fora da produtividade e nenhum cálculo foi recalibrado.
+
+
+## V88.124 — interface dos relatórios (16/11/2026)
+
+- Corrigida a apresentação das abas de monitoramento agrícola e carbono com rolagem vertical da página, mantendo as barras internas dos relatórios. Em telas menores, o usuário consegue descer até os controles, as subabas e todo o texto.
+- O resumo de carbono abandona a tabela larga e passa a listar cada compartimento em linhas responsivas, com estoque conhecido em tC e tCO₂e, densidade, incerteza disponível e área de cobertura quantificada.
+- A soma de estoques conhecidos é mostrada em destaque. Quando há compartimentos ou cobertura ausentes, rotular como parcial; o total completo e a densidade não defensável permanecem N/D. Ausência não equivale a zero e cenários experimentais ficam excluídos.
+- A alteração é de apresentação e acessibilidade; não altera as rotas SAR, os parâmetros de inventário, a propagação de incerteza nem os gates científicos. Foi adicionada regressão automatizada para a soma parcial. A candidata aguarda confirmação do workflow Windows e continua experimental.

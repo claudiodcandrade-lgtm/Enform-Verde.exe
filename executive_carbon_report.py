@@ -107,10 +107,9 @@ def executive_carbon_lines(native, fmt):
     pct=(100*area/aoi_ha) if aoi_ha>0 else None
     others=float(native.get("excluded_other_uses_ha") or 0)
     cover_complete=(native.get("cover_completeness")=="COMPLETE")
-    # Show density over measured area; complete total remains coverage-gated.
-    table=["+-----------------------------------------------+",
-           "| COMPARTIMENTO / TOTAL | tC/ha (área quantificada) | tCO2e/ha | INCERTEZA tCO2e/ha | INCERTEZA % | COBERTURA (ha / % nativa) |",
-           "+-----------------------------------------------+"]
+    # Simple wrapped lines remain readable in the narrow Tk report panel.
+    table=["ESTOQUES POR COMPARTIMENTO — tC e tCO₂e são estoques nas áreas quantificadas; "
+           "densidades usam somente a cobertura indicada:"]
     all_components=[c for st in native.get("strata",[]) for c in st.get("components",[])]
     pool_results={}
     for pool in ("Biomassa aérea","Biomassa subterrânea","Necromassa aérea",
@@ -145,12 +144,17 @@ def executive_carbon_lines(native, fmt):
         else:
             unc_abs=unc_pct=None
         pool_results[pool]=(density,unc_abs)
-        table.append("| "+pool+" | "+fmt(density) if density is not None else "| "+pool+" | N/D")
-        table[-1]+=" | "+fmt(density*44/12) if density is not None else " | N/D"
-        table[-1]+=" | "+fmt(unc_abs) if unc_abs is not None else (" | incerteza não mensurável" if stock is not None else " | N/D")
-        table[-1]+=" | "+fmt(unc_pct)+"%" if unc_pct is not None else (" | incerteza não mensurável" if stock is not None else " | N/D")
         coverage_pct=(100*covered/area if area>0 else None)
-        table[-1]+=" | "+(fmt(covered)+" ha / "+fmt(coverage_pct)+"%" if coverage_pct is not None else "N/D")+" |"
+        stock_text=(fmt(stock)+" tC | "+fmt(stock*44/12)+" tCO₂e" if stock is not None else "estoque N/D")
+        density_text=(fmt(density)+" tC/ha | "+fmt(density*44/12)+" tCO₂e/ha"
+                      if density is not None else "densidade N/D")
+        uncertainty_text=("incerteza: "+fmt(unc_abs)+" tCO₂e/ha ("+fmt(unc_pct)+"%)"
+                          if unc_abs is not None and unc_pct is not None else
+                          ("incerteza não mensurável" if stock is not None else "incerteza N/D"))
+        coverage_text=(fmt(covered)+" ha ("+fmt(coverage_pct)+"% da área nativa)"
+                       if coverage_pct is not None else "cobertura N/D")
+        table.append("• "+pool+": "+stock_text+"; "+density_text+"; "+uncertainty_text+
+                     "; área quantificada: "+coverage_text+".")
     total_uncertainty_rule=None
     if complete and area>0 and known is not None:
         total_density=known/area
@@ -176,13 +180,19 @@ def executive_carbon_lines(native, fmt):
     else:
         total_density=total_unc_abs=total_unc_pct=None
         total_label="TOTAL — parcial / incompleto"
-    table.append("+-----------------------------------------------+")
-    table.append("| "+total_label+" | "+(fmt(total_density) if total_density is not None else "N/D")+
-                 " | "+(fmt(total_density*44/12) if total_density is not None else "N/D")+
-                 " | "+(fmt(total_unc_abs) if total_unc_abs is not None else ("incerteza não mensurável" if known is not None else "N/D"))+
-                 " | "+(fmt(total_unc_pct)+"%" if total_unc_pct is not None else ("incerteza não mensurável" if known is not None else "N/D"))+
-                 " | "+(fmt(area)+" ha / 100,00%" if complete else "cobertura incompleta")+" |")
-    table.append("+-----------------------------------------------+")
+    if complete:
+        total_label="SOMA DOS ESTOQUES — cobertura completa"
+    else:
+        total_label="SOMA DOS ESTOQUES CONHECIDOS — PARCIAL; não representa o estoque total"
+    table.append(total_label+": "+
+                 (fmt(known)+" tC | "+fmt(known*44/12)+" tCO₂e" if known is not None else "N/D")+
+                 ("; densidade: "+fmt(total_density)+" tC/ha | "+fmt(total_density*44/12)+" tCO₂e/ha"
+                  if total_density is not None else
+                  "; densidade do total: N/D — cobertura/compartimentos incompletos")+
+                 ("; incerteza combinada: "+fmt(total_unc_abs)+" tCO₂e/ha ("+fmt(total_unc_pct)+"%)"
+                  if total_unc_abs is not None and total_unc_pct is not None else
+                  ("; incerteza combinada não mensurável" if known is not None else
+                   "; incerteza combinada N/D"))+".")
     biodiversity=native.get("biodiversity_references") or []
     biodiversity_lines=["PERSPECTIVA DE BIODIVERSIDADE E ESTRUTURA — INVENTÁRIOS REGIONAIS",
         "Referência fitossociológica compatível; não representa inventário medido na propriedade."]
@@ -245,7 +255,7 @@ def executive_carbon_lines(native, fmt):
            "Densidade sobre a área NATIVA mapeada: "+
            (fmt(known/area)+" tC/ha | "+fmt(known/area*44/12)+" tCO₂e/ha"
             if known is not None and area else "N/D"),
-           "INCERTEZA POR COMPARTIMENTO — quadro executivo (estoques em tC/ha e tCO₂e/ha; incertezas em tCO₂e/ha e %):",
+           "ESTOQUES POR COMPARTIMENTO — valores medidos, cobertura e incerteza:",
            *table,
            ("Incerteza do total: "+total_uncertainty_rule+"." if total_uncertainty_rule else
             ("Incerteza do total: incerteza não mensurável — covariância/transferência não permite quantificação." if known is not None else "Incerteza do total: N/D — estoque total sem suporte.") )]

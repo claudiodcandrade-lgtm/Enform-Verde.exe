@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.60-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.61-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -2392,8 +2392,26 @@ class App(tk.Tk):
             self.status.set("Camada de fitofisionomias IBGE não carregada.")
             messagebox.showerror("Fitofisionomias IBGE",str(e))
 
+    def _scrollable_tab_content(self,tab):
+        """Provide page-level vertical scrolling for long result tabs."""
+        canvas=tk.Canvas(tab,bg="#F4F6F5",highlightthickness=0)
+        scrollbar=ttk.Scrollbar(tab,orient="vertical",command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side="left",fill="both",expand=True)
+        scrollbar.pack(side="right",fill="y")
+        content=ttk.Frame(canvas,padding=(8,4,12,12))
+        window=canvas.create_window((0,0),window=content,anchor="nw")
+        def update_region(_event=None):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        def resize_content(event):
+            canvas.itemconfigure(window,width=max(1,event.width))
+            update_region()
+        content.bind("<Configure>",update_region)
+        canvas.bind("<Configure>",resize_content)
+        return content
+
     def _results(self):
-        f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
+        f=self._scrollable_tab_content(self.tabs[3]); ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
         self.carbon_exec_box,self.carbon_exec_var=self._executive_card(
             f,"QUADRO EXECUTIVO — CARBONO NATIVO",
             "Estoque, cobertura, compartimentos ausentes e incerteza serão resumidos após a análise.")
@@ -2406,7 +2424,7 @@ class App(tk.Tk):
         self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
     def _cultivated_results(self):
         """Separate concise executive results from traceable technical audit."""
-        f=self.tabs[5]
+        f=self._scrollable_tab_content(self.tabs[5])
         ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
         ttk.Label(f,text="Detecção de áreas cultivadas primeiro; identificação da cultura somente quando a evidência e a validação permitirem.",
                   wraplength=1000).pack(anchor="w",pady=(4,8))
