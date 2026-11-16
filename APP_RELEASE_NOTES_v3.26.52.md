@@ -24,3 +24,7 @@ A V88.99 manteve timeout no canvas Windows apesar de a cobertura nacional óptic
 
 ## V88.101 — seleciona a página do mapa no smoke (16/11/2026)
 A saída CBERS estava carregada, mas a página Mapas e limites permanecia oculta no smoke do Tk. O teste agora seleciona essa página e exige visibilidade do widget, além de pixels. Repetir CI completa; a V88.100 não gerou EXE liberável.
+
+
+## V88.102 — correção da captura visual do canvas
+O smoke Windows de V88.101 detectou canvas visível e imagem Sentinel-2, mas a captura reportou apenas 4,98% de pixels claros. V88.102 converte coordenadas Tk para pixels físicos do ImageGrab em telas escaladas, registra dimensões e anexa captura de diagnóstico em caso de falha. A causa DPI ainda é hipótese até confirmação pela nova CI. Doze testes focados passaram localmente; gates Windows pendentes.

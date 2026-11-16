@@ -654,3 +654,9 @@ O Windows build `43794816489` do SHA V88.97 falhou no smoke do canvas porque o s
 - A CI V88.100 provou a causa do timeout: CBERS carregou no canvas, mas `canvas_viewable=false`; o smoke nunca saía da primeira página do Notebook. O screenshot mediu a janela atrás do mapa oculto. Isto não era falha da fonte óptica; o widget não estava visível.
 - O smoke seleciona `window.tabs[1]` (Mapas e limites) antes do worker e exige `winfo_viewable()` junto aos pixels reais. Imagem em aba oculta não passa. Manter critérios diferenciados para fallback claro, satélite e tela preta.
 - Repetir CI completa; não liberar até o canvas visível, build e autoteste do EXE passarem no mesmo SHA. V88.100 dashboard suite, SAR integrado Sinop/Tapajós, prova ESA BIOMASS FH e cobertura óptica nacional passaram; só canvas falhou.
+
+
+## V88.102 — captura do canvas em Windows com escala DPI (16/11/2026)
+- A CI V88.101 passou suíte integral, SAR integrado Sinop/Tapajós, pixels ESA BIOMASS FH e cobertura óptica nacional; falhou apenas no smoke final do canvas. A captura indicou canvas visível e uma imagem Sentinel-2, porém só 4,98% dos pixels acima do limiar de luminância.
+- Causa provável: coordenadas lógicas do Tk foram usadas como pixels físicos pelo ImageGrab em tela Windows com escala DPI. A hipótese só será confirmada pela nova CI. V88.102 captura a tela inteira, converte o recorte conforme dimensões Tk/físicas, registra dimensões e preserva PNG do recorte quando falha.
+- Dois testes da transformação em escala 1,5× e 1× passaram localmente; 12 testes focados passaram e o módulo compilou. Código: d1fb59a33abca2c8297a78320d051afe7426c188. A suíte integral, o novo smoke do canvas e o build ainda precisam passar; não há executável liberado.
