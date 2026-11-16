@@ -17,9 +17,13 @@ def crop_geometry(land, crop, *, canonical_fn):
     frame = gpd.read_file(path)
     if frame.empty or not {"class_name", "source"}.issubset(frame.columns) or frame.crs is None:
         return None
-    mask = (frame["class_name"].map(
-        lambda name: canonical_fn(str(name)[len("Lavoura de "):])
-        if str(name).casefold().startswith("lavoura de ") else None) == crop)
+    from priority_production_models import priority_target
+    def target_name(name):
+        text = str(name)
+        if text.casefold().startswith("lavoura de "):
+            return canonical_fn(text[len("Lavoura de "):])
+        return priority_target(text)
+    mask = frame["class_name"].map(target_name) == crop
     # Experimental source is acceptable for pre-field scenarios, provided
     # that the forecast records seasonal/staleness and transfer uncertainty.
     mask &= frame["source"].astype(str).str.startswith(
@@ -75,7 +79,8 @@ def current_candidate_vigor_blocks(candidates, *, max_blocks=18,
                                    min_block_area_ha=2.0,
                                    target_block_area_ha=16.0,
                                    max_targets=6,
-                                   min_reference_blocks=6):
+                                   min_reference_blocks=6,
+                                   footprint_label="máscara SAR candidata"):
     """Split a dissolved current SAR-candidate mask into disjoint target and
     internal-reference blocks.
 
@@ -100,7 +105,7 @@ def current_candidate_vigor_blocks(candidates, *, max_blocks=18,
                                  min_purity=.90)
     if len(blocks) < min_reference_blocks + 1:
         return {"status": "N/D", "reason": (
-                    f"máscara SAR candidata permite apenas {len(blocks)} blocos internos; "
+                    f"{footprint_label} permite apenas {len(blocks)} blocos internos; "
                     f"vigor relativo exige 1 alvo e ao menos {min_reference_blocks} blocos de referência"),
                 "target_blocks": [], "reference_gdf": None,
                 "blocks_available": len(blocks)}

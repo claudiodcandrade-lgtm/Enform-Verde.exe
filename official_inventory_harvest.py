@@ -86,11 +86,13 @@ SOURCE_HIERARCHY = [
     {"rank": 2, "label": "institucional_totalizado_com_erro",
      "description": "Inventário publicado por instituição reconhecida, já totalizado, com classe, unidade, n e margem de erro verificáveis."},
     {"rank": 3, "label": "base_publica_oficial",
-     "description": "Mesmo nível de origem institucional para IFN/SFB e dados públicos oficiais do Sinaflor; distinguir inventário medido de registro de autorização/processo."},
-    {"rank": 4, "label": "metadado_publico_de_licenciamento",
+     "description": "SFB/IFN e Sinaflor podem conter medições ou registros oficiais; distinguir inventário medido de autorização/processo e conferir a natureza dos campos."},
+    {"rank": 4, "label": "inventario_anexo_aceito_por_orgao_ambiental",
+     "description": "Último recurso quantitativo quando não houver inventário institucional ou base oficial melhor: o próprio inventário anexo precisa estar acessível, identificado no processo e explicitamente aceito em parecer/decisão; aprovação da licença ou do plano, sem aceite do inventário, não basta."},
+    {"rank": 5, "label": "metadado_publico_de_licenciamento",
      "description": "PNLA e metadados de processos: ajudam a localizar estudos/documentos, mas não são por si só observações de inventário."},
-    {"rank": 5, "label": "inventario_privado_de_licenciamento",
-     "description": "Último recurso; somente com acesso autorizado, compatibilidade espacial/fitofisionômica e margem de erro publicada no estudo."},
+    {"rank": 6, "label": "inventario_privado_sem_aceite_comprovado",
+     "description": "Não usar quantitativamente até autorização de acesso, identificação do anexo, metodologia e compatibilidade serem verificadas."},
 ]
 
 SEARCH_TERMS = (
@@ -410,8 +412,8 @@ def evaluate_private_licensing_inventory(
     }
     eligible = all(checks.values())
     return {
-        "source_hierarchy_rank": 5,
-        "source_hierarchy_label": "inventario_privado_de_licenciamento",
+        "source_hierarchy_rank": 6,
+        "source_hierarchy_label": "inventario_privado_sem_aceite_comprovado",
         "may_support_estimate": eligible,
         "include_in_sar_calibration": False,
         "checks": checks,
@@ -442,19 +444,71 @@ def evaluate_totalized_inventory(
     }
     eligible = all(checks.values())
     return {
-        "source_hierarchy_rank": 2 if recognized_institution else 5,
+        "source_hierarchy_rank": 2 if recognized_institution else 6,
         "source_hierarchy_label": (
             "institucional_totalizado_com_erro" if recognized_institution
-            else "inventario_privado_de_licenciamento"
+            else "inventario_sem_aceite_comprovado"
         ),
         "may_support_estimate": eligible,
         "include_in_sar_calibration": False,
+        "uncertainty_status": "MENSURADA" if published_margin_of_error else "incerteza não mensurável",
         "checks": checks,
         "decision": (
             "Elegível como estimativa secundária totalizada após auditoria de unidade, estatística e transferência."
             if eligible else
-            "Não usar numericamente; inventário totalizado requer instituição identificada, margem de erro publicada, "
-            "classe/domínio compatíveis e unidades independentes."
+            "Não usar numericamente; requer instituição identificada, margem de erro publicada, classe/domínio compatíveis e unidades independentes."
+        ),
+    }
+
+
+def evaluate_agency_accepted_inventory_document(
+    *, authorized_access: bool, process_id: str | None,
+    inventory_document_url: str | None, inventory_document_sha256: str | None,
+    inventory_attachment_confirmed: bool, acceptance_evidence_url: str | None,
+    acceptance_explicitly_covers_inventory: bool, physiognomy_match: bool,
+    spatial_match: bool, extracted_numeric_metric: bool,
+    method_and_units_verified: bool, sample_size: int | None = None,
+    sampling_error_published: bool = False,
+) -> dict[str, Any]:
+    """Require proof that the inventory attachment itself was accepted.
+
+    Approval of a license, management plan, or process alone does not satisfy
+    the acceptance check. This supplies a lower-priority reference tier only;
+    it never approves an agency inventory as SAR calibration data.
+    """
+    checks = {
+        "acesso_autorizado": bool(authorized_access),
+        "identificador_do_processo": bool(str(process_id or "").strip()),
+        "anexo_identificado_com_hash": bool(
+            inventory_attachment_confirmed and inventory_document_url
+            and re.fullmatch(r"[0-9a-fA-F]{64}", str(inventory_document_sha256 or ""))
+        ),
+        "parecer_ou_decisao_localizavel": bool(acceptance_evidence_url),
+        "aceite_expresso_do_inventario_anexo": bool(acceptance_explicitly_covers_inventory),
+        "fitofisionomia_compativel": bool(physiognomy_match),
+        "dominio_espacial_compativel": bool(spatial_match),
+        "metrica_numerica_extraida": bool(extracted_numeric_metric),
+        "metodo_e_unidades_verificados": bool(method_and_units_verified),
+    }
+    verified = all(checks.values())
+    uncertainty = ("MENSURADA" if sampling_error_published and sample_size and sample_size > 1
+                   else "incerteza não mensurável")
+    return {
+        "source_hierarchy_rank": 4,
+        "source_hierarchy_label": "inventario_anexo_aceito_por_orgao_ambiental",
+        "agency_inventory_acceptance_verified": verified,
+        "may_support_regional_reference": verified,
+        "include_in_sar_calibration": False,
+        "uncertainty_status": uncertainty,
+        "sample_size": sample_size,
+        "checks": checks,
+        "inventory_document_url": inventory_document_url,
+        "inventory_document_sha256": inventory_document_sha256,
+        "acceptance_evidence_url": acceptance_evidence_url,
+        "decision": (
+            "Referência regional de último nível; aceite do próprio anexo confirmado. Não promove a calibração SAR."
+            if verified else
+            "Somente pista de licenciamento. Não usar quantitativamente até identificar o anexo e confirmar que a decisão do órgão o aceitou explicitamente, com método e unidades verificados."
         ),
     }
 

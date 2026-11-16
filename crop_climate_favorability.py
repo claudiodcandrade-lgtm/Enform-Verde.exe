@@ -31,12 +31,15 @@ import numpy as np
 CLASSES = ("desfavorável", "neutro", "favorável")
 KC_MID = {  # FAO-56 (Allen et al., 1998) Table 12, mid-season Kc
     "Soja": 1.15, "Milho": 1.20, "Sorgo": 1.05, "Feijão": 1.15, "Arroz": 1.20,
+    "Algodão": 1.15,
     "Café": 0.95, "Cana-de-açúcar": 1.25, "Citros": 0.65}
 HEAT_TMAX_C = {  # ASSUMED stress thresholds — configurable, cite when calibrated
     "Soja": 35.0, "Milho": 35.0, "Sorgo": 38.0, "Feijão": 32.0, "Arroz": 35.0,
+    "Algodão": 35.0,
     "Café": 34.0, "Cana-de-açúcar": 38.0, "Citros": 38.0}
 DEFAULT_SEASON = {  # generic Brazilian windows (MM-DD); replace by CONAB calendar of the UF
     "Soja": ("10-01", "02-28"), "Milho": ("10-01", "03-31"), "Sorgo": ("02-01", "06-30"),
+    "Algodão": ("10-01", "03-31"),
     "Feijão": ("10-15", "01-31"), "Arroz": ("10-01", "03-15"), "Café": ("09-01", "04-30"),
     "Cana-de-açúcar": ("10-01", "09-30"), "Citros": ("08-01", "05-31")}
 POWER_API = "https://power.larc.nasa.gov/api/temporal/daily/point"

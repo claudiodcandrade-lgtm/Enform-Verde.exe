@@ -248,15 +248,16 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertIn("85 Mg/ha",entries["AFRICA_BOUVET_2018_SAVANNA_PALSAR"]["domain"])
         self.assertIn("253 parcelas",entries["AFRICA_MITCHARD_2009_SAVANNA_L"]["domain"])
 
-    def test_sar_height_search_contract_covers_all_five_priority_biomes(self):
-        expected=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga")
+    def test_sar_height_search_contract_covers_all_six_biomes_and_all_brazilian_aois(self):
+        expected=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga","Pampa")
         for biome in expected:
             with self.subTest(biome=biome):
                 scope=sar.height_scope_contract(biome,"fitofisionomia IBGE de teste")
                 self.assertEqual(tuple(scope["requested_biomes"]),expected)
-                self.assertIn("for each AOI",scope["search_policy"])
+                self.assertIn("cada AOI brasileira",scope["search_policy"])
+                self.assertEqual(scope["priority_scope"],"TODAS_AS_AOIS_NO_BRASIL")
                 self.assertEqual(scope["aoi_biome"],biome)
-                self.assertIn("not all five",scope["fallback"])
+                self.assertIn("não é cobertura nacional",scope["fallback"])
                 self.assertIn("spatial dispersion, not measurement error",scope["error_policy"])
                 self.assertEqual(scope["status"],"AOI_SPECIFIC_COVERAGE_AND_ERROR_REQUIRED")
 

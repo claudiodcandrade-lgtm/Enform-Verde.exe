@@ -1,7 +1,8 @@
 """Microregional phytosociology summaries for the executive panel.
 
-Only compatible, licensed tree-level inventory records are summarized. These
-are regional references, never observations made on the property.
+Only compatible, licensed inventory records are summarized. The qualitative
+species list ranks taxa by mean basal-area dominance in the regional plots;
+it describes likely occurrence, never observations made on the property.
 """
 from __future__ import annotations
 
@@ -88,8 +89,19 @@ def load_biodiversity_inventory_csv(path, *, max_rows=500_000):
             if not all(math.isfinite(x) for x in (area, dbh, threshold)) or area <= 0 or dbh < threshold:
                 raise ValueError(f"linha {line}: registro fora do limite/área de parcela")
             if not all(str(row.get(k, "")).strip() for k in
-                       ("inventory_id", "plot_id", "biome", "physiognomy", "microregion", "species", "status", "institution", "source_url")):
+                       ("inventory_id", "plot_id", "biome", "physiognomy", "microregion", "status", "institution", "source_url")):
                 raise ValueError(f"linha {line}: proveniência, parcela ou taxonomia ausente")
+            published=str(row.get("species") or row.get("scientific_name") or "").strip()
+            scientific=str(row.get("scientific_name") or "").strip()
+            if not published:
+                raise ValueError(f"linha {line}: nome científico/táxon ausente")
+            # A legacy `species` field may contain a vernacular or an
+            # unnormalized label. Preserve it for grouping, but never relabel
+            # it as a scientific name unless the source supplied that field.
+            row["name_as_published"]=published
+            row["scientific_name"]=scientific or "N/D — fonte sem nome científico explícito"
+            row["common_name"]=str(row.get("common_name") or "N/D — não informado no inventário").strip()
+            row["species"]=scientific
             rows.append(dict(row))
     if not rows:
         raise ValueError("CSV fitossociológico sem árvores válidas")
@@ -121,6 +133,14 @@ def summarize_top10_species(records, *, biome, physiognomy, microregion):
     wanted = (_norm(biome), _norm(physiognomy), _norm(microregion))
     selected = [r for r in records if (_norm(r.get("biome")), _norm(r.get("physiognomy")),
                                        _norm(r.get("microregion"))) == wanted]
+    scope = "MICRORREGIONAL"
+    # If there is no matching microregion, widen only the geographic scope;
+    # biome and physiognomy remain exact. This is an explicit regional
+    # reference, never a silent transfer across vegetation types.
+    if not selected:
+        selected = [r for r in records if (_norm(r.get("biome")),
+                                             _norm(r.get("physiognomy"))) == wanted[:2]]
+        scope = "REGIONAL"
     if not selected:
         return {"status": "N/D", "reason": "SEM_INVENTARIO_COMPATIVEL_NA_FITOFISIONOMIA_E_MICRORREGIAO",
                 "target": {"biome": biome, "physiognomy": physiognomy, "microregion": microregion}}
@@ -144,6 +164,7 @@ def summarize_top10_species(records, *, biome, physiognomy, microregion):
     ci_eligible = designs == {"simplerandom"} and equal_plot_area
     species_plots = defaultdict(set)
     species_ba = defaultdict(lambda: [0.0] * nplots)
+    species_common = defaultdict(Counter)
     total_ba = [0.0] * nplots
     dbh_distribution = { _dbh_bin_id(lo, hi): {"lower_cm": lo,
         "upper_cm": (None if math.isinf(hi) else hi), "stems_ha_by_plot": [0.0] * nplots,
@@ -154,7 +175,11 @@ def summarize_top10_species(records, *, biome, physiognomy, microregion):
         for row in plots[pid]:
             if _norm(row.get("status")) not in {"alive", "viva", "vivo", "live"}:
                 continue
-            sp = str(row["species"]).strip()
+            sp = str(row.get("scientific_name") or "").strip()
+            if not sp or sp.startswith("N/D"):
+                sp = str(row.get("name_as_published") or row.get("species") or "").strip()
+            common=str(row.get("common_name") or "N/D — não informado no inventário").strip()
+            if common and not common.startswith("N/D"):species_common[sp][common]+=1
             d = float(row["dbh_cm"])
             ba = math.pi * (d / 200.0) ** 2 / plot_area[pid]
             species_plots[sp].add(pid)
@@ -168,7 +193,10 @@ def summarize_top10_species(records, *, biome, physiognomy, microregion):
                     break
             stems[sp] += 1
             sources[(row["institution"], row["source_url"])] = None
-    ranked = sorted(species_plots, key=lambda sp: (-len(species_plots[sp]), -sum(species_ba[sp]) / nplots, _norm(sp)))
+    mean_total = sum(total_ba) / nplots
+    # Forestry dominance is represented by mean species basal area (m²/ha).
+    # Plot incidence/frequency is shown alongside it, but does not determine rank.
+    ranked = sorted(species_plots, key=lambda sp: (-sum(species_ba[sp]) / nplots, -len(species_plots[sp]), _norm(sp)))
     top = []
     for sp in ranked[:10]:
         vals = species_ba[sp]
@@ -178,11 +206,22 @@ def summarize_top10_species(records, *, biome, physiognomy, microregion):
         if nplots > 1 and ci_eligible:
             half = _t_critical_975(nplots - 1) * sd / math.sqrt(nplots)
             interval = [max(0.0, mean - half), mean + half]
-        top.append({"species": sp, "plot_incidence_n": len(species_plots[sp]),
+        mean_ba=mean
+        common=(species_common[sp].most_common(1)[0][0] if species_common[sp]
+                else "N/D — não informado no inventário")
+        representative=max((r for pid in plot_ids for r in plots[pid]
+                            if str(r.get("scientific_name") or "").strip()==sp),
+                           key=lambda r: len(str(r.get("scientific_name") or "")), default=None)
+        scientific=(str(representative.get("scientific_name") or "").strip()
+                    if representative else "N/D — fonte sem nome científico explícito")
+        top.append({"species": sp,"name_as_published":sp,"scientific_name":scientific,"common_name":common,
+                    "dominance_basis":"área basal média da espécie nas parcelas (m²/ha)",
+                    "mean_basal_area_m2_ha":mean_ba,
+                    "relative_dominance_pct":100*mean_ba/mean_total if mean_total>0 else None,
+                    "plot_incidence_n": len(species_plots[sp]),
                     "frequency_pct": 100 * len(species_plots[sp]) / nplots,
-                    "mean_basal_area_m2_ha": mean, "sd_between_plots_m2_ha": sd,
+                    "sd_between_plots_m2_ha": sd,
                     "ci95_source_region_m2_ha": interval})
-    mean_total = sum(total_ba) / nplots
     sd_total = math.sqrt(sum((v - mean_total) ** 2 for v in total_ba) / (nplots - 1)) if nplots > 1 else None
     total_ci = None
     if nplots > 1 and ci_eligible:
@@ -238,10 +277,14 @@ def summarize_top10_species(records, *, biome, physiognomy, microregion):
     return {
         "status": "REFERENCIA_FITOSSOCIOLOGICA_REGIONAL",
         "biome": biome, "physiognomy": physiognomy, "microregion": microregion,
+        "geographic_scope": scope,
+        "source_microregions": sorted({str(r.get("microregion") or "N/D") for r in selected}),
         "inventory_n_plots": nplots, "inventory_n_live_stems": nstems,
         "species_richness_observed": len(species_plots), "shannon_h_descriptive": shannon,
         "inclusion_threshold_dap_cm": next(iter(thresholds)),
-        "top10_by_plot_incidence": top,
+        "top10_by_dominance": top,
+        "top10_by_plot_incidence": top,  # compatibility alias; order is now dominance rank
+        "species_occurrence_label":"espécies de ocorrência mais provável",
         "top10_mean_basal_area_sum_m2_ha": sum(x["mean_basal_area_m2_ha"] for x in top),
         "community_mean_basal_area_m2_ha": mean_total,
         "community_sd_between_plots_m2_ha": sd_total,
@@ -254,5 +297,5 @@ def summarize_top10_species(records, *, biome, physiognomy, microregion):
         "institutions": sorted({k[0] for k in sources}),
         "source_urls": sorted({k[1] for k in sources}),
         "property_observation": False,
-        "interpretation": "Top 10 por frequência de ocorrência nas parcelas; área basal por espécie é média de parcela incluindo zeros. A estimativa principal da comunidade inclui todas as espécies; top 10 é perfil composicional e não substitui espécies raras.",
+        "interpretation": "Lista qualitativa de espécies de ocorrência mais provável, priorizando agregação de inventários da mesma fitofisionomia e microrregião; quando ausente, amplia para mesma fitofisionomia e bioma e identifica o escopo regional. Rankeada por dominância em área basal média por parcela, incluindo parcelas sem a espécie como zero. Nome vulgar e científico são apresentados somente quando informados ou normalizados com proveniência; nome ambíguo permanece como publicado e não é promovido a nome científico. A estimativa da comunidade inclui todas as espécies; top 10 não é inventário da propriedade nem substitui espécies raras.",
     }

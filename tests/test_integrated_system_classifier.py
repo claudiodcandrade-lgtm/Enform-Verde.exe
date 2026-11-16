@@ -1,5 +1,6 @@
 import unittest
 from integrated_system_classifier import identify_integrated_system, validated_precision_interval, model_route_status, classify_integrated_batch
+from crop_monitoring_forecast import _integrated_system_audit
 
 def item(component, unit="T1", period="2026", confidence=0.98):
     return {"present":True,"validated":True,"confidence":confidence,
@@ -30,6 +31,19 @@ class IntegratedSystemTests(unittest.TestCase):
     def test_ipf(self):
         self.assertEqual(identify_integrated_system(
             {c:item(c) for c in ("pecuaria","floresta")})["class_name"],"IPF")
+    def test_ilp(self):
+        self.assertEqual(identify_integrated_system(
+            {c:item(c) for c in ("lavoura","pecuaria")})["class_name"],"ILP")
+    def test_scientific_ilp_ilpf_routes_reach_report_audit(self):
+        evidence={c:item(c) for c in ("lavoura","pecuaria")}
+        result=_integrated_system_audit({"integrated_system_evidence":[
+            {"observation_id":"talhao-1","components":evidence}]})
+        self.assertEqual(result["records"][0]["decision"]["class_name"],"ILP")
+        route=result["records"][0]["classifier_route"]
+        self.assertFalse(route["operational"])
+        self.assertIn("MOD13Q1",route["task"])
+        self.assertEqual(route["reported_metrics"]["f1"],0.995)
+        self.assertEqual(result["route_catalog"]["ILPF"]["reported_metrics"]["iou"],0.8815)
     def test_spatial_mismatch_abstains(self):
         evidence={"lavoura":item("lavoura"),"floresta":item("floresta",unit="T2")}
         self.assertIsNone(identify_integrated_system(evidence)["class_name"])

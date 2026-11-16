@@ -196,6 +196,8 @@ def executive_carbon_lines(native, fmt):
                 continue
             biodiversity_lines.append(
                 str(ref.get("physiognomy"))+" / "+str(ref.get("microregion"))+": "+
+                "escopo "+str(ref.get("geographic_scope") or "REGIONAL")+"; regiões das fontes: "+
+                ", ".join(ref.get("source_microregions") or [str(ref.get("microregion"))])+"; "+
                 str(ref.get("inventory_n_plots"))+" parcelas; "+
                 str(ref.get("inventory_n_live_stems"))+" indivíduos vivos; "+
                 str(ref.get("species_richness_observed"))+" espécies observadas; "+
@@ -209,14 +211,16 @@ def executive_carbon_lines(native, fmt):
             biodiversity_lines.append("Riqueza e Shannon H′ são descritivos da amostra, sem IC de transferência: "+
                 str(ref.get("species_richness_observed"))+" espécies; H′="+
                 fmt(ref.get("shannon_h_descriptive"))+".")
-            biodiversity_lines.append("Top 10 por frequência nas parcelas — frequência | área basal média (m²/ha) | IC95% amostral da região:")
-            for row in ref.get("top10_by_plot_incidence",[]):
+            biodiversity_lines.append("Lista qualitativa — espécies de ocorrência mais provável; 10 espécies de maior dominância por área basal média:")
+            biodiversity_lines.append("Nome vulgar | nome científico | dominância média (m²/ha; %) | frequência nas parcelas | IC95% amostral da região:")
+            for row in ref.get("top10_by_dominance",ref.get("top10_by_plot_incidence",[])):
                 ci=row.get("ci95_source_region_m2_ha")
-                biodiversity_lines.append("  "+str(row.get("species"))+" — "+
-                    fmt(row.get("frequency_pct"))+"% | "+fmt(row.get("mean_basal_area_m2_ha"))+" | "+
+                biodiversity_lines.append("  "+str(row.get("common_name") or "N/D")+" | "+
+                    str(row.get("scientific_name") or row.get("species"))+" | "+
+                    fmt(row.get("mean_basal_area_m2_ha"))+" ("+fmt(row.get("relative_dominance_pct"))+"%) | "+
+                    fmt(row.get("frequency_pct"))+"% | "+
                     (fmt(ci[0])+"–"+fmt(ci[1]) if ci else "N/D"))
-            biodiversity_lines.append("Soma da área basal média das 10 espécies: "+
-                fmt(ref.get("top10_mean_basal_area_sum_m2_ha"))+" m²/ha. A estimativa da comunidade mantém todas as espécies; espécies raras não são descartadas.")
+            biodiversity_lines.append("Indicador regional qualitativo, não confirmação de ocorrência na propriedade. Área basal média comunitária inclui todas as espécies; espécies raras não são descartadas.")
             biodiversity_lines.append("Fontes: "+"; ".join(ref.get("institutions") or [])+
                 " — "+"; ".join(ref.get("source_urls") or []))
     lines=["PAINEL EXECUTIVO — ESTOQUES DE CARBONO",

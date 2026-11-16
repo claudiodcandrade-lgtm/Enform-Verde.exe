@@ -1,0 +1,231 @@
+{
+  "captured_utc": "2026-11-15T23:33:05Z",
+  "privacy": "Only source-level counts and SHA-256 digests are retained; no names, CPF/CNPJ, CAR IDs, process IDs, or raw rows.",
+  "sources": {
+    "SINAFLOR_PMFS_AMAZONIA": {
+      "url": "https://stibamadadosabertosprd.blob.core.windows.net/dados-abertos/dados/SINAFLOR/pmfs/AmazoniaLegal/pmfsAmazoniaLegal.csv",
+      "dataset_url": "https://dadosabertos.ibama.gov.br/dataset/sinaflor-pmfs-amazonia-legal",
+      "catalog_last_updated": "2026-07-08",
+      "captured_file_sha256": "f5516c209b5940563293cea3d8237d061dd5703e8dfffc353d45acd6de094f58",
+      "captured_file_bytes": 5915525,
+      "summary": {
+        "source_record_rows": 10273,
+        "distinct_registry_ids": 1508,
+        "distinct_authorization_ids": 6619,
+        "ufs": [
+          "AC",
+          "AM",
+          "AP",
+          "MA",
+          "MT",
+          "PA",
+          "RO",
+          "RR",
+          "TO"
+        ],
+        "biomes_reported": [
+          "Amazônia",
+          "Cerrado",
+          "Floresta amazônica",
+          "Mata Atlântica"
+        ],
+        "physiognomies_reported": [
+          "Floresta Estacional",
+          "Floresta Ombrófila",
+          "Savana"
+        ],
+        "rows_with_enterprise_centroid": 10272,
+        "records_by_uf": {
+          "AC": {
+            "distinct_registry_ids": 100,
+            "distinct_authorization_ids": 100
+          },
+          "AM": {
+            "distinct_registry_ids": 201,
+            "distinct_authorization_ids": 201
+          },
+          "AP": {
+            "distinct_registry_ids": 376,
+            "distinct_authorization_ids": 376
+          },
+          "MA": {
+            "distinct_registry_ids": 1,
+            "distinct_authorization_ids": 1
+          },
+          "MT": {
+            "distinct_registry_ids": 0,
+            "distinct_authorization_ids": 3451
+          },
+          "PA": {
+            "distinct_registry_ids": 35,
+            "distinct_authorization_ids": 1695
+          },
+          "RO": {
+            "distinct_registry_ids": 707,
+            "distinct_authorization_ids": 707
+          },
+          "RR": {
+            "distinct_registry_ids": 87,
+            "distinct_authorization_ids": 87
+          },
+          "TO": {
+            "distinct_registry_ids": 1,
+            "distinct_authorization_ids": 1
+          }
+        },
+        "inventory_count_interpretation": "distinct authorizations/registry identifiers are licensing-plan records, not confirmed independent scientific inventories or plot campaigns"
+      }
+    },
+    "SINAFLOR_VOLUMES_IF100": {
+      "url": "https://stibamadadosabertosprd.blob.core.windows.net/dados-abertos/dados/SINAFLOR/VolumesExploradosIf100/volumes_explorados_if_100_csv.zip",
+      "dataset_url": "https://dadosabertos.ibama.gov.br/dataset/volumes-explorados-if-100",
+      "catalog_last_updated": "2026-10-08",
+      "captured_file_sha256": "b6323042471b8cc44d939e0011960a60be89e0dbd84a36281ed75888accdbf5b",
+      "captured_file_bytes": 52373949,
+      "summary": {
+        "source_record_rows": 2438833,
+        "rows_by_year": {
+          "2026": 153282,
+          "2025": 278492,
+          "2024": 408099,
+          "2023": 326655,
+          "2022": 368372,
+          "2021": 447135,
+          "2020": 189189,
+          "2019": 189569,
+          "2018": 74818,
+          "2017": 3222
+        },
+        "distinct_registry_ids": 2665,
+        "distinct_authorization_ids": 2665,
+        "ufs_observed": [
+          "AC",
+          "AM",
+          "AP",
+          "BA",
+          "CE",
+          "MA",
+          "MG",
+          "PA",
+          "PB",
+          "PE",
+          "PI",
+          "RN",
+          "RO",
+          "RR",
+          "SC",
+          "TO"
+        ],
+        "scientific_names_reported": 847,
+        "rows_with_tree_coordinates": 2436353,
+        "rows_with_tree_number": 2436418,
+        "inventory_count_interpretation": "unique authorization/registry identifiers in selective exploitation records; not independent random plots or complete ecosystem inventories",
+        "ecological_use_limit": "explored-tree/species records are selectively harvested and cannot represent natural stand dominance, basal area or ungrazed species frequency"
+      }
+    },
+    "IBAMA_LICENSES_FEDERAL": {
+      "url": "https://stibamadadosabertosprd.blob.core.windows.net/dados-abertos/dados/SISLIC/sislic-licencas.csv",
+      "dataset_url": "https://dadosabertos.ibama.gov.br/dataset/licencas-ambientais-de-atividades-e-empreendimentos-licenciados-pelo-ibama",
+      "catalog_last_updated": "2026-05-29",
+      "captured_file_sha256": "d17cb2a0738d095e62d1198ebfbe09062b0e709a8572721e03f832617d43f241",
+      "captured_file_bytes": 3347862,
+      "summary": {
+        "license_rows": 14376,
+        "distinct_federal_process_ids": 2532,
+        "asv_license_rows": 2954,
+        "distinct_processes_with_asv": 761,
+        "license_rows_by_type": {
+          "Anuência": 641,
+          "Autorização": 66,
+          "Autorização Especial": 18,
+          "Autorização de Captura, Coleta e Transporte de Material Biológico": 2147,
+          "Autorização de Exploração - Corte de Árvore Isolada": 3,
+          "Autorização de Operação": 26,
+          "Autorização de Supressão de Vegetação": 2183,
+          "Autorização para Abertura de Picada": 78,
+          "Autorização para Operação no Âmbito do Termo de Ajustamento de Conduta": 16,
+          "Indeferimento de Licença Prévia": 3,
+          "Indeferimento de Licença de Instalação": 4,
+          "Indeferimento de Licença de Operação": 1,
+          "Indeferimento de Prorrogação Prévia para Perfuração": 1,
+          "Indeferimento de Prorrogação de Licença de Instalação": 1,
+          "Licença Especial": 4,
+          "Licença Prévia": 800,
+          "Licença Prévia de Produção para Pesquisa": 8,
+          "Licença Prévia para Perfuração": 93,
+          "Licença de Instalação": 1436,
+          "Licença de Instalação e Operação": 59,
+          "Licença de Operação": 1596,
+          "Licença de Operação - Regularização": 27,
+          "Licença de Operação para Pesquisa": 6,
+          "Licença de Operação para Área de Pesquisa": 8,
+          "Licença de Pesquisa Sísmica": 196,
+          "Prorrogação de Licença Prévia": 84,
+          "Prorrogação de Licença de Instalação": 302,
+          "Prorrogação de Licença de Pesquisa Sísmica": 27,
+          "Renovação da Autorização para atividade de Perfuração no Âmbito do Termo de Ajustamento de Conduta": 5,
+          "Renovação de Autorização": 5,
+          "Renovação de Autorização de Abertura de Picada": 25,
+          "Renovação de Autorização de Captura, Coleta e Transporte de Material Biológico": 610,
+          "Renovação de Autorização de Supressão de Vegetação": 437,
+          "Renovação de Autorização para Operação no Âmbito do Termo de Ajustamento de Conduta": 26,
+          "Renovação de Licença Especial": 1,
+          "Renovação de Licença Prévia de Produção para Pesquisa": 7,
+          "Renovação de Licença Prévia para Perfuração": 14,
+          "Renovação de Licença de Instalação": 17,
+          "Renovação de Licença de Operação": 674,
+          "Renovação de Licença de Operação - Regularização": 3,
+          "Renovação de Licença de Pesquisa Sísmica": 10,
+          "Retificação da Licença de Operação para Pesquisa Mineral": 2,
+          "Retificação da Licença de Pesquisa Sísmica": 77,
+          "Retificação da Renovação de Autorização de Captura, Coleta e Transporte de Material Biológico": 269,
+          "Retificação da Renovação de Autorização de Supressão de Vegetação": 41,
+          "Retificação da Renovação de Licença Prévia": 4,
+          "Retificação da Renovação de Licença Prévia de Perfuração": 3,
+          "Retificação da Renovação de Licença de Instalação": 48,
+          "Retificação da Renovação de Licença de Operação": 216,
+          "Retificação da Renovação de Licença de Pesquisa Sísmica": 13,
+          "Retificação de Autorização": 76,
+          "Retificação de Autorização Especial": 6,
+          "Retificação de Autorização de Abertura de Picada": 10,
+          "Retificação de Autorização de Captura, Coleta e Transporte de Material Biológico": 845,
+          "Retificação de Autorização de Supressão de Vegetação": 293,
+          "Retificação de Licença Prévia": 73,
+          "Retificação de Licença Prévia para Perfuração": 3,
+          "Retificação de Licença de Instalação": 324,
+          "Retificação de Licença de Operação": 401,
+          "Retificação de Licença de Operação - Regularização": 4
+        },
+        "license_rows_by_typology_top20": {
+          "Estruturas Rodoviárias": 2620,
+          "Sistema de Transmissão": 2136,
+          "Usina Hidrelétrica": 1807,
+          "Petróleo e Gás - Produção": 1380,
+          "Mineração": 1169,
+          "Estruturas Ferroviárias": 955,
+          "Transporte Hidroviário Marítimo": 702,
+          "Petróleo e Gás - Perfuração": 563,
+          "Petróleo e Gás - Pesquisa Sísmica": 548,
+          "Outras": 467,
+          "Duto Terrestre": 455,
+          "Pequena Central Hidrelétrica": 340,
+          "Instalação Nuclear/Radiativa": 212,
+          "Usina Termelétrica": 183,
+          "Cabo Óptico": 118,
+          "Transposição": 110,
+          "Usina Eólica": 87,
+          "Transporte Hidroviário Fluvial": 86,
+          "Antenas": 59,
+          "Mineroduto": 53
+        },
+        "inventory_count_interpretation": "processes/licenses are candidate document locations; the number of published inventory studies must be counted after retrieving and deduplicating environmental studies"
+      }
+    }
+  },
+  "cross_source_deduplication": {
+    "sinaflor_pmfs_if100_shared_authorization_ids": 0,
+    "sinaflor_pmfs_if100_union_authorization_ids": 9284,
+    "method": "SHA-256 IDs held only in memory for exact join; raw authorization IDs and hashes are not persisted",
+    "interpretation": "union remains count of administrative authorizations, not independent forest inventories"
+  }
+}

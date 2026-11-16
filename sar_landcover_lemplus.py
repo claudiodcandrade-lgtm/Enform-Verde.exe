@@ -42,6 +42,21 @@ def _resource(p):
     return q if q.is_file() else Path(p)
 
 
+
+def _aoi_in_training_envelope(aoi_4326):
+    """Require the complete AOI bounds inside the model's crop training envelope."""
+    minx,miny,maxx,maxy=aoi_4326.geometry.union_all().bounds
+    west,south,east,north=DOMAIN_ENVELOPE
+    return bool(west <= minx and south <= miny and maxx <= east and maxy <= north)
+
+
+def _crop_labels_with_domain_guard(labels, in_training_domain):
+    """Suppress specific crop names outside the spatial training envelope."""
+    values=np.asarray(labels,dtype=object)
+    if not in_training_domain:
+        return np.full(values.shape,UNIDENTIFIED_CROP,dtype=object)
+    return values
+
 def agricultural_year(as_of):
     """Last complete Oct→Sep window strictly before ``as_of``."""
     end_year = as_of.year if as_of.month >= 10 else as_of.year - 1
@@ -327,6 +342,7 @@ def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
     months, season = agricultural_year(as_of)
     models, man = load()
     aoi4326 = aoi.to_crs(4326)
+    in_domain=_aoi_in_training_envelope(aoi4326)
     data, info = _monthly_features(aoi4326, months, search_fn, token_fn)
     if data is None:
         return {"status": info.get("status", "N/D_SEM_PIXELS_SAR"), "reason": info["reason"],
@@ -393,13 +409,12 @@ def classify_aoi(aoi, *, as_of=None, search_fn=None, token_fn=None):
               "geometry": _shape(gm)} for gm, v in shapes(code_arr, mask=code_arr > 0, transform=tr)]
     poly_gdf = (gpd.GeoDataFrame(polys, crs=6933).dissolve("class_name").reset_index()
                 .clip(aoi.to_crs(6933)) if polys else None)
-    cent = aoi4326.geometry.union_all().centroid
-    w, s, e, n = DOMAIN_ENVELOPE
-    in_domain = w <= cent.x <= e and s <= cent.y <= n
     return {"status": "SAR_CLASSIFICADOR_EXPERIMENTAL", "model_id": man["model_id"], "model_sha256": man["sha256"],
             "season": season, "classes": classes, "pixels": int(ok.sum()), "pixel_m": PIXEL_M,
             "landcover_overall_accuracy": val["landcover"]["overall_accuracy"],
             "landcover_overall_accuracy_wilson95": val["landcover"]["overall_accuracy_wilson95"],
             "crop_overall_accuracy": val["crop"]["overall_accuracy"], "in_training_domain": in_domain,
+            "crop_label_policy": ("NAMED_CROPS_ALLOWED_WITH_EXPERIMENTAL_STATUS" if in_domain else
+                                  "SPECIFIC_CROP_SUPPRESSED_OUTSIDE_TRAINING_ENVELOPE"),
             "domain_warning": (None if in_domain else man["domain"]["transfer_note"]), **info,
             "labels_source": "; ".join(t["dataset"] for t in man["training_labels"]), "polygons_6933": poly_gdf}

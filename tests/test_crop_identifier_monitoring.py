@@ -10,7 +10,7 @@ import crop_identifier_consolidated as cic
 from crop_monitoring_forecast import crops_in_land_result, monitoring_forecast
 from crop_vigor_auto import automatic_vigor
 
-LISTED = {"Soja", "Milho", "Sorgo", "Café", "Cana-de-açúcar", "Arroz", "Feijão", "Citros"}
+LISTED = {"Soja", "Milho", "Sorgo", "Café", "Cana-de-açúcar", "Arroz", "Algodão", "Feijão", "Citros"}
 
 
 class ConsolidatedIdentifierTests(unittest.TestCase):

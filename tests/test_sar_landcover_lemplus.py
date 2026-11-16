@@ -109,6 +109,15 @@ class LemplusModelTests(unittest.TestCase):
         models, _ = sl.load()
         self.assertEqual(models["landcover"].n_features_in_, 36)
 
+    def test_crop_identity_is_suppressed_outside_training_envelope(self):
+        tapajos = gpd.GeoDataFrame(geometry=[box(-55.2,-3.2,-55.1,-3.1)],crs=4326)
+        sinop = gpd.GeoDataFrame(geometry=[box(-55.21,-11.89,-55.17,-11.855)],crs=4326)
+        self.assertFalse(sl._aoi_in_training_envelope(tapajos))
+        self.assertTrue(sl._aoi_in_training_envelope(sinop))
+        labels=sl._crop_labels_with_domain_guard(["Soja","Café"],False)
+        self.assertEqual(list(labels),[sl.UNIDENTIFIED_CROP,sl.UNIDENTIFIED_CROP])
+        self.assertEqual(list(sl._crop_labels_with_domain_guard(["Soja"],True)),["Soja"])
+
     def test_model_loader_blocks_incompatible_sklearn_runtime(self):
         from pathlib import Path
         with tempfile.TemporaryDirectory() as d:

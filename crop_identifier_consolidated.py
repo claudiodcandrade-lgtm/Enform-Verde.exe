@@ -10,7 +10,7 @@ from collections import defaultdict
 
 from crop_yield_scenario import PAM_PATH, PRODUCT_KEY, _resource
 
-CROPS=("Milho","Soja","Sorgo","Café","Cana-de-açúcar","Arroz","Feijão","Citros")
+CROPS=("Milho","Soja","Arroz","Algodão","Sorgo","Cana-de-açúcar","Café","Feijão","Citros")
 TEMPORARY_UNSEPARATED=("Milho","Sorgo","Feijão")
 REGISTRY={crop:{
     "route":"SAR_VALIDADO",

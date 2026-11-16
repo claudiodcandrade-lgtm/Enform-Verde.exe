@@ -2,6 +2,8 @@
 
 Aplicativo desktop Windows para biomassa e carbono florestal.
 
+Versão candidata atual: **3.26.51-PRECAMPO-EXPERIMENTAL (V88.93)**. O catálogo executável de alvos inclui soja, milho, arroz, algodão, sorgo, cana-de-açúcar, café, feijão, citros, pastagens, silvicultura e ILP/IPF/ILPF. O painel PAM + balanço hídrico segue restrito a soja e milho; as demais culturas agrícolas recebem cenários exploratórios sem painel próprio calibrado. Pastagens, silvicultura e sistemas integrados têm cálculos e unidades próprios, condicionados a dados de campo/manejo/inventário. A candidata ainda não foi comprovada em build Windows nem validada em campo.
+
 O GitHub Actions compila automaticamente o pacote operacional Windows. Após baixar o artefato **Enform-Verde-Windows-operacional**, extraia o ZIP e dê duplo clique em **Enform Verde.exe**.
 
 A compilação executa um autoteste do código-fonte e outro do executável compilado antes de publicar o artefato.

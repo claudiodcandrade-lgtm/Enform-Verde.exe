@@ -511,3 +511,19 @@ A interface agora coloca um quadro executivo com borda e título em cada uma das
 
 Código `3.26.46-PRECAMPO-EXPERIMENTAL`, SHA `88f9b67cc4f9cfdce04e9f974cff192dcc03af82`. `compileall` e 2 testes do contrato de quadros passaram. A verificação visual local não executou porque o ambiente não possui `requests`, dependência importada por `desktop_app.py`; exigir smoke visual Windows/CI no SHA final antes do EXE. A mudança é de apresentação e não altera cálculos, sensores ou limites científicos. A candidata permanece não homologada; KML privado integral da Fazenda Maria Eduarda e validação de campo seguem pendentes.
 - `tools/check_test_collection.py` inspecionou 175 módulos, mas terminou com código 1 porque módulos geoespaciais não importam sem as dependências do ambiente. O `ui_visual_standard.py` também foi bloqueado pela falta de `requests`.
+
+## V88.90 — requisitos paralelos de inventário e extrapolação agrícola SAR
+
+A hierarquia florestal não altera o cálculo do solo. Fontes de licenciamento só contribuem para estrutura/biodiversidade quando há evidência de aceite do próprio inventário anexo, como último recurso. No relatório Tapajós, pequenas áreas de cultura correspondem a pixels da grade de 80 m e eram identificadas por um classificador fora de seu envelope espacial. O programa agora suprime o nome específico da cultura e o forecast correspondente se a AOI inteira estiver fora do domínio. Isso não afeta as fontes de carbono do solo e não confirma cobertura no campo.
+
+## V88.92 — escopo do fluxo agrícola SAR-safra
+
+A integração de vigor SAR condicional ao modelo PAM + clima não altera os dados, unidades, profundidade, fontes ou incertezas do carbono do solo. Os parâmetros de água disponível continuam sendo usados apenas no módulo de balanço hídrico agrícola e não são substitutos de medições locais de fertilidade ou SOC.
+
+## V88.93 — escopo agrícola ampliado (15/11/2026)
+
+A extensão dos modelos para algodão, arroz, sorgo, cana, café, feijão, citros, pastagens, silvicultura e sistemas integrados não altera fontes, profundidades ou cálculo do carbono orgânico do solo. Água disponível usada em cenários agrícolas não pode ser tratada como medição de fertilidade nem convertida em estoque de carbono. Mantêm-se os requisitos desta especificação de SOC 0–100 cm e suas regras de incerteza.
+
+A ordenação revisada das fontes de inventário também não altera o módulo de SOC: bases oficiais medidas têm prioridade sobre anexos de licenciamento, e estes só podem ser referência estrutural secundária quando o aceite do próprio inventário for comprovado; nenhuma dessas referências substitui os requisitos pedológicos e analíticos de carbono do solo definidos neste documento.
+
+O gate de leitura live Sentinel-1 VV/VH foi incluído no workflow de build, mas não altera as fontes, os cálculos nem a incerteza de SOC. A leitura real validada nesta rodada limita-se a 9 pixels por polarização num recorte pontual de Sinop; não corresponde a observação de solo nem confirma cobertura de toda a propriedade.

@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.46-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.51-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -2817,8 +2817,12 @@ class App(tk.Tk):
                             "Base de produtividade: painel histórico PAM + clima/balanço hídrico. "
                             + ("Vigor SAR atual não foi incorporado: não há máscara semântica atual de "
                                "cultura compatível; veja o diagnóstico estrutural SAR relativo em separado."
-                               if not inputs.get("current_crop_specific_sar_vigor_used") else
-                               "Vigor SAR datado sobre máscara de cultura foi incorporado conforme o contrato do modelo."),
+                               if not (inputs.get("current_crop_specific_sar_vigor_used") or
+                                       inputs.get("experimental_current_sar_vigor_conditioned_yield")) else
+                               ("Vigor SAR datado incorporado condicionalmente sobre máscara anual experimental; "
+                                "a permanência da cultura não foi confirmada."
+                                if inputs.get("experimental_current_sar_vigor_conditioned_yield") else
+                                "Vigor SAR datado sobre máscara de cultura foi incorporado conforme o contrato do modelo.")),
                             "Transferência da máscara/área retrospectiva para a safra projetada: "
                             + str(inputs.get("area_transfer_uncertainty") or "não aplicável")
                             + "; incerteza de classificação/transferência não incluída no intervalo de produtividade."]
@@ -2845,8 +2849,8 @@ class App(tk.Tk):
             "Modelos e inventários: consulte o estado de disponibilidade e compatibilidade antes de interpretar resultados.")
         self.science_exec_box.pack(fill="x",pady=(6,4))
         ttk.Button(f,text="RESUMIR INVENTÁRIO (DAP + ÁREA BASAL)",command=self.summarize_inventory_ui).pack(anchor="w",pady=(6,2))
-        ttk.Button(f,text="AMPLIAR BIBLIOTECA — INSTITUIÇÕES, PNLA E SINAFLO",command=self.harvest_official_inventory_ui).pack(anchor="w",pady=2)
-        ttk.Label(f,text="Busca bases abertas institucionais e oficiais, baixa recursos do REDAPE e do Sinaflor e abre o PNLA para localizar estudos públicos por processo. Inventários privados só entram no último nível e com margem de erro publicada.",wraplength=1000).pack(anchor="w",pady=(0,6))
+        ttk.Button(f,text="AMPLIAR BIBLIOTECA — FONTES HIERARQUIZADAS",command=self.harvest_official_inventory_ui).pack(anchor="w",pady=2)
+        ttk.Label(f,text="Consulta APIs do IFN/SFB, Sinaflor/IBAMA, REDAPE/Embrapa, repositórios institucionais OAI e Zenodo; baixa recursos públicos do REDAPE e Sinaflor e registra as demais rotas de acesso, inclusive universidades, PNLA, IBAMA, órgãos estaduais e unidades de conservação. Inventários fitossociológicos entram na mesma triagem estrutural e taxonômica.",wraplength=1000).pack(anchor="w",pady=(0,6))
         source_box=ttk.LabelFrame(f,text="Métodos, fontes e limites de aplicação",style="Exec.TLabelframe"); source_box.pack(fill="both",expand=True,pady=8)
         self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
         source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
@@ -2881,18 +2885,36 @@ class App(tk.Tk):
         base=filedialog.askdirectory(title="Escolha a pasta da biblioteca ampliada de inventários")
         if not base:return
         root=Path(base)/"Enform_Verde_Biblioteca_Inventarios"
-        self.status.set("Consultando REDAPE e Sinaflor; abrindo pesquisa pública do PNLA…")
-        self._set(self.src,"Coleta em andamento. Esta janela continuará responsiva.\n\nPrioridade: parcelas georreferenciadas abertas de instituições reconhecidas; depois inventários institucionais totalizados com erro documentado; dados oficiais do IFN/SFB e Sinaflor no mesmo nível de origem oficial; por último, inventários privados de licenciamento somente com autorização e margem de erro publicada.")
-        webbrowser.open(PNLA_PORTAL)
+        self.status.set("Consultando catálogos institucionais e fontes oficiais hierarquizadas…")
+        self._set(self.src,"Coleta em andamento. Esta janela continuará responsiva.\n\nOrdem aplicada: (1) parcelas abertas de instituições reconhecidas na mesma fitofisionomia e microrregião; (2) parcelas compatíveis na região, depois estatísticas publicadas por instituições reconhecidas; (3) inventário anexado a processo ambiental somente se o próprio documento tiver aceite expresso verificável; (4) bases oficiais administrativas para localizar estudos, sem contar autorizações como inventários; (5) fontes sem API ficam disponíveis como links de consulta. Fitossociologia pode apoiar área basal, DAP, distribuição diamétrica e espécies dominantes. Descoberta de metadados não equivale a inventário validado.")
         def collect():
             results={}
             errors={}
+            try:
+                from inventory_source_access import collect_hierarchical_sources
+                results["FONTES_HIERARQUIZADAS"]=collect_hierarchical_sources(
+                    root/"00_Fontes_hierarquizadas",max_oai_pages=30)
+            except Exception as exc:
+                errors["FONTES_HIERARQUIZADAS"]=f"{type(exc).__name__}: {exc}"
             for name,fn,folder in (("REDAPE",harvest_redape,"01_REDAPE_Embrapa"),("SINAFLO",harvest_sinaflor,"02_SINAFLO_IBAMA")):
                 try:results[name]=fn(root/folder)
                 except Exception as exc:errors[name]=f"{type(exc).__name__}: {exc}"
             def finish():
                 lines=["BIBLIOTECA DE INVENTÁRIOS — COLETA DE FONTES OFICIAIS",""]
                 for name,manifest in results.items():
+                    if name=="FONTES_HIERARQUIZADAS":
+                        runs=manifest.get("runs",[])
+                        machine=sum(int(x.get("records",0)) for x in runs)
+                        ok=sum(1 for x in runs if x.get("status")=="OK")
+                        lines += [f"Busca hierarquizada: {machine} registros de metadados encontrados em {ok}/{len(runs)} rotas automatizadas.",
+                                  "  Tiers: 1) parcelas/dados abertos de instituições reconhecidas; 2) estatísticas institucionais publicadas; 3) inventário anexo com aceite expresso; 4) bases oficiais administrativas para localizar estudos; 5) portais sem API confirmada.",
+                                  "  Arquivo de rotas: "+str(root/"00_Fontes_hierarquizadas"/"fontes_hierarquizadas.csv"),
+                                  "  Manifesto: "+str(root/"00_Fontes_hierarquizadas"/"manifest_fontes_hierarquizadas.json"),
+                                  "  Catálogo SQLite local: "+str(root/"00_Fontes_hierarquizadas"/"catalogo_inventarios_fontes_hierarquizadas.sqlite"),
+                                  "  Metadados encontrados continuam inelegíveis até auditoria do arquivo e da compatibilidade ecológica."]
+                        for run in runs:
+                            if run.get("status")!="OK": lines.append(f"  {run.get('source_id')}: {run.get('status')} — {run.get('error','rota/endpoint não confirmado')}")
+                        continue
                     items=manifest.get("resources",[])
                     downloaded=sum(1 for x in items if x.get("download_status")=="baixado")
                     lines += [f"{name}: {len(items)} recursos catalogados; {downloaded} baixados."]
@@ -2911,6 +2933,9 @@ class App(tk.Tk):
                 lines += ["","Arquivos e manifestos salvos em:",str(root)]
                 self._set(self.src,"\n".join(lines))
                 self.status.set("Coleta de catálogos concluída.")
+                access_index=root/"00_Fontes_hierarquizadas"/"acesso_fontes_hierarquizadas.html"
+                if access_index.exists():
+                    webbrowser.open(access_index.resolve().as_uri())
                 messagebox.showinfo("Biblioteca de inventários",f"Coleta concluída. Consulte os manifestos e arquivos em:\n{root}")
             self.after(0,finish)
         threading.Thread(target=collect,daemon=True).start()
@@ -4149,25 +4174,45 @@ class App(tk.Tk):
             hc.add_data(Reference(chart,min_col=5,min_row=4,max_row=17),titles_from_data=True)
             hc.set_categories(Reference(chart,min_col=4,min_row=5,max_row=17));hc.height=8;hc.width=16;chart.add_chart(hc,"H12")
 
-        chart["G2"]="10 espécies dominantes — frequência média de ocorrência nas parcelas compatíveis."
-        chart["G2"].font=Font(bold=True,color=green);chart["G4"]="Espécie";chart["H4"]="Frequência média (%)"
-        species_values={};species_weights={}
+        chart["G2"]="Lista qualitativa — espécies de ocorrência mais provável (10 maiores dominâncias por área basal)."
+        chart["G2"].font=Font(bold=True,color=green)
+        for col,label in enumerate(("Nome vulgar","Nome científico","Área basal média (m²/ha)",
+                                    "Dominância relativa (%)","Frequência nas parcelas (%)"),7):
+            chart.cell(4,col,label)
+        species_values={}
         for ref in bio_refs:
             if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":continue
             weight=float(ref.get("inventory_n_plots") or 0)
-            for item in ref.get("top10_by_plot_incidence") or []:
-                name=str(item.get("species") or "");freq=float(item.get("frequency_pct") or 0)
-                if name:
-                    species_values[name]=species_values.get(name,0)+freq*weight
-                    species_weights[name]=species_weights.get(name,0)+weight
-        species_rank=sorted(((name,species_values[name]/species_weights[name]) for name in species_values if species_weights[name]>0),key=lambda x:(-x[1],x[0]))[:10]
+            for item in ref.get("top10_by_dominance") or []:
+                scientific=str(item.get("scientific_name") or "").strip()
+                published=str(item.get("name_as_published") or item.get("species") or "").strip()
+                taxon=(scientific if scientific and not scientific.startswith("N/D")
+                       else str(ref.get("institutions") or "fonte")+"|"+published)
+                if not taxon or weight<=0:continue
+                record=species_values.setdefault(taxon,{"weight":0.0,"ba":0.0,"rel":0.0,"freq":0.0,
+                    "common":str(item.get("common_name") or "N/D"),
+                    "scientific":scientific or "N/D — fonte sem nome científico explícito",
+                    "published":published})
+                record["weight"]+=weight
+                record["ba"]+=float(item.get("mean_basal_area_m2_ha") or 0)*weight
+                record["rel"]+=float(item.get("relative_dominance_pct") or 0)*weight
+                record["freq"]+=float(item.get("frequency_pct") or 0)*weight
+        species_rank=sorted(((taxon,{k:(v[k]/v["weight"] if k in {"ba","rel","freq"} else v[k])
+                                      for k in v if k!="weight"})
+                             for taxon,v in species_values.items() if v["weight"]>0),
+                            key=lambda x:(-x[1]["ba"],x[0]))[:10]
         if species_rank:
-            for row,(name,freq) in enumerate(species_rank,5):chart.cell(row,7,name);chart.cell(row,8,freq)
+            for row,(_taxon,item) in enumerate(species_rank,5):
+                chart.cell(row,7,item["common"]);chart.cell(row,8,item["scientific"])
+                chart.cell(row,9,item["ba"]);chart.cell(row,10,item["rel"]);chart.cell(row,11,item["freq"])
             species_refs=[ref for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls")]
             species_sources=inventory_source_labels(species_refs)
-            chart["G3"]="Inventários microrregionais/regionais compatíveis; média ponderada por parcelas. Fontes (instituição — URL): "+("; ".join(species_sources) or "N/D")
-            bc=BarChart();bc.type="bar";bc.style=10;bc.title="10 espécies mais frequentes";bc.x_axis.title="Frequência média (%)";bc.y_axis.title="Espécie"
-            bc.add_data(Reference(chart,min_col=8,min_row=4,max_row=4+len(species_rank)),titles_from_data=True)
+            scopes=sorted({str(ref.get("geographic_scope") or "REGIONAL") for ref in species_refs})
+            phys=sorted({str(ref.get("physiognomy") or "N/D") for ref in species_refs})
+            chart.merge_cells("G3:K3")
+            chart["G3"]="Referência: "+", ".join(phys)+"; escopo "+", ".join(scopes)+". Fontes (instituição — URL): "+("; ".join(species_sources) or "N/D")
+            bc=BarChart();bc.type="bar";bc.style=10;bc.title="Dominância média das espécies";bc.x_axis.title="Área basal média (m²/ha)";bc.y_axis.title="Nome vulgar"
+            bc.add_data(Reference(chart,min_col=9,min_row=4,max_row=4+len(species_rank)),titles_from_data=True)
             bc.set_categories(Reference(chart,min_col=7,min_row=5,max_row=4+len(species_rank)));bc.height=8;bc.width=16;chart.add_chart(bc,"A29")
         else:
             chart["G5"]="N/D — inventário compatível não carregado ou não encontrado."

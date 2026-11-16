@@ -28,6 +28,7 @@ META = ROOT / "data" / "pam_microregion_yield_2015_2024.metadata.json"
 BASE = "https://apisidra.ibge.gov.br/values/t/5457/n9/all/v/112,214,216/p/2015-2024/c782/{}"
 VARIABLES = {"112": "Rendimento médio da produção", "214": "Quantidade produzida", "216": "Área colhida"}
 PRODUCTS = {
+    "algodao_herbaceo": ("Algodão herbáceo (em caroço)", "40099"),
     "arroz_grao": ("Arroz (em casca)", "40102"),
     "cafe_total": ("Café (em grão)", "40139"),
     "cana_acucar": ("Cana-de-açúcar", "40106"),

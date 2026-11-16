@@ -128,6 +128,8 @@ class OfficialInventoryHarvestTests(unittest.TestCase):
         )
         self.assertTrue(good["may_support_estimate"])
         self.assertFalse(good["include_in_sar_calibration"])
+        self.assertEqual(good["source_hierarchy_rank"], 6)
+        self.assertEqual(good["source_hierarchy_label"], "inventario_privado_sem_aceite_comprovado")
         bad = evaluate_private_licensing_inventory(
             authorized_access=True,
             published_margin_of_error=False,
@@ -157,10 +159,12 @@ class OfficialInventoryHarvestTests(unittest.TestCase):
         self.assertFalse(blocked["may_support_estimate"])
 
     def test_source_hierarchy_puts_recognized_research_before_licensing_records(self):
-        self.assertEqual([x["rank"] for x in SOURCE_HIERARCHY], [1, 2, 3, 4, 5])
+        self.assertEqual([x["rank"] for x in SOURCE_HIERARCHY], [1, 2, 3, 4, 5, 6])
         self.assertEqual(SOURCE_HIERARCHY[0]["label"], "institucional_parcela_aberta")
         self.assertEqual(SOURCE_HIERARCHY[2]["label"], "base_publica_oficial")
-        self.assertEqual(SOURCE_HIERARCHY[-1]["label"], "inventario_privado_de_licenciamento")
+        self.assertEqual(SOURCE_HIERARCHY[3]["label"], "inventario_anexo_aceito_por_orgao_ambiental")
+        self.assertEqual(SOURCE_HIERARCHY[4]["label"], "metadado_publico_de_licenciamento")
+        self.assertEqual(SOURCE_HIERARCHY[5]["label"], "inventario_privado_sem_aceite_comprovado")
 
 
 if __name__ == "__main__":

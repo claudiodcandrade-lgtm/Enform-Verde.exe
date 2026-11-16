@@ -908,16 +908,17 @@ def _preserve_sar_canopy_height(result, height, audit=None):
     return out
 
 
-HEIGHT_PRIORITY_BIOMES=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga")
+HEIGHT_PRIORITY_BIOMES=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga","Pampa")
 def height_scope_contract(biome=None,physiognomy=None):
-    """National request policy; per-AOI coverage and error remain product-gated."""
+    """National first-priority height search; coverage remains AOI/product-gated."""
     return {
         "requested_biomes":list(HEIGHT_PRIORITY_BIOMES),
+        "priority_scope":"TODAS_AS_AOIS_NO_BRASIL",
         "aoi_biome":str(biome or ""),
         "aoi_ibge_physiognomy":str(physiognomy or ""),
-        "search_policy":"Query ESA BIOMASS FP_FH__L2B P-band for each AOI, independent of biome/physiognomy; do not infer coverage from mission-wide goals.",
-        "priority":"ESA BIOMASS FP_FH__L2B where actual AOI pixels are available and valid.",
-        "fallback":"GTDX ORNL 2298 TanDEM-X InSAR + GEDI only where its delivered pantropical rasters overlap the AOI; documented coverage includes the Amazon Basin, not all five Brazilian biomes.",
+        "search_policy":"Prioridade absoluta: consultar ESA BIOMASS FP_FH__L2B/L2A e ler pixels de altura em cada AOI brasileira, sem condicionar a bioma, fitofisionomia ou sucesso de AGB. Se não cobrir, consultar produto alternativo de altura com cobertura real da AOI; ausência só após busca e leitura completas.",
+        "priority":"ESA BIOMASS FP_FH__L2B/L2A; altura SAR antes da seleção de AGB em todo o Brasil",
+        "fallback":"GTDX ORNL 2298 TanDEM-X InSAR + GEDI somente onde os rasters entregues interceptem a AOI; cobertura documentada inclui Amazônia, não é cobertura nacional. Fora dela, buscar produto publicado adicional compatível; sem cobertura ou erro compatível, declarar N/D com o motivo, nunca substituir por retroespalhamento.",
         "class_policy":"Report height by IBGE physiognomy for valid pixels; preserve no-data and flag physiognomies where a forest-canopy-height metric is not scientifically defined.",
         "error_policy":"Carry product-provided pixel uncertainty or a documented validation error. Within-AOI pixel SD is spatial dispersion, not measurement error; never substitute it for product error.",
         "status":"AOI_SPECIFIC_COVERAGE_AND_ERROR_REQUIRED"
@@ -1990,8 +1991,22 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         "product_types":sorted({it.get("_product_type") for it in fh_items})}
     if fh_items:
         try:
-            hd=download_maap_height(gdf,offline_token,Path(cache)/"biomass_height",items=fh_items)
+            height_cache_key=("biomass_height_download",
+                str(Path(cache).resolve()),
+                tuple(sorted(str(it.get("id") or "") for it in fh_items)))
+            height_cache_hit=bool(pipeline_route_cache is not None and
+                                  height_cache_key in pipeline_route_cache)
+            if height_cache_hit:
+                hd=dict(pipeline_route_cache[height_cache_key])
+            else:
+                hd=download_maap_height(gdf,offline_token,Path(cache)/"biomass_height",items=fh_items)
+                if pipeline_route_cache is not None:
+                    # Product extraction/download is AOI scoped. Reuse these
+                    # source rasters across native strata; keep exact zonal
+                    # reads below scoped to each stratum geometry.
+                    pipeline_route_cache[height_cache_key]=dict(hd)
             audit["biomass_height"]=hd
+            audit["biomass_height"]["analysis_download_cache"]=("HIT" if height_cache_hit else "MISS")
             # A FH-only product must not be passed through the AGB classifier
             # just to extract height. Read true georeferenced zonal pixels.
             for height_path in hd.get("paths") or []:
@@ -2055,8 +2070,19 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     # an ESA MAAP token is used only when the catalogue asset is technically protected.
     if l2items:
         try:
-            d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass",items=l2items)
+            agb_items=[it for it in l2items if it.get("_product_type","FP_AGB_L2B")=="FP_AGB_L2B"]
+            agb_cache_key=("biomass_agb_download",str(Path(cache).resolve()),
+                tuple(sorted(str(it.get("id") or "") for it in agb_items)))
+            agb_cache_hit=bool(pipeline_route_cache is not None and
+                               agb_cache_key in pipeline_route_cache)
+            if agb_cache_hit:
+                d=dict(pipeline_route_cache[agb_cache_key])
+            else:
+                d=download_maap_agb(gdf,offline_token,Path(cache)/"biomass",items=l2items)
+                if pipeline_route_cache is not None:
+                    pipeline_route_cache[agb_cache_key]=dict(d)
             audit["biomass_l2b"]["download"]=d
+            audit["biomass_l2b"]["download"]["analysis_download_cache"]=("HIT" if agb_cache_hit else "MISS")
             if d.get("paths"):
                 pr=process_real_sar(gdf,d["paths"],biome,phys)
                 pr["audit"]=audit; pr["paths"]=d["paths"]; pr["data_origin"]="SAR_P_BIOMASS_FP_AGB_L2B"
@@ -2068,6 +2094,25 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                     if pr.get("uncertainty_mg_ha") is not None else
                     "produto não forneceu camada AGB_Std_Dev legível; dispersão espacial reportada à parte, sem erro local validado")
                 if height_structure_estimate and height_structure_estimate.get("agb_mg_ha") is not None:
+                    # When both measured P-band H100 and the local horizontal
+                    # inventory support are valid, the approved experimental
+                    # height×structure equation is the carbon estimate. Keep
+                    # official BIOMASS AGB as an independent comparison.
+                    direct_comparison={"agb_mg_ha":pr.get("agb_mg_ha"),
+                        "uncertainty_mg_ha":pr.get("uncertainty_mg_ha"),
+                        "uncertainty_kind":pr.get("uncertainty_kind"),
+                        "source":pr.get("source"),"product":pr.get("product"),
+                        "data_origin":pr.get("data_origin"),
+                        "n_valid_pixels":pr.get("n_valid_pixels")}
+                    height_result=dict(height_structure_estimate)
+                    height_result["audit"]=audit
+                    height_result["paths"]=(sar_height or {}).get("paths",[])
+                    height_result["official_agb_product_comparison"]=direct_comparison
+                    height_result["agb_selection_reason"]=(
+                        "H100 SAR × área basal do inventário local: suporte espacial e domínio da calibração compatíveis; "
+                        "AGB oficial mantida como comparação independente")
+                    return _preserve_sar_canopy_height(height_result,sar_height,audit)
+                if height_structure_estimate:
                     pr["height_structure_comparison"]=height_structure_estimate
                 return _preserve_sar_canopy_height(pr,sar_height,audit)
         except Exception as e:audit["warnings"].append("BIOMASS P download/process: "+str(e))

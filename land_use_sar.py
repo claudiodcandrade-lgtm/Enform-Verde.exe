@@ -1078,6 +1078,8 @@ def report_lines(summary, fmt=lambda v:f'{v:.2f}'):
     if lemplus.get('season'):
         lines.append('  Safra='+str(lemplus.get('season'))+'; cenas='+str(lemplus.get('scenes_used','N/D'))+
                      '; pixels='+str(lemplus.get('pixels','N/D'))+'; domínio='+str(lemplus.get('domain','N/D')))
+        if lemplus.get('crop_label_policy') == 'SPECIFIC_CROP_SUPPRESSED_OUTSIDE_TRAINING_ENVELOPE':
+            lines.append('  Identificação específica de cultura: SUPRIMIDA — AOI fora do envelope geográfico de treinamento; área agrícola permanece experimental e cultura N/D.')
     lem_reason=lemplus.get('reason')
     acquisition=lemplus.get('acquisition_diagnostic') or {}
     if lem_reason or acquisition:

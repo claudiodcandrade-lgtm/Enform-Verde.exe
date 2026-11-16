@@ -143,14 +143,19 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
             except ValueError:
                 continue
     candidate_blocks = reference_mode == "sar_candidate_blocks"
+    annual_mask_blocks = reference_mode == "annual_experimental_crop_mask"
     if used < MIN_REFERENCE_BLOCKS:
-        reference_label = "blocos espaciais SAR candidatos" if candidate_blocks else "talhões SAR independentes"
+        reference_label = ("blocos espaciais SAR candidatos" if candidate_blocks else
+                           "blocos espaciais da máscara anual experimental" if annual_mask_blocks else
+                           "talhões SAR independentes")
         return {"status":"N/D",
                 "reason":f"só {used} {reference_label} no raio de {ring_km} km; vigor relativo requer {MIN_REFERENCE_BLOCKS}",
                 "scene_id":scene["id"],"acquisition_utc":scene["acquisition_utc"],
-                "reference_fields":None if candidate_blocks else used,
-                "reference_blocks":used if candidate_blocks else None,
-                "reference_source":"blocos não sobrepostos da máscara SAR atual experimental" if candidate_blocks else "classes atuais do classificador SAR validado"}
+                "reference_fields":None if (candidate_blocks or annual_mask_blocks) else used,
+                "reference_blocks":used if (candidate_blocks or annual_mask_blocks) else None,
+                "reference_source":("blocos não sobrepostos da máscara SAR atual experimental" if candidate_blocks else
+                    "blocos não sobrepostos da máscara anual SAR experimental; classe atual não confirmada" if annual_mask_blocks else
+                    "classes atuais do classificador SAR validado")}
     height_array=None; height_audit={"eligible":False,"reasons":["modelo de altura não configurado"]}
     if height_provider is not None:
         try:
@@ -169,11 +174,13 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
     reference_definition = (
         "blocos espaciais não sobrepostos da máscara de candidatos cultivados SAR da mesma AOI e aquisição; cultura não identificada"
         if candidate_blocks else
+        "blocos espaciais não sobrepostos derivados da máscara anual SAR experimental da cultura; Sentinel-1 é atual, mas a permanência da cultura no local não está confirmada"
+        if annual_mask_blocks else
         "talhões de cultura em geometrias independentes classificadas pelo mesmo modelo SAR aceito; pixels fora do talhão-alvo, mesma cena e janela")
     out.update({"scene_id":scene["id"],"acquisition_utc":scene["acquisition_utc"],
                 "scene_age_days":round(age_days,2),"search_window_days":window_days,
-                "reference_fields":None if candidate_blocks else used,
-                "reference_blocks":used if candidate_blocks else None,
+                "reference_fields":None if (candidate_blocks or annual_mask_blocks) else used,
+                "reference_blocks":used if (candidate_blocks or annual_mask_blocks) else None,
                 "reference_definition":reference_definition,
                 "reference_labels":peer_labels,
                 "height_audit":height_audit,
@@ -181,5 +188,9 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
                 "crop":crop_name,
                 "source":("Sentinel-1 RTC VV/VH atual + máscara de candidatos SAR experimental; não confirma cultura"
                           if candidate_blocks else
-                          "Sentinel-1 RTC VV/VH atual + máscara SAR validada; MapBiomas não utilizado")})
+                          "Sentinel-1 RTC VV/VH atual sobre máscara anual SAR experimental; permanência da cultura não confirmada"
+                          if annual_mask_blocks else
+                          "Sentinel-1 RTC VV/VH atual + máscara SAR validada; MapBiomas não utilizado"),
+                "conditional_scope":"SAFRA_ANTERIOR_MASK_X_SAR_ATUAL" if annual_mask_blocks else
+                                   "CANDIDATO_CULTIVADO" if candidate_blocks else "MASCARA_CULTURA_ACEITA"})
     return out

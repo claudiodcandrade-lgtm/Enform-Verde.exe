@@ -3,6 +3,7 @@
 This deliberately exercises public catalogue discovery, the documented SAS route,
 GDAL/rasterio decoding and actual pixel extraction. It is not a synthetic contract.
 """
+import os
 import unittest
 from datetime import datetime, timedelta, timezone
 
@@ -24,6 +25,10 @@ def require_live_mpc_token():
         return get_runtime_sas_token()
     except RuntimeError as exc:
         if "SAS token unavailable via collection and storage routes" in str(exc):
+            if os.environ.get("ENFORM_REQUIRE_LIVE_SAR_PIXEL_GATE") == "1":
+                raise RuntimeError(
+                    "Required live VV/VH pixel gate failed: Planetary Computer SAS signing service unavailable"
+                ) from exc
             raise unittest.SkipTest("Microsoft Planetary Computer SAS signing service unavailable; required release live-pixel gate remains blocking") from exc
         raise
 
@@ -33,8 +38,17 @@ class Sentinel1LiveAccessTests(unittest.TestCase):
         from unittest.mock import patch
         with patch(__name__ + ".get_runtime_sas_token",
                    side_effect=RuntimeError("MPC Sentinel-1 SAS token unavailable via collection and storage routes (RuntimeError,RuntimeError)")):
-            with self.assertRaises(unittest.SkipTest):
-                require_live_mpc_token()
+            with patch.dict(os.environ, {}, clear=True):
+                with self.assertRaises(unittest.SkipTest):
+                    require_live_mpc_token()
+
+    def test_required_gate_fails_instead_of_skipping_when_signer_is_unavailable(self):
+        from unittest.mock import patch
+        error = RuntimeError("MPC Sentinel-1 SAS token unavailable via collection and storage routes")
+        with patch(__name__ + ".get_runtime_sas_token", side_effect=error):
+            with patch.dict(os.environ, {"ENFORM_REQUIRE_LIVE_SAR_PIXEL_GATE": "1"}):
+                with self.assertRaisesRegex(RuntimeError, "Required live VV/VH pixel gate failed"):
+                    require_live_mpc_token()
 
     def test_current_mpc_scene_decodes_real_vv_and_vh_pixels(self):
         # Center of the user's attached Sinop AOI (FAZENDA MARIA EDUARDA).
@@ -63,6 +77,14 @@ class Sentinel1LiveAccessTests(unittest.TestCase):
                 self.assertTrue(vh["median_native"] > 0)
                 self.assertEqual(vv["status"], "pixels_read")
                 self.assertEqual(vh["status"], "pixels_read")
+                print("LIVE_S1_VV_VH_PIXELS_OK", {
+                    "scene_id": scene.get("id"),
+                    "acquired": scene.get("datetime") or (scene.get("properties") or {}).get("datetime"),
+                    "vv_valid_pixels": vv["valid_pixels"],
+                    "vh_valid_pixels": vh["valid_pixels"],
+                    "vv_median_native": vv["median_native"],
+                    "vh_median_native": vh["median_native"],
+                })
                 return
             except Exception as exc:
                 failures.append((scene.get("id"), type(exc).__name__))

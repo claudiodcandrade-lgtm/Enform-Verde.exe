@@ -8,6 +8,9 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 
 from crop_identifier_consolidated import CROPS, REGISTRY, attribute_unseparated
+from priority_production_models import (PAM_CLIMATE_SCENARIO_CROPS, model_contract as priority_model_contract,
+                                        priority_target)
+from priority_production_models import TARGETS as PRIORITY_MODEL_TARGETS
 CANONICAL_CROPS = {name.casefold(): name for name in CROPS}
 CANONICAL_CROPS.update({"citrus": "Citros", "cana": "Cana-de-açúcar", "cana de açúcar": "Cana-de-açúcar"})
 
@@ -28,6 +31,9 @@ def mapbiomas_historical_reference(land):
         if name.startswith("Lavoura de "):
             crop = canonical_crop(name.replace("Lavoura de ", "").strip())
             out[crop] = out.get(crop, 0.0) + float(item.get("area_ha") or 0.0)
+        elif priority_target(name) in ("Pastagens", "Silvicultura"):
+            target = priority_target(name)
+            out[target] = out.get(target, 0.0) + float(item.get("area_ha") or 0.0)
         elif name in ("Outras Lavouras Temporárias", "Lavoura Temporária"):
             out["__temporarias__"] = out.get("__temporarias__", 0.0) + float(item.get("area_ha") or 0.0)
     return out
@@ -42,6 +48,9 @@ def _crops_from_sar_source(land, prefix):
         if name.startswith("Lavoura de "):
             crop = canonical_crop(name.replace("Lavoura de ", "").strip())
             out[crop] = out.get(crop, 0.0) + float(item.get("area_ha") or 0.0)
+        elif priority_target(name) in ("Pastagens", "Silvicultura"):
+            target = priority_target(name)
+            out[target] = out.get(target, 0.0) + float(item.get("area_ha") or 0.0)
         elif name in ("Outras Lavouras Temporárias", "Lavoura Temporária"):
             out["__temporarias__"] = out.get("__temporarias__", 0.0) + float(item.get("area_ha") or 0.0)
     return out
@@ -167,6 +176,7 @@ def _append_candidate_vigor_lines(lines, result):
         lines.append("• Vigor SAR RELATIVO — CONDICIONAL/EXPERIMENTAL em área cultivada candidata; cultura não identificada: "
                      + str(result.get("class", "N/D")) + (" (" + distribution + ")" if distribution else "") + ".")
         lines.append("  A classe compara blocos espaciais SAR candidatos da mesma AOI e aquisição; é assinatura estrutural relativa, não vigor agronômico validado, cultura, fitossanidade ou produtividade.")
+        lines.append("  O resultado não confirma cultivo atual nem identidade da cultura.")
         lines.append("  Máscara de candidatos: série temporal móvel de até 150 dias; vigor calculado apenas com VV/VH de cena datada dentro de 30 dias.")
         lines.append("  Amostras SAR válidas: " + str(result.get("patches_valid", 0)) + "/" + str(result.get("patches_evaluated", 0)) +
                      "; área de candidatos coberta: " + format(float(result.get("sar_sample_coverage_fraction", 0))*100, ".1f") + "%.")
@@ -200,6 +210,31 @@ def _append_candidate_vigor_lines(lines, result):
     else:
         lines.append("• Vigor: N/D — diagnóstico SAR condicional indisponível: " + str(result.get("reason", "não há dados/referências suficientes")))
 
+
+def _integrated_system_audit(land):
+    """Carry same-unit management evidence to the report without inferring it from cover."""
+    from integrated_system_classifier import identify_integrated_system, model_route_status
+    records = (land or {}).get("integrated_system_evidence") or []
+    decisions = []
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            continue
+        decision = identify_integrated_system(record.get("components"))
+        route = {"ILP": "ilp_temporal_rf", "ILPF": "ilpf_spatial_unet"}.get(decision.get("class_name"))
+        classifier = (model_route_status(route) if route else
+                      {"operational": False,
+                       "reason": "IPF sem classificador treinado específico; evidência de manejo continua necessária"}
+                      if decision.get("class_name") == "IPF" else None)
+        decisions.append({"observation_id": record.get("observation_id", index),
+                          "decision": decision, "classifier_route": classifier})
+    return {"status": "EVIDENCIA_AVALIADA" if records else "SEM_EVIDENCIA_DE_MANEJO",
+            "records": decisions,
+            "route_catalog": {
+                "ILP": model_route_status("ilp_temporal_rf"),
+                "ILPF": model_route_status("ilpf_spatial_unet"),
+                "IPF": {"operational": False,
+                        "reason": "não há modelo específico incorporado para IPF; requer referência/campo local"}}}
+
 def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=None, micro_fn=None):
     from crop_forecast_pipeline import forecast_fields, forecast_lines
     from crop_panel_yield_model import load_artifact
@@ -221,18 +256,33 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
     annual_experimental = bool(conditional_crops and not current_crops)
     model_season=((land or {}).get("validation") or {}).get("observed_season")
     lines = ["", "CLASSIFICAÇÃO SAR EXPERIMENTAL, VIGOR ATUAL E PREVISÃO CONDICIONAL DE SAFRA"]
+    audit = {"as_of": as_of.isoformat(), "crops": {},
+             "priority_model_routes": {name: priority_model_contract(name)
+                                       for name in PRIORITY_MODEL_TARGETS}}
+    audit["integrated_systems"] = _integrated_system_audit(land)
+    lines.append("ALVOS PRIORITÁRIOS: soja e milho usam painel PAM×FAO experimental com hindcast; "
+                 "arroz, algodão, sorgo, cana, café, feijão e citros usam cenário PAM×clima exploratório, sem painel calibrado próprio; "
+                 "pastagens, silvicultura e ILP/IPF/ILPF têm contratos e calculadoras de unidade própria, condicionados a dados de manejo/inventário.")
+    for item in audit["integrated_systems"]["records"]:
+        d = item["decision"]
+        if d.get("class_name"):
+            lines.append("• Sistema integrado candidato " + str(d["class_name"]) +
+                         " — evidência vinculada à unidade/período; requer confirmação de manejo; classificador específico não operacional nesta build.")
+        else:
+            lines.append("• Integração ILP/IPF/ILPF: N/D — " + str(d.get("reason") or "evidências vinculadas insuficientes"))
+    if not audit["integrated_systems"]["records"]:
+        lines.append("• Integração ILP/IPF/ILPF: N/D — não foram fornecidos registros de manejo por unidade/período; coocorrência SAR não comprova integração.")
     if annual_experimental:
         lines.append("• COBERTURA EXPERIMENTAL RETROSPECTIVA: máscaras de uso do solo obtidas no ano agrícola "+
                      str(model_season or "sem período identificado")+
                      "; NÃO comprovam cobertura atual da safra em curso, mesmo com SAR recente para vigor.")
     from sensor_contingency import fallback_plan
-    audit = {"as_of": as_of.isoformat(), "crops": {},
-             "current_crop_identification": ("SAR_EXPERIMENTAL_ANUAL_NAO_ATUAL" if annual_experimental
+    audit.update({"current_crop_identification": ("SAR_EXPERIMENTAL_ANUAL_NAO_ATUAL" if annual_experimental
                                               else "SAR_VALIDADO" if crops else "N/D"),
              "crop_landcover_season":model_season,
              "field_validation_status":"PENDENTE" if annual_experimental else "indefinido",
              "mapbiomas_historical_reference_only": historical,
-             "sensor_contingency": fallback_plan(target="agricultura_area_vigor_safra")}
+             "sensor_contingency": fallback_plan(target="agricultura_area_vigor_safra")})
     from crop_spatial_monitoring import sampled_sentinel_vigor
     candidate_vigor = _current_candidate_vigor(
         gdf, land, as_of, vigor_fn, sampled_sentinel_vigor)
@@ -295,16 +345,80 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
         crop_gdf = crop_geometry(land, crop, canonical_fn=canonical_crop)
         entry["crop_polygon_available"] = crop_gdf is not None
         if annual_experimental:
-            # The prior-season crop mask is not a current crop mask. Current
-            # SAR candidate vigor is reported separately and cannot condition
-            # this crop-specific forecast.
-            vig = {"status": "N/D",
-                   "reason": "vigor específico da cultura não estimado sobre máscara anual retrospectiva; consulte o diagnóstico SAR condicional de candidato cultivado",
-                   "scope": "ANNUAL_CROP_MASK_NOT_CURRENT"}
-            entry["vigor"] = candidate_vigor
+            # Use current, dated VV/VH over spatial blocks of the prior-season
+            # crop mask as an experimental, explicitly conditional vigor
+            # signal. This connects measured current SAR to the PAM×climate
+            # model without asserting that the crop persisted in those pixels.
+            if crop_gdf is not None:
+                try:
+                    from crop_spatial_monitoring import current_candidate_vigor_blocks
+                    block_design = current_candidate_vigor_blocks(
+                        crop_gdf, footprint_label="máscara anual SAR experimental da cultura")
+                    if block_design.get("status") != "ok":
+                        vig = {"status": "N/D", "reason": block_design.get("reason"),
+                               "patches_evaluated": block_design.get("blocks_available", 0),
+                               "patches_valid": 0}
+                    else:
+                        references = block_design["reference_gdf"]
+                        search_cache = {"result": None, "loaded": False}
+                        token_cache = {"value": None}
+                        def cached_annual_search(day):
+                            if not search_cache["loaded"]:
+                                # One catalog request per crop/AOI; each target
+                                # block still performs its own dated pixel read.
+                                from shapely.geometry import box, mapping
+                                from sentinel1_sources import search_sentinel1_sources
+                                end = datetime.combine(day, datetime.max.time()).replace(tzinfo=timezone.utc)
+                                start = end - timedelta(days=30)
+                                bounds = crop_gdf.to_crs(4326).total_bounds
+                                search_cache["result"] = search_sentinel1_sources(
+                                    mapping(box(*bounds)), start_utc=start, end_utc=end)
+                                search_cache["loaded"] = True
+                            return search_cache["result"]
+                        def annual_cached_token():
+                            if token_cache["value"] is None:
+                                from sentinel1_mpc import get_runtime_sas_token
+                                token_cache["value"] = get_runtime_sas_token()
+                            return token_cache["value"]
+                        def annual_scene_vigor(patch, day, _crop_label):
+                            if vigor_fn is automatic_vigor:
+                                # Catalog discovery and token lookup are lazy:
+                                # mocked/unit paths stay offline, production does
+                                # one lookup and reuses it across target blocks.
+                                search_result = cached_annual_search(day)
+                                return vigor_fn(patch, day, crop, reference_gdf=references,
+                                                reference_mode="annual_experimental_crop_mask",
+                                                search=lambda *_a, **_kw: search_result,
+                                                token_fn=annual_cached_token)
+                            return vigor_fn(patch, day, crop)
+                        vig = sampled_sentinel_vigor(
+                            crop_gdf, as_of, crop, annual_scene_vigor,
+                            require_scene_evidence=(vigor_fn is automatic_vigor),
+                            min_area_ha=2.0, target_patch_ha=16.0,
+                            patches=block_design["target_blocks"])
+                        vig["reference_block_design"] = {
+                            "target_blocks": block_design["target_block_count"],
+                            "reference_blocks": block_design["reference_block_count"],
+                            "block_area_ha": block_design["block_area_ha"],
+                            "interpretation": "blocos espaciais da máscara anual experimental; não são talhões independentes nem validação de campo"}
+                    vig.update({"classification": "CONDITIONAL_EXPERIMENTAL",
+                        "scope": "SAFRA_ANTERIOR_MASK_X_SAR_ATUAL",
+                        "crop_confirmed_current": False,
+                        "interpretation_limit": "vigor SAR relativo medido em cena atual sobre blocos da máscara de cultura da safra anterior; não confirma permanência da cultura nem vigor agronômico absoluto"})
+                except Exception as exc:
+                    vig = {"status": "ERRO_TECNICO", "reason": type(exc).__name__ + ": " + str(exc)[:180],
+                           "scope": "SAFRA_ANTERIOR_MASK_X_SAR_ATUAL", "crop_confirmed_current": False}
+            else:
+                vig = {"status": "N/D", "reason": "geometria vetorial da máscara anual da cultura indisponível para amostragem SAR atual",
+                       "scope": "SAFRA_ANTERIOR_MASK_X_SAR_ATUAL", "crop_confirmed_current": False}
             entry["crop_specific_vigor"] = vig
             entry["vigor_current_crop_confirmed"] = False
-            lines.append("  Vigor específico de " + crop + ": N/D — máscara de cultura da safra anterior não confirma a localização atual; não usar o indicador genérico de candidato para o modelo de safra desta cultura.")
+            if vig.get("status") in ("experimental", "validated"):
+                lines.append("  Vigor SAR relativo de " + crop + ": calculado com VV/VH atuais sobre blocos da máscara anual experimental; entra condicionalmente no modelo, sem confirmar cultura atual.")
+            elif vig.get("status") == "ERRO_TECNICO":
+                lines.append("  Vigor SAR condicional de " + crop + ": ERRO TÉCNICO — " + str(vig.get("reason")))
+            else:
+                lines.append("  Vigor SAR de " + crop + ": N/D — " + str(vig.get("reason") or "cena atual/referências insuficientes"))
         elif crop_gdf is not None and not sar_probe_done:
             sar_probe_done = True
             try:
@@ -325,14 +439,17 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     "reason": type(exc).__name__ + ": " + str(exc)[:180]}
                 lines.append("  SAR ATUAL: ERRO TÉCNICO — "+
                              audit["live_sar_probe"]["reason"])
-        if crop in art.get("crops", {}):
-            # For a current accepted mask, vigor can condition the model.
-            # An annual experimental SAR mask may still run the calibrated
-            # climate+PAM model as a prior-season scenario, never as current
-            # production; its transfer uncertainty is explicitly unquantified.
+        if crop in art.get("crops", {}) or crop in PAM_CLIMATE_SCENARIO_CROPS:
+            # A current accepted mask uses current crop-specific vigor. An
+            # annual experimental mask may condition the same mathematical
+            # model with a current SAR relative-vigor observation, but only as
+            # a prior-season footprint scenario; area/crop transfer remains
+            # explicitly unquantified.
             def scene_vigor(patch, day, _crop_label):
                 if vigor_fn is automatic_vigor:
-                    return vigor_fn(patch, day, crop, reference_gdf=crop_gdf)
+                    return vigor_fn(patch, day, crop, reference_gdf=crop_gdf,
+                                    reference_mode=("annual_experimental_crop_mask" if annual_experimental
+                                                    else "validated_crop_fields"))
                 return vigor_fn(patch, day, crop)
             try:
                 if annual_experimental:
@@ -429,15 +546,28 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                                     "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
                                   as_of=as_of)
                 lines += ["  " + l for l in forecast_lines(rep)]
+                route_contract = priority_model_contract(crop)
+                if crop in PAM_CLIMATE_SCENARIO_CROPS:
+                    lines.append("  ROTA PRIORITÁRIA: cenário experimental PAM + clima por matriz vigor/clima; "
+                                 "não equivale ao painel calibrado de soja/milho nem a modelo mecanístico validado.")
+                    for blocker in route_contract.get("blockers", []):
+                        lines.append("  Variável de manejo pendente: " + blocker + ".")
                 forecast_inputs = {
                     "crop_mask_source": crop_source,
                     "crop_mask_season": model_season if annual_experimental else None,
                     "crop_area_ha": float(area),
                     "yield_model": rep.get("model_label") or rep.get("model"),
+                    "priority_model_contract": route_contract,
                     "yield_history": "IBGE PAM N9, escala microrregional",
                     "weather_and_water_balance": "NASA POWER + FAO-56/FAO-33; fonte/período no relatório de previsão",
                     "current_crop_specific_sar_vigor_used": bool(
                         vigor_usable and forecast_vigor is vig and not annual_experimental),
+                    "experimental_current_sar_vigor_conditioned_yield": bool(
+                        vigor_usable and forecast_vigor is vig and annual_experimental),
+                    "vigor_observation_scope": ("SAR atual sobre blocos da máscara anual experimental; cultura atual não confirmada"
+                        if annual_experimental and vigor_usable and forecast_vigor is vig else
+                        "SAR atual sobre máscara de cultura aceita" if vigor_usable and forecast_vigor is vig else
+                        "sem vigor SAR utilizável na previsão"),
                     "current_candidate_vigor_status": candidate_vigor.get("status"),
                     "current_candidate_vigor_interpretation": "assinatura estrutural SAR relativa; não identifica cultura nem substitui vigor agronômico calibrado",
                     "area_transfer_uncertainty": "NAO_QUANTIFICADA" if annual_experimental else None,
@@ -446,8 +576,11 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 lines.append("  Entradas da previsão: produtividade pelo painel PAM + clima/balanço hídrico; máscara/área de cultura por "
                              + ("SAR experimental retrospectivo da safra " + str(model_season or "N/D")
                                 if annual_experimental else "SAR classificado para a área da cultura")
-                             + ("; vigor SAR atual não incorporado à produtividade." if not forecast_inputs["current_crop_specific_sar_vigor_used"]
-                                else "; vigor SAR datado sobre máscara SAR da cultura incorporado conforme modelo."))
+                             + ("; vigor SAR atual não incorporado à produtividade." if not (
+                                    forecast_inputs["current_crop_specific_sar_vigor_used"] or
+                                    forecast_inputs["experimental_current_sar_vigor_conditioned_yield"])
+                                else "; vigor SAR datado incorporado ao modelo (condicional sobre máscara anual experimental)."
+                                if annual_experimental else "; vigor SAR datado sobre máscara SAR da cultura incorporado conforme modelo."))
                 if annual_experimental:
                     lines.append("  PREVISÃO CONDICIONAL: área e cultura da safra anterior; transferência para "
                                  "a safra corrente NÃO quantificada; usar para aferição experimental, "
@@ -460,6 +593,12 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
             except Exception as exc:
                 lines.append("  Previsão de safra: N/D — " + type(exc).__name__ + ": " + str(exc)[:160])
         else:
-            lines.append("  Previsão de safra: sem modelo calibrado para esta cultura (apenas soja e milho calibrados).")
+            route_contract = priority_model_contract(crop)
+            lines.append("  Previsão de produção: N/D — " + "; ".join(route_contract.get("blockers") or
+                ["esta cultura/sistema não tem coeficientes e entradas operacionais suficientes"])+".")
+            entry["priority_model_contract"] = route_contract
+            entry["forecast_status"] = "N/D_MODELO_ESPECIFICO_PENDENTE"
+            entry["forecast"] = {"status":"N/D", "reason":route_contract.get("blockers") or
+                                 ["modelo específico e dados de entrada não disponíveis"]}
         audit["crops"][crop] = entry
     return lines, audit

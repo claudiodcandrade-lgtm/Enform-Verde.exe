@@ -7,6 +7,7 @@ observation period; mere neighboring polygons do not prove integration.
 from __future__ import annotations
 
 SYSTEM_COMPONENTS = {
+    "ILP": frozenset(("lavoura", "pecuaria")),
     "ILF": frozenset(("lavoura", "floresta")),
     "IPF": frozenset(("pecuaria", "floresta")),
     "ILPF": frozenset(("lavoura", "pecuaria", "floresta")),
@@ -44,15 +45,11 @@ def identify_integrated_system(evidence, *, minimum_confidence=0.90):
     if len(units)!=1 or len(periods)!=1:
         result["reason"]="evidências não demonstram a mesma unidade e período"
         return result
-    if accepted == SYSTEM_COMPONENTS["ILPF"]:
-        label="ILPF"
-    elif accepted == SYSTEM_COMPONENTS["ILF"]:
-        label="ILF"
-    elif accepted == SYSTEM_COMPONENTS["IPF"]:
-        label="IPF"
-    else:
+    labels = [name for name, required in SYSTEM_COMPONENTS.items() if accepted == required]
+    if len(labels) != 1:
         result["reason"]="conjunto de componentes insuficiente"
         return result
+    label=labels[0]
     result.update({"class_name":label,"status":"CANDIDATO_COM_EVIDENCIAS",
                    "reason":"coocorrência documentada; confirmar integração por manejo",
                    "unit_id":next(iter(units)),"period":next(iter(periods))})
@@ -75,10 +72,17 @@ def validated_precision_interval(correct, total):
 SCIENTIFIC_ROUTES = {
     "ilpf_spatial_unet":{"method":"U-Net","institution":"Embrapa Solos / UERJ",
         "reference":"https://www.alice.cnptia.embrapa.br/handle/doc/1178498",
-        "task":"spatial candidate detection","ready":False},
+        "task":"segmentação espacial ILPF; NDVI + RGB Sentinel-2",
+        "reported_metrics":{"precision":0.9458,"f1":0.9391,"iou":0.8815},
+        "scope":"pontos brasileiros e recortes aéreos do estudo; não homologação nacional",
+        "ready":False},
     "ilp_temporal_rf":{"method":"Random Forest","institution":"Embrapa Territorial / UNICAMP",
         "reference":"https://www.alice.cnptia.embrapa.br/handle/doc/1175472",
-        "task":"crop-pasture temporal patterns","ready":False},
+        "task":"classificação ILP/não-ILP; MOD13Q1 MODIS + NDVI/EVI SATVeg",
+        "reported_metrics":{"auc":1.0,"accuracy":0.995,"f1":0.995,"mcc":0.989},
+        "scope":"Tasso Fragoso-MA; 518 pontos; divisão aleatória 333 treino/185 validação; viés amostral reconhecido",
+        "predictors":("NIR janeiro", "NDVI maio/junho", "NIR fevereiro", "SWIR fevereiro", "EVI janeiro"),
+        "ready":False},
     "ilp_planetscope_temporal":{"method":"temporal deep learning",
         "reference":"https://www.sciencedirect.com/science/article/pii/S0034425723004376",
         "task":"crop-pasture time series","ready":False},
@@ -89,8 +93,9 @@ def model_route_status(route):
     entry=SCIENTIFIC_ROUTES.get(route)
     if entry is None:
         return {"operational":False,"reason":"rota desconhecida"}
-    return {"operational":bool(entry["ready"]),"reference":entry["reference"],
-            "reason":"modelo documentado, pesos e validacao local pendentes" if not entry["ready"] else "validado"}
+    return {**entry, "operational":bool(entry["ready"]),
+            "reason":"modelo documentado; artefato/pesos reprodutíveis e validação independente no domínio de uso pendentes"
+            if not entry["ready"] else "validado"}
 
 
 def classify_integrated_batch(records, *, output_path=None):

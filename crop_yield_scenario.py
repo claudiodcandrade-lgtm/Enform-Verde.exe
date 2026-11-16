@@ -42,6 +42,7 @@ import csv
 import gzip
 import json
 import math
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -50,6 +51,7 @@ ROOT = Path(__file__).resolve().parent
 PAM_PATH = ROOT / "data" / "pam_microregion_yield_2015_2024.csv.gz"
 MICRO_PATH = ROOT / "data" / "ibge_microrregioes_2021_simplificada.geojson.gz"
 PRODUCT_KEY = {"Soja": "soja_grao", "Milho": "milho_grao", "Sorgo": "sorgo_grao",
+               "Algodão": "algodao_herbaceo",
                "Café": "cafe_total", "Cana-de-açúcar": "cana_acucar", "Arroz": "arroz_grao",
                "Feijão": "feijao_grao", "Citros": "laranja"}
 VIGOR = ("baixo vigor", "vigor adequado", "alto vigor")
@@ -75,7 +77,39 @@ def load_microregion_yields(crop, micro_code, path=PAM_PATH):
             if (r["product_key"] == key and r["territory_code"] == str(micro_code)
                     and r["variable_code"] == "112" and r["observation_status"] == "numeric"):
                 out[int(r["year"])] = float(r["value_numeric"])
+    # The bundled series predates inclusion of herbaceous cotton. When no
+    # local records exist, obtain only that crop/microregion from the official
+    # public SIDRA API; never substitute municipal/national means.
+    if not out and crop == "Algodão":
+        out = _fetch_cotton_pam_microregion(str(micro_code))
     return out
+
+
+@lru_cache(maxsize=128)
+def _fetch_cotton_pam_microregion(micro_code):
+    """Fetch IBGE PAM table 5457 cotton yield (product 40099), 2015–2024."""
+    from urllib.request import Request, urlopen
+    url = ("https://apisidra.ibge.gov.br/values/t/5457/n9/" + str(micro_code)
+           + "/v/112/p/2015-2024/c782/40099")
+    try:
+        req = Request(url, headers={"Accept": "application/json", "User-Agent": "Enform-Verde/3"})
+        with urlopen(req, timeout=18) as response:
+            payload = json.load(response)
+        if not isinstance(payload, list) or len(payload) < 2:
+            return {}
+        values = {}
+        for row in payload[1:]:
+            try:
+                year, value = int(row.get("D3C")), float(str(row.get("V", "")).replace(",", "."))
+            except (TypeError, ValueError):
+                continue
+            if 2015 <= year <= 2024 and value >= 0:
+                values[year] = value
+        return values
+    except Exception:
+        # The caller retains a precise insufficient-PAM result; a service
+        # failure must not abort SAR or other report sections.
+        return {}
 
 
 def microregion_of(gdf, path=MICRO_PATH):
