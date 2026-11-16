@@ -482,3 +482,6 @@ Consultar primeiro produtos SAR de altura validados e não inferir altura em met
 
 ## V88.98 — Fazenda Maria Eduarda e otimização ESA (16/11/2026)
 O KML integral privado foi processado localmente até o payload do dashboard com a identidade da AOI preservada. A máscara anual SAR permanece experimental; o carbono retornou parcial e levou 292 s. Não declarar altura SAR: o catálogo ESA encontrou ativos BIOMASS-FH, mas a leitura sem token recebeu HTTP 401. A 3.26.52 evita o download do ZIP ESA depois de sucesso do GeoTIFF direto e corrige o smoke de canvas para verificar fallback visível durante o worker pendente. A repetição aquecida não comprovou ganho total de tempo. Exigir suíte completa e build/smokes Windows antes de distribuição; sem homologação de campo.
+
+## Checkpoint V88.99 (16/11/2026)
+O build V88.98 falhou no smoke do canvas por falso negativo: o fundo cartográfico claro de fallback tinha baixo contraste apesar de estar visível. O smoke agora usa critérios separados para fallback cartográfico e imagem óptica; canvas preto continua reprovado. O teste local específico e a CI no novo SHA precisam passar antes de liberar EXE. A integração SAR Sinop/Tapajós, a suíte dashboard, a cobertura óptica nacional e a leitura real de pixels BIOMASS FH passaram na V88.98. Carbono da Fazenda Maria Eduarda está parcial; o fluxo não está homologado em campo.

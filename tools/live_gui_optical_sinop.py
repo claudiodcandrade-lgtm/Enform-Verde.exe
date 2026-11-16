@@ -21,12 +21,24 @@ def rendered_optical_status(provider, visible, photo_size, canvas_image_count, p
     provider=str(provider or "").strip().casefold()
     if not visible:
         return None
-    if not isinstance(pixel_quality,dict) or pixel_quality.get("p99_luminance",0)<20 or pixel_quality.get("std_luminance",0)<5 or pixel_quality.get("visible_fraction",0)<0.15:
+    if not isinstance(pixel_quality,dict):
         return None
     if "ibge_potential_fallback" in provider:
-        return "PASS_IBGE_FALLBACK" if canvas_item_count>0 else None
+        # Pale cartographic fills and the light AOI canvas are correctly
+        # visible even when their pixel contrast is below the satellite-image
+        # threshold. Keep the luminance/coverage checks so an actually black
+        # canvas cannot pass.
+        return "PASS_IBGE_FALLBACK" if (
+            canvas_item_count>0 and pixel_quality.get("p99_luminance",0)>=20
+            and pixel_quality.get("visible_fraction",0)>=0.15
+        ) else None
     if "aoi_local_fallback" in provider:
-        return "PASS_AOI_FALLBACK" if canvas_item_count>0 else None
+        return "PASS_AOI_FALLBACK" if (
+            canvas_item_count>0 and pixel_quality.get("p99_luminance",0)>=20
+            and pixel_quality.get("visible_fraction",0)>=0.15
+        ) else None
+    if pixel_quality.get("p99_luminance",0)<20 or pixel_quality.get("std_luminance",0)<5 or pixel_quality.get("visible_fraction",0)<0.15:
+        return None
     if not photo_size or min(photo_size)<=0 or canvas_image_count<1:
         return None
     if "cbers-4a/wfi" in provider:

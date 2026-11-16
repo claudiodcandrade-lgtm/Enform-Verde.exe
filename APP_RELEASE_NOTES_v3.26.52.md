@@ -15,3 +15,6 @@
 ## Estado de liberação
 
 Candidata pré-campo experimental. A suíte e o build Windows do novo SHA ainda precisam passar. O gate científico independente continua separado de funcionamento técnico; estimativas sem validação de campo permanecem experimentais e incerteza não mensurável permanece explícita.
+
+## V88.99 — correção do smoke de canvas (16/11/2026)
+A primeira CI da V88.98 passou o dashboard, integração SAR de Sinop/Tapajós, leitura live de pixels ESA BIOMASS FH e cobertura nacional óptica. O build Windows falhou no smoke visual por exigir contraste de satélite do fallback claro AOI/IBGE. O critério foi corrigido e ganhou regressão para fallback claro e contraprova de tela preta. Reexecutar CI e build no novo SHA; não houve EXE liberado na V88.98.

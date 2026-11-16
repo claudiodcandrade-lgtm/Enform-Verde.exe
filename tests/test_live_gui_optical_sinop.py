@@ -22,6 +22,15 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
             "AOI_LOCAL_FALLBACK",True,None,0,self.QUALITY,canvas_item_count=8),
             "PASS_AOI_FALLBACK")
 
+    def test_low_contrast_but_bright_fallback_does_not_need_satellite_contrast(self):
+        pale_visible={"p99_luminance":232,"std_luminance":2.1,"visible_fraction":0.98}
+        self.assertEqual(rendered_optical_status(
+            "AOI_LOCAL_FALLBACK",True,None,0,pale_visible,canvas_item_count=8),
+            "PASS_AOI_FALLBACK")
+        self.assertIsNone(rendered_optical_status(
+            "AOI_LOCAL_FALLBACK",True,None,0,
+            {"p99_luminance":0,"std_luminance":0,"visible_fraction":0},canvas_item_count=8))
+
     def test_black_canvas_does_not_pass_even_when_photo_item_exists(self):
         self.assertIsNone(rendered_optical_status("CBERS-4A/WFI",True,(900,420),1,
             {"p99_luminance":0,"std_luminance":0,"visible_fraction":0}))
