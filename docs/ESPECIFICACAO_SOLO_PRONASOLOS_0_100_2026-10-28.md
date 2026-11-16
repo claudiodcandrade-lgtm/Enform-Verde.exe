@@ -536,3 +536,6 @@ A correção V88.95 só altera o nome de classes agrícolas experimentais fora d
 
 ## V88.96 — limpeza do teste SQLite Windows
 O fechamento explícito de conexão corrige o cleanup da fixture de teste de inventários em Windows; não altera tabelas, fontes, observações nem cálculos do carbono do solo.
+
+## V88.97 — fixture de teste SAR
+O acréscimo das métricas exigidas no fixture de teste SAR não altera o processamento, as fontes ou a incerteza de SOC.

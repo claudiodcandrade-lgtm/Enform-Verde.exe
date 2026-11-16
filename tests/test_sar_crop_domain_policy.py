@@ -81,8 +81,10 @@ class SarCropDomainPolicyTests(unittest.TestCase):
             "landcover": _Classifier(["Cultivo agrícola"], [1.0]),
             "crop": _Classifier(["Soja", "Café"], [0.7, 0.3]),
         }
+        accuracy = {"overall_accuracy": 0.9, "overall_accuracy_wilson95": [0.8, 0.95],
+                    "per_class": {}}
         manifest = {"model_id": "fixture", "sha256": "fixture",
-                    "validation": {"landcover": {"per_class": {}}, "crop": {"per_class": {}}},
+                    "validation": {"landcover": accuracy, "crop": accuracy},
                     "training_labels": [], "domain": {"transfer_note": "outside-domain test"}}
         with patch.object(sar, "load", return_value=(models, manifest)), \
                 patch.object(sar, "_monthly_features", return_value=(data, {"scenes_used": 12})):

@@ -26,3 +26,6 @@ A execução ponta a ponta real provou que o SAR alcançou os painéis em Sinop-
 ## Compatibilidade de teste Windows — V88.96
 
 Corrigido o cleanup de uma conexão SQLite aberta pela fixture de teste. O resultado anterior passou 1.221 testes, mas falhou ao apagar o banco temporário bloqueado no Windows. A conexão agora é fechada explicitamente. É necessária nova suíte e novo build no SHA atualizado.
+## Completa fixture de regressão SAR — V88.97
+
+O teste geoespacial Windows recém-executado revelou métricas ausentes no fixture (`overall_accuracy` e intervalo Wilson), não no fluxo de classe. O fixture foi completado; a nova CI precisa provar que a supressão dos nomes fora do envelope chega tanto às classes como aos polígonos. O ambiente local não tem GeoPandas.
