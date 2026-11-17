@@ -126,31 +126,14 @@ def main(timeout=180):
         window.nb.select(window.tabs[1])
         window.update_idletasks()
         window.update()
-        # The Spatial page is intentionally vertically scrollable: its IBGE
-        # summary and controls precede the map. Move that outer page to the
-        # map area before measuring the canvas; merely selecting the tab can
-        # leave a real, viewable canvas below the fold of a 768 px desktop.
         spatial_scroll=next((child for child in window.tabs[1].winfo_children()
                              if isinstance(child,app.tk.Canvas)),None)
-        def place_map_in_scroll_view():
-            if spatial_scroll is None:
-                return
-            region=spatial_scroll.bbox("all")
-            if not region:
-                return
-            total=max(1,int(region[3])-int(region[1]))
-            yview=spatial_scroll.yview()
-            outer_y=int(spatial_scroll.winfo_rooty())
-            target_y=outer_y+12
-            fraction=scroll_fraction_for_target(
-                window.map_canvas.winfo_rooty(),outer_y,yview[0],total,target_y)
-            spatial_scroll.yview_moveto(fraction)
-            window.update_idletasks()
-            window.update()
-        place_map_in_scroll_view()
-        # The canvas has a 560 px design request. Fit it within both the
-        # visible desktop and the actual top-level window, then reposition it
-        # once more because shrinking the canvas changes the outer scrollrange.
+        # Production code must bring the map above the fold itself. Exercise
+        # the same page-scroll helper used by the user's map action.
+        window._scroll_spatial_widget_into_view(window.map_canvas)
+        window.update_idletasks()
+        window.update()
+        # Fit the canvas within the visible desktop after production scrolling.
         window_bottom=int(window.winfo_rooty())+int(window.winfo_height())
         available_canvas_height=canvas_height_fitting_window(
             window_bottom,int(screen_size[1]),int(window.map_canvas.winfo_rooty()))
@@ -161,7 +144,6 @@ def main(timeout=180):
             window.map_canvas.configure(height=available_canvas_height)
             window.update_idletasks()
             window.update()
-            place_map_in_scroll_view()
         window.show_google_map(refresh=False,prefer_public=True)
         deadline=time.monotonic()+timeout
         last_observation={}

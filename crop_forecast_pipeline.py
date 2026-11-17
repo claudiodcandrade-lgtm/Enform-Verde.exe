@@ -14,6 +14,56 @@ from crop_climate_favorability import DEFAULT_SEASON, favourability, fetch_power
 from crop_yield_scenario import (MIN_YEARS, forecast_production, hindcast_errors,
                                  load_microregion_yields, microregion_of, scenario_table)
 
+VIGOR_CLASSES = ("baixo vigor", "vigor adequado", "alto vigor")
+
+
+def _usable_dated_vigor(vigor, as_of, *, max_age_days=30):
+    """Accept vigor as a forecast input only with valid probabilities and recent SAR evidence.
+
+    A successful-looking class label alone is insufficient: the forecast must
+    receive the complete class probability vector and at least one dated scene
+    within the configured observation window. This keeps the dashboard and
+    yield model from treating stale or malformed vigor as a real covariate.
+    """
+    from datetime import datetime, timezone
+    import math
+
+    if not isinstance(vigor, dict) or vigor.get("status") not in ("experimental", "validated"):
+        return False, "vigor SAR não calculado"
+    probabilities = vigor.get("probabilities")
+    if not isinstance(probabilities, dict) or any(k not in probabilities for k in VIGOR_CLASSES):
+        return False, "probabilidades das três classes de vigor ausentes"
+    try:
+        values = [float(probabilities[k]) for k in VIGOR_CLASSES]
+    except (TypeError, ValueError):
+        return False, "probabilidades de vigor não numéricas"
+    if any(not math.isfinite(x) or x < 0 or x > 1 for x in values) or abs(sum(values) - 1.0) > 1e-4:
+        return False, "probabilidades de vigor inválidas ou não normalizadas"
+
+    stamps = []
+    for item in vigor.get("accepted_scenes") or []:
+        if isinstance(item, dict) and item.get("acquisition_utc"):
+            stamps.append(item["acquisition_utc"])
+    if vigor.get("acquisition_utc"):
+        stamps.append(vigor["acquisition_utc"])
+    if not stamps:
+        return False, "vigor sem data de aquisição SAR"
+    cutoff = datetime.combine(as_of, datetime.max.time()).replace(tzinfo=timezone.utc)
+    valid = []
+    for stamp in stamps:
+        try:
+            acquired = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+            if acquired.tzinfo is None:
+                continue
+            age = (cutoff - acquired.astimezone(timezone.utc)).total_seconds() / 86400.0
+            if 0 <= age <= max_age_days:
+                valid.append(age)
+        except (TypeError, ValueError):
+            continue
+    if not valid:
+        return False, f"nenhuma cena de vigor datada dentro dos últimos {max_age_days} dias"
+    return True, None
+
 
 def _season_start_year(crop, as_of, season):
     start_mmdd = (season or DEFAULT_SEASON[crop])[0]
@@ -57,10 +107,9 @@ def forecast_fields(fields, *, as_of=None, season=None, weather_fetcher=fetch_po
             report["fields"][rid] = {"status": "N/D", "reason": "cultura não identificada por identificador utilizável"}
             continue
         vig = f.get("vigor") or {}
-        vigor_ok=(vig.get("status") in ("experimental", "validated") and
-                  isinstance(vig.get("probabilities"),dict))
+        vigor_ok, vigor_reason = _usable_dated_vigor(vig, as_of)
         if not vigor_ok and not allow_no_vigor_contingency:
-            report["fields"][rid] = {"status": "N/D", "reason": "vigor N/D: " + str(vig.get("reason", ""))}
+            report["fields"][rid] = {"status": "N/D", "reason": "vigor N/D: " + str(vigor_reason or vig.get("reason", ""))}
             continue
         micro = microregion_of(f["gdf"])["dominant"]
         yields = load_microregion_yields(crop, micro["code"])
@@ -192,14 +241,11 @@ def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fe
             report["fields"][rid] = {"status": "N/D", "reason": "cultura não identificada por identificador utilizável"}
             continue
         vig = f.get("vigor") or {}
-        vig_ok = (vig.get("status") in ("experimental", "validated")
-                  and isinstance(vig.get("probabilities"), dict)
-                  and (bool(vig.get("scene_id") and vig.get("acquisition_utc"))
-                       or bool(vig.get("accepted_scenes"))))
+        vig_ok, vigor_reason = _usable_dated_vigor(vig, as_of)
         # Owner decision 08/11/2026 (question 5 = B): without a dated SAR vigor
         # the forecast is still produced from climate + PAM history, labelled
         # "sem vigor", with the wider interval of ALL historical errors.
-        no_vigor_reason = None if vig_ok else "vigor SAR atual indisponível ou sem cena datada"
+        no_vigor_reason = None if vig_ok else (vigor_reason or "vigor SAR atual indisponível")
         micro_all = microregion_of(f["gdf"]); micro = micro_all["dominant"]
         yields = load_microregion_yields(crop, micro["code"])
         c = f["gdf"].to_crs(4326).geometry.union_all().centroid

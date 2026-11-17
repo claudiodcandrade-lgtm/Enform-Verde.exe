@@ -215,7 +215,8 @@ class PipelineTests(unittest.TestCase):
         g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
         fake = lambda lat, lon, s, e: {"daily": _synthetic_weather(lat, list(range(2000, 2026))), "source_url": "synthetic"}
         vig = {"status": "experimental", "class": "vigor adequado",
-               "probabilities": {"baixo vigor": .1, "vigor adequado": .8, "alto vigor": .1}}
+               "probabilities": {"baixo vigor": .1, "vigor adequado": .8, "alto vigor": .1},
+               "scene_id": "S1_TEST", "acquisition_utc": "2026-02-20T10:00:00Z"}
         fields = [{"id": "T1", "gdf": g, "crop": "Soja", "identification": {"label_allowed": True},
                    "vigor": vig, "area_ha": 200},
                   {"id": "T2", "gdf": g, "crop": "Soja", "identification": {"label_allowed": False},

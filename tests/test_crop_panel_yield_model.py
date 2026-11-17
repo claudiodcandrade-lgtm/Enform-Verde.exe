@@ -94,6 +94,23 @@ class ArtifactTests(unittest.TestCase):
         self.assertGreater(art["crops"]["Milho"]["Centro-Norte"]["loyo"]["skill_vs_trend"], 0.10)
         self.assertEqual(len(art["provenance"]["pam_file_sha256"]), 64)
 
+    def test_forecast_rejects_undated_or_invalid_vigor_as_model_input(self):
+        from crop_forecast_pipeline import _usable_dated_vigor
+        as_of = date(2026, 10, 31)
+        base = {"status": "experimental", "probabilities": {
+            "baixo vigor": .2, "vigor adequado": .6, "alto vigor": .2},
+            "scene_id": "S1_TEST", "acquisition_utc": "2026-10-25T10:00:00Z"}
+        self.assertEqual(_usable_dated_vigor(base, as_of), (True, None))
+        for changed, expected in (
+            ({**base, "acquisition_utc": "2026-09-01T10:00:00Z"}, "últimos 30 dias"),
+            ({**base, "probabilities": {"baixo vigor": .2, "vigor adequado": .2,
+                                        "alto vigor": .2}}, "não normalizadas"),
+            ({k: v for k, v in base.items() if k != "acquisition_utc"}, "sem data"),
+        ):
+            ok, reason = _usable_dated_vigor(changed, as_of)
+            self.assertFalse(ok)
+            self.assertIn(expected, reason)
+
     def test_pipeline_forecasts_without_vigor_as_labelled_climate_history_only(self):
         g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
         fake_wx = lambda lat, lon, s, e: {"daily": weather(range(2000, 2027), lambda d: 7.0), "source_url": "synthetic"}
@@ -125,6 +142,16 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(audit["probabilities_used"],probabilities)
         self.assertEqual(len(audit["residual_conditioning"]["residual_medians_kg_ha"]),3)
         self.assertIn("Vigor aplicado ao modelo vigente","\n".join(forecast_lines(rep)))
+        high_probabilities={"baixo vigor":0.05,"vigor adequado":0.20,"alto vigor":0.75}
+        high_rep=forecast_fields([{"id":"T","gdf":g,"crop":"Soja",
+            "identification":{"label_allowed":True},"vigor":{"status":"experimental",
+                "probabilities":high_probabilities,"scene_id":"S1_TEST",
+                "acquisition_utc":"2026-10-25T00:00:00Z"},"area_ha":100}],
+            as_of=date(2026,10,31),weather_fetcher=fake_wx,awc_fetcher=fake_awc,n_mc=300)
+        low_median=rep["production"]["fields_kg_ha"]["T"]["median"]
+        high_median=high_rep["production"]["fields_kg_ha"]["T"]["median"]
+        self.assertGreater(high_median,low_median,
+                           "probabilidade de alto vigor deve deslocar a distribuição simulada para resíduos PAM mais altos")
 
 
 if __name__ == "__main__":

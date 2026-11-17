@@ -1827,9 +1827,52 @@ class App(tk.Tk):
         except Exception:
             pass  # Never lose the image because the diagnostic could not be written.
 
+    def _scroll_spatial_widget_into_view(self,widget,*,margin=12):
+        """Bring a nested map canvas into the scrollable page's viewport.
+
+        The live canvas smoke had to scroll the page manually before the map
+        was visible. The application must do that itself when the user asks
+        to open satellite imagery; loading pixels below the fold is not a
+        visible map result.
+        """
+        parent=getattr(widget,"master",None)
+        while parent is not None:
+            if isinstance(parent,tk.Canvas) and parent is not widget:
+                try:
+                    region=parent.bbox("all")
+                    if not region:return
+                    # The former desktop smoke could shrink the canvas, but
+                    # the normal app left its 560px design height unchanged.
+                    # Fit it to the visible page before computing the raster
+                    # dimensions so the full image is on screen after scroll.
+                    available_h=max(180,int(parent.winfo_height())-2*int(margin))
+                    current_h=max(1,int(widget.winfo_height()))
+                    if current_h>available_h:
+                        widget.configure(height=available_h)
+                        parent.update_idletasks()
+                        region=parent.bbox("all") or region
+                    top,bottom=int(region[1]),int(region[3])
+                    total=max(1,bottom-top)
+                    viewport_top=float(parent.canvasy(0))
+                    viewport_bottom=float(parent.canvasy(max(1,parent.winfo_height())))
+                    widget_top=float(parent.canvasy(widget.winfo_rooty()-parent.winfo_rooty()))
+                    widget_bottom=widget_top+max(1,int(widget.winfo_height()))
+                    if widget_top<viewport_top+margin or widget_bottom>viewport_bottom-margin:
+                        desired=max(top,widget_top-margin)
+                        max_top=max(top,bottom-max(1,int(parent.winfo_height())))
+                        desired=min(desired,max_top)
+                        parent.yview_moveto(max(0.0,min(1.0,(desired-top)/total)))
+                        parent.update_idletasks()
+                except (tk.TclError,ValueError,TypeError):
+                    pass
+                return
+            parent=getattr(parent,"master",None)
+
     def show_google_map(self,refresh=False,prefer_public=False):
         """Visual-only CBERS-4A/WFI primary backdrop; Sentinel-2 fallback; never an analytical input."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
+        self._scroll_spatial_widget_into_view(self.map_canvas)
+        self.update_idletasks()
         if not getattr(self,"_satellite_map_visible",False):
             self._draw_aoi_outline("Carregando imagem óptica real — exibindo o perímetro temporariamente")
         self._map_generation+=1; generation=self._map_generation
