@@ -33,7 +33,9 @@ class MunicipalCropMaskTests(unittest.TestCase):
         mask=gpd.GeoDataFrame(geometry=cells,crs=6933)
         design=current_candidate_vigor_blocks(mask)
         self.assertEqual(design["status"],"ok")
-        self.assertEqual(design["block_area_ha"],8.0)
+        self.assertGreaterEqual(design["block_area_ha"],2.0)
+        self.assertLessEqual(design["block_area_ha"],8.0)
+        self.assertLess(design["block_area_ha"],16.0)
         self.assertGreaterEqual(design["reference_block_count"],6)
         for target in design["target_blocks"]:
             self.assertGreaterEqual(target.to_crs(6933).geometry.area.iloc[0]/10000,2.0)

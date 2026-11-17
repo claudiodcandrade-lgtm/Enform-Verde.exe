@@ -177,7 +177,10 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
         targets=[item.to_crs(6933).geometry.iloc[0] for item in design["target_blocks"]]
         references=[geom for geom in design["reference_gdf"].to_crs(6933).geometry]
         self.assertTrue(all(not target.intersects(ref) for target in targets for ref in references))
-        small=gpd.GeoDataFrame(geometry=[box(-55.20,-11.89,-55.19,-11.88)],crs=4326)
+        # About 1 ha: below the minimum 2-ha block area, regardless of the
+        # adaptive grid spacing, so six independent reference blocks are
+        # genuinely unavailable.
+        small=gpd.GeoDataFrame(geometry=[box(-55.200,-11.890,-55.199,-11.889)],crs=4326)
         insufficient=current_candidate_vigor_blocks(
             small,footprint_label="máscara anual SAR experimental da cultura")
         self.assertEqual(insufficient["status"],"N/D")
