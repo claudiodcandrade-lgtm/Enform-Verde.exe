@@ -2774,9 +2774,31 @@ class App(tk.Tk):
         self._crop_monitoring_base_report="\n".join(executive)
         self._crop_monitoring_audit_base="\n".join(audit)
         if hasattr(self,"crop_exec_var"):
-            self.crop_exec_var.set(self._executive_excerpt(self._crop_monitoring_base_report,
+            summary=[self._executive_excerpt(self._crop_monitoring_base_report,
                 ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:",
-                 "Produtividade estimada no momento dessa análise:","Produção provável:")))
+                 "Produtividade estimada no momento dessa análise:","Produção provável:"))]
+            summary.append("\nVIGOR SAR E EFEITO NA PREVISÃO")
+            current_vigor=audit.get("current_sar_candidate_vigor") or {}
+            summary.append("Área cultivada candidata atual (cultura não confirmada): "+
+                str(current_vigor.get("status","N/D"))+" — "+
+                str(current_vigor.get("class") or current_vigor.get("reason") or "sem resultado"))
+            crop_audit=audit.get("crops") or {}
+            if crop_audit:
+                for crop_name,entry in crop_audit.items():
+                    vigor=entry.get("crop_specific_vigor") or entry.get("vigor") or {}
+                    inputs=entry.get("forecast_inputs") or {}
+                    used=bool(inputs.get("current_crop_specific_sar_vigor_used") or
+                              inputs.get("experimental_current_sar_vigor_conditioned_yield"))
+                    summary.append(str(crop_name)+": vigor "+
+                        str(vigor.get("status","N/D"))+
+                        ("; incorporado condicionalmente à previsão" if used else
+                         "; NÃO incorporado à previsão")+
+                        (" — "+str(vigor.get("reason")) if vigor.get("status")=="N/D" and vigor.get("reason") else ""))
+            else:
+                summary.append("Previsão de safra: "+str(audit.get("forecast_block_reason") or
+                    "N/D — identificador de cultura atual ou máscara elegível indisponível"))
+            summary.append("A máscara SAR 2025/2026 é retrospectiva; vigor atual sobre ela não confirma a permanência da cultura.")
+            self.crop_exec_var.set("\n".join(summary))
         self._set(self.crop_res,self._crop_monitoring_base_report)
         self._set(self.crop_audit,self._crop_monitoring_audit_base)
         generation=self._weather_query_generation
@@ -4061,32 +4083,41 @@ class App(tk.Tk):
         sh["A2"]="Interseção espacial AOI × classe IBGE; erro do produto e altura são camadas separadas. AGB total = média Mg/ha × área da classe."
         sh.merge_cells("A2:H2")
         sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
-        sh=wb.create_sheet("Comparação AGB IFN")
-        setup(sh,"Enform Verde — comparação ESA CCI e inventários IFN")
+        sh=wb.create_sheet("Comparação AGB Inventários")
+        setup(sh,"Enform Verde — comparação ESA CCI e todas as fontes de inventário elegíveis")
         comparison_rows=[]
         for st in (self.project.get("native_carbon") or {}).get("strata",[]):
             details=st.get("sar_details") or {}
             cmp=details.get("inventory_agb_comparison")
             if not cmp: continue
-            comparison_rows.append([st.get("physiognomy"),st.get("area_ha"),details.get("product"),
-                details.get("agb_mg_ha"),details.get("uncertainty_mg_ha"),cmp.get("status"),
-                cmp.get("agb_mean_mg_ha"),cmp.get("agb_sample_sd_mg_ha"),
-                json.dumps(cmp.get("agb_observed_range_mg_ha"),ensure_ascii=False),cmp.get("inventory_n_unique_sampling_units"),
-                cmp.get("nearest_ua_distance_km"),cmp.get("carbon_total_tc_comparison"),
-                cmp.get("carbon_total_tco2e_comparison"),cmp.get("uncertainty"),
-                json.dumps(cmp.get("selected_units") or [],ensure_ascii=False),
-                "; ".join(cmp.get("limitations") or [])])
+            references=cmp.get("inventory_references") or [cmp]
+            for ref in references:
+                comparison_rows.append([st.get("physiognomy"),st.get("area_ha"),details.get("product"),
+                    details.get("agb_mg_ha"),details.get("uncertainty_mg_ha"),
+                    ref.get("institution") or ref.get("source") or ref.get("status"),
+                    ref.get("agb_mean_mg_ha"),ref.get("agb_sample_sd_mg_ha") or ref.get("sd_mg_ha"),
+                    (json.dumps(ref.get("agb_observed_range_mg_ha"),ensure_ascii=False)
+                     if ref.get("agb_observed_range_mg_ha") else ""),
+                    (ref.get("inventory_n_unique_sampling_units") or ref.get("n_plots")),
+                    ref.get("nearest_ua_distance_km"),ref.get("carbon_total_tc_comparison"),
+                    ref.get("carbon_total_tco2e_comparison"),
+                    ref.get("uncertainty") or
+                    (("IC95% publicado: "+str(ref.get("ci95_low_mg_ha"))+"–"+str(ref.get("ci95_high_mg_ha"))+" Mg AGB/ha. ")
+                     if ref.get("ci95_low_mg_ha") is not None and ref.get("ci95_high_mg_ha") is not None else "IC95% não informado; ")
+                    +str(ref.get("statistical_use") or ref.get("reason") or ""),
+                    json.dumps(ref.get("selected_units") or [],ensure_ascii=False),
+                    "; ".join(ref.get("limitations") or []) or str(ref.get("region") or ref.get("url") or "")])
         if not comparison_rows:
-            comparison_rows=[["N/D",None,"Rota FH + inventário estrutural prioritária ou CCI sem estimativa IFN elegível",
+            comparison_rows=[["N/D",None,"Rota FH + inventário estrutural prioritária ou CCI sem referência elegível",
                 None,None,"N/D",None,None,None,None,None,None,None,
-                "Comparação CCI × IFN só é apresentada se o resultado quantitativo primário vier do CCI e houver UAs compatíveis.",None,
+                "Comparação CCI × inventários só é apresentada se o resultado quantitativo primário vier do CCI e houver fonte harmonizada compatível.",None,
                 "Comparação não integra nem altera o estoque oficial da análise."]]
         sh.unmerge_cells("A1:H1")
         sh.merge_cells("A1:P1")
         comp_headers=["Fitofisionomia","Área ha","Produto primário","AGB ESA Mg/ha","DP produto Mg/ha",
-            "Estado IFN","AGB IFN média Mg/ha","DP amostral IFN Mg/ha","Faixa observada IFN",
-            "n UAs","Distância mínima km","tC IFN comparativo","tCO₂e IFN comparativo",
-            "Incerteza / interpretação","UAs selecionadas","Limitações"]
+            "Inventário / instituição","AGB média Mg/ha","DP publicado/amostral Mg/ha","Faixa observada",
+            "n parcelas/UAs","Distância mínima km","tC comparativo","tCO₂e comparativo",
+            "Incerteza / interpretação","Unidades selecionadas","Limitações / região / URL"]
         for j,h in enumerate(comp_headers,1):
             c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
             c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
@@ -4096,7 +4127,7 @@ class App(tk.Tk):
             sh.column_dimensions[col].width=w
         put(sh,comparison_rows)
         sh.auto_filter.ref=f"A3:P{3+len(comparison_rows)}"
-        sh["A2"]="IFN é comparação experimental, independente e não somada ao estoque; a incerteza de transferência regional para a propriedade permanece não quantificada. Quando FH × estrutura de inventário fornece a estimativa, fontes adicionais não são exibidas."
+        sh["A2"]="Cada fonte IFN ou publicação harmonizada é apresentada separadamente; valores comparativos não são somados ao estoque. DP entre UAs não equivale a IC95%; estudos sem incerteza publicada mantêm essa lacuna explícita. Catálogo pendente não é fonte operacional."
         sh.merge_cells("A2:P2"); sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
         sh=wb.create_sheet("Fitossociologia IFN")
         setup(sh,"Enform Verde — espécies frequentes em unidades IFN compatíveis")
