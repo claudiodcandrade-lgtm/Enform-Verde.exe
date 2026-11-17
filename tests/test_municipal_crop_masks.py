@@ -24,6 +24,21 @@ class MunicipalCropMaskTests(unittest.TestCase):
             for reference in design["reference_gdf"].geometry:
                 self.assertFalse(target.geometry.iloc[0].intersects(reference))
 
+    def test_fragmented_crop_mask_retries_smaller_blocks_without_relaxing_purity(self):
+        # Eight separated 9-ha fields: a 16-ha window dilutes each field below
+        # the 90% purity gate, while an 8-ha interior window is usable.
+        from shapely.geometry import box
+        cells=[box(i*500,j*500,i*500+300,j*500+300)
+               for i in range(4) for j in range(2)]
+        mask=gpd.GeoDataFrame(geometry=cells,crs=6933)
+        design=current_candidate_vigor_blocks(mask)
+        self.assertEqual(design["status"],"ok")
+        self.assertEqual(design["block_area_ha"],8.0)
+        self.assertGreaterEqual(design["reference_block_count"],6)
+        for target in design["target_blocks"]:
+            self.assertGreaterEqual(target.to_crs(6933).geometry.area.iloc[0]/10000,2.0)
+            self.assertLessEqual(target.to_crs(6933).geometry.area.iloc[0]/10000,8.01)
+
     def setUp(self):
         self.tmp=TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

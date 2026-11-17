@@ -99,16 +99,30 @@ def current_candidate_vigor_blocks(candidates, *, max_blocks=18,
         return {"status": "N/D", "reason": "máscara de candidatos SAR sem geometrias válidas",
                 "target_blocks": [], "reference_gdf": None}
     footprint = gpd.GeoDataFrame(geometry=[unary_union(shapes)], crs=candidates.crs)
-    blocks = sample_crop_patches(footprint, max_patches=max_blocks,
-                                 min_area_ha=min_block_area_ha,
-                                 target_patch_ha=target_block_area_ha,
-                                 min_purity=.90)
+    # Coarse 16-ha windows can miss a fragmented but substantial crop mask.
+    # Retry smaller equal-area windows while retaining the same 90% purity and
+    # six-reference minimum. Never count overlapping blocks as references.
+    attempted_areas = sorted({float(target_block_area_ha),
+                              max(float(min_block_area_ha), float(target_block_area_ha) / 2),
+                              max(float(min_block_area_ha), float(target_block_area_ha) / 4),
+                              float(min_block_area_ha)}, reverse=True)
+    blocks = []
+    selected_block_area = None
+    for block_area in attempted_areas:
+        blocks = sample_crop_patches(footprint, max_patches=max_blocks,
+                                     min_area_ha=min_block_area_ha,
+                                     target_patch_ha=block_area,
+                                     min_purity=.90)
+        if len(blocks) >= min_reference_blocks + 1:
+            selected_block_area = block_area
+            break
     if len(blocks) < min_reference_blocks + 1:
         return {"status": "N/D", "reason": (
                     f"{footprint_label} permite apenas {len(blocks)} blocos internos; "
                     f"vigor relativo exige 1 alvo e ao menos {min_reference_blocks} blocos de referência"),
                 "target_blocks": [], "reference_gdf": None,
-                "blocks_available": len(blocks)}
+                "blocks_available": len(blocks),
+                "attempted_block_areas_ha": attempted_areas}
     n_targets = min(max_targets, len(blocks) - min_reference_blocks)
     target_blocks = blocks[:n_targets]
     reference_blocks = blocks[n_targets:]
@@ -120,7 +134,7 @@ def current_candidate_vigor_blocks(candidates, *, max_blocks=18,
             "blocks_available": len(blocks),
             "target_block_count": len(target_blocks),
             "reference_block_count": len(reference_blocks),
-            "block_area_ha": target_block_area_ha}
+            "block_area_ha": selected_block_area}
 
 
 def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,

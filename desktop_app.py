@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.64-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.65-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -686,7 +686,14 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
     if height_certs and all(c==height_certs[0] for c in height_certs):
         result["height_absence_certificate"]=height_certs[0]
     if not biodiversity_inventory_records:
-        result["biodiversity_references"]=[{"status":"N/D","reason":"INVENTARIO_FITOSSOCIOLOGICO_NAO_CARREGADO"}]
+        # The inventory selector already queried the bundled IFN for each
+        # native stratum. Do not contradict those real results merely because
+        # the optional regional CSV was not supplied by the operator.
+        embedded=[(st.get("sar_details") or {}).get("inventory_biodiversity_reference")
+                  for st in native_strata]
+        embedded=[x for x in embedded if isinstance(x,dict)]
+        result["biodiversity_references"]=(embedded or
+            [{"status":"N/D","reason":"NENHUMA_FONTE_FITOSSOCIOLOGICA_UTILIZAVEL_CARREGADA"}])
     elif not native_strata:
         result["biodiversity_references"]=[{"status":"N/D","reason":"NENHUM_ESTRATO_NATIVO_ATUAL_CONFIRMADO_POR_SAR"}]
     else:
@@ -1749,7 +1756,7 @@ class App(tk.Tk):
         self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
         self.map_canvas.grid(row=1,column=0,sticky="nsew"); self.map_vscroll.grid(row=1,column=1,sticky="ns"); self.map_hscroll.grid(row=2,column=0,sticky="ew")
         map_frame.rowconfigure(1,weight=1); map_frame.columnconfigure(0,weight=1)
-        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._last_canvas_size=None; self._map_extent_factor=1.36; self._map_provider="SATELLITE_PENDING"
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._last_canvas_size=None; self._map_extent_factor=1.36; self._map_provider="SATELLITE_PENDING"; self._optical_attempts_by_generation={}
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
         self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
@@ -1931,6 +1938,7 @@ class App(tk.Tk):
                 copyright=f"CBERS-4A/WFI • INPE • 55 m • {dr[0]}–{dr[1]}{cloud_note}"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],[],p["provider"],copyright)
                 self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
                 self._map_queue.put((generation,p["image"],[],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("CBERS-4A/WFI INPE: "+str(e))
@@ -1940,6 +1948,7 @@ class App(tk.Tk):
                 copyright=f"Sentinel-2 L2A • Earth Search/AWS • {(p.get('datetime') or '')[:10]} • nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
                 self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
@@ -1948,6 +1957,8 @@ class App(tk.Tk):
                 _require_visible_optical_image(p.get("image"),p.get("provider","Sentinel-2 MPC"))
                 copyright=f"Sentinel-2 L2A • Planetary Computer • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
@@ -1955,6 +1966,7 @@ class App(tk.Tk):
                 image,meta,original=cached_optical
                 credit="Imagem óptica em cache • fonte original: "+original
                 self._save_optical_diagnostic(generation,"CACHE_OPTICAL",errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
                 self._map_queue.put((generation,image,meta.get("polygons") or [],
                                      "CACHE ÓPTICO • "+original,None,credit,None))
                 return
@@ -1967,6 +1979,7 @@ class App(tk.Tk):
                 copyright=f"NASA GIBS • VIIRS SNPP • imagem de {p.get('datetime','')} • contexto visual"
                 _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p.get("polygons") or [],p["provider"],copyright)
                 self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
                 self._map_queue.put((generation,p["image"],p.get("polygons") or [],p["provider"],None,copyright,None))
                 return
             except Exception as e:errors.append("NASA GIBS VIIRS: "+str(e))
@@ -1979,12 +1992,14 @@ class App(tk.Tk):
                 copyright="Esri World Imagery • mosaico óptico de referência • data e sensor N/D"
                 _store_satellite_preview_cache(g,extent_factor,w,h,im,[],"ESRI_WORLD_IMAGERY",copyright)
                 self._save_optical_diagnostic(generation,"ESRI_WORLD_IMAGERY",errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
                 self._map_queue.put((generation,im,[],"ESRI_WORLD_IMAGERY",None,copyright,None))
                 return
             except Exception as e:errors.append("Esri World Imagery: "+type(e).__name__+": "+str(e)[:180])
             # A fitofisionomia IBGE remains an analytical vector input. It is
             # never reported as an optical image or accepted as map delivery.
             self._save_optical_diagnostic(generation,"NO_OPTICAL_IMAGE",errors)
+            self._optical_attempts_by_generation[generation]=list(errors)
             self._map_queue.put((generation,None,[],"NO_OPTICAL_IMAGE",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
@@ -2018,7 +2033,12 @@ class App(tk.Tk):
             self._map_provider="NO_OPTICAL_IMAGE" if not kept else getattr(self,"_map_provider","OPTICAL_CACHE")
             self.map_status.set("FALHA AO ABRIR IMAGEM ÓPTICA: "+str(error)[:220]+
                 ("; última imagem óptica válida mantida." if kept else "; nenhum fundo óptico foi carregado.")+" A análise segue independente do fundo.")
-            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
+            attempts=self._optical_attempts_by_generation.pop(generation,[])
+            detail=("\nFalhas por provedor:\n• "+"\n• ".join(attempts)) if attempts else ""
+            self.project["optical_diagnostic"]={"status":"NO_OPTICAL_IMAGE","error":str(error),
+                "provider_failures":attempts,"aoi_area_ha":self.project.get("area_ha")}
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+
+                "\n\nIMAGEM ÓPTICA NÃO CARREGADA — diagnóstico para esta AOI:\n"+str(error)+detail)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
@@ -2029,6 +2049,13 @@ class App(tk.Tk):
         self.map_canvas.yview_moveto(max(0.0,min(1.0,(view.height-max(1,self.map_canvas.winfo_height()))/(2*max(1,view.height)))))
         self._map_provider=str(provider or "ONLINE")
         self.map_status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {format_ptbr(1.36/max(self._map_extent_factor,1e-9),2)}×. Uso exclusivo para visualização; não alimenta cálculos.")
+        attempts=self._optical_attempts_by_generation.pop(generation,[])
+        self.project["optical_diagnostic"]={"status":"OPTICAL_IMAGE_LOADED","provider":str(provider),
+            "provider_failures":attempts,"aoi_area_ha":self.project.get("area_ha")}
+        if attempts:
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+
+                "\n\nDiagnóstico do fundo óptico — fonte exibida: "+str(provider)+
+                "\nFontes prioritárias que falharam antes dela:\n• "+"\n• ".join(attempts))
 
     def _on_map_resize(self,event=None):
         """Keep the selected basemap fitted after a real canvas resize."""
@@ -3684,7 +3711,10 @@ class App(tk.Tk):
                             "    Estado e limites: "+str(inventory_cmp.get("confidence"))+"; "+"; ".join(inventory_cmp.get("limitations") or []),
                         ]
                     else:
-                        lines.append("  COMPARAÇÃO DE AGB POR INVENTÁRIOS: "+str(inventory_cmp.get("status"))+" — "+str(inventory_cmp.get("reason") or "referência compatível não disponível")+". A base expandida foi consultada quando disponível; não foi inventado valor.")
+                        lines.append("  COMPARAÇÃO DE AGB POR INVENTÁRIOS: "+str(inventory_cmp.get("status"))+" — "+str(inventory_cmp.get("reason") or "referência compatível não disponível"))
+                    for ref in inventory_cmp.get("inventory_references",[]):
+                        if ref.get("status")=="REFERENCIA_AGREGADA_PUBLICADA":
+                            lines.append("    Referência publicada independente (não somada): "+str(ref.get("institution"))+"; "+str(ref.get("region"))+"; AGB média "+format_ptbr(ref.get("agb_mean_mg_ha"),2)+" Mg/ha; n parcelas="+str(ref.get("n_plots") or "N/D")+"; incerteza publicada="+(str(ref.get("ci95_low_mg_ha"))+"–"+str(ref.get("ci95_high_mg_ha"))+" Mg/ha" if ref.get("ci95_low_mg_ha") is not None and ref.get("ci95_high_mg_ha") is not None else "N/D")+"; "+str(ref.get("citation"))+"; "+str(ref.get("statistical_use")))
                 biodiversity=sar_details.get("inventory_biodiversity_reference")
                 if isinstance(biodiversity,dict):
                     if biodiversity.get("status")=="INDICADOR_FITOSSOCIOLOGICO_IFN":

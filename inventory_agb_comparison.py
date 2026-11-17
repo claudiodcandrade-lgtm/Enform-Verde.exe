@@ -21,6 +21,7 @@ PANEL = ROOT / "data" / "ifn_fesv_mato_grosso_agb_candidates_v1.csv"
 DB = ROOT / "data" / "national_inventory_microdata_v1.sqlite"
 UF_NAME = {"MT": "Mato Grosso"}
 PANEL_SHA256 = "f677e2fbc8288b36e5614c1e3ada47fdc5becd3694fccb8d150d9e2d6e361ea8"
+AGGREGATE_PANEL = ROOT / "data" / "structural_aggregate_evidence_v1.csv"
 
 
 def _norm(value):
@@ -33,6 +34,41 @@ def _distance_km(lon1, lat1, lon2, lat2):
     dp, dl = p2 - p1, math.radians(lon2 - lon1)
     h = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
     return 6371.0088 * 2 * math.asin(min(1.0, math.sqrt(h)))
+
+
+def canonical_panel_sha256(data):
+    """Hash CSV content independently of LF versus Windows CRLF endings."""
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
+    """All exact bioregional/physiognomic published AGB rows, kept separate."""
+    rows=[]; seen=set()
+    try:
+        with Path(path).open(encoding="utf-8-sig", newline="") as stream:
+            for row in csv.DictReader(stream):
+                if (_norm(row.get("metric")) != "agb"
+                        or _norm(row.get("biome")) != _norm(biome)
+                        or _norm(row.get("physiognomy")) != _norm(physiognomy)):
+                    continue
+                value=_optional_float(row.get("center"))
+                if value is None or value < 0: continue
+                key=(row.get("source_id"),row.get("region"),row.get("citation"),value)
+                if key in seen: continue
+                seen.add(key)
+                rows.append({"status":"REFERENCIA_AGREGADA_PUBLICADA",
+                    "source_id":row.get("source_id"), "institution":row.get("institution"),
+                    "region":row.get("region"), "agb_mean_mg_ha":value,
+                    "sd_mg_ha":_optional_float(row.get("sd")),
+                    "ci95_low_mg_ha":_optional_float(row.get("ci95_low")),
+                    "ci95_high_mg_ha":_optional_float(row.get("ci95_high")),
+                    "n_plots":row.get("n_plots"), "n_sites":row.get("n_sites"),
+                    "citation":row.get("citation"), "url":row.get("url"),
+                    "statistical_use":row.get("statistical_use"),
+                    "not_added_to_stock_total":True})
+    except (OSError, csv.Error):
+        return []
+    return rows
 
 
 def estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
@@ -52,7 +88,9 @@ def estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
         return {"status": "N/D", "reason": "AREA_OU_CENTROIDE_INVALIDO"}
     if not DB.is_file() or not PANEL.is_file():
         return {"status": "N/D", "reason": "BASE_IFN_EXPANDIDA_OU_PAINEL_AGB_INDISPONIVEL"}
-    panel_sha = hashlib.sha256(PANEL.read_bytes()).hexdigest()
+    # Windows checkouts may normalize LF to CRLF. Hash the canonical text
+    # representation so line-ending policy does not disable a valid dataset.
+    panel_sha = canonical_panel_sha256(PANEL.read_bytes())
     if panel_sha != PANEL_SHA256:
         return {"status": "N/D", "reason": "HASH_DO_PAINEL_IFN_AGB_DIVERGENTE",
                 "observed_sha256": panel_sha}
@@ -119,14 +157,14 @@ def estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
     candidates.sort(key=lambda r: (r["distance_km"], r["ua_id"]))
     selected = candidates[:max(1, min(int(max_units), 20))]
     if len(selected) < 5:
-        return {"status": "N/D", "reason": "MENOS_DE_CINCO_UAS_COMPATIVEIS_NA_MESMA_FITOFISIONOMIA",
-                "n_ua_compativeis": len(selected), "raio_km": float(max_distance_km),
-                "base_ifn_expandida_usada": True}
-
-    values = [r["agb_mg_ha"] for r in selected]
-    mean, sd = statistics.mean(values), statistics.stdev(values)
-    cfrac = 0.47
-    return {
+        ifn_result = {"status": "N/D", "reason": "MENOS_DE_CINCO_UAS_COMPATIVEIS_NA_MESMA_FITOFISIONOMIA",
+                      "n_ua_compativeis": len(selected), "raio_km": float(max_distance_km),
+                      "base_ifn_expandida_usada": True}
+    else:
+        values = [r["agb_mg_ha"] for r in selected]
+        mean, sd = statistics.mean(values), statistics.stdev(values)
+        cfrac = 0.47
+        ifn_result = {
         "status": "COMPARACAO_EXPERIMENTAL_IFN_AGB",
         "label": "Comparação regional por médias de UAs IFN compatíveis — experimental",
         "base_ifn_expandida_usada": True,
@@ -145,31 +183,34 @@ def estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
         "nearest_ua_distance_km": selected[0]["distance_km"],
         "mean_selected_ua_distance_km": statistics.mean(r["distance_km"] for r in selected),
         "selected_units": selected,
-        "source": "SFB/IFN Painel de Biomassa e Carbono (AGB_Chave), vinculado à base IFN DAP10 expandida e ao cruzamento IFN × IBGE Vegetação legenda_1",
+        "source": "SFB/IFN Painel de Biomassa e Carbono (AGB_Chave), vinculado à base IFN DAP10 expandida",
         "source_url": "https://dados.florestal.gov.br/pt_BR/dataset/painel-de-biomassa-e-carbono",
         "candidate_file_sha256": panel_sha,
-        "source_panel_sha256": "8f4dbd3c22904632447796d39ee575f60ea36ce483a3e5f3849ddff762c1cc6e",
-        "uncertainty": (
-            f"DP amostral entre {len(selected)} UAs: {sd:.2f} Mg AGB/ha; "
-            f"faixa observada {min(values):.2f}–{max(values):.2f} Mg/ha. "
-            "Essa dispersão descreve as UAs selecionadas, não é IC95% nem intervalo preditivo da propriedade. "
-            "Erro da equação AGB_Chave, expansão do desenho amostral, precisão posicional e transferência espacial não quantificados."
-        ),
+        "uncertainty": (f"DP amostral entre {len(selected)} UAs: {sd:.2f} Mg AGB/ha; faixa observada "
+            f"{min(values):.2f}–{max(values):.2f} Mg/ha. Não é IC95% nem intervalo preditivo; "
+            "erros da equação, expansão, posição e transferência não quantificados."),
         "confidence": "BAIXA; comparação regional experimental, sem validação independente na propriedade",
-        "calculation_trace": {
-            "selection": "bioma + MT + Floresta Natural + tipologia idêntica + legenda_1 IBGE idêntica; cinco UAs físicas mais próximas em até 250 km",
-            "mean_formula": "média aritmética não ponderada das AGB mg/ha por UA independente",
-            "sample_sd_formula": "DP amostral entre UAs; não usar como erro da AOI",
-            "carbon_formula": "AGB × fração operacional 0,47; estoque comparativo = tC/ha × área da classe",
-            "inventory_db_sha256": "9ffeb84e582d2fa2c5c892bd798346f227adc2080d7976a75cea71238ba75389",
-            "area_basis": "mesma área de classe nativa confirmada por SAR usada no estrato CCI",
-            "not_included": ["erro do fator 0,47", "incerteza de expansão", "erro AGB_Chave", "transferência para a AOI"]
-        },
         "not_added_to_stock_total": True,
-        "limitations": [
-            "AGB_Chave é a opção publicada pelo painel, mas sua escolha não foi auditada independentemente para esta fitofisionomia",
-            "coordenadas do painel têm precisão posicional não quantificada",
-            "a base IFN DAP10 é um programa nacional; UAs não equivalem a inventários independentes por UF",
-            "não é validação local nem deve ser somada ao estoque ESA CCI",
-        ],
-    }
+        }
+
+    # Include every verified published aggregate with AGB in the local
+    # evidence register. Preserve each study as its own reference: unlike
+    # plot microdata, these records cannot be pooled or distance-ranked.
+    published = published_agb_references(biome=biome,physiognomy=physiognomy)
+    result = dict(ifn_result)
+    result["inventory_references"] = ([ifn_result] if ifn_result.get("status") != "N/D" else []) + published
+    result["usable_inventory_sources_consulted"] = ["SFB_IFN_DAP10", "REGISTRO_AGREGADOS_PUBLICADOS"]
+    result["published_aggregate_count"] = len(published)
+    if result["status"] == "N/D" and published:
+        result["status"] = "COMPARACAO_REFERENCIAS_PUBLICADAS"
+        result["reason"] = "IFN microdados não elegíveis; referências agregadas compatíveis listadas separadamente"
+    if not result["inventory_references"]:
+        result["reason"] = result.get("reason", "SEM_REFERENCIAS_DE_AGB_COMPATIVEIS_NA_BASE_UTILIZAVEL")
+    return result
+
+def _optional_float(value):
+    try:
+        out=float(value)
+        return out if math.isfinite(out) else None
+    except (TypeError, ValueError):
+        return None
