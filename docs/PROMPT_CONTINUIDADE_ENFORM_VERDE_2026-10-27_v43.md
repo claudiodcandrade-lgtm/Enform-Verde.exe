@@ -586,3 +586,16 @@ A especificação Word completa é atualizada pelo workflow de sincronização a
 
 #### Ajuste da suíte completa
 A suíte revelou expectativas de formatação vinculadas à tabela antiga. Elas foram atualizadas para verificar o novo formato responsivo, incluindo a soma, a propagação estatística declarada e a sinalização de incerteza não mensurável; os critérios de conteúdo permanecem.
+
+## V88.126 — IFN no executável e gate fechado da contingência de carbono (16/11/2026)
+
+- A versão candidata é `3.26.62-PRECAMPO-EXPERIMENTAL`. O workflow reconstrói a base oficial IFN DAP10 (27 partições estaduais, 841.387 observações e 8.951 unidades), cruza cada centro de UA com a `legenda_1` do IBGE e inclui o banco SQLite no pacote Windows. A consulta da aplicação seleciona por localização, bioma e fitofisionomia, em ordem de proximidade.
+- A associação geométrica local encontrou uma correspondência única em cada UA. Isso representa região fitoecológica potencial, não vegetação atual ou validação em campo. Coordenadas são do centro de UA; observações brutas não sustentam por si só AGB/ha, área basal/ha nem altura média do dossel.
+- A altura média do dossel continua prioritariamente dependente do ESA BIOMASS FH. A base IFN é referência estrutural, não substitui FH e não está promovida a estimador operacional enquanto faltarem área/pesos de expansão e pontes alométricas validadas.
+- Corrigido o bypass da contingência: `conditional_only=True` não pode autorizar cenário. Inventários só são elegíveis após certificado explícito de ausência de cenas de altura, esgotamento de todas as rotas sem erro e ausência de altura/pixels SAR quantitativos ou outra rota de altura utilizável. Erros de rede, TLS, autenticação, leitura ou processamento bloqueiam; não se reclassificam como ausência.
+- Testes relevantes do IFN, do gate de contingência e do handoff: 17 passaram. Após sincronizar a especificação Word, a suíte integral passou com 1.253 testes e um skip headless; o verificador inspecionou 183 módulos. O `--module-check` local confirmou a seleção da base IFN. Compilação Python e `git diff --check` passaram.
+- Build Windows, banco embutido no EXE, seleção sob `--module-check`, canvas visível e network-check seguem pendentes de confirmação no SHA final. A versão continua experimental, sem homologação científica ou EXE liberado. O KML integral privado da Fazenda Maria Eduarda ainda precisa ser exercitado no Windows.
+
+### Continuidade
+
+Sincronizar DOCX V88.126, repetir suíte/checker e publicar somente na branch de desenvolvimento autorizada. Acompanhar o workflow Windows até terminal. Corrigir falhas reais sem relaxar critérios de pixels, visibilidade, TLS ou ausência de cenas. Não publicar na `main` nem afirmar homologação sem os gates verdes.
