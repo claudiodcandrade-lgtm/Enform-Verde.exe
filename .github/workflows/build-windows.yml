@@ -86,6 +86,20 @@ jobs:
             data/pam_microregion_yield_2015_2024.csv.gz
             data/pam_microregion_yield_2015_2024.metadata.json
           retention-days: 30
+      - name: Materialize IFN microdata and crosswalk to IBGE legenda_1
+        timeout-minutes: 20
+        run: |
+          python tools/harvest_ifn_dap10_2025.py
+          python tools/ingest_official_inventory_microdata.py
+          python tools/build_ifn_ibge_crosswalk.py
+      - name: Upload IFN database and spatial crosswalk audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifn-tree-microdata-and-ibge-crosswalk-${{ github.sha }}
+          path: |
+            data/official_inventory_microdata_ingestion_v1.json
+            data/ifn_ibge_crosswalk_audit_v1.json
+          retention-days: 30
       - name: Inspect public IFN necromass and point schemas
         continue-on-error: true
         timeout-minutes: 3
@@ -132,6 +146,8 @@ jobs:
 
       - name: Source self-test
         run: python desktop_app.py --self-test
+      - name: IFN database, location, biome and fitophysiognomy selection tests
+        run: python -m unittest tests.test_inventory_microdata_library -v
       - name: Native-only stratification and confidence regression tests
         run: python -m unittest tests.test_native_carbon tests.test_land_use_sar tests.test_crop_model_registry tests.test_crop_yield_uncertainty tests.test_crop_yield_modeling tests.test_crop_map_training tests.test_crop_height_features tests.test_crop_regional_phenology tests.test_crop_fusion_inference tests.test_crop_fusion_batch tests.test_sar_acquisition_time tests.test_planted_forest_classifier tests.test_independent_sar_validation tests.test_external_reference_catalog tests.test_alos_scene_pair tests.test_integrated_system_classifier tests.test_executive_carbon_report tests.test_inmet_weather_client tests.test_sidra_pam_materializer tests.test_sar_crop_domain_policy tests.test_agricultural_sar_freshness tests.test_agricultural_evidence_routes tests.test_dual_dashboard tests.test_agricultural_yield_units -v
       - name: Pantanal fallback tests
@@ -371,7 +387,7 @@ jobs:
           '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
           python live_sentinel2_preview.py
 
-      - name: Live optical background smoke — Brazilian biomes and geographic extremes
+      - name: Live real optical pixels — Brazilian biomes and geographic extremes
         shell: pwsh
         timeout-minutes: 45
         run: python tools/live_optical_coverage_brazil.py
@@ -384,7 +400,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Live optical-or-IBGE-fallback worker-to-Tk-canvas smoke — Sinop
+      - name: Live real optical worker-to-Tk-canvas smoke — Sinop
         shell: pwsh
         timeout-minutes: 7
         run: python tools/live_gui_optical_sinop.py
@@ -867,7 +883,7 @@ jobs:
           if ($sourceSha -ne $expected) { throw "Build SHA mismatch: $sourceSha vs $expected" }
           "SOURCE_SHA = '$sourceSha'" | Set-Content 'enform_build_source.py' -Encoding utf8
       - name: Build executable
-        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "data/pam_microregion_yield_2015_2024.csv.gz;data" --add-data "data/ibge_microrregioes_2021_simplificada.geojson.gz;data" --add-data "data/ifn_fesv_mato_grosso_agb_candidates_v1.csv;data" --add-data "data/national_forest_inventory_catalog_v1.sqlite;data" --add-data "data/national_inventory_portals_v1.csv;data" --add-data "data/national_inventory_datasets_v1.csv;data" --add-data "data/national_inventory_source_metrics_v1.json;data" --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj --collect-all sklearn --hidden-import pronasolos_wcs --hidden-import soil_intersection_report --hidden-import crop_model_priority --hidden-import crop_vigor --hidden-import crop_climate_favorability --hidden-import crop_yield_scenario --hidden-import crop_forecast_pipeline --hidden-import ui_visual_standard --hidden-import crop_water_balance_yield --hidden-import crop_panel_yield_model --hidden-import soil_water_balance_spatial --hidden-import crop_identifier_consolidated --hidden-import crop_vigor_auto --hidden-import crop_monitoring_forecast --hidden-import national_analysis_audit --hidden-import national_inventory_database --hidden-import biodiversity_inventory --hidden-import soil_pedology_embrapa --hidden-import soil_fertility_zonal --hidden-import soil_soc_official_uncertainty --hidden-import modeled_field_validation --hidden-import enform_build_source --hidden-import recent_sar_landcover --hidden-import property_physiognomy_display --hidden-import tls_setup --hidden-import regional_litter_hierarchy --hidden-import sar_landcover_lemplus --hidden-import ifn_carbon_fallback --add-data "data/models/sar_brasil_rf_v2.joblib;data/models" --add-data "data/models/sar_brasil_rf_v2.manifest.json;data/models" --collect-data certifi --add-data "data/models/yield_panel_v1.json;data/models" --add-data "validation/ui_visual_baseline.json;validation" desktop_app.py
+        run: pyinstaller --noconfirm --clean --windowed --onedir --name "Enform Verde" --icon enform_verde.ico --add-data "enform_header.png;." --add-data "data/pam_microregion_yield_2015_2024.csv.gz;data" --add-data "data/ibge_microrregioes_2021_simplificada.geojson.gz;data" --add-data "data/ifn_fesv_mato_grosso_agb_candidates_v1.csv;data" --add-data "data/national_forest_inventory_catalog_v1.sqlite;data" --add-data "data/national_inventory_microdata_v1.sqlite;data" --add-data "data/national_inventory_portals_v1.csv;data" --add-data "data/national_inventory_datasets_v1.csv;data" --add-data "data/national_inventory_source_metrics_v1.json;data" --collect-all pandas --collect-all openpyxl --collect-all geopandas --collect-all pyogrio --collect-all rasterio --collect-all pyproj --collect-all sklearn --hidden-import pronasolos_wcs --hidden-import soil_intersection_report --hidden-import crop_model_priority --hidden-import crop_vigor --hidden-import crop_climate_favorability --hidden-import crop_yield_scenario --hidden-import crop_forecast_pipeline --hidden-import ui_visual_standard --hidden-import crop_water_balance_yield --hidden-import crop_panel_yield_model --hidden-import soil_water_balance_spatial --hidden-import crop_identifier_consolidated --hidden-import crop_vigor_auto --hidden-import crop_monitoring_forecast --hidden-import national_analysis_audit --hidden-import national_inventory_database --hidden-import inventory_microdata_library --hidden-import biodiversity_inventory --hidden-import soil_pedology_embrapa --hidden-import soil_fertility_zonal --hidden-import soil_soc_official_uncertainty --hidden-import modeled_field_validation --hidden-import enform_build_source --hidden-import recent_sar_landcover --hidden-import property_physiognomy_display --hidden-import tls_setup --hidden-import regional_litter_hierarchy --hidden-import sar_landcover_lemplus --hidden-import ifn_carbon_fallback --add-data "data/models/sar_brasil_rf_v2.joblib;data/models" --add-data "data/models/sar_brasil_rf_v2.manifest.json;data/models" --collect-data certifi --add-data "data/models/yield_panel_v1.json;data/models" --add-data "validation/ui_visual_baseline.json;validation" desktop_app.py
       - name: Place approved visual asset beside EXE
         shell: pwsh
         run: |
@@ -906,6 +922,9 @@ jobs:
           $header = Join-Path $root 'enform_header.png'
           if (!(Test-Path $header)) { throw 'enform_header.png is missing from packaged application' }
           if ((Get-Item $header).Length -lt 20000) { throw 'Approved high-resolution Enform mask is unexpectedly small' }
+          $ifnDb = Get-ChildItem -Path $root -Recurse -Filter 'national_inventory_microdata_v1.sqlite' | Select-Object -First 1
+          if (!$ifnDb) { throw 'IFN 841k-tree microdata database is missing from packaged application' }
+          if ($ifnDb.Length -lt 400000000) { throw 'Packaged IFN database is unexpectedly incomplete' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Alta_Biomassa_Tapajos.kml'))) { throw 'High-biomass Brazilian SAR AOI is missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_PF_Alta.kml'))) { throw 'PF H100-structure AOI is missing from package' }
           if (!(Test-Path (Join-Path $root 'acceptance\Teste_SAR_Altura_Estrutura_Tapajos_SF_Baixa.kml'))) { throw 'SF H100-structure AOI is missing from package' }
@@ -948,7 +967,7 @@ jobs:
             # Python and the PyInstaller Windows executable, not just import.
             $pythonRef = Get-Content (Join-Path $env:RUNNER_TEMP 'enform_python_reference.json') -Raw | ConvertFrom-Json -AsHashtable
             $windowsResult = Get-Content (Join-Path $env:TEMP 'enform_verde_module_check.json') -Raw | ConvertFrom-Json -AsHashtable
-            foreach ($key in @('version','soil_exact_intersection','pre_field_model_contract','microregion','pam_years','yield_panel_model','sar_model','crop_water')) {
+            foreach ($key in @('version','soil_exact_intersection','pre_field_model_contract','microregion','pam_years','yield_panel_model','sar_model','crop_water','ifn_microdata')) {
               if (!$pythonRef.ContainsKey($key) -or !$windowsResult.ContainsKey($key)) { throw "Python/Windows parity missing module evidence: $key" }
               $left = ConvertTo-Json -InputObject $pythonRef[$key] -Depth 30 -Compress
               $right = ConvertTo-Json -InputObject $windowsResult[$key] -Depth 30 -Compress

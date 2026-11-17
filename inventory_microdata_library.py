@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import csv
 import hashlib
+from functools import lru_cache
 import math
+import sqlite3
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -187,10 +190,9 @@ def query_official_inventory_measurements(*, uf: str | None = None,
     per-hectare estimates; the IFN design and expansion weights must be applied
     separately before population inference.
     """
-    import sqlite3
     path = Path(db_path).resolve()
     if not path.is_file():
-        return []
+        raise FileNotFoundError("IFN_MICRODATA_DB_NOT_AVAILABLE")
     safe_limit = max(1, min(int(limit), 200))
     clauses, params = [], []
     for field, value in (("uf", uf), ("biome", biome), ("municipality", municipality)):
@@ -222,6 +224,176 @@ def query_official_inventory_measurements(*, uf: str | None = None,
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA query_only=ON")
         return [dict(row) for row in conn.execute(sql, params)]
+
+
+def _norm_label(value: str | None) -> str:
+    text=unicodedata.normalize("NFKD",str(value or "").casefold())
+    return "".join(c for c in text if c.isalnum() and not unicodedata.combining(c))
+
+
+@lru_cache(maxsize=8)
+def _official_inventory_database_status_cached(path_text: str, size_bytes: int, mtime_ns: int) -> dict:
+    """Report whether tree data and verified IBGE unit crosswalk are present."""
+    path=Path(path_text)
+    if not path.is_file():
+        return {"status":"N/D","available":False,
+                "reason":"IFN_MICRODATA_DB_NOT_AVAILABLE","operational_for_tree_selection":False}
+    try:
+        with sqlite3.connect(f"file:{path}?mode=ro",uri=True,timeout=5) as conn:
+            observations=conn.execute("SELECT COUNT(*) FROM ifn_dap10_observation").fetchone()[0]
+            units=conn.execute("SELECT COUNT(*) FROM ifn_sampling_unit_summary").fetchone()[0]
+            tables={r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            if "ifn_sampling_unit_ibge_crosswalk" not in tables:
+                return {"status":"INCOMPLETO","available":True,"observation_rows":observations,
+                        "sampling_units":units,"reason":"IFN_IBGE_PHYSIOGNOMY_CROSSWALK_NOT_AVAILABLE",
+                        "operational_for_tree_selection":False}
+            crosswalk=conn.execute("SELECT COUNT(*) FROM ifn_sampling_unit_ibge_crosswalk WHERE match_status='MATCH_UNICO_PONTO_INTERIOR'").fetchone()[0]
+            source_files=conn.execute("SELECT COUNT(DISTINCT source_file) FROM ifn_dap10_observation").fetchone()[0]
+            source_hashes=conn.execute("SELECT COUNT(DISTINCT source_sha256) FROM ifn_dap10_observation").fetchone()[0]
+        expected_rows,expected_units,expected_files=841387,8951,27
+        ready=(observations==expected_rows and units==expected_units and
+               crosswalk==expected_units and source_files==expected_files and source_hashes==expected_files)
+        return {"status":"PRONTO_PARA_SELECAO_DE_REFERENCIAS" if ready else "INCOMPLETO_OU_DIVERGENTE","available":True,
+                "observation_rows":observations,"sampling_units":units,
+                "source_workbooks":source_files,"source_workbook_hashes":source_hashes,
+                "ibge_unique_unit_matches":crosswalk,"expected_observation_rows":expected_rows,
+                "expected_sampling_units":expected_units,
+                "operational_for_tree_selection":ready,
+                "agb_or_canopy_height_estimator_available":False,
+                "reason":None if ready else "IFN_COUNTS_SOURCE_HASHES_OR_IBGE_CROSSWALK_DID_NOT_MEET_EXPECTED_CONTRACT"}
+    except sqlite3.Error as exc:
+        return {"status":"ERRO_LEITURA","available":True,
+                "reason":"IFN_DB_SCHEMA_OR_READ_ERROR:"+type(exc).__name__,
+                "operational_for_tree_selection":False}
+
+
+def official_inventory_database_status(db_path: str | Path = OFFICIAL_DB) -> dict:
+    """Check the large IFN database once per file version, then reuse its audit.
+
+    The database is immutable during an analysis. Keying the cache by absolute
+    path, size and nanosecond mtime invalidates it after a replacement/update,
+    while avoiding repeated full-table COUNT scans in one desktop session.
+    """
+    path=Path(db_path).resolve()
+    if not path.is_file():
+        return {"status":"N/D","available":False,
+                "reason":"IFN_MICRODATA_DB_NOT_AVAILABLE","operational_for_tree_selection":False}
+    stat=path.stat()
+    result=_official_inventory_database_status_cached(str(path),stat.st_size,stat.st_mtime_ns)
+    return dict(result)
+
+
+def select_official_inventory_units(*, biome: str, physiognomy: str,
+        longitude: float, latitude: float, max_distance_km: float = 250.0,
+        max_units: int = 5, include_trees: bool = True,
+        db_path: str | Path = OFFICIAL_DB) -> dict:
+    """Select nearest unique IFN sampling units by exact biome and IBGE legenda_1.
+
+    Distance is from the IFN sampling-unit center. Tree records inherit that
+    center only for candidate selection; they are never represented as
+    individually georeferenced. Returned measurements are raw sampled trees,
+    not per-hectare estimates and not an AGB estimate.
+    """
+    path=Path(db_path).resolve()
+    if not path.is_file():
+        return {"status":"N/D","reason":"IFN_MICRODATA_DB_NOT_AVAILABLE","units":[],"trees":[]}
+    try:
+        lon,lat,radius=float(longitude),float(latitude),float(max_distance_km)
+        if not all(math.isfinite(v) for v in (lon,lat,radius)) or not -180<=lon<=180 or not -90<=lat<=90 or radius<=0:
+            raise ValueError("invalid target coordinate or search radius")
+    except (TypeError,ValueError,OverflowError) as exc:
+        return {"status":"N/D","reason":"INVALID_SELECTION_LOCATION_OR_RADIUS","diagnostic":type(exc).__name__,"units":[],"trees":[]}
+    with sqlite3.connect(f"file:{path}?mode=ro",uri=True,timeout=5) as conn:
+        conn.row_factory=sqlite3.Row
+        tables={r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if "ifn_sampling_unit_ibge_crosswalk" not in tables:
+            return {"status":"N/D","reason":"IFN_IBGE_PHYSIOGNOMY_CROSSWALK_NOT_AVAILABLE","units":[],"trees":[]}
+        records=conn.execute("""SELECT s.*, x.ibge_cd_fito, x.ibge_legenda_1, x.match_status,
+                   x.source_url AS crosswalk_source, x.source_sha256 AS crosswalk_sha256
+            FROM ifn_sampling_unit_summary s JOIN ifn_sampling_unit_ibge_crosswalk x
+              ON x.ua_id=s.ua_id AND x.uf=s.uf
+            WHERE s.biome=? AND x.match_status='MATCH_UNICO_PONTO_INTERIOR'
+              AND x.ibge_legenda_1 IS NOT NULL""",(str(biome).strip(),)).fetchall()
+        target=_norm_label(physiognomy)
+        candidates=[]
+        for row in records:
+            if _norm_label(row["ibge_legenda_1"])!=target:
+                continue
+            if row["ua_center_lon"] is None or row["ua_center_lat"] is None:
+                continue
+            p1,p2=math.radians(lat),math.radians(float(row["ua_center_lat"]))
+            dp=p2-p1; dl=math.radians(float(row["ua_center_lon"])-lon)
+            a=math.sin(dp/2)**2+math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+            distance=6371.0088*2*math.asin(min(1.0,math.sqrt(a)))
+            if distance<=radius:
+                candidates.append((distance,dict(row)))
+        candidates.sort(key=lambda item:(item[0],item[1]["uf"],item[1]["ua_id"]))
+        candidates=candidates[:max(1,min(int(max_units),100))]
+        if not candidates:
+            return {"status":"N/D","reason":"NO_IFN_UNIT_MATCHES_LOCATION_BIOME_PHYSIOGNOMY_AND_RADIUS",
+                    "units":[],"trees":[],"selection":{"biome":biome,"physiognomy":physiognomy,"radius_km":radius}}
+        units=[]; trees=[]; dbh_values=[]; height_values=[]; sample_ba=0.0
+        species_unit_counts=Counter(); species_tree_counts=Counter()
+        bins={"10_20":0,"20_30":0,"30_40":0,"40_60":0,"60_plus":0}
+        for distance,unit in candidates:
+            unit["distance_km"]=distance
+            units.append(unit)
+            rows=conn.execute("""SELECT * FROM ifn_dap10_observation
+                WHERE ua_id=? AND uf=? ORDER BY subunit,subplot,source_row_number""",
+                (unit["ua_id"],unit["uf"])).fetchall()
+            species_seen_in_unit=set()
+            for row in rows:
+                tree=dict(row)
+                # Presence across independent UAs is the reported frequency;
+                # stem counts are retained separately and never called frequency.
+                taxon=(tree.get("scientific_name") or tree.get("verbatim_identification") or "").strip()
+                taxon_key=_norm_label(taxon)
+                if taxon_key and not any(x in taxon_key for x in ("indeterminad", "naoidentificad", "semidentificacao")):
+                    species_seen_in_unit.add(taxon)
+                    species_tree_counts[taxon]+=1
+                dbh=tree.get("dbh_cm")
+                if dbh is not None and float(dbh)>0:
+                    d=float(dbh); dbh_values.append(d); sample_ba+=math.pi*(d/200.0)**2
+                    bin_id="10_20" if d<20 else "20_30" if d<30 else "30_40" if d<40 else "40_60" if d<60 else "60_plus"
+                    bins[bin_id]+=1
+                height=tree.get("total_height_m")
+                if height is not None and float(height)>0: height_values.append(float(height))
+                if include_trees:
+                    tree["sampling_unit_distance_km"]=distance
+                    tree["tree_coordinate_interpretation"]="UA_CENTER_ONLY_NOT_INDIVIDUAL_TREE_COORDINATE"
+                    trees.append(tree)
+            for taxon in species_seen_in_unit:
+                species_unit_counts[taxon]+=1
+    db_status=official_inventory_database_status(path)
+    selected_unit_count=max(1,len(units))
+    top_species=sorted(species_unit_counts,
+        key=lambda name:(-species_unit_counts[name],-species_tree_counts[name],name.casefold()))[:10]
+    biodiversity={"status":"INDICADOR_FITOSSOCIOLOGICO_IFN" if top_species else "N/D",
+        "definition":"frequência absoluta = UAs compatíveis com a espécie / UAs selecionadas × 100; n de indivíduos apresentado separadamente",
+        "n_unique_sampling_units":len(units),"n_tree_records_with_taxon":sum(species_tree_counts.values()),
+        "unique_taxa_observed":len(species_unit_counts),
+        "top_10_species_by_sampling_unit_frequency":[{
+            "rank":i+1,"species":name,"sampling_units_present":species_unit_counts[name],
+            "frequency_pct":100.0*species_unit_counts[name]/selected_unit_count,
+            "tree_records":species_tree_counts[name]}
+            for i,name in enumerate(top_species)],
+        "limitations":["IFN DAP10 selecionado por proximidade, bioma e legenda_1 IBGE; não é censo de toda a região",
+            "frequência entre UAs não equivale a abundância relativa nem a índice completo de biodiversidade",
+            "uma UA representa a unidade amostral; não atribuir coordenadas individuais às árvores"]}
+    return {"status":"SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA",
+        "selection":{"biome":biome,"physiognomy":physiognomy,"target_longitude":lon,
+            "target_latitude":lat,"radius_km":radius,"selected_unique_units":len(units),
+            "source":"IFN/DAP10 + IBGE Vegetação 2026 legenda_1",
+            "crosswalk_method":"ponto interior único do centro da unidade amostral"},
+        "database_status":db_status,"units":units,"trees":trees,
+        "biodiversity_reference":biodiversity,
+        "raw_tree_sample_summary":{"tree_record_count":len(dbh_values),
+            "mean_dbh_cm":sum(dbh_values)/len(dbh_values) if dbh_values else None,
+            "mean_individual_tree_height_m":sum(height_values)/len(height_values) if height_values else None,
+            "observed_sample_basal_area_m2":sample_ba,
+            "dbh_class_tree_counts":bins,
+            "warning":"amostra bruta das árvores selecionadas; não é densidade por hectare nem estimativa da AOI"},
+        "interpretation":"DAP/HT são medições de árvore em unidades amostrais. Sem aplicar desenho amostral/expansão e equação compatível, não são métricas por hectare nem AGB da AOI; altura de árvore não substitui altura média do dossel SAR."}
 
 
 def query_ief_mg_equations(*, physiognomy: str | None = None,

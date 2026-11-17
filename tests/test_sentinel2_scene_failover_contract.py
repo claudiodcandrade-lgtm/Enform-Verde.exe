@@ -63,13 +63,13 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         self.assertIn("_fetch_stac_features_paged",src)
         self.assertNotIn("_draw_offline_brazil_basemap",body)
 
-    def test_black_or_blank_optical_pixels_are_rejected_before_canvas_delivery(self):
+    def test_optical_failure_is_not_relabelled_as_an_ibge_background(self):
         src=SOURCE.read_text(encoding="utf-8")
         self.assertIn("def _require_visible_optical_image(image,provider):",src)
         self.assertIn("p99<20.0 or spread<5.0 or visible_fraction<0.15",src)
         self.assertIn("optical_pixels=pixels[~overlay]",src)
-        self.assertIn("IBGE_POTENTIAL_FALLBACK",src)
-        self.assertIn("load_ibge_land_use_reference(g)",src)
+        self.assertIn('"NO_OPTICAL_IMAGE"',src)
+        self.assertNotIn('"IBGE_POTENTIAL_FALLBACK"',src)
         tree=ast.parse(src)
         fn=next(n for n in ast.walk(tree)
                 if isinstance(n,ast.FunctionDef) and n.name=="show_google_map")
@@ -98,6 +98,13 @@ class Sentinel2SceneFailoverContract(unittest.TestCase):
         self.assertIn("Image.fromarray",fixture)
         self.assertIn("np.indices",fixture)
         self.assertNotIn('Image.new("RGB",(int(out_w),int(out_h)),(34,104,71))',fixture)
+
+    def test_live_windows_canvas_gate_requires_real_optical_pixels(self):
+        live=(SOURCE.parent/"tools"/"live_gui_optical_sinop.py").read_text(encoding="utf-8")
+        self.assertIn("real optical imagery is visible as a Tk canvas image",live)
+        self.assertNotIn("PASS_IBGE_FALLBACK",live)
+        self.assertNotIn("PASS_AOI_FALLBACK",live)
+        self.assertIn('visible=canvas_viewable and bool(getattr(window,"_satellite_map_visible",False))',live)
 
     def test_preview_reads_are_split_into_bounded_quadrants(self):
         from desktop_app import OPTICAL_COG_TILE_SIZE,_iter_optical_quadrants

@@ -345,7 +345,21 @@ def ingest_ief_equations(conn):
         conn.execute(query, [row.get(key) for key in cols])
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ief_physiognomy_region ON ief_mg_published_equation(physiognomy,region_code)")
     conn.commit()
-    return {"equation_count": len(rows), "source_pdf_sha256": _hash(DATA / "external_raw" / "ief_mg_2008" / "IEF_UFLA_2008_equacoes_peso_materia_seca_capitulo_III.pdf")}
+    # The equation table is shipped as a reviewed CSV. The original chapter PDF
+    # is not present in every clean checkout; retain its previously audited
+    # digest from the ingestion manifest instead of failing after rebuilding the
+    # much larger IFN database. If the PDF is present, verify it against that
+    # digest before recording it.
+    pdf = DATA / "external_raw" / "ief_mg_2008" / "IEF_UFLA_2008_equacoes_peso_materia_seca_capitulo_III.pdf"
+    prior_report = DATA / "official_inventory_microdata_ingestion_v1.json"
+    prior = json.loads(prior_report.read_text(encoding="utf-8")) if prior_report.exists() else {}
+    expected = ((prior.get("ief_mg_2008_equations") or {}).get("source_pdf_sha256"))
+    actual = _hash(pdf) if pdf.is_file() else None
+    if actual and expected and actual != expected:
+        raise RuntimeError("IEF_SOURCE_PDF_SHA256_MISMATCH")
+    return {"equation_count": len(rows),
+            "source_pdf_sha256": actual or expected,
+            "source_pdf_available_in_checkout": bool(actual)}
 
 
 def main():
@@ -383,11 +397,24 @@ def main():
         "Personal/property identifiers removed. No approval or inventory approval inferred from authorization status."))
     conn.commit()
     conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    crosswalk = None
+    try:
+        crosswalk = {
+            "sampling_units": conn.execute("SELECT COUNT(*) FROM ifn_sampling_unit_ibge_crosswalk").fetchone()[0],
+            "unique_matches": conn.execute("SELECT COUNT(*) FROM ifn_sampling_unit_ibge_crosswalk WHERE match_status='MATCH_UNICO_PONTO_INTERIOR'").fetchone()[0],
+            "status_counts": {row[0]: row[1] for row in conn.execute(
+                "SELECT match_status,COUNT(*) FROM ifn_sampling_unit_ibge_crosswalk GROUP BY match_status")},
+            "ibge_vegetation_source_sha256": conn.execute(
+                "SELECT MIN(source_sha256) FROM ifn_sampling_unit_ibge_crosswalk").fetchone()[0],
+            "method": "IFN sampling-unit center within exactly one IBGE Vegetação 2026 polygon; legenda_1; no per-tree coordinates inferred",
+        }
+    except sqlite3.OperationalError:
+        crosswalk = {"status": "NOT_BUILT", "reason": "IFN_IBGE_CROSSWALK_NOT_AVAILABLE"}
     conn.close()
     report = {
         "retrieved_at_utc": now, "database": str(DB_PATH.relative_to(ROOT)),
         "database_sha256": _hash(DB_PATH), "database_size_bytes": DB_PATH.stat().st_size,
-        "ifn": {**ifn_result, "source_sha256_by_state": {
+        "ifn": {**ifn_result, "ibge_spatial_crosswalk": crosswalk, "source_sha256_by_state": {
             x["filename"]: x["sha256"] for x in manifest["state_workbooks"]}},
         "sinaflor_poa": sinaflor_result,
         "ief_mg_2008_equations": ief_result,

@@ -222,8 +222,28 @@ def _forecast_panel(fields, art, as_of, weather_fetcher, first_ref, n_mc, awc_fe
             soil_model={"status":"N/D_MODELO_HIDRICO",
                 "reason":type(exc).__name__+": "+str(exc)[:180]}
         # Storage is a modelled trajectory, NOT an in-situ moisture observation.
+        # Audit the existing panel model's vigor conditioning explicitly.
+        # It selects historical PAM residual terciles using the dated SAR
+        # vigor probabilities; report this so input presence is not confused
+        # with actual yield-model use.
+        vigor_used = params.get("vigor") is not None
+        vigor_residual_summary = None
+        if vigor_used:
+            import numpy as np
+            residual_thirds = np.array_split(params["errors"], 3)
+            vigor_residual_summary = {
+                "class_order": ["baixo vigor", "vigor adequado", "alto vigor"],
+                "residual_medians_kg_ha": [float(np.median(x)) for x in residual_thirds],
+                "unconditioned_residual_median_kg_ha": float(np.median(params["errors"])),
+                "selected_probabilities": dict(zip(
+                    ("baixo vigor", "vigor adequado", "alto vigor"), map(float, params["vigor"]))),
+                "rule": "Monte Carlo selects the historical PAM residual tercile by observed SAR vigor probabilities",
+            }
         report["fields"][rid] = {"status": ("experimental_validated_out_of_sample" if vig_ok else
                                             "experimental_sem_vigor_clima_historico"),
+                                 "vigor_model_audit": {"used_in_yield_distribution": vigor_used,
+                                     "probabilities_used": (vigor_residual_summary or {}).get("selected_probabilities"),
+                                     "residual_conditioning": vigor_residual_summary},
                                  "no_vigor_reason": no_vigor_reason,
                                  "soil_water_modelled": soil_model, "microregion": micro,
                                  "harvest_year": hy, "awc": aw, "ry_median": float(sorted(ens)[len(ens) // 2]),
@@ -300,12 +320,20 @@ def _panel_lines(report, fmt):
                 f"    Água disponível do solo: {r['awc']['awc_mm_cm']:.2f} mm/cm ({r['awc']['source']})".replace(".", ","),
                 (f"    Rendimento relativo hídrico (RY): mediana {r['ry_median']:.2f} "
                  f"(p10–p90 {r['ry_p10_p90'][0]:.2f}–{r['ry_p10_p90'][1]:.2f}; {r['n_analogs']} anos análogos)").replace(".", ","),
-                ("    Vigor: " + r["vigor"]["class"] + " (posiciona o resultado no terço correspondente dos erros históricos)")
+                ("    Vigor: " + str(r["vigor"].get("class") or "perfil SAR probabilístico") + " (posiciona o resultado nos tercis correspondentes dos erros históricos)")
                 if r["vigor"] else ("    Vigor: N/D (" + str(r.get("no_vigor_reason") or "sem vigor") + ") — PREVISÃO SEM VIGOR: "
                                     "só clima + histórico PAM; intervalo cobre todos os erros históricos"),
                 productivity_display(rid, p, fmt),
                 f"    Validação do modelo no grupo: MAE {fmt(l['mae_kg_ha'])} kg/ha vs. {fmt(l['trend_only_mae_kg_ha'])} só tendência "
                 f"(ganho {100*l['skill_vs_trend']:.0f}%; {l['units_improved']}/{l['units']} microrregiões melhoram)"]
+        vigor_audit = r.get("vigor_model_audit") or {}
+        if vigor_audit.get("used_in_yield_distribution"):
+            cond = vigor_audit.get("residual_conditioning") or {}
+            out.append("    Vigor aplicado ao modelo vigente: probabilidades SAR condicionam a seleção dos resíduos PAM históricos por tercis; "
+                       "medianas dos resíduos baixo/adequado/alto = " + ", ".join(
+                           fmt(x) for x in cond.get("residual_medians_kg_ha", [])) + " kg/ha.")
+        else:
+            out.append("    Vigor não aplicado: previsão utiliza clima + histórico PAM e todos os resíduos históricos.")
         soil = r.get("soil_water_modelled") or {}
         if soil.get("status") == "ARMAZENAMENTO_HIDRICO_MODELADO":
             stores=soil.get("storage_mm_by_scenario") or {}

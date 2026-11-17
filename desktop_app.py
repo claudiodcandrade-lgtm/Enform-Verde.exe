@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.61-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.64-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -599,9 +599,42 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
                     "height_queries_complete":False,
                     "technical_error":type(exc).__name__+": "+str(exc)[:180]})
         items,audit=catalog_cache["biomass_catalog"]
-        return automatic_pipeline(frame,b,p,biomass_catalog_items=items,
-                                  biomass_search_audit=audit,
-                                  pipeline_route_cache=pipeline_route_cache,**options)
+        estimate=automatic_pipeline(frame,b,p,biomass_catalog_items=items,
+                                    biomass_search_audit=audit,
+                                    pipeline_route_cache=pipeline_route_cache,**options)
+        # Fitossociological reference from nearby IFN sampling units is kept
+        # independent of the carbon model and remains available when FH ×
+        # inventory structure, rather than CCI, is the selected AGB route.
+        try:
+            from inventory_microdata_library import select_official_inventory_units
+            centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
+            biodiversity=select_official_inventory_units(
+                biome=b,physiognomy=p,longitude=float(centroid.x),latitude=float(centroid.y),
+                max_distance_km=250.0,max_units=100,include_trees=False)
+            estimate["inventory_biodiversity_reference"]=(
+                biodiversity.get("biodiversity_reference") or
+                {"status":"N/D","reason":biodiversity.get("reason") or biodiversity.get("status")})
+        except Exception as exc:
+            estimate["inventory_biodiversity_reference"]={
+                "status":"N/D","reason":"CONSULTA_FITOSSOCIOLOGICA_IFN_FALHOU",
+                "diagnostic":type(exc).__name__}
+        # Keep the primary FH+inventory structural estimate dominant. The
+        # inventory mean is a visible comparison only when CCI AGB supplied
+        # the quantitative result; it is never mixed into the stock total.
+        if (isinstance(estimate,dict) and estimate.get("product")=="ESA CCI Biomass AGB"
+                and estimate.get("agb_mg_ha") is not None):
+            try:
+                from inventory_agb_comparison import estimate_ifn_agb_comparison
+                centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
+                area=float(frame.to_crs("EPSG:6933").geometry.area.sum())/10000.0
+                estimate["inventory_agb_comparison"]=estimate_ifn_agb_comparison(
+                    biome=b,physiognomy=p,area_ha=area,
+                    centroid_lon=float(centroid.x),centroid_lat=float(centroid.y))
+            except Exception as exc:
+                estimate["inventory_agb_comparison"]={
+                    "status":"N/D","reason":"COMPARACAO_IFN_NAO_CONCLUIDA",
+                    "diagnostic":type(exc).__name__}
+        return estimate
     def estimator(frame,phys):
         if "prepared" not in soil_source_cache:
             soil_source_cache["prepared"]=_prepare_pronasolos_sources(aoi)
@@ -618,6 +651,36 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         "classificação semântica SAR atual" if land.get("current_semantic_classification_status")=="CLASSIFICADO_POR_SAR_ATUAL"
         else "cobertura nativa atual não confirmada por classificador semântico SAR")
     native_strata=[st for st in result.get("strata",[]) if float(st.get("area_ha") or 0)>0]
+    # Query the bundled IFN tree microdata only as an auditable structural
+    # reference. These records are selected by location, SFB biome and exact
+    # IBGE Vegetação legenda_1. They are never converted into per-hectare AGB
+    # or canopy height here: the IFN rows do not supply the AOI's sampling
+    # expansion weights or a locally validated allometric transfer model.
+    result["ifn_structural_references"]=[]
+    try:
+        from inventory_microdata_library import (official_inventory_database_status,
+            select_official_inventory_units)
+        centroid=aoi.to_crs("EPSG:4326").geometry.union_all().centroid
+        db_status=official_inventory_database_status()
+        result["ifn_database_status"]=db_status
+        if db_status.get("operational_for_tree_selection"):
+            for potential in land.get("potential_physiognomy_intersections") or []:
+                phys=str(potential.get("name") or "").strip()
+                area=float(potential.get("area_ha") or 0)
+                if not phys or phys=="Sem cobertura IBGE" or area<=0:
+                    continue
+                selected=select_official_inventory_units(
+                    biome=biome,physiognomy=phys,longitude=centroid.x,
+                    latitude=centroid.y,max_distance_km=250,max_units=5,include_trees=False)
+                result["ifn_structural_references"].append({
+                    "physiognomy":phys,"potential_ibge_area_ha":area,
+                    "area_basis":"potencial IBGE legenda_1; não confirma cobertura nativa atual",
+                    "selection":selected,
+                    "use_status":"REFERENCIA_ESTRUTURAL_SEM_EXPANSAO_POR_HECTARE_NEM_EQUACAO_AGB_VALIDADA"})
+    except Exception as exc:
+        result["ifn_database_status"]={"status":"ERRO_CONSULTA_IFN",
+            "reason":type(exc).__name__+": "+str(exc)[:250],
+            "operational_for_tree_selection":False}
     height_certs=[(st.get("sar_details") or {}).get("height_absence_certificate") for st in native_strata]
     height_certs=[c for c in height_certs if isinstance(c,dict)]
     if height_certs and all(c==height_certs[0] for c in height_certs):
@@ -638,12 +701,12 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         except Exception as exc:
             result["biodiversity_references"]=[{"status":"N/D","reason":"CONSULTA_MICRORREGIONAL_FALHOU_"+
                 type(exc).__name__+": "+str(exc)[:180]}]
-    # Separate conditional inventory scenario. The wrapper first tries the
+    # Separate inventory contingency. The wrapper first tries the
     # open IFN plot data for the matching physiognomy/region, then the existing
     # published regional hierarchy. Exhausted-route technical failures stay
     # visible; they are not relabelled as no-scene/no-pixel evidence.
     # A SAR-native stratum with N/D components is still not a carbon result.
-    # Run the explicitly conditional inventory route whenever no carbon stock
+    # Run the strictly gated inventory route whenever no carbon stock
     # was quantified; checking only for an empty stratum list skipped the
     # fallback whenever the classifier had drawn a polygon but estimation
     # failed downstream.
@@ -666,7 +729,7 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
                 scenario=estimate_inventory_carbon_scenario(
                     biome=biome,physiognomy=physiognomy,
                     area_ha=float(potential.get('area_ha') or 0),
-                    sar_result=fallback_sar_result,conditional_only=True,aoi=aoi,
+                    sar_result=fallback_sar_result,aoi=aoi,
                     centroid_lon=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.x),
                     centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
                 scenario['sar_status']=fallback_sar_result.get('status')
@@ -1761,7 +1824,7 @@ class App(tk.Tk):
         """Visual-only CBERS-4A/WFI primary backdrop; Sentinel-2 fallback; never an analytical input."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
         if not getattr(self,"_satellite_map_visible",False):
-            self._draw_aoi_outline("Carregando imagem óptica — fundo cartográfico de contingência ativo")
+            self._draw_aoi_outline("Carregando imagem óptica real — exibindo o perímetro temporariamente")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()
         viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
@@ -1919,22 +1982,10 @@ class App(tk.Tk):
                 self._map_queue.put((generation,im,[],"ESRI_WORLD_IMAGERY",None,copyright,None))
                 return
             except Exception as e:errors.append("Esri World Imagery: "+type(e).__name__+": "+str(e)[:180])
-            # Optical imagery is visual-only and must never leave a black panel.
-            # Load the official IBGE phytophysiognomy reference asynchronously;
-            # the AOI fallback is already visible while this download is pending.
-            try:
-                ibge_layer,ibge_field=load_ibge_land_use_reference(g)
-                self.ibge_physiognomy_gdf=ibge_layer
-                self.ibge_class_field=ibge_field
-                self._save_optical_diagnostic(generation,"IBGE_POTENTIAL_FALLBACK",errors)
-                self._map_queue.put((generation,None,[],"IBGE_POTENTIAL_FALLBACK",None,
-                    "IBGE vegetação 2026 — referência potencial; não representa cobertura atual",
-                    "CBERS/Sentinel-2 e outros fundos ópticos indisponíveis; fundo IBGE carregado."))
-                return
-            except Exception as e:
-                errors.append("IBGE fallback: "+type(e).__name__+": "+str(e)[:180])
+            # A fitofisionomia IBGE remains an analytical vector input. It is
+            # never reported as an optical image or accepted as map delivery.
             self._save_optical_diagnostic(generation,"NO_OPTICAL_IMAGE",errors)
-            self._map_queue.put((generation,None,[],"AOI_LOCAL_FALLBACK",None,None," | ".join(errors)))
+            self._map_queue.put((generation,None,[],"NO_OPTICAL_IMAGE",None,None," | ".join(errors)))
 
         threading.Thread(target=worker,name="EnformMap",daemon=True).start()
         self.after(80,self._poll_map_queue)
@@ -1950,12 +2001,6 @@ class App(tk.Tk):
             # Discard its image but KEEP polling for the current request.
             if self.gdf is not None:self.after(100,self._poll_map_queue)
             return
-        if provider=="IBGE_POTENTIAL_FALLBACK":
-            self._draw_aoi_outline("Imagem óptica indisponível — fundo cartográfico IBGE potencial")
-            self.map_status.set("CBERS/Sentinel-2 indisponíveis; fundo IBGE exibido como referência potencial.")
-            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+
-                      "\n\nImagem óptica indisponível; fundo IBGE é referência potencial e não determina uso/cobertura atual.")
-            return
         self._finish_satellite_map(generation,view,polygons,provider,zoom,copyright,error)
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
@@ -1968,9 +2013,11 @@ class App(tk.Tk):
         if error:
             # Keep the last accepted optical image when a refresh fails.
             if not getattr(self,'_satellite_map_visible',False):
-                self._draw_aoi_outline("Imagem óptica indisponível — fundo cartográfico de contingência / perímetro da AOI")
+                self._draw_aoi_outline("Imagem óptica não carregada — apenas perímetro da AOI")
             kept=getattr(self,'_satellite_map_visible',False)
-            self.map_status.set("Imagem CBERS/Sentinel-2 indisponível; "+("última imagem óptica válida mantida. " if kept else "fundo de contingência exibido. ")+"A análise segue independente do fundo.")
+            self._map_provider="NO_OPTICAL_IMAGE" if not kept else getattr(self,"_map_provider","OPTICAL_CACHE")
+            self.map_status.set("FALHA AO ABRIR IMAGEM ÓPTICA: "+str(error)[:220]+
+                ("; última imagem óptica válida mantida." if kept else "; nenhum fundo óptico foi carregado.")+" A análise segue independente do fundo.")
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nImagem Sentinel-2/CBERS-4A indisponível: "+error)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
@@ -2034,46 +2081,16 @@ class App(tk.Tk):
         self.map_canvas.create_text(w-14,14,anchor="ne",text="N",fill="#24382D",font=("Segoe UI",10,"bold"))
         self.map_canvas.create_line(w-20,48,w-20,24,fill="#24382D",width=2,arrow="first")
         def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
-        # Use the already-loaded official IBGE phytophysiognomy layer as a
-        # cartographic-only fallback when optical providers fail. This is a
-        # potential-formation reference, never current-cover evidence.
-        ibge_drawn=False
-        ibge_layer=getattr(self,"ibge_physiognomy_gdf",None)
-        if ibge_layer is not None and not getattr(ibge_layer,"empty",True):
-            try:
-                ibge_local=ibge_layer.to_crs(local)
-                bounds=ibge_local.geometry.bounds
-                visible=(bounds.maxx>=minx)&(bounds.minx<=maxx)&(bounds.maxy>=miny)&(bounds.miny<=maxy)
-                nearby=ibge_local.loc[visible].head(120)
-                colors=("#DCE8D8","#E8E6CF","#D7E2EA","#E9D8C9")
-                from shapely.geometry import box as _box
-                view_box=_box(minx,miny,maxx,maxy)
-                for idx,geom in enumerate(nearby.geometry):
-                    if geom is None or geom.is_empty:continue
-                    clipped=geom.intersection(view_box)
-                    parts=list(clipped.geoms) if clipped.geom_type=="MultiPolygon" else ([clipped] if clipped.geom_type=="Polygon" else [])
-                    for poly in parts:
-                        coords=[xy(x,y) for x,y in poly.exterior.coords]
-                        pts=[v for point in coords for v in point]
-                        if len(pts)>=6:
-                            self.map_canvas.create_polygon(*pts,fill=colors[idx%len(colors)],
-                                                           outline="#AAB9A7",width=1)
-                            ibge_drawn=True
-            except Exception:
-                ibge_drawn=False
         for geom in projected.geometry:
             polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
             for poly in polys:
                 pts=[]
                 for coord in poly.exterior.coords:pts.extend(xy(coord[0],coord[1]))
                 if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
-        fallback_label=("FUNDO CARTOGRÁFICO IBGE — fitofisionomia potencial; não representa cobertura atual"
-                        if ibge_drawn else label+" — cartografia IBGE indisponível nesta execução")
-        self.map_canvas.create_text(12,12,anchor="nw",text=fallback_label,fill="#24382D",font=("Segoe UI",10,"bold"))
-        self._map_provider=("IBGE_POTENTIAL_FALLBACK" if ibge_drawn else "AOI_LOCAL_FALLBACK")
+        self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
+        self._map_provider="OPTICAL_LOADING"
         if hasattr(self,"map_status"):
-            self.map_status.set("Fundo cartográfico IBGE potencial — apenas referência visual." if ibge_drawn
-                                else "Imagem óptica indisponível; perímetro AOI visível, camada IBGE não carregada.")
+            self.map_status.set("Imagem óptica em carregamento; perímetro da AOI visível temporariamente.")
         # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
         bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
         self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)
@@ -3611,6 +3628,26 @@ class App(tk.Tk):
             cert=(self.project.get("sar_result") or {}).get("height_absence_certificate") or {}
             lines.extend(["", "ALTURA DE DOSSEL SAR: N/D — nenhum pixel de altura chegou ao painel; "+
                           str(cert.get("status") or "ausência não certificada; consultar auditoria SAR")+"."])
+        if native.get("ifn_database_status"):
+            db_status=native["ifn_database_status"]
+            lines.extend(["", "REFERÊNCIAS ESTRUTURAIS IFN — seleção por localização, bioma e fitofisionomia IBGE",
+                "Estado da base: "+str(db_status.get("status"))+"; registros: "+
+                str(db_status.get("observation_rows","N/D"))+"; unidades amostrais: "+
+                str(db_status.get("sampling_units","N/D"))+"; cruzamentos únicos legenda_1: "+
+                str(db_status.get("ibge_unique_unit_matches","N/D")),
+                "Os registros abaixo são referências estruturais. A seleção não confirma cobertura atual, não aplica fatores de expansão e não estima AGB por hectare nem altura média do dossel."])
+            for reference in native.get("ifn_structural_references",[]):
+                selected=reference.get("selection") or {}
+                summary=selected.get("raw_tree_sample_summary") or {}
+                lines.append("  "+str(reference.get("physiognomy"))+" — área potencial IBGE "+
+                    format_ptbr(reference.get("potential_ibge_area_ha"),2)+" ha; estado "+str(selected.get("status"))+
+                    "; UAs selecionadas "+str((selected.get("selection") or {}).get("selected_unique_units",0))+
+                    "; árvores amostradas "+str(summary.get("tree_record_count",0))+
+                    "; DAP médio bruto "+format_ptbr(summary.get("mean_dbh_cm"),2)+" cm; altura individual média "+
+                    format_ptbr(summary.get("mean_individual_tree_height_m"),2)+" m; área basal bruta amostral "+
+                    format_ptbr(summary.get("observed_sample_basal_area_m2"),3)+" m².")
+                lines.append("    Escopo geográfico: "+str(reference.get("area_basis"))+"; "+
+                    str(summary.get("warning") or selected.get("reason") or "não é métrica por hectare"))
         for scenario in native.get("conditional_inventory_scenarios",[]):
             lines += ["", "CENÁRIO CONDICIONAL DE CARBONO — INVENTÁRIO/REFERÊNCIA REGIONAL (não é cobertura atual confirmada)",
                       "Estado: "+str(scenario.get("status")),
@@ -3634,6 +3671,31 @@ class App(tk.Tk):
             # Display actual raster acquisition separately from catalog discovery.
             sar_details=st.get("sar_details") or {}
             if isinstance(sar_details,dict):
+                inventory_cmp=sar_details.get("inventory_agb_comparison")
+                if isinstance(inventory_cmp,dict):
+                    if inventory_cmp.get("status")=="COMPARACAO_EXPERIMENTAL_IFN_AGB":
+                        lines += [
+                            "  COMPARAÇÃO INDEPENDENTE DE AGB — ESA CCI × médias de inventários IFN (não somar ao estoque)",
+                            "    ESA CCI: "+format_ptbr(sar_details.get("agb_mg_ha"),2)+" Mg AGB/ha; incerteza do produto: "+format_ptbr(sar_details.get("uncertainty_mg_ha"),2)+" Mg/ha.",
+                            "    IFN: "+format_ptbr(inventory_cmp.get("agb_mean_mg_ha"),2)+" Mg AGB/ha; média de "+str(inventory_cmp.get("inventory_n_unique_sampling_units"))+" UAs independentes; DP amostral "+format_ptbr(inventory_cmp.get("agb_sample_sd_mg_ha"),2)+" Mg/ha; faixa observada "+json.dumps(inventory_cmp.get("agb_observed_range_mg_ha"),ensure_ascii=False)+".",
+                            "    Carbono IFN comparativo: "+format_ptbr(inventory_cmp.get("carbon_mean_tc_ha"),2)+" tC/ha; estoque comparativo na área do estrato: "+format_ptbr(inventory_cmp.get("carbon_total_tc_comparison"),2)+" tC ("+format_ptbr(inventory_cmp.get("carbon_total_tco2e_comparison"),2)+" tCO₂e).",
+                            "    Base expandida ligada às UAs: "+str(inventory_cmp.get("inventory_tree_observations_in_selected_units"))+" observações de árvores/fustes; seleção: "+str(inventory_cmp.get("calculation_trace",{}).get("selection"))+"; menor distância "+format_ptbr(inventory_cmp.get("nearest_ua_distance_km"),1)+" km.",
+                            "    Incerteza IFN: "+str(inventory_cmp.get("uncertainty")),
+                            "    Estado e limites: "+str(inventory_cmp.get("confidence"))+"; "+"; ".join(inventory_cmp.get("limitations") or []),
+                        ]
+                    else:
+                        lines.append("  COMPARAÇÃO DE AGB POR INVENTÁRIOS: "+str(inventory_cmp.get("status"))+" — "+str(inventory_cmp.get("reason") or "referência compatível não disponível")+". A base expandida foi consultada quando disponível; não foi inventado valor.")
+                biodiversity=sar_details.get("inventory_biodiversity_reference")
+                if isinstance(biodiversity,dict):
+                    if biodiversity.get("status")=="INDICADOR_FITOSSOCIOLOGICO_IFN":
+                        lines.append("  REFERÊNCIA FITOSSOCIOLÓGICA IFN — frequência entre unidades amostrais compatíveis (não é índice completo de biodiversidade): "+
+                            str(biodiversity.get("n_unique_sampling_units"))+" UAs; "+str(biodiversity.get("unique_taxa_observed"))+" táxons registrados.")
+                        for sp in biodiversity.get("top_10_species_by_sampling_unit_frequency",[]):
+                            lines.append("    "+str(sp.get("rank"))+". "+str(sp.get("species"))+": presença em "+
+                                str(sp.get("sampling_units_present"))+"/"+str(biodiversity.get("n_unique_sampling_units"))+" UAs ("+
+                                format_ptbr(sp.get("frequency_pct"),1)+"%); "+str(sp.get("tree_records"))+" registros de árvores.")
+                    else:
+                        lines.append("  REFERÊNCIA FITOSSOCIOLÓGICA IFN: N/D — "+str(biodiversity.get("reason") or "sem UAs elegíveis suficientes")+".")
                 actual_stats=sar_details.get("stats") or []
                 for scene in actual_stats:
                     if not isinstance(scene,dict):
@@ -3969,6 +4031,70 @@ class App(tk.Tk):
         sh["A2"]="Interseção espacial AOI × classe IBGE; erro do produto e altura são camadas separadas. AGB total = média Mg/ha × área da classe."
         sh.merge_cells("A2:H2")
         sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        sh=wb.create_sheet("Comparação AGB IFN")
+        setup(sh,"Enform Verde — comparação ESA CCI e inventários IFN")
+        comparison_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            details=st.get("sar_details") or {}
+            cmp=details.get("inventory_agb_comparison")
+            if not cmp: continue
+            comparison_rows.append([st.get("physiognomy"),st.get("area_ha"),details.get("product"),
+                details.get("agb_mg_ha"),details.get("uncertainty_mg_ha"),cmp.get("status"),
+                cmp.get("agb_mean_mg_ha"),cmp.get("agb_sample_sd_mg_ha"),
+                json.dumps(cmp.get("agb_observed_range_mg_ha"),ensure_ascii=False),cmp.get("inventory_n_unique_sampling_units"),
+                cmp.get("nearest_ua_distance_km"),cmp.get("carbon_total_tc_comparison"),
+                cmp.get("carbon_total_tco2e_comparison"),cmp.get("uncertainty"),
+                json.dumps(cmp.get("selected_units") or [],ensure_ascii=False),
+                "; ".join(cmp.get("limitations") or [])])
+        if not comparison_rows:
+            comparison_rows=[["N/D",None,"Rota FH + inventário estrutural prioritária ou CCI sem estimativa IFN elegível",
+                None,None,"N/D",None,None,None,None,None,None,None,
+                "Comparação CCI × IFN só é apresentada se o resultado quantitativo primário vier do CCI e houver UAs compatíveis.",None,
+                "Comparação não integra nem altera o estoque oficial da análise."]]
+        sh.unmerge_cells("A1:H1")
+        sh.merge_cells("A1:P1")
+        comp_headers=["Fitofisionomia","Área ha","Produto primário","AGB ESA Mg/ha","DP produto Mg/ha",
+            "Estado IFN","AGB IFN média Mg/ha","DP amostral IFN Mg/ha","Faixa observada IFN",
+            "n UAs","Distância mínima km","tC IFN comparativo","tCO₂e IFN comparativo",
+            "Incerteza / interpretação","UAs selecionadas","Limitações"]
+        for j,h in enumerate(comp_headers,1):
+            c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
+            c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+            c.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+        sh.row_dimensions[3].height=52
+        for col,w in zip("ABCDEFGHIJKLMNOP",[25,14,24,18,19,30,22,22,24,12,17,20,22,65,65,65]):
+            sh.column_dimensions[col].width=w
+        put(sh,comparison_rows)
+        sh.auto_filter.ref=f"A3:P{3+len(comparison_rows)}"
+        sh["A2"]="IFN é comparação experimental, independente e não somada ao estoque; a incerteza de transferência regional para a propriedade permanece não quantificada. Quando FH × estrutura de inventário fornece a estimativa, fontes adicionais não são exibidas."
+        sh.merge_cells("A2:P2"); sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        sh=wb.create_sheet("Fitossociologia IFN")
+        setup(sh,"Enform Verde — espécies frequentes em unidades IFN compatíveis")
+        biodiversity_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            audit=(st.get("sar_details") or {}).get("inventory_biodiversity_reference") or {}
+            if audit.get("status")!="INDICADOR_FITOSSOCIOLOGICO_IFN":
+                biodiversity_rows.append([st.get("physiognomy"),audit.get("status","N/D"),None,None,None,None,
+                    audit.get("reason") or "Sem referência IFN compatível nesta execução."])
+                continue
+            for species in audit.get("top_10_species_by_sampling_unit_frequency",[]):
+                biodiversity_rows.append([st.get("physiognomy"),audit.get("status"),
+                    audit.get("n_unique_sampling_units"),audit.get("unique_taxa_observed"),
+                    species.get("rank"),species.get("species"),
+                    f"Presença em {species.get('sampling_units_present')}/{audit.get('n_unique_sampling_units')} UAs "
+                    f"({format_ptbr(species.get('frequency_pct'),1)}%); {species.get('tree_records')} registros de árvores. "
+                    "Frequência entre UAs; não é abundância relativa nem índice completo de biodiversidade."])
+        if not biodiversity_rows:
+            biodiversity_rows=[["N/D","N/D",None,None,None,None,
+                "Nenhuma referência fitossociológica IFN compatível foi retornada nesta execução."]]
+        headers=["Fitofisionomia IBGE","Estado","n UAs","Táxons distintos","Posição","Espécie","Frequência e interpretação"]
+        for j,h in enumerate(headers,1):
+            c=sh.cell(3,j,h);c.font=Font(bold=True,color=white);c.fill=PatternFill("solid",fgColor=orange)
+            c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+        sh.merge_cells("A1:G1");sh["A2"]="Resumo descritivo IFN/DAP10 por proximidade, bioma e legenda_1 IBGE; UAs do mesmo programa nacional não são inventários independentes. Outras fontes primárias e agregadas reconhecidas devem ser harmonizadas e acrescentadas com unidade amostral e incerteza próprias."
+        sh.merge_cells("A2:G2");sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        for col,width in zip("ABCDEFG",[28,32,12,18,12,35,80]):sh.column_dimensions[col].width=width
+        put(sh,biodiversity_rows);sh.auto_filter.ref=f"A3:G{3+len(biodiversity_rows)}"
         sh=wb.create_sheet("Carbono do Solo"); setup(sh,"Enform Verde — Carbono orgânico do solo")
         soil_rows=[r for r in ar if r["parametro"].startswith("Solo ")]
         soil_data=[["MAPEAMENTO — PronaSolos",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]+" | "+r.get("erro_metrica","")] for r in soil_rows]
@@ -4487,6 +4613,37 @@ def module_check():
     import crop_climate_favorability, crop_forecast_pipeline
     from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
     from crop_yield_scenario import load_microregion_yields, microregion_of
+    from inventory_microdata_library import (OFFICIAL_DB, official_inventory_database_status,
+        select_official_inventory_units)
+    if not OFFICIAL_DB.is_file():
+        raise RuntimeError("Banco IFN de árvores não foi empacotado em data/national_inventory_microdata_v1.sqlite")
+    ifn_status=official_inventory_database_status()
+    if (not ifn_status.get("operational_for_tree_selection")
+            or ifn_status.get("observation_rows")!=841387
+            or ifn_status.get("sampling_units")!=8951
+            or ifn_status.get("ibge_unique_unit_matches")!=8951):
+        raise RuntimeError("Banco IFN ou cruzamento IBGE legenda_1 não atende ao contrato de seleção: "+json.dumps(ifn_status,ensure_ascii=False))
+    import sqlite3 as _sqlite3
+    with _sqlite3.connect(f"file:{OFFICIAL_DB.resolve()}?mode=ro",uri=True) as _conn:
+        _unit=_conn.execute("""SELECT s.biome,s.ua_center_lon,s.ua_center_lat,
+                x.ibge_legenda_1,s.uf,s.ua_id FROM ifn_sampling_unit_summary s
+            JOIN ifn_sampling_unit_ibge_crosswalk x ON x.ua_id=s.ua_id AND x.uf=s.uf
+            WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND s.biome IS NOT NULL
+              AND s.ua_center_lon IS NOT NULL AND s.ua_center_lat IS NOT NULL
+              AND x.ibge_legenda_1 IS NOT NULL ORDER BY s.uf,s.ua_id LIMIT 1""").fetchone()
+    if not _unit:
+        raise RuntimeError("Banco IFN sem unidade adequada para teste de seleção")
+    _selected=select_official_inventory_units(biome=_unit[0],physiognomy=_unit[3],
+        longitude=_unit[1],latitude=_unit[2],max_distance_km=1,max_units=5,include_trees=False)
+    if (_selected.get("status")!="SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA"
+            or not _selected.get("units") or _selected["units"][0].get("ua_id")!=_unit[5]
+            or _selected["units"][0].get("uf")!=_unit[4]):
+        raise RuntimeError("Consulta empacotada não selecionou a UA IFN coincidente em localização, bioma e legenda_1")
+    out["ifn_microdata"]={"database":"bundled_read_only","observation_rows":ifn_status["observation_rows"],
+        "sampling_units":ifn_status["sampling_units"],"source_workbooks":ifn_status["source_workbooks"],
+        "ibge_unique_unit_matches":ifn_status["ibge_unique_unit_matches"],
+        "selection_by_location_biome_and_legenda_1":"ok",
+        "selected_reference_use_only":True,"agb_per_ha_or_canopy_height_estimator":False}
     tmp=Path(tempfile.mkdtemp(prefix="enform_modcheck_")); px=pronasolos_wcs.PIXEL_DEG; paths={}
     for lid in range(2,7):
         f=tmp/f"h{lid}.tif"
