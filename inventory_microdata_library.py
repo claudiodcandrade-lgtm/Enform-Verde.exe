@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+from functools import lru_cache
 import math
 import sqlite3
 import unicodedata
@@ -230,9 +231,10 @@ def _norm_label(value: str | None) -> str:
     return "".join(c for c in text if c.isalnum() and not unicodedata.combining(c))
 
 
-def official_inventory_database_status(db_path: str | Path = OFFICIAL_DB) -> dict:
+@lru_cache(maxsize=8)
+def _official_inventory_database_status_cached(path_text: str, size_bytes: int, mtime_ns: int) -> dict:
     """Report whether tree data and verified IBGE unit crosswalk are present."""
-    path=Path(db_path).resolve()
+    path=Path(path_text)
     if not path.is_file():
         return {"status":"N/D","available":False,
                 "reason":"IFN_MICRODATA_DB_NOT_AVAILABLE","operational_for_tree_selection":False}
@@ -263,6 +265,22 @@ def official_inventory_database_status(db_path: str | Path = OFFICIAL_DB) -> dic
         return {"status":"ERRO_LEITURA","available":True,
                 "reason":"IFN_DB_SCHEMA_OR_READ_ERROR:"+type(exc).__name__,
                 "operational_for_tree_selection":False}
+
+
+def official_inventory_database_status(db_path: str | Path = OFFICIAL_DB) -> dict:
+    """Check the large IFN database once per file version, then reuse its audit.
+
+    The database is immutable during an analysis. Keying the cache by absolute
+    path, size and nanosecond mtime invalidates it after a replacement/update,
+    while avoiding repeated full-table COUNT scans in one desktop session.
+    """
+    path=Path(db_path).resolve()
+    if not path.is_file():
+        return {"status":"N/D","available":False,
+                "reason":"IFN_MICRODATA_DB_NOT_AVAILABLE","operational_for_tree_selection":False}
+    stat=path.stat()
+    result=_official_inventory_database_status_cached(str(path),stat.st_size,stat.st_mtime_ns)
+    return dict(result)
 
 
 def select_official_inventory_units(*, biome: str, physiognomy: str,
@@ -314,15 +332,25 @@ def select_official_inventory_units(*, biome: str, physiognomy: str,
         if not candidates:
             return {"status":"N/D","reason":"NO_IFN_UNIT_MATCHES_LOCATION_BIOME_PHYSIOGNOMY_AND_RADIUS",
                     "units":[],"trees":[],"selection":{"biome":biome,"physiognomy":physiognomy,"radius_km":radius}}
-        units=[]; trees=[]; dbh_values=[]; height_values=[]; sample_ba=0.0; bins={"10_20":0,"20_30":0,"30_40":0,"40_60":0,"60_plus":0}
+        units=[]; trees=[]; dbh_values=[]; height_values=[]; sample_ba=0.0
+        species_unit_counts=Counter(); species_tree_counts=Counter()
+        bins={"10_20":0,"20_30":0,"30_40":0,"40_60":0,"60_plus":0}
         for distance,unit in candidates:
             unit["distance_km"]=distance
             units.append(unit)
             rows=conn.execute("""SELECT * FROM ifn_dap10_observation
                 WHERE ua_id=? AND uf=? ORDER BY subunit,subplot,source_row_number""",
                 (unit["ua_id"],unit["uf"])).fetchall()
+            species_seen_in_unit=set()
             for row in rows:
                 tree=dict(row)
+                # Presence across independent UAs is the reported frequency;
+                # stem counts are retained separately and never called frequency.
+                taxon=(tree.get("scientific_name") or tree.get("verbatim_identification") or "").strip()
+                taxon_key=_norm_label(taxon)
+                if taxon_key and not any(x in taxon_key for x in ("indeterminad", "naoidentificad", "semidentificacao")):
+                    species_seen_in_unit.add(taxon)
+                    species_tree_counts[taxon]+=1
                 dbh=tree.get("dbh_cm")
                 if dbh is not None and float(dbh)>0:
                     d=float(dbh); dbh_values.append(d); sample_ba+=math.pi*(d/200.0)**2
@@ -334,13 +362,31 @@ def select_official_inventory_units(*, biome: str, physiognomy: str,
                     tree["sampling_unit_distance_km"]=distance
                     tree["tree_coordinate_interpretation"]="UA_CENTER_ONLY_NOT_INDIVIDUAL_TREE_COORDINATE"
                     trees.append(tree)
+            for taxon in species_seen_in_unit:
+                species_unit_counts[taxon]+=1
     db_status=official_inventory_database_status(path)
+    selected_unit_count=max(1,len(units))
+    top_species=sorted(species_unit_counts,
+        key=lambda name:(-species_unit_counts[name],-species_tree_counts[name],name.casefold()))[:10]
+    biodiversity={"status":"INDICADOR_FITOSSOCIOLOGICO_IFN" if top_species else "N/D",
+        "definition":"frequência absoluta = UAs compatíveis com a espécie / UAs selecionadas × 100; n de indivíduos apresentado separadamente",
+        "n_unique_sampling_units":len(units),"n_tree_records_with_taxon":sum(species_tree_counts.values()),
+        "unique_taxa_observed":len(species_unit_counts),
+        "top_10_species_by_sampling_unit_frequency":[{
+            "rank":i+1,"species":name,"sampling_units_present":species_unit_counts[name],
+            "frequency_pct":100.0*species_unit_counts[name]/selected_unit_count,
+            "tree_records":species_tree_counts[name]}
+            for i,name in enumerate(top_species)],
+        "limitations":["IFN DAP10 selecionado por proximidade, bioma e legenda_1 IBGE; não é censo de toda a região",
+            "frequência entre UAs não equivale a abundância relativa nem a índice completo de biodiversidade",
+            "uma UA representa a unidade amostral; não atribuir coordenadas individuais às árvores"]}
     return {"status":"SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA",
         "selection":{"biome":biome,"physiognomy":physiognomy,"target_longitude":lon,
             "target_latitude":lat,"radius_km":radius,"selected_unique_units":len(units),
             "source":"IFN/DAP10 + IBGE Vegetação 2026 legenda_1",
             "crosswalk_method":"ponto interior único do centro da unidade amostral"},
         "database_status":db_status,"units":units,"trees":trees,
+        "biodiversity_reference":biodiversity,
         "raw_tree_sample_summary":{"tree_record_count":len(dbh_values),
             "mean_dbh_cm":sum(dbh_values)/len(dbh_values) if dbh_values else None,
             "mean_individual_tree_height_m":sum(height_values)/len(height_values) if height_values else None,

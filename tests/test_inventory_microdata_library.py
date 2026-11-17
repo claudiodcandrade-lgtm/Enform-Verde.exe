@@ -8,6 +8,27 @@ from national_inventory_database import initialize_database
 
 
 class InventoryMicrodataLibraryTests(unittest.TestCase):
+    def test_large_database_integrity_scan_is_cached_until_file_changes(self):
+        import sqlite3
+        from unittest.mock import patch
+        import inventory_microdata_library as module
+        module._official_inventory_database_status_cached.cache_clear()
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"inventory.sqlite"
+            path.write_bytes(b"same immutable database version")
+            with patch("inventory_microdata_library.sqlite3.connect",
+                       side_effect=sqlite3.OperationalError("test sentinel")) as connect:
+                first=official_inventory_database_status(path)
+                second=official_inventory_database_status(path)
+            self.assertEqual(first["status"],"ERRO_LEITURA")
+            self.assertEqual(second,first)
+            connect.assert_called_once()
+            path.write_bytes(b"replacement database version with a different size")
+            with patch("inventory_microdata_library.sqlite3.connect",
+                       side_effect=sqlite3.OperationalError("test sentinel")) as connect:
+                official_inventory_database_status(path)
+            connect.assert_called_once()
+
     def test_official_ifn_database_and_ibge_crosswalk_meet_full_selection_contract(self):
         status=official_inventory_database_status()
         self.assertEqual(status["status"],"PRONTO_PARA_SELECAO_DE_REFERENCIAS")
@@ -40,6 +61,15 @@ class InventoryMicrodataLibraryTests(unittest.TestCase):
         self.assertTrue(all(row["tree_coordinate_interpretation"]==
             "UA_CENTER_ONLY_NOT_INDIVIDUAL_TREE_COORDINATE" for row in result["trees"]))
         self.assertIn("não são métricas por hectare",result["interpretation"])
+        bio=result["biodiversity_reference"]
+        self.assertEqual(bio["status"],"INDICADOR_FITOSSOCIOLOGICO_IFN")
+        self.assertLessEqual(len(bio["top_10_species_by_sampling_unit_frequency"]),10)
+        self.assertTrue(all(0 < row["frequency_pct"] <= 100
+                            for row in bio["top_10_species_by_sampling_unit_frequency"]))
+        compact=select_official_inventory_units(biome=biome,physiognomy=physiognomy,
+            longitude=lon,latitude=lat,max_distance_km=1,max_units=5,include_trees=False)
+        self.assertEqual(compact["trees"],[])
+        self.assertEqual(compact["biodiversity_reference"],bio)
 
     def test_wrong_physiognomy_cannot_select_ifn_tree_records(self):
         import sqlite3
