@@ -11,4 +11,4 @@
 
 ## Estado
 
-Versão experimental. A publicação depende dos testes locais e do workflow Windows no SHA final. A geometria privada integral da Fazenda Maria Eduarda não está disponível neste checkout. Aprovação do build e do smoke óptico não equivale a homologação científica.
+Versão experimental. O workflow Windows `44136053595` passou no commit `9b3d74286a7d0efce335ce84266c6154da9ba21e`, incluindo pixels ópticos reais nos 11 pontos, canvas Tk visível em Sinop, SAR real, runtime empacotado e autoteste do EXE em cópia limpa. A prova ESA BIOMASS FH real em Sinop passou em job separado. O ZIP experimental (artefato Actions `14354102535`, 264.054.505 bytes) está disponível na página da execução; uma GitHub Release formal não foi publicada. A homologação científica continua pendente e a geometria privada integral da Fazenda Maria Eduarda não está disponível neste checkout. Build aprovado não equivale a homologação científica.
