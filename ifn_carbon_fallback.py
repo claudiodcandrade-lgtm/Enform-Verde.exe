@@ -51,7 +51,9 @@ def no_valid_sar_pixels(sar_result):
 def estimate_fesv_state_scenario(*, biome, physiognomy, area_ha, sar_result,
                                  centroid_lon=None, centroid_lat=None, conditional_only=False):
     """Build a transparent conditional scenario for the currently supported domain."""
-    if not conditional_only and not no_valid_sar_pixels(sar_result):
+    # Keep the legacy parameter for old callers, but never let it bypass the
+    # fail-closed absence certificate. A technical failure is not scene absence.
+    if not no_valid_sar_pixels(sar_result):
         return {"status": "BLOQUEADO", "reason": "SAR_COM_PIXELS_OU_FALHA_TECNICA_NAO_RESOLVIDA"}
     if _norm(biome) != _norm("Amazônia") or _norm(physiognomy) not in (
             _norm("Floresta Estacional Sempre-Verde"),
@@ -149,12 +151,14 @@ def estimate_inventory_carbon_scenario(*, biome, physiognomy, area_ha, sar_resul
     potential IBGE phytoregion area. It never confirms current native cover and
     is never added to the SAR-measured stock.
     """
-    if not conditional_only and not no_valid_sar_pixels(sar_result):
+    # ``conditional_only`` used to allow a scenario beside unresolved SAR.
+    # Preserve the argument for compatibility but always require a complete,
+    # error-free scene-absence certificate before using inventory AGB.
+    if not no_valid_sar_pixels(sar_result):
         return {"status":"BLOQUEADO","reason":"ROTAS_SAR_NAO_ESGOTADAS_OU_OBSERVAVEL_SAR_PROCESSADO"}
     primary = estimate_fesv_state_scenario(
         biome=biome, physiognomy=physiognomy, area_ha=area_ha,
-        sar_result=sar_result, centroid_lon=centroid_lon, centroid_lat=centroid_lat,
-        conditional_only=conditional_only)
+        sar_result=sar_result, centroid_lon=centroid_lon, centroid_lat=centroid_lat)
     if primary.get("status") == "CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR":
         return primary
 

@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.61-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.62-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -618,6 +618,36 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         "classificação semântica SAR atual" if land.get("current_semantic_classification_status")=="CLASSIFICADO_POR_SAR_ATUAL"
         else "cobertura nativa atual não confirmada por classificador semântico SAR")
     native_strata=[st for st in result.get("strata",[]) if float(st.get("area_ha") or 0)>0]
+    # Query the bundled IFN tree microdata only as an auditable structural
+    # reference. These records are selected by location, SFB biome and exact
+    # IBGE Vegetação legenda_1. They are never converted into per-hectare AGB
+    # or canopy height here: the IFN rows do not supply the AOI's sampling
+    # expansion weights or a locally validated allometric transfer model.
+    result["ifn_structural_references"]=[]
+    try:
+        from inventory_microdata_library import (official_inventory_database_status,
+            select_official_inventory_units)
+        centroid=aoi.to_crs("EPSG:4326").geometry.union_all().centroid
+        db_status=official_inventory_database_status()
+        result["ifn_database_status"]=db_status
+        if db_status.get("operational_for_tree_selection"):
+            for potential in land.get("potential_physiognomy_intersections") or []:
+                phys=str(potential.get("name") or "").strip()
+                area=float(potential.get("area_ha") or 0)
+                if not phys or phys=="Sem cobertura IBGE" or area<=0:
+                    continue
+                selected=select_official_inventory_units(
+                    biome=biome,physiognomy=phys,longitude=centroid.x,
+                    latitude=centroid.y,max_distance_km=250,max_units=5,include_trees=False)
+                result["ifn_structural_references"].append({
+                    "physiognomy":phys,"potential_ibge_area_ha":area,
+                    "area_basis":"potencial IBGE legenda_1; não confirma cobertura nativa atual",
+                    "selection":selected,
+                    "use_status":"REFERENCIA_ESTRUTURAL_SEM_EXPANSAO_POR_HECTARE_NEM_EQUACAO_AGB_VALIDADA"})
+    except Exception as exc:
+        result["ifn_database_status"]={"status":"ERRO_CONSULTA_IFN",
+            "reason":type(exc).__name__+": "+str(exc)[:250],
+            "operational_for_tree_selection":False}
     height_certs=[(st.get("sar_details") or {}).get("height_absence_certificate") for st in native_strata]
     height_certs=[c for c in height_certs if isinstance(c,dict)]
     if height_certs and all(c==height_certs[0] for c in height_certs):
@@ -638,12 +668,12 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         except Exception as exc:
             result["biodiversity_references"]=[{"status":"N/D","reason":"CONSULTA_MICRORREGIONAL_FALHOU_"+
                 type(exc).__name__+": "+str(exc)[:180]}]
-    # Separate conditional inventory scenario. The wrapper first tries the
+    # Separate inventory contingency. The wrapper first tries the
     # open IFN plot data for the matching physiognomy/region, then the existing
     # published regional hierarchy. Exhausted-route technical failures stay
     # visible; they are not relabelled as no-scene/no-pixel evidence.
     # A SAR-native stratum with N/D components is still not a carbon result.
-    # Run the explicitly conditional inventory route whenever no carbon stock
+    # Run the strictly gated inventory route whenever no carbon stock
     # was quantified; checking only for an empty stratum list skipped the
     # fallback whenever the classifier had drawn a polygon but estimation
     # failed downstream.
@@ -666,7 +696,7 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
                 scenario=estimate_inventory_carbon_scenario(
                     biome=biome,physiognomy=physiognomy,
                     area_ha=float(potential.get('area_ha') or 0),
-                    sar_result=fallback_sar_result,conditional_only=True,aoi=aoi,
+                    sar_result=fallback_sar_result,aoi=aoi,
                     centroid_lon=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.x),
                     centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
                 scenario['sar_status']=fallback_sar_result.get('status')
@@ -3611,6 +3641,26 @@ class App(tk.Tk):
             cert=(self.project.get("sar_result") or {}).get("height_absence_certificate") or {}
             lines.extend(["", "ALTURA DE DOSSEL SAR: N/D — nenhum pixel de altura chegou ao painel; "+
                           str(cert.get("status") or "ausência não certificada; consultar auditoria SAR")+"."])
+        if native.get("ifn_database_status"):
+            db_status=native["ifn_database_status"]
+            lines.extend(["", "REFERÊNCIAS ESTRUTURAIS IFN — seleção por localização, bioma e fitofisionomia IBGE",
+                "Estado da base: "+str(db_status.get("status"))+"; registros: "+
+                str(db_status.get("observation_rows","N/D"))+"; unidades amostrais: "+
+                str(db_status.get("sampling_units","N/D"))+"; cruzamentos únicos legenda_1: "+
+                str(db_status.get("ibge_unique_unit_matches","N/D")),
+                "Os registros abaixo são referências estruturais. A seleção não confirma cobertura atual, não aplica fatores de expansão e não estima AGB por hectare nem altura média do dossel."])
+            for reference in native.get("ifn_structural_references",[]):
+                selected=reference.get("selection") or {}
+                summary=selected.get("raw_tree_sample_summary") or {}
+                lines.append("  "+str(reference.get("physiognomy"))+" — área potencial IBGE "+
+                    format_ptbr(reference.get("potential_ibge_area_ha"),2)+" ha; estado "+str(selected.get("status"))+
+                    "; UAs selecionadas "+str((selected.get("selection") or {}).get("selected_unique_units",0))+
+                    "; árvores amostradas "+str(summary.get("tree_record_count",0))+
+                    "; DAP médio bruto "+format_ptbr(summary.get("mean_dbh_cm"),2)+" cm; altura individual média "+
+                    format_ptbr(summary.get("mean_individual_tree_height_m"),2)+" m; área basal bruta amostral "+
+                    format_ptbr(summary.get("observed_sample_basal_area_m2"),3)+" m².")
+                lines.append("    Escopo geográfico: "+str(reference.get("area_basis"))+"; "+
+                    str(summary.get("warning") or selected.get("reason") or "não é métrica por hectare"))
         for scenario in native.get("conditional_inventory_scenarios",[]):
             lines += ["", "CENÁRIO CONDICIONAL DE CARBONO — INVENTÁRIO/REFERÊNCIA REGIONAL (não é cobertura atual confirmada)",
                       "Estado: "+str(scenario.get("status")),
@@ -4487,6 +4537,37 @@ def module_check():
     import crop_climate_favorability, crop_forecast_pipeline
     from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
     from crop_yield_scenario import load_microregion_yields, microregion_of
+    from inventory_microdata_library import (OFFICIAL_DB, official_inventory_database_status,
+        select_official_inventory_units)
+    if not OFFICIAL_DB.is_file():
+        raise RuntimeError("Banco IFN de árvores não foi empacotado em data/national_inventory_microdata_v1.sqlite")
+    ifn_status=official_inventory_database_status()
+    if (not ifn_status.get("operational_for_tree_selection")
+            or ifn_status.get("observation_rows")!=841387
+            or ifn_status.get("sampling_units")!=8951
+            or ifn_status.get("ibge_unique_unit_matches")!=8951):
+        raise RuntimeError("Banco IFN ou cruzamento IBGE legenda_1 não atende ao contrato de seleção: "+json.dumps(ifn_status,ensure_ascii=False))
+    import sqlite3 as _sqlite3
+    with _sqlite3.connect(f"file:{OFFICIAL_DB.resolve()}?mode=ro",uri=True) as _conn:
+        _unit=_conn.execute("""SELECT s.biome,s.ua_center_lon,s.ua_center_lat,
+                x.ibge_legenda_1,s.uf,s.ua_id FROM ifn_sampling_unit_summary s
+            JOIN ifn_sampling_unit_ibge_crosswalk x ON x.ua_id=s.ua_id AND x.uf=s.uf
+            WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND s.biome IS NOT NULL
+              AND s.ua_center_lon IS NOT NULL AND s.ua_center_lat IS NOT NULL
+              AND x.ibge_legenda_1 IS NOT NULL ORDER BY s.uf,s.ua_id LIMIT 1""").fetchone()
+    if not _unit:
+        raise RuntimeError("Banco IFN sem unidade adequada para teste de seleção")
+    _selected=select_official_inventory_units(biome=_unit[0],physiognomy=_unit[3],
+        longitude=_unit[1],latitude=_unit[2],max_distance_km=1,max_units=5,include_trees=False)
+    if (_selected.get("status")!="SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA"
+            or not _selected.get("units") or _selected["units"][0].get("ua_id")!=_unit[5]
+            or _selected["units"][0].get("uf")!=_unit[4]):
+        raise RuntimeError("Consulta empacotada não selecionou a UA IFN coincidente em localização, bioma e legenda_1")
+    out["ifn_microdata"]={"database":"bundled_read_only","observation_rows":ifn_status["observation_rows"],
+        "sampling_units":ifn_status["sampling_units"],"source_workbooks":ifn_status["source_workbooks"],
+        "ibge_unique_unit_matches":ifn_status["ibge_unique_unit_matches"],
+        "selection_by_location_biome_and_legenda_1":"ok",
+        "selected_reference_use_only":True,"agb_per_ha_or_canopy_height_estimator":False}
     tmp=Path(tempfile.mkdtemp(prefix="enform_modcheck_")); px=pronasolos_wcs.PIXEL_DEG; paths={}
     for lid in range(2,7):
         f=tmp/f"h{lid}.tif"

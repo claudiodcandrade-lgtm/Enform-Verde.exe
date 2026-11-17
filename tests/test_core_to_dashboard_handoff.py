@@ -322,7 +322,18 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
 
     def test_conditional_inventory_reuses_existing_sar_without_second_pipeline(self):
         aoi = gpd.GeoDataFrame(geometry=[box(-55.0, -4.0, -54.99, -3.99)], crs="EPSG:4326")
-        sar_result = {"status": "SAR_PROCESSADO_SEM_MODELO_AGB", "reason": "pixels existentes"}
+        sar_result = {
+            "status": "SAR_NAO_PROCESSADO",
+            "reason": "ausência de cenas confirmada após esgotar as rotas",
+            "audit": {
+                "sar_sources_exhausted": True,
+                "sar_pixel_processing_status": "NENHUM_PIXEL_SAR_UTILIZAVEL_APOS_ROTAS_CONFIGURADAS",
+                "scene_absence_certificate": {
+                    "eligible": True, "status": "SAR_AUSENCIA_CENAS_CONFIRMADA"},
+            },
+            "inventory_fallback_gate": {
+                "eligible": True, "status": "SAR_AUSENCIA_CENAS_CONFIRMADA"},
+        }
         land = {
             "vector_path": "land.geojson",
             "validation": {},
@@ -343,7 +354,7 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         self.assertEqual(pipeline.call_count, 0)
         self.assertEqual(scenario.call_count, 2)
         self.assertTrue(all(call.kwargs["sar_result"] == sar_result for call in scenario.call_args_list))
-        self.assertTrue(all(call.kwargs["conditional_only"] is True for call in scenario.call_args_list))
+        self.assertTrue(all("conditional_only" not in call.kwargs for call in scenario.call_args_list))
         self.assertEqual(len(result["conditional_inventory_scenarios"]), 2)
 
 
