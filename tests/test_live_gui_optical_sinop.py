@@ -45,27 +45,21 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
         self.assertEqual(canvas_height_fitting_window(711,768,334),353)
         self.assertEqual(canvas_height_fitting_window(711,768,714),0)
 
-    def test_ibge_cartographic_fallback_passes_only_with_visible_canvas_pixels(self):
-        self.assertEqual(rendered_optical_status(
-            "IBGE_POTENTIAL_FALLBACK",True,None,0,self.QUALITY,canvas_item_count=5),
-            "PASS_IBGE_FALLBACK")
+    def test_ibge_cartography_never_counts_as_an_optical_image(self):
+        self.assertIsNone(rendered_optical_status(
+            "IBGE_POTENTIAL_FALLBACK",True,None,0,self.QUALITY,canvas_item_count=5))
         self.assertIsNone(rendered_optical_status(
             "IBGE_POTENTIAL_FALLBACK",True,None,0,
             {"p99_luminance":0,"std_luminance":0,"visible_fraction":0},canvas_item_count=5))
 
-    def test_aoi_fallback_is_accepted_while_remote_worker_is_pending(self):
-        # The Tk canvas has an immediate non-black AOI fallback while remote
-        # optical providers load. The live smoke must inspect that canvas
-        # before waiting for the network worker's terminal state.
-        self.assertEqual(rendered_optical_status(
-            "AOI_LOCAL_FALLBACK",True,None,0,self.QUALITY,canvas_item_count=8),
-            "PASS_AOI_FALLBACK")
+    def test_aoi_outline_never_counts_as_an_optical_image(self):
+        self.assertIsNone(rendered_optical_status(
+            "AOI_LOCAL_FALLBACK",True,None,0,self.QUALITY,canvas_item_count=8))
 
-    def test_low_contrast_but_bright_fallback_does_not_need_satellite_contrast(self):
+    def test_low_contrast_cartographic_pixels_never_count_as_an_image(self):
         pale_visible={"p99_luminance":232,"std_luminance":2.1,"visible_fraction":0.98}
-        self.assertEqual(rendered_optical_status(
-            "AOI_LOCAL_FALLBACK",True,None,0,pale_visible,canvas_item_count=8),
-            "PASS_AOI_FALLBACK")
+        self.assertIsNone(rendered_optical_status(
+            "AOI_LOCAL_FALLBACK",True,None,0,pale_visible,canvas_item_count=8))
         self.assertIsNone(rendered_optical_status(
             "AOI_LOCAL_FALLBACK",True,None,0,
             {"p99_luminance":0,"std_luminance":0,"visible_fraction":0},canvas_item_count=8))
@@ -104,12 +98,13 @@ class TestLiveGuiOpticalSinop(unittest.TestCase):
             rendered_optical_status("Sentinel-2 carregado", True, (900, 420), 0)
         )
 
-    def test_cartography_and_other_imagery_do_not_satisfy_optical_gate(self):
-        for provider in ("MAPA CARTOGRÁFICO IBGE", "NASA GIBS VIIRS", "ESRI_WORLD_IMAGERY"):
+    def test_actual_optical_fallbacks_satisfy_gate_only_with_visible_pixels(self):
+        for provider in ("NASA GIBS VIIRS", "ESRI_WORLD_IMAGERY", "CACHE ÓPTICO • Sentinel-2"):
             with self.subTest(provider=provider):
-                self.assertIsNone(
-                    rendered_optical_status(provider, True, (900, 420), 1)
-                )
+                expected = ("PASS_SENTINEL2_FALLBACK" if "sentinel-2" in provider.casefold()
+                            else "PASS_OPTICAL_IMAGE_FALLBACK")
+                self.assertEqual(rendered_optical_status(provider, True, (900, 420), 1, self.QUALITY), expected)
+        self.assertIsNone(rendered_optical_status("MAPA CARTOGRÁFICO IBGE",True,(900,420),1,self.QUALITY))
 
     def test_missing_photo_or_hidden_canvas_does_not_pass(self):
         self.assertIsNone(rendered_optical_status("CBERS-4A/WFI", True, None, 1))

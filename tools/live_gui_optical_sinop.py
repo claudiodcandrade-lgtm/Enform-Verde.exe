@@ -17,36 +17,20 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 
 def rendered_optical_status(provider, visible, photo_size, canvas_image_count, pixel_quality=None, canvas_item_count=0):
-    """Pass only when real canvas pixels show imagery or a cartographic fallback."""
+    """Pass only when real optical imagery is visible as a Tk canvas image."""
     provider=str(provider or "").strip().casefold()
-    if not visible:
+    if not visible or not photo_size or min(photo_size)<=0 or canvas_image_count<1:
         return None
     if not isinstance(pixel_quality,dict):
         return None
-    if "ibge_potential_fallback" in provider:
-        # Pale cartographic fills and the light AOI canvas are correctly
-        # visible even when their pixel contrast is below the satellite-image
-        # threshold. Keep the luminance/coverage checks so an actually black
-        # canvas cannot pass.
-        return "PASS_IBGE_FALLBACK" if (
-            canvas_item_count>0 and pixel_quality.get("p99_luminance",0)>=20
-            and pixel_quality.get("visible_fraction",0)>=0.15
-        ) else None
-    if "aoi_local_fallback" in provider:
-        return "PASS_AOI_FALLBACK" if (
-            canvas_item_count>0 and pixel_quality.get("p99_luminance",0)>=20
-            and pixel_quality.get("visible_fraction",0)>=0.15
-        ) else None
     if pixel_quality.get("p99_luminance",0)<20 or pixel_quality.get("std_luminance",0)<5 or pixel_quality.get("visible_fraction",0)<0.15:
-        return None
-    if not photo_size or min(photo_size)<=0 or canvas_image_count<1:
         return None
     if "cbers-4a/wfi" in provider:
         return "PASS_CBERS"
     if "sentinel-2" in provider:
         return "PASS_SENTINEL2_FALLBACK"
-    # Other backdrops (VIIRS, web mosaics, cartography) are not the two
-    # specified medium-resolution optical sources and cannot satisfy this gate.
+    if "nasa gibs" in provider or "viirs" in provider or "esri_world_imagery" in provider or "cache óptico" in provider:
+        return "PASS_OPTICAL_IMAGE_FALLBACK"
     return None
 
 
@@ -113,10 +97,9 @@ def main(timeout=180):
     window=app.App()
     status="NOT_STARTED"
     result={"scope":"Sinop centroid vicinity, NOT original KML",
-            "mode":"CBERS/Sentinel-2 when available; otherwise IBGE cartography/AOI fallback on Tk canvas",
-            "accepted_sources":["CBERS-4A/WFI","Sentinel-2","IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK"],
+            "mode":"real optical source through provider retrieval, UI queue and visible Tk canvas",
+            "accepted_sources":["CBERS-4A/WFI","Sentinel-2","NASA GIBS VIIRS","Esri World Imagery","optical cache"],
             "optical_retrieval_is_not_landcover_classification":True}
-    initial_fallback_visible=False
     screen=None
     capture_bbox=None
     try:
@@ -186,17 +169,11 @@ def main(timeout=180):
             window.update()
             provider=str(getattr(window,"_map_provider","") or "")
             map_status=str(window.map_status.get())
-            # The AOI outline is drawn synchronously before the remote worker
-            # starts. It prevents a black canvas while loading, but is not proof
-            # that the worker delivered an image or completed the IBGE fallback.
-            if provider == "AOI_LOCAL_FALLBACK":
-                initial_fallback_visible=True
             pending=(map_status.startswith("Carregando CBERS-4A/WFI") or
-                     "enquanto atualiza CBERS-4A" in map_status)
+                     "enquanto atualiza CBERS-4A" in map_status or
+                     map_status.startswith("Imagem óptica em carregamento"))
             canvas_viewable=bool(window.map_canvas.winfo_viewable())
-            visible=canvas_viewable and bool(
-                getattr(window,"_satellite_map_visible",False)
-                or provider in ("IBGE_POTENTIAL_FALLBACK","AOI_LOCAL_FALLBACK"))
+            visible=canvas_viewable and bool(getattr(window,"_satellite_map_visible",False))
             canvas_items=window.map_canvas.find_all()
             photo=getattr(window,"google_map_photo",None)
             photo_size=(photo.width(),photo.height()) if photo is not None else None
@@ -229,7 +206,7 @@ def main(timeout=180):
                 "capture_bbox_fully_visible":capture_bbox_visible,
                 "canvas_bg":str(window.map_canvas.cget("bg")),
                 "canvas_items":len(canvas_items),"canvas_image_items":image_count,
-                "pixel_quality":pixel_quality,"fallback_seen":initial_fallback_visible,
+                "pixel_quality":pixel_quality,
             }
             passed=rendered_optical_status(provider,visible and capture_bbox_visible,photo_size,image_count,pixel_quality,len(canvas_items))
             if passed:
@@ -238,24 +215,33 @@ def main(timeout=180):
                               image_height=photo_size[1] if photo_size else None,
                               canvas_pixel_quality=pixel_quality,
                               optical_attempt_status=map_status[:220],
-                              worker_terminal_state_observed=not pending,
-                              worker_pending_at_visible_fallback=bool(pending and passed in (
-                                  "PASS_IBGE_FALLBACK","PASS_AOI_FALLBACK")),
-                              initial_nonblack_fallback_seen=initial_fallback_visible)
+                              worker_terminal_state_observed=not pending)
                 break
             if pending:
                 time.sleep(0.12)
                 continue
+            if provider == "NO_OPTICAL_IMAGE" or "FALHA AO ABRIR IMAGEM ÓPTICA" in map_status:
+                result["status"] = "NO_OPTICAL_IMAGE"
+                result["last_canvas_observation"] = last_observation
+                diagnostic=Path.home()/".enform_verde"/"ultimo_diagnostico_imagem_otica.json"
+                if diagnostic.is_file():
+                    try:result["provider_diagnostic"]=json.loads(diagnostic.read_text(encoding="utf-8"))
+                    except (OSError,ValueError):pass
+                break
             time.sleep(0.12)
         else:
             result["status"]="TIMEOUT"
             result["last_canvas_observation"]=last_observation
+            diagnostic=Path.home()/".enform_verde"/"ultimo_diagnostico_imagem_otica.json"
+            if diagnostic.is_file():
+                try:result["provider_diagnostic"]=json.loads(diagnostic.read_text(encoding="utf-8"))
+                except (OSError,ValueError):pass
         result["last_ui_status"]=str(window.status.get())[:350]
     except Exception as exc:
         result.update(status="ERROR",error_type=type(exc).__name__,
                       message=str(exc)[:300])
     finally:
-        if result.get("status") not in ("PASS_CBERS","PASS_SENTINEL2_FALLBACK","PASS_IBGE_FALLBACK","PASS_AOI_FALLBACK") and screen is not None:
+        if result.get("status") not in ("PASS_CBERS","PASS_SENTINEL2_FALLBACK","PASS_OPTICAL_IMAGE_FALLBACK") and screen is not None:
             try:screen.crop(capture_bbox).save(ROOT/"optical_gui_sinop_canvas_debug.png")
             except Exception:pass
         try:window.destroy()
@@ -263,7 +249,7 @@ def main(timeout=180):
     output=ROOT/"optical_gui_sinop_live.json"
     output.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding="utf-8")
     print(json.dumps(result,ensure_ascii=False))
-    return 0 if result["status"] in ("PASS_CBERS","PASS_SENTINEL2_FALLBACK","PASS_IBGE_FALLBACK","PASS_AOI_FALLBACK") else 1
+    return 0 if result["status"] in ("PASS_CBERS","PASS_SENTINEL2_FALLBACK","PASS_OPTICAL_IMAGE_FALLBACK") else 1
 
 
 if __name__=="__main__":

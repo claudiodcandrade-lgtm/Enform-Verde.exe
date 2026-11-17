@@ -387,7 +387,7 @@ jobs:
           '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
           python live_sentinel2_preview.py
 
-      - name: Live optical background smoke — Brazilian biomes and geographic extremes
+      - name: Live real optical pixels — Brazilian biomes and geographic extremes
         shell: pwsh
         timeout-minutes: 45
         run: python tools/live_optical_coverage_brazil.py
@@ -400,7 +400,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Live optical-or-IBGE-fallback worker-to-Tk-canvas smoke — Sinop
+      - name: Live real optical worker-to-Tk-canvas smoke — Sinop
         shell: pwsh
         timeout-minutes: 7
         run: python tools/live_gui_optical_sinop.py

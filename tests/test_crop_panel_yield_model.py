@@ -110,6 +110,22 @@ class ArtifactTests(unittest.TestCase):
         self.assertIn("Alto Teles Pires", txt)
         self.assertEqual(rep["fields"]["T"]["status"], "experimental_sem_vigor_clima_historico")
 
+    def test_pipeline_records_dated_vigor_as_applied_to_the_existing_yield_model(self):
+        g = gpd.GeoDataFrame(geometry=[Point(-55.7, -12.5).buffer(.01)], crs=4326)
+        fake_wx = lambda lat, lon, s, e: {"daily": weather(range(2000, 2027), lambda d: 7.0), "source_url": "synthetic"}
+        fake_awc = lambda lat, lon: {"awc_mm_cm": 1.1, "source": "teste"}
+        probabilities={"baixo vigor":0.75,"vigor adequado":0.20,"alto vigor":0.05}
+        rep=forecast_fields([{"id":"T","gdf":g,"crop":"Soja",
+            "identification":{"label_allowed":True},"vigor":{"status":"experimental",
+                "probabilities":probabilities,"scene_id":"S1_TEST","acquisition_utc":"2026-10-25T00:00:00Z"},
+            "area_ha":100}],as_of=date(2026,10,31),weather_fetcher=fake_wx,
+            awc_fetcher=fake_awc,n_mc=300)
+        audit=rep["fields"]["T"]["vigor_model_audit"]
+        self.assertTrue(audit["used_in_yield_distribution"])
+        self.assertEqual(audit["probabilities_used"],probabilities)
+        self.assertEqual(len(audit["residual_conditioning"]["residual_medians_kg_ha"]),3)
+        self.assertIn("Vigor aplicado ao modelo vigente","\n".join(forecast_lines(rep)))
+
 
 if __name__ == "__main__":
     unittest.main()
