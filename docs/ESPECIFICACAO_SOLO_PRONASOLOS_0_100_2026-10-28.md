@@ -739,3 +739,9 @@ O smoke live do SHA `3999058` confirmou a separação de origem: FH foi apresent
 A consulta de comparação agora informa separadamente rotas de inventário pesquisadas, fontes existentes no registro harmonizado, correspondências exatas e fontes utilizáveis. Isso evidencia quando todo o registro foi consultado sem produzir referência compatível e mantém N/D quando bioma/fitofisionomia/unidade não sustentam comparação. Não muda o método do solo.
 
 Candidata 3.26.70-PRECAMPO-EXPERIMENTAL; regressão/handoff anteriores aprovados em SHA anterior, build/autoteste e gates da revisão final ainda devem passar no SHA que contém estas alterações.
+
+## Nota V88.149 (18/11/2026)
+
+O autoteste Windows anterior detectou bloqueio técnico da rota FH/GTDX no EXE. A investigação localizou a causa no workflow: a etapa de prova MAAP tinha o segredo ESA configurado, mas o processo de aceite do executável não o recebia. O passo de aceite agora recebe o token offline por variável protegida; o pipeline utiliza essa variável quando não há token explícito. Erros de autenticação permanecem técnicos e não são tratados como ausência de cobertura. Sem alteração de métodos, profundidade ou fontes do carbono do solo.
+
+A candidata 3.26.71 aguarda os gates finais no novo SHA.

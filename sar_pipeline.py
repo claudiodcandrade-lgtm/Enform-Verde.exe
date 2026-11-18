@@ -1,4 +1,4 @@
-import math,re,hashlib,time,zipfile
+import math,re,hashlib,time,zipfile,os
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import numpy as np, requests
@@ -998,6 +998,11 @@ def _preserve_sar_canopy_height(result, height, audit=None):
     out["height_route_status"]="ALTURA_SAR_PROCESSADA"
     out["height_data_origin"]="SAR_DERIVED_PRODUCT_WITH_PROVENANCE"
     return out
+
+
+def _resolve_maap_offline_token(explicit=""):
+    """Prefer an explicit user token; otherwise honor the protected runtime env."""
+    return str(explicit or os.environ.get("ESA_MAAP_OFFLINE_TOKEN") or "").strip()
 
 
 HEIGHT_PRIORITY_BIOMES=("Amazônia","Pantanal","Cerrado","Mata Atlântica","Caatinga","Pampa")
@@ -2053,6 +2058,7 @@ def _scene_absence_certificate(audit):
 
 
 def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=None,edl_user="",edl_password="",edl_token="",cdse_token="",cdse_client_id="",cdse_client_secret="",biomass_catalog_items=None,biomass_search_audit=None,pipeline_route_cache=None):
+    offline_token=_resolve_maap_offline_token(offline_token)
     cache=cache or str(Path.home()/".enform_verde"/"sar")
     from datetime import datetime, timezone
     audit={"priority":"P(ESA) > L(NASA/ASF) > X(local/licensed) > C(Copernicus CDSE) > CCI",

@@ -953,6 +953,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Source Python module check failed' }
           Copy-Item -Force (Join-Path $env:TEMP 'enform_verde_module_check.json') (Join-Path $env:RUNNER_TEMP 'enform_python_reference.json')
       - name: Compiled EXE self-test from clean copied folder
+        env:
+          ESA_MAAP_OFFLINE_TOKEN: ${{ secrets.ESA_MAAP_OFFLINE_TOKEN }}
         shell: pwsh
         run: |
           $src = Join-Path $PWD 'dist\Enform Verde'

@@ -2,6 +2,7 @@
 import unittest
 import tempfile
 import zipfile
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -20,6 +21,11 @@ def item(pid, ptype):
 
 
 class BiomassL2aTests(unittest.TestCase):
+    def test_maap_token_uses_runtime_secret_when_no_explicit_token_is_provided(self):
+        with patch.dict(os.environ,{"ESA_MAAP_OFFLINE_TOKEN":"runner-secret"}):
+            self.assertEqual(sp._resolve_maap_offline_token(),"runner-secret")
+            self.assertEqual(sp._resolve_maap_offline_token("explicit-token"),"explicit-token")
+
     def test_only_fh_geotiff_selected_for_l2a(self):
         keys = [k for k, _ in sp._biomass_product_assets(item("BIO_FP_FH__L2A_X", "FP_FH__L2A"), "FP_FH__L2A")]
         # Direct FH GeoTIFF first; the official product ZIP is a fallback
