@@ -9,7 +9,8 @@ from unittest.mock import patch
 import geopandas as gpd
 from shapely.geometry import box
 from crop_monitoring_forecast import (crops_in_land_result,experimental_crops_in_land_result,
-                                     canonical_crop,_append_candidate_vigor_lines,monitoring_forecast)
+                                     canonical_crop,_append_candidate_vigor_lines,monitoring_forecast,
+                                     sentinel1_search_window)
 from crop_spatial_monitoring import (crop_geometry,current_sar_cultivated_candidate_geometry,
                                     current_candidate_vigor_blocks)
 
@@ -50,6 +51,12 @@ def _panel_forecast_fixture(vigor_model_audit, *, vigor_used):
 
 
 class ExperimentalCropForecastContracts(unittest.TestCase):
+    def test_annual_search_window_is_timezone_aware_and_30_days(self):
+        day=datetime.now(timezone.utc).date()
+        start,end=sentinel1_search_window(day,30)
+        self.assertEqual(start.tzinfo,end.tzinfo)
+        self.assertAlmostEqual((end-start).total_seconds(),30*86400,delta=1)
+
     def test_proven_absence_contingency_estimate_is_exposed_in_dashboard_audit(self):
         frame=gpd.GeoDataFrame(geometry=[box(-55.20,-11.89,-55.19,-11.88)],crs=4326)
         contingency={"status":"FALLBACK_HISTORICO_MAPBIOMAS_PAM",

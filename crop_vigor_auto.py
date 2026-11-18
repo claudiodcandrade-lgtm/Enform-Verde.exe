@@ -26,8 +26,8 @@ def _scene(field_4326, as_of, window_days, search):
     found = search(mapping(field_4326), start_utc=end - timedelta(days=window_days), end_utc=end)
     for s in found["scenes"]:
         if {"vv", "vh"} <= set(s["assets"]) and "VH" in (s.get("polarizations") or ["VH"]):
-            return s
-    return None
+            return s, found
+    return None, found
 
 
 def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=8.0,
@@ -51,10 +51,22 @@ def automatic_vigor(field_gdf, as_of, crop_name, *, reference_gdf=None, ring_km=
     # polygons have thousands of vertices and made the STAC request fail
     # (bug found in the 09/11/2026 Sinop test). Pixels still use the true field.
     from shapely.geometry import box as _box
-    scene = _scene(_box(*g.bounds), as_of, window_days, search)
+    scene, scene_search_audit = _scene(_box(*g.bounds), as_of, window_days, search)
     if scene is None:
+        providers=scene_search_audit.get("providers") or []
+        search_audit={key:scene_search_audit.get(key) for key in
+            ("providers","scene_count","pagination_complete","queried_at_utc")}
+        incomplete=(not providers or
+                    scene_search_audit.get("pagination_complete") is not True or
+                    any(row.get("status") != "OK" for row in providers))
+        if incomplete:
+            return {"status":"ERRO_TECNICO",
+                    "reason":"catálogo Sentinel-1 incompleto ou com falha em uma rota; ausência não comprovada",
+                    "search_window_days":window_days,"as_of":as_of.isoformat(),
+                    "scene_search_audit":search_audit}
         return {"status": "N/D", "reason": f"sem cena Sentinel-1 RTC VV/VH nos últimos {window_days} dias",
-                "search_window_days": window_days, "as_of": as_of.isoformat()}
+                "search_window_days": window_days, "as_of": as_of.isoformat(),
+                "scene_search_audit":search_audit}
     # Catalog entries alone are not evidence of current, acquired SAR pixels.
     # Reject stale/future scene dates even if a custom STAC backend returns them.
     acquired = datetime.fromisoformat(str(scene.get("acquisition_utc", "")).replace("Z", "+00:00"))

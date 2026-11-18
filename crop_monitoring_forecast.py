@@ -20,6 +20,13 @@ def canonical_crop(label):
     return CANONICAL_CROPS.get(str(label).strip().casefold(), str(label).strip())
 
 
+def sentinel1_search_window(day, window_days=30):
+    """Build a timezone-aware rolling window without closing over local imports."""
+    end = datetime.combine(day, datetime.max.time()).replace(tzinfo=timezone.utc)
+    end = min(end, datetime.now(timezone.utc))
+    return end - timedelta(days=int(window_days)), end
+
+
 
 def mapbiomas_historical_reference(land):
     """Return MapBiomas crop areas as an explicitly historical reference only."""
@@ -122,8 +129,7 @@ def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
         if use_live_vigor:
             from shapely.geometry import box as _box, mapping as _mapping
             from sentinel1_sources import search_sentinel1_sources
-            end = datetime.combine(as_of, datetime.max.time()).replace(tzinfo=timezone.utc)
-            start = end - timedelta(days=30)
+            start, end = sentinel1_search_window(as_of, 30)
             search_result = search_sentinel1_sources(
                 _mapping(_box(*target.to_crs(4326).geometry.iloc[0].bounds)),
                 start_utc=start, end_utc=end)
@@ -149,6 +155,10 @@ def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
             patches=target_blocks,
         )
         result.update({"crop_confirmed": False, "scope": "CURRENT_CULTIVATED_CANDIDATE"})
+        if use_live_vigor and isinstance(search_result, dict):
+            result["scene_search_audit"] = {
+                key: search_result.get(key) for key in
+                ("providers", "scene_count", "pagination_complete", "queried_at_utc")}
         result["reference_block_design"] = {
             "target_blocks": block_design["target_block_count"],
             "reference_blocks": block_design["reference_block_count"],
@@ -408,8 +418,7 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                                 # block still performs its own dated pixel read.
                                 from shapely.geometry import box, mapping
                                 from sentinel1_sources import search_sentinel1_sources
-                                end = datetime.combine(day, datetime.max.time()).replace(tzinfo=timezone.utc)
-                                start = end - timedelta(days=30)
+                                start, end = sentinel1_search_window(day, 30)
                                 bounds = crop_gdf.to_crs(4326).total_bounds
                                 search_cache["result"] = search_sentinel1_sources(
                                     mapping(box(*bounds)), start_utc=start, end_utc=end)
@@ -436,6 +445,10 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                             require_scene_evidence=(vigor_fn is automatic_vigor),
                             min_area_ha=2.0, target_patch_ha=16.0,
                             patches=block_design["target_blocks"])
+                        if search_cache["loaded"] and isinstance(search_cache["result"], dict):
+                            vig["scene_search_audit"] = {
+                                key: search_cache["result"].get(key) for key in
+                                ("providers", "scene_count", "pagination_complete", "queried_at_utc")}
                         vig["reference_block_design"] = {
                             "target_blocks": block_design["target_block_count"],
                             "reference_blocks": block_design["reference_block_count"],
@@ -520,7 +533,6 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     dates = vig.get("acquisition_period_utc")
                     if dates:
                         lines.append(f"  AQUISIÇÃO SENTINEL-1 REAL (UTC): {dates[0]} até {dates[1]}")
-                        from datetime import datetime, timezone
                         utc_minus_3 = timezone(timedelta(hours=-3))
                         def _date_br(iso):
                             return datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone(utc_minus_3).isoformat()
