@@ -673,3 +673,7 @@ A auditoria do carbono nativo preserva a proveniência por estrato e não deve r
 ## Nota V88.135 (17/11/2026)
 
 A correção da auditoria e formatação do painel agrícola não modifica as fontes, profundidades, modelos ou incertezas de carbono do solo especificados neste documento. Sua inclusão atende à sincronização documental da candidata 3.26.65, sem alterar os cálculos do compartimento solo.
+
+## Nota V88.138 (18/11/2026)
+
+O smoke live de carbono FH e vigor não modifica o método do compartimento solo. A fonte PronaSolos continua separada das estimativas de biomassa e sua variabilidade espacial não deve ser chamada de IC95% ou erro de predição. Esta nota sincroniza a especificação às mudanças efetivas auditadas no mesmo ciclo.
