@@ -1,4 +1,5 @@
 """Fail-closed gate for regional height-chart fallback."""
+import math
 
 
 def build_height_absence_certificate(esa_search_audit, esa_height_result, gtdx_result):
