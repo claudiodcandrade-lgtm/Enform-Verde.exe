@@ -95,16 +95,11 @@ def _hash(path):
     return h.hexdigest()
 
 
+from inventory_date_utils import normalize_inventory_date
+
+
 def _date_iso(value):
-    if value is None:
-        return None
-    text = str(value).strip()
-    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d/%m/%y"):
-        try:
-            return datetime.strptime(text, fmt).date().isoformat()
-        except ValueError:
-            continue
-    return text
+    return normalize_inventory_date(value)
 
 
 def _schema(conn):

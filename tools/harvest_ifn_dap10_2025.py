@@ -12,6 +12,8 @@ from pathlib import Path
 import requests
 from openpyxl import load_workbook
 
+from inventory_date_utils import normalize_inventory_date
+
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "external_raw" / "ifn_dap10_set2025"
 MANIFEST = ROOT / "data" / "ifn_dap10_set2025_harvest_manifest.json"
@@ -64,6 +66,7 @@ def _profile(name, path, size, digest):
     biomes = set()
     municipalities = set()
     dates = []
+    unparsed_dates = 0
     valid_dap = 0
     valid_height = 0
     species = set()
@@ -77,8 +80,13 @@ def _profile(name, path, size, digest):
             biomes.add(str(row[idx["bioma"]]))
         if row[idx["mun"]] is not None:
             municipalities.add(str(row[idx["mun"]]))
-        if row[idx["Data"]]:
-            dates.append(str(row[idx["Data"]]))
+        raw_date = row[idx["Data"]]
+        if raw_date not in (None, ""):
+            normalized_date = normalize_inventory_date(raw_date)
+            if normalized_date:
+                dates.append(normalized_date)
+            else:
+                unparsed_dates += 1
         try:
             valid_dap += float(row[idx["DAP"]]) > 0
         except (TypeError, ValueError):
@@ -98,6 +106,7 @@ def _profile(name, path, size, digest):
         "biomes": sorted(biomes), "municipalities": len(municipalities),
         "date_min": min(dates) if dates else None,
         "date_max": max(dates) if dates else None,
+        "unparsed_date_values": int(unparsed_dates),
         "valid_dap_records": int(valid_dap),
         "valid_total_height_records": int(valid_height),
         "distinct_scientific_name_values": len(species),

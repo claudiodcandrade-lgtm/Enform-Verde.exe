@@ -7,7 +7,7 @@ on:
     paths:
       - docs/spec_updates/2026-11-15_v88_83_carbon_pools_uncertainty_performance.md
       - docs/spec_updates/2026-11-18_v88_153_h100_inventory_height_calibration.md
-      - docs/spec_updates/2026-11-18_v88_155_fh_model_status_correction.md
+      - docs/spec_updates/2026-11-18_v88_156_inventory_date_normalization.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -26,13 +26,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Append V88.155 FH model status correction preserving full Word history
+      - name: Append V88.156 inventory date normalization and release blocker preserving full Word history
         run: |
           if python - <<'PY'
           from zipfile import ZipFile
           with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as z:
               xml=z.read('word/document.xml').decode('utf-8')
-          raise SystemExit(0 if 'V88.155' in xml else 1)
+          raise SystemExit(0 if 'V88.156' in xml else 1)
           PY
           then
             python - <<'PY'
@@ -61,17 +61,17 @@ jobs:
                   Path(temporary).replace(path)
               finally:
                   Path(temporary).unlink(missing_ok=True)
-          print('V88.155 already present; finalized its SHA metadata.')
+          print('V88.156 already present; finalized its SHA metadata.')
           PY
           else
             python tools/update_spec_docx.py \
               --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-              --entry docs/spec_updates/2026-11-18_v88_155_fh_model_status_correction.md \
-              --baseline "Enform Verde 3.26.71-PRECAMPO-EXPERIMENTAL (V88.155 correction of FH availability diagnostics)" \
+              --entry docs/spec_updates/2026-11-18_v88_156_inventory_date_normalization.md \
+              --baseline "Enform Verde 3.26.71-PRECAMPO-EXPERIMENTAL (V88.156 IFN date normalization and AGB release blocker)" \
               --head-sha "${{ github.sha }}" \
               --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
               --date "18 de novembro de 2026" \
-              --footer-label "V88.155 · experimental 3.26.71 · calibração FH com base expandida de inventários" \
+              --footer-label "V88.156 · experimental 3.26.71 · datas IFN normalizadas; modelo AGB pendente" \
               --footer-date "18/11/2026"
           fi
         env:
@@ -86,13 +86,13 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert len(xml) > 10000
-              assert 'V88.155' in xml and '3.26.71-PRECAMPO-EXPERIMENTAL' in xml
-          print('Word specification updated with V88.155 checkpoint and archive validated')
+              assert 'V88.156' in xml and '3.26.71-PRECAMPO-EXPERIMENTAL' in xml
+          print('Word specification updated with V88.156 checkpoint and archive validated')
           PY
       - name: Commit DOCX to the same feature branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.155 FH model status correction"
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.156 inventory date normalization and release blocker"
           git push origin HEAD:${{ github.ref_name }}
