@@ -581,7 +581,6 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 rep = forecast_fn([{"id": crop, "gdf": crop_gdf if crop_gdf is not None else gdf, "crop": crop,
                                     "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
                                   as_of=as_of)
-                lines += ["  " + l for l in forecast_lines(rep)]
                 field_forecast = (rep.get("fields") or {}).get(crop) or {}
                 vigor_model_audit = field_forecast.get("vigor_model_audit") or {}
                 vigor_used_in_distribution = bool(vigor_model_audit.get("used_in_yield_distribution"))
@@ -633,6 +632,17 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 entry["forecast_model"] = rep.get("model")
                 entry["forecast"] = {k: v for k, v in rep.items() if k in ("production", "fields", "model_label", "status") }
                 entry["forecast"]["input_provenance"] = forecast_inputs
+                # Preserve the model result and its complete provenance before
+                # rendering the narrative. A formatting error must not erase a
+                # completed forecast or leave the audit without forecast_inputs.
+                try:
+                    lines += ["  " + l for l in forecast_lines(rep)]
+                    entry["forecast_render_status"] = "OK"
+                except Exception as render_exc:
+                    entry["forecast_render_status"] = "ERRO_FORMATACAO"
+                    entry["forecast_render_reason"] = (type(render_exc).__name__ + ": " + str(render_exc)[:160])
+                    lines.append("  Resultado numérico preservado na auditoria; falha ao formatar o resumo: " +
+                                 entry["forecast_render_reason"])
             except Exception as exc:
                 lines.append("  Previsão de safra: N/D — " + type(exc).__name__ + ": " + str(exc)[:160])
         else:

@@ -14,6 +14,41 @@ from crop_spatial_monitoring import (crop_geometry,current_sar_cultivated_candid
                                     current_candidate_vigor_blocks)
 
 
+def _panel_forecast_fixture(vigor_model_audit, *, vigor_used):
+    """Keep monitor→forecast tests on the same schema as the real panel model."""
+    vigor = ({"status": "experimental", "class": "vigor adequado",
+              "probabilities": {"baixo vigor": .2, "vigor adequado": .6,
+                                "alto vigor": .2}}
+             if vigor_used else None)
+    field = {
+        "status": "experimental_validated_out_of_sample" if vigor_used else "experimental_sem_vigor_clima_historico",
+        "microregion": {"name": "Alto Teles Pires", "uf": "MT"},
+        "harvest_year": 2026,
+        "region_group": "51006:Soja",
+        "trend_source": "fixture PAM",
+        "awc": {"awc_mm_cm": 90.0, "source": "fixture"},
+        "ry_median": .82,
+        "ry_p10_p90": [.72, .91],
+        "n_analogs": 8,
+        "vigor": vigor,
+        "no_vigor_reason": None if vigor_used else "vigor SAR não incorporado pelo fixture",
+        "loyo": {"mae_kg_ha": 100.0, "trend_only_mae_kg_ha": 120.0,
+                 "skill_vs_trend": .16, "units_improved": 1, "units": 2},
+        "vigor_model_audit": vigor_model_audit,
+        "soil_water_modelled": {"status": "N/D", "reason": "fixture"},
+    }
+    return {
+        "model": "panel",
+        "model_label": "painel teste",
+        "status": "ok",
+        "fields": {"Soja": field},
+        "production": {
+            "fields_kg_ha": {"Soja": {"median": 3000.0, "p05": 2500.0, "p95": 3500.0}},
+            "production_t": {"median": 300.0, "p05": 250.0, "p95": 350.0},
+        },
+    }
+
+
 class ExperimentalCropForecastContracts(unittest.TestCase):
     def test_proven_absence_contingency_estimate_is_exposed_in_dashboard_audit(self):
         frame=gpd.GeoDataFrame(geometry=[box(-55.20,-11.89,-55.19,-11.88)],crs=4326)
@@ -110,9 +145,8 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
             called={}
             def forecast(fields,as_of):
                 called["fields"]=fields
-                return {"model":"panel","model_label":"painel teste","fields":{"Soja":{"vigor_model_audit":{"used_in_yield_distribution":True}}},
-                    "production":{"fields_kg_ha":{},"production_t":{"median":0,"p05":0,"p95":0,
-                    "interval_note":"fixture"}}}
+                return _panel_forecast_fixture(
+                    {"used_in_yield_distribution": True}, vigor_used=True)
             with patch("crop_panel_yield_model.load_artifact",return_value={"crops":{"Soja":{}}}), \
                  patch("crop_spatial_monitoring.sampled_sentinel_vigor",return_value=vigor), \
                  patch("crop_spatial_monitoring.current_candidate_vigor_blocks",return_value={
@@ -148,11 +182,10 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
             called={}
             def forecast(fields,as_of):
                 called["fields"]=fields
-                return {"model":"panel","model_label":"painel teste",
-                    "fields":{"Soja":{"vigor_model_audit":{"used_in_yield_distribution":False,
-                        "reason":"vigor sem identidade de cena e data de aquisição SAR"}}},
-                    "production":{"fields_kg_ha":{},"production_t":{"median":0,"p05":0,"p95":0,
-                    "interval_note":"fixture"}}}
+                return _panel_forecast_fixture(
+                    {"used_in_yield_distribution": False,
+                     "reason": "vigor sem identidade de cena e data de aquisição SAR"},
+                    vigor_used=False)
             with patch("crop_panel_yield_model.load_artifact",return_value={"crops":{"Soja":{}}}), \
                  patch("crop_spatial_monitoring.sampled_sentinel_vigor",return_value=vigor), \
                  patch("crop_spatial_monitoring.current_candidate_vigor_blocks",return_value={
