@@ -92,6 +92,7 @@ jobs:
           python tools/harvest_ifn_dap10_2025.py
           python tools/ingest_official_inventory_microdata.py
           python tools/build_ifn_ibge_crosswalk.py
+          python tools/harvest_sfb_biomass_panel.py
       - name: Upload IFN database and spatial crosswalk audit
         uses: actions/upload-artifact@v4
         with:
@@ -99,6 +100,9 @@ jobs:
           path: |
             data/official_inventory_microdata_ingestion_v1.json
             data/ifn_ibge_crosswalk_audit_v1.json
+            data/sfb_ifn_biomass_v1.csv
+            data/sfb_ifn_biomass_equations_v1.csv
+            data/sfb_ifn_biomass_manifest_v1.json
           retention-days: 30
       - name: Inspect public IFN necromass and point schemas
         continue-on-error: true

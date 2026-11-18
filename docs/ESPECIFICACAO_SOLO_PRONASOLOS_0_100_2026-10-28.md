@@ -750,3 +750,8 @@ A candidata 3.26.71 aguarda os gates finais no novo SHA.
 ## V88.151 — interface com calibração de biomassa radicular
 
 Carbono/biomassa de raízes permanece compartimento separado do carbono orgânico do solo (0–100 cm). A conversão de AGB em biomassa abaixo do solo deve usar equação ou razão raiz:parte aérea publicada para a formação e domínio adequados, com fonte e incerteza. A especificação edáfica não autoriza usar carbono do solo como proxy de raízes, nem somar raízes mortas novamente quando a equação incluir raízes vivas e mortas. Na versão examinada, a rotina de carbono ainda usa Cairns et al. como aproximação ampla para formações florestais altas; a seleção por fitofisionomia e sua incerteza completa são pendência explícita, não calibração local.
+
+
+## V88.152 — integração do Painel SFB/IFN
+
+A ingestão do Painel SFB/IFN inclui referências de AGB e equações empregadas no cálculo. O campo `valor_r` do painel representa um fator raiz/parte aérea informado pela metodologia do SFB, não uma equação alométrica de raízes. Carbono do solo 0–100 cm continua independente. Para raízes, o sistema deve priorizar equações alométricas publicadas aplicáveis ao estrato; usar `valor_r` somente como fator de expansão compatível, declarando a fonte e sua dispersão, sem chamar o fator de alometria calibrada.
