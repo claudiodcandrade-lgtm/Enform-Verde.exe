@@ -696,3 +696,10 @@ Teste live Sinop confirmou uma amostra de soja em uma cena Sentinel‑1 RTC de 1
 ## Nota V88.143 (18/11/2026)
 
 A remoção da exceção no fluxo de apresentação do monitoramento agrícola não modifica métodos, fontes, profundidades ou incertezas do compartimento carbono do solo.
+
+
+## V88.143 — atualização para 3.26.66-PRECAMPO-EXPERIMENTAL (18/11/2026)
+
+A correção dos quadros executivos e da apresentação do vigor condicionando a previsão foi incorporada. A versão da aplicação foi incrementada de 3.26.65 para 3.26.66-PRECAMPO-EXPERIMENTAL. A versão 3.26.65 compilou e passou o autoteste Windows em pasta limpa; a regressão integral teve 1.271 testes OK e o gate documental passou após sincronização. Esses resultados pertencem ao SHA 3.26.65; a versão 3.26.66 requer novos gates de regressão, build/autoteste e handoff live.
+
+A homologação científica independente permanece reprovada por ausência de validação de campo independente. Manter explicitamente o status pré-campo/experimental; não declarar release homologada. A auditoria live Sinop confirma integração condicional do vigor da soja, sem validar cultura atual ou transferência da máscara retrospectiva 2025/2026.
