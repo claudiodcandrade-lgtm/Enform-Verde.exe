@@ -55,3 +55,7 @@ Versão experimental e não homologada. A execução Windows no SHA anterior `50
 - O live identificou um `NameError` por sombreamento de `datetime` no ramo anual da busca Sentinel‑1, mascarado como N/D e deixando a previsão seguir sem vigor. Corrigido o fechamento temporal e adicionada auditoria por provedor para impedir que busca incompleta seja confundida com ausência de cena.
 - No AOI público de Sinop, o live anterior também não encontrou cenas VV/VH nos últimos 30 dias. O reparo remove o erro lógico, mas vigor só será calculado quando uma cena recente e pixels/referências passarem os gates. A próxima previsão precisa demonstrar `used_in_yield_distribution=true`; sem isso, permanece previsão sem vigor com motivo explícito.
 - Novos testes cobrem ausência comprovada e erro de catálogo. Neste container, `py_compile`/AST passaram; a suíte geoespacial depende do runner com GeoPandas. Código e documentação atualizados; Windows/live ainda precisam concluir antes de distribuição. A candidata segue experimental.
+
+### V88.140 — correção de expectativas da regressão
+- A suíte completa encontrou quatro falhas nos testes: import faltante, fixtures de busca sem estado de completude dos dois provedores, e expectativa N/D incompatível com o fixture que continha uma cena válida. Os contratos foram corrigidos sem relaxar os gates de ausência ou de uso do vigor.
+- A suíte Windows e os jobs SAR/live foram disparados novamente; até concluírem no SHA documental final, não há novo pacote para distribuição. Candidata permanece experimental.

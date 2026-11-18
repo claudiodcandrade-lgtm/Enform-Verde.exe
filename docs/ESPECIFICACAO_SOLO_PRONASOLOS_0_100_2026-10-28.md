@@ -681,3 +681,7 @@ O smoke live de carbono FH e vigor não modifica o método do compartimento solo
 ## Nota V88.139 (18/11/2026)
 
 A correção do escopo temporal da busca de cenas Sentinel‑1 para vigor agrícola não altera o método do compartimento solo, suas fontes, profundidades ou incertezas. As rotas MPC e INPE precisam concluir a busca antes de declarar ausência de cena; falha de catálogo permanece erro técnico. Esta nota sincroniza a especificação documental sem modificar o cálculo do solo.
+
+## Nota V88.140 (18/11/2026)
+
+Ajustes em fixtures e expectativas de regressão da busca de vigor não alteram o método, fontes, profundidades ou incertezas do carbono do solo. Mantêm-se os gates do produto e a separação entre compartimentos.
