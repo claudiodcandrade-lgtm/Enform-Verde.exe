@@ -38,7 +38,7 @@ class MunicipalCropMaskTests(unittest.TestCase):
         self.assertLess(design["block_area_ha"],16.0)
         self.assertGreaterEqual(design["reference_block_count"],6)
         for target in design["target_blocks"]:
-            self.assertGreaterEqual(target.to_crs(6933).geometry.area.iloc[0]/10000,2.0)
+            self.assertGreaterEqual(target.to_crs(6933).geometry.area.iloc[0]/10000,2.0-1e-6)
             self.assertLessEqual(target.to_crs(6933).geometry.area.iloc[0]/10000,8.01)
 
     def setUp(self):

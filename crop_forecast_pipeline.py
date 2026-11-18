@@ -49,7 +49,7 @@ def _usable_dated_vigor(vigor, as_of, *, max_age_days=30):
     if vigor.get("scene_id") and vigor.get("acquisition_utc"):
         stamps.append(vigor["acquisition_utc"])
     if not stamps:
-        return False, "vigor sem identidade de cena e data de aquisição SAR"
+        return False, "vigor sem data de aquisição SAR ou identidade de cena ausente"
     cutoff = datetime.combine(as_of, datetime.max.time()).replace(tzinfo=timezone.utc)
     valid = []
     for stamp in stamps:

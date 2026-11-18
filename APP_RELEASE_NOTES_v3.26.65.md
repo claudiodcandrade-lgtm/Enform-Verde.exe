@@ -13,4 +13,11 @@
 
 ## Estado
 
-Versão experimental e não homologada. A suíte completa e os gates de Windows ainda não foram executados nesta candidata; a execução ponta a ponta com o KML privado ainda é necessária. Não distribuir como versão corrigida até esses gates confirmarem o comportamento.
+Versão experimental e não homologada. A regressão completa executou 1.260 testes e reportou cinco problemas (quatro falhas e um erro): o workflow não materializava o cruzamento IFN–IBGE antes dos testes, uma mensagem de vigor não preservava a expressão “sem data” e uma asserção ignorava erro de reprojeção inferior a 1e-6 ha. Correções já preparadas; a regressão e os gates Windows no novo SHA ainda precisam concluir. Não distribuir como versão corrigida antes da aprovação desses gates e da execução com o KML privado integral.
+
+
+### V88.132 — correções verificadas na regressão
+- O workflow completo materializa explicitamente o cruzamento espacial IFN × IBGE `legenda_1` depois da ingestão, antes de testar seleção por localização, bioma e fitofisionomia.
+- Corrigida a mensagem de vigor sem cena/data e tolerância numérica do teste de blocos de 2 ha sem relaxar os critérios de área/pureza do algoritmo.
+- Smokes Windows: CBERS-4A/WFI carregou pixels reais no canvas; o smoke de cobertura registrou 11/11 locais. Aplicabilidade à geometria integral da propriedade ainda não foi demonstrada.
+- Candidata permanece experimental até todos os jobs da revisão e evidências da AOI integral terminarem.

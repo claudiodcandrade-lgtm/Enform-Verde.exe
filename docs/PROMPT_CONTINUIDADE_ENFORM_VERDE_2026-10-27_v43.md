@@ -650,3 +650,11 @@ Versão: `3.26.64-PRECAMPO-EXPERIMENTAL`.
 - O cartão executivo agrícola precisa identificar vigor por cultura, mostrar se a previsão o utilizou e explicar N/D; detalhes das cenas e métricas ficam na auditoria.
 - A job completa de regressão precisa materializar a base oficial IFN antes dos testes que dependem do SQLite; falhas por banco ausente indicam ambiente de teste incompleto.
 - A versão 3.26.65 permanece experimental. Só declarar correção FH e óptica após teste Windows com geometria integral, pixels extraídos/renderizados e os gates técnicos do SHA final.
+
+
+### Checkpoint V88.132 — pós-regressão Windows
+- No workflow de regressão, executar `tools/harvest_ifn_dap10_2025.py`, `tools/ingest_official_inventory_microdata.py` e `tools/build_ifn_ibge_crosswalk.py` nessa ordem antes de testes que selecionam parcelas IFN por local, bioma e legenda_1. A base sem cruzamento espacial não é operacional para essa seleção.
+- Preservar a exigência de scene_id + acquisition_utc e probabilidades válidas para incorporar vigor na distribuição Monte Carlo da previsão. A ausência deve retornar motivo legível com “sem data” e/ou ID ausente.
+- A área de 2 ha é avaliada em EPSG:6933; a asserção automatizada pode usar tolerância de 1e-6 ha devido à reprojeção. Não reduzir o gate de pureza ≥90%.
+- O smoke CBERS-4A/WFI do Windows passou com pixels visíveis no canvas; 11/11 locais do smoke óptico nacional receberam pixels reais. Isso não substitui a execução com o KML integral privado da Fazenda Maria Eduarda.
+- ESA BIOMASS FH real leu pixels na prova independente de Sinop; continuar reportando FH da fazenda como pendente até leitura com a geometria da propriedade. Homologação científica permanece independente.

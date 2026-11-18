@@ -102,6 +102,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Official IFN source harvest failed (exit code $LASTEXITCODE)" }
           python tools/ingest_official_inventory_microdata.py
           if ($LASTEXITCODE -ne 0) { throw "Official IFN database materialization failed (exit code $LASTEXITCODE)" }
+          python tools/build_ifn_ibge_crosswalk.py
+          if ($LASTEXITCODE -ne 0) { throw "Official IFN-IBGE crosswalk materialization failed (exit code $LASTEXITCODE)" }
       - name: Complete regression suite (all tests/test_*.py in one discovery)
         shell: pwsh
         run: |
