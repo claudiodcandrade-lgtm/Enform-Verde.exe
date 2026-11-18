@@ -767,3 +767,10 @@ ESA BIOMASS FH é H100, média de altura das 100 árvores mais altas por hectare
 O código em validação está no SHA `894835bae7fdf35a972efe652f95a79ce55e413f`. Correção recente normaliza datas IFN e trata datas vazias sem falha de agregação; testes específicos foram adicionados. Esta mudança de ingestão não altera os métodos pedológicos nem comprova uma nova análise de solo.
 
 O workflow independente científico segue bloqueando homologação por ausência de evidência de validação de campo. O build Windows, SAR live e dashboard ainda estavam em execução na materialização/teste da base IFN, sem novo executável/checksum publicado. Preservar o status pré-campo/experimental. Não converter falha técnica em ausência de dados nem inferir cobertura/estoques sem resultado observável. Para qualquer cenário ou camada pedológica, conservar fonte, profundidade, cobertura e incerteza conforme as seções existentes desta especificação.
+
+
+## V88.158 — continuidade após falha do transporte (18/11/2026)
+
+A ingestão IFN e o crosswalk concluíram: 841.387 observações em 8.951 UAs, com correspondência única à IBGE legenda_1. O job Windows falhou no CSV SFB porque o servidor interrompeu a conexão antes dos últimos 45.819 bytes. Correção adiciona streaming, retentativas limitadas, resume por Range com Content-Range e validator ETag/Last-Modified, reinício quando Range é ignorado, verificação de tamanho e escrita atômica após validação do CSV. Cinco testes locais passaram; a correção aguarda CI.
+
+Timeouts do probe PronaSolos em três AOIs são indisponibilidade técnica de um passo opcional (continue-on-error), não evidência de ausência de dados. A homologação científica segue bloqueada; nenhum novo EXE foi publicado. Aplicar as diretrizes FH/AGB e contingências já registradas na seção V88.157 sem afrouxá-las.
