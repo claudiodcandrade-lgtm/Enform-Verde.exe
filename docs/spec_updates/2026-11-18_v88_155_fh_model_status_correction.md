@@ -17,3 +17,8 @@ A distinção foi implementada: FH lido sem modelo recebe `FH_DISPONIVEL_AGB_MOD
 A calibração FH×campo e sua integração ao fluxo de AGB não estão implementadas. O modelo Tapajós existente está restrito às zonas dos sítios ORNL e não cobre o AOI extenso do aceite. A base local inclui dados IFN e outras fontes, mas ainda não foi demonstrado pareamento FH–inventário multiprovedor, validação espacial independente nem incerteza propagada em domínio microrregional. Não substituir essa lacuna por CCI, médias de inventário ou uma regra de aceite permissiva.
 
 A rotina corrigida precisa ser incorporada ao executável, e a versão candidata só poderá ser liberada após demonstrar, no mesmo SHA: consulta da base expandida, pares FH–inventário elegíveis, modelo único de AGB com validação e incerteza, integração até dashboard/relatório e autoteste Windows aprovado. A homologação científica independente permanece separada.
+
+
+## Registro do checkpoint documental
+
+Commit da correção diagnóstica: `0cc8bfa2f65a6060f85f8908d4cb8bcc4daa8268`. Workflow atualizado para sincronizar este checkpoint na especificação Word completa. A sincronização Word e o novo build Windows estão em execução; a aprovação depende dos resultados finais.
