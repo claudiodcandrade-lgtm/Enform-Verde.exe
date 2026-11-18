@@ -777,3 +777,8 @@ Timeouts do probe PronaSolos em três AOIs são indisponibilidade técnica de um
 
 ### Nota de checkpoint V88.160 (18/11/2026)
 Esta alteração é restrita à consulta e apresentação de referências de inventários para biomassa aérea e estrutura horizontal. Não modifica fontes, métodos, profundidade, equações ou incerteza do carbono do solo. A regressão completa local passou (1.288 testes; 1 ignorado) com base IFN espacial materializada; aguarda-se o workflow Windows no SHA atualizado.
+
+
+## Nota V88.162 — processamento ESA CCI
+
+Alteração exclusiva do agendamento da contingência AGB: o raster ESA CCI não é consultado/baixado antes do gate FH/GTDX e calibração CCI–inventário. Esta mudança não modifica método, dados, profundidade, equações ou incerteza do carbono orgânico do solo 0–100 cm. Biomassa radicular permanece compartimento separado e a estimativa total do solo não substitui nem serve de proxy para raízes.

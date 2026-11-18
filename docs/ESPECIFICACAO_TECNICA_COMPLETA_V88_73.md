@@ -42,3 +42,10 @@ CBERS/Sentinel-2 são opcionais e não bloqueiam a análise. A UI mantém um fun
 - O resumo de carbono abandona a tabela larga e passa a listar cada compartimento em linhas responsivas, com estoque conhecido em tC e tCO₂e, densidade, incerteza disponível e área de cobertura quantificada.
 - A soma de estoques conhecidos é mostrada em destaque. Quando há compartimentos ou cobertura ausentes, rotular como parcial; o total completo e a densidade não defensável permanecem N/D. Ausência não equivale a zero e cenários experimentais ficam excluídos.
 - A alteração é de apresentação e acessibilidade; não altera as rotas SAR, os parâmetros de inventário, a propagação de incerteza nem os gates científicos. Foi adicionada regressão automatizada para a soma parcial. A candidata aguarda confirmação do workflow Windows e continua experimental.
+
+
+## V88.162 — aquisição CCI condicionada à elegibilidade (18/11/2026)
+
+A rota ESA CCI é secundária. O pipeline deve calcular o gate antes de adquirir mosaicos: pixels FH válidos, rota FH/GTDX incompleta ou com erro técnico, ou falta de calibração CCI–inventário bloqueiam a busca e são registrados como `NAO_ADQUIRIDO_GATE_BLOQUEADO` (`download_skipped=true`). Isso é diferente de um erro técnico de uma aquisição que tenha sido tentada. A mudança limita I/O remoto e não altera critérios científicos, não cria calibração e não autoriza estimativa quantitativa quando FH não tem modelo aplicável. Nesse caso o estado permanece N/D explícito; contagem de FH continua reportada separadamente.
+
+Estado da candidata 3.26.73: regressão integral e verificação da coleção passaram localmente (1.305 testes OK, 1 ignorado; 190 módulos sem falhas); build Windows, validação visual/rede, aceite integrado SAR→dashboard e aprovação científica independente não foram comprovados neste SHA. Não afirmar EXE liberado nem homologação até os gates correspondentes passarem.

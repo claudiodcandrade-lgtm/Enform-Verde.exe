@@ -681,3 +681,8 @@ Foi acrescentado teste integrado que reproduz falha FH com CCI disponível e pro
 ### Nota de continuidade V88.160 (18/11/2026)
 
 Preservar a diretriz de inventários mult fonte: agregados publicados por região/fitofisionomia podem servir como baliza quando microdados não estão abertos, com fontes separadas, estatística publicada, citação e limites. Não os converter em parcelas, pareamentos FH ou validação. Relatório e Excel agora apresentam referências horizontais também quando a estimativa primária é FH; CCI mantém ressalva de saturação tropical registrada na auditoria. A regressão completa no branch atualizado passou (1.305 testes OK; 1 ignorado); autoteste e compilação local também passaram. A candidata 3.26.72 permanece pré-campo até gates Windows e aceite integrado no mesmo SHA.
+
+
+## V88.162 — gate CCI antes da aquisição (18/11/2026)
+
+A busca/download ESA CCI só ocorre após o gate completo de contingência. FH presente, rota prioritária incompleta/erro ou calibração CCI–inventário ausente bloqueiam a aquisição, com status auditável `NAO_ADQUIRIDO_GATE_BLOQUEADO` e `download_skipped=true`. Essa otimização não muda limiares nem transforma ausência de modelo em ausência de cenas. FH sem modelo AGB aplicável continua sem estimativa quantitativa; não divulgar executável nem homologação sem gates no SHA final.

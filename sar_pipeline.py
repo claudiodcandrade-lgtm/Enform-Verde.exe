@@ -2390,14 +2390,26 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
 
     # 5 — CCI derived AGB is secondary; technical errors in priority height
     # routes must be fixed before this candidate can become the selected result.
-    cci_gate=None
+    cci_gate=secondary_cci_agb_decision(
+        audit.get("height_absence_certificate"),
+        valid_height_pixels=bool(sar_height and int(sar_height.get("height_n_valid_pixels") or 0)>0))
     try:
-        cci=_cci_history_for_analysis(gdf,Path(cache)/"cci",offline_token or None,pipeline_route_cache)
+        # Do not start a large remote CCI download unless the full fallback
+        # gate is already satisfied. An FH product, an incomplete priority
+        # search, or missing CCI calibration makes that request ineligible.
+        cci_download_skipped=not cci_gate["eligible"]
+        if cci_download_skipped:
+            cci={"items":0,"paths":[],"errors":[],"download_skipped":True,
+                 "catalog_search_complete":False,"pagination_complete":False,
+                 "technical_error_count":0}
+        else:
+            cci=_cci_history_for_analysis(gdf,Path(cache)/"cci",offline_token or None,pipeline_route_cache)
         audit["cci"]={"count":cci.get("items",0),"downloaded":len(cci.get("paths",[])),
                       "version":cci.get("version"),"year":cci.get("year"),
                       "resolution_m":cci.get("resolution_m"),"tiles":cci.get("tiles",[]),
                       "source":cci.get("source"),"errors":cci.get("errors",[])[:8],
                       "paths":cci.get("paths",[]),
+                      "download_skipped":cci_download_skipped,
                       "catalog_search_complete":cci.get("catalog_search_complete"),
                       "pagination_complete":cci.get("pagination_complete"),
                       "technical_error_count":cci.get("technical_error_count")}
@@ -2408,9 +2420,6 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             "Risco elevado de saturação e compressão da resposta em floresta tropical úmida; CCI não deve ser usado como verdade de campo nem como estimativa final não calibrada. Comparar com inventários compatíveis e relatar incerteza de transferência."
             if is_humid_tropical else
             "Produto regional/global derivado de SAR; requer calibração e validação compatíveis antes de ser apresentado como estimativa local.")
-        cci_gate=secondary_cci_agb_decision(
-            audit.get("height_absence_certificate"),
-            valid_height_pixels=bool(sar_height and int(sar_height.get("height_n_valid_pixels") or 0)>0))
         audit["cci"]["priority_selection_gate"]=cci_gate
         if cci.get("paths") and cci_gate["eligible"]:
             audit["cci"]["selection_status"]="ELEGIVEL_COMO_CONTINGENCIA_AGB"
@@ -2447,9 +2456,19 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             if cci.get("paths"):
                 audit["cci"]["selection_status"]="ADIADA_ERRO_OU_AUSENCIA_NAO_COMPROVADA_NA_ROTA_PRIORITARIA"
                 audit["cci"]["selection_reason"]=cci_gate["reason"]
-            audit["warnings"].append(
-                ("ESA CCI AGB disponível, mas não promovido a estimativa: " if cci.get("paths") else "")+
-                "rota prioritária BIOMASS FH/GTDX não foi resolvida sem erro. Corrigir/repetir a rota prioritária antes de selecionar contingência.")
+            elif cci_download_skipped:
+                audit["cci"]["selection_status"]="NAO_ADQUIRIDO_GATE_BLOQUEADO"
+                audit["cci"]["selection_reason"]=cci_gate["reason"]
+            if route_state["status"]=="FH_DISPONIVEL_AGB_MODELO_NAO_DISPONIVEL":
+                audit["warnings"].append(
+                    "FH foi lido, mas não há modelo AGB aplicável; ESA CCI não foi adquirido porque o gate exige ausência real de FH e calibração CCI–inventário validada.")
+            elif cci.get("paths"):
+                audit["warnings"].append(
+                    "ESA CCI foi localizado, mas não promovido: "+cci_gate["reason"]+
+                    ". Corrigir/concluir a rota FH antes de selecionar contingência.")
+            else:
+                audit["warnings"].append(
+                    "ESA CCI não foi adquirido: rota FH/GTDX incompleta ou calibração CCI–inventário ausente; resolver a condição auditada antes de selecionar contingência.")
         else:
             audit["priority_height_route_gate"]={"status":"ROTA_PRIORITARIA_RESOLVIDA",
                 "reason":cci_gate["reason"],"cci_candidate_available":bool(cci.get("paths")),

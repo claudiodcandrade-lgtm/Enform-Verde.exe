@@ -28,23 +28,22 @@ class AutomaticPipelineCciPriorityTests(unittest.TestCase):
              patch.object(sp,"planetary_sentinel1_cog",return_value=no_scene), \
              patch.object(sp,"inpe_sentinel1_rtc",return_value={**no_scene,"provider":"INPE"}), \
              patch.object(sp,"public_sentinel1_cog",return_value=no_scene), \
-             patch.object(sp,"_cci_history_for_analysis",return_value={
-                 "items":1,"paths":["cci_agb.tif"],"version":"7.0","year":2024,
-                 "catalog_search_complete":True,"pagination_complete":True,
-                 "technical_error_count":0}), \
+             patch.object(sp,"_cci_history_for_analysis",side_effect=AssertionError(
+                 "CCI must not be downloaded when the FH route is unresolved")) as cci_search, \
              patch.object(sp,"process_real_sar",side_effect=AssertionError(
                  "CCI cannot be promoted while the priority FH route is unresolved")):
             result=sp.automatic_pipeline(object(),"Amazônia","Floresta Ombrófila Densa",
                 cache="/tmp/enform-cci-priority-test",biomass_catalog_items=[],
                 biomass_search_audit=height_audit)
         cci=result["audit"]["cci"]
-        self.assertEqual(cci["selection_status"],
-            "ADIADA_ERRO_OU_AUSENCIA_NAO_COMPROVADA_NA_ROTA_PRIORITARIA")
+        self.assertEqual(cci["selection_status"],"NAO_ADQUIRIDO_GATE_BLOQUEADO")
+        self.assertTrue(cci["download_skipped"])
+        cci_search.assert_not_called()
         self.assertFalse(cci["priority_selection_gate"]["eligible"])
         self.assertEqual(result["status"],"ERRO_TECNICO_ROTA_PRIORITARIA")
         self.assertIn("Corrigir a rota técnica",result["message"])
         self.assertIsNone(result["agb_mg_ha"])
-        self.assertTrue(any("Corrigir/repetir a rota prioritária" in warning
+        self.assertTrue(any("calibração CCI–inventário ausente" in warning
                             for warning in result["audit"]["warnings"]))
 
 
