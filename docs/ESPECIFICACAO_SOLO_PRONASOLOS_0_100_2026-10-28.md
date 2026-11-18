@@ -677,3 +677,7 @@ A correção da auditoria e formatação do painel agrícola não modifica as fo
 ## Nota V88.138 (18/11/2026)
 
 O smoke live de carbono FH e vigor não modifica o método do compartimento solo. A fonte PronaSolos continua separada das estimativas de biomassa e sua variabilidade espacial não deve ser chamada de IC95% ou erro de predição. Esta nota sincroniza a especificação às mudanças efetivas auditadas no mesmo ciclo.
+
+## Nota V88.139 (18/11/2026)
+
+A correção do escopo temporal da busca de cenas Sentinel‑1 para vigor agrícola não altera o método do compartimento solo, suas fontes, profundidades ou incertezas. As rotas MPC e INPE precisam concluir a busca antes de declarar ausência de cena; falha de catálogo permanece erro técnico. Esta nota sincroniza a especificação documental sem modificar o cálculo do solo.
