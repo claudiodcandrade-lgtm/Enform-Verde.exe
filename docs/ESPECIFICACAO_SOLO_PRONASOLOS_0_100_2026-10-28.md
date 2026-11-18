@@ -745,3 +745,8 @@ Candidata 3.26.70-PRECAMPO-EXPERIMENTAL; regressão/handoff anteriores aprovados
 O autoteste Windows anterior detectou bloqueio técnico da rota FH/GTDX no EXE. A investigação localizou a causa no workflow: a etapa de prova MAAP tinha o segredo ESA configurado, mas o processo de aceite do executável não o recebia. O passo de aceite agora recebe o token offline por variável protegida; o pipeline utiliza essa variável quando não há token explícito. Erros de autenticação permanecem técnicos e não são tratados como ausência de cobertura. Sem alteração de métodos, profundidade ou fontes do carbono do solo.
 
 A candidata 3.26.71 aguarda os gates finais no novo SHA.
+
+
+## V88.151 — interface com calibração de biomassa radicular
+
+Carbono/biomassa de raízes permanece compartimento separado do carbono orgânico do solo (0–100 cm). A conversão de AGB em biomassa abaixo do solo deve usar equação ou razão raiz:parte aérea publicada para a formação e domínio adequados, com fonte e incerteza. A especificação edáfica não autoriza usar carbono do solo como proxy de raízes, nem somar raízes mortas novamente quando a equação incluir raízes vivas e mortas. Na versão examinada, a rotina de carbono ainda usa Cairns et al. como aproximação ampla para formações florestais altas; a seleção por fitofisionomia e sua incerteza completa são pendência explícita, não calibração local.
