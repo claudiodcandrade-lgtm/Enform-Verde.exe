@@ -107,3 +107,56 @@ def _blocked(code, reason, n, sites):
         "reason_code":code,"reason":reason,"n_qa_pairs":int(n),"independent_sites":int(sites),
         "height_estimate_source":"produto SAR direto, quando disponível",
         "calibrated_height_m":None,"local_validation_error_m":None}
+
+
+def derive_inventory_h100(tree_frame, *, plot_id_col="plot_id", tree_id_col="tree_number",
+                          height_col="total_height_m", sample_area_col="sample_area_ha",
+                          domain_cols=("biome", "physiognomy", "microregion")):
+    """Derive inventory H100 from tree heights using the measured plot area.
+
+    ESA BIOMASS FH is H100: mean height of the 100 tallest trees per hectare.
+    This derives that same statistic from tree-level inventory rows. Multi-stem
+    records are collapsed to one height per tree (maximum recorded height),
+    then the highest 100*area trees are averaged. It refuses undersampled plots,
+    missing area, or missing domain labels instead of substituting a mean tree
+    height. The returned observations are field reference heights, never a
+    replacement for the SAR measurement.
+    """
+    import math
+    import pandas as pd
+    required=[plot_id_col,tree_id_col,height_col,sample_area_col,*domain_cols]
+    missing=[c for c in required if c not in tree_frame.columns]
+    if missing: raise ValueError("IFN tree-to-H100 fields missing: "+", ".join(missing))
+    d=tree_frame[required].copy()
+    d[height_col]=pd.to_numeric(d[height_col],errors="coerce")
+    d[sample_area_col]=pd.to_numeric(d[sample_area_col],errors="coerce")
+    d[plot_id_col]=d[plot_id_col].astype("string").str.strip()
+    d[tree_id_col]=d[tree_id_col].astype("string").str.strip()
+    valid=(d[height_col].map(lambda x: math.isfinite(x) and x>0)
+           & d[sample_area_col].map(lambda x: math.isfinite(x) and x>0)
+           & d[plot_id_col].notna() & d[plot_id_col].ne("")
+           & d[tree_id_col].notna() & d[tree_id_col].ne(""))
+    for c in domain_cols: valid &= d[c].notna() & d[c].astype("string").str.strip().ne("")
+    d=d.loc[valid].copy()
+    results=[]
+    group_cols=[*domain_cols,plot_id_col]
+    for keys,g in d.groupby(group_cols,dropna=False,sort=True):
+        areas=g[sample_area_col].drop_duplicates().tolist()
+        if len(areas)!=1: continue
+        area=float(areas[0]); target=100.0*area
+        # One field height per tree. A multi-stem tree contributes one H value.
+        heights=(g.groupby(tree_id_col,as_index=False)[height_col].max()[height_col]
+                 .sort_values(ascending=False).to_numpy(float))
+        if len(heights)+1e-12<target: continue
+        whole=int(math.floor(target)); fraction=target-whole
+        total=float(heights[:whole].sum()) if whole else 0.0
+        if fraction>1e-12: total+=fraction*float(heights[whole])
+        h100=total/target
+        record=dict(zip(group_cols,keys if isinstance(keys,tuple) else (keys,)))
+        record.update({"field_height_m":h100,"field_height_definition":"H100_mean_of_100_tallest_trees_per_ha",
+                       "sample_area_ha":area,"h100_equivalent_tree_count":target,
+                       "n_unique_inventory_trees":int(len(heights)),
+                       "height_source":"IFN DAP10 individual-tree total heights",
+                       "height_method":"weighted mean of tallest 100 trees/ha; multi-stem records deduplicated by tree ID"})
+        results.append(record)
+    return pd.DataFrame(results)

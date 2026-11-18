@@ -755,3 +755,8 @@ Carbono/biomassa de raízes permanece compartimento separado do carbono orgânic
 ## V88.152 — integração do Painel SFB/IFN
 
 A ingestão do Painel SFB/IFN inclui referências de AGB e equações empregadas no cálculo. O campo `valor_r` do painel representa um fator raiz/parte aérea informado pela metodologia do SFB, não uma equação alométrica de raízes. Carbono do solo 0–100 cm continua independente. Para raízes, o sistema deve priorizar equações alométricas publicadas aplicáveis ao estrato; usar `valor_r` somente como fator de expansão compatível, declarando a fonte e sua dispersão, sem chamar o fator de alometria calibrada.
+
+
+## V88.153 — métrica H100 e carbono do solo
+
+ESA BIOMASS FH é H100, média de altura das 100 árvores mais altas por hectare. Alturas IFN podem formar a referência de campo se a área amostrada e a identidade de árvore forem conhecidas, a densidade amostral cobrir o equivalente a 100 indivíduos/ha e a fitofisionomia estiver validada. Esse pareamento calibra a leitura de altura SAR; não modifica nem substitui carbono do solo 0–100 cm. O erro de altura deve ser propagado ao modelo AGB e reportado separadamente do erro edáfico.

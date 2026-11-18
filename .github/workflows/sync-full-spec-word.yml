@@ -6,7 +6,7 @@ on:
       - patches-3.26.6
     paths:
       - docs/spec_updates/2026-11-15_v88_83_carbon_pools_uncertainty_performance.md
-      - docs/spec_updates/2026-11-18_v88_152_sfb_inventory_calibration_inputs.md
+      - docs/spec_updates/2026-11-18_v88_153_h100_inventory_height_calibration.md
   workflow_dispatch:
 permissions:
   contents: write
@@ -25,13 +25,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Append V88.152 SFB inventory calibration inputs preserving full Word history
+      - name: Append V88.153 IFN H100 reference derivation preserving full Word history
         run: |
           if python - <<'PY'
           from zipfile import ZipFile
           with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as z:
               xml=z.read('word/document.xml').decode('utf-8')
-          raise SystemExit(0 if 'V88.152' in xml else 1)
+          raise SystemExit(0 if 'V88.153' in xml else 1)
           PY
           then
             python - <<'PY'
@@ -65,12 +65,12 @@ jobs:
           else
             python tools/update_spec_docx.py \
               --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-              --entry docs/spec_updates/2026-11-18_v88_152_sfb_inventory_calibration_inputs.md \
-              --baseline "Enform Verde 3.26.71-PRECAMPO-EXPERIMENTAL (V88.152 SFB inventory and FH calibration inputs)" \
+              --entry docs/spec_updates/2026-11-18_v88_153_h100_inventory_height_calibration.md \
+              --baseline "Enform Verde 3.26.71-PRECAMPO-EXPERIMENTAL (V88.153 IFN field H100 derivation)" \
               --head-sha "${{ github.sha }}" \
               --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
               --date "18 de novembro de 2026" \
-              --footer-label "V88.152 · experimental 3.26.71 · inventário SFB para FH/CCI" \
+              --footer-label "V88.153 · experimental 3.26.71 · H100 IFN para calibração FH" \
               --footer-date "18/11/2026"
           fi
         env:
@@ -85,13 +85,13 @@ jobs:
               assert z.testzip() is None
               xml=z.read('word/document.xml').decode()
               assert len(xml) > 10000
-              assert 'V88.152' in xml and '3.26.71-PRECAMPO-EXPERIMENTAL' in xml
-          print('Word specification updated with V88.152 checkpoint and archive validated')
+              assert 'V88.153' in xml and '3.26.71-PRECAMPO-EXPERIMENTAL' in xml
+          print('Word specification updated with V88.153 checkpoint and archive validated')
           PY
       - name: Commit DOCX to the same feature branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx
-          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.152 SFB inventory calibration inputs"
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.153 IFN H100 reference derivation"
           git push origin HEAD:${{ github.ref_name }}

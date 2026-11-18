@@ -710,3 +710,10 @@ Para os parâmetros horizontais da estimativa, resumir área basal por hectare, 
 Para ESA CCI, usar as AGB do painel SFB/IFN como referências de inventário após compatibilizar unidade, suporte espacial, máscara de vegetação e data do inventário. O CCI é a única estimativa AGB contingencial, só se a ausência FH estiver certificada sem erros; aplicar a calibração regional e propagar a incerteza do CCI, variância do inventário, amostragem e validação. O resultado final deve mostrar uma única AGB selecionada.
 
 Biomassa abaixo do solo: preferir equação alométrica de raízes publicada e aplicável à fitofisionomia; quando inexistente, usar razão raiz/parte aérea oficial compatível, incluindo a dispersão e deixando explícito que não é alometria local. O campo `valor_r` do painel SFB é uma razão/fator, não deve ser descrito como equação alométrica. Não aplicar Cairns universal se existir uma equação ou referência estratificada mais apropriada.
+
+
+## V88.153 — altura H100 de referência IFN para calibrar FH (18/11/2026)
+
+A altura ESA BIOMASS FH é H100: média da altura das 100 árvores mais altas por hectare. A função `derive_inventory_h100` calcula o valor correspondente usando alturas totais do IFN, área amostrada validada e identificador de árvore; múltiplas hastes da mesma árvore contam uma vez. Ajusta a fração da árvore de borda quando 100 × área não é inteiro e recusa a parcela se a contagem observada for insuficiente ou se faltarem bioma, fitofisionomia e microrregião.
+
+Os pares de calibração precisam combinar esse H100 de campo com pixels ESA FH no mesmo suporte espacial e período compatível. Ajustar por produto, região e legenda_1; separar sítios externos do treinamento. Reportar erro absoluto e relativo, viés, RMSE, MAE, R² e intervalo dos resíduos. O limiar de missão publicado para FH é RMSE <30% em florestas com árvores >10 m, mas essa meta não substitui métricas locais nem validação independente. Não declarar o modelo operacional enquanto o pareamento real e a validação externa não forem concluídos.
