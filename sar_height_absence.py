@@ -78,3 +78,48 @@ def regional_height_fallback_decision(certificate):
         if route.get("technical_error_count") != 0:
             return False, "ERRO_TECNICO_SAR_BLOQUEIA_FALLBACK"
     return True, "AUSENCIA_SAR_CONFIRMADA_EM_TODAS_AS_ROTAS_AUDITADAS"
+
+
+def secondary_cci_agb_decision(height_certificate, *, valid_height_pixels=False):
+    """Allow ESA CCI AGB only after the priority FH route was resolved.
+
+    CCI is a lower-priority AGB reference. A failure to query/read BIOMASS FH
+    or GTDX is not evidence that no FH coefficient/model applies. If valid FH
+    pixels were read, CCI may be used only after the caller found no applicable
+    FH × horizontal-inventory model. If no FH pixels were found, require an
+    explicit, complete, error-free absence certificate for both routes.
+    """
+    if not isinstance(height_certificate, dict):
+        return {"eligible":False,"reason":"CERTIFICADO_DA_ROTA_PRIORITARIA_AUSENTE",
+                "evidence":"PRIORITY_ROUTE_AUDIT_MISSING"}
+    routes=height_certificate.get("routes")
+    if not isinstance(routes,list) or not routes:
+        return {"eligible":False,"reason":"AUDITORIA_DAS_ROTAS_PRIORITARIAS_AUSENTE",
+                "evidence":"PRIORITY_ROUTE_AUDIT_MISSING"}
+    esa=next((r for r in routes if isinstance(r,dict) and
+              r.get("route")=="ESA_BIOMASS_FH"),None)
+    if not isinstance(esa,dict) or esa.get("configured") is not True:
+        return {"eligible":False,"reason":"ROTA_ESA_BIOMASS_FH_SEM_AUDITORIA_VALIDA",
+                "evidence":"PRIORITY_ROUTE_AUDIT_INVALID"}
+    for route in ([esa] if valid_height_pixels else routes):
+        if route.get("catalog_search_complete") is not True or route.get("pagination_complete") is not True:
+            return {"eligible":False,"reason":"BUSCA_PRIORITARIA_INCOMPLETA:"+str(route.get("route")),
+                    "evidence":"PRIORITY_ROUTE_INCOMPLETE"}
+        if route.get("pixel_read_complete") is not True:
+            return {"eligible":False,"reason":"LEITURA_PRIORITARIA_INCOMPLETA:"+str(route.get("route")),
+                    "evidence":"PRIORITY_ROUTE_INCOMPLETE"}
+        if int(route.get("technical_error_count") or 0)>0:
+            return {"eligible":False,"reason":"ERRO_TECNICO_NA_ROTA_PRIORITARIA:"+str(route.get("route")),
+                    "evidence":"PRIORITY_ROUTE_TECHNICAL_ERROR"}
+    if valid_height_pixels:
+        return {"eligible":True,
+                "reason":"FH_LIDO_SEM_MODELO_H100_X_INVENTARIO_APLICAVEL; CCI pode ser referência AGB secundária.",
+                "evidence":"FH_PIXELS_VALIDOS_MODELO_NAO_APLICAVEL"}
+    if height_certificate.get("status")=="SAR_AUSENCIA_COBERTURA_CONFIRMADA" and all(
+            route.get("coverage_absence_confirmed") is True and route.get("valid_pixel_count")==0
+            for route in routes):
+        return {"eligible":True,
+                "reason":"AUSENCIA_DE_ALTURA_SAR_CONFIRMADA; CCI pode ser contingência AGB.",
+                "evidence":"PRIORITY_ROUTE_ABSENCE_CONFIRMED"}
+    return {"eligible":False,"reason":"SEM_PIXELS_FH_VALIDOS_E_AUSENCIA_NAO_CONFIRMADA",
+            "evidence":"PRIORITY_ROUTE_ABSENCE_UNPROVEN"}

@@ -1,12 +1,16 @@
 import unittest
 
-from sar_height_absence import build_height_absence_certificate, regional_height_fallback_decision
+from sar_height_absence import (build_height_absence_certificate,
+    regional_height_fallback_decision,secondary_cci_agb_decision)
 
 
 def certificate():
     return {"status":"SAR_AUSENCIA_COBERTURA_CONFIRMADA",
         "global_search_complete":True,"pagination_complete":True,"pixel_read_complete":True,
-        "routes":[{"configured":True,"coverage_absence_confirmed":True,
+        "routes":[{"route":"ESA_BIOMASS_FH","configured":True,"coverage_absence_confirmed":True,
+            "catalog_search_complete":True,"pagination_complete":True,
+            "pixel_read_complete":True,"valid_pixel_count":0,"technical_error_count":0},
+            {"route":"GTDX_GEDI_TANDEM_X","configured":True,"coverage_absence_confirmed":True,
             "catalog_search_complete":True,"pagination_complete":True,
             "pixel_read_complete":True,"valid_pixel_count":0,"technical_error_count":0}]}
 
@@ -76,6 +80,21 @@ class SarHeightAbsenceTests(unittest.TestCase):
         esa_route=next(r for r in cert["routes"] if r["route"]=="ESA_BIOMASS_FH")
         self.assertTrue(esa_route["pixel_read_complete"])
         self.assertFalse(esa_route["coverage_absence_confirmed"])
+
+    def test_cci_is_blocked_when_priority_fh_route_has_a_technical_error(self):
+        c=certificate()
+        c["routes"][0]["technical_error_count"]=1
+        decision=secondary_cci_agb_decision(c)
+        self.assertFalse(decision["eligible"])
+        self.assertEqual(decision["evidence"],"PRIORITY_ROUTE_TECHNICAL_ERROR")
+
+    def test_cci_is_allowed_only_after_confirmed_absence_or_valid_fh_without_applicable_model(self):
+        self.assertTrue(secondary_cci_agb_decision(certificate())["eligible"])
+        c=certificate()
+        c["status"]="AUSENCIA_SAR_NAO_COMPROVADA"
+        c["routes"][0].update({"coverage_absence_confirmed":False,"valid_pixel_count":12})
+        self.assertTrue(secondary_cci_agb_decision(c,valid_height_pixels=True)["eligible"])
+        self.assertFalse(secondary_cci_agb_decision(c)["eligible"])
 
 
 if __name__=="__main__":

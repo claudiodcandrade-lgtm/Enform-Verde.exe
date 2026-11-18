@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np, requests
 from scientific_calibration import SCIENTIFIC_INVENTORY_REGISTRY, saturation_audit, glcm_features, multiscale_texture, rank_external_evidence, fit_local_ensemble
 from national_fallback import national_agb_fallback, inventory_fallback_gate
+from sar_height_absence import secondary_cci_agb_decision
 from structural_evidence import StructuralEvidence, evidence_se, random_effects_summary, harmonize_primary_plot_rows
 from carbon_compartments import tapajos_litter_stock_component
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
@@ -2295,7 +2296,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             audit["warnings"].append("Sentinel-1 C-band processado, mas sem modelo AGB calibrado/validado compatível; busca SAR continua.")
     except Exception as e: audit["warnings"].append("Sentinel-1 CDSE Process API/download: "+str(e))
 
-    # 5 — CCI derived AGB is last quantitative fallback, never ahead of raw P/L processing.
+    # 5 — CCI derived AGB is secondary; technical errors in priority height
+    # routes must be fixed before this candidate can become the selected result.
+    cci_gate=None
     try:
         cci=_cci_history_for_analysis(gdf,Path(cache)/"cci",offline_token or None,pipeline_route_cache)
         audit["cci"]={"count":cci.get("items",0),"downloaded":len(cci.get("paths",[])),
@@ -2306,7 +2309,13 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                       "catalog_search_complete":cci.get("catalog_search_complete"),
                       "pagination_complete":cci.get("pagination_complete"),
                       "technical_error_count":cci.get("technical_error_count")}
-        if cci.get("paths"):
+        cci_gate=secondary_cci_agb_decision(
+            audit.get("height_absence_certificate"),
+            valid_height_pixels=bool(sar_height and int(sar_height.get("height_n_valid_pixels") or 0)>0))
+        audit["cci"]["priority_selection_gate"]=cci_gate
+        if cci.get("paths") and cci_gate["eligible"]:
+            audit["cci"]["selection_status"]="ELEGIVEL_COMO_CONTINGENCIA_AGB"
+            audit["cci"]["selection_reason"]=cci_gate["reason"]
             pr=process_real_sar(gdf,cci["paths"],biome,phys)
             pr["audit"]=audit; pr["paths"]=cci["paths"]; pr["historical"]=True
             pr["data_origin"]="SAR_DERIVED_CCI"
@@ -2324,6 +2333,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             if pr.get("uncertainty_mg_ha") is not None:
                 pr["uncertainty_kind"]="média zonal da camada AGB_SD do ESA CCI; desvio-padrão do produto, não erro local de validação"
             return _preserve_sar_canopy_height(pr,sar_height,audit)
+        if cci.get("paths") and not cci_gate["eligible"]:
+            audit["cci"]["selection_status"]="ADIADA_ERRO_OU_AUSENCIA_NAO_COMPROVADA_NA_ROTA_PRIORITARIA"
+            audit["cci"]["selection_reason"]=cci_gate["reason"]
+            audit["warnings"].append(
+                "ESA CCI AGB disponível, mas não promovido a estimativa: rota prioritária BIOMASS FH/GTDX não foi resolvida sem erro. Corrigir/repetir a rota prioritária antes de selecionar contingência.")
     except Exception as e: audit["cci"]={"error":str(e)}
 
     # Mark the end of every configured route. A scene or any SAR pixel blocks
@@ -2357,7 +2371,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         lit["sar_processed"]=False
         lit["sar_pixel_audit"]=[]
     auxiliary_sar=bool(audit.get("processed_without_agb"))
-    result={"status":("SAR_PROCESSADO_SEM_MODELO_AGB" if auxiliary_sar or sar_height else "SAR_NAO_PROCESSADO"),
+    priority_route_error=bool(isinstance(cci_gate,dict) and not cci_gate.get("eligible"))
+    result={"status":("ERRO_TECNICO_ROTA_PRIORITARIA" if priority_route_error else
+                       "SAR_PROCESSADO_SEM_MODELO_AGB" if auxiliary_sar or sar_height else "SAR_NAO_PROCESSADO"),
             "agb_mg_ha":None,"uncertainty_mg_ha":None,
             "data_origin":("SAR_ALTURA_SEM_MODELO_AGB" if sar_height else
                            "SAR_ATRIBUTOS_ESTRATIFICADORES" if auxiliary_sar else "SAR_NAO_PROCESSADO"),
@@ -2366,7 +2382,10 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                       if auxiliary_sar else "nenhum arquivo SAR pôde ser baixado/processado nesta execução"),
             "audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "inventory_fallback_gate":fallback_gate,
-            "message":("Pixels SAR auxiliares foram lidos, mas não há altura/AGB quantitativa de biomassa compatível; após esgotar as rotas de biomassa, pode-se emitir cenário separado de inventário, preservando a trilha e sem chamar inventário de SAR."
+            "message":(("Falha ou auditoria incompleta na rota prioritária BIOMASS FH/GTDX: "+str(cci_gate.get("reason"))+
+                        ". ESA CCI foi mantido apenas como candidato e não foi selecionado. Corrigir a rota técnica e repetir a análise.")
+                       if priority_route_error else
+                       "Pixels SAR auxiliares foram lidos, mas não há altura/AGB quantitativa de biomassa compatível; após esgotar as rotas de biomassa, pode-se emitir cenário separado de inventário, preservando a trilha e sem chamar inventário de SAR."
                        if audit.get("processed_without_agb") else ("SAR sem pixels utilizáveis após esgotar as rotas configuradas; emitir cenário condicional de inventário e preservar cada falha técnica, sem declarar ausência de cenas."
                        if fallback_gate["eligible"] else "Rotas SAR ainda não esgotadas; a estimativa de inventário permanece bloqueada."))}
     if 'class_stats' in locals() and class_audit is not None:
