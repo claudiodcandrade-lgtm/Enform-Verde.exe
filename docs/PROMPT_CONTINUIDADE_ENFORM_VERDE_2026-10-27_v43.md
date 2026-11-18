@@ -665,3 +665,9 @@ Versão: `3.26.64-PRECAMPO-EXPERIMENTAL`.
 - O painel só declara `vigor usado/incorporado` quando `fields[cultura].vigor_model_audit.used_in_yield_distribution` confirma a aplicação no modelo. A auditoria do modelo é fonte de verdade para os flags executivos. Em N/D/rejeição, preservar motivo e não afirmar incorporação.
 - A regressão deve testar `monitoring_forecast` com cena datada sem ID e verificar que o forecast recebe vigor N/D, que os flags ficam falsos e que o texto executivo informa a não incorporação.
 - A distribuição vigente de safra continua PAM × clima; vigor SAR elegível condiciona a distribuição de resíduos Monte Carlo PAM, sem introdução de outro modelo concorrente nesta build.
+
+## V88.143 — remover exceção que bloqueava a previsão de vigor (18/11/2026)
+
+- A verificação da primeira ponta encontrou um bloqueio concreto que não fora removido pelo V88.142: o resumo preliminar lia `audit.get(...)` enquanto `audit` já era uma lista de linhas. A exceção acontecia antes de agendar `query_crop_weather`, impedindo o cálculo assíncrono PAM×clima e o envio do `fc_audit` ao cartão.
+- Removido o bloco inválido. O cartão executivo é preenchido depois do forecast; a auditoria completa continua separada. Nova regressão impede voltar a chamar `.get` sobre a lista e confirma o encaminhamento do `fc_audit` ao cartão.
+- Quatro testes focados passaram localmente. A suíte do SHA anterior teve 1.271 testes OK, mas reprovou no gate documental; build e live desse SHA não comprovam este reparo. Reiniciar regressão e build no SHA V88.143 antes de distribuir. Manter candidata 3.26.65 experimental e não homologada.

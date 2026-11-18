@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from crop_vigor_dashboard_summary import crop_vigor_dashboard_lines
 
@@ -8,6 +9,15 @@ def ptbr(value, digits=2):
 
 
 class CropVigorDashboardSummaryTests(unittest.TestCase):
+    def test_desktop_does_not_read_audit_line_list_as_a_dictionary(self):
+        source = (Path(__file__).resolve().parents[1] / "desktop_app.py").read_text(encoding="utf-8")
+        start = source.index("    def _present_cultivated_monitoring(self,land):")
+        end = source.index("    def query_crop_weather(self):", start)
+        report_builder = source[start:end]
+        self.assertRegex(report_builder, r"\baudit\s*=\s*\[")
+        self.assertNotRegex(report_builder, r"\baudit\.get\s*\(")
+        self.assertIn("crop_vigor_dashboard_lines(fc_audit,format_ptbr)", source[end:])
+
     def test_live_model_audit_is_visible_in_executive_summary(self):
         audit = {
             "crops": {

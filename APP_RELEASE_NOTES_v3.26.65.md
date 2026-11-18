@@ -59,3 +59,7 @@ Versão experimental e não homologada. A execução Windows no SHA anterior `50
 ### V88.140 — correção de expectativas da regressão
 - A suíte completa encontrou quatro falhas nos testes: import faltante, fixtures de busca sem estado de completude dos dois provedores, e um teste que buscava cena live sem querer ao validar apenas o encaminhamento da máscara agrícola. Os fixtures agora controlam ausência/cena explicitamente, sem relaxar os gates de produção.
 - A suíte Windows e os jobs SAR/live foram disparados novamente; até concluírem no SHA documental final, não há novo pacote para distribuição. Candidata permanece experimental.
+
+### V88.143 — desbloqueio do monitoramento de vigor
+- Removida exceção causada por chamar `.get` na lista de auditoria antes de agendar o forecast. O cartão só é preenchido após retorno de `monitoring_forecast` e usa sua auditoria estruturada.
+- Adicionada regressão para essa falha de ordem/estado. Quatro testes focados passaram; a suíte e o build precisam rodar no SHA corrigido. Candidata experimental.

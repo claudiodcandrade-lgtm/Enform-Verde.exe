@@ -2818,32 +2818,6 @@ class App(tk.Tk):
         audit.extend(["","Distribuições originais das fontes:",json.dumps(land.get("original_source_distributions",[]),ensure_ascii=False,indent=2,default=str)])
         self._crop_monitoring_base_report="\n".join(executive)
         self._crop_monitoring_audit_base="\n".join(audit)
-        if hasattr(self,"crop_exec_var"):
-            summary=[self._executive_excerpt(self._crop_monitoring_base_report,
-                ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:",
-                 "Produtividade estimada no momento dessa análise:","Produção provável:"))]
-            summary.append("\nVIGOR SAR E EFEITO NA PREVISÃO")
-            current_vigor=audit.get("current_sar_candidate_vigor") or {}
-            summary.append("Área cultivada candidata atual (cultura não confirmada): "+
-                str(current_vigor.get("status","N/D"))+" — "+
-                str(current_vigor.get("class") or current_vigor.get("reason") or "sem resultado"))
-            crop_audit=audit.get("crops") or {}
-            if crop_audit:
-                for crop_name,entry in crop_audit.items():
-                    vigor=entry.get("crop_specific_vigor") or entry.get("vigor") or {}
-                    inputs=entry.get("forecast_inputs") or {}
-                    used=bool(inputs.get("current_crop_specific_sar_vigor_used") or
-                              inputs.get("experimental_current_sar_vigor_conditioned_yield"))
-                    summary.append(str(crop_name)+": vigor "+
-                        str(vigor.get("status","N/D"))+
-                        ("; incorporado condicionalmente à previsão" if used else
-                         "; NÃO incorporado à previsão")+
-                        (" — "+str(vigor.get("reason")) if vigor.get("status")=="N/D" and vigor.get("reason") else ""))
-            else:
-                summary.append("Previsão de safra: "+str(audit.get("forecast_block_reason") or
-                    "N/D — identificador de cultura atual ou máscara elegível indisponível"))
-            summary.append("A máscara SAR 2025/2026 é retrospectiva; vigor atual sobre ela não confirma a permanência da cultura.")
-            self.crop_exec_var.set("\n".join(summary))
         self._set(self.crop_res,self._crop_monitoring_base_report)
         self._set(self.crop_audit,self._crop_monitoring_audit_base)
         generation=self._weather_query_generation

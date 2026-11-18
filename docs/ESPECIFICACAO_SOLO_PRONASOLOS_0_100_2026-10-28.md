@@ -692,3 +692,7 @@ Ajustes em fixtures e expectativas de regressão da busca de vigor não alteram 
 Os quadros executivos devem estar no início das abas/relatórios e permanecer separados da trilha de auditoria. A atualização assíncrona de clima não pode remover do quadro agrícola o vigor e seu efeito no modelo de safra. A interface informa participação apenas quando `vigor_model_audit.used_in_yield_distribution=true`, junto com classe/probabilidades, amostragem, data da cena e safra da máscara. N/D e não confirmação devem manter o motivo visível.
 
 Teste live Sinop confirmou uma amostra de soja em uma cena Sentinel‑1 RTC de 12/11/2026: aproximadamente 8 ha, seis referências e 2,456% de cobertura da máscara SAR retrospectiva 2025/2026; auditoria confirmou uso condicional do vigor nos resíduos PAM×clima. É evidência experimental de integração, não validação agronômica nem comprovação de cultura atual. Build Windows e handoff final continuam sujeitos aos gates do SHA; não elevar o status científico por esta amostra.
+
+## Nota V88.143 (18/11/2026)
+
+A remoção da exceção no fluxo de apresentação do monitoramento agrícola não modifica métodos, fontes, profundidades ou incertezas do compartimento carbono do solo.
