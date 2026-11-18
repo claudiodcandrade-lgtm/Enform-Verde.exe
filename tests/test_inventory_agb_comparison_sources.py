@@ -1,7 +1,9 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
+import inventory_agb_comparison as comparison
 from inventory_agb_comparison import canonical_panel_sha256, published_agb_references
 
 
@@ -27,6 +29,27 @@ class InventoryAgbComparisonSourceTests(unittest.TestCase):
         self.assertEqual([row["source_id"] for row in rows], ["A", "B"])
         self.assertEqual(rows[1]["ci95_low_mg_ha"], 90.0)
         self.assertTrue(all(row["not_added_to_stock_total"] for row in rows))
+
+    def test_published_sources_work_without_ifn_and_are_not_pooled(self):
+        refs = [
+            {"status":"REFERENCIA_AGREGADA_PUBLICADA","source_id":"EMBRAPA",
+             "institution":"Embrapa","region":"Região A","agb_mean_mg_ha":110,
+             "citation":"Estudo A","not_added_to_stock_total":True},
+            {"status":"REFERENCIA_AGREGADA_PUBLICADA","source_id":"UFV",
+             "institution":"UFV","region":"Região B","agb_mean_mg_ha":145,
+             "citation":"Estudo B","not_added_to_stock_total":True},
+        ]
+        with patch.object(comparison, "DB", Path("/missing/ifn.sqlite")), \
+             patch.object(comparison, "PANEL", Path("/missing/ifn.csv")), \
+             patch.object(comparison, "published_agb_references", return_value=refs):
+            result = comparison.estimate_inventory_agb_comparison(
+                biome="Amazônia", physiognomy="Floresta X", area_ha=10,
+                centroid_lon=-55, centroid_lat=-11)
+        self.assertEqual(result["status"], "COMPARACAO_REFERENCIAS_PUBLICADAS")
+        self.assertEqual(result["published_aggregate_count"], 2)
+        self.assertEqual(result["usable_inventory_sources_consulted"], ["EMBRAPA", "UFV"])
+        self.assertEqual([r["agb_mean_mg_ha"] for r in result["inventory_references"]], [110, 145])
+        self.assertTrue(result["not_added_to_stock_total"])
 
 
 if __name__ == "__main__":

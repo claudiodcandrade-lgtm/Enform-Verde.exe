@@ -2333,11 +2333,20 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             if pr.get("uncertainty_mg_ha") is not None:
                 pr["uncertainty_kind"]="média zonal da camada AGB_SD do ESA CCI; desvio-padrão do produto, não erro local de validação"
             return _preserve_sar_canopy_height(pr,sar_height,audit)
-        if cci.get("paths") and not cci_gate["eligible"]:
-            audit["cci"]["selection_status"]="ADIADA_ERRO_OU_AUSENCIA_NAO_COMPROVADA_NA_ROTA_PRIORITARIA"
-            audit["cci"]["selection_reason"]=cci_gate["reason"]
+        if not cci_gate["eligible"]:
+            audit["priority_height_route_gate"]={"status":"ERRO_TECNICO_ROTA_PRIORITARIA",
+                "reason":cci_gate["reason"],"cci_candidate_available":bool(cci.get("paths")),
+                "cci_promoted":False}
+            if cci.get("paths"):
+                audit["cci"]["selection_status"]="ADIADA_ERRO_OU_AUSENCIA_NAO_COMPROVADA_NA_ROTA_PRIORITARIA"
+                audit["cci"]["selection_reason"]=cci_gate["reason"]
             audit["warnings"].append(
-                "ESA CCI AGB disponível, mas não promovido a estimativa: rota prioritária BIOMASS FH/GTDX não foi resolvida sem erro. Corrigir/repetir a rota prioritária antes de selecionar contingência.")
+                ("ESA CCI AGB disponível, mas não promovido a estimativa: " if cci.get("paths") else "")+
+                "rota prioritária BIOMASS FH/GTDX não foi resolvida sem erro. Corrigir/repetir a rota prioritária antes de selecionar contingência.")
+        else:
+            audit["priority_height_route_gate"]={"status":"ROTA_PRIORITARIA_RESOLVIDA",
+                "reason":cci_gate["reason"],"cci_candidate_available":bool(cci.get("paths")),
+                "cci_promoted":bool(cci.get("paths"))}
     except Exception as e: audit["cci"]={"error":str(e)}
 
     # Mark the end of every configured route. A scene or any SAR pixel blocks
@@ -2372,8 +2381,10 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         lit["sar_pixel_audit"]=[]
     auxiliary_sar=bool(audit.get("processed_without_agb"))
     priority_route_error=bool(isinstance(cci_gate,dict) and not cci_gate.get("eligible"))
-    result={"status":("ERRO_TECNICO_ROTA_PRIORITARIA" if priority_route_error else
+    has_processed_sar=bool(auxiliary_sar or sar_height)
+    result={"status":("ERRO_TECNICO_ROTA_PRIORITARIA" if priority_route_error and not has_processed_sar else
                        "SAR_PROCESSADO_SEM_MODELO_AGB" if auxiliary_sar or sar_height else "SAR_NAO_PROCESSADO"),
+            "priority_height_route_status":("ERRO_TECNICO_ROTA_PRIORITARIA" if priority_route_error else "ROTA_PRIORITARIA_RESOLVIDA"),
             "agb_mg_ha":None,"uncertainty_mg_ha":None,
             "data_origin":("SAR_ALTURA_SEM_MODELO_AGB" if sar_height else
                            "SAR_ATRIBUTOS_ESTRATIFICADORES" if auxiliary_sar else "SAR_NAO_PROCESSADO"),
@@ -2383,7 +2394,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             "audit":audit,"literature_reference":lit,"sar_attempted_first":True,
             "inventory_fallback_gate":fallback_gate,
             "message":(("Falha ou auditoria incompleta na rota prioritária BIOMASS FH/GTDX: "+str(cci_gate.get("reason"))+
-                        ". ESA CCI foi mantido apenas como candidato e não foi selecionado. Corrigir a rota técnica e repetir a análise.")
+                        ". "+("ESA CCI foi mantido apenas como candidato e não foi selecionado. " if (audit.get("cci") or {}).get("paths") else "")+
+                        ("Pixels SAR auxiliares foram lidos, mas não há altura/AGB quantitativa compatível. " if has_processed_sar and not sar_height else "")+
+                        "Corrigir a rota técnica e repetir a análise.")
                        if priority_route_error else
                        "Pixels SAR auxiliares foram lidos, mas não há altura/AGB quantitativa de biomassa compatível; após esgotar as rotas de biomassa, pode-se emitir cenário separado de inventário, preservando a trilha e sem chamar inventário de SAR."
                        if audit.get("processed_without_agb") else ("SAR sem pixels utilizáveis após esgotar as rotas configuradas; emitir cenário condicional de inventário e preservar cada falha técnica, sem declarar ausência de cenas."

@@ -1,9 +1,11 @@
-"""Exploratory, same-physiognomy IFN AGB reference for comparison with CCI.
+"""All compatible forest-inventory AGB references for comparison with CCI.
 
 The SFB panel contains per-hectare AGB candidates, while the expanded IFN
 SQLite contains the primary tree observations and the official IBGE crosswalk.
-The two are joined by physical sampling-unit identity. This is a regional
-comparison only; it is never added to the carbon stock and never replaces a
+IFN sampling units are joined by physical identity. Published AGB aggregates
+from every harmonized source are always consulted independently of IFN file
+availability, and remain separate when their designs cannot be pooled. This
+regional comparison is never added to the carbon stock and never replaces a
 successful ESA BIOMASS FH + inventory structural estimate.
 """
 from __future__ import annotations
@@ -71,7 +73,7 @@ def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
     return rows
 
 
-def estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
+def _estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
                                 centroid_lon, centroid_lat,
                                 max_distance_km=250.0, max_units=5):
     """Return a cautious AGB/carbon comparison, or N/D when the evidence fails.
@@ -207,6 +209,52 @@ def estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
     if not result["inventory_references"]:
         result["reason"] = result.get("reason", "SEM_REFERENCIAS_DE_AGB_COMPATIVEIS_NA_BASE_UTILIZAVEL")
     return result
+
+
+def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
+                                      centroid_lon, centroid_lat,
+                                      max_distance_km=250.0, max_units=5):
+    """Use all source-level AGB evidence, independent of IFN availability.
+
+    The IFN per-UA comparison is one evidence tier, not the inventory base.
+    Every compatible published aggregate in the harmonized register is
+    included as a distinct reference even when IFN microdata are unavailable.
+    Do not pool studies with noncomparable designs or uncertainty semantics.
+    """
+    kwargs={"biome":biome,"physiognomy":physiognomy,"area_ha":area_ha,
+            "centroid_lon":centroid_lon,"centroid_lat":centroid_lat,
+            "max_distance_km":max_distance_km,"max_units":max_units}
+    try:
+        result=_estimate_ifn_agb_comparison(**kwargs)
+    except Exception as exc:
+        result={"status":"N/D","reason":"COMPARACAO_IFN_NAO_CONCLUIDA",
+                "diagnostic":type(exc).__name__}
+    published=published_agb_references(biome=biome,physiognomy=physiognomy)
+    refs=list(result.get("inventory_references") or [])
+    seen={(r.get("source_id"),r.get("region"),r.get("citation")) for r in refs}
+    for ref in published:
+        key=(ref.get("source_id"),ref.get("region"),ref.get("citation"))
+        if key not in seen:
+            refs.append(ref); seen.add(key)
+    ifn_valid=result.get("status")=="COMPARACAO_EXPERIMENTAL_IFN_AGB"
+    if not ifn_valid and published:
+        result["status"]="COMPARACAO_REFERENCIAS_PUBLICADAS"
+        result["reason"]="Referências AGB de inventários compatíveis listadas por fonte; IFN não elegível ou indisponível; não há média conjunta sem desenho e incerteza harmonizados."
+    elif not ifn_valid and not published:
+        result["status"]="N/D"
+        result["reason"]=result.get("reason") or "SEM_REFERENCIAS_DE_AGB_COMPATIVEIS_NA_BASE_UTILIZAVEL"
+    result["inventory_references"]=refs
+    result["published_aggregate_count"]=len(published)
+    result["usable_inventory_sources_consulted"]=sorted({
+        str(ref.get("source_id")) for ref in refs if ref.get("source_id")})
+    result["inventory_base_scope"]="todas as fontes com AGB harmonizada e compatibilidade exata disponíveis no registro; cada fonte preservada separadamente; IFN é apenas uma das bases"
+    result["ifn_microdata_available"]=bool(result.get("base_ifn_expandida_usada"))
+    result["not_added_to_stock_total"]=True
+    return result
+
+
+# Backward-compatible name for callers/tests that request the IFN tier directly.
+estimate_ifn_agb_comparison=estimate_inventory_agb_comparison
 
 def _optional_float(value):
     try:

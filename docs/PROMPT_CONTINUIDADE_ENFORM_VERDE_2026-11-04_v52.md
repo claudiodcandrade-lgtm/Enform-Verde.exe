@@ -633,3 +633,11 @@ Manter pré-campo/experimental. O gate de homologação científica independente
 ### Reforço do gate live V88.144a
 
 O workflow de integração SAR→uso da terra→carbono→dashboard deve disparar também quando `sar_pipeline.py` mudar. Esse gatilho foi incluído em `push` e `pull_request` para que alterações no seletor FH/CCI não escapem ao ensaio live. O teste live ainda precisa passar no SHA final antes de considerar a candidata validada.
+
+## V88.145 — referências de inventários não restritas ao IFN (18/11/2026)
+
+- A comparação independente com ESA CCI consulta todas as referências de AGB numéricas, harmonizadas e compatíveis por bioma e fitofisionomia no registro agregado, mesmo quando a base expandida IFN estiver indisponível ou não tiver UAs elegíveis. IFN é uma fonte, não a base inteira.
+- Cada estudo permanece separado e identificado por fonte, região, citação e incerteza publicada. Não calcular uma média conjunta entre estudos com desenho/unidade/escala ou incerteza não harmonizados; nenhuma dessas referências é somada ao estoque CCI.
+- Inventários com apenas metadados de catálogo, microdados sem área amostral ou sem vínculo espacial/fitofisionômico confiável não viram estimativas numéricas. Devem ser explicitamente identificados como pendentes de harmonização; catálogo não equivale a base operacional.
+- Corrigida regressão da prioridade FH: com falha da rota e pixels SAR auxiliares lidos, preservar `SAR_PROCESSADO_SEM_MODELO_AGB` e registrar paralelamente `priority_height_route_status=ERRO_TECNICO_ROTA_PRIORITARIA`. Se não houver produto SAR processado, o status técnico continua bloqueando contingências.
+- Testes focados do agregador, prioridade CCI e fallback nacional passaram localmente (18 testes, 2 skips ambientais). A suíte integral, build/autoteste Windows e handoff live desta revisão ainda devem passar no SHA final. Candidata 3.26.67 permanece pré-campo/experimental; não declarar homologação científica nem teste da geometria privada da Fazenda Maria Eduarda.

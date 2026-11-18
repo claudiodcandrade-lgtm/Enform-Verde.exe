@@ -624,10 +624,10 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
         if (isinstance(estimate,dict) and estimate.get("product")=="ESA CCI Biomass AGB"
                 and estimate.get("agb_mg_ha") is not None):
             try:
-                from inventory_agb_comparison import estimate_ifn_agb_comparison
+                from inventory_agb_comparison import estimate_inventory_agb_comparison
                 centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
                 area=float(frame.to_crs("EPSG:6933").geometry.area.sum())/10000.0
-                estimate["inventory_agb_comparison"]=estimate_ifn_agb_comparison(
+                estimate["inventory_agb_comparison"]=estimate_inventory_agb_comparison(
                     biome=b,physiognomy=p,area_ha=area,
                     centroid_lon=float(centroid.x),centroid_lat=float(centroid.y))
             except Exception as exc:
@@ -3748,7 +3748,7 @@ class App(tk.Tk):
                 if isinstance(inventory_cmp,dict):
                     if inventory_cmp.get("status")=="COMPARACAO_EXPERIMENTAL_IFN_AGB":
                         lines += [
-                            "  COMPARAÇÃO INDEPENDENTE DE AGB — ESA CCI × médias de inventários IFN (não somar ao estoque)",
+                            "  COMPARAÇÃO INDEPENDENTE DE AGB — ESA CCI × inventários compatíveis (não somar ao estoque)",
                             "    ESA CCI: "+format_ptbr(sar_details.get("agb_mg_ha"),2)+" Mg AGB/ha; incerteza do produto: "+format_ptbr(sar_details.get("uncertainty_mg_ha"),2)+" Mg/ha.",
                             "    IFN: "+format_ptbr(inventory_cmp.get("agb_mean_mg_ha"),2)+" Mg AGB/ha; média de "+str(inventory_cmp.get("inventory_n_unique_sampling_units"))+" UAs independentes; DP amostral "+format_ptbr(inventory_cmp.get("agb_sample_sd_mg_ha"),2)+" Mg/ha; faixa observada "+json.dumps(inventory_cmp.get("agb_observed_range_mg_ha"),ensure_ascii=False)+".",
                             "    Carbono IFN comparativo: "+format_ptbr(inventory_cmp.get("carbon_mean_tc_ha"),2)+" tC/ha; estoque comparativo na área do estrato: "+format_ptbr(inventory_cmp.get("carbon_total_tc_comparison"),2)+" tC ("+format_ptbr(inventory_cmp.get("carbon_total_tco2e_comparison"),2)+" tCO₂e).",
@@ -4151,7 +4151,7 @@ class App(tk.Tk):
             sh.column_dimensions[col].width=w
         put(sh,comparison_rows)
         sh.auto_filter.ref=f"A3:P{3+len(comparison_rows)}"
-        sh["A2"]="Cada fonte IFN ou publicação harmonizada é apresentada separadamente; valores comparativos não são somados ao estoque. DP entre UAs não equivale a IC95%; estudos sem incerteza publicada mantêm essa lacuna explícita. Catálogo pendente não é fonte operacional."
+        sh["A2"]="Todas as fontes numéricas harmonizadas e compatíveis são consultadas; IFN é uma delas. Cada fonte é apresentada separadamente; valores comparativos não são somados ao estoque. DP entre UAs não equivale a IC95%; estudos sem incerteza publicada mantêm essa lacuna explícita. Metadados de catálogo sem AGB harmonizada não são estimativas."
         sh.merge_cells("A2:P2"); sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
         sh=wb.create_sheet("Fitossociologia IFN")
         setup(sh,"Enform Verde — espécies frequentes em unidades IFN compatíveis")

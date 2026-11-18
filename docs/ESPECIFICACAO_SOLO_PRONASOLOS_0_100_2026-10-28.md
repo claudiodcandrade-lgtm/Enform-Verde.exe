@@ -712,3 +712,7 @@ O compartimento solo e seus métodos não mudam. A regra sistêmica que afeta a 
 ## Nota V88.144a (18/11/2026)
 
 O workflow live do handoff SAR inclui mudanças em `sar_pipeline.py` nos gatilhos push/PR, para validar a saída de carbono que alimenta os relatórios junto das alterações de prioridade de AGB. Sem alteração metodológica do solo.
+
+## Nota V88.145 (18/11/2026)
+
+A comparação ESA CCI × inventários deve consultar todas as fontes de AGB numéricas harmonizadas e compatíveis, sem restringir a comparação ao IFN. Referências publicadas ficam separadas por fonte; não se calcula média conjunta quando desenho, unidade amostral, domínio espacial ou incerteza não forem comparáveis, e nenhuma referência paralela é adicionada ao estoque CCI. Fontes presentes apenas em catálogo ou microdados sem harmonização espacial/fitofisionômica e denominador amostral não sustentam AGB/ha; sua incorporação quantitativa segue pendente até harmonização. Esta atualização não altera métodos ou profundidade do carbono do solo.
