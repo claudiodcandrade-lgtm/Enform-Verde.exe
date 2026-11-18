@@ -25,5 +25,14 @@ class InventoryH100Tests(unittest.TestCase):
     def test_physiognomy_and_region_are_required(self):
         d=self.frame(list(range(1,11)),.1);d["microregion"]=""
         self.assertTrue(derive_inventory_h100(d).empty)
+    def test_multiple_sources_keep_duplicate_plot_ids_separate(self):
+        a=self.frame(list(range(1,11)),.1).assign(source_id="IFN")
+        b=self.frame(list(range(21,31)),.1).assign(source_id="EMBRAPA")
+        out=derive_inventory_h100(pd.concat([a,b],ignore_index=True))
+        self.assertEqual(len(out),2)
+        by_source=dict(zip(out.source_id,out.field_height_m))
+        self.assertEqual(set(by_source),{"IFN","EMBRAPA"})
+        self.assertAlmostEqual(by_source["IFN"],5.5)
+        self.assertAlmostEqual(by_source["EMBRAPA"],25.5)
 
 if __name__=="__main__":unittest.main()

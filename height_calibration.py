@@ -111,23 +111,28 @@ def _blocked(code, reason, n, sites):
 
 def derive_inventory_h100(tree_frame, *, plot_id_col="plot_id", tree_id_col="tree_number",
                           height_col="total_height_m", sample_area_col="sample_area_ha",
+                          source_id_col="source_id",
                           domain_cols=("biome", "physiognomy", "microregion")):
     """Derive inventory H100 from tree heights using the measured plot area.
 
     ESA BIOMASS FH is H100: mean height of the 100 tallest trees per hectare.
     This derives that same statistic from tree-level inventory rows. Multi-stem
     records are collapsed to one height per tree (maximum recorded height),
-    then the highest 100*area trees are averaged. It refuses undersampled plots,
-    missing area, or missing domain labels instead of substituting a mean tree
-    height. The returned observations are field reference heights, never a
-    replacement for the SAR measurement.
+    then the highest 100*area trees are averaged. It accepts a harmonized frame
+    assembled from any trusted inventory source; when source_id_col is present,
+    source identity is part of the plot key so equal plot IDs from different
+    datasets are never merged. It refuses undersampled plots, missing area, or
+    missing domain labels instead of substituting a mean tree height. Returned
+    observations are field references, never replacements for SAR measurements.
     """
     import math
     import pandas as pd
     required=[plot_id_col,tree_id_col,height_col,sample_area_col,*domain_cols]
     missing=[c for c in required if c not in tree_frame.columns]
-    if missing: raise ValueError("IFN tree-to-H100 fields missing: "+", ".join(missing))
-    d=tree_frame[required].copy()
+    if missing: raise ValueError("Inventory tree-to-H100 fields missing: "+", ".join(missing))
+    source_col=source_id_col if source_id_col in tree_frame.columns else None
+    selected=required+([source_col] if source_col else [])
+    d=tree_frame[selected].copy()
     d[height_col]=pd.to_numeric(d[height_col],errors="coerce")
     d[sample_area_col]=pd.to_numeric(d[sample_area_col],errors="coerce")
     d[plot_id_col]=d[plot_id_col].astype("string").str.strip()
@@ -137,9 +142,11 @@ def derive_inventory_h100(tree_frame, *, plot_id_col="plot_id", tree_id_col="tre
            & d[plot_id_col].notna() & d[plot_id_col].ne("")
            & d[tree_id_col].notna() & d[tree_id_col].ne(""))
     for c in domain_cols: valid &= d[c].notna() & d[c].astype("string").str.strip().ne("")
+    if source_col:
+        valid &= d[source_col].notna() & d[source_col].astype("string").str.strip().ne("")
     d=d.loc[valid].copy()
     results=[]
-    group_cols=[*domain_cols,plot_id_col]
+    group_cols=([source_col] if source_col else [])+[*domain_cols,plot_id_col]
     for keys,g in d.groupby(group_cols,dropna=False,sort=True):
         areas=g[sample_area_col].drop_duplicates().tolist()
         if len(areas)!=1: continue
@@ -156,7 +163,7 @@ def derive_inventory_h100(tree_frame, *, plot_id_col="plot_id", tree_id_col="tre
         record.update({"field_height_m":h100,"field_height_definition":"H100_mean_of_100_tallest_trees_per_ha",
                        "sample_area_ha":area,"h100_equivalent_tree_count":target,
                        "n_unique_inventory_trees":int(len(heights)),
-                       "height_source":"IFN DAP10 individual-tree total heights",
+                       "height_source":(str(record[source_col]) if source_col else "inventory_field_measurements"),
                        "height_method":"weighted mean of tallest 100 trees/ha; multi-stem records deduplicated by tree ID"})
         results.append(record)
     return pd.DataFrame(results)

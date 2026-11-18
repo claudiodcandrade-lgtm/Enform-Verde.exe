@@ -1026,7 +1026,8 @@ def acceptance_test(kmz_path):
     if agb is None:
         if not lit.get("available") or not lit.get("sar_processed"):
             if result.get("priority_height_route_status")=="ERRO_TECNICO_ROTA_PRIORITARIA":
-                raise RuntimeError("ERRO_TECNICO_ROTA_PRIORITARIA no FH/GTDX; contingência de inventário bloqueada corretamente. Diagnóstico detalhado salvo em "+str(acceptance_path))
+                diagnostic=acceptance_path.read_text(encoding="utf-8",errors="replace")
+                raise RuntimeError("ERRO_TECNICO_ROTA_PRIORITARIA no FH/GTDX; contingência de inventário bloqueada corretamente. Diagnóstico: "+diagnostic[:12000])
             raise RuntimeError("Pixels SAR foram processados, mas nenhuma estimativa AGB prioritária ou referência de inventário elegível foi produzida. Diagnóstico salvo em "+str(acceptance_path))
     elif not str(result.get("data_origin","")).startswith("SAR"):
         raise RuntimeError("Origem AGB incompatível: resultado numérico sem proveniência SAR.")
