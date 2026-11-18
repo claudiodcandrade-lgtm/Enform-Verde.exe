@@ -33,3 +33,9 @@ Versão experimental e não homologada. A execução Windows no SHA anterior `50
 - Corrigidos os dois fixtures incompletos que causavam erros no teste do painel. A aplicação grava previsão, proveniência e trilha de uso do vigor antes da renderização textual, preservando-as se o formatador falhar.
 - A consulta de catálogo discrimina FH `FP_FH__L2A`/`FP_FH__L2B`, cenas L1C e consultas/paginação incompletas. Encontrar produto não equivale a ler pixels ou integrar altura à estimativa de carbono; ausência de L2B não é ausência demonstrada de altura.
 - A validação do novo commit `137cd80e940b126d803c4b8c2ac2c9957e4e2159` ainda depende dos workflows em andamento. A versão permanece experimental, sem alegação de funcionamento completo do vigor ou FH→carbono, sem build aprovado e sem homologação científica.
+
+### V88.136 — acesso autenticado FH e primeira ponta da previsão
+- A investigação do fluxo real mostrou FH L2A no catálogo, mas HTTP 401 no download. O workflow SAR agora fornece o secret ESA MAAP à chamada de carbono; os relatórios nunca exibem o token.
+- Falhas do ativo FH contam como erros técnicos e bloqueiam a contingência por ausência. A leitura positiva de pixels é marcada como concluída, sem confundir pixels existentes com ausência.
+- O ensaio live inclui chamada real ao modelo de previsão agrícola usando a mesma AOI/resultado SAR. Só informa uso de vigor quando a auditoria do modelo confirma a participação na distribuição de produtividade.
+- Testes locais direcionados passaram (11). Workflow Windows, pixels FH autenticados e execução ponta a ponta da previsão continuam pendentes; manter candidata experimental até a inspeção dos novos artefatos. O ensaio CBERS em ponto público não comprova abertura na geometria integral privada.
