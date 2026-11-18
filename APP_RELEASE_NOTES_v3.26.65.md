@@ -39,3 +39,8 @@ Versão experimental e não homologada. A execução Windows no SHA anterior `50
 - Falhas do ativo FH contam como erros técnicos e bloqueiam a contingência por ausência. A leitura positiva de pixels é marcada como concluída, sem confundir pixels existentes com ausência.
 - O ensaio live inclui chamada real ao modelo de previsão agrícola usando a mesma AOI/resultado SAR. Só informa uso de vigor quando a auditoria do modelo confirma a participação na distribuição de produtividade.
 - Testes locais direcionados passaram (11). Workflow Windows, pixels FH autenticados e execução ponta a ponta da previsão continuam pendentes; manter candidata experimental até a inspeção dos novos artefatos. O ensaio CBERS em ponto público não comprova abertura na geometria integral privada.
+
+### V88.137 — integridade da publicação de código
+- O primeiro runner do patch de token FH não iniciou: encontrou U+2026 dentro de `sar_pipeline.py`, porque a transferência do arquivo extenso ao objeto GitHub havia sido truncada. A checagem local isolada não detectou a diferença entre arquivo local e blob remoto.
+- Fonte completa retransmitida e publicada em `b99f92fbda4cef0ba49edd139c1e22dd81cf0183`. O resultado do build anterior foi interrompido e não pode ser distribuído. O novo runner precisa passar sintaxe, regressão, live SAR/carbono/previsão e build limpo antes de declarar a versão corrigida.
+- A prova separada conseguiu pixels FH em Sinop, mas a etapa substituta Borneo falhou e o fluxo SAR integrado não executou. O vigor ainda não foi comprovado no cálculo da produtividade.

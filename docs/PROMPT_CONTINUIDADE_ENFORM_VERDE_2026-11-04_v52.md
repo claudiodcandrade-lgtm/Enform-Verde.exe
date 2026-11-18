@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 30639)
-Total output lines: 570
+Warning: truncated output (original token count: 30952)
+Total output lines: 577
 
 Warning: truncated output (original token count: 46970)
 Total output lines: 909
@@ -137,39 +137,7 @@ ESTADO VIGENTE (13/11/2026, checkpoint V88.36): candidata `3.26.25-PRECAMPO-EXPE
 <!-- ENFORM_CHECKPOINT_V87_77_WINDOWS_REGRESSION -->
 ## V87.77 - checkpoint ESA MAAP e piloto experimental (2026-11-10)
 
-- V87.77 — build 3.26.10 no SHA e77310ba falhou: regressao geral 1037 testes com 3 falhas e 1 erro, e build Windows reprovou teste nativo; portanto ZIP NAO liberado. Corrigidos contrato de identidade atual vs anual, fixtures de ausencia de modelo SAR, e campo scenario_intervals_are_not_CI95 no modulo hidrico.
-- CLASSIFI…119064 tokens truncated…ontinua pré-campo experimental, não homologada; não declarar resultado de incerteza até leitura de dados reais passar no runtime.
-
-# V88.40 — parsing resiliente do XML de capacidades PronaSolos
-
-## Diagnóstico
-
-O estoque SOC Embrapa/PronaSolos de 0–100 cm foi calculado, mas a leitura das camadas WCS de incerteza parou em `ParseError: reference to invalid character number`. O erro ocorre antes da descoberta das dez camadas (limite inferior/superior para cinco horizontes). Ele caracteriza conteúdo de resposta inválido para XML 1.0, não ausência de serviço ou credencial. Não zerar incerteza nem eliminar o estoque já calculado por esse erro secundário.
-
-## Correção de software
-
-Antes do `ElementTree.fromstring`, inspecionar referências numéricas XML e remover somente aquelas cujo código Unicode não pertence à produção `Char` do XML 1.0. Preservar referências válidas e todo o restante da resposta. O hash SHA-256 da resposta WCS original e a quantidade de referências removidas entram na proveniência. Respostas truncadas, estruturalmente inválidas ou sem as dez camadas continuam como `ERRO_TECNICO`/N/D; nunca são interpretadas como ausência confirmada.
-
-Após a descoberta, manter os contratos existentes: baixar limites inferior e superior para os cinco horizontes, validar formato GeoTIFF, CRS, resolução, NoData, grade alinhada, cobertura da AOI e conteúdo dos rasters. Repetir somente falhas transitórias com tentativas limitadas e TLS validado. Enquanto qualquer requisito falhar, manter estoque SOC quando disponível e exibir sua incerteza como N/D com motivo específico. O envelope marginal publicado não deve ser rotulado como IC95% conjunto.
-
-## Teste e limites
-
-Teste de regressão: referência inválida `&#x0;` é removida, referência XML legal `&#x20;` permanece, e o identificador de cobertura reparado é descoberto. A suí…14639 tokens truncated…ampla sob demanda.
-
-## Complemento V88.115 — SEMA-MT e inventários de planos de manejo (16/11/2026)
-
-- A página oficial de Gestão Florestal da SEMA-MT, o SIMLAM, o Geoportal e o Portal de Metadados foram triados. O Geoportal declara permitir visualizar, consultar e baixar camadas geográficas (incluindo autorizações); a categoria pública “Projetos e Ações” da Gestão Florestal não tinha arquivos cadastrados nesta consulta.
-- Evidência forte de dados primários: relatório público REM-MT/FUNBIO descreve um lote recebido da Coordenação de Manejo Florestal/SEMA via SIMLAM: 188 arquivos de inventário, três corrompidos e 185 analisados em 34 municípios, 1.830.561 árvores, com feições geográficas/shapefiles e tabelas processadas em formato compatível com Excel. O acesso aos microdados é descrito como realizado pela coordenação de Manejo Florestal da SEMA.
-- A notícia oficial da SEMA-MT de 26/06/2026 informa 402 planos autorizados em execução, 5,2 milhões ha em áreas de manejo e inventários submetidos digitalmente e georreferenciados. Isso demonstra escala e alto potencial de aquisição, não que 402 arquivos tenham sido baixados. Os 185 do relatório constituem lote selecionado para uma pesquisa de espécies-alvo, não total do estado nem amostra representativa.
-- Catálogo: `SEMA_MT_GESTAO_FLORESTAL`; conjunto `SEMA_MT_PMFS_INVENTORIES_REPORTED_185` (lead restrito, zero arquivos primários locais) e camada separada `SEMA_MT_GEOSERVER_AUTEX_PMFS` (polígonos/autorizações, sem medidas de árvores verificadas). A captura IFN-MT já incluída no IFN nacional permanece distinta (705 UAs/80.711 observações; não somar como novas campanhas de PMFS).
-- Próximo passo: solicitar formalmente à SEMA via SIC/LAI ou Coordenação de Manejo acesso a inventários aprovados e reutilizáveis, priorizando pacote em lote, dicionário, geometrias, métricas, desenho, biometria, datas, aprovação, licença e SHA. Não contornar SIMLAM/autenticação. Promover a dados locais só após obtenção autorizada, hash, limpeza PII, validação do esquema, compatibilidade de mensuração e deduplicação por PMFS/UPA/POA/ciclo/parcela/remedição. Inventários 100% de árvores comerciais não equivalem automaticamente a parcelas ecológicas ou biomassa total.
-- Fonte comprobatória: https://rem.sema.mt.gov.br/wp-content/uploads/2024/06/REM-MT-Termo-de-Encerramento-ao-contrato-de-apoio-no-154_2023-FUNDACAO-DE-APOIO-AO-ENSINO-SUPERIOR-PUBLICO-ESTADUAL-%E2%80%93-FAESPE-assinado.pdf ; página SEMA-MT: https://www.sema.mt.gov.br/site/index.php/unidades-administrativas/gestao-florestal ; notícia (26/06/2026): https://www.sema.mt.gov.br/site/index.php/sema/noticias/7244-sema-monitora-mais-de-400-planos-de-manejo-em-execu%C3%A7%C3%A3o-no-estado-de-mato-grosso .
-- Esta rodada atualiza pesquisa e catálogo, mas não software, microdados integrados, cálculos de carbono, benchmark ou homologação. Versão do software permanece 3.26.59-PRECAMPO-EXPERIMENTAL; não declarar validação Windows/nacional com base nessa descoberta.
-
-
-## V88.120 — candidata 3.26.60: build Windows e separação de fontes (16/11/2026)
-
-- Versão em preparação: `3.26.60-PRECAMPO-EXPERIMENTAL`. Foi incrementada a versão do aplicativo para gerar um artefato identificável; não publicar release antes de workflow Windows verde no mesmo SHA.
+- V87.77 — build 3.26.10 no SHA e77310ba falhou: regressao geral 1037 testes com 3 falhas e 1 erro, e build Windows reprovou teste nativo; portanto ZIP NAO liberado. Corrigidos contrato de identidade atual vs anual, fixtures de ausencia de …15952 tokens truncated…são do aplicativo para gerar um artefato identificável; não publicar release antes de workflow Windows verde no mesmo SHA.
 - Catálogo sob demanda, limitado e read-only: 4 conjuntos primários locais; 2 harmonizados em nível de parcela. IFN/DAP10: 841.387 registros e 8.951 UAs; permanece `model_eligible=0` até revisão metodológica, representatividade e validação. Agregados SINAFLOR, equações IEF, polígonos e leads não são microdados de parcelas.
 - Após o incremento: suíte local 1.247 testes OK, 1 skip; checker 183 módulos aprovado; leitura live pontual de uma cena Sentinel-1 VV/VH com 9 pixels por polarização. Esses resultados não substituem o Windows runner.
 - Próximo gate obrigatório: build Windows com autoteste, paridade Python/EXE, `--module-check`, `--visual-check`, `--network-check`, aceite SAR Tapajós e inspeção dos artefatos. Se falhar, corrigir antes de divulgar EXE.
@@ -300,3 +268,10 @@ Versão: `3.26.64-PRECAMPO-EXPERIMENTAL`.
 - O ensaio SAR de Sinop passa a executar também `monitoring_forecast` com a máscara e AOI do mesmo run. O status de vigor exige auditoria explícita `vigor_model_audit.used_in_yield_distribution=true`; ausência/invalidade de cena, entrada agrícola não confirmada ou exceção deve permanecer visível como não uso/N/D com motivo. A amostra pública não é a fazenda integral.
 - Commit de código `e15bd840fa224d021ca270177b50d6e9974ac74e`. No checkpoint: 11 testes focados locais passaram; workflow Windows, prova FH autenticada e previsão SAR→safra estão em execução. A execução anterior mostrou CBERS no canvas em ponto público de Sinop e 11/11 pontos óticos, mas não valida o polígono privado completo. Ver `docs/spec_updates/V88.136_TOKEN_MAAP_HANDOFF_FH_E_VIGOR.md`.
 - Sem KML/KMZ integral privado não declarar validação da Fazenda Maria Eduarda. Sem artefato final Windows no SHA e verificação dos relatórios, não liberar como versão corrigida/homologada.
+
+## V88.137 — correção da transferência incompleta do código (18/11/2026)
+
+- O workflow no SHA `e15bd840fa224d021ca270177b50d6e9974ac74e` falhou imediatamente com `SyntaxError` em `sar_pipeline.py:461`, caractere U+2026. Diagnóstico: a fonte local estava correta, mas o objeto enviado ao GitHub havia sido truncado no transporte da ferramenta. Isso demonstra que a verificação local, sozinha, não garantiu integridade do blob publicado.
+- A fonte completa foi restaurada no SHA `b99f92fbda4cef0ba49edd139c1e22dd81cf0183` usando transferência em blocos; confirmar o SHA/arquivo remoto e aguardar toda a regressão e build antes de divulgar qualquer artefato. O commit e15 não é um build válido.
+- Nesse run, a prova ESA separada leu FH em Sinop, mas a amostra Borneo alternativa falhou; o fluxo integrado nem iniciou por causa da sintaxe. Portanto ainda não se provou FH→H100→inventários→AGB, nem vigor realmente incorporado à previsão. A execução agrícola ao vivo no novo SHA deverá gravar ambos resultado e auditoria.
+- A geometria privada integral da Fazenda Maria Eduarda continua ausente; CBERS em ponto público não equivale à prova no KML da fazenda. Ver `docs/spec_updates/V88.137_REPARO_TRANSFER_SAR_PIPELINE.md`.
