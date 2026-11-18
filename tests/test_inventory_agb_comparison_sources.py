@@ -4,7 +4,9 @@ from unittest.mock import patch
 from pathlib import Path
 
 import inventory_agb_comparison as comparison
-from inventory_agb_comparison import canonical_panel_sha256, published_agb_references
+from inventory_agb_comparison import (canonical_panel_sha256, published_agb_references,
+                                      published_structural_references,
+                                      published_inventory_evidence)
 
 
 class InventoryAgbComparisonSourceTests(unittest.TestCase):
@@ -69,7 +71,31 @@ class InventoryAgbComparisonSourceTests(unittest.TestCase):
                          ["EMBRAPA","INPA","UFV"])
         self.assertEqual(result["inventory_sources_searched"],[
             "IFN_EXPANDED_TREE_MICRODATA","SFB_IFN_DAP10_AGB_PANEL",
-            "HARMONIZED_PUBLISHED_AGB_REGISTER"])
+            "HARMONIZED_PUBLISHED_AGB_REGISTER",
+            "HARMONIZED_PUBLISHED_STRUCTURAL_REGISTER"])
+
+    def test_horizontal_aggregates_are_returned_as_references_not_plot_data(self):
+        refs=published_structural_references(
+            biome="Amazônia",physiognomy="Floresta Ombrófila Densa")
+        matched=[r for r in refs if r["source_id"]=="EMBRAPA_ODF_CLASS1_GE15_BA"]
+        self.assertEqual(len(matched),1)
+        self.assertEqual(matched[0]["metric"],"basal_area")
+        self.assertEqual(matched[0]["center"],27.36)
+        self.assertTrue(matched[0]["not_plot_level_data"])
+        self.assertIsNone(matched[0]["sd"])
+
+    def test_inventory_evidence_bundle_declares_aggregate_as_benchmark(self):
+        evidence=published_inventory_evidence(
+            biome="Amazônia",physiognomy="Floresta Ombrófila Densa")
+        self.assertIn("EMBRAPA_ODF_CLASS1_GE15_BA",evidence["sources"])
+        self.assertGreater(evidence["horizontal_reference_count"],0)
+        self.assertIn("baliza regional",evidence["use_when_plot_microdata_unavailable"])
+        self.assertTrue(evidence["not_added_to_stock_total"])
+
+    def test_missing_inventory_register_is_not_reported_as_empty_ecological_domain(self):
+        evidence=published_inventory_evidence(
+            biome="Amazônia",physiognomy="Floresta X",path=Path("/missing/evidence.csv"))
+        self.assertEqual(evidence["status"],"ERRO_TECNICO_LEITURA_REGISTRO")
 
 
 if __name__ == "__main__":

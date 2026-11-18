@@ -745,3 +745,6 @@ Candidata 3.26.70-PRECAMPO-EXPERIMENTAL; regressão/handoff anteriores aprovados
 O autoteste Windows anterior detectou bloqueio técnico da rota FH/GTDX no EXE. A investigação localizou a causa no workflow: a etapa de prova MAAP tinha o segredo ESA configurado, mas o processo de aceite do executável não o recebia. O passo de aceite agora recebe o token offline por variável protegida; o pipeline utiliza essa variável quando não há token explícito. Erros de autenticação permanecem técnicos e não são tratados como ausência de cobertura. Sem alteração de métodos, profundidade ou fontes do carbono do solo.
 
 A candidata 3.26.71 aguarda os gates finais no novo SHA.
+
+### Nota de checkpoint V88.160 (18/11/2026)
+Esta alteração é restrita à consulta e apresentação de referências de inventários para biomassa aérea e estrutura horizontal. Não modifica fontes, métodos, profundidade, equações ou incerteza do carbono do solo. A candidata 3.26.72 ainda aguarda gates completos.
