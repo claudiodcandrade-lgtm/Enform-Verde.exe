@@ -707,3 +707,8 @@ A homologação científica independente permanece reprovada por ausência de va
 ## Nota V88.144 (18/11/2026)
 
 O compartimento solo e seus métodos não mudam. A regra sistêmica que afeta a apresentação do total mantém a estimativa AGB prioritária separada das referências CCI/IFN. Erro técnico na rota ESA BIOMASS FH não pode promover CCI ou inventários a estimativa selecionada; a auditoria deve identificar causa, rota e estado incompleto. Permanecem as regras de incerteza e de não somar referências independentes.
+
+
+## Nota V88.144a (18/11/2026)
+
+O workflow live do handoff SAR inclui mudanças em `sar_pipeline.py` nos gatilhos push/PR, para validar a saída de carbono que alimenta os relatórios junto das alterações de prioridade de AGB. Sem alteração metodológica do solo.

@@ -628,3 +628,8 @@ Manter pré-campo/experimental. O gate de homologação científica independente
 - A seleção CCI agora exige rota ESA FH auditada, completa e sem erro, e ausência de modelo FH×estrutura horizontal aplicável; sem pixels FH, exige certificado de ausência sem erro em FH e GTDX. Com falha, preservar candidato CCI apenas na auditoria e retornar erro/motivo, sem promovê-lo.
 - Incluído teste de integração com falha FH e CCI disponível, além de contratos do gate de prioridade. Focado passou localmente. Suíte completa local (1.039 testes) e checker não puderam ser aprovados neste container: faltam geopandas/rasterio/shapely e base IFN materializada; houve erros/falhas ambientais. Windows com dependências completas deve ser a autoridade do teste integral.
 - Nova candidata `3.26.67-PRECAMPO-EXPERIMENTAL`. Não liberar antes de todos os gates técnicos no SHA documental final. Não confundir erro de script com ausência real de cenas nem declarar homologação científica/validação da fazenda.
+
+
+### Reforço do gate live V88.144a
+
+O workflow de integração SAR→uso da terra→carbono→dashboard deve disparar também quando `sar_pipeline.py` mudar. Esse gatilho foi incluído em `push` e `pull_request` para que alterações no seletor FH/CCI não escapem ao ensaio live. O teste live ainda precisa passar no SHA final antes de considerar a candidata validada.
