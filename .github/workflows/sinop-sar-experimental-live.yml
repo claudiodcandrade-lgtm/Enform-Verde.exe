@@ -43,6 +43,12 @@ jobs:
         run: python -m pip install -U -r requirements_desktop.txt 'scikit-learn==1.8.0'
       - name: Reproduce bounded VV/VH window and provisional-domain contracts
         run: python -m unittest tests.test_sar_lemplus_windowed_real_raster -v
+      - name: Materialize expanded IFN trees and exact IBGE fitofisionomy crosswalk
+        timeout-minutes: 20
+        run: |
+          python tools/harvest_ifn_dap10_2025.py
+          python tools/ingest_official_inventory_microdata.py
+          python tools/build_ifn_ibge_crosswalk.py
       - name: Run live SAR through land-use, native-carbon and dashboard handoff on Sinop sample and Tapajos KML
         timeout-minutes: 110
         run: python tools/live_sinop_semantic_sar.py acceptance/Teste_SAR_Biomassa_Tapajos.kmz

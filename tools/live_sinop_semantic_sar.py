@@ -59,6 +59,8 @@ def summarize_crop_forecast(crop_audit, lines, *, as_of, current_mask=False):
             "forecast_render_reason": entry.get("forecast_render_reason"),
             "forecast_inputs": entry.get("forecast_inputs"),
             "vigor_model_audit": vigor_audit,
+            "crop_specific_vigor": entry.get("crop_specific_vigor"),
+            "vigor_observation": entry.get("vigor"),
             "vigor_usable_for_municipal_yield": entry.get("vigor_usable_for_municipal_yield"),
             "transfer_uncertainty": entry.get("transfer_uncertainty"),
         }
@@ -73,6 +75,7 @@ def summarize_crop_forecast(crop_audit, lines, *, as_of, current_mask=False):
         "status": status,
         "as_of": as_of.isoformat(),
         "mask_is_current_semantic_classification": bool(current_mask),
+        "current_sar_candidate_vigor": (crop_audit or {}).get("current_sar_candidate_vigor"),
         "crops": crop_summary,
         "lines": lines,
         "interpretation": (
@@ -187,6 +190,21 @@ def _run_full_handoff(label, aoi):
                 "uncertainty":c.get("uncertainty"),"obs":c.get("obs")}
                 for c in st.get("components",[])]} for st in strata],
         "uncertainty_note":native.get("uncertainty_note"),
+        "height_inventory_routes":[{
+            "class_name":st.get("class_name"),
+            "height_mean_m":(st.get("sar_details") or {}).get("height_mean_m"),
+            "height_n_valid_pixels":(st.get("sar_details") or {}).get("height_n_valid_pixels"),
+            "height_metric":(st.get("sar_details") or {}).get("height_metric"),
+            "height_route_status":(st.get("sar_details") or {}).get("height_route_status"),
+            "fh_download_audit":{
+                k:((st.get("sar_details") or {}).get("audit") or {}).get("biomass_height",{}).get(k)
+                for k in ("available","fh_items","pixel_read_complete","valid_pixel_count",
+                          "technical_error_count","reason")},
+            "height_structure_model":(st.get("sar_details") or {}).get("height_structure_model"),
+            "inventory_agb_comparison":(st.get("sar_details") or {}).get("inventory_agb_comparison"),
+            "official_agb_product_comparison":(st.get("sar_details") or {}).get("official_agb_product_comparison"),
+            "agb_selection_reason":(st.get("sar_details") or {}).get("agb_selection_reason"),
+        } for st in strata],
         "exception":report.get("carbon_stage_exception")}
     report["dashboard"]={
         "status":dashboard.get("status"),

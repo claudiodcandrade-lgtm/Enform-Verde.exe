@@ -26,6 +26,7 @@ class SinopLiveScopeTests(unittest.TestCase):
         from datetime import date
         report = summarize_crop_forecast({"crops": {
             "Soja": {"forecast_status": "ok",
+                     "crop_specific_vigor": {"status":"N/D","reason":"sem cena atual"},
                      "forecast_inputs": {"vigor_model_audit": {
                          "used_in_yield_distribution": False,
                          "reason": "sem cena contemporânea"}},
@@ -39,6 +40,8 @@ class SinopLiveScopeTests(unittest.TestCase):
         self.assertFalse(report["mask_is_current_semantic_classification"])
         self.assertEqual(report["crops"]["Soja"]["vigor_model_audit"]["reason"],
                          "sem cena contemporânea")
+        self.assertEqual(report["crops"]["Soja"]["crop_specific_vigor"]["reason"],
+                         "sem cena atual")
 
     def test_live_forecast_never_claims_vigor_without_model_confirmation(self):
         from datetime import date
