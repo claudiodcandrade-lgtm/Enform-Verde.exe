@@ -44,12 +44,12 @@ def _usable_dated_vigor(vigor, as_of, *, max_age_days=30):
 
     stamps = []
     for item in vigor.get("accepted_scenes") or []:
-        if isinstance(item, dict) and item.get("acquisition_utc"):
+        if isinstance(item, dict) and item.get("scene_id") and item.get("acquisition_utc"):
             stamps.append(item["acquisition_utc"])
-    if vigor.get("acquisition_utc"):
+    if vigor.get("scene_id") and vigor.get("acquisition_utc"):
         stamps.append(vigor["acquisition_utc"])
     if not stamps:
-        return False, "vigor sem data de aquisição SAR"
+        return False, "vigor sem identidade de cena e data de aquisição SAR"
     cutoff = datetime.combine(as_of, datetime.max.time()).replace(tzinfo=timezone.utc)
     valid = []
     for stamp in stamps:

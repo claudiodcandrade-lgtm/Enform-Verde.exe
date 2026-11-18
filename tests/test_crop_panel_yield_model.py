@@ -106,6 +106,7 @@ class ArtifactTests(unittest.TestCase):
             ({**base, "probabilities": {"baixo vigor": .2, "vigor adequado": .2,
                                         "alto vigor": .2}}, "não normalizadas"),
             ({k: v for k, v in base.items() if k != "acquisition_utc"}, "sem data"),
+            ({k: v for k, v in base.items() if k != "scene_id"}, "identidade de cena"),
         ):
             ok, reason = _usable_dated_vigor(changed, as_of)
             self.assertFalse(ok)
