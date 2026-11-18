@@ -102,6 +102,17 @@ def _date_iso(value):
     return normalize_inventory_date(value)
 
 
+def _update_date_bounds(summary, date_value):
+    """Update ISO min/max while safely ignoring blank or unparsed dates."""
+    if not date_value:
+        return
+    date_value = str(date_value)
+    if summary.get("date_min") is None or date_value < summary["date_min"]:
+        summary["date_min"] = date_value
+    if summary.get("date_max") is None or date_value > summary["date_max"]:
+        summary["date_max"] = date_value
+
+
 def _schema(conn):
     conn.executescript("""
     PRAGMA journal_mode=WAL;
@@ -223,8 +234,7 @@ def ingest_ifn(conn, manifest):
                 s["height_n"] += 1
             if values["measurement_date"]:
                 date_value = _date_iso(values["measurement_date"])
-                s["date_min"] = min(s["date_min"], date_value) if s["date_min"] else date_value
-                s["date_max"] = max(s["date_max"], date_value) if s["date_max"] else date_value
+                _update_date_bounds(s, date_value)
             if s["static"] is None:
                 s["static"] = {k: values[k] for k in (
                     "lot_code", "biome", "municipality", "ua_center_lon", "ua_center_lat")}
