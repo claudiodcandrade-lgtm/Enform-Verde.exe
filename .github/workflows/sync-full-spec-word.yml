@@ -66,7 +66,7 @@ jobs:
           else
             python tools/update_spec_docx.py \
               --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
-              --entry docs/spec_updates/2026-11-18_v88_155_all_inventory_sources_fh_calibration.md \
+              --entry docs/spec_updates/2026-11-18_v88_155_fh_model_status_correction.md \
               --baseline "Enform Verde 3.26.71-PRECAMPO-EXPERIMENTAL (V88.155 correction of FH availability diagnostics)" \
               --head-sha "${{ github.sha }}" \
               --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
