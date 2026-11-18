@@ -13,7 +13,7 @@
 
 ## Estado
 
-Versão experimental e não homologada. A regressão completa executou 1.260 testes e reportou cinco problemas (quatro falhas e um erro): o workflow não materializava o cruzamento IFN–IBGE antes dos testes, uma mensagem de vigor não preservava a expressão “sem data” e uma asserção ignorava erro de reprojeção inferior a 1e-6 ha. Correções já preparadas; a regressão e os gates Windows no novo SHA ainda precisam concluir. Não distribuir como versão corrigida antes da aprovação desses gates e da execução com o KML privado integral.
+Versão experimental e não homologada. A execução Windows no SHA anterior `50431f39eeb2570e7b7320137277710090885761` concluiu 1.261 testes e encontrou dois erros em fixtures incompletos dos contratos do painel de previsão (ambos abortavam na formatação por falta de campos). Isso não é uma falha comprovada do modelo de vigor, mas impede aprovar aquele resultado. O commit `137cd80e940b126d803c4b8c2ac2c9957e4e2159` corrige os fixtures e preserva a auditoria antes de formatar. A nova regressão/build Windows e os demais gates ainda precisam concluir; não distribuir como versão corrigida até verificar a execução do SHA novo e testar a geometria privada integral.
 
 
 ### V88.132 — correções verificadas na regressão
@@ -27,3 +27,9 @@ Versão experimental e não homologada. A regressão completa executou 1.260 tes
 - O painel agora consulta a auditoria emitida pela previsão (`used_in_yield_distribution`) para informar se o vigor efetivamente entrou na distribuição Monte Carlo. Uma lista de cenas sem identidade/data válida não basta.
 - Cena sem `scene_id` e `acquisition_utc` válida é recusada na entrada do modelo; o painel informa N/D/motivo e não apresenta vigor como aplicado.
 - Adicionada regressão da primeira ponta: saída do monitoramento → forecast → trilha executiva, incluindo cena sem ID. O runner do novo SHA está pendente.
+
+
+### V88.135 — isolamento da formatação e auditoria de altura FH
+- Corrigidos os dois fixtures incompletos que causavam erros no teste do painel. A aplicação grava previsão, proveniência e trilha de uso do vigor antes da renderização textual, preservando-as se o formatador falhar.
+- A consulta de catálogo discrimina FH `FP_FH__L2A`/`FP_FH__L2B`, cenas L1C e consultas/paginação incompletas. Encontrar produto não equivale a ler pixels ou integrar altura à estimativa de carbono; ausência de L2B não é ausência demonstrada de altura.
+- A validação do novo commit `137cd80e940b126d803c4b8c2ac2c9957e4e2159` ainda depende dos workflows em andamento. A versão permanece experimental, sem alegação de funcionamento completo do vigor ou FH→carbono, sem build aprovado e sem homologação científica.

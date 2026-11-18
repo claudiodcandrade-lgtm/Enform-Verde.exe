@@ -669,3 +669,7 @@ Versão candidata: `3.26.64-PRECAMPO-EXPERIMENTAL`.
 # Nota de integração V88.131 (17/11/2026)
 
 A auditoria do carbono nativo preserva a proveniência por estrato e não deve reportar como “IFN não carregado” uma consulta IFN concluída. A correção não altera os métodos, fontes, profundidades ou incertezas do compartimento de carbono do solo descritos nesta especificação. Os diagnósticos de altura FH e imagem óptica permanecem fora do método de solo.
+
+## Nota V88.135 (17/11/2026)
+
+A correção da auditoria e formatação do painel agrícola não modifica as fontes, profundidades, modelos ou incertezas de carbono do solo especificados neste documento. Sua inclusão atende à sincronização documental da candidata 3.26.65, sem alterar os cálculos do compartimento solo.
