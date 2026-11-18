@@ -1664,7 +1664,9 @@ class App(tk.Tk):
                 selected.append(line)
             if len(selected)>=limit:
                 break
-        return "\n".join(selected) if selected else "Dados executivos ainda indisponíveis; consulte a auditoria para o motivo."
+        # If a report's preferred headings change, still show its opening
+        # result lines instead of leaving the executive card blank.
+        return "\n".join(selected or lines[:limit]) if lines else "Dados executivos ainda indisponíveis; consulte a auditoria para o motivo."
 
     def _project(self):
         f=self.tabs[0]; ttk.Label(f,text="Abrir análise",style="H.TLabel").grid(row=0,column=0,columnspan=4,sticky="w")
@@ -3009,50 +3011,9 @@ class App(tk.Tk):
                     card=self._executive_excerpt("\n".join(executive),
                         ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:",
                          "Produtividade estimada no momento dessa análise:","Produção provável:"))
-                    vigor_lines=[]
-                    for crop_name,entry in (fc_audit.get("crops") or {}).items():
-                        if not isinstance(entry,dict):
-                            continue
-                        inputs=entry.get("forecast_inputs") or {}
-                        model_audit=(entry.get("vigor_model_audit") or
-                                     inputs.get("vigor_model_audit") or {})
-                        used=model_audit.get("used_in_yield_distribution") is True
-                        observation=(entry.get("crop_specific_vigor") or
-                                     entry.get("vigor_observation") or
-                                     entry.get("vigor") or {})
-                        probabilities=(model_audit.get("probabilities_used") or
-                                       observation.get("probabilities") or {})
-                        prob_text=", ".join(
-                            str(label)+": "+format_ptbr(value*100,0)+"%"
-                            for label,value in probabilities.items()
-                            if isinstance(value,(int,float)))
-                        sample_area=observation.get("sample_area_ha")
-                        coverage=observation.get("sar_sample_coverage_fraction")
-                        accepted=observation.get("accepted_scenes") or []
-                        sample_audit=observation.get("sample_audit") or []
-                        scene=(accepted[0] if accepted else
-                               ((sample_audit[0].get("scene_id") and sample_audit[0]) or {}))
-                        scene_date=str(scene.get("acquisition_utc") or "data N/D")
-                        mask_season=str(inputs.get("crop_mask_season") or "safra N/D")
-                        line=(str(crop_name)+": vigor "+
-                              str(observation.get("class") or observation.get("status") or "N/D")+
-                              "; participação na distribuição PAM×clima: "+
-                              ("SIM, condicional" if used else "NÃO confirmada"))
-                        if prob_text:
-                            line+="; probabilidades: "+prob_text
-                        if isinstance(sample_area,(int,float)):
-                            line+="; amostra: "+format_ptbr(sample_area,2)+" ha"
-                        if isinstance(coverage,(int,float)):
-                            line+=" ("+format_ptbr(coverage*100,2)+"% da máscara)"
-                        line+="; cena: "+scene_date+"; máscara: "+mask_season
-                        vigor_lines.append(line)
-                    if not vigor_lines:
-                        candidate=fc_audit.get("current_sar_candidate_vigor") or {}
-                        vigor_lines.append("Vigor SAR: "+
-                            str(candidate.get("class") or candidate.get("reason") or
-                                candidate.get("status") or "N/D")+
-                            "; uso na previsão por cultura: não confirmado.")
-                    card+="\n\nVIGOR SAR E EFEITO NA PREVISÃO\n"+"\n".join(vigor_lines)
+                    from crop_vigor_dashboard_summary import crop_vigor_dashboard_lines
+                    card+="\n\nVIGOR SAR E EFEITO NA PREVISÃO\n"+"\n".join(
+                        crop_vigor_dashboard_lines(fc_audit,format_ptbr))
                     self.crop_exec_var.set(card)
                 self._set(self.crop_res,"\n".join(executive))
                 self._set(self.crop_audit,"\n".join(audit_text))
