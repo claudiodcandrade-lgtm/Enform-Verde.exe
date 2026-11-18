@@ -79,9 +79,18 @@ class MonitoringTests(unittest.TestCase):
         self.assertEqual(audit["current_crop_identification"], "N/D")
 
 class AutomaticVigorGuardTests(unittest.TestCase):
+    @staticmethod
+    def _complete_empty_search_result():
+        return {"scenes": [], "scene_count": 0, "pagination_complete": True,
+                "providers": [
+                    {"provider": "MPC", "status": "OK", "pagination_complete": True},
+                    {"provider": "INPE", "status": "OK", "pagination_complete": True}],
+                "queried_at_utc": "2026-11-17T00:00:00Z"}
+
     def test_no_scene_is_nd(self):
         g = gpd.GeoDataFrame(geometry=[box(-55.72, -12.52, -55.70, -12.50)], crs=4326)
-        r = automatic_vigor(g, date(2026, 10, 31), 39, search=lambda *a, **k: {"scenes": []}, token_fn=lambda: "x")
+        r = automatic_vigor(g, date(2026, 10, 31), 39,
+                            search=lambda *a, **k: self._complete_empty_search_result(), token_fn=lambda: "x")
         self.assertEqual(r["status"], "N/D"); self.assertIn("sem cena Sentinel-1", r["reason"])
 
     def test_default_vigor_search_uses_full_owner_limit_of_30_days(self):
@@ -89,7 +98,7 @@ class AutomaticVigorGuardTests(unittest.TestCase):
         captured={}
         def search(_geometry,*,start_utc,end_utc):
             captured.update(start=start_utc,end=end_utc)
-            return {"scenes":[]}
+            return self._complete_empty_search_result()
         r=automatic_vigor(g,date(2026,11,12),"Soja",search=search,token_fn=lambda:"x")
         self.assertEqual(r["status"],"N/D")
         self.assertEqual((captured["end"]-captured["start"]).total_seconds(),30*86400)

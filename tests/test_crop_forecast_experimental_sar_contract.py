@@ -4,7 +4,7 @@ conditional scenarios, but never misrepresented as current verified fields.
 import tempfile
 from pathlib import Path
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 from unittest.mock import patch
 import geopandas as gpd
 from shapely.geometry import box
@@ -122,7 +122,7 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
                     micro_fn=lambda _g:{"dominant":{"code":"51006","name":"Alto Teles Pires"}})
             self.assertIn("fields",called,"máscara SAR anual não pode ser bloqueada antes do modelo")
             self.assertEqual(called["fields"][0]["crop"],"Soja")
-            self.assertEqual(called["fields"][0]["vigor"]["status"],"N/D")
+            self.assertEqual(called["fields"][0]["vigor"]["status"],"experimental")
             self.assertEqual(audit["crops"]["Soja"]["transfer_uncertainty"],"NAO_QUANTIFICADA")
             inputs=audit["crops"]["Soja"]["forecast_inputs"]
             self.assertEqual(inputs["crop_mask_source"],"SAR_EXPERIMENTAL_ANUAL")
