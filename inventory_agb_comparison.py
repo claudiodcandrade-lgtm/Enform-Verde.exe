@@ -86,6 +86,91 @@ def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
     return rows
 
 
+def published_structural_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
+    """Return published horizontal-structure summaries for exact domains.
+
+    Aggregate-only publications are valid regional/physiognomic references,
+    but are not plot observations and cannot calibrate a SAR model on their
+    own. Each source, campaign, stratum and metric remains a separate record.
+    """
+    rows=[]; seen=set()
+    try:
+        with Path(path).open(encoding="utf-8-sig", newline="") as stream:
+            for row in csv.DictReader(stream):
+                metric=_norm(row.get("metric"))
+                if metric in {"agb", "totalbiomass", "carbon", "agc"}:
+                    continue
+                if (_norm(row.get("biome")) != _norm(biome)
+                        or _norm(row.get("physiognomy")) != _norm(physiognomy)):
+                    continue
+                center=_optional_float(row.get("center"))
+                if center is None or center < 0:
+                    continue
+                key=(row.get("source_id"),row.get("region"),row.get("metric"),
+                     row.get("center_type"),center,row.get("citation"))
+                if key in seen: continue
+                seen.add(key)
+                rows.append({"status":"REFERENCIA_ESTRUTURAL_AGREGADA_PUBLICADA",
+                    "source_id":row.get("source_id"),
+                    "institution":row.get("institution"),
+                    "biome":row.get("biome"),"physiognomy":row.get("physiognomy"),
+                    "region":row.get("region"),"metric":row.get("metric"),
+                    "unit":row.get("unit"),"center_type":row.get("center_type"),
+                    "center":center,"sd":_optional_float(row.get("sd")),
+                    "se":_optional_float(row.get("se")),
+                    "ci95_low":_optional_float(row.get("ci95_low")),
+                    "ci95_high":_optional_float(row.get("ci95_high")),
+                    "iqr_low":_optional_float(row.get("iqr_low")),
+                    "iqr_high":_optional_float(row.get("iqr_high")),
+                    "range_low":_optional_float(row.get("range_low")),
+                    "range_high":_optional_float(row.get("range_high")),
+                    "n_plots":row.get("n_plots"),"n_sites":row.get("n_sites"),
+                    "citation":row.get("citation"),"url":row.get("url"),
+                    "statistical_use":row.get("statistical_use"),
+                    "not_plot_level_data":True,"not_added_to_stock_total":True})
+    except (OSError,csv.Error):
+        return []
+    return rows
+
+
+def published_inventory_evidence(*, biome, physiognomy, path=AGGREGATE_PANEL):
+    """Compact, auditable AGB and horizontal-reference bundle for pipeline reports."""
+    try:
+        with Path(path).open(encoding="utf-8-sig",newline="") as stream:
+            reader=csv.DictReader(stream)
+            required={"source_id","biome","physiognomy","metric","center"}
+            if not required.issubset(set(reader.fieldnames or [])):
+                raise csv.Error("required evidence columns are missing")
+            list(reader)  # Force parsing now so malformed data is not reported as an empty domain.
+    except (OSError,csv.Error) as exc:
+        return {"status":"ERRO_TECNICO_LEITURA_REGISTRO",
+            "diagnostic":type(exc).__name__,"agb_references":[],
+            "horizontal_structure_references":[],"agb_reference_count":0,
+            "horizontal_reference_count":0,"sources":[],
+            "use_when_plot_microdata_unavailable":None,
+            "uncertainty_rule":None,"not_added_to_stock_total":True}
+    agb=published_agb_references(biome=biome,physiognomy=physiognomy,path=path)
+    horizontal=published_structural_references(
+        biome=biome,physiognomy=physiognomy,path=path)
+    return {
+        "status":"REFERENCIAS_PUBLICADAS_LISTADAS" if agb or horizontal else "SEM_REFERENCIA_EXATA",
+        "matching":"bioma e fitofisionomia normalizados exatamente; sem extrapolação implícita",
+        "agb_references":agb,
+        "horizontal_structure_references":horizontal,
+        "agb_reference_count":len(agb),
+        "horizontal_reference_count":len(horizontal),
+        "sources":sorted({str(row.get("source_id")) for row in agb+horizontal
+                          if row.get("source_id")}),
+        "use_when_plot_microdata_unavailable":(
+            "baliza regional/fitofisionômica e checagem de plausibilidade; não equivale a parcela, "
+            "pareamento pixel-parcela nem validação independente"),
+        "uncertainty_rule":(
+            "preservar SD/SE/IC/faixas publicados; se ausentes, marcar incerteza da referência como N/D; "
+            "não inferir erro-padrão a partir de média ou n sem desenho e variância"),
+        "not_added_to_stock_total":True,
+    }
+
+
 def _estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
                                 centroid_lon, centroid_lat,
                                 max_distance_km=250.0, max_units=5):
@@ -243,6 +328,7 @@ def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
         result={"status":"N/D","reason":"COMPARACAO_IFN_NAO_CONCLUIDA",
                 "diagnostic":type(exc).__name__}
     published=published_agb_references(biome=biome,physiognomy=physiognomy)
+    structural=published_structural_references(biome=biome,physiognomy=physiognomy)
     refs=list(result.get("inventory_references") or [])
     seen={(r.get("source_id"),r.get("region"),r.get("citation")) for r in refs}
     for ref in published:
@@ -257,6 +343,10 @@ def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
         result["status"]="N/D"
         result["reason"]=result.get("reason") or "SEM_REFERENCIAS_DE_AGB_COMPATIVEIS_NA_BASE_UTILIZAVEL"
     result["inventory_references"]=refs
+    result["published_structural_references"]=structural
+    result["published_structural_reference_count"]=len(structural)
+    result["matched_published_structural_sources"]=sorted({
+        str(ref.get("source_id")) for ref in structural if ref.get("source_id")})
     result["published_aggregate_count"]=len(published)
     usable_sources={
         str(ref.get("source_id")) for ref in refs if ref.get("source_id")}
@@ -267,7 +357,8 @@ def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
     # was consulted or that the published inventory register was skipped.
     result["inventory_sources_searched"]=[
         "IFN_EXPANDED_TREE_MICRODATA","SFB_IFN_DAP10_AGB_PANEL",
-        "HARMONIZED_PUBLISHED_AGB_REGISTER"]
+        "HARMONIZED_PUBLISHED_AGB_REGISTER",
+        "HARMONIZED_PUBLISHED_STRUCTURAL_REGISTER"]
     result["registered_published_inventory_sources"]=_published_aggregate_source_ids()
     result["matched_published_inventory_sources"]=sorted({
         str(ref.get("source_id")) for ref in published if ref.get("source_id")})
