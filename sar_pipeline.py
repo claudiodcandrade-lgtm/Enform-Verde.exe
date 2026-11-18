@@ -9,6 +9,15 @@ from structural_evidence import StructuralEvidence, evidence_se, random_effects_
 from carbon_compartments import tapajos_litter_stock_component
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
+def _priority_height_route_state(*, cci_eligible, valid_height_pixels):
+    """Separate valid FH with no AGB model from a failed priority SAR route."""
+    if cci_eligible:
+        return {"status":"ROTA_PRIORITARIA_RESOLVIDA","technical_error":False,"cci_promoted":True}
+    if int(valid_height_pixels or 0)>0:
+        return {"status":"FH_DISPONIVEL_AGB_MODELO_NAO_DISPONIVEL","technical_error":False,"cci_promoted":False}
+    return {"status":"ERRO_TECNICO_ROTA_PRIORITARIA","technical_error":True,"cci_promoted":False}
+
+
 MODEL_REGISTRY=[
 {"id":"ESA_BIOMASS_FP_AGB_L2B","biome":"*","physiognomy":"florestas no domínio válido do produto ESA","domain":"ESA BIOMASS Level-2B AGB; usar AGB e AGB_Std_Dev do produto, sem recalibrar como backscatter","bands":["P"],"sensor":"ESA BIOMASS P-band","algorithm":"produto geofísico oficial L2B","predictors":["AGB"],"coefficients":None,"validation":"usar metadados, máscaras/nodata e incerteza do ativo/versionamento; isso não substitui validação local","institution":"ESA","executable":True,"execution_mode":"direct_product","constraints":"exigir FP_AGB_L2B e cobertura da AOI; usar apenas pixels válidos conforme o ativo; reportar AGB_Std_Dev como incerteza fornecida pelo produto, nunca como erro local de validação; FP_FH__L2B é altura, não AGB"},
 {"id":"ESA_CCI_BIOMASS_V7","biome":"*","physiognomy":"cobertura florestal global","domain":"mapa AGB CCI v7; série 2005–2012 e 2015–2024; produto EO multissensor","bands":["L","C"],"sensor":"ALOS-2 PALSAR-2 + Sentinel-1","algorithm":"BIOMASAR-L/BIOMASAR-C + fusão","predictors":["AGB"],"coefficients":None,"validation":"incerteza do produto CCI","institution":"ESA CCI Biomass","executable":True,"execution_mode":"direct_product","constraints":"produto histórico; não rotular como P-band nem como estimativa local calibrada"},
@@ -2407,9 +2416,17 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 pr["uncertainty_kind"]="média zonal da camada AGB_SD do ESA CCI; desvio-padrão do produto, não erro local de validação"
             return _preserve_sar_canopy_height(pr,sar_height,audit)
         if not cci_gate["eligible"]:
-            audit["priority_height_route_gate"]={"status":"ERRO_TECNICO_ROTA_PRIORITARIA",
-                "reason":cci_gate["reason"],"cci_candidate_available":bool(cci.get("paths")),
-                "cci_promoted":False}
+            route_state=_priority_height_route_state(
+                cci_eligible=False,
+                valid_height_pixels=(sar_height or {}).get("height_n_valid_pixels"))
+            if route_state["status"]=="FH_DISPONIVEL_AGB_MODELO_NAO_DISPONIVEL":
+                audit["priority_height_route_gate"]={"status":route_state["status"],
+                    "reason":"Pixels FH válidos foram lidos; ESA CCI permanece bloqueado. Não há modelo AGB compatível aplicado a este domínio.",
+                    "cci_candidate_available":bool(cci.get("paths")),"cci_promoted":False}
+            else:
+                audit["priority_height_route_gate"]={"status":route_state["status"],
+                    "reason":cci_gate["reason"],"cci_candidate_available":bool(cci.get("paths")),
+                    "cci_promoted":False}
             if cci.get("paths"):
                 audit["cci"]["selection_status"]="ADIADA_ERRO_OU_AUSENCIA_NAO_COMPROVADA_NA_ROTA_PRIORITARIA"
                 audit["cci"]["selection_reason"]=cci_gate["reason"]
@@ -2453,11 +2470,14 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
         lit["sar_processed"]=False
         lit["sar_pixel_audit"]=[]
     auxiliary_sar=bool(audit.get("processed_without_agb"))
-    priority_route_error=bool(isinstance(cci_gate,dict) and not cci_gate.get("eligible"))
+    priority_route_state=_priority_height_route_state(
+        cci_eligible=bool(isinstance(cci_gate,dict) and cci_gate.get("eligible")),
+        valid_height_pixels=(sar_height or {}).get("height_n_valid_pixels"))
+    priority_route_error=priority_route_state["technical_error"]
     has_processed_sar=bool(auxiliary_sar or sar_height)
     result={"status":("ERRO_TECNICO_ROTA_PRIORITARIA" if priority_route_error and not has_processed_sar else
                        "SAR_PROCESSADO_SEM_MODELO_AGB" if auxiliary_sar or sar_height else "SAR_NAO_PROCESSADO"),
-            "priority_height_route_status":("ERRO_TECNICO_ROTA_PRIORITARIA" if priority_route_error else "ROTA_PRIORITARIA_RESOLVIDA"),
+            "priority_height_route_status":priority_route_state["status"],
             "agb_mg_ha":None,"uncertainty_mg_ha":None,
             "data_origin":("SAR_ALTURA_SEM_MODELO_AGB" if sar_height else
                            "SAR_ATRIBUTOS_ESTRATIFICADORES" if auxiliary_sar else "SAR_NAO_PROCESSADO"),

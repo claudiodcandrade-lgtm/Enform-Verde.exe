@@ -64,6 +64,19 @@ class SarHeightAgreementTests(unittest.TestCase):
         self.assertIn("cmr.earthdata.nasa.gov",session.calls[0])
         self.assertFalse(any(url.startswith("s3://") for url in session.calls))
 
+    def test_valid_fh_pixels_are_not_misreported_as_technical_route_failure(self):
+        from sar_pipeline import _priority_height_route_state
+        out=_priority_height_route_state(cci_eligible=False, valid_height_pixels=1512)
+        self.assertEqual(out["status"],"FH_DISPONIVEL_AGB_MODELO_NAO_DISPONIVEL")
+        self.assertFalse(out["technical_error"])
+        self.assertFalse(out["cci_promoted"])
+
+    def test_unresolved_height_route_remains_a_failure(self):
+        from sar_pipeline import _priority_height_route_state
+        out=_priority_height_route_state(cci_eligible=False, valid_height_pixels=0)
+        self.assertEqual(out["status"],"ERRO_TECNICO_ROTA_PRIORITARIA")
+        self.assertTrue(out["technical_error"])
+
     def test_gtdx_height_rejects_negative_error(self):
         from sar_pipeline import _gtdx_height_summary
         with self.assertRaises(ValueError):
