@@ -118,11 +118,13 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
                     "interval_note":"fixture"}}}
             with patch("crop_panel_yield_model.load_artifact",return_value={"crops":{"Soja":{}}}):
                 lines,audit=monitoring_forecast(
-                    frame,land,as_of=date(2026,11,15),forecast_fn=forecast,
+                    frame,land,as_of=date(2026,11,15),
+                    vigor_fn=lambda *_args: {"status":"N/D","reason":"fixture sem cena SAR atual"},
+                    forecast_fn=forecast,
                     micro_fn=lambda _g:{"dominant":{"code":"51006","name":"Alto Teles Pires"}})
             self.assertIn("fields",called,"máscara SAR anual não pode ser bloqueada antes do modelo")
             self.assertEqual(called["fields"][0]["crop"],"Soja")
-            self.assertEqual(called["fields"][0]["vigor"]["status"],"experimental")
+            self.assertEqual(called["fields"][0]["vigor"]["status"],"N/D")
             self.assertEqual(audit["crops"]["Soja"]["transfer_uncertainty"],"NAO_QUANTIFICADA")
             inputs=audit["crops"]["Soja"]["forecast_inputs"]
             self.assertEqual(inputs["crop_mask_source"],"SAR_EXPERIMENTAL_ANUAL")
