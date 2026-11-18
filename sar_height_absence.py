@@ -9,16 +9,22 @@ def build_height_absence_certificate(esa_search_audit, esa_height_result, gtdx_r
         q.get("catalog_search_complete") is True and q.get("pagination_complete") is True
         and q.get("technical_error_count")==0 for q in fh_queries))
     esa_empty=bool(esa_search_ok and all(q.get("matching_product_count")==0 for q in fh_queries))
-    esa_read_ok=(esa_empty or bool((esa_height_result or {}).get("pixel_read_complete") is True
-        and (esa_height_result or {}).get("technical_error_count")==0
-        and (esa_height_result or {}).get("valid_pixel_count")==0))
+    height_result=esa_height_result or {}
+    height_errors=height_result.get("technical_error_count")
+    if height_errors is None:
+        height_errors=len(height_result.get("errors") or [])
+    esa_read_ok=(esa_empty or bool(height_result.get("pixel_read_complete") is True
+        and int(height_errors or 0)==0
+        and isinstance(height_result.get("valid_pixel_count"),int)
+        and height_result.get("valid_pixel_count") >= 0))
     esa_route={"route":"ESA_BIOMASS_FH","configured":True,
         "catalog_search_complete":esa_search_ok,"pagination_complete":esa_search_ok,
         "pixel_read_complete":esa_read_ok,
-        "coverage_absence_confirmed":esa_empty and esa_read_ok,
-        "valid_pixel_count":0 if esa_empty and esa_read_ok else (esa_height_result or {}).get("valid_pixel_count"),
+        "coverage_absence_confirmed":bool(esa_empty and esa_read_ok
+            and int(height_errors or 0)==0),
+        "valid_pixel_count":0 if esa_empty and esa_read_ok else height_result.get("valid_pixel_count"),
         "technical_error_count":sum(int(q.get("technical_error_count") or 0) for q in fh_queries)
-            +int((esa_height_result or {}).get("technical_error_count") or 0)}
+            +int(height_errors or 0)}
     gtdx=gtdx_result or {}
     gtdx_empty=(gtdx.get("catalog_search_complete") is True
         and gtdx.get("pagination_complete") is True

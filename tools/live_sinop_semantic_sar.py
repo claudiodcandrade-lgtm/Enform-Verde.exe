@@ -5,6 +5,7 @@ This is explicitly NOT the Fazenda Maria Eduarda KML and does not prove
 contemporaneous 2026/27 conditions. Uses the last complete Oct-Sep season.
 """
 import json
+import os
 import sys
 import traceback
 from datetime import date, datetime, timezone
@@ -12,8 +13,6 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-import geopandas as gpd
-from shapely.geometry import box
 
 OUT=Path("sinop_sar_semantic_experimental")
 OUT.mkdir(exist_ok=True)
@@ -47,7 +46,45 @@ def summarize_sample_box(sample_box_area_ha, class_areas_ha):
     }
 
 
+def summarize_crop_forecast(crop_audit, lines, *, as_of, current_mask=False):
+    """Report vigor use only from the yield model's own audit contract."""
+    crop_entries = (crop_audit or {}).get("crops") or {}
+    crop_summary = {}
+    for crop, entry in crop_entries.items():
+        vigor_audit = (entry.get("vigor_model_audit") or
+                       (entry.get("forecast_inputs") or {}).get("vigor_model_audit") or {})
+        crop_summary[crop] = {
+            "forecast_status": entry.get("forecast_status"),
+            "forecast_render_status": entry.get("forecast_render_status"),
+            "forecast_render_reason": entry.get("forecast_render_reason"),
+            "forecast_inputs": entry.get("forecast_inputs"),
+            "vigor_model_audit": vigor_audit,
+            "vigor_usable_for_municipal_yield": entry.get("vigor_usable_for_municipal_yield"),
+            "transfer_uncertainty": entry.get("transfer_uncertainty"),
+        }
+    used_crops = [crop for crop, row in crop_summary.items()
+                  if (row.get("vigor_model_audit") or {}).get("used_in_yield_distribution") is True]
+    render_errors = [crop for crop, row in crop_summary.items()
+                     if row.get("forecast_render_status") == "ERRO_FORMATACAO"]
+    status = ("VIGOR_CONFIRMADO_NA_DISTRIBUICAO" if used_crops else
+              "ERRO_FORMATACAO_PREVISAO" if render_errors else
+              "PREVISAO_EXECUTADA_SEM_VIGOR_CONFIRMADO")
+    return {
+        "status": status,
+        "as_of": as_of.isoformat(),
+        "mask_is_current_semantic_classification": bool(current_mask),
+        "crops": crop_summary,
+        "lines": lines,
+        "interpretation": (
+            "Vigor só é considerado integrado quando vigor_model_audit.used_in_yield_distribution=true. "
+            "Máscara anual 2025/2026 é condicional e não confirma cultura atual."
+        ),
+    }
+
+
 def _load_aoi(path, label):
+    import geopandas as gpd
+    from shapely.geometry import box
     if path is None:
         if label != "Sinop":
             raise ValueError("AOI_PATH_REQUIRED_FOR_" + label.upper())
@@ -115,7 +152,9 @@ def _run_full_handoff(label, aoi):
     if not native_semantic:
         raise RuntimeError(label+": MASCARA_NATIVA_SAR_NAO_CHEGOU_AO_PONTO_DE_ENTRADA_DO_CARBONO")
     try:
-        native=native_carbon_analysis(aoi,land,"Amazônia")
+        native=native_carbon_analysis(
+            aoi,land,"Amazônia",
+            sar_options={"offline_token":os.environ.get("ESA_MAAP_OFFLINE_TOKEN","")})
     except Exception as exc:
         native=_native_carbon_failure_result(aoi,exc)
         report["carbon_stage_exception"]=type(exc).__name__+": "+str(exc)[:300]
@@ -156,7 +195,29 @@ def _run_full_handoff(label, aoi):
         "class_area_ha":semantic_payload.get("area_ha"),
         "analysis_run_id":dashboard.get("analysis_run_id"),
         "aoi_hash_sha256":dashboard.get("aoi_hash_sha256")}
+    # Exercise the first real-data hop into the agricultural dashboard as
+    # part of the same AOI run. A prior-season semantic crop mask may support
+    # only a conditional scenario; current SAR vigor must still be dated and
+    # explicitly audited by the yield model before the report says it was used.
+    if label == "Sinop_amostra_003graus":
+        from crop_monitoring_forecast import monitoring_forecast
+        try:
+            crop_lines, crop_audit = monitoring_forecast(aoi, land, as_of=date.today())
+            report["crop_forecast"] = summarize_crop_forecast(
+                crop_audit, crop_lines, as_of=date.today(), current_mask=current_applied)
+        except Exception as exc:
+            report["crop_forecast"] = {
+                "status":"ERRO_EXECUCAO_PREVISAO",
+                "as_of":date.today().isoformat(),
+                "error_type":type(exc).__name__,
+                "reason":str(exc)[:500],
+                "vigor_confirmed_in_yield_distribution":False}
+        (out/"crop_forecast_handoff.json").write_text(
+            json.dumps(report["crop_forecast"], ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8")
     report["execution_status"]="SAR_TO_LAND_USE_TO_CARBON_TO_DASHBOARD_HANDOFF_PASSED"
+    if label == "Sinop_amostra_003graus":
+        report["execution_status"] += "_AND_CROP_FORECAST_EXECUTED"
     (out/"land_use_report.txt").write_text("\n".join(report_lines(land)),encoding="utf-8")
     (out/"carbon_handoff.json").write_text(json.dumps(report["carbon"],ensure_ascii=False,
         indent=2,default=str),encoding="utf-8")

@@ -50,6 +50,33 @@ class SarHeightAbsenceTests(unittest.TestCase):
         c=certificate();c["pagination_complete"]=False
         self.assertFalse(regional_height_fallback_decision(c)[0])
 
+    def test_asset_http_error_is_counted_and_never_claimed_as_absence(self):
+        esa={"queries":[{"product_type":product,"catalog_search_complete":True,
+            "pagination_complete":True,"matching_product_count":1 if index==0 else 0,
+            "technical_error_count":0}
+            for index,product in enumerate(("FP_FH__L2A","FP_FH__L2B","FP_FH__L2A","FP_FH__L2B"))]}
+        cert=build_height_absence_certificate(esa,
+            {"available":False,"errors":["HTTP 401 Unauthorized"]},
+            {"catalog_search_complete":True,"pagination_complete":True,
+             "pixel_read_complete":True,"valid_pixel_count":0,"technical_error_count":0})
+        esa_route=next(r for r in cert["routes"] if r["route"]=="ESA_BIOMASS_FH")
+        self.assertEqual(esa_route["technical_error_count"],1)
+        self.assertFalse(esa_route["coverage_absence_confirmed"])
+        self.assertFalse(regional_height_fallback_decision(cert)[0])
+
+    def test_successful_height_pixels_are_a_completed_read_not_absence(self):
+        esa={"queries":[{"product_type":product,"catalog_search_complete":True,
+            "pagination_complete":True,"matching_product_count":1 if index==0 else 0,
+            "technical_error_count":0}
+            for index,product in enumerate(("FP_FH__L2A","FP_FH__L2B","FP_FH__L2A","FP_FH__L2B"))]}
+        cert=build_height_absence_certificate(esa,
+            {"pixel_read_complete":True,"valid_pixel_count":12,"technical_error_count":0},
+            {"catalog_search_complete":True,"pagination_complete":True,
+             "pixel_read_complete":True,"valid_pixel_count":0,"technical_error_count":0})
+        esa_route=next(r for r in cert["routes"] if r["route"]=="ESA_BIOMASS_FH")
+        self.assertTrue(esa_route["pixel_read_complete"])
+        self.assertFalse(esa_route["coverage_absence_confirmed"])
+
 
 if __name__=="__main__":
     unittest.main()
