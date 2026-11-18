@@ -2929,6 +2929,7 @@ class App(tk.Tk):
                 power_summary,forecast_summary,format_ptbr)
             executive=([base_report,""] if base_report else [])+dashboard
             audit_text=([audit_base,""] if audit_base else [])+details
+            fc_audit={}
             # Consolidated crop identification + automatic Sentinel-1 vigor +
             # calibrated yield forecast (experimental), computed in parallel
             # with the independent NASA POWER/CPTEC dashboard requests.
@@ -3005,9 +3006,54 @@ class App(tk.Tk):
                 if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
                     return
                 if hasattr(self,"crop_exec_var"):
-                    self.crop_exec_var.set(self._executive_excerpt("\n".join(executive),
+                    card=self._executive_excerpt("\n".join(executive),
                         ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:",
-                         "Produtividade estimada no momento dessa análise:","Produção provável:")))
+                         "Produtividade estimada no momento dessa análise:","Produção provável:"))
+                    vigor_lines=[]
+                    for crop_name,entry in (fc_audit.get("crops") or {}).items():
+                        if not isinstance(entry,dict):
+                            continue
+                        inputs=entry.get("forecast_inputs") or {}
+                        model_audit=(entry.get("vigor_model_audit") or
+                                     inputs.get("vigor_model_audit") or {})
+                        used=model_audit.get("used_in_yield_distribution") is True
+                        observation=(entry.get("crop_specific_vigor") or
+                                     entry.get("vigor_observation") or
+                                     entry.get("vigor") or {})
+                        probabilities=(model_audit.get("probabilities_used") or
+                                       observation.get("probabilities") or {})
+                        prob_text=", ".join(
+                            str(label)+": "+format_ptbr(value*100,0)+"%"
+                            for label,value in probabilities.items()
+                            if isinstance(value,(int,float)))
+                        sample_area=observation.get("sample_area_ha")
+                        coverage=observation.get("sar_sample_coverage_fraction")
+                        accepted=observation.get("accepted_scenes") or []
+                        sample_audit=observation.get("sample_audit") or []
+                        scene=(accepted[0] if accepted else
+                               ((sample_audit[0].get("scene_id") and sample_audit[0]) or {}))
+                        scene_date=str(scene.get("acquisition_utc") or "data N/D")
+                        mask_season=str(inputs.get("crop_mask_season") or "safra N/D")
+                        line=(str(crop_name)+": vigor "+
+                              str(observation.get("class") or observation.get("status") or "N/D")+
+                              "; participação na distribuição PAM×clima: "+
+                              ("SIM, condicional" if used else "NÃO confirmada"))
+                        if prob_text:
+                            line+="; probabilidades: "+prob_text
+                        if isinstance(sample_area,(int,float)):
+                            line+="; amostra: "+format_ptbr(sample_area,2)+" ha"
+                        if isinstance(coverage,(int,float)):
+                            line+=" ("+format_ptbr(coverage*100,2)+"% da máscara)"
+                        line+="; cena: "+scene_date+"; máscara: "+mask_season
+                        vigor_lines.append(line)
+                    if not vigor_lines:
+                        candidate=fc_audit.get("current_sar_candidate_vigor") or {}
+                        vigor_lines.append("Vigor SAR: "+
+                            str(candidate.get("class") or candidate.get("reason") or
+                                candidate.get("status") or "N/D")+
+                            "; uso na previsão por cultura: não confirmado.")
+                    card+="\n\nVIGOR SAR E EFEITO NA PREVISÃO\n"+"\n".join(vigor_lines)
+                    self.crop_exec_var.set(card)
                 self._set(self.crop_res,"\n".join(executive))
                 self._set(self.crop_audit,"\n".join(audit_text))
             self.after(0,present)
