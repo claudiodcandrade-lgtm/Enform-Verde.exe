@@ -57,5 +57,5 @@ Versão experimental e não homologada. A execução Windows no SHA anterior `50
 - Novos testes cobrem ausência comprovada e erro de catálogo. Neste container, `py_compile`/AST passaram; a suíte geoespacial depende do runner com GeoPandas. Código e documentação atualizados; Windows/live ainda precisam concluir antes de distribuição. A candidata segue experimental.
 
 ### V88.140 — correção de expectativas da regressão
-- A suíte completa encontrou quatro falhas nos testes: import faltante, fixtures de busca sem estado de completude dos dois provedores, e expectativa N/D incompatível com o fixture que continha uma cena válida. Os contratos foram corrigidos sem relaxar os gates de ausência ou de uso do vigor.
+- A suíte completa encontrou quatro falhas nos testes: import faltante, fixtures de busca sem estado de completude dos dois provedores, e um teste que buscava cena live sem querer ao validar apenas o encaminhamento da máscara agrícola. Os fixtures agora controlam ausência/cena explicitamente, sem relaxar os gates de produção.
 - A suíte Windows e os jobs SAR/live foram disparados novamente; até concluírem no SHA documental final, não há novo pacote para distribuição. Candidata permanece experimental.

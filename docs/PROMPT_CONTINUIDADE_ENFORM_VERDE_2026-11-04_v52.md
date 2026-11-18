@@ -596,6 +596,6 @@ Versão: `3.26.64-PRECAMPO-EXPERIMENTAL`.
 
 ## V88.140 — ajustes da regressão de vigor (18/11/2026)
 
-- A primeira regressão completa posterior ao reparo executou 1.268 testes e reprovou quatro verificações de fixtures/expectativas: import ausente no novo teste de janela; duas buscas simuladas sem auditoria de completude dos catálogos; e uma expectativa N/D onde o fixture fornecia cena, data e probabilidades válidas. O teste foi corrigido para refletir o contrato científico, mantendo falhas de catálogo como erro técnico.
+- A primeira regressão completa posterior ao reparo executou 1.268 testes e reprovou quatro verificações de fixtures: import ausente no novo teste de janela; duas buscas simuladas sem auditoria de completude dos catálogos; e um teste da máscara anual que atingiu o catálogo live sem querer e encontrou cena real, tornando-se não determinístico. O fixture agora usa N/D explícito ao testar apenas o encaminhamento da máscara; o contrato de vigor com cena continua coberto por fixture separado.
 - O erro de `datetime` da aplicação foi removido no commit `e645919e03d63e22287f0af49213bfb08be1324d`; o commit `93011c2bbe9f1908c183fd0b9734e5194b068b90` ajusta apenas testes. O runner precisa repetir a suíte completa, o build Windows e o live; resultados ainda pendentes.
 - Esta candidata segue experimental. A versão só pode ser distribuída depois de todos os gates técnicos passarem no SHA documental final e os resultados reais demonstrarem as condições de funcionamento; a geometria privada integral ainda precisa de aceitação separada.
