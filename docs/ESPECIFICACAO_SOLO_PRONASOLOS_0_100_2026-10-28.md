@@ -760,3 +760,10 @@ A ingestão do Painel SFB/IFN inclui referências de AGB e equações empregadas
 ## V88.153 — métrica H100 e carbono do solo
 
 ESA BIOMASS FH é H100, média de altura das 100 árvores mais altas por hectare. Alturas IFN podem formar a referência de campo se a área amostrada e a identidade de árvore forem conhecidas, a densidade amostral cobrir o equivalente a 100 indivíduos/ha e a fitofisionomia estiver validada. Esse pareamento calibra a leitura de altura SAR; não modifica nem substitui carbono do solo 0–100 cm. O erro de altura deve ser propagado ao modelo AGB e reportado separadamente do erro edáfico.
+
+
+## V88.157 — auditoria de continuidade do release (18/11/2026)
+
+O código em validação está no SHA `894835bae7fdf35a972efe652f95a79ce55e413f`. Correção recente normaliza datas IFN e trata datas vazias sem falha de agregação; testes específicos foram adicionados. Esta mudança de ingestão não altera os métodos pedológicos nem comprova uma nova análise de solo.
+
+O workflow independente científico segue bloqueando homologação por ausência de evidência de validação de campo. O build Windows, SAR live e dashboard ainda estavam em execução na materialização/teste da base IFN, sem novo executável/checksum publicado. Preservar o status pré-campo/experimental. Não converter falha técnica em ausência de dados nem inferir cobertura/estoques sem resultado observável. Para qualquer cenário ou camada pedológica, conservar fonte, profundidade, cobertura e incerteza conforme as seções existentes desta especificação.
