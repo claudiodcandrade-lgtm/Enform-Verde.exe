@@ -16,3 +16,7 @@ Esta candidata endurece a prioridade da mensuração FH + estrutura horizontal d
 ## Status
 
 Candidata experimental/pré-campo. Testes focados locais passaram (18, 2 skips ambientais); a suíte integral local falhou por dependências geoespaciais/base IFN ausentes e erros live dependentes dessas bibliotecas. Checker documental, build Windows, autoteste em pasta limpa e handoff live devem passar no SHA final. A homologação científica independente e a validação da geometria integral da Fazenda Maria Eduarda permanecem requisitos separados.
+
+## Resultado dos gates — SHA 7198a6d
+
+A suíte integral, o gate documental e o handoff live Sinop/Tapajós passaram. O vigor SAR foi usado pela distribuição PAM+clima na amostra Sinop (`used_in_yield_distribution=true`), condicional à máscara retrospectiva. A prova de pixels FH separada passou em Sinop, mas o handoff FH→AGB nos recortes carbonizados reportou erro técnico e leitura incompleta; motivo não foi preservado, portanto não equivale a ausência certificada. O build criou o EXE, mas o autoteste limpo falhou porque o teste de aceitação ainda exige referência de biomassa Tapajós quando o gate FH bloqueia corretamente a contingência. Sem pacote/publicação nesta revisão. Corrigir e auditar a causa FH e alinhar o teste de aceitação, depois repetir os gates e autoteste.
