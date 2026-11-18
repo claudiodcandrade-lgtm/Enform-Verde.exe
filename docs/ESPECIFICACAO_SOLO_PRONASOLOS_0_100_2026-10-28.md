@@ -731,3 +731,11 @@ A candidata 3.26.68-PRECAMPO-EXPERIMENTAL aguarda suíte integral, handoff live,
 A auditoria live do SHA `49c2f17` confirmou leitura ESA BIOMASS FH dentro do KML Tapajós (1.263 pixels válidos, sem erro técnico) e processamento até o dashboard. Ela também detectou conflito de proveniência: a altura medida vinha de FH, mas o objeto de AGB ESA CCI fornecia rótulo e caminhos apresentados no quadro de altura. A interface e a planilha passam a preservar o produto FH/GTDX dentro do campo de altura, deixando a origem ESA CCI apenas nos campos de AGB. CCI é produto multissensor de AGB e nunca deve ser mostrado como mensuração de altura.
 
 Esta correção não altera método, profundidade ou fontes do carbono do solo. A comparação paralela de inventários consultou o registro completo; sem UAs ou agregados compatíveis para a tipologia do smoke, manteve N/D. A candidata 3.26.69 segue pré-campo enquanto seus gates completos e autoteste do EXE aguardam novo SHA.
+
+## Nota V88.148 (18/11/2026)
+
+O smoke live do SHA `3999058` confirmou a separação de origem: FH foi apresentado como altura (H100, pixels e raster ESA BIOMASS) e CCI como AGB, sem misturar seus caminhos ou rótulos. A etapa live seguinte transporta os mesmos campos para a auditoria executiva `height_inventory_routes`. Esta mudança não altera fontes, método ou profundidade de carbono do solo.
+
+A consulta de comparação agora informa separadamente rotas de inventário pesquisadas, fontes existentes no registro harmonizado, correspondências exatas e fontes utilizáveis. Isso evidencia quando todo o registro foi consultado sem produzir referência compatível e mantém N/D quando bioma/fitofisionomia/unidade não sustentam comparação. Não muda o método do solo.
+
+Candidata 3.26.70-PRECAMPO-EXPERIMENTAL; regressão/handoff anteriores aprovados em SHA anterior, build/autoteste e gates da revisão final ainda devem passar no SHA que contém estas alterações.

@@ -48,8 +48,28 @@ class InventoryAgbComparisonSourceTests(unittest.TestCase):
         self.assertEqual(result["status"], "COMPARACAO_REFERENCIAS_PUBLICADAS")
         self.assertEqual(result["published_aggregate_count"], 2)
         self.assertEqual(result["usable_inventory_sources_consulted"], ["EMBRAPA", "UFV"])
+        self.assertIn("HARMONIZED_PUBLISHED_AGB_REGISTER",result["inventory_sources_searched"])
+        self.assertEqual(result["matched_published_inventory_sources"],["EMBRAPA","UFV"])
         self.assertEqual([r["agb_mean_mg_ha"] for r in result["inventory_references"]], [110, 145])
         self.assertTrue(result["not_added_to_stock_total"])
+
+    def test_no_exact_match_still_records_full_inventory_source_search(self):
+        with patch.object(comparison,"DB",Path("/missing/ifn.sqlite")), \
+             patch.object(comparison,"PANEL",Path("/missing/ifn.csv")), \
+             patch.object(comparison,"published_agb_references",return_value=[]), \
+             patch.object(comparison,"_published_aggregate_source_ids",
+                          return_value=["EMBRAPA","INPA","UFV"]):
+            result=comparison.estimate_inventory_agb_comparison(
+                biome="Amazônia",physiognomy="Formação florestal",area_ha=10,
+                centroid_lon=-55,centroid_lat=-11)
+        self.assertEqual(result["status"],"N/D")
+        self.assertEqual(result["published_aggregate_count"],0)
+        self.assertEqual(result["matched_published_inventory_sources"],[])
+        self.assertEqual(result["registered_published_inventory_sources"],
+                         ["EMBRAPA","INPA","UFV"])
+        self.assertEqual(result["inventory_sources_searched"],[
+            "IFN_EXPANDED_TREE_MICRODATA","SFB_IFN_DAP10_AGB_PANEL",
+            "HARMONIZED_PUBLISHED_AGB_REGISTER"])
 
 
 if __name__ == "__main__":

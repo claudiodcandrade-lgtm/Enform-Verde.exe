@@ -43,6 +43,19 @@ def canonical_panel_sha256(data):
     return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
 
 
+def _published_aggregate_source_ids(path=AGGREGATE_PANEL):
+    """Inventory every source represented in the harmonized AGB register."""
+    sources=set()
+    try:
+        with Path(path).open(encoding="utf-8-sig",newline="") as stream:
+            for row in csv.DictReader(stream):
+                source=str(row.get("source_id") or "").strip()
+                if source:sources.add(source)
+    except (OSError,csv.Error):
+        return []
+    return sorted(sources)
+
+
 def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
     """All exact bioregional/physiognomic published AGB rows, kept separate."""
     rows=[]; seen=set()
@@ -245,8 +258,24 @@ def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
         result["reason"]=result.get("reason") or "SEM_REFERENCIAS_DE_AGB_COMPATIVEIS_NA_BASE_UTILIZAVEL"
     result["inventory_references"]=refs
     result["published_aggregate_count"]=len(published)
-    result["usable_inventory_sources_consulted"]=sorted({
-        str(ref.get("source_id")) for ref in refs if ref.get("source_id")})
+    usable_sources={
+        str(ref.get("source_id")) for ref in refs if ref.get("source_id")}
+    if ifn_valid:usable_sources.add("SFB_IFN_DAP10")
+    result["usable_inventory_sources_consulted"]=sorted(usable_sources)
+    # Distinguish a source being searched from a source yielding a compatible
+    # AGB value. This prevents an empty match list from implying that only IFN
+    # was consulted or that the published inventory register was skipped.
+    result["inventory_sources_searched"]=[
+        "IFN_EXPANDED_TREE_MICRODATA","SFB_IFN_DAP10_AGB_PANEL",
+        "HARMONIZED_PUBLISHED_AGB_REGISTER"]
+    result["registered_published_inventory_sources"]=_published_aggregate_source_ids()
+    result["matched_published_inventory_sources"]=sorted({
+        str(ref.get("source_id")) for ref in published if ref.get("source_id")})
+    result["inventory_source_query_scope"]={
+        "biome":str(biome),"physiognomy":str(physiognomy),
+        "matching":"exact normalized biome + physiognomy + numeric AGB; no cross-fitofisionomia extrapolation",
+        "ifn_tree_microdata_available":bool(result.get("base_ifn_expandida_usada")),
+        "harmonized_register_available":AGGREGATE_PANEL.is_file()}
     result["inventory_base_scope"]="todas as fontes com AGB harmonizada e compatibilidade exata disponíveis no registro; cada fonte preservada separadamente; IFN é apenas uma das bases"
     result["ifn_microdata_available"]=bool(result.get("base_ifn_expandida_usada"))
     result["not_added_to_stock_total"]=True

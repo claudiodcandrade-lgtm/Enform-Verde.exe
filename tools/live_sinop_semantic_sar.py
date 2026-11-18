@@ -85,6 +85,36 @@ def summarize_crop_forecast(crop_audit, lines, *, as_of, current_mask=False):
     }
 
 
+def summarize_height_inventory_route(stratum):
+    """Keep measured height provenance separate from the selected AGB source."""
+    details=stratum.get("sar_details") or {}
+    height=details.get("sar_height") or {}
+    audit=details.get("audit") or {}
+    comparison=details.get("inventory_agb_comparison") or {}
+    return {
+        "class_name":stratum.get("class_name"),
+        "height_mean_m":height.get("height_mean_m"),
+        "height_n_valid_pixels":height.get("height_n_valid_pixels"),
+        "height_metric":height.get("height_metric"),
+        "height_route_status":height.get("height_route_status"),
+        "height_product":height.get("product"),
+        "height_source":height.get("source"),
+        "height_paths":height.get("paths"),
+        "agb_product":details.get("product"),"agb_source":details.get("source"),
+        "agb_data_origin":details.get("data_origin"),
+        "fh_download_audit":{k:(audit.get("biomass_height") or {}).get(k)
+            for k in ("available","fh_items","pixel_read_complete","valid_pixel_count",
+                      "technical_error_count","reason")},
+        "height_structure_model":details.get("height_structure_model"),
+        "inventory_agb_comparison":comparison,
+        "inventory_sources_searched":comparison.get("inventory_sources_searched",[]),
+        "registered_published_inventory_sources":comparison.get("registered_published_inventory_sources",[]),
+        "matched_published_inventory_sources":comparison.get("matched_published_inventory_sources",[]),
+        "official_agb_product_comparison":details.get("official_agb_product_comparison"),
+        "agb_selection_reason":details.get("agb_selection_reason"),
+    }
+
+
 def _load_aoi(path, label):
     import geopandas as gpd
     from shapely.geometry import box
@@ -190,21 +220,7 @@ def _run_full_handoff(label, aoi):
                 "uncertainty":c.get("uncertainty"),"obs":c.get("obs")}
                 for c in st.get("components",[])]} for st in strata],
         "uncertainty_note":native.get("uncertainty_note"),
-        "height_inventory_routes":[{
-            "class_name":st.get("class_name"),
-            "height_mean_m":(st.get("sar_details") or {}).get("height_mean_m"),
-            "height_n_valid_pixels":(st.get("sar_details") or {}).get("height_n_valid_pixels"),
-            "height_metric":(st.get("sar_details") or {}).get("height_metric"),
-            "height_route_status":(st.get("sar_details") or {}).get("height_route_status"),
-            "fh_download_audit":{
-                k:((st.get("sar_details") or {}).get("audit") or {}).get("biomass_height",{}).get(k)
-                for k in ("available","fh_items","pixel_read_complete","valid_pixel_count",
-                          "technical_error_count","reason")},
-            "height_structure_model":(st.get("sar_details") or {}).get("height_structure_model"),
-            "inventory_agb_comparison":(st.get("sar_details") or {}).get("inventory_agb_comparison"),
-            "official_agb_product_comparison":(st.get("sar_details") or {}).get("official_agb_product_comparison"),
-            "agb_selection_reason":(st.get("sar_details") or {}).get("agb_selection_reason"),
-        } for st in strata],
+        "height_inventory_routes":[summarize_height_inventory_route(st) for st in strata],
         "exception":report.get("carbon_stage_exception")}
     report["dashboard"]={
         "status":dashboard.get("status"),
