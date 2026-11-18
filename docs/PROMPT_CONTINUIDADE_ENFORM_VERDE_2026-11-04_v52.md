@@ -614,3 +614,10 @@ Prova live registrada: Sinop, Sentinel‑1 RTC de 12/11/2026; um bloco de soja (
 - A verificação da primeira ponta encontrou um bloqueio concreto que não fora removido pelo V88.142: o resumo preliminar lia `audit.get(...)` enquanto `audit` já era uma lista de linhas. A exceção acontecia antes de agendar `query_crop_weather`, impedindo o cálculo assíncrono PAM×clima e o envio do `fc_audit` ao cartão.
 - Removido o bloco inválido. O cartão executivo é preenchido depois do forecast; a auditoria completa continua separada. Nova regressão impede voltar a chamar `.get` sobre a lista e confirma o encaminhamento do `fc_audit` ao cartão.
 - Quatro testes focados passaram localmente. A suíte do SHA anterior teve 1.271 testes OK, mas reprovou no gate documental; build e live desse SHA não comprovam este reparo. Reiniciar regressão e build no SHA V88.143 antes de distribuir. Manter candidata 3.26.65 experimental e não homologada.
+
+
+## CHECKPOINT V88.143 — versão candidata 3.26.66-PRECAMPO-EXPERIMENTAL (18/11/2026)
+
+Após corrigir a persistência dos resumos executivos e do vigor, atualizar a versão de aplicação de 3.26.65 para 3.26.66-PRECAMPO-EXPERIMENTAL. O artefato 3.26.65 do SHA anterior compilou e passou o autoteste em pasta limpa; sua regressão integral executou 1.271 testes OK e o gate documental passou após sincronizar prompt, especificação de solo e Word. A prova live Sinop manteve `VIGOR_CONFIRMADO_NA_DISTRIBUICAO` e `used_in_yield_distribution=true`; a nova versão 3.26.66 ainda deve repetir os gates no SHA final.
+
+Manter pré-campo/experimental. O gate de homologação científica independente continua reprovado por ausência de dados de campo independentes; isso impede declarar homologação científica e não deve ser ocultado no nome ou nos resultados. Não liberar uma release como homologada. O pacote experimental só pode ser entregue depois de Windows EXE, autoteste limpo, regressão integral e handoff live passarem no SHA 3.26.66.
