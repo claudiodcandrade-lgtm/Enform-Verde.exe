@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.67-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.68-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -996,16 +996,24 @@ def acceptance_test(kmz_path):
     pixel_count+=sum(int(s.get("n",0)) for s in result.get("stats",[]))
     if pixel_count<=0:raise RuntimeError("Nenhum pixel SAR foi processado dentro da AOI Tapajós.")
     agb=result.get("agb_mg_ha")
+    lit=result.get("literature_reference") or {}
+    summary={"status":result.get("status"),"area_ha":metrics["area_ha"],"pixel_count":pixel_count,
+             "data_origin":result.get("data_origin"),"priority_height_route_status":result.get("priority_height_route_status"),
+             "priority_height_route_gate":audit.get("priority_height_route_gate"),
+             "fh_zonal_read_audit":(audit.get("biomass_height") or {}).get("zonal_read_audit"),
+             "fh_zonal_read_errors":(audit.get("biomass_height") or {}).get("zonal_read_errors"),
+             "gtdx_reason":(audit.get("gtdx_height") or {}).get("reason"),
+             "scene_count":len(audit.get("alos_palsar_public",{}).get("scene_ids",[]))+len(audit.get("sentinel1_public",{}).get("scene_ids",[])),
+             "fallback_agb_mg_ha":lit.get("agb_mg_ha")}
+    acceptance_path=Path(tempfile.gettempdir())/"enform_verde_acceptance_result.json"
+    acceptance_path.write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
     if agb is None:
-        lit=result.get("literature_reference") or {}
         if not lit.get("available") or not lit.get("sar_processed"):
-            raise RuntimeError("Pixels SAR foram processados, mas a referência regional Tapajós não foi selecionada corretamente.")
+            if result.get("priority_height_route_status")=="ERRO_TECNICO_ROTA_PRIORITARIA":
+                raise RuntimeError("ERRO_TECNICO_ROTA_PRIORITARIA no FH/GTDX; contingência de inventário bloqueada corretamente. Diagnóstico detalhado salvo em "+str(acceptance_path))
+            raise RuntimeError("Pixels SAR foram processados, mas nenhuma estimativa AGB prioritária ou referência de inventário elegível foi produzida. Diagnóstico salvo em "+str(acceptance_path))
     elif not str(result.get("data_origin","")).startswith("SAR"):
         raise RuntimeError("Origem AGB incompatível: resultado numérico sem proveniência SAR.")
-    summary={"status":result.get("status"),"area_ha":metrics["area_ha"],"pixel_count":pixel_count,
-             "data_origin":result.get("data_origin"),"scene_count":len(audit.get("alos_palsar_public",{}).get("scene_ids",[]))+len(audit.get("sentinel1_public",{}).get("scene_ids",[])),
-             "fallback_agb_mg_ha":(result.get("literature_reference") or {}).get("agb_mg_ha")}
-    (Path(tempfile.gettempdir())/"enform_verde_acceptance_result.json").write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
     return summary
 
 def ui_smoke_test():

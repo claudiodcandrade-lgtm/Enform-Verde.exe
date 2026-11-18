@@ -84,6 +84,45 @@ class BiomassL2aTests(unittest.TestCase):
         self.assertEqual(len(calls),1)
         self.assertTrue(calls[0].endswith("i_fh.tiff"))
 
+    def test_zonal_reader_tries_next_candidate_after_empty_aoi(self):
+        download={"paths":["fh_one_height.tif","fh_two_height.tif"],
+                  "candidate_download_complete":True,"technical_error_count":0}
+        items=[{"id":"fh_one","_product_type":"FP_FH__L2B"},
+               {"id":"fh_two","_product_type":"FP_FH__L2B"}]
+        with patch.object(sp,"role",return_value="HEIGHT"), patch.object(
+                sp,"_zonal",side_effect=[
+                    ValueError("Raster sem pixels válidos de altura não negativos dentro do polígono."),
+                    {"mean":27.0,"sd":3.2,"n":9,"pixel_distribution":[20,30]}]):
+            height,audit=sp._read_biomass_fh_zonal(None,download,items)
+        self.assertEqual(height["height_mean_m"],27.0)
+        self.assertTrue(audit["pixel_read_complete"])
+        self.assertEqual(audit["zonal_read_audit"][0]["status"],"SEM_PIXELS_VALIDOS_NA_AOI")
+        self.assertEqual(audit["zonal_read_audit"][1]["status"],"PIXELS_VALIDOS_LIDOS")
+
+    def test_completed_empty_reads_are_absence_not_technical_failure(self):
+        download={"paths":["fh_one_height.tif","fh_two_height.tif"],
+                  "candidate_download_complete":True,"technical_error_count":0}
+        with patch.object(sp,"role",return_value="HEIGHT"), patch.object(
+                sp,"_zonal",side_effect=[
+                    ValueError("Raster sem pixels válidos de altura não negativos dentro do polígono."),
+                    ValueError("Input shapes do not overlap raster.")]):
+            height,audit=sp._read_biomass_fh_zonal(None,download,[])
+        self.assertIsNone(height)
+        self.assertTrue(audit["pixel_read_complete"])
+        self.assertEqual(audit["valid_pixel_count"],0)
+        self.assertEqual(audit["technical_error_count"],0)
+
+    def test_raster_read_error_keeps_full_technical_failure(self):
+        download={"paths":["fh_one_height.tif"],"candidate_download_complete":True,
+                  "technical_error_count":0}
+        with patch.object(sp,"role",return_value="HEIGHT"), patch.object(
+                sp,"_zonal",side_effect=OSError("GeoTIFF bloqueado pelo driver")):
+            height,audit=sp._read_biomass_fh_zonal(None,download,[])
+        self.assertIsNone(height)
+        self.assertFalse(audit["pixel_read_complete"])
+        self.assertGreater(audit["technical_error_count"],0)
+        self.assertIn("GeoTIFF bloqueado",audit["zonal_read_errors"][0]["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

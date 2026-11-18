@@ -858,7 +858,10 @@ def download_maap_height(gdf,offline_token,cache,items=None):
         return {"available":False,"paths":[],"items":len(items),"fh_items":0,
                 "reason":"nenhum produto ESA BIOMASS FH (L2B ou L2A, banda P) cobre a AOI; altura SAR não calculável nesta rota"}
     Path(cache).mkdir(parents=True,exist_ok=True); paths=[]; errors=[]; token=None; token_loaded=False
-    for it in fh_items[:4]:
+    candidate_limit=8
+    candidates=fh_items[:candidate_limit]
+    for it in candidates:
+        before=len(paths)
         for key,url in _biomass_product_assets(it,it.get("_product_type") or "FP_FH__L2B")[:2]:
             base=Path(url.split("?")[0]).name or (it.get("id","biomass")+"_FH_"+key)
             asset_type=str((it.get("assets") or {}).get(key,{}).get("type") or "").lower()
@@ -874,19 +877,95 @@ def download_maap_height(gdf,offline_token,cache,items=None):
                         if not token_loaded:token=maap_access_token(offline_token);token_loaded=True
                         _download(url,target,token)
                 paths.extend(_extract_biomass_height_assets(target,Path(cache)/(it.get("id","biomass")+"_height")))
-                # Prefer the direct FH GeoTIFF. The full product ZIP is only
-                # a fallback when the direct raster is absent or unreadable;
-                # downloading it after a successful TIFF read was redundant.
-                if paths:
+                # Prefer the direct FH GeoTIFF for this item. If it exists, do
+                # not download that same item's ZIP, but continue to the next
+                # catalog candidate: the first product may not cover this AOI.
+                if len(paths)>before:
                     break
             except Exception as e:errors.append(str(it.get("id"))+" / "+key+": "+str(e))
-        if paths:break
+    candidate_download_complete=(len(candidates)==len(fh_items) and not errors)
     return {"available":bool(paths),"paths":paths,"items":len(items),"fh_items":len(fh_items),
             "height_catalog_items":[_biomass_catalog_summary(it) for it in fh_items[:50]],
             "pixel_read_complete":False,"valid_pixel_count":None,
             "technical_error_count":len(errors) if errors else (0 if paths else 1),
+            "candidate_downloads_attempted":len(candidates),
+            "candidate_downloads_total":len(fh_items),
+            "candidate_download_complete":candidate_download_complete,
             "reason":None if paths else "Produto ESA BIOMASS FH L2A/L2B catalogado, mas o raster de altura não foi recuperado",
             "errors":errors[:5]}
+
+
+def _read_biomass_fh_zonal(gdf, height_download, fh_items):
+    """Read candidate FH rasters in order, distinguishing empty AOI coverage from read errors."""
+    result=dict(height_download or {})
+    paths=list(result.get("paths") or [])
+    read_audit=[]; errors=[]; no_pixel_messages=(
+        "Input shapes do not overlap raster",
+        "Raster sem pixels válidos de altura não negativos dentro do polígono.")
+    for height_path in paths:
+        if role(height_path)!="HEIGHT":
+            read_audit.append({"path":Path(height_path).name,"status":"IGNORADO_NAO_E_ALTURA"})
+            continue
+        try:
+            z=_zonal(gdf,height_path)
+        except ValueError as exc:
+            message=str(exc)
+            if any(token in message for token in no_pixel_messages):
+                read_audit.append({"path":Path(height_path).name,
+                    "status":"SEM_PIXELS_VALIDOS_NA_AOI","exception_type":"ValueError",
+                    "message":message[:300]})
+                continue
+            errors.append({"path":Path(height_path).name,"exception_type":"ValueError",
+                           "message":message[:500]})
+            read_audit.append({"path":Path(height_path).name,"status":"ERRO_TECNICO",
+                               "exception_type":"ValueError","message":message[:500]})
+        except (OSError,RuntimeError) as exc:
+            message=str(exc)
+            errors.append({"path":Path(height_path).name,"exception_type":type(exc).__name__,
+                           "message":message[:500]})
+            read_audit.append({"path":Path(height_path).name,"status":"ERRO_TECNICO",
+                               "exception_type":type(exc).__name__,"message":message[:500]})
+        else:
+            if not (z.get("n",0)>0 and math.isfinite(z.get("mean",float("nan")))
+                    and z.get("mean",0)>0):
+                read_audit.append({"path":Path(height_path).name,
+                    "status":"SEM_PIXELS_VALIDOS_NA_AOI",
+                    "message":"Leitura do raster concluída sem altura válida dentro da AOI."})
+                continue
+            chosen=next((it for it in fh_items
+                         if str(it.get("id") or "") in str(height_path)),
+                        next((it for it in fh_items if str(it.get("_product_type") or "").upper()
+                              in Path(height_path).name.upper()),(fh_items or [{}])[0]))
+            product_type=chosen.get("_product_type") or BIOMASS_FH_L2A
+            height={"height_mean_m":z["mean"],"height_sd_m":z["sd"],
+                "height_n_valid_pixels":z["n"],
+                "height_pixel_distribution":z.get("pixel_distribution"),
+                "height_definition_compatible_with_H100":True,
+                "height_metric":"ESA BIOMASS upper forest canopy height H100",
+                "height_error_kind":"spatial standard deviation; not measurement uncertainty",
+                "height_interpretation":{"observable":"altura superior do dossel H100",
+                    "band":"P","meaning":"FH mede altura florestal, não biomassa aérea nem árvores individuais",
+                    "agb_inference_permitted":False},
+                "product":product_type,"sensor":"ESA BIOMASS","band":"P",
+                "source":"ESA BIOMASS "+product_type+" — altura superior do dossel (H100)",
+                "paths":[str(height_path)],"scene_ids":[chosen.get("id")],
+                "height_route_status":"ALTURA_SAR_PROCESSADA"}
+            read_audit.append({"path":Path(height_path).name,"status":"PIXELS_VALIDOS_LIDOS",
+                               "valid_pixel_count":int(z["n"])})
+            result.update({"pixel_read_complete":True,"valid_pixel_count":int(z["n"]),
+                "technical_error_count":len(errors),"zonal_height":height,
+                "zonal_read_audit":read_audit,"zonal_read_errors":errors,
+                "reason":None if not errors else "ALTURA FH válida lida; houve falha em candidato alternativo.",
+                "candidate_download_complete":bool(result.get("candidate_download_complete"))})
+            return height,result
+    complete=(bool(paths) and len(read_audit)==len(paths)
+        and bool(result.get("candidate_download_complete")) and not errors)
+    result.update({"pixel_read_complete":complete,"valid_pixel_count":0 if complete else None,
+        "technical_error_count":len(errors)+int(not bool(paths) or not result.get("candidate_download_complete")),
+        "zonal_read_audit":read_audit,"zonal_read_errors":errors,
+        "reason":("LEITURA_FH_COMPLETA_SEM_PIXELS_VALIDOS_NA_AOI" if complete else
+                  "LEITURA_FH_INCOMPLETA_OU_COM_ERRO_TECNICO")})
+    return None,result
 
 def _preserve_sar_canopy_height(result, height, audit=None):
     """Preserve independently processed SAR-derived canopy height on any AGB route.
@@ -992,19 +1071,31 @@ def download_gtdx_height(gdf,edl_user="",edl_password="",edl_token="",cache=None
         if hits==0:cmr_pagination_complete=True
         if page>20 and hits is not None and len(entries)<hits:cmr_pagination_complete=False
         wanted={"height_amazon_25m.tif":None,"height_uncertainty_amazon_25m.tif":None}
+        wanted_rank={name:-1 for name in wanted}
         for entry in entries:
             candidates=list(entry.get("links",[]) or [])
             candidates.extend((entry.get("umm",{}).get("RelatedUrls",[]) or []))
             for link in candidates:
                 href=link.get("href") or link.get("URL") or ""
                 name=Path(href.split("?",1)[0]).name.casefold()
+                # CMR returns both a browser-ready Earthdata HTTPS URL and an
+                # S3 URI for the same ORNL object. The S3 link is for in-cloud
+                # clients and cannot be passed to requests/rasterio from the
+                # Windows desktop application. Prefer the authenticated HTTPS
+                # distribution link; never let a later S3 entry overwrite it.
+                if not str(href).lower().startswith(("https://", "http://")):
+                    continue
                 for key in wanted:
-                    if name==key:wanted[key]=href
+                    if name==key:
+                        rank=2 if "data.ornldaac.earthdata.nasa.gov/protected/" in href.lower() else 1
+                        if rank>wanted_rank[key]:
+                            wanted[key]=href;wanted_rank[key]=rank
         if not all(wanted.values()):
             return {"available":False,"reason":"CMR não retornou os COGs de altura e incerteza Amazon 25 m.",
                     "collection_id":GTDX_COLLECTION_ID,"cmr_entries":len(entries),"cmr_hits":hits,
                     "catalog_search_complete":cmr_pagination_complete,
                     "pagination_complete":cmr_pagination_complete,
+                    "https_data_links_found":{k:bool(v) for k,v in wanted.items()},
                     "pixel_read_complete":bool(cmr_pagination_complete and not entries),
                     "valid_pixel_count":0 if cmr_pagination_complete and not entries else None,
                     "technical_error_count":0 if cmr_pagination_complete else 1,"auth_state":state}
@@ -2022,44 +2113,20 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             audit["biomass_height"]["analysis_download_cache"]=("HIT" if height_cache_hit else "MISS")
             # A FH-only product must not be passed through the AGB classifier
             # just to extract height. Read true georeferenced zonal pixels.
-            for height_path in hd.get("paths") or []:
-                if role(height_path)!="HEIGHT":
-                    continue
-                try:
-                    z=_zonal(gdf,height_path)
-                    if not (z["n"]>0 and math.isfinite(z["mean"]) and z["mean"]>0):
-                        continue
-                    chosen=next((it for it in fh_items
-                                 if str(it.get("id") or "") in str(height_path)),fh_items[0])
-                    product_type=chosen.get("_product_type") or BIOMASS_FH_L2A
-                    sar_height={
-                        "height_mean_m":z["mean"],
-                        "height_sd_m":z["sd"],
-                        "height_n_valid_pixels":z["n"],
-                        "height_pixel_distribution":z.get("pixel_distribution"),
-                        "height_definition_compatible_with_H100":True,
-                        "height_metric":"ESA BIOMASS upper forest canopy height H100",
-                        "height_error_kind":"spatial standard deviation; not measurement uncertainty",
-                        "height_interpretation":{
-                            "observable":"altura superior do dossel H100",
-                            "band":"P",
-                            "meaning":"FH mede altura florestal, não biomassa aérea nem árvores individuais",
-                            "agb_inference_permitted":False},
-                        "product":product_type,"sensor":"ESA BIOMASS","band":"P",
-                        "source":"ESA BIOMASS "+product_type+" — altura superior do dossel (H100)",
-                        "paths":[str(height_path)],
-                        "scene_ids":[chosen.get("id")],
-                        "height_route_status":"ALTURA_SAR_PROCESSADA"}
-                    audit["biomass_height"]["pixel_read_complete"]=True
-                    audit["biomass_height"]["valid_pixel_count"]=int(z["n"])
-                    audit["biomass_height"]["zonal_height"]=sar_height
-                    break
-                except (OSError,ValueError,RuntimeError) as exc:
-                    audit["warnings"].append("BIOMASS FH raster: "+type(exc).__name__)
-                    audit["biomass_height"]["technical_error_count"] = int(
-                        audit["biomass_height"].get("technical_error_count") or 0) + 1
-            if hd.get("paths") and not sar_height:
-                audit["warnings"].append("BIOMASS FH rasters recovered, but no valid georeferenced height pixels in AOI")
+            sar_height,fh_read_audit=_read_biomass_fh_zonal(gdf,hd,fh_items)
+            audit["biomass_height"].update(fh_read_audit)
+            if sar_height is None:
+                for row in fh_read_audit.get("zonal_read_audit",[]):
+                    if row.get("status")=="ERRO_TECNICO":
+                        audit["warnings"].append("BIOMASS FH raster: "+row.get("exception_type","Exception")+
+                            ": "+row.get("message","")[:300])
+                if hd.get("paths") and fh_read_audit.get("pixel_read_complete"):
+                    audit["warnings"].append("BIOMASS FH pixels validly read: zero height pixels intersected the AOI across all downloaded candidates.")
+                elif hd.get("paths"):
+                    audit["warnings"].append("BIOMASS FH candidate reading incomplete; technical errors and untried products remain in the audit.")
+                if hd.get("errors"):
+                    audit["warnings"].extend("BIOMASS FH download: "+str(error)[:300]
+                                             for error in hd["errors"][:3])
         except Exception as exc:
             audit["biomass_height"]={"available":False,"reason":type(exc).__name__+": "+str(exc)[:180]}
     # ESA BIOMASS FH L2A/L2B has priority. If unavailable, use the

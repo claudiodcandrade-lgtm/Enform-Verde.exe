@@ -13,16 +13,25 @@ def build_height_absence_certificate(esa_search_audit, esa_height_result, gtdx_r
     height_errors=height_result.get("technical_error_count")
     if height_errors is None:
         height_errors=len(height_result.get("errors") or [])
+    completed_zero_pixel_read=bool(height_result.get("pixel_read_complete") is True
+        and int(height_errors or 0)==0
+        and isinstance(height_result.get("valid_pixel_count"),int)
+        and height_result.get("valid_pixel_count")==0)
     esa_read_ok=(esa_empty or bool(height_result.get("pixel_read_complete") is True
         and int(height_errors or 0)==0
         and isinstance(height_result.get("valid_pixel_count"),int)
         and height_result.get("valid_pixel_count") >= 0))
+    # A product may intersect the catalog AOI bbox while its actual FH raster
+    # has no valid cells inside the precise requested geometry. A completed
+    # zonal read of every downloaded candidate with zero valid cells is an
+    # AOI-scoped absence observation; a catalog hit alone is not.
+    esa_coverage_absent=bool(esa_search_ok and (esa_empty or completed_zero_pixel_read)
+        and int(height_errors or 0)==0)
     esa_route={"route":"ESA_BIOMASS_FH","configured":True,
         "catalog_search_complete":esa_search_ok,"pagination_complete":esa_search_ok,
         "pixel_read_complete":esa_read_ok,
-        "coverage_absence_confirmed":bool(esa_empty and esa_read_ok
-            and int(height_errors or 0)==0),
-        "valid_pixel_count":0 if esa_empty and esa_read_ok else height_result.get("valid_pixel_count"),
+        "coverage_absence_confirmed":esa_coverage_absent,
+        "valid_pixel_count":0 if esa_coverage_absent else height_result.get("valid_pixel_count"),
         "technical_error_count":sum(int(q.get("technical_error_count") or 0) for q in fh_queries)
             +int(height_errors or 0)}
     gtdx=gtdx_result or {}

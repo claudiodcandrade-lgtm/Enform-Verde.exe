@@ -49,6 +49,7 @@ class SarHeightAgreementTests(unittest.TestCase):
                 if "cmr.earthdata.nasa.gov" in url:
                     return Response({"feed":{"entry":[{"links":[
                         {"href":"https://data.example/height_amazon_25m.tif"},
+                        {"rel":"http://esipfed.org/ns/fedsearch/1.1/s3#","href":"s3://ornl-cumulus-prod-protected/global_vegetation/ForestHt_Biomass_GEDI_TDX/data/height_amazon_25m.tif"},
                         {"href":"https://data.example/height_uncertainty_amazon_25m.tif"}]}]}})
                 return Response()
         session=Session()
@@ -61,6 +62,7 @@ class SarHeightAgreementTests(unittest.TestCase):
         self.assertTrue(out["available"])
         self.assertEqual(out["access_route"],"tentativa pública sem autenticação")
         self.assertIn("cmr.earthdata.nasa.gov",session.calls[0])
+        self.assertFalse(any(url.startswith("s3://") for url in session.calls))
 
     def test_gtdx_height_rejects_negative_error(self):
         from sar_pipeline import _gtdx_height_summary
@@ -93,8 +95,10 @@ class SarHeightAgreementTests(unittest.TestCase):
                 self.calls.append(url)
                 if "cmr.earthdata.nasa.gov" in url:
                     return Response({"feed":{"entry":[{"links":[
-                        {"href":"https://data.example/height_amazon_25m.tif"},
-                        {"href":"https://data.example/height_uncertainty_amazon_25m.tif"}]}]}})
+                        {"href":"https://data.ornldaac.earthdata.nasa.gov/protected/global_vegetation/ForestHt_Biomass_GEDI_TDX/data/height_amazon_25m.tif"},
+                        {"href":"s3://ornl-cumulus-prod-protected/global_vegetation/ForestHt_Biomass_GEDI_TDX/data/height_amazon_25m.tif"},
+                        {"href":"https://data.ornldaac.earthdata.nasa.gov/protected/global_vegetation/ForestHt_Biomass_GEDI_TDX/data/height_uncertainty_amazon_25m.tif"},
+                        {"href":"s3://ornl-cumulus-prod-protected/global_vegetation/ForestHt_Biomass_GEDI_TDX/data/height_uncertainty_amazon_25m.tif"}]}]}})
                 return Response()
         session=Session()
         with tempfile.TemporaryDirectory() as td, \
@@ -108,6 +112,8 @@ class SarHeightAgreementTests(unittest.TestCase):
             self.assertFalse(out["height_definition_compatible_with_H100"])
             self.assertTrue((Path(td)/"height_amazon_25m.tif").exists())
             self.assertTrue((Path(td)/"height_uncertainty_amazon_25m.tif").exists())
+            self.assertTrue(any("data.ornldaac.earthdata.nasa.gov/protected/" in url for url in session.calls))
+            self.assertFalse(any(url.startswith("s3://") for url in session.calls))
 
 
 if __name__ == "__main__":

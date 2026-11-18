@@ -718,3 +718,10 @@ O workflow live do handoff SAR inclui mudanças em `sar_pipeline.py` nos gatilho
 A comparação ESA CCI × inventários deve consultar todas as fontes de AGB numéricas harmonizadas e compatíveis, sem restringir a comparação ao IFN. Referências publicadas ficam separadas por fonte; não se calcula média conjunta quando desenho, unidade amostral, domínio espacial ou incerteza não forem comparáveis, e nenhuma referência paralela é adicionada ao estoque CCI. Fontes presentes apenas em catálogo ou microdados sem harmonização espacial/fitofisionômica e denominador amostral não sustentam AGB/ha; sua incorporação quantitativa segue pendente até harmonização. Esta atualização não altera métodos ou profundidade do carbono do solo.
 
 O handoff live no SHA `b8972bf` concluiu Sinop e falhou na etapa seguinte do Tapajós com `TypeError` ao comparar contagem de pixels FH nula no payload do dashboard. A contagem nula é normal quando não há pixels FH válidos; deve ser tratada como zero para a decisão de status, preservando `None` e a auditoria original nos detalhes. Correção e regressão adicionadas; aguardam nova execução no SHA posterior. Sem mudança nos métodos do solo.
+
+
+## Nota V88.146 (18/11/2026)
+
+A correção de transporte dos arquivos GTDX e de leitura dos produtos FH não altera as fontes, profundidades, métodos ou incertezas do carbono do solo. Link de acesso inválido, erro de autenticação, falha de download ou falha de leitura de raster deve ser reportado como erro técnico; não comprova ausência de pixels e não autoriza substituir a mensuração prioritária por CCI ou inventários. A comparação paralela ESA CCI × inventários abrange fontes quantitativas harmonizadas compatíveis de todo o registro, sem ficar limitada ao IFN, e continua separada do estoque CCI.
+
+A candidata 3.26.68-PRECAMPO-EXPERIMENTAL aguarda suíte integral, handoff live, build e autoteste no mesmo SHA; esta nota não declara liberação nem validação científica.
