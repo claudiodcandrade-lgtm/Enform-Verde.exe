@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.71-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.72-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -636,11 +636,10 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
             estimate["inventory_biodiversity_reference"]={
                 "status":"N/D","reason":"CONSULTA_FITOSSOCIOLOGICA_IFN_FALHOU",
                 "diagnostic":type(exc).__name__}
-        # Keep the primary FH+inventory structural estimate dominant. The
-        # inventory mean is a visible comparison only when CCI AGB supplied
-        # the quantitative result; it is never mixed into the stock total.
-        if (isinstance(estimate,dict) and estimate.get("product")=="ESA CCI Biomass AGB"
-                and estimate.get("agb_mg_ha") is not None):
+        # Expose both microdata comparisons and published horizontal/AGB
+        # aggregates for every primary method. Aggregates are regional
+        # benchmarks, never synthetic plots or additions to the stock total.
+        if isinstance(estimate,dict):
             try:
                 from inventory_agb_comparison import estimate_inventory_agb_comparison
                 centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
@@ -650,7 +649,7 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
                     centroid_lon=float(centroid.x),centroid_lat=float(centroid.y))
             except Exception as exc:
                 estimate["inventory_agb_comparison"]={
-                    "status":"N/D","reason":"COMPARACAO_IFN_NAO_CONCLUIDA",
+                    "status":"N/D","reason":"CONSULTA_INVENTARIOS_MULTIFONTE_NAO_CONCLUIDA",
                     "diagnostic":type(exc).__name__}
         return estimate
     def estimator(frame,phys):
@@ -3788,6 +3787,21 @@ class App(tk.Tk):
                     for ref in inventory_cmp.get("inventory_references",[]):
                         if ref.get("status")=="REFERENCIA_AGREGADA_PUBLICADA":
                             lines.append("    Referência publicada independente (não somada): "+str(ref.get("institution"))+"; "+str(ref.get("region"))+"; AGB média "+format_ptbr(ref.get("agb_mean_mg_ha"),2)+" Mg/ha; n parcelas="+str(ref.get("n_plots") or "N/D")+"; incerteza publicada="+(str(ref.get("ci95_low_mg_ha"))+"–"+str(ref.get("ci95_high_mg_ha"))+" Mg/ha" if ref.get("ci95_low_mg_ha") is not None and ref.get("ci95_high_mg_ha") is not None else "N/D")+"; "+str(ref.get("citation"))+"; "+str(ref.get("statistical_use")))
+                    for ref in inventory_cmp.get("published_structural_references",[]):
+                        lines.append("    BALIZA ESTRUTURAL PUBLICADA (não é parcela nem validação SAR): "+
+                            str(ref.get("institution") or ref.get("source_id"))+"; "+
+                            str(ref.get("region") or "região N/D")+"; "+str(ref.get("metric"))+"="+
+                            format_ptbr(ref.get("center"),2)+" "+str(ref.get("unit") or "unidade N/D")+
+                            "; erro publicado="+("SD "+format_ptbr(ref.get("sd"),2) if ref.get("sd") is not None else
+                                "SE "+format_ptbr(ref.get("se"),2) if ref.get("se") is not None else
+                                "IC95% "+format_ptbr(ref.get("ci95_low"),2)+"–"+format_ptbr(ref.get("ci95_high"),2)
+                                    if ref.get("ci95_low") is not None and ref.get("ci95_high") is not None else "N/D")+
+                            "; n parcelas="+str(ref.get("n_plots") or "N/D")+"; fonte="+
+                            str(ref.get("citation") or "N/D")+"; uso="+str(ref.get("statistical_use") or "baliza regional"))
+                sar_audit=sar_details.get("audit") or {}
+                cci_audit=sar_audit.get("cci") or {}
+                if cci_audit.get("saturation_risk_note"):
+                    lines.append("  LIMITAÇÃO ESA CCI: "+str(cci_audit["saturation_risk_note"]))
                 biodiversity=sar_details.get("inventory_biodiversity_reference")
                 if isinstance(biodiversity,dict):
                     if biodiversity.get("status")=="INDICADOR_FITOSSOCIOLOGICO_IFN":
@@ -4180,6 +4194,46 @@ class App(tk.Tk):
         sh.auto_filter.ref=f"A3:P{3+len(comparison_rows)}"
         sh["A2"]="Todas as fontes numéricas harmonizadas e compatíveis são consultadas; IFN é uma delas. Cada fonte é apresentada separadamente; valores comparativos não são somados ao estoque. DP entre UAs não equivale a IC95%; estudos sem incerteza publicada mantêm essa lacuna explícita. Metadados de catálogo sem AGB harmonizada não são estimativas."
         sh.merge_cells("A2:P2"); sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        sh=wb.create_sheet("Referências Estruturais")
+        setup(sh,"Enform Verde — referências horizontais de inventários por fitofisionomia")
+        structural_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            details=st.get("sar_details") or {}
+            cmp=details.get("inventory_agb_comparison") or {}
+            refs=cmp.get("published_structural_references") or []
+            if not refs:
+                structural_rows.append([st.get("physiognomy"),"N/D",None,None,None,None,None,None,
+                    "Sem agregado estrutural de correspondência exata no registro local; consultar auditoria/fonte.",
+                    cmp.get("reason") or cmp.get("status") or "N/D"])
+                continue
+            for ref in refs:
+                if ref.get("sd") is not None: uncertainty="SD publicado: "+str(ref.get("sd"))
+                elif ref.get("se") is not None: uncertainty="SE publicado: "+str(ref.get("se"))
+                elif ref.get("ci95_low") is not None and ref.get("ci95_high") is not None:
+                    uncertainty="IC95% publicado: "+str(ref.get("ci95_low"))+"–"+str(ref.get("ci95_high"))
+                elif ref.get("iqr_low") is not None and ref.get("iqr_high") is not None:
+                    uncertainty="IQR publicado: "+str(ref.get("iqr_low"))+"–"+str(ref.get("iqr_high"))
+                else: uncertainty="N/D na publicação; não estimar erro a partir da média"
+                structural_rows.append([st.get("physiognomy"),ref.get("institution") or ref.get("source_id"),
+                    ref.get("region"),ref.get("metric"),ref.get("center"),ref.get("unit"),
+                    ref.get("center_type"),ref.get("n_plots") or "N/D",uncertainty,
+                    str(ref.get("citation") or "N/D")+" | "+str(ref.get("url") or "")+
+                    " | "+str(ref.get("statistical_use") or "Baliza regional/fitofisionômica")])
+        struct_headers=["Fitofisionomia IBGE","Instituição/fonte","Região","Métrica horizontal",
+            "Valor central","Unidade","Tipo de centro","n parcelas","Incerteza publicada",
+            "Citação, URL e interpretação"]
+        for j,h in enumerate(struct_headers,1):
+            c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
+            c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+            c.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+        sh.merge_cells("A1:J1"); sh["A2"]=(
+            "Agregados de área basal, densidade e outras métricas horizontais são balizas regionais quando não há parcelas abertas. "
+            "Cada estudo fica separado. Não são parcelas sintéticas, pares FH–campo, validação SAR nem valores somados ao estoque. "
+            "A métrica e o limiar de inclusão da fonte limitam a interpretação.")
+        sh.merge_cells("A2:J2"); sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        for col,width in zip("ABCDEFGHIJ",[27,32,28,22,16,16,17,13,38,80]):
+            sh.column_dimensions[col].width=width
+        put(sh,structural_rows); sh.auto_filter.ref=f"A3:J{3+len(structural_rows)}"
         sh=wb.create_sheet("Fitossociologia IFN")
         setup(sh,"Enform Verde — espécies frequentes em unidades IFN compatíveis")
         biodiversity_rows=[]

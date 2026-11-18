@@ -2076,6 +2076,16 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
            "recency_rule":"fresh live provider search per AOI; true sensing datetime, not ingestion; newest within compatible product class; unknown dates last",
            "providers":{"earthdata":"independent","copernicus_cdse":"independent","esa_maap":"independent","local":"independent"},
            "biomass_l2b":None,"asf":None,"sentinel1_public":None,"cci":None,"warnings":[]}
+    try:
+        from inventory_agb_comparison import published_inventory_evidence
+        audit["published_inventory_evidence"]=published_inventory_evidence(
+            biome=biome,physiognomy=phys)
+    except Exception as exc:
+        # Catalog/evidence loading is ancillary; preserve a technical trace and
+        # do not misreport the source register as empty or biologically absent.
+        audit["published_inventory_evidence"]={
+            "status":"ERRO_TECNICO_LEITURA_REGISTRO",
+            "diagnostic":type(exc).__name__,"references":None}
     audit["national_route_matrix"]=national_predictive_route_matrix(biome,phys,aoi=gdf)
     audit["height_scope"]=height_scope_contract(biome,phys)
 
@@ -2391,6 +2401,13 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                       "catalog_search_complete":cci.get("catalog_search_complete"),
                       "pagination_complete":cci.get("pagination_complete"),
                       "technical_error_count":cci.get("technical_error_count")}
+        is_humid_tropical=("amaz" in str(biome or "").casefold()
+            and any(term in str(phys or "").casefold() for term in
+                    ("ombrófila densa","ombrofila densa","floresta densa","terra firme")))
+        audit["cci"]["saturation_risk_note"]=(
+            "Risco elevado de saturação e compressão da resposta em floresta tropical úmida; CCI não deve ser usado como verdade de campo nem como estimativa final não calibrada. Comparar com inventários compatíveis e relatar incerteza de transferência."
+            if is_humid_tropical else
+            "Produto regional/global derivado de SAR; requer calibração e validação compatíveis antes de ser apresentado como estimativa local.")
         cci_gate=secondary_cci_agb_decision(
             audit.get("height_absence_certificate"),
             valid_height_pixels=bool(sar_height and int(sar_height.get("height_n_valid_pixels") or 0)>0))

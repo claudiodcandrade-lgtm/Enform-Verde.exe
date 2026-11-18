@@ -774,3 +774,6 @@ O workflow independente científico segue bloqueando homologação por ausência
 A ingestão IFN e o crosswalk concluíram: 841.387 observações em 8.951 UAs, com correspondência única à IBGE legenda_1. O job Windows falhou no CSV SFB porque o servidor interrompeu a conexão antes dos últimos 45.819 bytes. Correção adiciona streaming, retentativas limitadas, resume por Range com Content-Range e validator ETag/Last-Modified, reinício quando Range é ignorado, verificação de tamanho e escrita atômica após validação do CSV. Cinco testes locais passaram; a correção aguarda CI.
 
 Timeouts do probe PronaSolos em três AOIs são indisponibilidade técnica de um passo opcional (continue-on-error), não evidência de ausência de dados. A homologação científica segue bloqueada; nenhum novo EXE foi publicado. Aplicar as diretrizes FH/AGB e contingências já registradas na seção V88.157 sem afrouxá-las.
+
+### Nota de checkpoint V88.160 (18/11/2026)
+Esta alteração é restrita à consulta e apresentação de referências de inventários para biomassa aérea e estrutura horizontal. Não modifica fontes, métodos, profundidade, equações ou incerteza do carbono do solo. A regressão completa local passou (1.288 testes; 1 ignorado) com base IFN espacial materializada; aguarda-se o workflow Windows no SHA atualizado.
