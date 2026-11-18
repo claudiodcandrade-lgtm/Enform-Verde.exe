@@ -21,3 +21,9 @@ Versão experimental e não homologada. A regressão completa executou 1.260 tes
 - Corrigida a mensagem de vigor sem cena/data e tolerância numérica do teste de blocos de 2 ha sem relaxar os critérios de área/pureza do algoritmo.
 - Smokes Windows: CBERS-4A/WFI carregou pixels reais no canvas; o smoke de cobertura registrou 11/11 locais. Aplicabilidade à geometria integral da propriedade ainda não foi demonstrada.
 - Candidata permanece experimental até todos os jobs da revisão e evidências da AOI integral terminarem.
+
+
+### V88.133 — coerência entre vigor calculado e vigor informado
+- O painel agora consulta a auditoria emitida pela previsão (`used_in_yield_distribution`) para informar se o vigor efetivamente entrou na distribuição Monte Carlo. Uma lista de cenas sem identidade/data válida não basta.
+- Cena sem `scene_id` e `acquisition_utc` válida é recusada na entrada do modelo; o painel informa N/D/motivo e não apresenta vigor como aplicado.
+- Adicionada regressão da primeira ponta: saída do monitoramento → forecast → trilha executiva, incluindo cena sem ID. O runner do novo SHA está pendente.

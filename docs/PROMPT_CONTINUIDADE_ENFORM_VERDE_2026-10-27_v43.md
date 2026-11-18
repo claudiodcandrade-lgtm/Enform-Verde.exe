@@ -658,3 +658,10 @@ Versão: `3.26.64-PRECAMPO-EXPERIMENTAL`.
 - A área de 2 ha é avaliada em EPSG:6933; a asserção automatizada pode usar tolerância de 1e-6 ha devido à reprojeção. Não reduzir o gate de pureza ≥90%.
 - O smoke CBERS-4A/WFI do Windows passou com pixels visíveis no canvas; 11/11 locais do smoke óptico nacional receberam pixels reais. Isso não substitui a execução com o KML integral privado da Fazenda Maria Eduarda.
 - ESA BIOMASS FH real leu pixels na prova independente de Sinop; continuar reportando FH da fazenda como pendente até leitura com a geometria da propriedade. Homologação científica permanece independente.
+
+
+### Checkpoint V88.133 — vigor e estado executivo
+- Na primeira ponta do monitoramento agrícola, a seleção do vigor deve usar o validador `_usable_dated_vigor` do pipeline. Cena precisa ter `scene_id` e `acquisition_utc` dentro dos 30 dias, válida, sem ser futura, além de probabilidades normalizadas.
+- O painel só declara `vigor usado/incorporado` quando `fields[cultura].vigor_model_audit.used_in_yield_distribution` confirma a aplicação no modelo. A auditoria do modelo é fonte de verdade para os flags executivos. Em N/D/rejeição, preservar motivo e não afirmar incorporação.
+- A regressão deve testar `monitoring_forecast` com cena datada sem ID e verificar que o forecast recebe vigor N/D, que os flags ficam falsos e que o texto executivo informa a não incorporação.
+- A distribuição vigente de safra continua PAM × clima; vigor SAR elegível condiciona a distribuição de resíduos Monte Carlo PAM, sem introdução de outro modelo concorrente nesta build.

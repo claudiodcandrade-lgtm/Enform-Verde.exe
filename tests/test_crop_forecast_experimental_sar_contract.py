@@ -110,7 +110,7 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
             called={}
             def forecast(fields,as_of):
                 called["fields"]=fields
-                return {"model":"panel","model_label":"painel teste","fields":{},
+                return {"model":"panel","model_label":"painel teste","fields":{"Soja":{"vigor_model_audit":{"used_in_yield_distribution":True}}},
                     "production":{"fields_kg_ha":{},"production_t":{"median":0,"p05":0,"p95":0,
                     "interval_note":"fixture"}}}
             with patch("crop_panel_yield_model.load_artifact",return_value={"crops":{"Soja":{}}}), \
@@ -132,6 +132,42 @@ class ExperimentalCropForecastContracts(unittest.TestCase):
             rendered="\n".join(lines)
             self.assertIn("vigor SAR datado incorporado ao modelo",rendered)
             self.assertIn("PREVISÃO CONDICIONAL",rendered)
+
+    def test_panel_never_claims_vigor_used_when_scene_id_is_missing(self):
+        frame=gpd.GeoDataFrame({"class_name":["Lavoura de Soja"],
+            "source":["SAR_EXPERIMENTAL_MODELO"]},
+            geometry=[box(-55.20,-11.89,-55.19,-11.88)],crs=4326)
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"annual.geojson";frame.to_file(path,driver="GeoJSON")
+            land={"vector_path":str(path),"classes":[{"class_name":"Lavoura de Soja",
+                "source":"SAR_EXPERIMENTAL_MODELO","area_ha":1.0}],
+                "validation":{"observed_season":"2025/2026"}}
+            vigor={"status":"experimental","class":"vigor adequado",
+                "probabilities":{"baixo vigor":.2,"vigor adequado":.6,"alto vigor":.2},
+                "accepted_scenes":[{"acquisition_utc":"2026-11-12T10:00:00Z"}]}
+            called={}
+            def forecast(fields,as_of):
+                called["fields"]=fields
+                return {"model":"panel","model_label":"painel teste",
+                    "fields":{"Soja":{"vigor_model_audit":{"used_in_yield_distribution":False,
+                        "reason":"vigor sem identidade de cena e data de aquisição SAR"}}},
+                    "production":{"fields_kg_ha":{},"production_t":{"median":0,"p05":0,"p95":0,
+                    "interval_note":"fixture"}}}
+            with patch("crop_panel_yield_model.load_artifact",return_value={"crops":{"Soja":{}}}), \
+                 patch("crop_spatial_monitoring.sampled_sentinel_vigor",return_value=vigor), \
+                 patch("crop_spatial_monitoring.current_candidate_vigor_blocks",return_value={
+                     "status":"ok","target_blocks":[frame[["geometry"]]],
+                     "reference_gdf":frame[["geometry"]],"target_block_count":1,
+                     "reference_block_count":6,"blocks_available":7,"block_area_ha":16.0}):
+                lines,audit=monitoring_forecast(
+                    frame,land,as_of=date(2026,11,15),forecast_fn=forecast,
+                    micro_fn=lambda _g:{"dominant":{"code":"51006","name":"Alto Teles Pires"}})
+            inputs=audit["crops"]["Soja"]["forecast_inputs"]
+            self.assertEqual(called["fields"][0]["vigor"]["status"],"N/D")
+            self.assertFalse(inputs["experimental_current_sar_vigor_conditioned_yield"])
+            self.assertFalse(inputs["current_crop_specific_sar_vigor_used"])
+            self.assertFalse(inputs["vigor_model_audit"]["used_in_yield_distribution"])
+            self.assertIn("NÃO incorporado pelo modelo","\n".join(lines))
 
     def test_unverified_cartographic_classes_never_enable_forecast(self):
         land={"classes":[

@@ -236,7 +236,7 @@ def _integrated_system_audit(land):
                         "reason": "não há modelo específico incorporado para IPF; requer referência/campo local"}}}
 
 def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=None, micro_fn=None):
-    from crop_forecast_pipeline import forecast_fields, forecast_lines
+    from crop_forecast_pipeline import forecast_fields, forecast_lines, _usable_dated_vigor
     from crop_panel_yield_model import load_artifact
     from crop_vigor_auto import automatic_vigor
     from crop_yield_scenario import microregion_of
@@ -553,16 +553,13 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                                 if ci is not None else "; incerteza N/D")
                         lines.append(f"  {sample_ref} — {label}: {value:.3f}" + note)
                 lines.append("  Incerteza de vigor: bootstrap espacial interno; NÃO equivale à acurácia de campo nem mede rugosidade física.")
-            scene_evidence = (bool(vig.get("scene_id") and vig.get("acquisition_utc")) or
-                             bool(vig.get("accepted_scenes")))
-            vigor_usable = (vig.get("status") in ("experimental", "validated") and
-                            isinstance(vig.get("probabilities"), dict) and scene_evidence and
-                            crop_gdf is not None)
+            vigor_is_dated_usable, vigor_gate_reason = _usable_dated_vigor(vig, as_of)
+            vigor_usable = vigor_is_dated_usable and crop_gdf is not None
             if not vigor_usable:
                 # Owner decision 08/11/2026 (5 = B): forecast continues WITHOUT
                 # vigor (climate + PAM history), clearly labelled; only a SAR
                 # crop mask (crop_gdf) is still mandatory for the field area.
-                reason = str(vig.get("reason") or "sem vigor SAR atual com cena datada sobre máscara SAR validada")
+                reason = str(vig.get("reason") or vigor_gate_reason or "sem vigor SAR atual com cena datada sobre máscara SAR validada")
                 if crop_gdf is None:
                     entry["forecast_status"] = "N/D"
                     entry["forecast"] = {"status": "N/D", "reason": "sem máscara SAR da cultura; " + reason}
@@ -581,11 +578,14 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                 forecast_vigor = ({"status": "N/D",
                                    "reason": "vigor SAR amostral não extrapolável ao município"}
                                   if municipal_scale and vig.get("patches_evaluated") else vig)
-                entry["vigor_usable_for_municipal_yield"] = forecast_vigor is vig
                 rep = forecast_fn([{"id": crop, "gdf": crop_gdf if crop_gdf is not None else gdf, "crop": crop,
                                     "identification": {"label_allowed": True}, "vigor": forecast_vigor, "area_ha": area}],
                                   as_of=as_of)
                 lines += ["  " + l for l in forecast_lines(rep)]
+                field_forecast = (rep.get("fields") or {}).get(crop) or {}
+                vigor_model_audit = field_forecast.get("vigor_model_audit") or {}
+                vigor_used_in_distribution = bool(vigor_model_audit.get("used_in_yield_distribution"))
+                entry["vigor_usable_for_municipal_yield"] = vigor_used_in_distribution
                 route_contract = priority_model_contract(crop)
                 if crop in PAM_CLIMATE_SCENARIO_CROPS:
                     lines.append("  ROTA PRIORITÁRIA: cenário experimental PAM + clima por matriz vigor/clima; "
@@ -601,18 +601,21 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                     "yield_history": "IBGE PAM N9, escala microrregional",
                     "weather_and_water_balance": "NASA POWER + FAO-56/FAO-33; fonte/período no relatório de previsão",
                     "current_crop_specific_sar_vigor_used": bool(
-                        vigor_usable and forecast_vigor is vig and not annual_experimental),
+                        vigor_used_in_distribution and not annual_experimental),
                     "experimental_current_sar_vigor_conditioned_yield": bool(
-                        vigor_usable and forecast_vigor is vig and annual_experimental),
+                        vigor_used_in_distribution and annual_experimental),
+                    "vigor_model_audit": vigor_model_audit,
                     "vigor_observation_scope": ("SAR atual sobre blocos da máscara anual experimental; cultura atual não confirmada"
-                        if annual_experimental and vigor_usable and forecast_vigor is vig else
-                        "SAR atual sobre máscara de cultura aceita" if vigor_usable and forecast_vigor is vig else
+                        if annual_experimental and vigor_used_in_distribution else
+                        "SAR atual sobre máscara de cultura aceita" if vigor_used_in_distribution else
                         "sem vigor SAR utilizável na previsão"),
                     "current_candidate_vigor_status": candidate_vigor.get("status"),
                     "current_candidate_vigor_interpretation": "assinatura estrutural SAR relativa; não identifica cultura nem substitui vigor agronômico calibrado",
                     "area_transfer_uncertainty": "NAO_QUANTIFICADA" if annual_experimental else None,
                 }
                 entry["forecast_inputs"] = forecast_inputs
+                if not vigor_used_in_distribution and vigor_model_audit.get("reason"):
+                    lines.append("  Vigor SAR NÃO incorporado pelo modelo: " + str(vigor_model_audit["reason"]))
                 lines.append("  Entradas da previsão: produtividade pelo painel PAM + clima/balanço hídrico; máscara/área de cultura por "
                              + ("SAR experimental retrospectivo da safra " + str(model_season or "N/D")
                                 if annual_experimental else "SAR classificado para a área da cultura")
