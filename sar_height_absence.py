@@ -89,7 +89,7 @@ def regional_height_fallback_decision(certificate):
     return True, "AUSENCIA_SAR_CONFIRMADA_EM_TODAS_AS_ROTAS_AUDITADAS"
 
 
-def secondary_cci_agb_decision(height_certificate, *, valid_height_pixels=False):
+def secondary_cci_agb_decision(height_certificate, *, valid_height_pixels=False, cci_calibration=None):
     """Allow ESA CCI AGB only after the priority FH route was resolved.
 
     CCI is a lower-priority AGB reference. A failure to query/read BIOMASS FH
@@ -120,15 +120,41 @@ def secondary_cci_agb_decision(height_certificate, *, valid_height_pixels=False)
         if int(route.get("technical_error_count") or 0)>0:
             return {"eligible":False,"reason":"ERRO_TECNICO_NA_ROTA_PRIORITARIA:"+str(route.get("route")),
                     "evidence":"PRIORITY_ROUTE_TECHNICAL_ERROR"}
-    if valid_height_pixels:
-        return {"eligible":True,
-                "reason":"FH_LIDO_SEM_MODELO_H100_X_INVENTARIO_APLICAVEL; CCI pode ser referência AGB secundária.",
-                "evidence":"FH_PIXELS_VALIDOS_MODELO_NAO_APLICAVEL"}
-    if height_certificate.get("status")=="SAR_AUSENCIA_COBERTURA_CONFIRMADA" and all(
+    if valid_height_pixels or any(route.get("valid_pixel_count", 0) > 0 for route in routes
+                                  if isinstance(route.get("valid_pixel_count"), int)):
+        return {"eligible":False,
+                "reason":"FH_DISPONIVEL; calibrar FH com inventário horizontal antes de considerar ESA CCI.",
+                "evidence":"FH_PIXELS_BLOCK_CCI"}
+    if not (height_certificate.get("status")=="SAR_AUSENCIA_COBERTURA_CONFIRMADA" and all(
             route.get("coverage_absence_confirmed") is True and route.get("valid_pixel_count")==0
-            for route in routes):
-        return {"eligible":True,
-                "reason":"AUSENCIA_DE_ALTURA_SAR_CONFIRMADA; CCI pode ser contingência AGB.",
-                "evidence":"PRIORITY_ROUTE_ABSENCE_CONFIRMED"}
-    return {"eligible":False,"reason":"SEM_PIXELS_FH_VALIDOS_E_AUSENCIA_NAO_CONFIRMADA",
-            "evidence":"PRIORITY_ROUTE_ABSENCE_UNPROVEN"}
+            for route in routes)):
+        return {"eligible":False,"reason":"SEM_PIXELS_FH_VALIDOS_E_AUSENCIA_NAO_CONFIRMADA",
+                "evidence":"PRIORITY_ROUTE_ABSENCE_UNPROVEN"}
+    calibration=cci_calibration if isinstance(cci_calibration,dict) else {}
+    required=("model_id","biome","physiognomy","source","n_pairs",
+              "n_independent_sites","independent_validation","rmse_mg_ha")
+    missing=[key for key in required if calibration.get(key) is None]
+    try:
+        pair_count=int(calibration.get("n_pairs") or 0)
+        site_count=int(calibration.get("n_independent_sites") or 0)
+        rmse=float(calibration.get("rmse_mg_ha"))
+    except (TypeError,ValueError,OverflowError):
+        pair_count=site_count=0; rmse=float("nan")
+    if (missing or calibration.get("independent_validation") is not True
+            or pair_count < 30 or site_count < 5
+            or not math.isfinite(rmse) or rmse <= 0
+            or not str(calibration.get("model_id") or "").strip()
+            or not str(calibration.get("source") or "").strip()):
+        return {"eligible":False,
+                "reason":"AUSENCIA_FH_CONFIRMADA_MAS_CALIBRACAO_CCI_INVENTARIO_INSUFICIENTE",
+                "evidence":"CCI_CALIBRATION_REQUIRED",
+                "missing_calibration_fields":missing,
+                "minimum_pairs":30,"minimum_independent_sites":5}
+    if calibration.get("biome") is None or calibration.get("physiognomy") is None:
+        return {"eligible":False,"reason":"DOMINIO_DA_CALIBRACAO_CCI_AUSENTE",
+                "evidence":"CCI_CALIBRATION_DOMAIN_MISSING"}
+    return {"eligible":True,
+            "reason":"AUSENCIA_FH_CONFIRMADA_E_CALIBRACAO_CCI_INVENTARIO_VALIDADA",
+            "evidence":"PRIORITY_ROUTE_ABSENCE_CONFIRMED_AND_CCI_CALIBRATION_VALIDATED",
+            "calibration_model_id":calibration["model_id"],
+            "calibration_rmse_mg_ha":rmse}

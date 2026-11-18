@@ -88,13 +88,20 @@ class SarHeightAbsenceTests(unittest.TestCase):
         self.assertFalse(decision["eligible"])
         self.assertEqual(decision["evidence"],"PRIORITY_ROUTE_TECHNICAL_ERROR")
 
-    def test_cci_is_allowed_only_after_confirmed_absence_or_valid_fh_without_applicable_model(self):
-        self.assertTrue(secondary_cci_agb_decision(certificate())["eligible"])
+    def test_cci_requires_confirmed_fh_absence_and_validated_inventory_calibration(self):
+        self.assertFalse(secondary_cci_agb_decision(certificate())["eligible"])
+        calibration={"model_id":"CCI_TEST","biome":"Amazonia","physiognomy":"Floresta",
+            "source":"independent matched plots","n_pairs":40,"n_independent_sites":6,
+            "independent_validation":True,"rmse_mg_ha":35.0}
+        self.assertTrue(secondary_cci_agb_decision(
+            certificate(),cci_calibration=calibration)["eligible"])
         c=certificate()
         c["status"]="AUSENCIA_SAR_NAO_COMPROVADA"
         c["routes"][0].update({"coverage_absence_confirmed":False,"valid_pixel_count":12})
-        self.assertTrue(secondary_cci_agb_decision(c,valid_height_pixels=True)["eligible"])
-        self.assertFalse(secondary_cci_agb_decision(c)["eligible"])
+        decision=secondary_cci_agb_decision(
+            c,valid_height_pixels=True,cci_calibration=calibration)
+        self.assertFalse(decision["eligible"])
+        self.assertEqual(decision["evidence"],"FH_PIXELS_BLOCK_CCI")
 
 
 if __name__=="__main__":
