@@ -11,6 +11,7 @@ Esta candidata endurece a prioridade da mensuração FH + estrutura horizontal d
 - Foi acrescentado um teste de integração reproduzindo busca FH com erro e CCI disponível.
 - A comparação independente ESA CCI passou a consultar todo o registro numérico de AGB harmonizado e compatível por bioma/fitofisionomia, mesmo sem IFN; cada estudo fica separado e não é somado ao estoque. Fontes em catálogo ou microdados não harmonizados seguem explicitamente não elegíveis.
 - O estado SAR auxiliar é preservado quando existe leitura de pixels, enquanto falha FH fica registrada em `priority_height_route_status` e continua impedindo a promoção do CCI.
+- Corrigido o handoff do dashboard quando a contagem de pixels FH é `None`: a interface usa zero somente no teste de existência de pixels e preserva o valor nulo e a auditoria na trilha original. O live do SHA anterior concluiu Sinop e identificou essa falha no Tapajós; a correção aguarda repetição do handoff.
 
 ## Status
 

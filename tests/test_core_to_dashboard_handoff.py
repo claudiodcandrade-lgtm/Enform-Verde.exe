@@ -391,6 +391,18 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         self.assertAlmostEqual(semantic["area_ha"], 5.3)
         self.assertEqual(semantic["classes"][1]["class_name"], "Lavoura de soja")
 
+    def test_none_height_pixel_count_does_not_break_dashboard_handoff(self):
+        payload = _sar_dashboard_payload({"strata": [{
+            "class_name": "Floresta Ombrófila Densa",
+            "sar_details": {"height_n_valid_pixels": None,
+                            "height_mean_m": None,
+                            "agb_mg_ha": None,
+                            "stats": []},
+        }]}, {})
+        self.assertEqual(payload["status"], "SAR_N/D")
+        self.assertEqual(payload["strata"][0]["height_n_valid_pixels"], None)
+        self.assertEqual(payload["height_products"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

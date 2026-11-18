@@ -441,7 +441,9 @@ def _sar_dashboard_payload(native, land=None):
                     "height_pixel_distribution":details.get("height_pixel_distribution")})
     land=land or {}
     cover=land.get("recent_sar_cover") or {}
-    pixels_processed=any(row.get("stats") or row.get("height_n_valid_pixels",0)>0
+    # A route may legitimately return None when no valid height pixels were
+    # available. Preserve the route audit instead of crashing the handoff.
+    pixels_processed=any(row.get("stats") or int(row.get("height_n_valid_pixels") or 0)>0
                          or row.get("agb_mg_ha") is not None for row in strata)
     pixels_processed=pixels_processed or cover.get("pixel_state")=="PROCESSADO"
     status=("SAR_PROCESSADO" if pixels_processed
