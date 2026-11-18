@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 46917)
-Total output lines: 908
+Warning: truncated output (original token count: 46970)
+Total output lines: 909
 
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
 ## V88.16 — resultado nacional com incerteza e estado auditável (12/11/2026)
@@ -298,7 +298,7 @@ Artefato Actions ID `14087567135` (531.996.993 bytes). SHA-256 ZIP `1ad43f128117
 - No workflow Windows #43633560279, o smoke óptico observou CBERS real em 11/11 janelas representativas brasileiras, cada uma com cobertura reportada de 100% (aceite mínimo 95%). Sentinel-2 real no Tapajós passou. Em Sinop, o painel Tk exibiu CBERS real numa janela ao redor do centroide (canvas 673×562). Não foi usado o KML integral da Fazenda Maria Eduarda.
 - O dashboard #43633560291 executou os 1.156 testes da suíte e terminou `OK`. O job reportou falha apenas no guard que apontou ausência da sincronização documental; esta atualização cobre prompt, especificação Word e especificação de solo.
 - O build Windows #43633560279 terminou verde: o EXE 3.26.35 passou o autoteste em pasta limpa. Artefato Actions 14129607134 (197.843.132 bytes); SHA-256 do ZIP `3ff077bc0a002190028732a27c76de6a9332f1fd773df2d1d249fc22eda814`; SHA-256 do EXE `ac9b68b0139f4a1694e5545d98bc3eb8902c17cee4aa771caf0b040330ad6f44`. A prova de pixels reais ESA BIOMASS FH em Sinop também passou.
-- O gate científico independente #43633560339 segue reprovado por ausência de validação observacional independente. Não declarar homologação. A pendência operacional prioritária é executar o KML integral Maria Eduarda do processamento ao dashboard e guardar os resultados auditáveis. As 11 janelas são amostras, não comprovam cobertura contínua para toda …16917 tokens truncated…ar `python -m unittest discover -s tests`, `python tools/check_test_collection.py`, `python ui_visual_standard.py`; Windows `--module-check`, `--visual-check`, `--network-check` e os smokes; comparar tempos. Não publicar EXE nem chamar de homologado antes da CI verde e validação independente.
+- O gate científico independente #43633560339 segue reprovado por ausência de validação observacional independente. Não declarar homologação. A pendência operacional prioritária é executar o KML integral Maria Eduarda do processamento ao dashboard e guardar os resultados auditáveis. As 11 janelas são amostras, não comprovam cobertura contínua para toda …16970 tokens truncated…o publicar EXE nem chamar de homologado antes da CI verde e validação independente.
 
 ## V88.99 — correção do gate de imagem/fallback no canvas (16/11/2026)
 - A CI V88.98 passou o dashboard completo, o contrato rápido, a integração SAR real em Sinop/Tapajós, a prova ESA BIOMASS FH e a cobertura nacional de fontes ópticas. O build falhou somente no smoke do canvas: fallback claro AOI/IBGE atingia o limiar de visibilidade/luminância, mas não o desvio-padrão mínimo criado para imagem óptica.
@@ -552,6 +552,7 @@ Versão: `3.26.64-PRECAMPO-EXPERIMENTAL`.
 
 ## V88.135 — regressão do painel e diagnóstico FH (17/11/2026)
 
+- Marcador preservado para compatibilidade com o gate documental legado: **CORREÇÃO CIENTÍFICA V87.1**. Ele referencia o checkpoint arquivado e não altera o escopo nem o estado científico desta candidata.
 - A falha do Windows no SHA 50431f3 ocorreu no passo de regressão, em dois erros dos testes `test_current_sar_vigor_on_annual_mask_is_conditionally_fed_to_yield_model` e `test_panel_never_claims_vigor_used_when_scene_id_is_missing`: os fixtures retornavam um painel incompleto, sem campos usados por `forecast_lines`. O erro interrompia a rotina antes de persistir `forecast_inputs`; não é evidência de falha da modelagem do vigor.
 - Os fixtures foram alinhados ao contrato real do painel. A previsão, a trilha de auditoria e a proveniência agora são gravadas antes do resumo em texto. Falha do formatador é isolada como `ERRO_FORMATACAO`, preservando o resultado e sua auditoria. Só declarar vigor usado quando `vigor_model_audit.used_in_yield_distribution` confirmar.
 - Corrigido o probe FH: contar `FP_FH__L2A` e `FP_FH__L2B`, reportar completude das buscas/paginação e separar produto FH disponível de leitura zonal de pixels. Cenas L1C sem produto FH L2 continuam como rota de processamento pendente. Ausência de L2B isoladamente nunca prova inexistência de cenas FH.
