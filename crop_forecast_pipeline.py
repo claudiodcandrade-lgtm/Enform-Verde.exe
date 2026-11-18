@@ -28,8 +28,10 @@ def _usable_dated_vigor(vigor, as_of, *, max_age_days=30):
     from datetime import datetime, timezone
     import math
 
-    if not isinstance(vigor, dict) or vigor.get("status") not in ("experimental", "validated"):
-        return False, "vigor SAR não calculado"
+    if not isinstance(vigor, dict) or not vigor:
+        return False, "vigor SAR atual indisponível"
+    if vigor.get("status") not in ("experimental", "validated"):
+        return False, str(vigor.get("reason") or "vigor SAR não calculado")
     probabilities = vigor.get("probabilities")
     if not isinstance(probabilities, dict) or any(k not in probabilities for k in VIGOR_CLASSES):
         return False, "probabilidades das três classes de vigor ausentes"
