@@ -11,7 +11,7 @@ from unittest.mock import patch
 import geopandas as gpd
 from shapely.geometry import box
 
-from desktop_app import App, native_carbon_analysis, _sar_dashboard_payload
+from desktop_app import App, native_carbon_analysis, _sar_dashboard_payload, _verified_sar_height_details
 from analysis_pipeline_contract import geometry_hash
 
 
@@ -402,6 +402,37 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         self.assertEqual(payload["status"], "SAR_N/D")
         self.assertEqual(payload["strata"][0]["height_n_valid_pixels"], None)
         self.assertEqual(payload["height_products"], [])
+
+    def test_cci_agb_provenance_does_not_replace_fh_height_provenance(self):
+        native={"strata":[{"class_name":"Formação florestal","physiognomy":"Floresta",
+            "sar_details":{"data_origin":"SAR_DERIVED_CCI",
+                "product":"ESA CCI Biomass AGB","source":"ESA CCI AGB v7",
+                "paths":["cci_agb.tif","cci_sd.tif"],"agb_mg_ha":180.0,
+                "height_mean_m":24.5,"height_n_valid_pixels":120,
+                "height_metric":None,"height_route_status":"ALTURA_SAR_PROCESSADA",
+                "sar_height":{"height_mean_m":24.5,"height_sd_m":3.0,
+                    "height_n_valid_pixels":120,"height_metric":"ESA BIOMASS upper forest canopy height H100",
+                    "height_error_kind":"spatial standard deviation",
+                    "height_route_status":"ALTURA_SAR_PROCESSADA","product":"FP_FH__L2A",
+                    "sensor":"ESA BIOMASS","band":"P","source":"ESA BIOMASS FH",
+                    "paths":["fh_height.tiff"],"height_pixel_distribution":{"status":"SAR_PIXELS_HISTOGRAMMED"}}}}]}
+        payload=_sar_dashboard_payload(native,{})
+        height=payload["height_products"][0]
+        self.assertEqual(height["product"],"FP_FH__L2A")
+        self.assertEqual(height["source"],"ESA BIOMASS FH")
+        self.assertEqual(height["paths"],["fh_height.tiff"])
+        self.assertEqual(height["agb_product"],"ESA CCI Biomass AGB")
+        self.assertEqual(height["agb_source"],"ESA CCI AGB v7")
+        self.assertEqual(_verified_sar_height_details(native["strata"][0]["sar_details"])["source"],"ESA BIOMASS FH")
+
+    def test_cci_payload_without_nested_height_does_not_invent_height_product(self):
+        payload=_sar_dashboard_payload({"strata":[{"class_name":"Floresta","sar_details":{
+            "data_origin":"SAR_DERIVED_CCI","product":"ESA CCI Biomass AGB",
+            "source":"ESA CCI AGB v7","height_mean_m":24.5,
+            "height_n_valid_pixels":120,"height_metric":None}}]}, {})
+        self.assertEqual(payload["height_products"],[])
+        self.assertEqual(_verified_sar_height_details({"product":"ESA CCI Biomass AGB",
+            "height_mean_m":24.5,"height_n_valid_pixels":120}),{})
 
 
 if __name__ == "__main__":

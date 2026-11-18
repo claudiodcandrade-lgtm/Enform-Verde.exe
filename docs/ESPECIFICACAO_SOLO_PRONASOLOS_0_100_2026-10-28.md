@@ -725,3 +725,9 @@ O handoff live no SHA `b8972bf` concluiu Sinop e falhou na etapa seguinte do Tap
 A correção de transporte dos arquivos GTDX e de leitura dos produtos FH não altera as fontes, profundidades, métodos ou incertezas do carbono do solo. Link de acesso inválido, erro de autenticação, falha de download ou falha de leitura de raster deve ser reportado como erro técnico; não comprova ausência de pixels e não autoriza substituir a mensuração prioritária por CCI ou inventários. A comparação paralela ESA CCI × inventários abrange fontes quantitativas harmonizadas compatíveis de todo o registro, sem ficar limitada ao IFN, e continua separada do estoque CCI.
 
 A candidata 3.26.68-PRECAMPO-EXPERIMENTAL aguarda suíte integral, handoff live, build e autoteste no mesmo SHA; esta nota não declara liberação nem validação científica.
+
+## Nota V88.147 (18/11/2026)
+
+A auditoria live do SHA `49c2f17` confirmou leitura ESA BIOMASS FH dentro do KML Tapajós (1.263 pixels válidos, sem erro técnico) e processamento até o dashboard. Ela também detectou conflito de proveniência: a altura medida vinha de FH, mas o objeto de AGB ESA CCI fornecia rótulo e caminhos apresentados no quadro de altura. A interface e a planilha passam a preservar o produto FH/GTDX dentro do campo de altura, deixando a origem ESA CCI apenas nos campos de AGB. CCI é produto multissensor de AGB e nunca deve ser mostrado como mensuração de altura.
+
+Esta correção não altera método, profundidade ou fontes do carbono do solo. A comparação paralela de inventários consultou o registro completo; sem UAs ou agregados compatíveis para a tipologia do smoke, manteve N/D. A candidata 3.26.69 segue pré-campo enquanto seus gates completos e autoteste do EXE aguardam novo SHA.

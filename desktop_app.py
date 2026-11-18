@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.68-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.69-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -406,6 +406,18 @@ def load_ibge_land_use_reference(project):
     if not field:raise ValueError("Camada oficial IBGE sem legenda_1.")
     return layer,field
 
+def _verified_sar_height_details(details):
+    """Return only the independently measured canopy-height product record."""
+    if not isinstance(details,dict):return {}
+    nested=details.get("sar_height")
+    if isinstance(nested,dict):return nested
+    # Legacy records can supply height metadata at the top level, but an AGB
+    # product's identity/path must never be mislabeled as a height product.
+    if details.get("height_metric") and "cci" not in str(details.get("product") or "").casefold():
+        return details
+    return {}
+
+
 def _sar_dashboard_payload(native, land=None):
     """Preserve carbon SAR details and annual semantic masks at dashboard level."""
     strata=[]
@@ -414,31 +426,35 @@ def _sar_dashboard_payload(native, land=None):
         details=item.get("sar_details") or {}
         audit=item.get("sar_audit") or {}
         if details or audit:
+            # Keep CCI/AGB and canopy-height source records distinct.
+            height_details=_verified_sar_height_details(details)
             row={"physiognomy":item.get("physiognomy") or item.get("class_name"),
                            "class_name":item.get("class_name"),"area_ha":item.get("area_ha"),
                            "source":item.get("source"),"status":details.get("status"),
                            "data_origin":details.get("data_origin"),"provider":details.get("source"),
                            "stats":details.get("stats") or [],"agb_mg_ha":details.get("agb_mg_ha"),
-                           "height_mean_m":details.get("height_mean_m"),
-                           "height_n_valid_pixels":details.get("height_n_valid_pixels"),
+                           "height_mean_m":height_details.get("height_mean_m"),
+                           "height_n_valid_pixels":height_details.get("height_n_valid_pixels"),
                            "audit":audit,"details":details}
             strata.append(row)
-            try:height_pixel_count=int(details.get("height_n_valid_pixels") or 0)
+            try:height_pixel_count=int(height_details.get("height_n_valid_pixels") or 0)
             except (TypeError,ValueError):height_pixel_count=0
-            try:height_mean=float(details.get("height_mean_m"))
+            try:height_mean=float(height_details.get("height_mean_m"))
             except (TypeError,ValueError):height_mean=float("nan")
             if height_pixel_count > 0 and math.isfinite(height_mean) and height_mean > 0:
                 height_products.append({"physiognomy":row["physiognomy"],
                     "height_mean_m":height_mean,
-                    "height_sd_m":details.get("height_sd_m"),
+                    "height_sd_m":height_details.get("height_sd_m"),
                     "height_n_valid_pixels":height_pixel_count,
-                    "height_metric":details.get("height_metric"),
-                    "height_error_kind":details.get("height_error_kind"),
-                    "height_route_status":details.get("height_route_status"),
-                    "product":details.get("product"),"sensor":details.get("sensor"),
-                    "band":details.get("band"),"source":details.get("source"),
-                    "scene_ids":details.get("scene_ids"),"paths":details.get("paths"),
-                    "height_pixel_distribution":details.get("height_pixel_distribution")})
+                    "height_metric":height_details.get("height_metric"),
+                    "height_error_kind":height_details.get("height_error_kind"),
+                    "height_route_status":height_details.get("height_route_status"),
+                    "product":height_details.get("product"),"sensor":height_details.get("sensor"),
+                    "band":height_details.get("band"),"source":height_details.get("source"),
+                    "scene_ids":height_details.get("scene_ids"),"paths":height_details.get("paths"),
+                    "height_pixel_distribution":height_details.get("height_pixel_distribution"),
+                    "agb_product":details.get("product"),"agb_source":details.get("source"),
+                    "agb_data_origin":details.get("data_origin")})
     land=land or {}
     cover=land.get("recent_sar_cover") or {}
     # A route may legitimately return None when no valid height pixels were
@@ -4419,7 +4435,8 @@ class App(tk.Tk):
         chart["D2"].font=Font(bold=True,color=green);chart["D4"]="Faixa de altura (m)";chart["E4"]="Frequência (%)"
         sar_bins={};sar_pixel_total=0;strata_with_height=0
         for st in native_strata:
-            info=(st.get("sar_details") or {}).get("height_pixel_distribution") or {}
+            height_details=_verified_sar_height_details(st.get("sar_details") or {})
+            info=height_details.get("height_pixel_distribution") or {}
             if info.get("status")!="SAR_PIXELS_HISTOGRAMMED":continue
             strata_with_height+=1
             for b in info.get("bins") or []:
@@ -4433,7 +4450,7 @@ class App(tk.Tk):
             for row,(label,_) in enumerate(labels,5):
                 chart.cell(row,4,label);chart.cell(row,5,100*sar_bins.get(label,0)/sar_pixel_total)
             height_source=("Pixels SAR válidos lidos em "+str(strata_with_height)+" estrato(s) nativo(s); n="+
-                str(sar_pixel_total)+" pixels. Fonte: "+"; ".join(sorted({str((st.get("sar_details") or {}).get("source") or (st.get("sar_details") or {}).get("product") or "produto SAR" ) for st in native_strata if (st.get("sar_details") or {}).get("height_pixel_distribution")})))
+                str(sar_pixel_total)+" pixels. Fonte: "+"; ".join(sorted({str(_verified_sar_height_details(st.get("sar_details") or {}).get("source") or _verified_sar_height_details(st.get("sar_details") or {}).get("product") or "produto SAR" ) for st in native_strata if _verified_sar_height_details(st.get("sar_details") or {}).get("height_pixel_distribution")})))
             chart["D3"]=height_source+". Pixels sem dado não foram preenchidos."
         else:
             cert=(chart_native.get("height_absence_certificate") or
