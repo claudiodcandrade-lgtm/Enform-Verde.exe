@@ -2214,7 +2214,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     if sar_height and sar_height.get("height_definition_compatible_with_H100",True):
         try:
             height_structure_estimate=tapajos_h100_structure_agb(gdf,sar_height,biome,phys)
-            audit["height_structure_model"]=height_structure_estimate
+            # Keep the audit acyclic: the returned estimate receives `audit` below.
+            audit["height_structure_model"]=(
+                {key:value for key,value in height_structure_estimate.items()
+                 if key!="audit"} if isinstance(height_structure_estimate,dict)
+                else height_structure_estimate)
         except Exception as e:
             audit["height_structure_model"]={"status":"ERROR","reason":str(e)}
     # Download/read the official L2B product bundle. Open products are attempted without credentials first;

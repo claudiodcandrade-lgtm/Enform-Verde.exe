@@ -199,6 +199,34 @@ def _run_full_handoff(label, aoi):
     if not received.intersection(native_names):
         raise RuntimeError(label+": ESTRATOS_NATIVOS_SAR_NAO_CHEGARAM_AO_MODULO_DE_CARBONO")
     dashboard=_sar_dashboard_payload(native,land)
+    # A live acceptance must verify FH pixels survive native carbon -> dashboard.
+    fh_native=[]
+    for stratum in strata:
+        details=stratum.get("sar_details") or {}
+        height=details.get("sar_height") or {}
+        product=str(height.get("product") or "")
+        try: pixel_count=int(height.get("height_n_valid_pixels") or 0)
+        except (TypeError,ValueError): pixel_count=0
+        if product.startswith("FP_FH__") and pixel_count>0:
+            fh_native.append({"physiognomy":stratum.get("physiognomy") or stratum.get("class_name"),
+                              "product":product,"source":height.get("source"),
+                              "height_n_valid_pixels":pixel_count,
+                              "height_mean_m":height.get("height_mean_m"),
+                              "agb_data_origin":details.get("data_origin"),
+                              "agb_source":details.get("source")})
+    fh_dashboard=dashboard.get("height_products") or []
+    if label=="Sinop_amostra_003graus" and not fh_native:
+        raise RuntimeError(label+": FH_REAL_LIDO_NAO_CHEGOU_AO_CARBONO_NATIVO")
+    for source_row in fh_native:
+        target=next((row for row in fh_dashboard
+                     if row.get("product")==source_row["product"]
+                     and row.get("physiognomy")==source_row["physiognomy"]),None)
+        if not target:
+            raise RuntimeError(label+": FH_REAL_DESCARTADO_ANTES_DO_DASHBOARD: "+source_row["product"])
+        if (int(target.get("height_n_valid_pixels") or 0)!=source_row["height_n_valid_pixels"]
+                or target.get("source")!=source_row["source"]
+                or target.get("agb_data_origin")!=source_row["agb_data_origin"]):
+            raise RuntimeError(label+": PROVENIENCIA_FH_O_ROTA_AGB_DIVERGENTE_NO_DASHBOARD")
     semantic_payload=dashboard.get("semantic_land_use") or {}
     if not semantic_payload.get("classes"):
         raise RuntimeError(label+": MASCARAS_SEMANTICAS_AUSENTES_NO_PAYLOAD_DO_DASHBOARD")
@@ -228,7 +256,10 @@ def _run_full_handoff(label, aoi):
         "class_count":semantic_payload.get("class_count"),
         "class_area_ha":semantic_payload.get("area_ha"),
         "analysis_run_id":dashboard.get("analysis_run_id"),
-        "aoi_hash_sha256":dashboard.get("aoi_hash_sha256")}
+        "aoi_hash_sha256":dashboard.get("aoi_hash_sha256"),
+        "fh_height_products":fh_dashboard,
+        "fh_live_native_to_dashboard":"PASSED" if fh_native else "NOT_EXERCISED",
+        "fh_native_carbon_routes":fh_native}
     # Exercise the first real-data hop into the agricultural dashboard as
     # part of the same AOI run. A prior-season semantic crop mask may support
     # only a conditional scenario; current SAR vigor must still be dated and

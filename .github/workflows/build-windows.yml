@@ -151,6 +151,8 @@ jobs:
 
       - name: Source self-test
         run: python desktop_app.py --self-test
+      - name: FH and inventory AGB through rendered executive dashboard
+        run: python -m unittest tests.test_maap_fh_l2a_automatic -v
       - name: IFN database, location, biome and fitophysiognomy selection tests
         run: python -m unittest tests.test_inventory_microdata_library -v
       - name: Native-only stratification and confidence regression tests

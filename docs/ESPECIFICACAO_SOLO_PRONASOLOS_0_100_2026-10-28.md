@@ -826,3 +826,7 @@ A atualização de FH/AGB trata exclusivamente de biomassa da vegetação e estr
 
 ### Versão vigente documentada — V88.168 / 3.26.78-PRECAMPO-EXPERIMENTAL (19/11/2026)
 O checkpoint V88.168 altera a rota de biomassa vegetal FH/AGB e a auditoria de inventários. Ele não modifica qualquer método do compartimento de carbono do solo; a inclusão desta versão mantém a especificação de solo sincronizada com a candidata atual.
+
+
+### Versão vigente documentada — V88.169 / 3.26.79-PRECAMPO-EXPERIMENTAL (19/11/2026)
+A correção V88.169 elimina uma referência circular entre a auditoria da rota FH×inventário e a estimativa AGB. Não altera os métodos ou resultados do compartimento de carbono do solo; o registro sincroniza a versão candidata nos documentos vigentes.

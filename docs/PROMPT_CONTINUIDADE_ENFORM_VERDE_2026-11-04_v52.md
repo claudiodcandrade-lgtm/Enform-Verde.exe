@@ -1,3 +1,7 @@
+### V88.169 — passagem obrigatória FH real → dashboard (19/11/2026)
+
+Versão candidata `3.26.79-PRECAMPO-EXPERIMENTAL`. A correção remove ciclo de referência entre estimativa H100×inventário e sua auditoria, que fazia a serialização do relatório/dashboard falhar após o cálculo. O novo teste encadeia FH L2A zonal, modelo AGB H100×G dentro do domínio observado, carbono por compartimento, payload, tabela executiva e relatório; os pixels nesse teste são sintéticos. O gate live de Sinop exige que FH real da etapa de carbono chegue ao painel com produto, fonte, pixels e origem AGB preservados. Não declarar concluído/distribuível antes de regressão, build Windows, teste real Sinop, imagem óptica e autoteste EXE limpo passarem no mesmo SHA. Resultados experimentais; validação científica de campo segue pendente. Detalhes: `docs/spec_updates/V88.169_FH_REAL_SINOP_DASHBOARD_HANDOFF.md`.
+
 Warning: truncated output (original token count: 46970)
 Total output lines: 909
 
