@@ -8,6 +8,9 @@ Data: 18/11/2026
 - O comando PyInstaller agora inclui esse arquivo em `data/` dentro do runtime `_internal`; a etapa Windows verifica a presença do arquivo e das referências Santos et al. KM72 e KM117 antes do aceite.
 - O relatório de aceite registra estado, diagnóstico, quantidade e fontes da evidência de inventários. Falha técnica de leitura passa a ser exposta como erro técnico explícito.
 
-## Verificação e estado
+## Correções da documentação e estado dos testes
 
-A versão anterior passou nos testes locais, SAR/óptico live e compilou o EXE; o autoteste limpo falhou porque o ativo de evidência não estava no runtime do PyInstaller. O primeiro gate integral encontrou que o sincronizador inseria V88.166 no histórico, mas deixava a capa do Word em 3.26.73; portanto, a regressão no novo SHA falhou em um teste documental específico. O gerador e o workflow agora atualizam a capa e têm testes dedicados. A nova regressão completa, build, FH/SAR live e aceite Tapajós em EXE limpo precisam concluir no SHA corrigido. A homologação científica independente permanece pendente e separada da disponibilidade funcional do programa.
+- A regressão integral identificou que a sincronização do histórico do DOCX não atualizava a versão na capa. O gerador agora atualiza o estado e a linha de versão da capa automaticamente, e a suíte cobre esse comportamento.
+- O gate inicial confirmou a causa com 1 falha documental em 1.312 testes. A regressão completa, build Windows, FH/SAR live e aceite Tapajós em EXE limpo foram disparados novamente após a sincronização automática da capa; ainda aguardam conclusão no SHA final.
+- FH real ESA BIOMASS em Sinop e o gate SAR live de Sinop/Tapajós passaram em execução anterior desta candidata. Isso comprova leitura/handoff, não calibração nem homologação científica.
+- A homologação científica independente permanece pendente e separada da disponibilidade operacional. Candidata experimental; nenhum EXE liberado até todos os gates operacionais passarem.
