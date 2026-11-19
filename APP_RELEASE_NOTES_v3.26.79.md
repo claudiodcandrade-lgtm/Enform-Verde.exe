@@ -6,3 +6,7 @@
 - Mantém as métricas agregadas de inventários como balizas; só calcula AGB quando existe modelo aplicável. Resultados continuam experimentais e não calibrados para Sinop sem validação independente de campo.
 
 **Estado:** candidata pré-campo. Não declarar executável distribuível antes de build Windows, regressão, teste de imagem óptica e autoteste em pasta limpa no mesmo SHA.
+
+## Registro operacional e critério de distribuição
+
+A prova FH real de Sinop passou, e o processamento SAR real de Sinop/Tapajós chegou ao dashboard com sucesso. Em uma tentativa Windows anterior, a regressão FH/AGB→quadro e relatório passou; o job parou depois porque o mock do contrato de interface não aceitava o argumento `metrics` e impedia o desenho do polígono. O mock foi corrigido. A distribuição desta versão exige que o build atual passe no SHA final, incluindo o contrato gráfico, os testes ópticos aplicáveis, a compilação do executável e seu autoteste em pasta limpa. O gate científico independente segue pendente de validação de campo; resultados permanecem experimentais.
