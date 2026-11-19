@@ -11,7 +11,7 @@ Ausência SAR só pode ser certificada depois de busca/paginação/leitura compl
 
 No Excel, a aba Gráficos contém linha de fustes/ha por DAP, parâmetros/tabela de área basal média, linha de altura SAR (ou média de inventário da mesma fitofisionomia apenas com ausência certificada) e barras das dez espécies dominantes; todas as fontes, unidade, período e condição observada/fallback. Bloquear regressão de sobreposição dos dados auxiliares DAP com a área D:E do painel de altura. O dashboard valida run_id/hash, aceita estados por módulo e mostra divergência de áreas como não reconciliada, sem atribuí-la a uma classe ou carbono.
 
-## Estado vigente — V88.167 / 3.26.77-PRECAMPO-EXPERIMENTAL (19/11/2026)
+## Estado vigente — V88.168 / 3.26.78-PRECAMPO-EXPERIMENTAL (19/11/2026)
 
 A última revisão inclui agrupamento de solicitações ópticas concorrentes sem cortar páginas/rotas/cenas, leitura vetorial fora da thread gráfica, remoção de cópias profundas de inventários e do mapa nacional na abertura da análise, e publicação imediata do resultado de vigor pela fila da interface. O relatório copiável e o painel executivo apresentam estoque por compartimento e incerteza sem preencher lacunas como zero. No Excel, o painel executivo é a primeira aba e os gráficos ficam separados; densidade por compartimento usa sua própria área quantificada e a densidade do total permanece N/D se a cobertura conjunta for parcial.
 
@@ -774,7 +774,7 @@ Validação operacional final da candidata `3.26.76-PRECAMPO-EXPERIMENTAL`, cód
 
 Workflow de sincronização documental: `.github/workflows/sync-v88-166-word.yml`, acionado por `docs/spec_updates/V88.166_PYINSTALLER_INVENTORY_EVIDENCE_RUNTIME.md`.
 
-A sincronização corrente da V88.167 é `.github/workflows/sync-v88-167-word.yml`, acionada por `docs/spec_updates/V88.167_RESPONSIVIDADE_PAINEL_INTEGRADO.md`. O banco IFN permanece ao lado do EXE, fora de `_internal`; validar integridade via manifesto/metadados e consultar apenas UAs espacialmente elegíveis, sem varredura integral por análise.
+A sincronização da V88.167 é preservada em `.github/workflows/sync-v88-167-word.yml`; a corrente V88.168 usa `.github/workflows/sync-v88-168-word.yml` e `docs/spec_updates/V88.168_FH_AGB_BALIZAS_HORIZONTAIS_MULTIFONTE.md`. O banco IFN permanece ao lado do EXE, fora de `_internal`; validar integridade via manifesto/metadados e consultar apenas UAs espacialmente elegíveis, sem varredura integral por análise.
 
 O teste integral Windows detectou que a sincronização inseria o checkpoint, mas deixava a capa do DOCX na versão anterior. `tools/update_spec_docx.py` e o workflow passaram a atualizar programaticamente estado e versão da capa, com testes de regressão. O gate pré-campo também foi atualizado para verificar versão atual e documentos vigentes, sem exigir texto de revisão histórica. Com essas correções, 1.314 testes, build Windows e autoteste limpo do EXE passaram no SHA `46119d9db17d00b2e5fd077d9f184afcc5939e1c`. A homologação científica independente segue pendente por falta de validação de campo e não impede a operação do aplicativo.
 

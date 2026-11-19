@@ -822,3 +822,7 @@ O ganho de responsividade vem de remover cópias redundantes, processamento sín
 
 ### Nota V88.168 — escopo da alteração
 A atualização de FH/AGB trata exclusivamente de biomassa da vegetação e estrutura de inventários. Estatísticas horizontais agregadas são balizas da rota de biomassa aérea e não modificam fonte, método, profundidade, equações, incerteza ou compartimentos do carbono orgânico do solo 0–100 cm. Raízes continuam separadas; nenhuma métrica de G/DAP é aplicada ao solo.
+
+
+### Versão vigente documentada — V88.168 / 3.26.78-PRECAMPO-EXPERIMENTAL (19/11/2026)
+O checkpoint V88.168 altera a rota de biomassa vegetal FH/AGB e a auditoria de inventários. Ele não modifica qualquer método do compartimento de carbono do solo; a inclusão desta versão mantém a especificação de solo sincronizada com a candidata atual.
