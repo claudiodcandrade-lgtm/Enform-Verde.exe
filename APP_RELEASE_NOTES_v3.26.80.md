@@ -18,3 +18,5 @@ Candidata experimental. FH real em Sinop e handoff FH/AGB até o payload do dash
 Os sincronizadores Word históricos também observavam o arquivo utilitário compartilhado e iniciaram commits concorrentes para versões antigas. Seus gatilhos foram limitados aos próprios arquivos de checkpoint; somente a V88.170 observa agora o utilitário. Isso evita que uma atualização histórica concorra com a documentação desta candidata.
 
 O build Windows da candidata pós-sincronização, o autoteste em pasta limpa e o checksum ainda precisam concluir para gerar o pacote desta candidata. Homologação científica independente e validação de campo permanecem pendentes.
+
+Uma segunda atualização do Word passou no run `44577483837`, com baseline, HEAD, data, SHA de controle, capa, versão, histórico e rodapé atualizados e DOCX íntegro. A cópia sincronizada está no commit `8faed8917e2a461cac9621f6d6990504c0e38256`. O próximo push dispara o build Windows contra esse estado documental.
