@@ -29,7 +29,7 @@ jobs:
             --date 2026-11-19 \
             --footer-label V88.170 \
             --footer-date 19/11/2026 \
-            --cover-state "CONSULTA IFN EM LOTE; GATE GUI CORRIGIDO; BUILD PENDENTE" \
+            --cover-state "FH/DASHBOARD, S2 E EXE LIMPO APROVADOS" \
             --cover-version "V88.170 | 3.26.80-PRECAMPO-EXPERIMENTAL"
           cp docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_170.docx
           python -c "from zipfile import ZipFile; p='docs/ESPECIFICACAO_TECNICA_COMPLETA.docx'; z=ZipFile(p); assert z.testzip() is None"
