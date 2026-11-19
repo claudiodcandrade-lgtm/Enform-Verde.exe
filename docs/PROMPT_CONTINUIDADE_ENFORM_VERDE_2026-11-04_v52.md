@@ -822,3 +822,6 @@ O job de sincronização falhou ao tentar atualizar a capa, pois a especificaç�
 
 ### V88.169 — gate GUI aguarda validação assíncrona de GeoJSON (19/11/2026)
 A execução Windows chegou ao gate gráfico e revelou uma corrida no teste de upload GeoJSON: a UI valida o arquivo em worker, mas a asserção era imediata e o `TemporaryDirectory` podia remover o arquivo antes da leitura. O contrato agora bombeia o loop Tk por até 15 s até estado terminal e só depois valida confirmação e polígono. Essa correção é do teste de interface; não transforma evidência sintética em prova óptica. Repetir no novo SHA os testes Windows, o processamento live FH→dashboard, a imagem óptica e o autoteste do EXE limpo. Não declarar release enquanto qualquer gate falhar.
+
+### V88.169 — sincronizador aceita capa já atualizada (19/11/2026)
+Uma segunda sincronização Word falhou porque a primeira já havia substituído o rótulo da capa pelo estado expandido `FH REAL SINOP/TAPAJÓS→DASHBOARD`. O atualizador passou a reconhecer também esse prefixo, com teste de regressão específico; assim, reexecuções não falham após a primeira atualização. O gate GUI do GeoJSON aguarda a validação e confirma o polígono antes do encerramento do arquivo temporário. Repetir a sincronização do Word, a regressão, o processamento live e o build/autoteste Windows antes da distribuição.
