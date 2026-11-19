@@ -819,3 +819,6 @@ A prova real ESA BIOMASS FH em Sinop passou; a execução real SAR→carbono nat
 
 ### V88.169 — sincronização da capa Word reconhece o rótulo vigente (19/11/2026)
 O job de sincronização falhou ao tentar atualizar a capa, pois a especificação V88.169 usa o prefixo `FH→PAINEL LOCAL:`. O atualizador agora reconhece esse prefixo além dos rótulos históricos, e existe teste unitário cobrindo a substituição do estado da capa. Confirmar que o workflow Word termina e a cópia versionada DOCX é gerada; depois validar o build Windows e o EXE no SHA final. A rota live Sinop/Tapajós FH→dashboard já passou; o pacote segue bloqueado até o EXE limpo.
+
+### V88.169 — gate GUI aguarda validação assíncrona de GeoJSON (19/11/2026)
+A execução Windows chegou ao gate gráfico e revelou uma corrida no teste de upload GeoJSON: a UI valida o arquivo em worker, mas a asserção era imediata e o `TemporaryDirectory` podia remover o arquivo antes da leitura. O contrato agora bombeia o loop Tk por até 15 s até estado terminal e só depois valida confirmação e polígono. Essa correção é do teste de interface; não transforma evidência sintética em prova óptica. Repetir no novo SHA os testes Windows, o processamento live FH→dashboard, a imagem óptica e o autoteste do EXE limpo. Não declarar release enquanto qualquer gate falhar.
