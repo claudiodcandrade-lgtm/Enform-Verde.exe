@@ -842,3 +842,6 @@ A correção do gate GUI agora aguarda a leitura assíncrona do GeoJSON. É uma 
 
 ### Nota V88.169 — sincronização repetível da capa (19/11/2026)
 A reexecução confiável da sincronização Word, inclusive após a atualização do rótulo da capa, não altera fonte, método, unidade, profundidade, incerteza ou resultados do carbono orgânico do solo 0–100 cm.
+
+### Nota V88.169 — assertions de fitofisionomia e contingência (19/11/2026)
+A atualização dos testes confere o rótulo de fitofisionomia potencial IBGE antes da confirmação por SAR e a contingência de inventários somente após esgotar as rotas SAR. Não altera dados, fonte, método, unidade, profundidade ou incerteza do carbono do solo 0–100 cm.
