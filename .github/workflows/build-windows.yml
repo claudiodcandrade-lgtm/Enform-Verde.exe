@@ -354,8 +354,14 @@ jobs:
               geojson=Path(td)/"tapajos_acceptance.geojson"
               app.read_vector(kmz).to_file(geojson,driver="GeoJSON")
               app.filedialog.askopenfilename=lambda **kwargs:str(geojson)
-              ui.pick_vector(); ui.update_idletasks()
-              assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
+              ui.pick_vector()
+              deadline=time.monotonic()+15
+              while time.monotonic()<deadline:
+                  ui.update()
+                  status=ui.vector_status.get()
+                  if status.startswith(("Upload concluído","Upload não concluído")): break
+                  time.sleep(.05)
+              assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing after async validation"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
               # Total image failure leaves the AOI outline; cartography is not imagery.
               current_gen=ui._map_generation
