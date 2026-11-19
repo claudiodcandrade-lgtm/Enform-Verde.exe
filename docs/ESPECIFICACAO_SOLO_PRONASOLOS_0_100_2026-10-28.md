@@ -839,3 +839,6 @@ A manutenção do atualizador da capa Word corrige apenas a sincronização docu
 
 ### Nota V88.169 — teste de upload assíncrono (19/11/2026)
 A correção do gate GUI agora aguarda a leitura assíncrona do GeoJSON. É uma alteração no teste da interface e não modifica métodos, fontes, unidade, profundidade ou incerteza do carbono orgânico do solo 0–100 cm.
+
+### Nota V88.169 — sincronização repetível da capa (19/11/2026)
+A reexecução confiável da sincronização Word, inclusive após a atualização do rótulo da capa, não altera fonte, método, unidade, profundidade, incerteza ou resultados do carbono orgânico do solo 0–100 cm.
