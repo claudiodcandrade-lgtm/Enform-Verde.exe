@@ -167,6 +167,7 @@ jobs:
         run: |
           @'
           import tkinter as tk
+          import time
           from pathlib import Path
           import desktop_app as app
           app.messagebox.showerror=lambda *a,**k: (_ for _ in ()).throw(RuntimeError("GUI contract encountered a modal error: "+str(a)))
@@ -313,8 +314,13 @@ jobs:
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
           ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
-          ui.update_idletasks()
-          assert "Upload concluído" in ui.vector_status.get() and kmz.name in ui.vector_status.get(), "AOI filename/upload confirmation missing"
+          deadline=time.monotonic()+15
+          while time.monotonic()<deadline:
+              ui.update()
+              status=ui.vector_status.get()
+              if status.startswith(("Upload concluído","Upload não concluído")): break
+              time.sleep(0.05)
+          assert "Upload concluído" in status and kmz.name in status, "AOI filename/upload confirmation missing after async validation"
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
           # Deterministic UI plumbing test: live coverage/pixel validity is tested
           # separately below and must not be hidden by a mocked provider here.
