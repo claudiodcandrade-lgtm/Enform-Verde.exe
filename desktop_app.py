@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.75-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.76-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1020,6 +1020,10 @@ def acceptance_test(kmz_path):
              "data_origin":result.get("data_origin"),"priority_height_route_status":result.get("priority_height_route_status"),
              "priority_height_route_gate":audit.get("priority_height_route_gate"),
              "agb_status":"ESTIMATIVA_QUANTITATIVA_DISPONIVEL" if agb is not None else "N_D_SEM_MODELO_AGB_APLICAVEL",
+             "inventory_evidence_status":published.get("status"),
+             "inventory_evidence_diagnostic":published.get("diagnostic"),
+             "inventory_reference_count":len(references),
+             "inventory_evidence_sources":list(published.get("sources") or []),
              "inventory_reference_eligible":reference_gate["inventory_reference_eligible"],
              "eligible_inventory_reference_count":len(reference_gate["eligible_inventory_references"]),
              "acceptance_status":reference_gate["acceptance_status"],
@@ -1048,7 +1052,10 @@ def acceptance_test(kmz_path):
             if result.get("priority_height_route_status")=="ERRO_TECNICO_ROTA_PRIORITARIA":
                 diagnostic=acceptance_path.read_text(encoding="utf-8",errors="replace")
                 raise RuntimeError("ERRO_TECNICO_ROTA_PRIORITARIA no FH/GTDX; contingência de inventário bloqueada corretamente. Diagnóstico: "+diagnostic[:12000])
-            raise RuntimeError("Pixels SAR foram processados, mas nenhuma estimativa AGB prioritária ou referência de inventário elegível foi produzida. Diagnóstico salvo em "+str(acceptance_path))
+            diagnostic=acceptance_path.read_text(encoding="utf-8",errors="replace")
+            if str(published.get("status") or "").startswith("ERRO_TECNICO"):
+                raise RuntimeError("ERRO_TECNICO_LEITURA_REGISTRO_INVENTARIOS: "+diagnostic[:12000])
+            raise RuntimeError("Pixels SAR foram processados, mas nenhuma estimativa AGB prioritária ou referência de inventário elegível foi produzida. Diagnóstico: "+diagnostic[:12000])
     elif not str(result.get("data_origin","")).startswith("SAR"):
         raise RuntimeError("Origem AGB incompatível: resultado numérico sem proveniência SAR.")
     return summary

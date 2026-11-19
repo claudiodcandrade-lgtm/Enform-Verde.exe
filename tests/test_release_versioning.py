@@ -44,6 +44,9 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("--module-check", text)
         self.assertIn("--visual-check", text)
         self.assertIn('validation/ui_visual_baseline.json;validation', text)
+        self.assertIn('--add-data "data/structural_aggregate_evidence_v1.csv;data"', text)
+        self.assertIn("Aggregated inventory evidence is missing beside the frozen Python module runtime", text)
+        self.assertIn("Compiled inventory evidence is missing the two eligible Tapajos aggregate references", text)
         self.assertNotRegex(text, r"VERSÃO \d+\.\d+\.\d+")          # no hard-coded version in LEIA-ME
         for mod in ("pronasolos_wcs", "crop_forecast_pipeline", "crop_vigor"):
             self.assertIn("--hidden-import " + mod, text)

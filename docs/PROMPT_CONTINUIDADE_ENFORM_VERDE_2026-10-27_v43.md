@@ -697,3 +697,9 @@ A aceitação anterior encontrou pixels SAR, mas descartou referências publicad
 O registro harmonizado de referências é cacheado por revisão do CSV e reutilizado em consultas de fontes, AGB e estrutura. Para a base IFN SQLite de 466 MiB, aplicar primeiro filtro pela chave composta bioma + legenda_1 do IBGE e buscar microdados arbóreos somente para UAs selecionadas via índice existente. Status de integridade da base fica cacheado por caminho/tamanho/`mtime_ns`. Manter todos os dados, compatibilidade de normalização, auditoria e distinção entre ausência real e falha técnica. A regressão integral local passou após a atualização do Word (1.312 testes OK, 1 ignorado); 191 módulos, autoteste e module-check passaram. Gates Windows e aceite do EXE limpo seguem pendentes; sem homologação científica implícita.
 
 A sincronização da especificação Word V88.165 é automatizada pelo workflow `.github/workflows/sync-v88-165-word.yml`, acionado pela entrada `docs/spec_updates/V88.165_INDICE_SOB_DEMANDA_INVENTARIOS.md`; ele atualiza a versão canônica e a cópia DOCX versionada.
+
+## V88.166 — causa da falha do aceite Tapajós no EXE (18/11/2026)
+
+O runner Windows provou CBERS-4A RGB, Sentinel-1 VV/VH, catálogo SAR em seis biomas, cruzamento IBGE e seleção IFN. A falha restante ocorreu no EXE limpo porque o CSV de referências AGB/estrutura não estava dentro de `_internal/data`, o caminho usado pelo módulo congelado; a etapa só o copiava para a pasta externa do aplicativo. PyInstaller agora empacota o arquivo no runtime interno, e o build confirma os agregados KM72/KM117. O resumo de aceite registra estado/diagnóstico/fontes e explicita falha técnica. Após sincronização Word V88.166, a regressão integral passou: 1.312 testes OK e 1 ignorado; 191 módulos, autoteste e module-check passaram. Novo build e aceite EXE limpo ainda pendentes; sem homologação científica.
+
+Workflow Word V88.166: `.github/workflows/sync-v88-166-word.yml`.

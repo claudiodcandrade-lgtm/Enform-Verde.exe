@@ -793,3 +793,7 @@ A compatibilidade hierárquica foi corrigida somente na listagem comparativa de 
 O cache e a seleção SQLite sob demanda otimizam exclusivamente o acesso às fontes de inventário usadas para referência de AGB/estrutura. Não modificam fonte, método, unidade, profundidade, incerteza ou compartimento do carbono do solo (0–100 cm), que permanece independente de biomassa radicular.
 
 A geração automatizada da cópia Word versionada V88.165 não altera os métodos ou resultados edáficos.
+
+## Nota V88.166 — empacotamento da evidência de inventários
+
+A correção posiciona o registro agregado de inventários no runtime congelado do PyInstaller e melhora o diagnóstico do aceite. Não altera fonte, unidade, profundidade, método ou incerteza de carbono orgânico do solo de 0–100 cm; raízes permanecem compartimento separado.
