@@ -13,8 +13,8 @@ Candidata experimental. FH real em Sinop e handoff FH/AGB até o payload do dash
 
 **Correção do gate GUI (19/11/2026):** o teste de upload GeoJSON verificava a confirmação imediatamente, embora `pick_vector()` leia em worker e atualize a interface por fila. O gate agora aguarda um estado terminal para KMZ e GeoJSON, com limite de 30 s, e verifica o polígono renderizado. A falha registrada foi uma corrida no teste, não uma reprodução confirmada de congelamento geral do programa. O build/autoteste Windows deve passar novamente antes de disponibilizar o pacote desta candidata.
 
-**Correção documental:** uma repetição da sincronização Word não reconhecia o rótulo da própria capa V88.170. O atualizador passa a aceitar esse prefixo e tem regressão específica de reexecução; a sincronização Word e o build Windows seguem pendentes no SHA corretivo.
+**Correção documental:** uma repetição da sincronização Word não reconhecia o rótulo da própria capa V88.170. O atualizador agora aceita esse prefixo e tem regressão específica de reexecução. A sincronização V88.170 passou no run `44576920853`; capa, versão, baseline, HEAD, controle de SHA, histórico e rodapé foram atualizados e o DOCX foi validado como ZIP íntegro no commit `6ceadd82be7ef0b098e0e38f03a05f04f9a32fc8`.
 
 Os sincronizadores Word históricos também observavam o arquivo utilitário compartilhado e iniciaram commits concorrentes para versões antigas. Seus gatilhos foram limitados aos próprios arquivos de checkpoint; somente a V88.170 observa agora o utilitário. Isso evita que uma atualização histórica concorra com a documentação desta candidata.
 
-Build Windows, autoteste em pasta limpa e checksum desta candidata ainda precisam concluir no mesmo SHA antes da disponibilização do ZIP. Homologação científica independente e validação de campo permanecem pendentes.
+O build Windows da candidata pós-sincronização, o autoteste em pasta limpa e o checksum ainda precisam concluir para gerar o pacote desta candidata. Homologação científica independente e validação de campo permanecem pendentes.
