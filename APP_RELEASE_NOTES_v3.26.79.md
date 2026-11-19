@@ -10,3 +10,5 @@
 ## Registro operacional e critério de distribuição
 
 A prova FH real de Sinop passou, e o processamento SAR real de Sinop/Tapajós chegou ao dashboard com sucesso. Em uma tentativa Windows anterior, a regressão FH/AGB→quadro e relatório passou; o job parou depois porque o mock do contrato de interface não aceitava o argumento `metrics` e impedia o desenho do polígono. O mock foi corrigido. A distribuição desta versão exige que o build atual passe no SHA final, incluindo o contrato gráfico, os testes ópticos aplicáveis, a compilação do executável e seu autoteste em pasta limpa. O gate científico independente segue pendente de validação de campo; resultados permanecem experimentais.
+
+A reexecução final V88.169 confirmou a sincronização da capa Word após duas atualizações consecutivas. Também ajustou o contrato GUI para aguardar a validação assíncrona de GeoJSON antes de conferir o polígono e remover o arquivo temporário. O build e o autoteste do EXE ainda devem passar no SHA final antes da distribuição.
