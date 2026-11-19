@@ -825,3 +825,6 @@ A execução Windows chegou ao gate gráfico e revelou uma corrida no teste de u
 
 ### V88.169 — sincronizador aceita capa já atualizada (19/11/2026)
 Uma segunda sincronização Word falhou porque a primeira já havia substituído o rótulo da capa pelo estado expandido `FH REAL SINOP/TAPAJÓS→DASHBOARD`. O atualizador passou a reconhecer também esse prefixo, com teste de regressão específico; assim, reexecuções não falham após a primeira atualização. O gate GUI do GeoJSON aguarda a validação e confirma o polígono antes do encerramento do arquivo temporário. Repetir a sincronização do Word, a regressão, o processamento live e o build/autoteste Windows antes da distribuição.
+
+### V88.169 — contratos do gate científico alinhados ao diagnóstico vigente (19/11/2026)
+O build Windows reprovou dois assertions no script de aceite, não os cálculos: o IBGE deve continuar rotulado como potencial até confirmação SAR, e a rota de média de inventários fica bloqueada enquanto alguma rota SAR estiver pendente ou tecnicamente incompleta. O texto do teste passa a conferir o rótulo potencial atual e a condição semântica de rotas SAR pendentes, sem alterar a política científica. Aguardar sincronização Word e repetir no novo SHA os gates ópticos, SAR real→dashboard, interface e EXE limpo.
