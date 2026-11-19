@@ -833,3 +833,6 @@ A correção V88.169 elimina uma referência circular entre a auditoria da rota 
 
 ### Nota de verificação Windows V88.169 (19/11/2026)
 O registro da passagem FH real Sinop→dashboard e da correção de um mock no gate de interface serve à rastreabilidade da versão; a falha estava no teste gráfico, não no cálculo do carbono do solo. Não altera fonte, método, profundidade, unidade, incerteza ou resultado de carbono orgânico 0–100 cm. O build final do EXE continua condicionado aos gates Windows.
+
+### Nota documental V88.169 — rótulo de capa (19/11/2026)
+A manutenção do atualizador da capa Word corrige apenas a sincronização documental da versão; não altera fonte, método, unidade, profundidade, incerteza ou resultados do carbono orgânico do solo 0–100 cm.
