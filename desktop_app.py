@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.73-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.75-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1012,9 +1012,24 @@ def acceptance_test(kmz_path):
     if pixel_count<=0:raise RuntimeError("Nenhum pixel SAR foi processado dentro da AOI Tapajós.")
     agb=result.get("agb_mg_ha")
     lit=result.get("literature_reference") or {}
+    published=(audit.get("published_inventory_evidence") or {})
+    references=list(published.get("agb_references") or [])
+    from inventory_agb_comparison import tapajos_acceptance_inventory_references
+    reference_gate=tapajos_acceptance_inventory_references(agb,pixel_count,published)
     summary={"status":result.get("status"),"area_ha":metrics["area_ha"],"pixel_count":pixel_count,
              "data_origin":result.get("data_origin"),"priority_height_route_status":result.get("priority_height_route_status"),
              "priority_height_route_gate":audit.get("priority_height_route_gate"),
+             "agb_status":"ESTIMATIVA_QUANTITATIVA_DISPONIVEL" if agb is not None else "N_D_SEM_MODELO_AGB_APLICAVEL",
+             "inventory_reference_eligible":reference_gate["inventory_reference_eligible"],
+             "eligible_inventory_reference_count":len(reference_gate["eligible_inventory_references"]),
+             "acceptance_status":reference_gate["acceptance_status"],
+             "agb_quantitative_estimate_available":reference_gate["agb_quantitative_estimate_available"],
+             "inventory_references":[{"source_id":r.get("source_id"),"institution":r.get("institution"),
+                 "region":r.get("region"),"agb_mean_mg_ha":r.get("agb_mean_mg_ha"),
+                 "sd_mg_ha":r.get("sd_mg_ha"),"ci95_low_mg_ha":r.get("ci95_low_mg_ha"),
+                 "ci95_high_mg_ha":r.get("ci95_high_mg_ha"),
+                 "physiognomy_match_level":r.get("physiognomy_match_level"),
+                 "reference_only":True,"not_added_to_stock_total":True} for r in references],
              "fh_zonal_read_audit":(audit.get("biomass_height") or {}).get("zonal_read_audit"),
              "fh_zonal_read_errors":(audit.get("biomass_height") or {}).get("zonal_read_errors"),
              "gtdx_reason":(audit.get("gtdx_height") or {}).get("reason"),
@@ -1024,6 +1039,12 @@ def acceptance_test(kmz_path):
     acceptance_path.write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
     if agb is None:
         if not lit.get("available") or not lit.get("sar_processed"):
+            # Parent/subformation aggregates may accompany an FH result as
+            # separately labeled benchmarks. They never become an AGB estimate
+            # or bypass the no-SAR inventory-fallback gate.
+            if reference_gate["inventory_reference_eligible"]:
+                acceptance_path.write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
+                return summary
             if result.get("priority_height_route_status")=="ERRO_TECNICO_ROTA_PRIORITARIA":
                 diagnostic=acceptance_path.read_text(encoding="utf-8",errors="replace")
                 raise RuntimeError("ERRO_TECNICO_ROTA_PRIORITARIA no FH/GTDX; contingência de inventário bloqueada corretamente. Diagnóstico: "+diagnostic[:12000])

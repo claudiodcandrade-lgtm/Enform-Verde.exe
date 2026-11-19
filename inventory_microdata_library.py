@@ -308,12 +308,26 @@ def select_official_inventory_units(*, biome: str, physiognomy: str,
         tables={r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         if "ifn_sampling_unit_ibge_crosswalk" not in tables:
             return {"status":"N/D","reason":"IFN_IBGE_PHYSIOGNOMY_CROSSWALK_NOT_AVAILABLE","units":[],"trees":[]}
+        # The composite crosswalk index starts with source_biome and legenda_1.
+        # Use an exact indexed lookup for the common case so the 466 MiB tree
+        # table is touched only for the selected units. If a caller supplies a
+        # spelling/case variant, preserve the accent/case-insensitive matching
+        # behavior through the narrower biome fallback and Python normalizer.
         records=conn.execute("""SELECT s.*, x.ibge_cd_fito, x.ibge_legenda_1, x.match_status,
                    x.source_url AS crosswalk_source, x.source_sha256 AS crosswalk_sha256
             FROM ifn_sampling_unit_summary s JOIN ifn_sampling_unit_ibge_crosswalk x
               ON x.ua_id=s.ua_id AND x.uf=s.uf
-            WHERE s.biome=? AND x.match_status='MATCH_UNICO_PONTO_INTERIOR'
-              AND x.ibge_legenda_1 IS NOT NULL""",(str(biome).strip(),)).fetchall()
+            WHERE x.source_biome=? AND x.ibge_legenda_1=?
+              AND s.biome=? AND x.match_status='MATCH_UNICO_PONTO_INTERIOR'
+              AND x.ibge_legenda_1 IS NOT NULL""",
+            (str(biome).strip(),str(physiognomy).strip(),str(biome).strip())).fetchall()
+        if not records:
+            records=conn.execute("""SELECT s.*, x.ibge_cd_fito, x.ibge_legenda_1, x.match_status,
+                       x.source_url AS crosswalk_source, x.source_sha256 AS crosswalk_sha256
+                FROM ifn_sampling_unit_summary s JOIN ifn_sampling_unit_ibge_crosswalk x
+                  ON x.ua_id=s.ua_id AND x.uf=s.uf
+                WHERE s.biome=? AND x.match_status='MATCH_UNICO_PONTO_INTERIOR'
+                  AND x.ibge_legenda_1 IS NOT NULL""",(str(biome).strip(),)).fetchall()
         target=_norm_label(physiognomy)
         candidates=[]
         for row in records:

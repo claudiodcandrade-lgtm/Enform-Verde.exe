@@ -782,3 +782,14 @@ Esta alteração é restrita à consulta e apresentação de referências de inv
 ## Nota V88.162 — processamento ESA CCI
 
 Alteração exclusiva do agendamento da contingência AGB: o raster ESA CCI não é consultado/baixado antes do gate FH/GTDX e calibração CCI–inventário. Esta mudança não modifica método, dados, profundidade, equações ou incerteza do carbono orgânico do solo 0–100 cm. Biomassa radicular permanece compartimento separado e a estimativa total do solo não substitui nem serve de proxy para raízes.
+
+
+## Nota V88.164 — aceite Tapajós
+
+A compatibilidade hierárquica foi corrigida somente na listagem comparativa de inventários AGB; não altera métodos, fontes, profundidade ou incerteza do carbono no solo. Referências agregadas não integram o estoque da AOI nem substituem compartimentos.
+
+## Nota V88.165 — indexação de inventários
+
+O cache e a seleção SQLite sob demanda otimizam exclusivamente o acesso às fontes de inventário usadas para referência de AGB/estrutura. Não modificam fonte, método, unidade, profundidade, incerteza ou compartimento do carbono do solo (0–100 cm), que permanece independente de biomassa radicular.
+
+A geração automatizada da cópia Word versionada V88.165 não altera os métodos ou resultados edáficos.

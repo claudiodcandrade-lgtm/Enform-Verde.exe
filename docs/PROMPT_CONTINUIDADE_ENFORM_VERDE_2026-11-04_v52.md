@@ -744,3 +744,14 @@ A candidata `3.26.72-PRECAMPO-EXPERIMENTAL` incorpora referências estruturais n
 ## V88.162 — gate CCI antes da aquisição (18/11/2026)
 
 O pipeline avalia o gate completo da contingência ESA CCI antes de consultar ou baixar o raster. Quando há pixels FH válidos, a pesquisa prioritária está incompleta/tem erro técnico ou não existe calibração CCI–inventário validada, registrar `NAO_ADQUIRIDO_GATE_BLOQUEADO` e `download_skipped=true`; não fazer o download. Isso separa a decisão de não adquirir do erro técnico em uma tentativa efetiva e evita I/O remoto inútil. Nunca tratar falta de modelo FH como ausência de cenas. A correção não cria modelo de AGB: FH válido sem modelo aplicável continua N/D explícito, e CCI segue bloqueado. Candidata 3.26.73 pré-campo até regressão integral, build Windows, aceite SAR→dashboard e revisão científica independente no SHA final.
+
+
+## V88.164 — aceite Tapajós com referências agregadas compatíveis (18/11/2026)
+
+A aceitação anterior encontrou pixels SAR, mas descartou referências publicadas devido à comparação literal da fitofisionomia. O filtro reconhece apenas relações IBGE pai/subformação explicitamente listadas, mantendo o bioma exato e rejeitando formações irmãs. Santos et al. KM72 e KM117 aparecem como referências agregadas separadas, não são agrupadas, adicionadas ao estoque, usadas como calibração FH ou convertidas em parcelas. Com SAR e sem modelo quantitativo aplicável, o aceite registra `SAR_E_REFERENCIAS_INVENTARIO_OK_AGB_N_D`; AGB permanece N/D e não há contingência sem SAR nem homologação. Candidata `3.26.74-PRECAMPO-EXPERIMENTAL`; código no commit `c49badba6f79cf854a1808552b1583d17dffc870`; EXE depende de build/autoteste Windows verde no mesmo SHA.
+
+## V88.165 — indexação sob demanda das bases de inventários (18/11/2026)
+
+A consulta às bases de inventários deve evitar leituras repetidas integrais. O registro harmonizado CSV de referências é carregado em cache de memória, compartilhado entre fontes, AGB e estrutura, com invalidação por caminho/tamanho/`mtime_ns`. Na base IFN SQLite de 466 MiB, filtrar primeiro pela chave indexada bioma + legenda_1 IBGE e consultar árvores apenas das UAs selecionadas pelo índice de UA. A auditoria de integridade já é cacheada por revisão do arquivo. Preservar os mesmos registros e resultados; falha técnica nunca vira ausência ecológica. Limite: o cache em memória usa metadados do arquivo, sem hash integral a cada consulta. Versão `3.26.75-PRECAMPO-EXPERIMENTAL`; regressão integral, Word e gates Windows devem ser validados no SHA final. Não chamar de homologado.
+
+A sincronização da especificação Word V88.165 é automatizada pelo workflow `.github/workflows/sync-v88-165-word.yml`, acionado pela entrada `docs/spec_updates/V88.165_INDICE_SOB_DEMANDA_INVENTARIOS.md`; ele atualiza a versão canônica e a cópia DOCX versionada.

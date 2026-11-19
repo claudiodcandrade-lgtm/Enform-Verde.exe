@@ -1,0 +1,40 @@
+name: Sync V88.165 Word specification
+on:
+  push:
+    branches: [patches-3.26.6]
+    paths:
+      - docs/spec_updates/V88.165_INDICE_SOB_DEMANDA_INVENTARIOS.md
+      - tools/update_spec_docx.py
+permissions:
+  contents: write
+jobs:
+  sync-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply V88.165 checkpoint to Word specification
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/V88.165_INDICE_SOB_DEMANDA_INVENTARIOS.md \
+            --baseline 7dc260ac68e36a5549e38503df17d58a51293773 \
+            --head-sha "$GITHUB_SHA" \
+            --code-sha a5b5b3e \
+            --date 2026-11-18 \
+            --footer-label V88.165 \
+            --footer-date 18/11/2026
+          cp docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_165.docx
+          python -c "from zipfile import ZipFile; p='docs/ESPECIFICACAO_TECNICA_COMPLETA.docx'; z=ZipFile(p); assert z.testzip() is None"
+      - name: Commit synchronized Word file
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_165.docx
+          git commit -m "Sync V88.165 Word specification" || exit 0
+          git push origin HEAD:patches-3.26.6

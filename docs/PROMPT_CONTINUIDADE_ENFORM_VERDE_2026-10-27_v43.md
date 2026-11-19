@@ -686,3 +686,14 @@ Preservar a diretriz de inventários mult fonte: agregados publicados por regiã
 ## V88.162 — gate CCI antes da aquisição (18/11/2026)
 
 A busca/download ESA CCI só ocorre após o gate completo de contingência. FH presente, rota prioritária incompleta/erro ou calibração CCI–inventário ausente bloqueiam a aquisição, com status auditável `NAO_ADQUIRIDO_GATE_BLOQUEADO` e `download_skipped=true`. Essa otimização não muda limiares nem transforma ausência de modelo em ausência de cenas. FH sem modelo AGB aplicável continua sem estimativa quantitativa; não divulgar executável nem homologação sem gates no SHA final.
+
+
+## V88.164 — aceite Tapajós com referências agregadas compatíveis (18/11/2026)
+
+A aceitação anterior encontrou pixels SAR, mas descartou referências publicadas devido à comparação literal da fitofisionomia. O filtro reconhece apenas relações IBGE pai/subformação explicitamente listadas, mantendo o bioma exato e rejeitando formações irmãs. Santos et al. KM72 e KM117 aparecem como referências agregadas separadas, não são agrupadas, adicionadas ao estoque, usadas como calibração FH ou convertidas em parcelas. Com SAR e sem modelo quantitativo aplicável, o aceite registra `SAR_E_REFERENCIAS_INVENTARIO_OK_AGB_N_D`; AGB permanece N/D e não há contingência sem SAR nem homologação. Candidata `3.26.74-PRECAMPO-EXPERIMENTAL`; código no commit `c49badba6f79cf854a1808552b1583d17dffc870`; EXE depende de build/autoteste Windows verde no mesmo SHA.
+
+## V88.165 — indexação sob demanda das bases de inventários (18/11/2026)
+
+O registro harmonizado de referências é cacheado por revisão do CSV e reutilizado em consultas de fontes, AGB e estrutura. Para a base IFN SQLite de 466 MiB, aplicar primeiro filtro pela chave composta bioma + legenda_1 do IBGE e buscar microdados arbóreos somente para UAs selecionadas via índice existente. Status de integridade da base fica cacheado por caminho/tamanho/`mtime_ns`. Manter todos os dados, compatibilidade de normalização, auditoria e distinção entre ausência real e falha técnica. A candidata `3.26.75-PRECAMPO-EXPERIMENTAL` exige regressão integral e gates Windows; sem homologação científica implícita.
+
+A sincronização da especificação Word V88.165 é automatizada pelo workflow `.github/workflows/sync-v88-165-word.yml`, acionado pela entrada `docs/spec_updates/V88.165_INDICE_SOB_DEMANDA_INVENTARIOS.md`; ele atualiza a versão canônica e a cópia DOCX versionada.

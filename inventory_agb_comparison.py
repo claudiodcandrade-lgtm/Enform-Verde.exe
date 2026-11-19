@@ -11,6 +11,7 @@ successful ESA BIOMASS FH + inventory structural estimate.
 from __future__ import annotations
 
 import csv
+from functools import lru_cache
 import hashlib
 import math
 import sqlite3
@@ -26,9 +27,49 @@ PANEL_SHA256 = "f677e2fbc8288b36e5614c1e3ada47fdc5becd3694fccb8d150d9e2d6e361ea8
 AGGREGATE_PANEL = ROOT / "data" / "structural_aggregate_evidence_v1.csv"
 
 
+@lru_cache(maxsize=16)
+def _aggregate_rows_cached(path_text, size_bytes, mtime_ns):
+    """Parse aggregate evidence once per file revision for all report readers."""
+    with Path(path_text).open(encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream)
+        fields = tuple(reader.fieldnames or ())
+        rows = tuple(dict(row) for row in reader)
+    return fields, rows
+
+
+def _aggregate_rows(path):
+    """Use a stat-keyed in-memory index; edits/replacements invalidate it."""
+    resolved = Path(path).resolve()
+    stat = resolved.stat()
+    return _aggregate_rows_cached(str(resolved), stat.st_size, stat.st_mtime_ns)
+
+
 def _norm(value):
     value = unicodedata.normalize("NFKD", str(value or "").casefold())
     return "".join(ch for ch in value if ch.isalnum() and not unicodedata.combining(ch))
+
+
+_IBGE_PHYSIOGNOMY_SUFFIXES = {
+    "dasterrasbaixas", "aluvial", "submontana", "montana", "altomontana",
+}
+
+
+def _physiognomy_match_level(reference, target):
+    """Match exact IBGE formations or a known parent/subformation relation.
+
+    Broader and narrower matches are for separately displayed references only;
+    callers must not pool them or treat them as plot-level calibration data.
+    """
+    ref, tgt = _norm(reference), _norm(target)
+    if not ref or not tgt:
+        return None
+    if ref == tgt:
+        return "EXATA"
+    if tgt.startswith(ref) and tgt[len(ref):] in _IBGE_PHYSIOGNOMY_SUFFIXES:
+        return "REFERENCIA_DE_FITOFISIONOMIA_PAI"
+    if ref.startswith(tgt) and ref[len(tgt):] in _IBGE_PHYSIOGNOMY_SUFFIXES:
+        return "REFERENCIA_DE_SUBFITOFISIONOMIA"
+    return None
 
 
 def _distance_km(lon1, lat1, lon2, lat2):
@@ -47,24 +88,25 @@ def _published_aggregate_source_ids(path=AGGREGATE_PANEL):
     """Inventory every source represented in the harmonized AGB register."""
     sources=set()
     try:
-        with Path(path).open(encoding="utf-8-sig",newline="") as stream:
-            for row in csv.DictReader(stream):
-                source=str(row.get("source_id") or "").strip()
-                if source:sources.add(source)
+        _, rows = _aggregate_rows(path)
+        for row in rows:
+            source=str(row.get("source_id") or "").strip()
+            if source:sources.add(source)
     except (OSError,csv.Error):
         return []
     return sorted(sources)
 
 
 def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
-    """All exact bioregional/physiognomic published AGB rows, kept separate."""
+    """All exact or explicitly hierarchical published AGB references, kept separate."""
     rows=[]; seen=set()
     try:
-        with Path(path).open(encoding="utf-8-sig", newline="") as stream:
-            for row in csv.DictReader(stream):
+        _, indexed_rows = _aggregate_rows(path)
+        for row in indexed_rows:
+                match_level=_physiognomy_match_level(row.get("physiognomy"),physiognomy)
                 if (_norm(row.get("metric")) != "agb"
                         or _norm(row.get("biome")) != _norm(biome)
-                        or _norm(row.get("physiognomy")) != _norm(physiognomy)):
+                        or match_level is None):
                     continue
                 value=_optional_float(row.get("center"))
                 if value is None or value < 0: continue
@@ -74,6 +116,7 @@ def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
                 rows.append({"status":"REFERENCIA_AGREGADA_PUBLICADA",
                     "source_id":row.get("source_id"), "institution":row.get("institution"),
                     "region":row.get("region"), "agb_mean_mg_ha":value,
+                    "physiognomy_match_level":match_level,"reference_only":True,
                     "sd_mg_ha":_optional_float(row.get("sd")),
                     "ci95_low_mg_ha":_optional_float(row.get("ci95_low")),
                     "ci95_high_mg_ha":_optional_float(row.get("ci95_high")),
@@ -87,7 +130,7 @@ def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
 
 
 def published_structural_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
-    """Return published horizontal-structure summaries for exact domains.
+    """Return published horizontal-structure summaries for exact/hierarchical domains.
 
     Aggregate-only publications are valid regional/physiognomic references,
     but are not plot observations and cannot calibrate a SAR model on their
@@ -95,13 +138,14 @@ def published_structural_references(*, biome, physiognomy, path=AGGREGATE_PANEL)
     """
     rows=[]; seen=set()
     try:
-        with Path(path).open(encoding="utf-8-sig", newline="") as stream:
-            for row in csv.DictReader(stream):
+        _, indexed_rows = _aggregate_rows(path)
+        for row in indexed_rows:
                 metric=_norm(row.get("metric"))
                 if metric in {"agb", "totalbiomass", "carbon", "agc"}:
                     continue
+                match_level=_physiognomy_match_level(row.get("physiognomy"),physiognomy)
                 if (_norm(row.get("biome")) != _norm(biome)
-                        or _norm(row.get("physiognomy")) != _norm(physiognomy)):
+                        or match_level is None):
                     continue
                 center=_optional_float(row.get("center"))
                 if center is None or center < 0:
@@ -114,6 +158,7 @@ def published_structural_references(*, biome, physiognomy, path=AGGREGATE_PANEL)
                     "source_id":row.get("source_id"),
                     "institution":row.get("institution"),
                     "biome":row.get("biome"),"physiognomy":row.get("physiognomy"),
+                    "physiognomy_match_level":match_level,
                     "region":row.get("region"),"metric":row.get("metric"),
                     "unit":row.get("unit"),"center_type":row.get("center_type"),
                     "center":center,"sd":_optional_float(row.get("sd")),
@@ -136,12 +181,10 @@ def published_structural_references(*, biome, physiognomy, path=AGGREGATE_PANEL)
 def published_inventory_evidence(*, biome, physiognomy, path=AGGREGATE_PANEL):
     """Compact, auditable AGB and horizontal-reference bundle for pipeline reports."""
     try:
-        with Path(path).open(encoding="utf-8-sig",newline="") as stream:
-            reader=csv.DictReader(stream)
-            required={"source_id","biome","physiognomy","metric","center"}
-            if not required.issubset(set(reader.fieldnames or [])):
-                raise csv.Error("required evidence columns are missing")
-            list(reader)  # Force parsing now so malformed data is not reported as an empty domain.
+        fields, _ = _aggregate_rows(path)
+        required={"source_id","biome","physiognomy","metric","center"}
+        if not required.issubset(set(fields)):
+            raise csv.Error("required evidence columns are missing")
     except (OSError,csv.Error) as exc:
         return {"status":"ERRO_TECNICO_LEITURA_REGISTRO",
             "diagnostic":type(exc).__name__,"agb_references":[],
@@ -153,8 +196,8 @@ def published_inventory_evidence(*, biome, physiognomy, path=AGGREGATE_PANEL):
     horizontal=published_structural_references(
         biome=biome,physiognomy=physiognomy,path=path)
     return {
-        "status":"REFERENCIAS_PUBLICADAS_LISTADAS" if agb or horizontal else "SEM_REFERENCIA_EXATA",
-        "matching":"bioma e fitofisionomia normalizados exatamente; sem extrapolação implícita",
+        "status":"REFERENCIAS_PUBLICADAS_LISTADAS" if agb or horizontal else "SEM_REFERENCIA_COMPATIVEL",
+        "matching":"bioma exato; fitofisionomia exata ou relação hierárquica IBGE explicitamente reconhecida",
         "agb_references":agb,
         "horizontal_structure_references":horizontal,
         "agb_reference_count":len(agb),
@@ -168,6 +211,34 @@ def published_inventory_evidence(*, biome, physiognomy, path=AGGREGATE_PANEL):
             "preservar SD/SE/IC/faixas publicados; se ausentes, marcar incerteza da referência como N/D; "
             "não inferir erro-padrão a partir de média ou n sem desenho e variância"),
         "not_added_to_stock_total":True,
+        "reference_only":True,
+        "hierarchical_matches_are_not_pooled_or_used_as_calibration":True,
+    }
+
+
+def tapajos_acceptance_inventory_references(agb_mg_ha, pixel_count, evidence):
+    """Gate compiled acceptance on a quantitative estimate or real inventory refs.
+
+    Published aggregates can satisfy the reference branch only; they are never
+    converted to the selected estimate and never fill `agb_mg_ha`.
+    """
+    refs=list((evidence or {}).get("agb_references") or [])
+    eligible=[]
+    if agb_mg_ha is None and int(pixel_count or 0)>0:
+        for row in refs:
+            value=_optional_float(row.get("agb_mean_mg_ha"))
+            if (row.get("status")=="REFERENCIA_AGREGADA_PUBLICADA"
+                    and value is not None and value>=0
+                    and row.get("not_added_to_stock_total") is True):
+                eligible.append(row)
+    return {
+        "acceptance_status":(
+            "ESTIMATIVA_QUANTITATIVA_DISPONIVEL" if agb_mg_ha is not None else
+            "SAR_E_REFERENCIAS_INVENTARIO_OK_AGB_N_D" if eligible else
+            "SEM_AGB_E_SEM_REFERENCIA_INVENTARIO_ELEGIVEL"),
+        "inventory_reference_eligible":bool(eligible),
+        "eligible_inventory_references":eligible,
+        "agb_quantitative_estimate_available":agb_mg_ha is not None,
     }
 
 
@@ -364,7 +435,7 @@ def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
         str(ref.get("source_id")) for ref in published if ref.get("source_id")})
     result["inventory_source_query_scope"]={
         "biome":str(biome),"physiognomy":str(physiognomy),
-        "matching":"exact normalized biome + physiognomy + numeric AGB; no cross-fitofisionomia extrapolation",
+        "matching":"exact normalized biome; exact or explicit IBGE parent/subformation relation for cited comparison only",
         "ifn_tree_microdata_available":bool(result.get("base_ifn_expandida_usada")),
         "harmonized_register_available":AGGREGATE_PANEL.is_file()}
     result["inventory_base_scope"]="todas as fontes com AGB harmonizada e compatibilidade exata disponíveis no registro; cada fonte preservada separadamente; IFN é apenas uma das bases"

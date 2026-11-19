@@ -10,6 +10,25 @@ from inventory_agb_comparison import (canonical_panel_sha256, published_agb_refe
 
 
 class InventoryAgbComparisonSourceTests(unittest.TestCase):
+    def test_harmonized_aggregate_register_is_read_once_and_invalidated_on_change(self):
+        import inventory_agb_comparison as module
+        module._aggregate_rows_cached.cache_clear()
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/"evidence.csv"
+            path.write_text(
+                "source_id,biome,physiognomy,metric,center\nA,Amazônia,F,AGB,10\n",
+                encoding="utf-8")
+            first=module._aggregate_rows(path)
+            second=module._aggregate_rows(path)
+            self.assertIs(first,second)
+            self.assertEqual(module._aggregate_rows_cached.cache_info().hits,1)
+            path.write_text(
+                "source_id,biome,physiognomy,metric,center\nA,Amazônia,F,AGB,10\nB,Amazônia,F,AGB,20\n",
+                encoding="utf-8")
+            changed=module._aggregate_rows(path)
+            self.assertEqual(len(changed[1]),2)
+            self.assertEqual(module._aggregate_rows_cached.cache_info().misses,2)
+
     def test_panel_hash_is_stable_across_windows_line_endings(self):
         lf = b"a,b\n1,2\n"
         crlf = lf.replace(b"\n", b"\r\n")
@@ -91,6 +110,22 @@ class InventoryAgbComparisonSourceTests(unittest.TestCase):
         self.assertGreater(evidence["horizontal_reference_count"],0)
         self.assertIn("baliza regional",evidence["use_when_plot_microdata_unavailable"])
         self.assertTrue(evidence["not_added_to_stock_total"])
+
+    def test_parent_forest_formation_matches_ibge_subformation_as_reference_only(self):
+        refs=published_agb_references(
+            biome="Amazônia",
+            physiognomy="Floresta Ombrófila Densa das Terras Baixas")
+        tapajos=[r for r in refs if r["source_id"] in {
+            "TAPAJOS_SANTOS_KM72","TAPAJOS_SANTOS_KM117"}]
+        self.assertEqual({r["source_id"] for r in tapajos},
+                         {"TAPAJOS_SANTOS_KM72","TAPAJOS_SANTOS_KM117"})
+        self.assertTrue(all(r["physiognomy_match_level"]=="REFERENCIA_DE_FITOFISIONOMIA_PAI"
+                            and r["reference_only"] and r["not_added_to_stock_total"]
+                            for r in tapajos))
+
+    def test_parent_matching_does_not_treat_sibling_formations_as_compatible(self):
+        self.assertIsNone(comparison._physiognomy_match_level(
+            "Floresta Ombrófila Densa","Floresta Ombrófila Aberta"))
 
     def test_missing_inventory_register_is_not_reported_as_empty_ecological_domain(self):
         evidence=published_inventory_evidence(
