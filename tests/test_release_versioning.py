@@ -97,6 +97,15 @@ class ReleaseVersioningTests(unittest.TestCase):
         paths = current.split("    paths:\n", 1)[1].split("permissions:\n", 1)[0]
         self.assertIn("tools/update_spec_docx.py", paths)
 
+    def test_windows_acceptance_checks_current_ibge_and_inventory_fallback_contracts(self):
+        text = WF.read_text(encoding="utf-8")
+        self.assertIn("COBERTURA NATIVA MAPEADA (máscara anual × região fitoecológica IBGE).", text)
+        self.assertIn("IBGE potential must remain separate from mapped current native-cover intersection", text)
+        self.assertIn("rotas sar configuradas ainda não foram todas tentadas", text)
+        self.assertIn("ausência não confirmada", text)
+        self.assertNotIn('"Fitofisionomia presente na propriedade:" in src', text)
+        self.assertNotIn('"pixels sar" in out["inventory_fallback_gate"]', text)
+
 
 if __name__ == "__main__":
     unittest.main()
