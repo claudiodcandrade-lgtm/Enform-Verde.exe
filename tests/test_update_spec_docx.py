@@ -12,6 +12,33 @@ from update_spec_docx import update  # noqa: E402
 
 
 class UpdateSpecDocxTests(unittest.TestCase):
+    def test_updates_fh_dashboard_cover_state_label(self):
+        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+ <w:body>
+  <w:p><w:r><w:t>Enform Verde</w:t></w:r></w:p>
+  <w:p><w:r><w:t>FH→PAINEL LOCAL: TESTE LOCAL PASSOU; BUILD PENDENTE</w:t></w:r></w:p>
+  <w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Especificação antiga</w:t></w:r></w:p>
+ </w:body>
+</w:document>'''
+        with tempfile.TemporaryDirectory() as td:
+            source = Path(td) / "source.docx"
+            output = Path(td) / "output.docx"
+            with zipfile.ZipFile(source, "w", zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("word/document.xml", xml)
+            report = update(source, output, "# V88.169 teste\\nConteúdo\\n",
+                            baseline="c12ed76", head_sha="abc123",
+                            code_sha="def456", date="19 de novembro de 2026",
+                            cover_state="FH REAL SINOP→DASHBOARD OK; GATE GUI CORRIGIDO")
+            self.assertTrue(report["cover_state"])
+            with zipfile.ZipFile(output) as archive:
+                document = ET.fromstring(archive.read("word/document.xml"))
+            ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+            text = " ".join(node.text or "" for node in document.findall(".//w:t", ns))
+            self.assertIn("FH REAL SINOP→DASHBOARD OK; GATE GUI CORRIGIDO", text)
+            self.assertNotIn("TESTE LOCAL PASSOU", text)
+
+class UpdateSpecDocxTests(unittest.TestCase):
     def test_namespace_prefixed_document_keeps_entry_inside_word_body(self):
         xml = '''<?xml version="1.0" encoding="UTF-8"?>
 <ns0:document xmlns:ns0="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
