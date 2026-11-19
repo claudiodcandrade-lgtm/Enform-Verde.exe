@@ -13,4 +13,6 @@ Candidata experimental. FH real em Sinop e handoff FH/AGB até o payload do dash
 
 **Correção do gate GUI (19/11/2026):** o teste de upload GeoJSON verificava a confirmação imediatamente, embora `pick_vector()` leia em worker e atualize a interface por fila. O gate agora aguarda um estado terminal para KMZ e GeoJSON, com limite de 30 s, e verifica o polígono renderizado. A falha registrada foi uma corrida no teste, não uma reprodução confirmada de congelamento geral do programa. O build/autoteste Windows deve passar novamente antes de disponibilizar o pacote desta candidata.
 
+**Correção documental:** uma repetição da sincronização Word não reconhecia o rótulo da própria capa V88.170. O atualizador passa a aceitar esse prefixo e tem regressão específica de reexecução; a sincronização Word e o build Windows seguem pendentes no SHA corretivo.
+
 Build Windows, autoteste em pasta limpa e checksum desta candidata ainda precisam concluir no mesmo SHA antes da disponibilização do ZIP. Homologação científica independente e validação de campo permanecem pendentes.

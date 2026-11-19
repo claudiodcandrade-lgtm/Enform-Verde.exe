@@ -112,6 +112,10 @@ def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, dat
             # A previous sync may already have expanded the cover state to the
             # live Sinop/Tapajós wording; it must remain replaceable on reruns.
             xml, report["cover_state"] = _replace_paragraph_text(xml, "FH REAL SINOP/TAPAJÓS", cover_state, prefix)
+        if not report["cover_state"]:
+            # V88.170 switched the cover to a concise IFN/performance status.
+            # Accept that state too so a subsequent Word sync remains idempotent.
+            xml, report["cover_state"] = _replace_paragraph_text(xml, "CONSULTA IFN EM LOTE;", cover_state, prefix)
     if cover_checkpoint:
         xml, report["cover_checkpoint"] = _replace_paragraph_text(xml, "Checkpoint V", cover_checkpoint, prefix)
     if cover_verification:
