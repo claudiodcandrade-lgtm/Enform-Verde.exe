@@ -4,7 +4,6 @@ on:
     branches: [patches-3.26.6]
     paths:
       - docs/spec_updates/V88.169_FH_REAL_SINOP_DASHBOARD_HANDOFF.md
-      - tools/update_spec_docx.py
 permissions:
   contents: write
 jobs:

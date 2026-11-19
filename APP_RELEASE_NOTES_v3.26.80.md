@@ -15,4 +15,6 @@ Candidata experimental. FH real em Sinop e handoff FH/AGB até o payload do dash
 
 **Correção documental:** uma repetição da sincronização Word não reconhecia o rótulo da própria capa V88.170. O atualizador passa a aceitar esse prefixo e tem regressão específica de reexecução; a sincronização Word e o build Windows seguem pendentes no SHA corretivo.
 
+Os sincronizadores Word históricos também observavam o arquivo utilitário compartilhado e iniciaram commits concorrentes para versões antigas. Seus gatilhos foram limitados aos próprios arquivos de checkpoint; somente a V88.170 observa agora o utilitário. Isso evita que uma atualização histórica concorra com a documentação desta candidata.
+
 Build Windows, autoteste em pasta limpa e checksum desta candidata ainda precisam concluir no mesmo SHA antes da disponibilização do ZIP. Homologação científica independente e validação de campo permanecem pendentes.

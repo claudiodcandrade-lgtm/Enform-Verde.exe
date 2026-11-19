@@ -4,7 +4,6 @@ on:
     branches: [patches-3.26.6]
     paths:
       - docs/spec_updates/V88.168_FH_AGB_BALIZAS_HORIZONTAIS_MULTIFONTE.md
-      - tools/update_spec_docx.py
 permissions:
   contents: write
 jobs:

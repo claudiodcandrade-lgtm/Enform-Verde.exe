@@ -87,6 +87,16 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn('--cover-version "V88.170 | 3.26.80-PRECAMPO-EXPERIMENTAL"', text)
         self.assertIn("ESPECIFICACAO_TECNICA_COMPLETA_V88_170.docx", text)
 
+    def test_only_current_word_checkpoint_watches_the_shared_updater(self):
+        workflows = ROOT / ".github" / "workflows"
+        for version in ("165", "167", "168", "169"):
+            text = (workflows / f"sync-v88-{version}-word.yml").read_text(encoding="utf-8")
+            paths = text.split("    paths:\n", 1)[1].split("permissions:\n", 1)[0]
+            self.assertNotIn("tools/update_spec_docx.py", paths)
+        current = (workflows / "sync-v88-170-word.yml").read_text(encoding="utf-8")
+        paths = current.split("    paths:\n", 1)[1].split("permissions:\n", 1)[0]
+        self.assertIn("tools/update_spec_docx.py", paths)
+
 
 if __name__ == "__main__":
     unittest.main()
