@@ -14,7 +14,7 @@
 ## Banco de inventários sob demanda
 
 - O SQLite IFN (488.456.192 bytes) acompanha a pasta `data/` ao lado do EXE, fora do runtime interno do PyInstaller.
-- O build confere manifesto, tamanho e SHA-256. A aplicação valida esquema/metadados sem varrer os 841 mil registros ou fazer contagens integrais a cada análise.
+- O build confere manifesto, tamanho e SHA-256. Ele gera o manifesto depois de materializar a base e o cruzamento IFN, evitando hash obsoleto. A aplicação valida esquema/metadados sem varrer os 841 mil registros ou fazer contagens integrais a cada análise.
 - A seleção combina filtros indexados de bioma/fitofisionomia com caixa espacial e distância geodésica exata; resumos usam agregação SQL apenas nas unidades selecionadas. A leitura de árvores individualizadas ocorre somente quando pedida.
 
 ## Performance e qualidade

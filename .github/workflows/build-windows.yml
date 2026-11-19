@@ -93,6 +93,7 @@ jobs:
           python tools/ingest_official_inventory_microdata.py
           python tools/build_ifn_ibge_crosswalk.py
           python tools/harvest_sfb_biomass_panel.py
+          python tools/build_inventory_runtime_manifest.py
       - name: Upload IFN database and spatial crosswalk audit
         uses: actions/upload-artifact@v4
         with:

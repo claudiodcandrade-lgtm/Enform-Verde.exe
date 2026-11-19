@@ -49,6 +49,7 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("External IFN database and manifest are missing beside the application", text)
         self.assertIn("External IFN database SHA-256 does not match the verified manifest", text)
         self.assertIn("Large IFN database must remain outside the PyInstaller internal runtime", text)
+        self.assertIn("python tools/build_inventory_runtime_manifest.py", text)
         self.assertIn("Aggregated inventory evidence is missing beside the frozen Python module runtime", text)
         self.assertIn("Compiled inventory evidence is missing the two eligible Tapajos aggregate references", text)
         self.assertNotRegex(text, r"VERSÃO \d+\.\d+\.\d+")          # no hard-coded version in LEIA-ME

@@ -9,5 +9,5 @@
   "ibge_unique_unit_matches": 8951,
   "source_workbooks": 27,
   "source_workbook_hashes": 27,
-  "verification": "build-time source hash; indexed SQLite schema and source_dataset metadata checked at runtime; no full row-count scan per analysis"
+  "verification": "generated after IFN harvest/ingest/crosswalk; full database SHA-256 checked at build; runtime validates size, schema and source metadata without scanning tree records"
 }
