@@ -1,16 +1,17 @@
 # Enform Verde v3.26.76-PRECAMPO-EXPERIMENTAL
 
-Data: 18/11/2026
+Data: 19/11/2026
 
-## Correção do pacote de inventários
+## Correções incorporadas
 
-- A investigação do aceite Tapajós no EXE encontrou o CSV harmonizado `structural_aggregate_evidence_v1.csv` na cópia externa do pacote, mas ausente no diretório interno do runtime congelado, onde o módulo de consulta o procura.
-- O comando PyInstaller agora inclui esse arquivo em `data/` dentro do runtime `_internal`; a etapa Windows verifica a presença do arquivo e das referências Santos et al. KM72 e KM117 antes do aceite.
-- O relatório de aceite registra estado, diagnóstico, quantidade e fontes da evidência de inventários. Falha técnica de leitura passa a ser exposta como erro técnico explícito.
+- O aceite Tapajós no EXE falhava porque `structural_aggregate_evidence_v1.csv` era copiado somente para a pasta externa; PyInstaller agora o inclui no runtime interno e o gate verifica os agregados KM72/KM117.
+- O relatório do aceite registra estado, diagnóstico, quantidade e fontes; falhas de leitura são explicitadas como erros técnicos.
+- A sincronização Word agora atualiza a linha de versão e estado da capa, além do histórico, com testes de regressão.
+- O gate pré-campo deixou de exigir frases da revisão histórica V87.1. Ele valida a versão atual do executável no DOCX e o checkpoint V88.166/3.26.76 no prompt v52 e na especificação de solo; v43 permanece histórico.
 
-## Correções da documentação e estado dos testes
+## Verificações e estado
 
-- A regressão integral identificou que a sincronização do histórico do DOCX não atualizava a versão na capa. O gerador agora atualiza o estado e a linha de versão da capa automaticamente, e a suíte cobre esse comportamento.
-- O gate inicial confirmou a causa com 1 falha documental em 1.312 testes. A regressão completa, build Windows, FH/SAR live e aceite Tapajós em EXE limpo foram disparados novamente após a sincronização automática da capa; ainda aguardam conclusão no SHA final.
-- FH real ESA BIOMASS em Sinop e o gate SAR live de Sinop/Tapajós passaram em execução anterior desta candidata. Isso comprova leitura/handoff, não calibração nem homologação científica.
-- A homologação científica independente permanece pendente e separada da disponibilidade operacional. Candidata experimental; nenhum EXE liberado até todos os gates operacionais passarem.
+- Testes locais focados após as correções: 17 aprovados; 191 módulos coletados.
+- FH real ESA BIOMASS em Sinop e handoff SAR live em Sinop/Tapajós passaram em execução da candidata.
+- Os gates de build Windows e regressão integral do SHA com a checagem documental atualizada foram reiniciados; autoteste EXE limpo Tapajós ainda precisa passar.
+- Homologação científica independente permanece pendente e separada do funcionamento operacional. Esta versão continua candidata pré-campo experimental; nenhum EXE é liberado até os gates operacionais passarem no mesmo SHA.
