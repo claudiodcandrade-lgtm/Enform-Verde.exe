@@ -836,3 +836,6 @@ O registro da passagem FH real Sinop→dashboard e da correção de um mock no g
 
 ### Nota documental V88.169 — rótulo de capa (19/11/2026)
 A manutenção do atualizador da capa Word corrige apenas a sincronização documental da versão; não altera fonte, método, unidade, profundidade, incerteza ou resultados do carbono orgânico do solo 0–100 cm.
+
+### Nota V88.169 — teste de upload assíncrono (19/11/2026)
+A correção do gate GUI agora aguarda a leitura assíncrona do GeoJSON. É uma alteração no teste da interface e não modifica métodos, fontes, unidade, profundidade ou incerteza do carbono orgânico do solo 0–100 cm.
