@@ -312,7 +312,8 @@ jobs:
           assert len(quadrants)==4 and all(w<=512 and h<=512 for _,_,w,h in quadrants), "optical preview must use bounded quadrants"
 
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
-          ui._show_geom=lambda name:ui._draw_aoi_outline("Perímetro carregado: "+name)
+          # Production passes cached geometry metrics; keep the mock signature compatible.
+          ui._show_geom=lambda name,metrics=None:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
           deadline=time.monotonic()+15
           while time.monotonic()<deadline:
