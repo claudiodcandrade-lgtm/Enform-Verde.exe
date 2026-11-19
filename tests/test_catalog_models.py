@@ -208,6 +208,22 @@ class CatalogModelExecutionTests(unittest.TestCase):
         self.assertEqual(out["data_origin"],"SAR_P_HEIGHT_X_INVENTORY_STRUCTURE")
         self.assertAlmostEqual(out["agb_mg_ha"],341.4857834621912,places=6)
 
+    @unittest.skipUnless(gpd and box,"geospatial dependencies are installed in the Windows workflow")
+    def test_fh_agb_result_carries_multisource_published_horizontal_baliza(self):
+        high=gpd.GeoDataFrame(geometry=[box(-54.9804,-2.9399,-54.9785,-2.9336)],crs="EPSG:4326")
+        baliza=[{"source_id":"EMBRAPA_ODF_CLASS1_GE15_BA","metric":"basal_area",
+                 "center":27.36,"unit":"m2/ha","region":"Amazônia Oriental",
+                 "not_plot_level_data":True}]
+        with patch("inventory_agb_comparison.published_structural_references",return_value=baliza):
+            out=sar.tapajos_h100_structure_agb(
+                high,{"height_mean_m":31.162,"height_sd_m":2.0,
+                      "height_n_valid_pixels":8},"Amazônia","Floresta Ombrófila Densa")
+        self.assertEqual(out["data_origin"],"SAR_P_HEIGHT_X_INVENTORY_STRUCTURE")
+        audit=out["published_horizontal_inventory_baliza"]
+        self.assertEqual(audit["status"],"BALIZA_HORIZONTAL_PUBLICADA_CONSULTADA")
+        self.assertEqual(audit["references"][0]["source_id"],"EMBRAPA_ODF_CLASS1_GE15_BA")
+        self.assertTrue(audit["not_used_as_plot_calibration"])
+
     def test_narvaes_published_equation_uses_exact_feature_contract(self):
         x={"sigma0_HH_db":-15,"Pv_db":0.2,"alpha_S2_deg":20,
            "Phi_S2_deg":-30,"Phi_S3_deg":45,"tau_m_deg":12}

@@ -70,6 +70,12 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn('--cover-version "V88.167 | 3.26.77-PRECAMPO-EXPERIMENTAL"', text)
         self.assertIn("--cover-state", text)
 
+    def test_v88_168_word_sync_tracks_the_new_candidate_and_checkpoint(self):
+        text = (ROOT / ".github" / "workflows" / "sync-v88-168-word.yml").read_text(encoding="utf-8")
+        self.assertIn("V88.168_FH_AGB_BALIZAS_HORIZONTAIS_MULTIFONTE.md", text)
+        self.assertIn('--cover-version "V88.168 | 3.26.78-PRECAMPO-EXPERIMENTAL"', text)
+        self.assertIn("ESPECIFICACAO_TECNICA_COMPLETA_V88_168.docx", text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -111,6 +111,10 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             app.biodiversity_inventory_records = None
             app.update_idletasks = lambda: None
             app.res = carbon_widget
+            # The compact UI fixture has no Treeview; keep the executive
+            # dashboard renderer out of this text/audit handoff assertion.
+            app._populate_carbon_dashboard = lambda native: None
+            app._refresh_overall_executive_summary = lambda: None
             app.crop_res = crop_widget
             app.crop_audit = crop_audit_widget
             app.tabs = [None, None, None, "carbon"]

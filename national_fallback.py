@@ -61,25 +61,34 @@ _NO_COVERAGE_MARKERS = (
 
 def inventory_fallback_gate(sar_processed, warnings=(), *, sources_exhausted=False,
                             height_processed=False, coverage_absence_confirmed=False,
-                            scenes_found=False):
-    """Permit inventory estimates only after a complete, error-free no-scene audit.
+                            scenes_found=False, quantitative_agb_unavailable=False):
+    """Permit a clearly labelled inventory mean after terminal AGB routes fail.
 
-    Any SAR pixels or catalogued scenes mean the result must continue to use
-    the SAR evidence and compatible SAR model; inventory estimates cannot
-    replace it. A connection/read error is not proof of scene absence.
+    The owner-approved mean is a contingency after FH×inventory and CCI did not
+    yield an AGB value. It is not evidence of SAR absence and cannot hide a
+    technical failure.
     """
     warning_list=[str(w) for w in (warnings or ())]
-    if sar_processed or height_processed or scenes_found:
-        return {"eligible":False,"reason":"Cenas ou pixels SAR foram encontrados/processados; contingência de inventário não pode substituí-los.",
-                "unresolved_warnings":[],"evidence":"CENAS_OU_PIXELS_SAR_PRESENTES"}
     if not sources_exhausted:
         return {"eligible":False,"reason":"rotas SAR configuradas ainda não foram todas tentadas; ausência não confirmada.",
                 "unresolved_warnings":warning_list,"evidence":"ROTAS_PENDENTES"}
+    resolved_model_notes=("não há modelo agb aplicável", "sem modelo agb calibrado/validado",
+        "classificado como sar estratificador", "pixels sar auxiliares foram lidos, mas não há altura/agb quantitativa")
     unresolved=[w for w in warning_list
-                if not any(marker in w.casefold() for marker in _NO_COVERAGE_MARKERS)]
+                if not any(marker in w.casefold() for marker in _NO_COVERAGE_MARKERS)
+                and not (quantitative_agb_unavailable and any(
+                    marker in w.casefold() for marker in resolved_model_notes))]
     if unresolved:
         return {"eligible":False,"reason":"erro técnico SAR não comprova ausência de cenas; corrigir/repetir a rota.",
                 "unresolved_warnings":unresolved,"evidence":"ERRO_TECNICO_NAO_E_AUSENCIA_DE_CENAS"}
+    if quantitative_agb_unavailable:
+        return {"eligible":True,
+            "reason":"Rotas prioritárias concluídas sem erro, mas sem AGB quantitativa; permitido cenário contingencial separado pela média de inventários compatíveis.",
+            "status":"ROTAS_TERMINAIS_SEM_MODELO_AGB; CENAS_SAR_PODEM_EXISTIR",
+            "unresolved_warnings":[],"evidence":"COMPLETE_ERROR_FREE_ROUTES_NO_QUANTITATIVE_AGB"}
+    if sar_processed or height_processed or scenes_found:
+        return {"eligible":False,"reason":"Cenas ou pixels SAR foram encontrados/processados; contingência ainda não autorizada.",
+                "unresolved_warnings":[],"evidence":"CENAS_OU_PIXELS_SAR_PRESENTES"}
     if coverage_absence_confirmed is not True:
         return {"eligible":False,"reason":"ausência de cenas não foi certificada por buscas completas em todas as rotas exigidas.",
                 "unresolved_warnings":[],"evidence":"CERTIFICADO_DE_AUSENCIA_DE_CENAS_AUSENTE"}

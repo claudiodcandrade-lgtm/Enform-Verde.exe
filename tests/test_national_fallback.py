@@ -23,6 +23,17 @@ class NationalFallbackTests(unittest.TestCase):
         self.assertFalse(inventory_fallback_gate(False,["SELECTED_SCENES_PIXEL_READ_FAILED"],
             sources_exhausted=True,coverage_absence_confirmed=True)["eligible"])
 
+    def test_inventory_mean_contingency_after_complete_routes_without_agb(self):
+        allowed=inventory_fallback_gate(True,["FH foi lido, mas não há modelo AGB aplicável ao domínio."],sources_exhausted=True,
+            height_processed=True,scenes_found=True,quantitative_agb_unavailable=True,
+            )
+        self.assertTrue(allowed["eligible"])
+        self.assertEqual(allowed["evidence"],"COMPLETE_ERROR_FREE_ROUTES_NO_QUANTITATIVE_AGB")
+        failed=inventory_fallback_gate(True,["CCI HTTP 503"],sources_exhausted=True,
+            quantitative_agb_unavailable=True)
+        self.assertFalse(failed["eligible"])
+        self.assertEqual(failed["evidence"],"ERRO_TECNICO_NAO_E_AUSENCIA_DE_CENAS")
+
     def test_all_scoped_biomes_always_return_agb_and_uncertainty(self):
         cases=[
           ("Amazônia","Floresta Ombrófila Aberta"),

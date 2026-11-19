@@ -295,6 +295,17 @@ def tapajos_h100_structure_agb(gdf,sar_height,biome="",phys=""):
                 "basal_area_domain_m2_ha":m["g_domain"],"zone":zone,"model_id":m["model_id"]}
     k=float(m["coefficient_k"]); agb=k*g*h
     g_spatial_sensitivity=abs(k*h*float(zone["basal_area_sd_m2_ha"]))
+    # Published regional structure totals are consulted for every FH × inventory
+    # result. They are a plausibility baliza (not plot-level calibration); the
+    # actual predictor G remains the eligible local inventory support above.
+    try:
+        from inventory_agb_comparison import published_horizontal_inventory_baliza
+        horizontal_audit=published_horizontal_inventory_baliza(
+            biome=biome,physiognomy=phys)
+    except Exception as exc:
+        horizontal_audit={"status":"ERRO_TECNICO_LEITURA_REFERENCIAS_HORIZONTAIS",
+                          "diagnostic":type(exc).__name__,"references":[],
+                          "not_used_as_plot_calibration":True}
     return {"status":"SAR_PROCESSADO","agb_mg_ha":float(agb),
             "uncertainty_mg_ha":float(m["cv_rmse_mg_ha"]),
             "uncertainty_kind":"RMSE leave-spatial-block-out do modelo G×H100 contra AGB alométrica Chave-2014; NÃO inclui erro de medição/transferência do produto FH SAR",
@@ -307,6 +318,7 @@ def tapajos_h100_structure_agb(gdf,sar_height,biome="",phys=""):
             "height_n_valid_pixels":(sar_height or {}).get("height_n_valid_pixels"),
             "height_definition":"H100 = média das 100 árvores mais altas/ha",
             "basal_area_m2_ha":g,"basal_area_sd_m2_ha":float(zone["basal_area_sd_m2_ha"]),
+            "published_horizontal_inventory_baliza":horizontal_audit,
             "inventory_plots":zone["plots"],"inventory_source":zone["inventory_source"],
             "inventory_agb_reference_mean_mg_ha":zone["inventory_agb_mean_mg_ha"],
             "calibration":{"n_plots":m["n_plots"],"spatial_blocks":m["spatial_blocks"],
@@ -316,6 +328,7 @@ def tapajos_h100_structure_agb(gdf,sar_height,biome="",phys=""):
             "validation_state":"SAR_CALCULADO_ERRO_PROVISORIO_SEM_VALIDACAO_FH_LOCAL",
             "limits":["uso restrito ao suporte espacial das parcelas cadastradas",
                       "referência AGB é alométrica, não destrutiva",
+                      "balizas de BA/densidade/DAP totalizadas são preservadas separadas e não são tratadas como parcela nem como calibração",
                       "RMSE mede o modelo estrutural dentro de Tapajós e não valida o erro do produto SAR H100"]}
 
 def sar_agb_blocker(biome,phys,available_features=None,aoi=None):
@@ -1186,7 +1199,7 @@ def _cci_v7_urls(gdf,year):
 def cci_history(gdf,cache,offline_token=None):
     """Acquire latest ESA CCI Biomass v7 GeoTIFFs, then MAAP v5.01 fallback."""
     cache=Path(cache); cache.mkdir(parents=True,exist_ok=True)
-    errors=[]; attempted=[]
+    errors=[]; technical_errors=[]; unavailable=[]; attempted=[]
     for year in CCI_V7_YEARS:
         specs=_cci_v7_urls(gdf,year)
         year_paths=[]; ok=True
@@ -1213,7 +1226,13 @@ def cci_history(gdf,cache,offline_token=None):
                         pass
             if last_error is not None:
                 ok=False
-                errors.append(f'{year} {spec["tile"]} {spec["variable"]}: {type(last_error).__name__}: {last_error}')
+                message=f'{year} {spec["tile"]} {spec["variable"]}: {type(last_error).__name__}: {last_error}'
+                status=getattr(getattr(last_error,"response",None),"status_code",None)
+                if isinstance(last_error,FileNotFoundError) or status==404 or "404" in str(last_error):
+                    unavailable.append(message)
+                else:
+                    technical_errors.append(message)
+                errors.append(message)
                 break
             year_paths.append(str(target))
         if ok and year_paths and any(role(p)=="AGB" for p in year_paths):
@@ -1221,16 +1240,20 @@ def cci_history(gdf,cache,offline_token=None):
                     "collection":"CEDA/ESA CCI Biomass v7.0","version":"7.0","year":int(year),
                     "resolution_m":100,"tiles":_cci_v7_tile_ids(gdf),
                     "source":"ESA CCI Open Data / CEDA","attempted_urls":attempted,
-                    "errors":errors[:8]}
+                    "errors":errors[:8],"unavailable_candidates":unavailable[:8],
+                    "catalog_search_complete":not technical_errors,"pagination_complete":not technical_errors,
+                    "technical_error_count":len(technical_errors)}
     # Compatibility only: older MAAP local CCI collection.
     items=[]; collections_tried=["CCIBiomassV5.01"]
     try: items=maap_search(gdf,"CCIBiomassV5.01",limit=100)
-    except Exception as e: errors.append("MAAP v5.01: "+str(e))
+    except Exception as e:
+        message="MAAP v5.01: "+str(e); errors.append(message); technical_errors.append(message)
     if not items:
         return {"available":False,"paths":[],"items":0,"collections_tried":collections_tried,
                 "version":"7.0","tiles":_cci_v7_tile_ids(gdf),"attempted_urls":attempted,
-                "errors":errors[:8],"catalog_search_complete":bool(attempted),
-                "pagination_complete":True,"technical_error_count":len(errors)}
+                "errors":errors[:8],"unavailable_candidates":unavailable[:8],
+                "catalog_search_complete":bool(attempted) and not technical_errors,
+                "pagination_complete":not technical_errors,"technical_error_count":len(technical_errors)}
     token=maap_access_token(offline_token) if offline_token else None
     paths=[]
     for it in items:
@@ -1240,11 +1263,14 @@ def cci_history(gdf,cache,offline_token=None):
                 try:
                     if not p.exists():_download(url,p,token)
                     paths.append(str(p))
-                except Exception as e:errors.append("MAAP asset: "+str(e))
+                except Exception as e:
+                    message="MAAP asset: "+str(e); errors.append(message); technical_errors.append(message)
     return {"available":bool(paths),"paths":paths,"items":len(items),
             "collection":"CCIBiomassV5.01","version":"5.01","year":None,
             "resolution_m":100,"tiles":_cci_v7_tile_ids(gdf),
-            "collections_tried":collections_tried,"errors":errors[:8]}
+            "collections_tried":collections_tried,"errors":errors[:8],
+            "catalog_search_complete":not technical_errors,"pagination_complete":not technical_errors,
+            "technical_error_count":len(technical_errors)}
 
 LITERATURE=[
 {"biome":"Amazônia","phys":["secund","sucess"],"mean":None,"rmse":38.7,"bias":2.1,"r2":0.51,"cv":"bootstrap 100 repetições; 80/20","source":"Cassol et al. 2019","doi":"10.3390/rs11010059","note":"referência de desempenho; média AGB não extraída para fallback"},
@@ -1328,6 +1354,22 @@ def literature_fallback(biome,phys,library_rows=None,location=None,aoi=None):
                 "note":"Estimativa de referência microrregional para AOI de floresta ombrófila densa situada até 35 km do km 83; não é uma equação SAR."}
     tapajos=_tapajos_reference()
     if tapajos:return tapajos
+    # The owner-approved terminal fallback is an equal-weight mean across
+    # compatible, published inventory studies, not an IFN-only lookup. Keep
+    # medians, broad envelopes, horizontal-only metrics, and sibling formations
+    # out of the numeric estimate while retaining their audit references.
+    try:
+        from inventory_agb_comparison import multisource_inventory_agb_mean
+        multi=multisource_inventory_agb_mean(biome=biome,physiognomy=phys)
+        if multi.get("agb_mg_ha") is not None:
+            multi["sar_processed"]=False
+            multi["sar_metrics"]={"RMSE":None,"MAE":None,"bias":None,"R2":None}
+            return multi
+    except Exception as exc:
+        # Preserve the failure instead of disguising it as ecological absence.
+        return {"available":False,"status":"ERRO_TECNICO_LEITURA_BASE_INVENTARIOS",
+                "reason":type(exc).__name__+": "+str(exc)[:300],
+                "data_origin":"INVENTORY_DATABASE_ERROR","sar_processed":False}
     rows=list(library_rows or []); p=(phys or "").lower(); loc=(location or "").lower(); ranked=[]
     centroid=None
     if aoi is not None:
@@ -2388,15 +2430,14 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             audit["warnings"].append("Sentinel-1 C-band processado, mas sem modelo AGB calibrado/validado compatível; busca SAR continua.")
     except Exception as e: audit["warnings"].append("Sentinel-1 CDSE Process API/download: "+str(e))
 
-    # 5 — CCI derived AGB is secondary; technical errors in priority height
-    # routes must be fixed before this candidate can become the selected result.
+    # 5 — After FH×inventory produced no estimate, CCI is the selected second
+    # direct AGB route. A technical/incomplete FH search still blocks it.
     cci_gate=secondary_cci_agb_decision(
         audit.get("height_absence_certificate"),
         valid_height_pixels=bool(sar_height and int(sar_height.get("height_n_valid_pixels") or 0)>0))
     try:
-        # Do not start a large remote CCI download unless the full fallback
-        # gate is already satisfied. An FH product, an incomplete priority
-        # search, or missing CCI calibration makes that request ineligible.
+        # Do not start a large remote CCI download unless the FH route has been
+        # fully read and the caller has already tried its compatible inventory model.
         cci_download_skipped=not cci_gate["eligible"]
         if cci_download_skipped:
             cci={"items":0,"paths":[],"errors":[],"download_skipped":True,
@@ -2421,6 +2462,11 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             if is_humid_tropical else
             "Produto regional/global derivado de SAR; requer calibração e validação compatíveis antes de ser apresentado como estimativa local.")
         audit["cci"]["priority_selection_gate"]=cci_gate
+        if int(cci.get("technical_error_count") or 0)>0:
+            audit["warnings"].append("ESA CCI teve erro técnico durante busca/leitura; a contingência por inventários fica bloqueada até corrigir a rota.")
+        elif cci_gate.get("eligible") and (cci.get("catalog_search_complete") is not True
+                or cci.get("pagination_complete") is not True):
+            audit["warnings"].append("ESA CCI não concluiu a busca/paginação; a contingência por inventários fica bloqueada.")
         if cci.get("paths") and cci_gate["eligible"]:
             audit["cci"]["selection_status"]="ELEGIVEL_COMO_CONTINGENCIA_AGB"
             audit["cci"]["selection_reason"]=cci_gate["reason"]
@@ -2473,11 +2519,15 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             audit["priority_height_route_gate"]={"status":"ROTA_PRIORITARIA_RESOLVIDA",
                 "reason":cci_gate["reason"],"cci_candidate_available":bool(cci.get("paths")),
                 "cci_promoted":bool(cci.get("paths"))}
-    except Exception as e: audit["cci"]={"error":str(e)}
+    except Exception as e:
+        cci={"items":0,"paths":[],"errors":[type(e).__name__+": "+str(e)[:250]],
+             "technical_error_count":1,"catalog_search_complete":False,"pagination_complete":False}
+        audit["cci"]={"error":str(e),"technical_error_count":1,
+            "catalog_search_complete":False,"pagination_complete":False}
+        audit["warnings"].append("ESA CCI falhou tecnicamente; fallback de inventário bloqueado.")
 
-    # Mark the end of every configured route. A scene or any SAR pixel blocks
-    # inventory substitution; technical failures and incomplete searches are
-    # never evidence that no scenes exist.
+    # Mark terminal routes. Inventory fallback means no AGB model was available,
+    # not that SAR coverage was absent; technical failures still block it.
     audit["sar_sources_exhausted"]=True
     sar_processed=bool(sar_height or audit.get("processed_without_agb"))
     audit["sar_pixel_processing_status"]=(
@@ -2488,14 +2538,19 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     audit["scene_absence_certificate"]=certificate
     fallback_gate=inventory_fallback_gate(
         sar_processed,audit.get("warnings",[]),
-        sources_exhausted=bool(audit.get("sar_sources_exhausted")),
+        sources_exhausted=bool(audit.get("sar_sources_exhausted") and
+            isinstance(cci_gate,dict) and cci_gate.get("eligible") is True and
+            cci.get("catalog_search_complete") is True and
+            cci.get("pagination_complete") is True and
+            int(cci.get("technical_error_count") or 0)==0),
         height_processed=bool(sar_height),
         coverage_absence_confirmed=certificate.get("eligible") is True,
         scenes_found=bool(audit.get("biomass_l2b",{}).get("count")
             or audit.get("alos_palsar_public",{}).get("catalogued")
             or sum(int(x.get("count") or 0) for x in audit.get("asf",[]) if isinstance(x,dict))
             or audit.get("sentinel1_inpe",{}).get("catalogued")
-            or sum(int(x.get("catalogued") or 0) for x in (audit.get("sentinel1_provider_routes") or {}).values())))
+            or sum(int(x.get("catalogued") or 0) for x in (audit.get("sentinel1_provider_routes") or {}).values())),
+        quantitative_agb_unavailable=True)
     audit["inventory_fallback_gate"]=fallback_gate
     lit=None
     if fallback_gate["eligible"]:
@@ -2530,6 +2585,15 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                        "Pixels SAR auxiliares foram lidos, mas não há altura/AGB quantitativa de biomassa compatível; após esgotar as rotas de biomassa, pode-se emitir cenário separado de inventário, preservando a trilha e sem chamar inventário de SAR."
                        if audit.get("processed_without_agb") else ("SAR sem pixels utilizáveis após esgotar as rotas configuradas; emitir cenário condicional de inventário e preservar cada falha técnica, sem declarar ausência de cenas."
                        if fallback_gate["eligible"] else "Rotas SAR ainda não esgotadas; a estimativa de inventário permanece bloqueada."))}
+    if lit and lit.get("agb_mg_ha") is not None:
+        result.update(status="AGB_CONTINGENCIAL_MEDIA_INVENTARIOS" if
+            lit.get("status")=="ESTIMATIVA_CONTINGENCIAL_MEDIA_INVENTARIOS_MULTIFONTE" else
+            "AGB_CONTINGENCIAL_INVENTARIO_COMPATIVEL",
+            agb_mg_ha=lit.get("agb_mg_ha"),
+            uncertainty_mg_ha=lit.get("uncertainty_mg_ha"),
+            data_origin=lit.get("data_origin") or "LITERATURA_SECUNDARIA",
+            source=lit.get("source") or "Inventários florestais compatíveis",
+            agb_selection_reason="Rotas FH×inventário e ESA CCI não produziram estimador quantitativo; cenário separado pela média de inventários pertinentes.")
     if 'class_stats' in locals() and class_audit is not None:
         result["fitofisionomia_status"]="INTERSECAO_IBGE_PROCESSADA"
         result["fitofisionomia_area_audit"]=class_audit

@@ -6,7 +6,9 @@ from pathlib import Path
 import inventory_agb_comparison as comparison
 from inventory_agb_comparison import (canonical_panel_sha256, published_agb_references,
                                       published_structural_references,
-                                      published_inventory_evidence)
+                                      published_inventory_evidence,
+                                      multisource_inventory_agb_mean,
+                                      published_horizontal_inventory_baliza)
 
 
 class InventoryAgbComparisonSourceTests(unittest.TestCase):
@@ -74,6 +76,28 @@ class InventoryAgbComparisonSourceTests(unittest.TestCase):
         self.assertEqual([r["agb_mean_mg_ha"] for r in result["inventory_references"]], [110, 145])
         self.assertTrue(result["not_added_to_stock_total"])
 
+    def test_inventory_contingency_averages_all_compatible_study_means_only(self):
+        content=(
+          "source_id,institution,biome,physiognomy,region,metric,unit,center_type,center,sd,n_plots,n_sites,data_level,citation,url\n"
+          "A1,Embrapa,Amazônia,Floresta X,Sítio 1,AGB,Mg/ha,mean,100,10,4,1,published_aggregate,Estudo A,https://a1\n"
+          "A2,Embrapa,Amazônia,Floresta X,Sítio 2,AGB,Mg/ha,mean,200,20,6,1,published_aggregate,Estudo A,https://a2\n"
+          "B,UFV,Amazônia,Floresta X,Sítio 3,AGB,Mg/ha,mean,300,,10,1,published_aggregate,Estudo B,https://b\n"
+          "C,UFV,Amazônia,Floresta X,Sítio 4,AGB,Mg/ha,median,900,,20,1,published_aggregate,Mediana,https://c\n"
+          "D,UFV,Amazônia,Floresta Y,Sítio 5,AGB,Mg/ha,mean,800,,20,1,published_aggregate,Irmã,https://d\n")
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/"evidence.csv";path.write_text(content,encoding="utf-8")
+            result=multisource_inventory_agb_mean(
+                biome="Amazônia",physiognomy="Floresta X",path=path)
+        # Estudo A combines 100 and 200 weighted by their plot counts => 160;
+        # the independent studies A and B then receive equal study weight.
+        self.assertAlmostEqual(result["agb_mg_ha"],230.0)
+        self.assertEqual(result["study_count"],2)
+        self.assertEqual(result["matched_inventory_sources"],["A1","A2","B"])
+        self.assertEqual(result["uncertainty_kind"],
+            "DP entre médias de estudos compatíveis; não é IC95% nem erro total de transferência")
+        self.assertFalse(result["reference_only"])
+        self.assertTrue(result["not_added_to_stock_total"] is False)
+
     def test_no_exact_match_still_records_full_inventory_source_search(self):
         with patch.object(comparison,"DB",Path("/missing/ifn.sqlite")), \
              patch.object(comparison,"PANEL",Path("/missing/ifn.csv")), \
@@ -91,7 +115,8 @@ class InventoryAgbComparisonSourceTests(unittest.TestCase):
         self.assertEqual(result["inventory_sources_searched"],[
             "IFN_EXPANDED_TREE_MICRODATA","SFB_IFN_DAP10_AGB_PANEL",
             "HARMONIZED_PUBLISHED_AGB_REGISTER",
-            "HARMONIZED_PUBLISHED_STRUCTURAL_REGISTER"])
+            "HARMONIZED_PUBLISHED_STRUCTURAL_REGISTER",
+            "NATIONAL_INVENTORY_CANDIDATE_CATALOG"])
 
     def test_horizontal_aggregates_are_returned_as_references_not_plot_data(self):
         refs=published_structural_references(
@@ -110,6 +135,17 @@ class InventoryAgbComparisonSourceTests(unittest.TestCase):
         self.assertGreater(evidence["horizontal_reference_count"],0)
         self.assertIn("baliza regional",evidence["use_when_plot_microdata_unavailable"])
         self.assertTrue(evidence["not_added_to_stock_total"])
+
+    def test_published_basal_area_is_available_as_horizontal_baliza_without_plot_rows(self):
+        baliza=published_horizontal_inventory_baliza(
+            biome="Amazônia",physiognomy="Floresta Ombrófila Densa")
+        refs=[r for r in baliza["references"]
+              if r["source_id"]=="EMBRAPA_ODF_CLASS1_GE15_BA"]
+        self.assertEqual(baliza["status"],"BALIZA_HORIZONTAL_PUBLICADA_CONSULTADA")
+        self.assertEqual(len(refs),1)
+        self.assertEqual(refs[0]["metric"],"basal_area")
+        self.assertEqual(refs[0]["center"],27.36)
+        self.assertTrue(baliza["not_used_as_plot_calibration"])
 
     def test_parent_forest_formation_matches_ibge_subformation_as_reference_only(self):
         refs=published_agb_references(

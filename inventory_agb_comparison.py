@@ -98,6 +98,33 @@ def _published_aggregate_source_ids(path=AGGREGATE_PANEL):
     return sorted(sources)
 
 
+def inventory_catalog_source_audit(*, biome, physiognomy, longitude=None,
+                                   latitude=None, limit=200):
+    """Query the lightweight national source catalog without opening microdata.
+
+    This makes non-IFN leads and datasets visible in the same AOI audit. Catalog
+    rows are discovery records only; they are never treated as measurements.
+    """
+    try:
+        from national_inventory_database import (query_inventory_candidates,
+                                                   rank_inventory_candidates)
+        rows=query_inventory_candidates(biome=biome,physiognomy=physiognomy,
+                                        limit=limit)
+        ranked=rank_inventory_candidates(rows,biome=biome,physiognomy=physiognomy,
+            longitude=longitude,latitude=latitude)
+        return {"status":"CATALOGO_LOCAL_CONSULTADO",
+            "candidate_record_count":len(rows),"search_limit":int(limit),
+            "search_complete":len(rows)<int(limit),
+            "source_ids":sorted({str(r.get("source_id")) for r in rows if r.get("source_id")}),
+            "selection_use_counts":{key:sum(r.get("selection_use")==key for r in ranked)
+                for key in sorted({str(r.get("selection_use")) for r in ranked if r.get("selection_use")})},
+            "numeric_use":"Somente descoberta; não entra em AGB sem arquivo primário, compatibilidade e elegibilidade verificadas."}
+    except Exception as exc:
+        return {"status":"ERRO_TECNICO_CONSULTA_CATALOGO_LOCAL",
+            "diagnostic":type(exc).__name__,"reason":str(exc)[:240],
+            "candidate_record_count":0,"search_complete":False,"source_ids":[]}
+
+
 def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
     """All exact or explicitly hierarchical published AGB references, kept separate."""
     rows=[]; seen=set()
@@ -117,6 +144,8 @@ def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
                 rows.append({"status":"REFERENCIA_AGREGADA_PUBLICADA",
                     "source_id":row.get("source_id"), "institution":row.get("institution"),
                     "region":row.get("region"), "agb_mean_mg_ha":value,
+                    "center_type":row.get("center_type"), "unit":row.get("unit"),
+                    "data_level":row.get("data_level"),
                     "physiognomy_match_level":match_level,"reference_only":True,
                     "sd_mg_ha":_optional_float(row.get("sd")),
                     "ci95_low_mg_ha":_optional_float(row.get("ci95_low")),
@@ -128,6 +157,89 @@ def published_agb_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
     except (OSError, csv.Error):
         return []
     return rows
+
+
+def multisource_inventory_agb_mean(*, biome, physiognomy, path=AGGREGATE_PANEL):
+    """Build the requested inventory-only contingency from the full AGB register.
+
+    Only published arithmetic means in Mg/ha are eligible. Medians, envelopes,
+    neighboring formations, and non-AGB metrics remain references but do not
+    enter the mean. Multiple strata from the same citation are first combined
+    by their reported plot counts; independent studies are then equally
+    weighted so a single large campaign cannot dominate the result.
+    """
+    refs=published_agb_references(biome=biome,physiognomy=physiognomy,path=path)
+    eligible=[]
+    for row in refs:
+        if row.get("physiognomy_match_level")!="EXATA":
+            continue
+        if _norm(row.get("center_type")) not in {"mean","publishedestimate","meanestimate"}:
+            continue
+        unit=_norm(row.get("unit"))
+        if unit not in {"mgha","mgha1","tha","tha1"}:
+            continue
+        if _optional_float(row.get("agb_mean_mg_ha")) is None:
+            continue
+        center=float(row["agb_mean_mg_ha"])
+        # Harmonize common dry-biomass units; carbon units are deliberately excluded.
+        if unit in {"tha","tha1"}:
+            center*=1.0
+        citation=str(row.get("citation") or row.get("source_id") or "").strip()
+        if not citation:
+            continue
+        row=dict(row); row["agb_mean_mg_ha"]=center; row["study_key"]=citation
+        eligible.append(row)
+    if not eligible:
+        return {"status":"N/D","reason":"SEM_MEDIA_AGB_PUBLICADAS_COMPATIVEIS_NA_BASE_MULTIFONTE",
+                "inventory_sources_searched":_published_aggregate_source_ids(),
+                "national_inventory_catalog_search":inventory_catalog_source_audit(
+                    biome=biome,physiognomy=physiognomy),
+                "eligible_study_count":0,"inventory_references":[],
+                "not_added_to_stock_total":True}
+    grouped={}
+    for row in eligible:
+        grouped.setdefault(row["study_key"],[]).append(row)
+    studies=[]
+    for key, rows in sorted(grouped.items()):
+        values=[float(r["agb_mean_mg_ha"]) for r in rows]
+        weights=[]
+        for r in rows:
+            try: n=int(r.get("n_plots") or 0)
+            except (TypeError,ValueError): n=0
+            weights.append(n if n>0 else 1)
+        study_mean=sum(v*w for v,w in zip(values,weights))/sum(weights)
+        studies.append({"study_key":key,"agb_mean_mg_ha":study_mean,
+            "site_count":len(rows),"plot_count_reported":sum(w for w,r in zip(weights,rows)
+                if str(r.get("n_plots") or "").strip()),
+            "source_ids":sorted({str(r.get("source_id")) for r in rows}),
+            "references":rows})
+    centers=[s["agb_mean_mg_ha"] for s in studies]
+    mean=sum(centers)/len(centers)
+    between_sd=(statistics.stdev(centers) if len(centers)>1 else None)
+    low=min(centers); high=max(centers)
+    source_ids=sorted({sid for study in studies for sid in study["source_ids"]})
+    catalog_audit=inventory_catalog_source_audit(biome=biome,physiognomy=physiognomy)
+    searched=sorted(set(_published_aggregate_source_ids()+[
+        "NATIONAL_INVENTORY_CANDIDATE_CATALOG","IFN_EXPANDED_TREE_MICRODATA",
+        "SFB_IFN_DAP10_AGB_PANEL"]))
+    return {"status":"ESTIMATIVA_CONTINGENCIAL_MEDIA_INVENTARIOS_MULTIFONTE",
+        "agb_mg_ha":mean,"uncertainty_mg_ha":between_sd,
+        "uncertainty_kind":("DP entre médias de estudos compatíveis; não é IC95% nem erro total de transferência"
+            if between_sd is not None else "incerteza entre estudos não estimável com uma única campanha; incerteza total N/D"),
+        "published_study_envelope_mg_ha":[low,high],
+        "method":"média aritmética das médias por estudo; estratos/campanhas repetidos dentro da citação são ponderados pelo n de parcelas informado; sem misturar medianas, carbono ou formações irmãs",
+        "biome":biome,"physiognomy":physiognomy,"study_count":len(studies),
+        "site_count":sum(s["site_count"] for s in studies),
+        "reported_plot_count":sum(s["plot_count_reported"] for s in studies),
+        "studies":studies,"inventory_references":eligible,
+        "inventory_sources_searched":searched,
+        "national_inventory_catalog_search":catalog_audit,
+        "matched_inventory_sources":source_ids,"data_origin":"LITERATURA_SECUNDARIA",
+        "source":"Registro harmonizado multifonte de inventários publicados",
+        "not_added_to_stock_total":False,"reference_only":False,
+        "limitations":["estimativa regional transferida à AOI, sem observação pixel a pixel",
+            "não incorpora automaticamente incerteza de transferência, classificação ou alometria",
+            "fontes sem média AGB por hectare compatível permanecem listadas, mas não entram no cálculo"]}
 
 
 def published_structural_references(*, biome, physiognomy, path=AGGREGATE_PANEL):
@@ -215,6 +327,28 @@ def published_inventory_evidence(*, biome, physiognomy, path=AGGREGATE_PANEL):
         "reference_only":True,
         "hierarchical_matches_are_not_pooled_or_used_as_calibration":True,
     }
+
+
+def published_horizontal_inventory_baliza(*, biome, physiognomy, path=AGGREGATE_PANEL):
+    """Read aggregate-only horizontal inventory metrics as explicit balizas.
+
+    These summaries can support regional plausibility checks even when plot
+    microdata are unavailable. They never become plot-level predictors or
+    calibration observations by implication.
+    """
+    try:
+        refs=published_structural_references(
+            biome=biome,physiognomy=physiognomy,path=path)
+    except Exception as exc:
+        return {"status":"ERRO_TECNICO_LEITURA_REFERENCIAS_HORIZONTAIS",
+                "diagnostic":type(exc).__name__,"references":[],
+                "not_used_as_plot_calibration":True}
+    return {"status":"BALIZA_HORIZONTAL_PUBLICADA_CONSULTADA" if refs else
+            "SEM_BALIZA_HORIZONTAL_PUBLICADA_COMPATIVEL",
+        "references":refs,
+        "matching":"bioma exato e fitofisionomia exata/hierárquica; manter região, estrato e métrica separados",
+        "use":"comparação regional de plausibilidade; valores agregados não substituem G da parcela/local nem calibram coeficiente",
+        "not_used_as_plot_calibration":True}
 
 
 def tapajos_acceptance_inventory_references(agb_mg_ha, pixel_count, evidence):
@@ -454,7 +588,11 @@ def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
     result["inventory_sources_searched"]=[
         "IFN_EXPANDED_TREE_MICRODATA","SFB_IFN_DAP10_AGB_PANEL",
         "HARMONIZED_PUBLISHED_AGB_REGISTER",
-        "HARMONIZED_PUBLISHED_STRUCTURAL_REGISTER"]
+        "HARMONIZED_PUBLISHED_STRUCTURAL_REGISTER",
+        "NATIONAL_INVENTORY_CANDIDATE_CATALOG"]
+    result["national_inventory_catalog_search"]=inventory_catalog_source_audit(
+        biome=biome,physiognomy=physiognomy,
+        longitude=centroid_lon,latitude=centroid_lat)
     result["registered_published_inventory_sources"]=_published_aggregate_source_ids()
     result["matched_published_inventory_sources"]=sorted({
         str(ref.get("source_id")) for ref in published if ref.get("source_id")})
@@ -462,8 +600,10 @@ def estimate_inventory_agb_comparison(*, biome, physiognomy, area_ha,
         "biome":str(biome),"physiognomy":str(physiognomy),
         "matching":"exact normalized biome; exact or explicit IBGE parent/subformation relation for cited comparison only",
         "ifn_tree_microdata_available":bool(result.get("base_ifn_expandida_usada")),
-        "harmonized_register_available":AGGREGATE_PANEL.is_file()}
-    result["inventory_base_scope"]="todas as fontes com AGB harmonizada e compatibilidade exata disponíveis no registro; cada fonte preservada separadamente; IFN é apenas uma das bases"
+        "harmonized_register_available":AGGREGATE_PANEL.is_file(),
+        "candidate_catalog_records":result["national_inventory_catalog_search"].get("candidate_record_count"),
+        "candidate_catalog_sources":result["national_inventory_catalog_search"].get("source_ids",[])}
+    result["inventory_base_scope"]="toda a base de candidatos espaciais filtrada e os registros numéricos harmonizados de AGB/estrutura; IFN é uma fonte entre várias; apenas evidências com unidade, métrica, proveniência e domínio compatíveis entram no cálculo"
     result["ifn_microdata_available"]=bool(result.get("base_ifn_expandida_usada"))
     result["not_added_to_stock_total"]=True
     return result

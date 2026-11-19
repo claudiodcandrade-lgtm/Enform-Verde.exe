@@ -88,20 +88,30 @@ class SarHeightAbsenceTests(unittest.TestCase):
         self.assertFalse(decision["eligible"])
         self.assertEqual(decision["evidence"],"PRIORITY_ROUTE_TECHNICAL_ERROR")
 
-    def test_cci_requires_confirmed_fh_absence_and_validated_inventory_calibration(self):
-        self.assertFalse(secondary_cci_agb_decision(certificate())["eligible"])
-        calibration={"model_id":"CCI_TEST","biome":"Amazonia","physiognomy":"Floresta",
-            "source":"independent matched plots","n_pairs":40,"n_independent_sites":6,
-            "independent_validation":True,"rmse_mg_ha":35.0}
-        self.assertTrue(secondary_cci_agb_decision(
-            certificate(),cci_calibration=calibration)["eligible"])
+    def test_cci_direct_product_is_second_route_after_complete_fh_absence(self):
+        decision=secondary_cci_agb_decision(certificate())
+        self.assertTrue(decision["eligible"])
+        self.assertFalse(decision["cci_calibration_required"])
+        self.assertTrue(decision["inventory_comparison_required_in_report"])
+        self.assertIn("FH_ABSENCE_CONFIRMED",decision["evidence"])
+
+    def test_cci_direct_product_follows_completed_fh_when_model_has_no_result(self):
         c=certificate()
         c["status"]="AUSENCIA_SAR_NAO_COMPROVADA"
         c["routes"][0].update({"coverage_absence_confirmed":False,"valid_pixel_count":12})
-        decision=secondary_cci_agb_decision(
-            c,valid_height_pixels=True,cci_calibration=calibration)
+        decision=secondary_cci_agb_decision(c,valid_height_pixels=True)
+        self.assertTrue(decision["eligible"])
+        self.assertIn("FH_MODEL_ATTEMPTED",decision["evidence"])
+
+    def test_cci_still_requires_a_complete_error_free_fh_read(self):
+        c=certificate()
+        c["routes"][0]["pixel_read_complete"]=False
+        decision=secondary_cci_agb_decision(c,valid_height_pixels=True)
         self.assertFalse(decision["eligible"])
-        self.assertEqual(decision["evidence"],"FH_PIXELS_BLOCK_CCI")
+        self.assertEqual(decision["evidence"],"PRIORITY_ROUTE_INCOMPLETE")
+        c=certificate()
+        c["status"]="AUSENCIA_SAR_NAO_COMPROVADA"
+        c["routes"][0].update({"coverage_absence_confirmed":False,"valid_pixel_count":12})
 
 
 if __name__=="__main__":
