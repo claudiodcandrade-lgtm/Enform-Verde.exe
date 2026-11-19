@@ -1,4 +1,4 @@
-Warning: truncated output (original token count: 40216)
+Warning: truncated output (original token count: 40230)
 Total output lines: 765
 
 Warning: truncated output (original token count: 46970)
@@ -97,7 +97,7 @@ ESTADO VIGENTE (13/11/2026, checkpoint V88.36): candidata `3.26.25-PRECAMPO-EXPE
 - Testar **2026-11-08 → 2027-02-06**, primeiro alerta em 2027-01-22, inicialização idempotente, renovação posterior prevalecendo e ausência de suposição de token ativo após expirar. Empacotar no Windows; CI e teste local da interface são provas distintas.
 
 <!-- ENFORM_V87_82_MAAP_TOKEN_RENEWAL -->
-## V87.82 — Renovação ESA MAAP e substituição seg…30216 tokens truncated…s), fontes registradas no cadastro, fontes com correspondência exata e fontes efetivamente utilizáveis. Assim `0 compatíveis` fica distinto de `registro não consultado`; não inferir bioma/fitofisionomia nem extrapolar estudo.
+## V87.82 — Renovação ESA MAAP e substituição seg…30230 tokens truncated…pondência exata e fontes efetivamente utilizáveis. Assim `0 compatíveis` fica distinto de `registro não consultado`; não inferir bioma/fitofisionomia nem extrapolar estudo.
 - Candidata `3.26.70-PRECAMPO-EXPERIMENTAL`. Regressão integral e handoff do SHA `3999058` passaram; o Windows desse SHA está no build/autoteste final. As mudanças adicionais de auditoria e inventário exigem gates no SHA `3.26.70` antes de distribuir. Homologação científica permanece sem validação independente de campo.
 
 ## V88.149 — autenticação ESA MAAP no aceite do EXE Windows (18/11/2026)
@@ -191,7 +191,7 @@ A sincronização da especificação Word V88.165 é automatizada pelo workflow 
 
 ## V88.166 — evidência de inventário dentro do EXE (18/11/2026)
 
-O aceite Windows da V88.165 revelou falha operacional concreta: o PyInstaller copiava `structural_aggregate_evidence_v1.csv` apenas para `dist/data`, mas `inventory_agb_comparison` procura o registro junto aos módulos congelados em `_internal/data`. O arquivo agora é incluído pelo próprio comando PyInstaller no destino interno. O gate também confere o arquivo e os IDs Tapajós KM72/KM117, e o relatório de aceite expõe estado, diagnóstico, quantidade e fontes do registro; erro de leitura é `ERRO_TECNICO_LEITURA_REGISTRO_INVENTARIOS`. Após sincronização do Word V88.166, regressão integral passou: 1.312 testes OK, 1 ignorado; coleção de 191 módulos, self-test e module-check passaram. Novo build e aceite EXE limpo no SHA `7df90886f3bc087994a614cc37686f461be46a04` seguem pendentes. AGB permanece N/D sem estimador quantitativo elegível; não homologado.
+O aceite Windows da V88.165 revelou falha operacional concreta: o PyInstaller copiava `structural_aggregate_evidence_v1.csv` apenas para `dist/data`, mas `inventory_agb_comparison` procura o registro junto aos módulos congelados em `_internal/data`. O arquivo agora é incluído pelo próprio comando PyInstaller no destino interno. O gate também confere o arquivo e os IDs Tapajós KM72/KM117, e o relatório de aceite expõe estado, diagnóstico, quantidade e fontes do registro; erro de leitura é `ERRO_TECNICO_LEITURA_REGISTRO_INVENTARIOS`. A primeira regressão Windows com a V88.166 falhou em um teste documental porque o sincronizador inseria o histórico, mas não atualizava a capa Word. A rotina e o gate documental foram corrigidos; a nova regressão e o build permanecem em execução no SHA final. AGB permanece N/D sem estimador quantitativo elegível; candidata `3.26.76-PRECAMPO-EXPERIMENTAL`, não homologada.
 
 Workflow de sincronização documental: `.github/workflows/sync-v88-166-word.yml`, acionado por `docs/spec_updates/V88.166_PYINSTALLER_INVENTORY_EVIDENCE_RUNTIME.md`.
 

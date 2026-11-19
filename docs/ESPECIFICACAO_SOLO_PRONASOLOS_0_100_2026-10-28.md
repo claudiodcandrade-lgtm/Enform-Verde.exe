@@ -1,4 +1,4 @@
-Warning: truncated output (original token count: 32858)
+Warning: truncated output (original token count: 32907)
 Total output lines: 802
 
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
@@ -97,7 +97,7 @@ Estado do PR #51: branch patches-3.26.6, HEAD 88b463813665dfb6b82071b39c24913864
 ## V87.82 — Renovação ESA MAAP e substituição segura de token (10/11/2026)
 - **Fonte oficial:** o ESA MAAP Long-Lasting / Offline Token tem validade nominal de 90 dias. A renovação é manual após autenticação do usuário no portal documentado https://portal.maap.eo.esa.int/ini/services/auth/token/ . Não criar nem transmitir automaticamente um novo segredo.
 - **GUI / desktop_app.py:** na aba SAR, manter campo de entrada mascarado `ESA MAAP Long Lasting Token`; adicionar botões «RENOVAR TOKEN NO PORTAL ESA», «SUBSTITUIR TOKEN» (apaga o token anterior da variável de interface e foca o campo para colar o novo) e «REGISTRAR DATA DE EMISSÃO / RENOVAÇÃO» (informa data AAAA-MM-DD). Após colar o token, esse segredo fica somente em memória para uso no processamento; não deve ser logado, persistido no projeto nem enviado para servidores não ESA.
-- **Vencimento:** módulo `esa_maap_token_renewal.py`, prazo estimado de 90 dias corridos a partir da data real de geração e alerta nos últimos 15 dias ou após o vencimento. Na abertura do aplicativo perguntar se deseja abrir a página oficial quando EXPIRED/EXPIRING_SOON. Quando emiss…22858 tokens truncated… aba `Comparação AGB IFN`. Se FH+estrutura local já estimar AGB, a comparação CCI/IFN não aparece como segunda estimativa da área. Outras regiões sem dados AGB compatíveis permanecem N/D; a base estrutural expandida não autoriza por si só extrapolação para Mg/ha.
+- **Vencimento:** módulo `esa_maap_token_renewal.py`, prazo estimado de 90 dias corridos a partir da data real de geração e alerta nos últimos 15 dias ou após o vencimento. Na abertura do aplicativo perguntar se deseja abrir a página oficial quando EXPIRED/EXPIRING_SOON. Quando emiss…22907 tokens truncated…; a base estrutural expandida não autoriza por si só extrapolação para Mg/ha.
 - CCI: mantém média zonal da camada de AGB e incerteza do produto; `C=0,47×AGB`, estoque=`C×área nativa SAR`, e `tCO2e=tC×44/12`. A incerteza do produto não equivale a validação local.
 - A versão candidata passa a 3.26.64-PRECAMPO-EXPERIMENTAL. O fluxo completo de relatório/Excel, a análise da geometria integral da Fazenda Maria Eduarda e os gates Windows ainda precisam ser exercitados no SHA final; não declarar homologação.
 ## V88.129 — vigor no modelo vigente, referências de inventários e imagem óptica (17/11/2026)
@@ -240,7 +240,7 @@ O cache e a seleção SQLite sob demanda otimizam exclusivamente o acesso às fo
 A geração automatizada da cópia Word versionada V88.165 não altera os métodos ou resultados edáficos.
 
 ### Nota de sincronização Word V88.166
-O teste integral encontrou a capa do DOCX canônico ainda na versão anterior, embora o checkpoint tivesse sido inserido no histórico. O sincronizador agora substitui o estado e a versão da capa automaticamente; essa correção documental não modifica fonte, método, unidade, profundidade ou incerteza do carbono orgânico do solo. O novo gate Windows permanece pendente até a regressão e o build terminarem no SHA corrigido.
+O teste integral encontrou a capa do DOCX canônico ainda na versão anterior, embora o checkpoint tivesse sido inserido no histórico. O sincronizador agora substitui o estado e a versão da capa automaticamente; a checagem pré-campo valida a versão atual 3.26.76 no DOCX, no prompt v52 e nesta especificação, sem exigir texto de uma revisão histórica V87.1. Essa correção documental não modifica fonte, método, unidade, profundidade ou incerteza do carbono orgânico do solo. Candidata `3.26.76-PRECAMPO-EXPERIMENTAL`; o novo gate Windows permanece pendente até a regressão e o build terminarem no SHA corrigido.
 
 ## Nota V88.166 — empacotamento da evidência de inventários
 

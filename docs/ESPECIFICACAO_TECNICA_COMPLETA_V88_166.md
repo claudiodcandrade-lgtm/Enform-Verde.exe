@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 276399)
-... 57020 bytes omitted ...
+Warning: truncated output (original token count: 276459)
+... 57260 bytes omitted ...
 
 # Especificação Técnica Completa — Enform Verde V88.166
 
@@ -9,7 +9,7 @@ Warning: truncated output (original token count: 276399)
 
 ## V88.166 — correção do runtime de evidência de inventário
 
-O aceite Tapajós do EXE revelou que `structural_aggregate_evidence_v1.csv` estava somente em `dist/data`, enquanto os módulos congelados consultam `_internal/data`. O build inclui agora o arquivo no runtime PyInstaller e valida a presença das referências KM72/KM117. O JSON/erro de aceite expõe estado, diagnóstico e fontes do registro. O primeiro gate integral encontrou também um defeito do sincronizador Word: a capa continuava em 3.26.73 mesmo após inserir o checkpoint V88.166. O gerador e workflow atualizam agora a linha de estado e a versão da capa, com testes de regressão. O build, a regressão integral e o aceite Windows/EXE limpo estão pendentes no novo SHA. Candidata 3.26.76, não homologada.
+O aceite Tapajós do EXE revelou que `structural_aggregate_evidence_v1.csv` estava somente em `dist/data`, enquanto os módulos congelados consultam `_internal/data`. O build inclui agora o arquivo no runtime PyInstaller e valida a presença das referências KM72/KM117. O JSON/erro de aceite expõe estado, diagnóstico e fontes do registro. O primeiro gate integral encontrou também um defeito do sincronizador Word: a capa continuava em 3.26.73 mesmo após inserir o checkpoint V88.166. O gerador e workflow atualizam agora a linha de estado e a versão da capa, com testes de regressão. A execução pré-campo seguinte revelou uma asserção antiga que exigia texto V87.1 nos documentos correntes; o gate agora compara `APP_VERSION` com o DOCX e verifica V88.166 no prompt v52 e na especificação do solo, sem exigir conteúdo do prompt histórico v43. Build e regressão integral do SHA corrigido ainda pendentes. Candidata 3.26.76, não homologada.
 
 ## Histórico V88.165 — indexação sob demanda das bases de inventários
 
@@ -227,9 +227,7 @@ O gate de seleção do ESA CCI foi alterado para cumprir a precedência FH:
 
 qualquer pixel FH válido bloqueia a promoção do CCI;
 
-ausência real de FH deve estar certificada por auditorias completas, paginação e leitura de pixels sem erro em todas as rotas prioritárias;
-
-CCI exige calibração com inventário compatível, ≥30 pares parcela–pixel, ≥5 sítios independentes, domínio explícito, fonte, validação independente e RMSE posi…252152 tokens truncated…https://www.sema.mt.gov.br/transparencia/servico/Formulario/simlam/SIMLAM.html .
+ausência real de FH deve estar certificada por auditorias completas, paginaç…252152 tokens truncated…https://www.sema.mt.gov.br/transparencia/servico/Formulario/simlam/SIMLAM.html .
 
 Minuta preparada: docs/solicitacao_LAI_SEMA_MT_inventarios_florestais.md
 

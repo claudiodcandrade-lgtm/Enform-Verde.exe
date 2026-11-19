@@ -35,6 +35,13 @@ class WorkflowProvenanceTests(unittest.TestCase):
         self.assertIn("ref: ${{ github.event.pull_request.head.sha || github.sha }}", src)
         self.assertIn("if: always()", src)
 
+    def test_prefield_documentation_gate_tracks_current_candidate(self):
+        src = (ROOT / ".github/workflows/model-prediction-contract.yml").read_text(encoding="utf-8")
+        self.assertIn("Verify current version documentation synchronized with the source", src)
+        self.assertIn("version in body", src)
+        self.assertIn('"V88.166" in text', src)
+        self.assertNotIn("CORREÇÃO CIENTÍFICA V87.1", src)
+
 if __name__ == "__main__":
     unittest.main()
 
