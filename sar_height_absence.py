@@ -91,13 +91,12 @@ def regional_height_fallback_decision(certificate):
 
 
 def secondary_cci_agb_decision(height_certificate, *, valid_height_pixels=False, cci_calibration=None):
-    """Allow direct CCI L4 after an error-free attempt at the preferred FH route.
+    """Offer CCI as an independent second AGB route after the FH attempt.
 
-    A usable FH value has already been offered to the FH × inventory model by
-    the caller before this gate. If that model cannot estimate AGB, the owner
-    has selected CCI plus inventory references as the second route. If FH is
-    absent, both height routes still need a complete, error-free absence proof.
-    CCI remains a satellite product, not a locally calibrated FH model.
+    FH absence is not required: valid FH first goes through the applicable
+    horizontal-inventory model, then CCI can be tried if it yields no estimate.
+    FH technical errors stay explicit and are never relabelled as absence; they
+    must not suppress the independent CCI attempt.
     """
     if not isinstance(height_certificate, dict):
         return {"eligible":False,"reason":"CERTIFICADO_DA_ROTA_PRIORITARIA_AUSENTE",
@@ -111,29 +110,32 @@ def secondary_cci_agb_decision(height_certificate, *, valid_height_pixels=False,
     if not isinstance(esa,dict) or esa.get("configured") is not True:
         return {"eligible":False,"reason":"ROTA_ESA_BIOMASS_FH_SEM_AUDITORIA_VALIDA",
                 "evidence":"PRIORITY_ROUTE_AUDIT_INVALID"}
-    for route in ([esa] if valid_height_pixels else routes):
-        if route.get("catalog_search_complete") is not True or route.get("pagination_complete") is not True:
-            return {"eligible":False,"reason":"BUSCA_PRIORITARIA_INCOMPLETA:"+str(route.get("route")),
-                    "evidence":"PRIORITY_ROUTE_INCOMPLETE"}
-        if route.get("pixel_read_complete") is not True:
-            return {"eligible":False,"reason":"LEITURA_PRIORITARIA_INCOMPLETA:"+str(route.get("route")),
-                    "evidence":"PRIORITY_ROUTE_INCOMPLETE"}
-        if int(route.get("technical_error_count") or 0)>0:
-            return {"eligible":False,"reason":"ERRO_TECNICO_NA_ROTA_PRIORITARIA:"+str(route.get("route")),
-                    "evidence":"PRIORITY_ROUTE_TECHNICAL_ERROR"}
     fh_found=bool(valid_height_pixels or any(
         isinstance(route.get("valid_pixel_count"),int) and route.get("valid_pixel_count",0)>0
         for route in routes))
-    if not fh_found and not (height_certificate.get("status")=="SAR_AUSENCIA_COBERTURA_CONFIRMADA" and all(
-            route.get("coverage_absence_confirmed") is True and route.get("valid_pixel_count")==0
-            for route in routes)):
-        return {"eligible":False,"reason":"SEM_PIXELS_FH_VALIDOS_E_AUSENCIA_NAO_CONFIRMADA",
-                "evidence":"PRIORITY_ROUTE_ABSENCE_UNPROVEN"}
+    # CCI is a separate, direct AGB product route. A failed or incomplete FH
+    # read must remain visible in the audit, but must not suppress this
+    # independent second route. In particular, do not convert that failure
+    # into a claim that FH coverage is absent.
+    fh_errors=sum(int(route.get("technical_error_count") or 0)
+                  for route in routes if isinstance(route,dict))
+    fh_incomplete=any(route.get("catalog_search_complete") is not True or
+                      route.get("pagination_complete") is not True or
+                      route.get("pixel_read_complete") is not True
+                      for route in routes if isinstance(route,dict))
     return {"eligible":True,
-            "reason":("FH FOI PROCESSADO, MAS O MODELO FH×INVENTARIO NÃO GEROU AGB; ESA CCI L4 É A SEGUNDA ROTA, COM REFERÊNCIAS DE INVENTÁRIOS COMPATÍVEIS." if fh_found else
-                      "AUSÊNCIA DE FH CONFIRMADA SEM ERROS; ESA CCI L4 É A SEGUNDA ROTA, COM REFERÊNCIAS DE INVENTÁRIOS COMPATÍVEIS."),
-            "evidence":"FH_MODEL_ATTEMPTED_CCI_DIRECT_PRODUCT_SECONDARY" if fh_found else
-                      "FH_ABSENCE_CONFIRMED_CCI_DIRECT_PRODUCT_SECONDARY",
+            "reason":("FH FOI TENTADO; CCI L4 É A SEGUNDA ROTA INDEPENDENTE. FALHAS/INCOMPLETUDE FH PERMANECEM REGISTRADAS." if fh_errors or fh_incomplete else
+                      ("FH FOI PROCESSADO, MAS O MODELO FH×INVENTÁRIO NÃO GEROU AGB; ESA CCI L4 É A SEGUNDA ROTA, COM REFERÊNCIAS DE INVENTÁRIOS COMPATÍVEIS." if fh_found else
+                       "AUSÊNCIA DE FH CONFIRMADA SEM ERROS; ESA CCI L4 É A SEGUNDA ROTA, COM REFERÊNCIAS DE INVENTÁRIOS COMPATÍVEIS.")),
+            "evidence":"FH_ATTEMPTED_CCI_DIRECT_PRODUCT_SECONDARY" if fh_errors or fh_incomplete else
+                      ("FH_MODEL_ATTEMPTED_CCI_DIRECT_PRODUCT_SECONDARY" if fh_found else
+                       "FH_ABSENCE_CONFIRMED_CCI_DIRECT_PRODUCT_SECONDARY"),
+            "fh_technical_errors_preserved":fh_errors,
+            "fh_incomplete_routes_preserved":fh_incomplete,
+            "fh_absence_asserted":not fh_found and not fh_errors and not fh_incomplete and
+                height_certificate.get("status")=="SAR_AUSENCIA_COBERTURA_CONFIRMADA" and all(
+                    route.get("coverage_absence_confirmed") is True and route.get("valid_pixel_count")==0
+                    for route in routes if isinstance(route,dict)),
             "cci_calibration_required":False,
             "inventory_comparison_required_in_report":True,
             "note":"CCI permanece produto anual AGB L4 com incerteza própria; referências de inventário são apresentadas separadamente e não são somadas nem usadas como calibração implícita."}

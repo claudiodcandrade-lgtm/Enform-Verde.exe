@@ -557,6 +557,31 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
         codes[(codes==0)&valid_observation]=3
         # Pixels without SAR observations must remain nodata=0, not unknown class 3.
         dest=Path(output_dir);dest.mkdir(parents=True,exist_ok=True)
+        # Keep the already-read VV/VH acquisition available to the vigor
+        # module. This prevents a second independent catalogue/download path
+        # from discarding valid pixels and then returning N/D for the same AOI.
+        vigor_scene_assets=[]
+        vigor_scenes_dir=dest/"vigor_scenes"
+        vigor_scenes_dir.mkdir(parents=True,exist_ok=True)
+        for scene_dt,scene_id,pair in data:
+            age=(ref-scene_dt).total_seconds()/86400.0
+            if age<0 or age>30:
+                continue
+            safe_id="".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in scene_id)[:100]
+            scene_dir=vigor_scenes_dir/(safe_id or scene_dt.strftime("%Y%m%dT%H%M%S"))
+            scene_dir.mkdir(parents=True,exist_ok=True)
+            assets={}
+            for pol,array in zip(("vv","vh"),pair):
+                asset_path=scene_dir/(pol+".tif")
+                with rasterio.open(asset_path,"w",driver="GTiff",height=size[0],width=size[1],
+                                   count=1,crs=crs,transform=tr,nodata=np.nan,
+                                   dtype="float32",compress="deflate",predictor=3) as out:
+                    out.write(np.asarray(array,dtype=np.float32),1)
+                assets[pol]={"href":str(asset_path)}
+            vigor_scene_assets.append({"id":scene_id,"acquisition_utc":scene_dt.isoformat(),
+                "provider":"LOCAL_CACHE","polarizations":["VV","VH"],"assets":assets,
+                "source":"pixels VV/VH já lidos pela triagem SAR contemporânea",
+                "age_days":round(age,2)})
         raster=dest/"sar_cobertura_atual_candidatos_experimental.tif"
         with rasterio.open(raster,"w",driver="GTiff",height=size[0],width=size[1],
                            count=1,crs=crs,transform=tr,nodata=0,dtype="uint8",compress="deflate") as out:
@@ -591,6 +616,9 @@ def run_recent_sar_screen(aoi,output_dir,*,now=None,search=None,token_fn=None):
              "provider_diagnostics":found.get("providers",[]),
              "providers_used":[provider_used] if provider_used else [],
              "scene_ids":[r[1] for r in data],"scene_count":len(data),
+             "vigor_scene_assets":vigor_scene_assets,
+             "vigor_scene_cache_status":"CENAS_VV_VH_LOCAIS_DISPONIVEIS" if vigor_scene_assets else
+                 "SEM_CENA_CACHEADA_COM_ATE_30_DIAS",
              "acquisitions_utc":[r[0].isoformat() for r in data],
              "latest_acquisition_utc":data[0][0].isoformat(),
              "orbit_state":orbit[1],"relative_orbit":orbit[2],

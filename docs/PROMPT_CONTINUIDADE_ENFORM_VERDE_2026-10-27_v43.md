@@ -709,3 +709,13 @@ A candidata 3.26.78 mantém FH + suporte horizontal de inventários como rota pr
 
 ### Adendo V88.168 — regressão completa (19/11/2026)
 A base IFN/SFB externa foi materializada e cruzada com 8.951 UAs únicas do IBGE legenda_1. Regressão completa: 1.324 testes OK, 1 ignorado; coleção: 192 módulos sem falhas. Fixtures de dashboard foram sincronizados com o painel executivo. A candidata ainda requer build Windows final e autoteste do EXE, inclusive leitura óptica, antes de disponibilização.
+
+### Adendo de continuidade V88.172 (19/11/2026)
+Os relatórios recebidos explicaram o congelamento visual: uma linha de proveniência SAR inline atingia 1.229.817 caracteres. A tela foi alterada para extrato compacto, renderização em blocos e gravação lateral do JSON completo; exigir aceitação Windows antes de declarar correção.
+
+A rota FH do relatório de Sinop encontrou HTTP 401 e GTDX sem credencial; a política anterior também bloqueava a tentativa ESA CCI em caso de erro/incompletude FH. A candidata 3.26.82 permite CCI como segunda rota independente sem ocultar a falha FH e distingue tentativa de sucesso. A triagem SAR já lê VV/VH, agora retidos como ativos locais de até 30 dias para o vigor. A saída é diagnóstico estrutural SAR experimental, não vigor agronômico validado; manter N/D se elegibilidade/amostragem falhar.
+
+`py_compile` passou. A execução ampliada local foi impedida por ausência de `requests` e `geopandas`; não houve prova de FH/CCI/inventário ao dashboard/Excel, vigor na AOI privada, fundo óptico na AOI, build ou autoteste Windows. Não disponibilizar executável até os gates completos passarem no mesmo SHA. Não declarar homologação científica nem validação de campo.
+
+### Verificação posterior da candidata 3.26.82 (19/11/2026)
+As dependências foram instaladas neste ambiente e a regressão completa passou com 1.349 testes e 1 ignorado; o coletor inspecionou 196 módulos e `py_compile`/`git diff --check` passaram. O padrão visual não pôde ser executado porque não há servidor X/display. Ainda faltam build e aceites Windows, integração real FH/CCI/inventários até dashboard/Excel, leitura óptica e vigor na AOI da Fazenda Maria Eduarda. A candidata permanece experimental e sem EXE liberado.

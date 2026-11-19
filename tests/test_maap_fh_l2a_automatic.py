@@ -130,6 +130,7 @@ class AutomaticFHL2ATests(unittest.TestCase):
                 project={"version":"test","sar_result":payload,"land_use":land},
                 carbon_dashboard_table=table,res=report,overall_exec_var=summary,
                 status=_Var(),nb=SimpleNamespace(select=lambda *_:None),tabs=[None,None,None,"carbon"],
+                _write_json_background=lambda *_args:None,
                 _set=lambda widget,value:setattr(widget,"value",value),_map_provider="test",
                 _populate_carbon_dashboard=lambda result:App._populate_carbon_dashboard(app,result),
                 _refresh_overall_executive_summary=lambda:App._refresh_overall_executive_summary(app),

@@ -87,13 +87,19 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn('--cover-version "V88.170 | 3.26.80-PRECAMPO-EXPERIMENTAL"', text)
         self.assertIn("ESPECIFICACAO_TECNICA_COMPLETA_V88_170.docx", text)
 
+    def test_v88_172_word_sync_tracks_current_candidate(self):
+        text = (ROOT / ".github" / "workflows" / "sync-v88-172-word.yml").read_text(encoding="utf-8")
+        self.assertIn("V88.172_AGB_CCI_INVENTORIES_VIGOR_RESPONSIVENESS.md", text)
+        self.assertIn('--cover-version "V88.172 | 3.26.82-PRECAMPO-EXPERIMENTAL"', text)
+        self.assertIn("ESPECIFICACAO_TECNICA_COMPLETA_V88_172.docx", text)
+
     def test_only_current_word_checkpoint_watches_the_shared_updater(self):
         workflows = ROOT / ".github" / "workflows"
-        for version in ("165", "167", "168", "169"):
+        for version in ("165", "167", "168", "169", "170", "171"):
             text = (workflows / f"sync-v88-{version}-word.yml").read_text(encoding="utf-8")
             paths = text.split("    paths:\n", 1)[1].split("permissions:\n", 1)[0]
             self.assertNotIn("tools/update_spec_docx.py", paths)
-        current = (workflows / "sync-v88-170-word.yml").read_text(encoding="utf-8")
+        current = (workflows / "sync-v88-172-word.yml").read_text(encoding="utf-8")
         paths = current.split("    paths:\n", 1)[1].split("permissions:\n", 1)[0]
         self.assertIn("tools/update_spec_docx.py", paths)
 

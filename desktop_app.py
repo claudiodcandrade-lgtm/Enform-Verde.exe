@@ -43,7 +43,50 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.81-PRECAMPO-EXPERIMENTAL"
+def _sanitize_optical_diagnostic_text(value):
+    """Remove remote URLs and credential-like query values before clipboard export."""
+    text=str(value or "")
+    text=re.sub(r"https?://[^\s]+","[URL_REDACTED]",text)
+    text=re.sub(r"(?i)(sig|token|client_secret|password)=([^&\s]+)",r"\1=[REDACTED]",text)
+    return text[:1200]
+
+
+def _sar_details_report_excerpt(details):
+    """Keep on-screen SAR text compact; preserve full provenance in JSON."""
+    if not isinstance(details,dict):
+        return {"status":"N/D","reason":"proveniência SAR não disponível"}
+    audit=details.get("audit") if isinstance(details.get("audit"),dict) else {}
+    def certificate(value):
+        if not isinstance(value,dict):return None
+        fields=("route","catalog_search_complete","pagination_complete","pixel_read_complete",
+                "candidate_scene_count","technical_error_count","coverage_absence_confirmed")
+        return {"status":value.get("status"),"global_search_complete":value.get("global_search_complete"),
+                "pagination_complete":value.get("pagination_complete"),"pixel_read_complete":value.get("pixel_read_complete"),
+                "routes":[{key:route.get(key) for key in fields if key in route}
+                    for route in value.get("routes",[]) if isinstance(route,dict)]}
+    comparison=details.get("inventory_agb_comparison")
+    if isinstance(comparison,dict):
+        comparison={key:comparison.get(key) for key in ("status","reason","n_ua_compativeis",
+            "inventory_n_unique_sampling_units","published_aggregate_count","published_structural_reference_count",
+            "matched_published_inventory_sources","base_ifn_expandida_usada","not_added_to_stock_total",
+            "usable_inventory_sources_consulted") if key in comparison}
+    else:
+        comparison=None
+    fallback=audit.get("inventory_fallback_gate")
+    fallback={key:fallback.get(key) for key in ("eligible","reason") if key in fallback} if isinstance(fallback,dict) else None
+    priority=audit.get("priority_height_route_gate")
+    priority={key:priority.get(key) for key in ("status","reason","cci_candidate_available","cci_promoted") if key in priority} if isinstance(priority,dict) else None
+    return {"status":details.get("status"),"data_origin":details.get("data_origin"),
+        "source":details.get("source"),"agb_mg_ha":details.get("agb_mg_ha"),
+        "uncertainty_mg_ha":details.get("uncertainty_mg_ha"),"height_route_status":details.get("height_route_status"),
+        "height_mean_m":details.get("height_mean_m"),"height_sd_m":details.get("height_sd_m"),
+        "height_n_valid_pixels":details.get("height_n_valid_pixels"),
+        "height_absence_certificate":certificate(details.get("height_absence_certificate")),
+        "priority_height_route_gate":priority,"inventory_agb_comparison":comparison,
+        "inventory_fallback_gate":fallback}
+
+
+APP_VERSION="3.26.82-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1804,7 +1847,8 @@ class App(tk.Tk):
 
         map_frame=ttk.Frame(f); map_frame.pack(fill="both",expand=True,pady=(2,6))
         self.map_status=tk.StringVar(value="Aguardando carregamento de imagem de referência.")
-        ttk.Label(map_frame,textvariable=self.map_status,anchor="w",foreground="#52645E").grid(row=0,column=0,columnspan=2,sticky="ew",pady=(0,4))
+        ttk.Label(map_frame,textvariable=self.map_status,anchor="w",foreground="#52645E").grid(row=0,column=0,sticky="ew",pady=(0,4))
+        ttk.Button(map_frame,text="COPIAR DIAGNÓSTICO ÓPTICO",command=self.copy_optical_diagnostic).grid(row=0,column=1,sticky="e",padx=(8,0),pady=(0,4))
         self.map_canvas=tk.Canvas(map_frame,height=560,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
                                   xscrollincrement=20,yscrollincrement=20)
         self.map_hscroll=ttk.Scrollbar(map_frame,orient="horizontal",command=self.map_canvas.xview)
@@ -2175,6 +2219,25 @@ class App(tk.Tk):
             self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+
                 "\n\nDiagnóstico do fundo óptico — fonte exibida: "+str(provider)+
                 "\nFontes prioritárias que falharam antes dela:\n• "+"\n• ".join(attempts))
+
+    def copy_optical_diagnostic(self):
+        """Copy the current AOI's optical outcome without remote signed URLs."""
+        diagnostic=self.project.get("optical_diagnostic") or {}
+        if not diagnostic:
+            messagebox.showinfo("Diagnóstico óptico","A busca de imagem desta AOI ainda não terminou.")
+            return
+        payload={
+            "app_version":APP_VERSION,
+            "status":_sanitize_optical_diagnostic_text(diagnostic.get("status")),
+            "provider":_sanitize_optical_diagnostic_text(diagnostic.get("provider") or self._map_provider),
+            "area_ha":diagnostic.get("aoi_area_ha"),
+            "error":_sanitize_optical_diagnostic_text(diagnostic.get("error")),
+            "provider_failures":[_sanitize_optical_diagnostic_text(x) for x in diagnostic.get("provider_failures",[])],
+            "map_status":_sanitize_optical_diagnostic_text(self.map_status.get()),
+        }
+        report=json.dumps(payload,ensure_ascii=False,indent=2)
+        self.clipboard_clear(); self.clipboard_append(report); self.update_idletasks()
+        self.status.set("Diagnóstico óptico desta AOI copiado. Ele não contém URLs assinadas nem credenciais.")
 
     def _on_map_resize(self,event=None):
         """Keep the selected basemap fitted after a real canvas resize."""
@@ -2690,7 +2753,11 @@ class App(tk.Tk):
                         "Ocorrência de vegetação nativa: N/D — ausência de máscara semântica SAR validada não significa 0 ha.")
         if not has_cultivated_area(classes) and complete_coverage and land.get("status")=="SAR_ELEGIVEL":
             self._crop_monitoring_base_report="sem cultivos detectados\n"+native_summary
-            self._crop_monitoring_audit_base="Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n"+native_summary+"\n\nRastreabilidade da análise:\n"+json.dumps(land,ensure_ascii=False,indent=2,default=str)
+            audit_dir=Path(land.get("vector_path") or (Path.home()/".enform_verde"/"auditorias" )).parent
+            land_audit=audit_dir/"uso_solo_auditoria.json"
+            self._write_json_background(land,land_audit)
+            self._crop_monitoring_audit_base=("Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n"+
+                native_summary+"\n\nAuditoria integral em JSON, gravada em segundo plano:\n"+str(land_audit))
             if hasattr(self,"crop_exec_var"):
                 self.crop_exec_var.set("Cobertura SAR: classificação elegível em toda a AOI.\n"
                     "Cultivos identificados: nenhum.\n"+native_summary)
@@ -2921,6 +2988,10 @@ class App(tk.Tk):
                "Incerteza da área/classificação: "+str(land.get("area_uncertainty") or "incerteza não mensurável — classificação/área"),
                "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
                "Avisos:"]+[str(x) for x in land.get("warnings",[]) or ["nenhum"]]
+        audit_dir=Path(land.get("vector_path") or (Path.home()/".enform_verde"/"auditorias" )).parent
+        land_audit=audit_dir/"uso_solo_auditoria.json"
+        self._write_json_background(land,land_audit)
+        audit.extend(["","Snapshot integral do módulo de uso do solo (JSON):",str(land_audit)])
         audit.extend(["","Classes, fontes e metadados:"])
         audit.extend(["", "Proveniência dos indicadores executivos:",
                       json.dumps({"agriculture_historical_contingency":contingency,
@@ -3297,9 +3368,49 @@ class App(tk.Tk):
         w.bind("<Button-4>",wheel); w.bind("<Button-5>",wheel)
 
     def _set(self,w,t):
-        w.config(state="normal"); w.delete("1.0","end"); w.insert("1.0",t); w.config(state="disabled")
-        try:w.yview_moveto(0.0)
-        except tk.TclError:pass
+        """Update report text without monopolizing Tk while large audits render."""
+        text=str(t or "")
+        generation=int(getattr(w,"_enform_render_generation",0))+1
+        w._enform_render_generation=generation
+        w._enform_pending_text=text if len(text)>80000 else None
+        w.config(state="normal"); w.delete("1.0","end"); w.config(state="disabled")
+        if len(text)<=80000:
+            w.config(state="normal"); w.insert("1.0",text); w.config(state="disabled")
+            try:w.yview_moveto(0.0)
+            except tk.TclError:pass
+            return
+        # Disabled widgets are briefly enabled per chunk so keyboard input
+        # cannot alter an audit while yielding to Tk between insertions.
+        chunk_size=16000
+        def insert_chunk(offset=0):
+            try:
+                if not w.winfo_exists() or w._enform_render_generation!=generation:return
+                end=min(len(text),offset+chunk_size)
+                w.config(state="normal"); w.insert("end",text[offset:end]); w.config(state="disabled")
+                if end<len(text):
+                    w.after(1,lambda next_offset=end:insert_chunk(next_offset))
+                else:
+                    w._enform_pending_text=None
+                    w.yview_moveto(0.0)
+            except tk.TclError:
+                return
+        w.after_idle(insert_chunk)
+    def _write_json_background(self,data,path):
+        """Persist potentially large audit snapshots outside the Tk event loop."""
+        target=Path(path)
+        def write_snapshot():
+            try:
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_text(json.dumps(data,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+            except Exception as exc:
+                try:
+                    log=Path.home()/".enform_verde"/"enform_diagnostico.log"
+                    log.parent.mkdir(parents=True,exist_ok=True)
+                    with log.open("a",encoding="utf-8") as stream:
+                        stream.write("\nAUDIT_WRITE_FAILED "+str(target)+": "+type(exc).__name__+": "+str(exc)[:240])
+                except OSError:
+                    pass
+        threading.Thread(target=write_snapshot,name="EnformAuditWrite",daemon=True).start()
     def _copy_text(self,text,label="Relatório"):
         value=str(text or "")
         if not value.strip():
@@ -3308,7 +3419,8 @@ class App(tk.Tk):
         self.clipboard_clear(); self.clipboard_append(value); self.update_idletasks()
         self.status.set(label+" copiado para a área de transferência.")
     def _copy_report(self,widget,label="Relatório"):
-        self._copy_text(widget.get("1.0","end-1c"),label)
+        pending=getattr(widget,"_enform_pending_text",None)
+        self._copy_text(pending if pending is not None else widget.get("1.0","end-1c"),label)
     def _populate_carbon_dashboard(self,native):
         from carbon_dashboard_table import carbon_dashboard_rows
         if not hasattr(self,"carbon_dashboard_table"):return
@@ -3999,12 +4111,16 @@ class App(tk.Tk):
         diag=native.get("inventory_scenario_diagnostic")
         if diag:
             lines += ["", "CENÁRIO DE INVENTÁRIO: "+str(diag.get("status"))+" — "+str(diag.get("reason"))]
+        sar_audit_path=Path(land["vector_path"]).parent/"carbono_formacoes_nativas.json"
+        lines.extend(["", "PROVENIÊNCIA SAR COMPLETA, LISTAS DE CENAS E ERROS DETALHADOS (JSON):",
+                      str(sar_audit_path),
+                      "Resumo SAR por estrato abaixo; o relatório de tela omite blobs/diagnósticos extensos para permanecer responsivo."])
         for st in native["strata"]:
             lines.append(st["class_name"]+": "+format_ptbr(st["area_ha"],2)+" ha ("+format_ptbr(st["area_pct"],2)+"% da AOI) — "+st["source"])
             lines.append("  FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: "+st["physiognomy"]+" — "+st["physiognomy_resolution"])
-            lines.append("  Proveniência SAR/altura: "+json.dumps(st.get("sar_details") or {},ensure_ascii=False,default=str))
-            # Display actual raster acquisition separately from catalog discovery.
             sar_details=st.get("sar_details") or {}
+            lines.append("  Resumo SAR/altura: "+json.dumps(_sar_details_report_excerpt(sar_details),ensure_ascii=False,default=str))
+            # Display actual raster acquisition separately from catalog discovery.
             if isinstance(sar_details,dict):
                 inventory_cmp=sar_details.get("inventory_agb_comparison")
                 if isinstance(inventory_cmp,dict):
@@ -4172,14 +4288,14 @@ class App(tk.Tk):
                 " AGB, fonte e aplicação estão discriminadas nos detalhes técnicos.")
         self.status.set("Carbono por formação nativa concluído; lacunas e outros usos indicados separadamente.")
         # Store serializable class-level results beside spatial provenance.
-        audit=Path(land["vector_path"]).parent/"carbono_formacoes_nativas.json"
-        audit.write_text(json.dumps(native,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        audit=sar_audit_path
+        self._write_json_background(native,audit)
         sar_audit=Path(land["vector_path"]).parent/"proveniencia_sar_painel.json"
-        sar_audit.write_text(json.dumps({
+        self._write_json_background({
             "analysis_run_id":self.project.get("analysis_run_id"),
             "aoi_hash_sha256":self.project.get("analysis_aoi_hash"),
             "sar_dashboard_payload":self.project.get("sar_result") or {},
-        },ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        },sar_audit)
         # Separate pedology from carbon stocks in exported calculation evidence.
         pedo_audit=Path(land["vector_path"]).parent/"pedologia_embrapa_auditoria.json"
         pedo_audit.write_text(json.dumps(pedology or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
@@ -5016,7 +5132,7 @@ class App(tk.Tk):
         wb.save(p); self.status.set("Excel exportado com sucesso.")
 
     def save_report(self):
-        txt=self.res.get("1.0","end").strip()
+        txt=str(self.project.get("last_result") or self.res.get("1.0","end")).strip()
         if not txt:return
         p=filedialog.asksaveasfilename(defaultextension=".txt",filetypes=[("Relatório TXT","*.txt")])
         if p:Path(p).write_text(txt+"\n\nFONTES\n"+self.src.get("1.0","end"),encoding="utf-8"); self.status.set("Relatório salvo.")

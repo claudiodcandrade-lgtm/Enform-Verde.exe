@@ -12,6 +12,32 @@ from update_spec_docx import update  # noqa: E402
 
 
 class UpdateSpecDocxAdditionalTests(unittest.TestCase):
+    def test_refreshes_final_v88_170_acceptance_cover_state(self):
+        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+ <w:body>
+  <w:p><w:r><w:t>Enform Verde</w:t></w:r></w:p>
+  <w:p><w:r><w:t>FH/DASHBOARD, S2 E EXE LIMPO APROVADOS</w:t></w:r></w:p>
+  <w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Especificação anterior</w:t></w:r></w:p>
+ </w:body>
+</w:document>'''
+        with tempfile.TemporaryDirectory() as td:
+            source = Path(td) / "source.docx"
+            output = Path(td) / "output.docx"
+            with zipfile.ZipFile(source, "w", zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("word/document.xml", xml)
+            report = update(source, output, "# V88.171 teste\\nConteúdo\\n",
+                            baseline="c12ed76", head_sha="abc123",
+                            code_sha="def456", date="19 de novembro de 2026",
+                            cover_state="UPLOAD PENDENTE; ÓPTICA EM DIAGNÓSTICO")
+            self.assertTrue(report["cover_state"])
+            with zipfile.ZipFile(output) as archive:
+                document = ET.fromstring(archive.read("word/document.xml"))
+            ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+            text = " ".join(node.text or "" for node in document.findall(".//w:t", ns))
+            self.assertIn("UPLOAD PENDENTE; ÓPTICA EM DIAGNÓSTICO", text)
+            self.assertNotIn("FH/DASHBOARD, S2 E EXE LIMPO APROVADOS", text)
+
     def test_refreshes_v88_170_ifn_cover_state_on_rerun(self):
         xml = '''<?xml version="1.0" encoding="UTF-8"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
@@ -65,6 +91,55 @@ class UpdateSpecDocxAdditionalTests(unittest.TestCase):
             self.assertNotIn("TESTE LOCAL PASSOU", text)
 
 class UpdateSpecDocxTests(unittest.TestCase):
+    def test_refreshes_v88_171_pending_upload_cover_state(self):
+        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+ <w:body>
+  <w:p><w:r><w:t>Enform Verde</w:t></w:r></w:p>
+  <w:p><w:r><w:t>UPLOAD KML/VETOR E EXECUÇÃO ENFILEIRADOS; BUILD EM VALIDAÇÃO</w:t></w:r></w:p>
+  <w:p><w:r><w:t>V88.171 | 3.26.81-PRECAMPO-EXPERIMENTAL</w:t></w:r></w:p>
+  <w:tbl><w:tr><w:tc><w:p><w:r><w:t>SHA atual do código</w:t></w:r></w:p></w:tc>
+   <w:tc><w:p><w:r><w:t>old</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+  <w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Especificação antiga</w:t></w:r></w:p>
+ </w:body>
+</w:document>'''
+        with tempfile.TemporaryDirectory() as td:
+            source = Path(td) / "source.docx"
+            output = Path(td) / "output.docx"
+            with zipfile.ZipFile(source, "w", zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("word/document.xml", xml)
+            report = update(source, output, "# V88.172 teste\nConteúdo\n",
+                            baseline="c12ed76", head_sha="abc123",
+                            code_sha="def456", date="19 de novembro de 2026",
+                            cover_state="FH/CCI EM VALIDAÇÃO",
+                            cover_version="V88.172 | 3.26.82-PRECAMPO-EXPERIMENTAL")
+            self.assertTrue(report["cover_state"])
+            self.assertTrue(report["cover_version"])
+
+    def test_v88_172_cover_state_is_repeatable(self):
+        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+ <w:body>
+  <w:p><w:r><w:t>Enform Verde</w:t></w:r></w:p>
+  <w:p><w:r><w:t>FH/CCI, VIGOR E RESPONSIVIDADE EM VALIDAÇÃO; EXE PENDENTE</w:t></w:r></w:p>
+  <w:p><w:r><w:t>V88.172 | 3.26.82-PRECAMPO-EXPERIMENTAL</w:t></w:r></w:p>
+  <w:tbl><w:tr><w:tc><w:p><w:r><w:t>SHA atual do código</w:t></w:r></w:p></w:tc>
+   <w:tc><w:p><w:r><w:t>old</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+  <w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Especificação antiga</w:t></w:r></w:p>
+ </w:body>
+</w:document>'''
+        with tempfile.TemporaryDirectory() as td:
+            source = Path(td) / "source.docx"
+            output = Path(td) / "output.docx"
+            with zipfile.ZipFile(source, "w", zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("word/document.xml", xml)
+            report = update(source, output, "# V88.172 teste\nConteúdo\n",
+                            baseline="c12ed76", head_sha="abc123",
+                            code_sha="def456", date="19 de novembro de 2026",
+                            cover_state="FH/CCI, VIGOR E RESPONSIVIDADE EM VALIDAÇÃO; EXE PENDENTE",
+                            cover_version="V88.172 | 3.26.82-PRECAMPO-EXPERIMENTAL")
+            self.assertTrue(report["cover_state"])
+
     def test_refreshes_previously_synced_fh_live_cover_state(self):
         xml = '''<?xml version="1.0" encoding="UTF-8"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">

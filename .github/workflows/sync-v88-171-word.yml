@@ -1,10 +1,6 @@
 name: Sync V88.171 Word specification
 on:
-  push:
-    branches: [patches-3.26.6]
-    paths:
-      - docs/spec_updates/V88.171_VECTOR_UPLOAD_EXECUTE_RACE.md
-      - tools/update_spec_docx.py
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:

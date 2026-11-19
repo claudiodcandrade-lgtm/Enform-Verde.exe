@@ -77,6 +77,21 @@ class SarHeightAgreementTests(unittest.TestCase):
         self.assertEqual(out["status"],"ERRO_TECNICO_ROTA_PRIORITARIA")
         self.assertTrue(out["technical_error"])
 
+    def test_cci_eligibility_is_not_reported_as_a_successful_route(self):
+        from sar_pipeline import _priority_height_route_state
+        out=_priority_height_route_state(cci_eligible=True, valid_height_pixels=0)
+        self.assertEqual(out["status"],"CCI_SEGUNDA_ROTA_TENTADA_SEM_AGB")
+        self.assertFalse(out["technical_error"])
+        self.assertFalse(out["cci_promoted"])
+
+    def test_fh_errors_remain_visible_when_cci_is_attempted(self):
+        from sar_pipeline import _priority_height_route_state
+        out=_priority_height_route_state(cci_eligible=True, valid_height_pixels=0,
+                                         fh_technical_errors=2, fh_incomplete=True)
+        self.assertEqual(out["status"],"FH_COM_FALHA_CCI_SEGUNDA_ROTA_TENTADA")
+        self.assertTrue(out["technical_error"])
+        self.assertEqual(out["fh_technical_errors"],2)
+
     def test_gtdx_height_rejects_negative_error(self):
         from sar_pipeline import _gtdx_height_summary
         with self.assertRaises(ValueError):

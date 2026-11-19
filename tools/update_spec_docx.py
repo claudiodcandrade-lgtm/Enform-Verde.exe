@@ -116,6 +116,19 @@ def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, dat
             # V88.170 switched the cover to a concise IFN/performance status.
             # Accept that state too so a subsequent Word sync remains idempotent.
             xml, report["cover_state"] = _replace_paragraph_text(xml, "CONSULTA IFN EM LOTE;", cover_state, prefix)
+        if not report["cover_state"]:
+            # V88.170 final acceptance used this concise cover state.
+            xml, report["cover_state"] = _replace_paragraph_text(
+                xml, "FH/DASHBOARD, S2 E EXE LIMPO APROVADOS", cover_state, prefix)
+        if not report["cover_state"]:
+            # V88.171 records the async vector-upload fix while Windows gates
+            # remain pending. Keep that state refreshable for later checkpoints.
+            xml, report["cover_state"] = _replace_paragraph_text(
+                xml, "UPLOAD KML/VETOR E EXECUÇÃO ENFILEIRADOS", cover_state, prefix)
+        if not report["cover_state"]:
+            # V88.172 is also repeatable after its first local/CI synchronization.
+            xml, report["cover_state"] = _replace_paragraph_text(
+                xml, "FH/CCI, VIGOR E RESPONSIVIDADE EM VALIDAÇÃO", cover_state, prefix)
     if cover_checkpoint:
         xml, report["cover_checkpoint"] = _replace_paragraph_text(xml, "Checkpoint V", cover_checkpoint, prefix)
     if cover_verification:

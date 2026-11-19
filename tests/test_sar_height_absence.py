@@ -81,12 +81,14 @@ class SarHeightAbsenceTests(unittest.TestCase):
         self.assertTrue(esa_route["pixel_read_complete"])
         self.assertFalse(esa_route["coverage_absence_confirmed"])
 
-    def test_cci_is_blocked_when_priority_fh_route_has_a_technical_error(self):
+    def test_cci_remains_available_when_priority_fh_route_has_a_technical_error(self):
         c=certificate()
         c["routes"][0]["technical_error_count"]=1
         decision=secondary_cci_agb_decision(c)
-        self.assertFalse(decision["eligible"])
-        self.assertEqual(decision["evidence"],"PRIORITY_ROUTE_TECHNICAL_ERROR")
+        self.assertTrue(decision["eligible"])
+        self.assertEqual(decision["fh_technical_errors_preserved"],1)
+        self.assertFalse(decision["fh_absence_asserted"])
+        self.assertEqual(decision["evidence"],"FH_ATTEMPTED_CCI_DIRECT_PRODUCT_SECONDARY")
 
     def test_cci_direct_product_is_second_route_after_complete_fh_absence(self):
         decision=secondary_cci_agb_decision(certificate())
@@ -103,12 +105,14 @@ class SarHeightAbsenceTests(unittest.TestCase):
         self.assertTrue(decision["eligible"])
         self.assertIn("FH_MODEL_ATTEMPTED",decision["evidence"])
 
-    def test_cci_still_requires_a_complete_error_free_fh_read(self):
+    def test_cci_is_independent_of_incomplete_fh_read_without_claiming_absence(self):
         c=certificate()
         c["routes"][0]["pixel_read_complete"]=False
         decision=secondary_cci_agb_decision(c,valid_height_pixels=True)
-        self.assertFalse(decision["eligible"])
-        self.assertEqual(decision["evidence"],"PRIORITY_ROUTE_INCOMPLETE")
+        self.assertTrue(decision["eligible"])
+        self.assertTrue(decision["fh_incomplete_routes_preserved"])
+        self.assertFalse(decision["fh_absence_asserted"])
+        self.assertEqual(decision["evidence"],"FH_ATTEMPTED_CCI_DIRECT_PRODUCT_SECONDARY")
         c=certificate()
         c["status"]="AUSENCIA_SAR_NAO_COMPROVADA"
         c["routes"][0].update({"coverage_absence_confirmed":False,"valid_pixel_count":12})

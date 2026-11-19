@@ -9,10 +9,16 @@ from structural_evidence import StructuralEvidence, evidence_se, random_effects_
 from carbon_compartments import tapajos_litter_stock_component
 ASF_SEARCH="https://api.daac.asf.alaska.edu/services/search/param"
 CDSE_STAC="https://stac.dataspace.copernicus.eu/v1/search"
-def _priority_height_route_state(*, cci_eligible, valid_height_pixels):
-    """Separate valid FH with no AGB model from a failed priority SAR route."""
+def _priority_height_route_state(*, cci_eligible, valid_height_pixels,
+                                 fh_technical_errors=0, fh_incomplete=False):
+    """Describe FH/CCI attempts without equating eligibility with success."""
+    if cci_eligible and (int(fh_technical_errors or 0)>0 or fh_incomplete):
+        return {"status":"FH_COM_FALHA_CCI_SEGUNDA_ROTA_TENTADA",
+                "technical_error":True,"cci_promoted":False,
+                "fh_technical_errors":int(fh_technical_errors or 0),
+                "fh_incomplete":bool(fh_incomplete)}
     if cci_eligible:
-        return {"status":"ROTA_PRIORITARIA_RESOLVIDA","technical_error":False,"cci_promoted":True}
+        return {"status":"CCI_SEGUNDA_ROTA_TENTADA_SEM_AGB","technical_error":False,"cci_promoted":False}
     if int(valid_height_pixels or 0)>0:
         return {"status":"FH_DISPONIVEL_AGB_MODELO_NAO_DISPONIVEL","technical_error":False,"cci_promoted":False}
     return {"status":"ERRO_TECNICO_ROTA_PRIORITARIA","technical_error":True,"cci_promoted":False}
@@ -2434,14 +2440,15 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             audit["warnings"].append("Sentinel-1 C-band processado, mas sem modelo AGB calibrado/validado compatível; busca SAR continua.")
     except Exception as e: audit["warnings"].append("Sentinel-1 CDSE Process API/download: "+str(e))
 
-    # 5 — After FH×inventory produced no estimate, CCI is the selected second
-    # direct AGB route. A technical/incomplete FH search still blocks it.
+    # 5 — After the FH × horizontal-inventory attempt, CCI is the independent
+    # second direct AGB route. FH errors remain in the audit and do not get
+    # relabelled as absence or suppress this route.
     cci_gate=secondary_cci_agb_decision(
         audit.get("height_absence_certificate"),
         valid_height_pixels=bool(sar_height and int(sar_height.get("height_n_valid_pixels") or 0)>0))
     try:
-        # Do not start a large remote CCI download unless the FH route has been
-        # fully read and the caller has already tried its compatible inventory model.
+        # This is an independent second product route. The FH route's technical
+        # state remains explicit in priority_selection_gate and is not cleared.
         cci_download_skipped=not cci_gate["eligible"]
         if cci_download_skipped:
             cci={"items":0,"paths":[],"errors":[],"download_skipped":True,
@@ -2491,6 +2498,19 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             if pr.get("uncertainty_mg_ha") is not None:
                 pr["uncertainty_kind"]="média zonal da camada AGB_SD do ESA CCI; desvio-padrão do produto, não erro local de validação"
             return _preserve_sar_canopy_height(pr,sar_height,audit)
+        elif cci_gate.get("eligible"):
+            audit["cci"]["selection_status"]=(
+                "ERRO_TECNICO_NA_SEGUNDA_ROTA" if int(cci.get("technical_error_count") or 0)>0 else
+                "BUSCA_DA_SEGUNDA_ROTA_INCOMPLETA" if cci.get("catalog_search_complete") is not True
+                    or cci.get("pagination_complete") is not True else
+                "CONSULTA_CONCLUIDA_SEM_PRODUTO_COMPATIVEL")
+            audit["cci"]["selection_reason"]=(
+                "Falha técnica no acesso/leitura ESA CCI; ver erros registrados." if
+                    int(cci.get("technical_error_count") or 0)>0 else
+                "Catálogo/paginação ESA CCI incompletos; não se afirma ausência." if
+                    cci.get("catalog_search_complete") is not True or
+                    cci.get("pagination_complete") is not True else
+                "Consulta concluída sem raster AGB compatível para esta AOI.")
         if not cci_gate["eligible"]:
             route_state=_priority_height_route_state(
                 cci_eligible=False,
@@ -2520,9 +2540,18 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 audit["warnings"].append(
                     "ESA CCI não foi adquirido: rota FH/GTDX incompleta ou calibração CCI–inventário ausente; resolver a condição auditada antes de selecionar contingência.")
         else:
-            audit["priority_height_route_gate"]={"status":"ROTA_PRIORITARIA_RESOLVIDA",
+            fh_failed=bool((cci_gate or {}).get("fh_technical_errors_preserved") or
+                           (cci_gate or {}).get("fh_incomplete_routes_preserved"))
+            audit["priority_height_route_gate"]={
+                "status":"FH_ERROS_PRESERVADOS_CCI_SEGUNDA_ROTA_APLICADA" if fh_failed and cci.get("paths") else
+                         "FH_ERROS_PRESERVADOS_CCI_SEGUNDA_ROTA_SEM_PRODUTO" if fh_failed else
+                         "CCI_SEGUNDA_ROTA_APLICADA" if cci.get("paths") else
+                         "CCI_SEGUNDA_ROTA_CONSULTADA_SEM_PRODUTO",
                 "reason":cci_gate["reason"],"cci_candidate_available":bool(cci.get("paths")),
-                "cci_promoted":bool(cci.get("paths"))}
+                "cci_promoted":bool(cci.get("paths")),
+                "fh_technical_errors_preserved":(cci_gate or {}).get("fh_technical_errors_preserved",0),
+                "fh_incomplete_routes_preserved":(cci_gate or {}).get("fh_incomplete_routes_preserved",False),
+                "fh_absence_asserted":(cci_gate or {}).get("fh_absence_asserted",False)}
     except Exception as e:
         cci={"items":0,"paths":[],"errors":[type(e).__name__+": "+str(e)[:250]],
              "technical_error_count":1,"catalog_search_complete":False,"pagination_complete":False}
@@ -2567,7 +2596,9 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
     auxiliary_sar=bool(audit.get("processed_without_agb"))
     priority_route_state=_priority_height_route_state(
         cci_eligible=bool(isinstance(cci_gate,dict) and cci_gate.get("eligible")),
-        valid_height_pixels=(sar_height or {}).get("height_n_valid_pixels"))
+        valid_height_pixels=(sar_height or {}).get("height_n_valid_pixels"),
+        fh_technical_errors=(cci_gate or {}).get("fh_technical_errors_preserved",0),
+        fh_incomplete=(cci_gate or {}).get("fh_incomplete_routes_preserved",False))
     priority_route_error=priority_route_state["technical_error"]
     has_processed_sar=bool(auxiliary_sar or sar_height)
     result={"status":("ERRO_TECNICO_ROTA_PRIORITARIA" if priority_route_error and not has_processed_sar else

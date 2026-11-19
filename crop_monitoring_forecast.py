@@ -6,6 +6,7 @@ Pure function (no tkinter) so it is testable and runs in a worker thread.
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
+import os
 
 from crop_identifier_consolidated import CROPS, REGISTRY, attribute_unseparated
 from priority_production_models import (PAM_CLIMATE_SCENARIO_CROPS, model_contract as priority_model_contract,
@@ -25,6 +26,39 @@ def sentinel1_search_window(day, window_days=30):
     end = datetime.combine(day, datetime.max.time()).replace(tzinfo=timezone.utc)
     end = min(end, datetime.now(timezone.utc))
     return end - timedelta(days=int(window_days)), end
+
+
+def _cached_recent_vigor_search(land, day, window_days=30):
+    """Expose already-read AOI VV/VH rasters as a local scene search result."""
+    orbital=(land or {}).get("recent_sar_cover") or {}
+    reference=datetime.combine(day,datetime.max.time()).replace(tzinfo=timezone.utc)
+    reference=min(reference,datetime.now(timezone.utc))
+    eligible=[]
+    for row in orbital.get("vigor_scene_assets") or []:
+        try:
+            acquired=datetime.fromisoformat(str(row["acquisition_utc"]).replace("Z","+00:00"))
+            assets=row.get("assets") or {}
+            if acquired.tzinfo is None or not {"vv","vh"}.issubset(assets):
+                continue
+            age=(reference-acquired.astimezone(timezone.utc)).total_seconds()/86400.0
+            if age<0 or age>float(window_days):
+                continue
+            if not all(os.path.isfile(str(assets[pol].get("href") or "")) for pol in ("vv","vh")):
+                continue
+            eligible.append((acquired,row,age))
+        except (KeyError,TypeError,ValueError,AttributeError):
+            continue
+    if not eligible:
+        return None
+    eligible.sort(key=lambda item:item[0],reverse=True)
+    acquired,row,age=eligible[0]
+    scene=dict(row);scene["provider"]="LOCAL_CACHE"
+    scene["age_days"]=round(age,2)
+    return {"scenes":[scene],"scene_count":1,"pagination_complete":True,
+        "queried_at_utc":datetime.now(timezone.utc).isoformat(),
+        "providers":[{"provider":"LOCAL_CACHE","status":"OK",
+            "pagination_complete":True,"scene_count":1}],
+        "reused_from_recent_sar_screen":True}
 
 
 
@@ -127,12 +161,17 @@ def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
             return token_cache["value"]
 
         if use_live_vigor:
-            from shapely.geometry import box as _box, mapping as _mapping
-            from sentinel1_sources import search_sentinel1_sources
-            start, end = sentinel1_search_window(as_of, 30)
-            search_result = search_sentinel1_sources(
-                _mapping(_box(*target.to_crs(4326).geometry.iloc[0].bounds)),
-                start_utc=start, end_utc=end)
+            # Reuse the actual VV/VH rasters read by the current-SAR screen.
+            # Fall back to one fresh catalogue query only if that screen did
+            # not retain a scene inside the strict 30-day vigor window.
+            search_result=_cached_recent_vigor_search(land,as_of,30)
+            if search_result is None:
+                from shapely.geometry import box as _box, mapping as _mapping
+                from sentinel1_sources import search_sentinel1_sources
+                start, end = sentinel1_search_window(as_of, 30)
+                search_result = search_sentinel1_sources(
+                    _mapping(_box(*target.to_crs(4326).geometry.iloc[0].bounds)),
+                    start_utc=start, end_utc=end)
 
         def candidate_scene_vigor(patch, day, label):
             if use_live_vigor:
@@ -158,7 +197,8 @@ def _current_candidate_vigor(gdf, land, as_of, vigor_fn, sampled_fn):
         if use_live_vigor and isinstance(search_result, dict):
             result["scene_search_audit"] = {
                 key: search_result.get(key) for key in
-                ("providers", "scene_count", "pagination_complete", "queried_at_utc")}
+                ("providers", "scene_count", "pagination_complete", "queried_at_utc",
+                 "reused_from_recent_sar_screen")}
         result["reference_block_design"] = {
             "target_blocks": block_design["target_block_count"],
             "reference_blocks": block_design["reference_block_count"],
@@ -414,14 +454,17 @@ def monitoring_forecast(gdf, land, *, as_of=None, vigor_fn=None, forecast_fn=Non
                         token_cache = {"value": None}
                         def cached_annual_search(day):
                             if not search_cache["loaded"]:
-                                # One catalog request per crop/AOI; each target
-                                # block still performs its own dated pixel read.
-                                from shapely.geometry import box, mapping
-                                from sentinel1_sources import search_sentinel1_sources
-                                start, end = sentinel1_search_window(day, 30)
-                                bounds = crop_gdf.to_crs(4326).total_bounds
-                                search_cache["result"] = search_sentinel1_sources(
-                                    mapping(box(*bounds)), start_utc=start, end_utc=end)
+                                # Prefer the exact AOI scenes already read by
+                                # the recent-screen worker; query remotely only
+                                # when no cached acquisition meets the 30-day gate.
+                                search_cache["result"]=_cached_recent_vigor_search(land,day,30)
+                                if search_cache["result"] is None:
+                                    from shapely.geometry import box, mapping
+                                    from sentinel1_sources import search_sentinel1_sources
+                                    start, end = sentinel1_search_window(day, 30)
+                                    bounds = crop_gdf.to_crs(4326).total_bounds
+                                    search_cache["result"] = search_sentinel1_sources(
+                                        mapping(box(*bounds)), start_utc=start, end_utc=end)
                                 search_cache["loaded"] = True
                             return search_cache["result"]
                         def annual_cached_token():

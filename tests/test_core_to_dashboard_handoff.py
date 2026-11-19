@@ -87,6 +87,8 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             scheduled = []
             app = SimpleNamespace(
                 _analysis_queue=queue.Queue(), _analysis_generation=7, _analysis_running=True,
+                _write_json_background=lambda data, path: Path(path).write_text(
+                    json.dumps(data, ensure_ascii=False, indent=2, default=str), encoding="utf-8"),
                 pipeline_btn=SimpleNamespace(state=lambda *_: None),
                 global_execute_btn=SimpleNamespace(state=lambda *_: None),
                 status=SimpleNamespace(set=lambda value: None),
@@ -254,7 +256,7 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
         native = {"area_aoi_ha": 1.0, "strata": [], "components": [],
                   "known_total_tc": None, "status": "N/D"}
         app = SimpleNamespace(
-            _analysis_running=False, _ibge_pending=False, gdf=aoi,
+            _analysis_running=False, _ibge_pending=False, _vector_load_pending=False, gdf=aoi,
             car=SimpleNamespace(get=lambda: ""), ccir=SimpleNamespace(get=lambda: ""),
             active_source=None, active_input_id=None, sar_paths=sar_paths,
             land_use_config=None, inventory_evidence_data=None,

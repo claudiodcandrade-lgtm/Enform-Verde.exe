@@ -1,4 +1,4 @@
-"""A technical failure in priority FH must not promote CCI to selected AGB."""
+"""A technical failure in priority FH must not suppress independent CCI attempt."""
 import unittest
 from unittest.mock import patch
 
@@ -6,7 +6,7 @@ import sar_pipeline as sp
 
 
 class AutomaticPipelineCciPriorityTests(unittest.TestCase):
-    def test_cci_pixels_are_not_selected_when_biomass_fh_search_failed(self):
+    def test_cci_second_route_is_attempted_but_fh_error_stays_visible(self):
         queries=[{"product_type":product,"catalog_search_complete":True,
                   "pagination_complete":True,"matching_product_count":0,
                   "technical_error_count":0}
@@ -28,23 +28,24 @@ class AutomaticPipelineCciPriorityTests(unittest.TestCase):
              patch.object(sp,"planetary_sentinel1_cog",return_value=no_scene), \
              patch.object(sp,"inpe_sentinel1_rtc",return_value={**no_scene,"provider":"INPE"}), \
              patch.object(sp,"public_sentinel1_cog",return_value=no_scene), \
-             patch.object(sp,"_cci_history_for_analysis",side_effect=AssertionError(
-                 "CCI must not be downloaded when the FH route is unresolved")) as cci_search, \
+             patch.object(sp,"_cci_history_for_analysis",return_value=no_scene) as cci_search, \
              patch.object(sp,"process_real_sar",side_effect=AssertionError(
                  "CCI cannot be promoted while the priority FH route is unresolved")):
             result=sp.automatic_pipeline(object(),"Amazônia","Floresta Ombrófila Densa",
                 cache="/tmp/enform-cci-priority-test",biomass_catalog_items=[],
                 biomass_search_audit=height_audit)
         cci=result["audit"]["cci"]
-        self.assertEqual(cci["selection_status"],"NAO_ADQUIRIDO_GATE_BLOQUEADO")
-        self.assertTrue(cci["download_skipped"])
-        cci_search.assert_not_called()
-        self.assertFalse(cci["priority_selection_gate"]["eligible"])
+        self.assertEqual(cci["selection_status"],"CONSULTA_CONCLUIDA_SEM_PRODUTO_COMPATIVEL")
+        self.assertFalse(cci["download_skipped"])
+        cci_search.assert_called_once()
+        self.assertTrue(cci["priority_selection_gate"]["eligible"])
+        self.assertGreater(cci["priority_selection_gate"]["fh_technical_errors_preserved"],0)
         self.assertEqual(result["status"],"ERRO_TECNICO_ROTA_PRIORITARIA")
         self.assertIn("Corrigir a rota técnica",result["message"])
         self.assertIsNone(result["agb_mg_ha"])
-        self.assertTrue(any("calibração CCI–inventário ausente" in warning
-                            for warning in result["audit"]["warnings"]))
+        fh_route=next(row for row in result["audit"]["height_absence_certificate"]["routes"]
+                      if row["route"]=="ESA_BIOMASS_FH")
+        self.assertGreater(fh_route["technical_error_count"],0)
 
 
 if __name__=="__main__":

@@ -301,6 +301,18 @@ jobs:
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
           ui.update_idletasks()
+          ui.project["optical_diagnostic"]={
+              "status":"NO_OPTICAL_IMAGE","provider":"CBERS/Sentinel-2 indisponível",
+              "aoi_area_ha":123.4,
+              "error":"COG falhou em https://example.invalid/asset.tif?token=SHOULD_NOT_COPY",
+              "provider_failures":["Sentinel-2 timeout https://example.invalid/search?sig=SHOULD_NOT_COPY"]}
+          ui._map_provider="NO_OPTICAL_IMAGE"
+          ui.map_status.set("FALHA AO ABRIR IMAGEM ÓPTICA")
+          ui.copy_optical_diagnostic()
+          optical_report=ui.clipboard_get()
+          assert "NO_OPTICAL_IMAGE" in optical_report and "provider_failures" in optical_report, "optical diagnostic was not copied"
+          assert "SHOULD_NOT_COPY" not in optical_report and "example.invalid" not in optical_report, "optical diagnostic leaked signed URL material"
+          ui.project.pop("optical_diagnostic",None)
           def wait_for_vector_upload(filename,timeout=30):
               deadline=time.monotonic()+timeout
               status=""

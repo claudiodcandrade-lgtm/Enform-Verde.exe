@@ -852,3 +852,13 @@ O painel fitossociológico IFN passa a agregar as UAs selecionadas em uma consul
 ## V88.171 — integridade da entrada vetorial e início da análise
 
 A geometria carregada em worker precisa ser confirmada na interface antes de iniciar as consultas de solo. Se o usuário solicitar a execução enquanto KML/KMZ/SHP/GeoJSON/GPKG ainda está sendo validado, o pedido deve aguardar a confirmação e seguir após o diagnóstico territorial, sem ser apagado por reinicialização duplicada do estado. Falha de leitura cancela o pedido com diagnóstico explícito; não deve ser apresentada como AOI ausente nem permitir uma análise de solo sem perímetro validado. Esta correção será aceita somente após prova Windows upload assíncrono → execução pendente → AOI validada → início pipeline.
+
+A v3.26.81 acrescenta cópia segura do diagnóstico da imagem óptica por AOI, separando erro de cobertura/transporte/apresentação e sem expor URL assinada ou token. Esse diagnóstico cartográfico é visual e não altera nem serve de entrada para o cálculo de carbono do solo.
+
+### Responsividade da apresentação de relatórios
+Auditorias extensas devem ser serializadas e gravadas fora da thread da interface Tk. Widgets de relatório com conteúdo longo devem receber o texto em blocos agendados, permitindo navegação e ações da janela durante a apresentação. A cópia deve acessar o texto completo mesmo antes do último bloco aparecer. A correção de interface não altera método ou incerteza do solo.
+
+O sincronizador Word da candidata também reconhece o estado mais recente da capa anterior e possui regressão para reexecuções; a documentação da execução deve ficar consistente com a versão testada antes de liberar o EXE.
+
+### Registro V88.172 — candidata 3.26.82 (19/11/2026)
+A alteração permite que ESA CCI seja tentado como produto independente após a rota FH × inventário e preserva integralmente erros/incompletudes FH. A triagem SAR pode reutilizar pares VV/VH locais para o módulo de vigor. A correção do congelamento limita o texto inline e move auditoria volumosa para arquivo lateral. Estes itens são do pipeline e da interface: não alteram fonte, definição de estoque, profundidade, unidade, equação, incerteza ou resultado do compartimento SOC 0–100 cm. A candidata continua sem gate Windows/EXE final; estes registros não afirmam validação live.
