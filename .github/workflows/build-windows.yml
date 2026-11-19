@@ -326,9 +326,29 @@ jobs:
           # this UI plumbing mock signature-compatible so the real preview draw
           # is exercised instead of failing before the polygon is created.
           ui._show_geom=lambda name,metrics=None:ui._draw_aoi_outline("Perímetro carregado: "+name)
+          # Reproduce the user race deterministically: keep the background
+          # reader blocked, click Execute before the UI receives the AOI, then
+          # release the reader and verify the queued request survives success.
+          import threading
+          original_read_vector=app.read_vector
+          reader_entered=threading.Event(); reader_release=threading.Event()
+          def delayed_read_vector(path):
+              reader_entered.set()
+              if not reader_release.wait(20):
+                  raise TimeoutError("GUI regression did not release the delayed vector reader")
+              return original_read_vector(path)
+          app.read_vector=delayed_read_vector
           ui.pick_vector()
+          assert reader_entered.wait(10), "vector reader did not enter the controlled pending state"
+          ui.execute()
+          assert ui._pending_execute and ui._vector_load_pending, "Execute during vector validation was not queued"
+          assert "análise começará automaticamente" in ui.status.get(), "queued Execute status is unclear"
+          reader_release.set()
           status=wait_for_vector_upload(kmz.name)
           assert "Upload concluído" in status and kmz.name in status, "AOI filename/upload confirmation missing after async validation"
+          assert ui._pending_execute and not ui._vector_load_pending, "successful upload discarded the queued Execute request"
+          app.read_vector=original_read_vector
+          ui._pending_execute=False
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
           # Deterministic UI plumbing test: live coverage/pixel validity is tested
           # separately below and must not be hidden by a mocked provider here.

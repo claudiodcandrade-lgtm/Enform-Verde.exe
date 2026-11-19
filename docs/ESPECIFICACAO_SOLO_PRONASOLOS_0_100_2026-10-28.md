@@ -848,3 +848,7 @@ A atualização dos testes confere o rótulo de fitofisionomia potencial IBGE an
 
 ### Nota V88.170 — desempenho da consulta de inventários (19/11/2026)
 O painel fitossociológico IFN passa a agregar as UAs selecionadas em uma consulta SQLite em lote; preserva as métricas e não altera os métodos do carbono do solo. A sincronização para a especificação Word está registrada em `docs/spec_updates/V88.170_IFN_BATCHED_BIODIVERSITY_QUERY.md`.
+
+## V88.171 — integridade da entrada vetorial e início da análise
+
+A geometria carregada em worker precisa ser confirmada na interface antes de iniciar as consultas de solo. Se o usuário solicitar a execução enquanto KML/KMZ/SHP/GeoJSON/GPKG ainda está sendo validado, o pedido deve aguardar a confirmação e seguir após o diagnóstico territorial, sem ser apagado por reinicialização duplicada do estado. Falha de leitura cancela o pedido com diagnóstico explícito; não deve ser apresentada como AOI ausente nem permitir uma análise de solo sem perímetro validado. Esta correção será aceita somente após prova Windows upload assíncrono → execução pendente → AOI validada → início pipeline.

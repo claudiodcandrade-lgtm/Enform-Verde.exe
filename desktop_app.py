@@ -43,7 +43,7 @@ def _require_visible_optical_image(image,provider):
     return image
 
 
-APP_VERSION="3.26.80-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.81-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1602,7 +1602,7 @@ def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue(); self._optical_worker_running=False; self._optical_refresh_pending=None; self._vector_load_generation=0; self._vector_load_queue=queue.Queue(); self._inventory_load_generations={"evidence":0,"biodiversity":0}; self._inventory_load_queues={"evidence":queue.Queue(),"biodiversity":queue.Queue()}; self._weather_query_generation=0; self._crop_forecast_queue=queue.Queue(); self._crop_monitoring_base_report=""
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._vector_load_pending=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue(); self._optical_worker_running=False; self._optical_refresh_pending=None; self._vector_load_generation=0; self._vector_load_queue=queue.Queue(); self._inventory_load_generations={"evidence":0,"biodiversity":0}; self._inventory_load_queues={"evidence":queue.Queue(),"biodiversity":queue.Queue()}; self._weather_query_generation=0; self._crop_forecast_queue=queue.Queue(); self._crop_monitoring_base_report=""
         # Seed the user's confirmed token issuance date (08/11/2026) only
         # when no newer issuance/renewal record exists.
         try:
@@ -3370,7 +3370,7 @@ class App(tk.Tk):
             self._set(self.crop_res,"Aguardando nova análise.")
         if hasattr(self,"crop_audit"):
             self._set(self.crop_audit,"A auditoria anterior foi descartada. Aguardando nova análise.")
-        self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False
+        self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False; self._vector_load_pending=False
         self._vector_load_generation+=1
         old_vector=self.project.get("vector")
         self.project={"version":APP_VERSION}
@@ -3437,6 +3437,7 @@ class App(tk.Tk):
         if not p:return
         self._reset_analysis_state()
         self._vector_load_generation+=1; generation=self._vector_load_generation
+        self._vector_load_pending=True
         filename=Path(p).name
         self.vector_status.set(f"Selecionado: {filename} — validando em segundo plano…")
         self.status.set("Lendo e validando o arquivo vetorial em segundo plano…"); self.update_idletasks()
@@ -3460,11 +3461,15 @@ class App(tk.Tk):
                 return
             if generation!=self._vector_load_generation:return
             if kind!="ok":
+                self._vector_load_pending=False; self._pending_execute=False
                 self.vector_status.set(f"Upload não concluído — {filename}: {value}")
                 self.status.set("Falha ao carregar vetor.")
                 messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {filename}\n\nMotivo: {value}")
                 return
-            self._reset_analysis_state()
+            # The analysis state was already cleared before starting the worker.
+            # Clearing it here would also discard an Execute request queued while
+            # the vector was being validated.
+            self._vector_load_pending=False
             self.gdf,metrics=value; self.project["vector"]=p; self.active_source="VECTOR"
             self.active_input_id=str(Path(p).resolve()); self.car.set(""); self.ccir.set("")
             self.vector_status.set(f"Upload concluído ✓  {filename}  |  {len(self.gdf)} feição(ões) vetorial(is) carregada(s).")
@@ -3572,6 +3577,10 @@ class App(tk.Tk):
     def execute(self,event=None):
         if self._analysis_running:
             self.status.set("Análise já em execução; aguarde.")
+            return
+        if self._vector_load_pending:
+            self._pending_execute=True
+            self.status.set("Arquivo vetorial em validação; a análise começará automaticamente após a confirmação do perímetro.")
             return
         if self._ibge_pending:
             self._pending_execute=True; self.status.set("A AOI está carregada. A análise começará assim que o diagnóstico territorial do IBGE terminar.")
