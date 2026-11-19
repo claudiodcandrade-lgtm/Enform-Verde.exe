@@ -50,6 +50,9 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("External IFN database SHA-256 does not match the verified manifest", text)
         self.assertIn("Large IFN database must remain outside the PyInstaller internal runtime", text)
         self.assertIn("python tools/build_inventory_runtime_manifest.py", text)
+        self.assertIn("EXE_SMOKE_BEGIN label=$Label", text)
+        self.assertIn("COMPILED_EXE_TIMEOUT label=$Label", text)
+        self.assertIn("Invoke-CheckedExe 'tapajos-acceptance'", text)
         self.assertIn("Aggregated inventory evidence is missing beside the frozen Python module runtime", text)
         self.assertIn("Compiled inventory evidence is missing the two eligible Tapajos aggregate references", text)
         self.assertNotRegex(text, r"VERSÃO \d+\.\d+\.\d+")          # no hard-coded version in LEIA-ME
@@ -75,6 +78,12 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("V88.168_FH_AGB_BALIZAS_HORIZONTAIS_MULTIFONTE.md", text)
         self.assertIn('--cover-version "V88.168 | 3.26.78-PRECAMPO-EXPERIMENTAL"', text)
         self.assertIn("ESPECIFICACAO_TECNICA_COMPLETA_V88_168.docx", text)
+
+    def test_v88_170_word_sync_tracks_ifn_query_batching_candidate(self):
+        text = (ROOT / ".github" / "workflows" / "sync-v88-170-word.yml").read_text(encoding="utf-8")
+        self.assertIn("V88.170_IFN_BATCHED_BIODIVERSITY_QUERY.md", text)
+        self.assertIn('--cover-version "V88.170 | 3.26.80-PRECAMPO-EXPERIMENTAL"', text)
+        self.assertIn("ESPECIFICACAO_TECNICA_COMPLETA_V88_170.docx", text)
 
 
 if __name__ == "__main__":

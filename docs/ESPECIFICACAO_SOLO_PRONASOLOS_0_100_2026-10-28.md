@@ -845,3 +845,6 @@ A reexecução confiável da sincronização Word, inclusive após a atualizaç�
 
 ### Nota V88.169 — assertions de fitofisionomia e contingência (19/11/2026)
 A atualização dos testes confere o rótulo de fitofisionomia potencial IBGE antes da confirmação por SAR e a contingência de inventários somente após esgotar as rotas SAR. Não altera dados, fonte, método, unidade, profundidade ou incerteza do carbono do solo 0–100 cm.
+
+### Nota V88.170 — desempenho da consulta de inventários (19/11/2026)
+O painel fitossociológico IFN passa a agregar as UAs selecionadas em uma consulta SQLite em lote; preserva as métricas e não altera os métodos do carbono do solo. A sincronização para a especificação Word está registrada em `docs/spec_updates/V88.170_IFN_BATCHED_BIODIVERSITY_QUERY.md`.

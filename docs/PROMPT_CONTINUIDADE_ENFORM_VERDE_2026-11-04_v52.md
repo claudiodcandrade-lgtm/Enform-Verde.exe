@@ -828,3 +828,11 @@ Uma segunda sincronização Word falhou porque a primeira já havia substituído
 
 ### V88.169 — contratos do gate científico alinhados ao diagnóstico vigente (19/11/2026)
 O build Windows reprovou dois assertions no script de aceite, não os cálculos: o IBGE deve continuar rotulado como potencial até confirmação SAR, e a rota de média de inventários fica bloqueada enquanto alguma rota SAR estiver pendente ou tecnicamente incompleta. O texto do teste passa a conferir o rótulo potencial atual e a condição semântica de rotas SAR pendentes, sem alterar a política científica. Aguardar sincronização Word e repetir no novo SHA os gates ópticos, SAR real→dashboard, interface e EXE limpo.
+
+## V88.170 — desempenho IFN e diagnóstico do autoteste Windows (19/11/2026)
+
+O usuário informou que versões anteriores não congelavam. A comparação identificou custos reais na rota IFN: validação histórica com contagens completas/distintas sobre 841.387 observações (substituída desde V88.167 por manifesto/schema) e a consulta compacta de biodiversidade que, com até 100 UAs e repetida por estrato, executava uma consulta por unidade. V88.170 agrega todas as UAs selecionadas em uma consulta SQL em lote, sem reduzir a base nem alterar as métricas. A regressão compara os resultados agregados à leitura detalhada e exige uma consulta.
+
+O autoteste do EXE V88.169 permaneceu ativo por mais de 25 minutos em um passo que inicia cinco modos com `Start-Process -Wait` sem timeout por processo ou marcador de progresso. A V88.170 imprime início/conclusão de cada subprocesso e impõe limites com encerramento e diagnóstico nominal; isso identifica o estágio bloqueado e evita espera infinita do runner. O job anterior não concluiu e os logs não estavam disponíveis enquanto ele permanecia ativo, então não se declara o congelamento visual geral resolvido até o novo EXE passar e cada etapa encerrar.
+
+**Candidata V88.170 / 3.26.80-PRECAMPO-EXPERIMENTAL.** Build Windows, autocheck do EXE limpo e checksum ainda são gates de distribuição. A aprovação FH real Sinop→dashboard na candidata anterior não substitui o teste de interface nem a validação de campo. Não declarar homologação científica.

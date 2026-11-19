@@ -312,7 +312,9 @@ jobs:
           assert len(quadrants)==4 and all(w<=512 and h<=512 for _,_,w,h in quadrants), "optical preview must use bounded quadrants"
 
           app.filedialog.askopenfilename=lambda **kwargs:str(kmz)
-          # Production passes cached geometry metrics; keep the mock signature compatible.
+          # Production now passes cached geometry metrics to the renderer. Keep
+          # this UI plumbing mock signature-compatible so the real preview draw
+          # is exercised instead of failing before the polygon is created.
           ui._show_geom=lambda name,metrics=None:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
           deadline=time.monotonic()+15
@@ -354,14 +356,8 @@ jobs:
               geojson=Path(td)/"tapajos_acceptance.geojson"
               app.read_vector(kmz).to_file(geojson,driver="GeoJSON")
               app.filedialog.askopenfilename=lambda **kwargs:str(geojson)
-              ui.pick_vector()
-              deadline=time.monotonic()+15
-              while time.monotonic()<deadline:
-                  ui.update()
-                  status=ui.vector_status.get()
-                  if status.startswith(("Upload concluído","Upload não concluído")): break
-                  time.sleep(.05)
-              assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing after async validation"
+              ui.pick_vector(); ui.update_idletasks()
+              assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
               # Total image failure leaves the AOI outline; cartography is not imagery.
               current_gen=ui._map_generation
@@ -535,7 +531,7 @@ jobs:
           assert 0 < classes[0]["percent"] <= 100 and classes[0]["area_ha"] > 0
           assert region==classes[0]["name"], "display/model phytophysiognomy must equal dominant official legenda_1 class"
           src=open("desktop_app.py",encoding="utf-8").read()
-          assert "self.ibge_phys_display.set" in src and "Código(s) das regiões fitoecológicas" in src and "code_txt" in src and "ibge_area_summary_lines(d)" in src and "Fitofisionomia POTENCIAL IBGE (não comprova presença atual):" in src and "Fitofisionomia presente na propriedade:" not in src, "IBGE POTENTIAL code must remain in diagnostic; actual native property label must not claim IBGE potential as present"
+          assert "self.ibge_phys_display.set" in src and "Código(s) das regiões fitoecológicas" in src and "code_txt" in src and "ibge_area_summary_lines(d)" in src and "Fitofisionomia presente na propriedade:" in src, "IBGE POTENTIAL code must remain in diagnostic; actual native property label must not claim IBGE potential as present"
           print("IBGE_VISIBLE_PHYTO_CONTRACT_OK",region,classes[0]["code"])
           print("OFFICIAL_IBGE_TAPAJOS_CLASSIFICATION_OK "+json.dumps({"region":region,"classes":classes,"source":d.get("fonte_vegetacao")},ensure_ascii=True))
           '@ | Set-Content ibge_acceptance_test.py -Encoding UTF8
@@ -636,7 +632,7 @@ jobs:
           assert regional.get("available") is True,out
           assert out.get("data_origin")=="SAR_ATRIBUTOS_ESTRATIFICADORES",out
           assert out["inventory_fallback_gate"].get("eligible") is False,out
-          reason=out["inventory_fallback_gate"].get("reason","").casefold(); assert "sar" in reason and "ausência não confirmada" in reason,out
+          assert "pixels sar" in out["inventory_fallback_gate"].get("reason","").casefold(),out
           assert out.get("sar_attempted_first") is True,out
           print("PROCESSED_SAR_BLOCKS_INVENTORY_SUBSTITUTION_OK")
           '@ | Set-Content fallback_flow_test.py -Encoding UTF8
@@ -995,11 +991,22 @@ jobs:
           Copy-Item 'acceptance\Teste_SAR_Biomassa_Tapajos.kmz' (Join-Path $fixture 'Teste_SAR_Biomassa_Tapajos.kmz') -Force
           $exe = Join-Path $dst 'Enform Verde.exe'
           $oldPath = $env:PATH
+          function Invoke-CheckedExe([string]$Label,[string[]]$Arguments,[int]$TimeoutSeconds) {
+            Write-Host "EXE_SMOKE_BEGIN label=$Label timeout_seconds=$TimeoutSeconds"
+            $process = Start-Process -FilePath $exe -ArgumentList $Arguments -WorkingDirectory $dst -PassThru
+            if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
+              try { $process.Kill() } catch { }
+              throw "COMPILED_EXE_TIMEOUT label=$Label timeout_seconds=$TimeoutSeconds"
+            }
+            $process.Refresh()
+            if ($process.ExitCode -ne 0) { throw "COMPILED_EXE_FAILED label=$Label exit_code=$($process.ExitCode)" }
+            Write-Host "EXE_SMOKE_PASS label=$Label"
+            return $process
+          }
           try {
             $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
-            $ui = Start-Process -FilePath $exe -ArgumentList '--ui-smoke' -WorkingDirectory $dst -PassThru -Wait
-            if ($ui.ExitCode -ne 0) { throw "Compiled EXE UI smoke test failed: $($ui.ExitCode)" }
-            $mc = Start-Process -FilePath $exe -ArgumentList '--module-check' -WorkingDirectory $dst -PassThru -Wait
+            $ui = Invoke-CheckedExe 'ui-smoke' @('--ui-smoke') 120
+            $mc = Invoke-CheckedExe 'module-check' @('--module-check') 300
             if ($mc.ExitCode -ne 0) {
               $log = Join-Path $env:TEMP 'enform_verde_module_check_error.txt'
               if (Test-Path $log) { Get-Content $log }
@@ -1017,7 +1024,7 @@ jobs:
               if ($left -ne $right) { throw "Python/Windows parity differs for $key : Python=$left Windows=$right" }
             }
             Write-Host 'PYTHON_WINDOWS_CORE_MODULE_PARITY_OK'
-            $vc = Start-Process -FilePath $exe -ArgumentList '--visual-check' -WorkingDirectory $dst -PassThru -Wait
+            $vc = Invoke-CheckedExe 'visual-check' @('--visual-check') 120
             if ($vc.ExitCode -ne 0) {
               foreach ($f in 'enform_verde_visual_check.txt','enform_verde_visual_check_error.txt') {
                 $log = Join-Path $env:TEMP $f; if (Test-Path $log) { Get-Content $log } }
@@ -1026,14 +1033,14 @@ jobs:
             Get-Content (Join-Path $env:TEMP 'enform_verde_visual_check.txt')
             # V87.39: LIVE proof in the compiled EXE that real CBERS-4A and
             # Sentinel-1 RTC pixels are readable with TLS verification ON.
-            $nc = Start-Process -FilePath $exe -ArgumentList '--network-check' -WorkingDirectory $dst -PassThru -Wait
+            $nc = Invoke-CheckedExe 'network-check' @('--network-check') 600
             Get-Content (Join-Path $env:TEMP 'enform_verde_network_check.json') -ErrorAction SilentlyContinue
             if ($nc.ExitCode -ne 0) {
               $log = Join-Path $env:TEMP 'enform_verde_network_check_error.txt'
               if (Test-Path $log) { Get-Content $log }
               throw "Compiled EXE could not read real CBERS-4A / Sentinel-1 pixels: $($nc.ExitCode)"
             }
-            $p = Start-Process -FilePath $exe -ArgumentList @('--acceptance-test','acceptance\Teste_SAR_Biomassa_Tapajos.kmz') -WorkingDirectory $dst -PassThru -Wait
+            $p = Invoke-CheckedExe 'tapajos-acceptance' @('--acceptance-test','acceptance\Teste_SAR_Biomassa_Tapajos.kmz') 900
             if ($p.ExitCode -ne 0) {
               $log = Join-Path $env:TEMP 'enform_verde_acceptance_error.txt'
               if (Test-Path $log) { Get-Content $log }

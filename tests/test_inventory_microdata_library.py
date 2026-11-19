@@ -95,6 +95,31 @@ class InventoryMicrodataLibraryTests(unittest.TestCase):
             self.assertAlmostEqual(compact["raw_tree_sample_summary"][key],
                                    result["raw_tree_sample_summary"][key],places=10)
 
+    def test_compact_biodiversity_aggregates_selected_units_in_one_sql_query(self):
+        import sqlite3
+        from unittest.mock import patch
+        from inventory_microdata_library import OFFICIAL_DB, select_official_inventory_units
+        with sqlite3.connect(f"file:{OFFICIAL_DB.resolve()}?mode=ro",uri=True) as conn:
+            biome,lon,lat,physiognomy=conn.execute("""SELECT s.biome,s.ua_center_lon,s.ua_center_lat,x.ibge_legenda_1
+                FROM ifn_sampling_unit_summary s JOIN ifn_sampling_unit_ibge_crosswalk x
+                ON x.ua_id=s.ua_id AND x.uf=s.uf
+                WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND s.biome IS NOT NULL
+                AND s.ua_center_lon IS NOT NULL AND s.ua_center_lat IS NOT NULL
+                AND x.ibge_legenda_1 IS NOT NULL ORDER BY s.uf,s.ua_id LIMIT 1""").fetchone()
+        statements=[]
+        original_connect=sqlite3.connect
+        def traced_connect(*args,**kwargs):
+            connection=original_connect(*args,**kwargs)
+            connection.set_trace_callback(statements.append)
+            return connection
+        with patch("inventory_microdata_library.sqlite3.connect",side_effect=traced_connect):
+            compact=select_official_inventory_units(biome=biome,physiognomy=physiognomy,
+                longitude=lon,latitude=lat,max_distance_km=1,max_units=5,include_trees=False)
+        aggregate_queries=[sql for sql in statements
+            if "FROM ifn_dap10_observation AS o" in sql and "GROUP BY o.ua_id" in sql]
+        self.assertEqual(len(aggregate_queries),1)
+        self.assertEqual(compact["status"],"SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA")
+
     def test_wrong_physiognomy_cannot_select_ifn_tree_records(self):
         import sqlite3
         from inventory_microdata_library import OFFICIAL_DB, select_official_inventory_units

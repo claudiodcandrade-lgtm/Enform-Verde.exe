@@ -429,26 +429,39 @@ def select_official_inventory_units(*, biome: str, physiognomy: str,
         height_aggregate_count=height_aggregate_sum=0
         species_unit_counts=Counter(); species_tree_counts=Counter()
         bins={"10_20":0,"20_30":0,"30_40":0,"40_60":0,"60_plus":0}
+        aggregate_by_unit={}
+        if not include_trees:
+            # The executive species-frequency panel can select up to 100
+            # representative units. Query their indexed tree rows in one
+            # grouped statement instead of issuing one SQL aggregation per
+            # unit; this preserves the same inventory scope while avoiding a
+            # long sequence of disk seeks on the 841k-row IFN database.
+            pairs=[(str(unit["ua_id"]),str(unit["uf"])) for _,unit in candidates]
+            pair_sql=",".join("(?,?)" for _ in pairs)
+            aggregate_rows=conn.execute("""SELECT o.ua_id,o.uf,
+                    o.scientific_name,o.verbatim_identification,
+                    COUNT(*) AS stems,
+                    SUM(CASE WHEN o.dbh_cm>0 THEN 1 ELSE 0 END) AS dbh_n,
+                    SUM(CASE WHEN o.dbh_cm>0 THEN o.dbh_cm ELSE 0 END) AS dbh_sum,
+                    SUM(CASE WHEN o.total_height_m>0 THEN 1 ELSE 0 END) AS height_n,
+                    SUM(CASE WHEN o.total_height_m>0 THEN o.total_height_m ELSE 0 END) AS height_sum,
+                    SUM(CASE WHEN o.dbh_cm>0 THEN 3.141592653589793*(o.dbh_cm/200.0)*(o.dbh_cm/200.0) ELSE 0 END) AS basal_area,
+                    SUM(CASE WHEN o.dbh_cm>=10 AND o.dbh_cm<20 THEN 1 ELSE 0 END) AS n_10_20,
+                    SUM(CASE WHEN o.dbh_cm>=20 AND o.dbh_cm<30 THEN 1 ELSE 0 END) AS n_20_30,
+                    SUM(CASE WHEN o.dbh_cm>=30 AND o.dbh_cm<40 THEN 1 ELSE 0 END) AS n_30_40,
+                    SUM(CASE WHEN o.dbh_cm>=40 AND o.dbh_cm<60 THEN 1 ELSE 0 END) AS n_40_60,
+                    SUM(CASE WHEN o.dbh_cm>=60 THEN 1 ELSE 0 END) AS n_60_plus
+                FROM ifn_dap10_observation AS o
+                WHERE (o.ua_id,o.uf) IN ("""+pair_sql+") """
+                "GROUP BY o.ua_id,o.uf,o.scientific_name,o.verbatim_identification",
+                tuple(value for pair in pairs for value in pair)).fetchall()
+            for aggregate in aggregate_rows:
+                aggregate_by_unit.setdefault((str(aggregate["ua_id"]),str(aggregate["uf"])),[]).append(aggregate)
         for distance,unit in candidates:
             unit["distance_km"]=distance
             units.append(unit)
             if not include_trees:
-                aggregates=conn.execute("""SELECT
-                    scientific_name, verbatim_identification,
-                    COUNT(*) AS stems,
-                    SUM(CASE WHEN dbh_cm>0 THEN 1 ELSE 0 END) AS dbh_n,
-                    SUM(CASE WHEN dbh_cm>0 THEN dbh_cm ELSE 0 END) AS dbh_sum,
-                    SUM(CASE WHEN total_height_m>0 THEN 1 ELSE 0 END) AS height_n,
-                    SUM(CASE WHEN total_height_m>0 THEN total_height_m ELSE 0 END) AS height_sum,
-                    SUM(CASE WHEN dbh_cm>0 THEN 3.141592653589793*(dbh_cm/200.0)*(dbh_cm/200.0) ELSE 0 END) AS basal_area,
-                    SUM(CASE WHEN dbh_cm>=10 AND dbh_cm<20 THEN 1 ELSE 0 END) AS n_10_20,
-                    SUM(CASE WHEN dbh_cm>=20 AND dbh_cm<30 THEN 1 ELSE 0 END) AS n_20_30,
-                    SUM(CASE WHEN dbh_cm>=30 AND dbh_cm<40 THEN 1 ELSE 0 END) AS n_30_40,
-                    SUM(CASE WHEN dbh_cm>=40 AND dbh_cm<60 THEN 1 ELSE 0 END) AS n_40_60,
-                    SUM(CASE WHEN dbh_cm>=60 THEN 1 ELSE 0 END) AS n_60_plus
-                    FROM ifn_dap10_observation WHERE ua_id=? AND uf=?
-                    GROUP BY scientific_name,verbatim_identification""",
-                    (unit["ua_id"],unit["uf"])).fetchall()
+                aggregates=aggregate_by_unit.get((str(unit["ua_id"]),str(unit["uf"])),[])
                 species_seen_in_unit=set()
                 for row in aggregates:
                     taxon=(row["scientific_name"] or row["verbatim_identification"] or "").strip()
