@@ -12,3 +12,9 @@ Data: 18/11/2026
 ## Estado científico e de distribuição
 
 Esta é uma candidata pré-campo experimental, não homologada. Referências agregadas não substituem parcelas pareadas e não geram estimativa quantitativa. AGB continua N/D quando não há modelo elegível. A disponibilização de executável requer build Windows, autoteste limpo e gates de aceite no SHA final; nenhum EXE ou resultado homologado é declarado por estas alterações locais.
+
+## Verificação local (18/11/2026)
+
+- Regressão integral: 1.312 testes aprovados e 1 ignorado; coleção: 191 módulos.
+- `--self-test` e `--module-check` passaram; o Word V88.165 foi sincronizado no branch de validação.
+- O build Windows e o autoteste de cópia limpa ainda precisam concluir no SHA final. Este registro não declara EXE liberado nem homologação científica.
