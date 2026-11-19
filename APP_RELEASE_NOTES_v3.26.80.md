@@ -19,6 +19,8 @@ Os sincronizadores Word históricos também observavam o arquivo utilitário com
 
 **Gate Windows no SHA `37b54b23` — falhas de contrato corrigidas em `2fc7c64`:** as verificações live ópticas, o worker até o canvas em Sinop, SAR público, FH+inventários até o dashboard, IFN e GUI passaram. A compilação foi interrompida por duas asserções de aceite desatualizadas: uma esperava um rótulo IBGE antigo, e outra esperava “pixels SAR” em vez do motivo atual de rotas SAR incompletas. Os contratos agora conferem os rótulos/condições semânticas vigentes e têm regressão local. No novo run `44581942105`, source self-test, FH/dashboard, IFN, estratificação, fallback Pantanal, GUI e preview Sentinel-2 já passaram; pixels ópticos live e EXE limpo seguem pendentes. Não liberar o ZIP até esses gates concluírem no mesmo SHA.
 
+**Documentação atualizada:** a repetição Word do checkpoint V88.170 passou no run `44585670591`; todos os campos da capa/controle/histórico foram atualizados e o DOCX foi validado. Cópia sincronizada no commit `882eba445b48ba9470846939e06c860b847f02f6`. O novo build final deve partir do SHA pós-sincronização; este arquivo não constitui liberação do pacote.
+
 O build Windows da candidata pós-sincronização, o autoteste em pasta limpa e o checksum ainda precisam concluir para gerar o pacote desta candidata. Homologação científica independente e validação de campo permanecem pendentes.
 
 Uma segunda atualização do Word passou no run `44577483837`, com baseline, HEAD, data, SHA de controle, capa, versão, histórico e rodapé atualizados e DOCX íntegro. A cópia sincronizada está no commit `8faed8917e2a461cac9621f6d6990504c0e38256`. O próximo push dispara o build Windows contra esse estado documental.
