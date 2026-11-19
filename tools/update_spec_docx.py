@@ -108,6 +108,10 @@ def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, dat
             # V88.169 Word cover uses this compact label instead of the older
             # "Estado vigente"/"CANDIDATA" labels. Keep the state refreshable.
             xml, report["cover_state"] = _replace_paragraph_text(xml, "FH→PAINEL LOCAL:", cover_state, prefix)
+        if not report["cover_state"]:
+            # A previous sync may already have expanded the cover state to the
+            # live Sinop/Tapajós wording; it must remain replaceable on reruns.
+            xml, report["cover_state"] = _replace_paragraph_text(xml, "FH REAL SINOP/TAPAJÓS", cover_state, prefix)
     if cover_checkpoint:
         xml, report["cover_checkpoint"] = _replace_paragraph_text(xml, "Checkpoint V", cover_checkpoint, prefix)
     if cover_verification:
