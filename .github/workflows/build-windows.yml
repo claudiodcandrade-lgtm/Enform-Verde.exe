@@ -996,16 +996,28 @@ jobs:
             $process = Start-Process -FilePath $exe -ArgumentList $Arguments -WorkingDirectory $dst -PassThru
             if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
               try { $process.Kill() } catch { }
+              $diagnosticFiles = switch ($Label) {
+                'module-check' { @('enform_verde_module_check_error.txt') }
+                'visual-check' { @('enform_verde_visual_check_error.txt','enform_verde_visual_check.txt') }
+                'network-check' { @('enform_verde_network_check_error.txt','enform_verde_network_check.json') }
+                'tapajos-acceptance' { @('enform_verde_acceptance_error.txt','enform_verde_acceptance_result.json') }
+                default { @() }
+              }
+              foreach ($file in $diagnosticFiles) {
+                $log = Join-Path $env:TEMP $file
+                if (Test-Path $log) { Get-Content $log -ErrorAction SilentlyContinue }
+              }
               throw "COMPILED_EXE_TIMEOUT label=$Label timeout_seconds=$TimeoutSeconds"
             }
             $process.Refresh()
-            if ($process.ExitCode -ne 0) { throw "COMPILED_EXE_FAILED label=$Label exit_code=$($process.ExitCode)" }
-            Write-Host "EXE_SMOKE_PASS label=$Label"
+            Write-Host "EXE_SMOKE_EXIT label=$Label exit_code=$($process.ExitCode)"
+            if ($process.ExitCode -eq 0) { Write-Host "EXE_SMOKE_PASS label=$Label" }
             return $process
           }
           try {
             $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
             $ui = Invoke-CheckedExe 'ui-smoke' @('--ui-smoke') 120
+            if ($ui.ExitCode -ne 0) { throw "Compiled EXE UI smoke test failed: $($ui.ExitCode)" }
             $mc = Invoke-CheckedExe 'module-check' @('--module-check') 300
             if ($mc.ExitCode -ne 0) {
               $log = Join-Path $env:TEMP 'enform_verde_module_check_error.txt'
