@@ -830,3 +830,6 @@ O checkpoint V88.168 altera a rota de biomassa vegetal FH/AGB e a auditoria de i
 
 ### Versão vigente documentada — V88.169 / 3.26.79-PRECAMPO-EXPERIMENTAL (19/11/2026)
 A correção V88.169 elimina uma referência circular entre a auditoria da rota FH×inventário e a estimativa AGB. Não altera os métodos ou resultados do compartimento de carbono do solo; o registro sincroniza a versão candidata nos documentos vigentes.
+
+### Nota de verificação Windows V88.169 (19/11/2026)
+O registro da passagem FH real Sinop→dashboard e da correção de um mock no gate de interface serve à rastreabilidade da versão; a falha estava no teste gráfico, não no cálculo do carbono do solo. Não altera fonte, método, profundidade, unidade, incerteza ou resultado de carbono orgânico 0–100 cm. O build final do EXE continua condicionado aos gates Windows.
