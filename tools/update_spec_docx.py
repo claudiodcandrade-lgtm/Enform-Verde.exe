@@ -85,7 +85,7 @@ def _replace_cell_after(xml, label, new_text, prefix="w:"):
 
 def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, date,
            footer_label=None, footer_date=None, cover_state=None,
-           cover_checkpoint=None, cover_verification=None):
+           cover_checkpoint=None, cover_verification=None, cover_version=None):
     tmp = Path(tempfile.mkdtemp())
     with zipfile.ZipFile(docx_in) as z:
         names = z.namelist(); z.extractall(tmp)
@@ -102,10 +102,17 @@ def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, dat
     xml, report["control_sha"] = _replace_cell_after(xml, "SHA atual do código", code_sha, prefix)
     if cover_state:
         xml, report["cover_state"] = _replace_paragraph_text(xml, "Estado vigente", cover_state, prefix)
+        if not report["cover_state"]:
+            xml, report["cover_state"] = _replace_paragraph_text(xml, "CANDIDATA", cover_state, prefix)
     if cover_checkpoint:
         xml, report["cover_checkpoint"] = _replace_paragraph_text(xml, "Checkpoint V", cover_checkpoint, prefix)
     if cover_verification:
         xml, report["cover_verification"] = _replace_paragraph_text(xml, "Verificação local atual:", cover_verification, prefix)
+    if cover_version:
+        # The cover's version line changes between historical specification
+        # templates. Match by its stable V88 prefix rather than assuming a
+        # particular application version or paragraph label.
+        xml, report["cover_version"] = _replace_paragraph_text(xml, "V88.", cover_version, prefix)
     # Legacy full specification versions may not contain a dedicated HEAD
     # paragraph. Add it before the first Heading1 rather than failing the
     # entire documentation synchronization or replacing the full document.
@@ -156,18 +163,20 @@ def main():
     ap.add_argument("--date", required=True)
     ap.add_argument("--footer-label"); ap.add_argument("--footer-date")
     ap.add_argument("--cover-state"); ap.add_argument("--cover-checkpoint"); ap.add_argument("--cover-verification")
+    ap.add_argument("--cover-version")
     a = ap.parse_args()
     out = a.out or a.docx
     r = update(a.docx, out + ".tmp", Path(a.entry).read_text(encoding="utf-8"), baseline=a.baseline,
                head_sha=a.head_sha, code_sha=a.code_sha, date=a.date,
                footer_label=a.footer_label, footer_date=a.footer_date,
                cover_state=a.cover_state, cover_checkpoint=a.cover_checkpoint,
-               cover_verification=a.cover_verification)
+               cover_verification=a.cover_verification, cover_version=a.cover_version)
     Path(out + ".tmp").replace(out)
     required = {"control_sha"}
     if a.cover_state: required.add("cover_state")
     if a.cover_checkpoint: required.add("cover_checkpoint")
     if a.cover_verification: required.add("cover_verification")
+    if a.cover_version: required.add("cover_version")
     missing = [k for k in required if not r.get(k, False)]
     print({"updated": out, "replaced": r})
     return 1 if missing else 0

@@ -60,6 +60,11 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("-Pattern '^# Enform Verde v(.+)$' | Select-Object -First 1", text)
         self.assertNotIn("-Pattern '^# Enform Verde v(.+)          git fetch", text)
 
+    def test_v88_166_word_sync_updates_the_cover_not_only_the_history(self):
+        text = (ROOT / ".github" / "workflows" / "sync-v88-166-word.yml").read_text(encoding="utf-8")
+        self.assertIn('--cover-version "V88.166 | 3.26.76-PRECAMPO-EXPERIMENTAL"', text)
+        self.assertIn("--cover-state", text)
+
 
 if __name__ == "__main__":
     unittest.main()
