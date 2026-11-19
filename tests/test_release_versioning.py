@@ -45,6 +45,10 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("--visual-check", text)
         self.assertIn('validation/ui_visual_baseline.json;validation', text)
         self.assertIn('--add-data "data/structural_aggregate_evidence_v1.csv;data"', text)
+        self.assertNotIn('data/national_inventory_microdata_v1.sqlite;data', text)
+        self.assertIn("External IFN database and manifest are missing beside the application", text)
+        self.assertIn("External IFN database SHA-256 does not match the verified manifest", text)
+        self.assertIn("Large IFN database must remain outside the PyInstaller internal runtime", text)
         self.assertIn("Aggregated inventory evidence is missing beside the frozen Python module runtime", text)
         self.assertIn("Compiled inventory evidence is missing the two eligible Tapajos aggregate references", text)
         self.assertNotRegex(text, r"VERSÃO \d+\.\d+\.\d+")          # no hard-coded version in LEIA-ME
@@ -60,9 +64,9 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("-Pattern '^# Enform Verde v(.+)$' | Select-Object -First 1", text)
         self.assertNotIn("-Pattern '^# Enform Verde v(.+)          git fetch", text)
 
-    def test_v88_166_word_sync_updates_the_cover_not_only_the_history(self):
-        text = (ROOT / ".github" / "workflows" / "sync-v88-166-word.yml").read_text(encoding="utf-8")
-        self.assertIn('--cover-version "V88.166 | 3.26.76-PRECAMPO-EXPERIMENTAL"', text)
+    def test_v88_167_word_sync_updates_the_cover_not_only_the_history(self):
+        text = (ROOT / ".github" / "workflows" / "sync-v88-167-word.yml").read_text(encoding="utf-8")
+        self.assertIn('--cover-version "V88.167 | 3.26.77-PRECAMPO-EXPERIMENTAL"', text)
         self.assertIn("--cover-state", text)
 
 

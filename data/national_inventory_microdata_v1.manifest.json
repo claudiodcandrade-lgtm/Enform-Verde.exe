@@ -1,0 +1,13 @@
+{
+  "manifest_version": 1,
+  "database_file": "national_inventory_microdata_v1.sqlite",
+  "database_size_bytes": 488456192,
+  "database_sha256": "0922370d31b71d67139dea3f1d898f4b7c495a0dc830afbfb643c3c9cdc7726f",
+  "expected_database_sha256": "0922370d31b71d67139dea3f1d898f4b7c495a0dc830afbfb643c3c9cdc7726f",
+  "observation_rows": 841387,
+  "sampling_units": 8951,
+  "ibge_unique_unit_matches": 8951,
+  "source_workbooks": 27,
+  "source_workbook_hashes": 27,
+  "verification": "build-time source hash; indexed SQLite schema and source_dataset metadata checked at runtime; no full row-count scan per analysis"
+}

@@ -2,16 +2,16 @@
 
 Data: 19/11/2026
 
-## Correções incorporadas
+## Correção do pacote de inventários
 
-- O aceite Tapajós no EXE falhava porque `structural_aggregate_evidence_v1.csv` era copiado somente para a pasta externa; PyInstaller agora o inclui no runtime interno e o gate verifica os agregados KM72/KM117.
-- O relatório do aceite registra estado, diagnóstico, quantidade e fontes; falhas de leitura são explicitadas como erros técnicos.
-- A sincronização Word agora atualiza a linha de versão e estado da capa, além do histórico, com testes de regressão.
-- O gate pré-campo deixou de exigir frases da revisão histórica V87.1. Ele valida a versão atual do executável no DOCX e o checkpoint V88.166/3.26.76 no prompt v52 e na especificação de solo; v43 permanece histórico.
+- A investigação do aceite Tapajós no EXE encontrou o CSV harmonizado `structural_aggregate_evidence_v1.csv` na cópia externa do pacote, mas ausente no diretório interno do runtime congelado, onde o módulo de consulta o procura.
+- O comando PyInstaller agora inclui esse arquivo em `data/` dentro do runtime `_internal`; a etapa Windows verifica a presença do arquivo e das referências Santos et al. KM72 e KM117 antes do aceite.
+- O relatório de aceite registra estado, diagnóstico, quantidade e fontes da evidência de inventários. Falha técnica de leitura passa a ser exposta como erro técnico explícito.
 
-## Verificações e estado
+## Verificação e estado
 
-- Testes locais focados após as correções: 17 aprovados; 191 módulos coletados.
-- FH real ESA BIOMASS em Sinop e handoff SAR live em Sinop/Tapajós passaram em execução da candidata.
-- Os gates de build Windows e regressão integral do SHA com a checagem documental atualizada foram reiniciados; autoteste EXE limpo Tapajós ainda precisa passar.
-- Homologação científica independente permanece pendente e separada do funcionamento operacional. Esta versão continua candidata pré-campo experimental; nenhum EXE é liberado até os gates operacionais passarem no mesmo SHA.
+- SHA do código testado: `46119d9db17d00b2e5fd077d9f184afcc5939e1c`.
+- Regressão completa: 1.314 testes aprovados; contrato pré-campo aprovado.
+- FH ESA BIOMASS real em Sinop, handoff SAR live Sinop/Tapajós, leitura óptica multibioma, build Windows, verificação do runtime empacotado e autoteste do EXE em pasta limpa aprovados. O aceite Tapajós confirmou a referência agregada no runtime.
+- ZIP Windows: `Enform-Verde-Windows-v3.26.76-PRECAMPO-EXPERIMENTAL.zip`, 271.236.209 bytes; SHA-256 `f7154e936c5bac06fd10f76b1fd45f21808f0cc78bcc0a459bcc07b533b6fec3`.
+- O contrato pré-campo e os gates operacionais passaram; a homologação científica independente permanece pendente por falta de validação de campo. O programa é operacional como candidata pré-campo/experimental; seus resultados não devem ser declarados cientificamente homologados nem FH–AGB calibrados.

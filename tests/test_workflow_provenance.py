@@ -39,7 +39,7 @@ class WorkflowProvenanceTests(unittest.TestCase):
         src = (ROOT / ".github/workflows/model-prediction-contract.yml").read_text(encoding="utf-8")
         self.assertIn("Verify current version documentation synchronized with the source", src)
         self.assertIn("version in body", src)
-        self.assertIn('"V88.166" in text', src)
+        self.assertIn('"V88.167" in text', src)
         self.assertNotIn("CORREÇÃO CIENTÍFICA V87.1", src)
 
 if __name__ == "__main__":

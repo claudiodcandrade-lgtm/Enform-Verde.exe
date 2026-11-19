@@ -39,6 +39,24 @@ class InventoryMicrodataLibraryTests(unittest.TestCase):
         self.assertEqual(status["ibge_unique_unit_matches"],8951)
         self.assertFalse(status["agb_or_canopy_height_estimator_available"])
 
+    def test_packaged_manifest_validation_never_counts_the_tree_table(self):
+        import sqlite3
+        from unittest.mock import patch
+        import inventory_microdata_library as module
+        module._official_inventory_database_status_cached.cache_clear()
+        statements=[]
+        original=sqlite3.connect
+        def traced_connect(*args,**kwargs):
+            conn=original(*args,**kwargs)
+            conn.set_trace_callback(statements.append)
+            return conn
+        with patch("inventory_microdata_library.sqlite3.connect",side_effect=traced_connect):
+            result=official_inventory_database_status()
+        self.assertEqual(result["validation"],"MANIFESTA_E_SCHEMA_SEM_VARREDURA_INTEGRAL")
+        self.assertTrue(any("source_dataset" in sql for sql in statements))
+        self.assertFalse(any("COUNT(" in sql.upper() for sql in statements))
+        self.assertFalse(any("FROM ifn_dap10_observation" in sql for sql in statements))
+
     def test_ifn_selection_filters_location_biome_and_exact_ibge_legenda_1(self):
         import sqlite3
         from inventory_microdata_library import OFFICIAL_DB
@@ -70,6 +88,12 @@ class InventoryMicrodataLibraryTests(unittest.TestCase):
             longitude=lon,latitude=lat,max_distance_km=1,max_units=5,include_trees=False)
         self.assertEqual(compact["trees"],[])
         self.assertEqual(compact["biodiversity_reference"],bio)
+        for key in ("tree_record_count","dbh_class_tree_counts","warning"):
+            self.assertEqual(compact["raw_tree_sample_summary"][key],
+                             result["raw_tree_sample_summary"][key])
+        for key in ("mean_dbh_cm","mean_individual_tree_height_m","observed_sample_basal_area_m2"):
+            self.assertAlmostEqual(compact["raw_tree_sample_summary"][key],
+                                   result["raw_tree_sample_summary"][key],places=10)
 
     def test_wrong_physiognomy_cannot_select_ifn_tree_records(self):
         import sqlite3

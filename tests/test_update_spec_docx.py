@@ -35,7 +35,7 @@ class UpdateSpecDocxTests(unittest.TestCase):
                             baseline="candidata 3.26.31", head_sha="abc123",
                             code_sha="def456", date="13 de novembro de 2026",
                             cover_state="CANDIDATA PRÉ-CAMPO EXPERIMENTAL; BUILD PENDENTE",
-                            cover_version="V88.166 | 3.26.76-PRECAMPO-EXPERIMENTAL")
+                            cover_version="V88.167 | 3.26.77-PRECAMPO-EXPERIMENTAL")
             self.assertTrue(report["control_sha"])
             self.assertTrue(report["cover_state"])
             self.assertTrue(report["cover_version"])
@@ -46,8 +46,21 @@ class UpdateSpecDocxTests(unittest.TestCase):
             self.assertIn("V88.45 teste", text)
             self.assertIn("def456", text)
             self.assertIn("BUILD PENDENTE", text)
-            self.assertIn("V88.166 | 3.26.76-PRECAMPO-EXPERIMENTAL", text)
+            self.assertIn("V88.167 | 3.26.77-PRECAMPO-EXPERIMENTAL", text)
             self.assertNotIn("<w:p>", text)
+            refreshed = Path(td) / "refreshed.docx"
+            second = update(output, refreshed,
+                            "# V88.45 teste\n## Seção revisada\nConteúdo atualizado\n",
+                            baseline="candidata 3.26.31", head_sha="abc123",
+                            code_sha="def456", date="13 de novembro de 2026")
+            self.assertFalse(second["entry_inserted"])
+            self.assertTrue(second["entry_refreshed"])
+            with zipfile.ZipFile(refreshed) as archive:
+                second_doc = ET.fromstring(archive.read("word/document.xml"))
+            second_text = " ".join(node.text or "" for node in second_doc.findall(".//w:t", ns))
+            self.assertEqual(second_text.count("V88.45 teste"), 1)
+            self.assertIn("Conteúdo atualizado", second_text)
+            self.assertNotIn("Conteúdo\n", second_text)
 
 
 if __name__ == "__main__":

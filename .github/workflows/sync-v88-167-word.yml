@@ -1,0 +1,42 @@
+name: Sync V88.167 Word specification
+on:
+  push:
+    branches: [patches-3.26.6]
+    paths:
+      - docs/spec_updates/V88.167_RESPONSIVIDADE_PAINEL_INTEGRADO.md
+      - tools/update_spec_docx.py
+permissions:
+  contents: write
+jobs:
+  sync-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply V88.167 checkpoint to Word specification
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/V88.167_RESPONSIVIDADE_PAINEL_INTEGRADO.md \
+            --baseline 46119d9db17d00b2e5fd077d9f184afcc5939e1c \
+            --head-sha "$GITHUB_SHA" \
+            --code-sha "$GITHUB_SHA" \
+            --date 2026-11-19 \
+            --footer-label V88.167 \
+            --footer-date 19/11/2026 \
+            --cover-state "CANDIDATA PRÉ-CAMPO EXPERIMENTAL; TESTES E BUILD 3.26.77 PENDENTES; NÃO HOMOLOGADA" \
+            --cover-version "V88.167 | 3.26.77-PRECAMPO-EXPERIMENTAL"
+          cp docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_167.docx
+          python -c "from zipfile import ZipFile; p='docs/ESPECIFICACAO_TECNICA_COMPLETA.docx'; z=ZipFile(p); assert z.testzip() is None"
+      - name: Commit synchronized Word file
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_167.docx
+          git commit -m "Sync V88.167 Word specification" || exit 0
+          git push origin HEAD:patches-3.26.6

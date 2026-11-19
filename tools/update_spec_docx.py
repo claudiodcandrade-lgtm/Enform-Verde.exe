@@ -128,7 +128,30 @@ def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, dat
     p_start = xml.rfind(f"<{prefix}p>", 0, first_h1.start())
     if p_start < 0:
         raise ValueError("could not locate the paragraph containing the first Heading1")
-    xml = xml[:p_start] + entry_xml(entry_markup, prefix) + xml[p_start:]
+    entry_title = next((line[2:].strip() for line in entry_markup.splitlines()
+                        if line.startswith("# ") or line.startswith("## ")), None)
+    title_paragraph = None
+    if entry_title:
+        for paragraph in re.finditer(rf"<{re.escape(prefix)}p[ >].*?</{re.escape(prefix)}p>", xml, re.S):
+            text = "".join(re.findall(
+                rf"<{re.escape(prefix)}t[^>]*>([^<]*)</{re.escape(prefix)}t>", paragraph.group(0)))
+            if text == escape(entry_title) or text == entry_title:
+                title_paragraph = paragraph
+                break
+    if title_paragraph:
+        # Re-running the sync workflow refreshes this checkpoint in place,
+        # rather than duplicating it or leaving stale detail below the title.
+        following_h1 = re.search(
+            rf"<{re.escape(prefix)}p[ >].*?{re.escape(prefix)}val=\"Heading1\".*?</{re.escape(prefix)}p>",
+            xml[title_paragraph.end():], re.S)
+        end = (title_paragraph.end() + following_h1.start()) if following_h1 else p_start
+        xml = (xml[:title_paragraph.start()] + entry_xml(entry_markup, prefix)
+               + xml[end:])
+        report["entry_inserted"] = False
+        report["entry_refreshed"] = True
+    else:
+        xml = xml[:p_start] + entry_xml(entry_markup, prefix) + xml[p_start:]
+        report["entry_inserted"] = True
     doc.write_text(xml, encoding="utf-8")
     if footer_label or footer_date:
         footer_replaced = False

@@ -11,12 +11,15 @@ import hashlib
 from functools import lru_cache
 import math
 import sqlite3
+import json
+import sys
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
+from inventory_runtime_paths import inventory_database_path, inventory_manifest_path
 
 DATA = Path(__file__).resolve().parent / "data" / "microdados_inventarios_harmonizados_v1.csv"
-OFFICIAL_DB = Path(__file__).resolve().parent / "data" / "national_inventory_microdata_v1.sqlite"
+OFFICIAL_DB = inventory_database_path()
 REQUIRED = {
     "inventory_id", "plot_id", "tree_id", "dbh_cm", "height_m", "species",
     "status", "inventory_mass_kg_tree", "plot_georeferenced",
@@ -232,14 +235,65 @@ def _norm_label(value: str | None) -> str:
 
 
 @lru_cache(maxsize=8)
-def _official_inventory_database_status_cached(path_text: str, size_bytes: int, mtime_ns: int) -> dict:
+def _official_inventory_database_status_cached(path_text: str, size_bytes: int, mtime_ns: int,
+        manifest_text: str | None = None) -> dict:
     """Report whether tree data and verified IBGE unit crosswalk are present."""
     path=Path(path_text)
     if not path.is_file():
         return {"status":"N/D","available":False,
                 "reason":"IFN_MICRODATA_DB_NOT_AVAILABLE","operational_for_tree_selection":False}
+    manifest_path=inventory_manifest_path(path)
+    if manifest_text is not None:
+        try:
+            manifest=json.loads(manifest_text)
+            if (manifest.get("database_file")!=path.name
+                    or int(manifest.get("database_size_bytes") or -1)!=size_bytes
+                    or manifest.get("database_sha256")!=manifest.get("expected_database_sha256")):
+                raise ValueError("INVENTORY_DATABASE_MANIFEST_MISMATCH")
+            # Validate schema/version and trusted source metadata through a few
+            # indexed lookups. Do not COUNT or iterate the 841k-row table here.
+            with sqlite3.connect(path.as_uri()+"?mode=ro",uri=True,timeout=2) as conn:
+                conn.execute("PRAGMA query_only=ON")
+                tables={r[0] for r in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'")}
+                required={"ifn_dap10_observation","ifn_sampling_unit_summary",
+                          "ifn_sampling_unit_ibge_crosswalk","source_dataset"}
+                if not required.issubset(tables):
+                    raise ValueError("IFN_REQUIRED_TABLES_MISSING")
+                source=conn.execute("SELECT row_count,unit_count FROM source_dataset "
+                    "WHERE dataset_id='IFN_DAP10_SET2025'").fetchone()
+                if (not source
+                        or int(source[0])!=int(manifest["observation_rows"])
+                        or int(source[1])!=int(manifest["sampling_units"])):
+                    raise ValueError("IFN_MANIFEST_SOURCE_COUNTS_MISMATCH")
+            observations=int(manifest["observation_rows"])
+            units=int(manifest["sampling_units"])
+            crosswalk=int(manifest["ibge_unique_unit_matches"])
+            source_files=int(manifest["source_workbooks"])
+            source_hashes=int(manifest["source_workbook_hashes"])
+            expected_rows,expected_units,expected_files=841387,8951,27
+            ready=(observations==expected_rows and units==expected_units and
+                   crosswalk==expected_units and source_files==expected_files and
+                   source_hashes==expected_files)
+            return {"status":"PRONTO_PARA_SELECAO_DE_REFERENCIAS" if ready else "INCOMPLETO_OU_DIVERGENTE",
+                "available":True,"observation_rows":observations,"sampling_units":units,
+                "source_workbooks":source_files,"source_workbook_hashes":source_hashes,
+                "ibge_unique_unit_matches":crosswalk,"expected_observation_rows":expected_rows,
+                "expected_sampling_units":expected_units,"operational_for_tree_selection":ready,
+                "agb_or_canopy_height_estimator_available":False,
+                "validation":"MANIFESTA_E_SCHEMA_SEM_VARREDURA_INTEGRAL",
+                "database_manifest":manifest_path.name,
+                "reason":None if ready else "IFN_COUNTS_SOURCE_HASHES_OR_IBGE_CROSSWALK_DID_NOT_MEET_EXPECTED_CONTRACT"}
+        except (OSError,ValueError,TypeError,KeyError,sqlite3.Error) as exc:
+            return {"status":"ERRO_LEITURA","available":True,
+                "reason":"IFN_DATABASE_MANIFEST_OR_SCHEMA_INVALID:"+type(exc).__name__,
+                "operational_for_tree_selection":False}
+    if getattr(sys,"frozen",False):
+        return {"status":"INCOMPLETO","available":True,
+            "reason":"IFN_EXTERNAL_DATABASE_MANIFEST_NOT_AVAILABLE",
+            "operational_for_tree_selection":False}
     try:
-        with sqlite3.connect(f"file:{path}?mode=ro",uri=True,timeout=5) as conn:
+        with sqlite3.connect(path.as_uri()+"?mode=ro",uri=True,timeout=5) as conn:
             observations=conn.execute("SELECT COUNT(*) FROM ifn_dap10_observation").fetchone()[0]
             units=conn.execute("SELECT COUNT(*) FROM ifn_sampling_unit_summary").fetchone()[0]
             tables={r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -268,18 +322,26 @@ def _official_inventory_database_status_cached(path_text: str, size_bytes: int, 
 
 
 def official_inventory_database_status(db_path: str | Path = OFFICIAL_DB) -> dict:
-    """Check the large IFN database once per file version, then reuse its audit.
-
-    The database is immutable during an analysis. Keying the cache by absolute
-    path, size and nanosecond mtime invalidates it after a replacement/update,
-    while avoiding repeated full-table COUNT scans in one desktop session.
-    """
+    """Validate the sidecar manifest/schema without scanning the tree table."""
     path=Path(db_path).resolve()
     if not path.is_file():
         return {"status":"N/D","available":False,
                 "reason":"IFN_MICRODATA_DB_NOT_AVAILABLE","operational_for_tree_selection":False}
-    stat=path.stat()
-    result=_official_inventory_database_status_cached(str(path),stat.st_size,stat.st_mtime_ns)
+    stat=path.stat(); manifest_path=inventory_manifest_path(path)
+    manifest_text=None
+    if manifest_path.is_file():
+        try:
+            manifest_text=manifest_path.read_text(encoding="utf-8")
+        except OSError:
+            if getattr(sys,"frozen",False) or path==Path(OFFICIAL_DB).resolve():
+                return {"status":"ERRO_LEITURA","available":True,
+                    "reason":"IFN_EXTERNAL_DATABASE_MANIFEST_UNREADABLE",
+                    "operational_for_tree_selection":False}
+    elif getattr(sys,"frozen",False) or path==Path(OFFICIAL_DB).resolve():
+        return {"status":"INCOMPLETO","available":True,
+            "reason":"IFN_EXTERNAL_DATABASE_MANIFEST_NOT_AVAILABLE",
+            "operational_for_tree_selection":False}
+    result=_official_inventory_database_status_cached(str(path),stat.st_size,stat.st_mtime_ns,manifest_text)
     return dict(result)
 
 
@@ -313,21 +375,37 @@ def select_official_inventory_units(*, biome: str, physiognomy: str,
         # table is touched only for the selected units. If a caller supplies a
         # spelling/case variant, preserve the accent/case-insensitive matching
         # behavior through the narrower biome fallback and Python normalizer.
+        lat_delta=radius/110.574
+        lon_delta=min(180.0,radius/max(111.320*math.cos(math.radians(lat)),1e-6))
+        south=max(-90.0,lat-lat_delta); north=min(90.0,lat+lat_delta)
+        west=lon-lon_delta; east=lon+lon_delta
+        spatial="x.ua_center_lat BETWEEN ? AND ?"
+        spatial_params=[south,north]
+        if west < -180.0:
+            spatial+=" AND (x.ua_center_lon BETWEEN ? AND 180 OR x.ua_center_lon BETWEEN -180 AND ?)"
+            spatial_params.extend((west+360.0,east))
+        elif east > 180.0:
+            spatial+=" AND (x.ua_center_lon BETWEEN ? AND 180 OR x.ua_center_lon BETWEEN -180 AND ?)"
+            spatial_params.extend((west,east-360.0))
+        else:
+            spatial+=" AND x.ua_center_lon BETWEEN ? AND ?"
+            spatial_params.extend((west,east))
         records=conn.execute("""SELECT s.*, x.ibge_cd_fito, x.ibge_legenda_1, x.match_status,
                    x.source_url AS crosswalk_source, x.source_sha256 AS crosswalk_sha256
             FROM ifn_sampling_unit_summary s JOIN ifn_sampling_unit_ibge_crosswalk x
               ON x.ua_id=s.ua_id AND x.uf=s.uf
             WHERE x.source_biome=? AND x.ibge_legenda_1=?
               AND s.biome=? AND x.match_status='MATCH_UNICO_PONTO_INTERIOR'
-              AND x.ibge_legenda_1 IS NOT NULL""",
-            (str(biome).strip(),str(physiognomy).strip(),str(biome).strip())).fetchall()
+              AND x.ibge_legenda_1 IS NOT NULL AND """+spatial,
+            (str(biome).strip(),str(physiognomy).strip(),str(biome).strip(),*spatial_params)).fetchall()
         if not records:
             records=conn.execute("""SELECT s.*, x.ibge_cd_fito, x.ibge_legenda_1, x.match_status,
                        x.source_url AS crosswalk_source, x.source_sha256 AS crosswalk_sha256
                 FROM ifn_sampling_unit_summary s JOIN ifn_sampling_unit_ibge_crosswalk x
                   ON x.ua_id=s.ua_id AND x.uf=s.uf
                 WHERE s.biome=? AND x.match_status='MATCH_UNICO_PONTO_INTERIOR'
-                  AND x.ibge_legenda_1 IS NOT NULL""",(str(biome).strip(),)).fetchall()
+                  AND x.ibge_legenda_1 IS NOT NULL AND """+spatial,
+                (str(biome).strip(),*spatial_params)).fetchall()
         target=_norm_label(physiognomy)
         candidates=[]
         for row in records:
@@ -347,11 +425,53 @@ def select_official_inventory_units(*, biome: str, physiognomy: str,
             return {"status":"N/D","reason":"NO_IFN_UNIT_MATCHES_LOCATION_BIOME_PHYSIOGNOMY_AND_RADIUS",
                     "units":[],"trees":[],"selection":{"biome":biome,"physiognomy":physiognomy,"radius_km":radius}}
         units=[]; trees=[]; dbh_values=[]; height_values=[]; sample_ba=0.0
+        dbh_aggregate_count=dbh_aggregate_sum=0
+        height_aggregate_count=height_aggregate_sum=0
         species_unit_counts=Counter(); species_tree_counts=Counter()
         bins={"10_20":0,"20_30":0,"30_40":0,"40_60":0,"60_plus":0}
         for distance,unit in candidates:
             unit["distance_km"]=distance
             units.append(unit)
+            if not include_trees:
+                aggregates=conn.execute("""SELECT
+                    scientific_name, verbatim_identification,
+                    COUNT(*) AS stems,
+                    SUM(CASE WHEN dbh_cm>0 THEN 1 ELSE 0 END) AS dbh_n,
+                    SUM(CASE WHEN dbh_cm>0 THEN dbh_cm ELSE 0 END) AS dbh_sum,
+                    SUM(CASE WHEN total_height_m>0 THEN 1 ELSE 0 END) AS height_n,
+                    SUM(CASE WHEN total_height_m>0 THEN total_height_m ELSE 0 END) AS height_sum,
+                    SUM(CASE WHEN dbh_cm>0 THEN 3.141592653589793*(dbh_cm/200.0)*(dbh_cm/200.0) ELSE 0 END) AS basal_area,
+                    SUM(CASE WHEN dbh_cm>=10 AND dbh_cm<20 THEN 1 ELSE 0 END) AS n_10_20,
+                    SUM(CASE WHEN dbh_cm>=20 AND dbh_cm<30 THEN 1 ELSE 0 END) AS n_20_30,
+                    SUM(CASE WHEN dbh_cm>=30 AND dbh_cm<40 THEN 1 ELSE 0 END) AS n_30_40,
+                    SUM(CASE WHEN dbh_cm>=40 AND dbh_cm<60 THEN 1 ELSE 0 END) AS n_40_60,
+                    SUM(CASE WHEN dbh_cm>=60 THEN 1 ELSE 0 END) AS n_60_plus
+                    FROM ifn_dap10_observation WHERE ua_id=? AND uf=?
+                    GROUP BY scientific_name,verbatim_identification""",
+                    (unit["ua_id"],unit["uf"])).fetchall()
+                species_seen_in_unit=set()
+                for row in aggregates:
+                    taxon=(row["scientific_name"] or row["verbatim_identification"] or "").strip()
+                    taxon_key=_norm_label(taxon)
+                    if taxon_key and not any(x in taxon_key for x in ("indeterminad", "naoidentificad", "semidentificacao")):
+                        species_seen_in_unit.add(taxon)
+                        species_tree_counts[taxon]+=int(row["stems"] or 0)
+                    n_dbh=int(row["dbh_n"] or 0)
+                    if n_dbh:
+                        dbh_aggregate_count+=n_dbh
+                        dbh_aggregate_sum+=float(row["dbh_sum"] or 0)
+                    n_height=int(row["height_n"] or 0)
+                    if n_height:
+                        height_aggregate_count+=n_height
+                        height_aggregate_sum+=float(row["height_sum"] or 0)
+                    sample_ba+=float(row["basal_area"] or 0)
+                    for key,column in (("10_20","n_10_20"),("20_30","n_20_30"),
+                                       ("30_40","n_30_40"),("40_60","n_40_60"),
+                                       ("60_plus","n_60_plus")):
+                        bins[key]+=int(row[column] or 0)
+                for taxon in species_seen_in_unit:
+                    species_unit_counts[taxon]+=1
+                continue
             rows=conn.execute("""SELECT * FROM ifn_dap10_observation
                 WHERE ua_id=? AND uf=? ORDER BY subunit,subplot,source_row_number""",
                 (unit["ua_id"],unit["uf"])).fetchall()
@@ -401,9 +521,9 @@ def select_official_inventory_units(*, biome: str, physiognomy: str,
             "crosswalk_method":"ponto interior único do centro da unidade amostral"},
         "database_status":db_status,"units":units,"trees":trees,
         "biodiversity_reference":biodiversity,
-        "raw_tree_sample_summary":{"tree_record_count":len(dbh_values),
-            "mean_dbh_cm":sum(dbh_values)/len(dbh_values) if dbh_values else None,
-            "mean_individual_tree_height_m":sum(height_values)/len(height_values) if height_values else None,
+        "raw_tree_sample_summary":{"tree_record_count":(dbh_aggregate_count if not include_trees else len(dbh_values)),
+            "mean_dbh_cm":(dbh_aggregate_sum/dbh_aggregate_count if dbh_aggregate_count else None) if not include_trees else (sum(dbh_values)/len(dbh_values) if dbh_values else None),
+            "mean_individual_tree_height_m":(height_aggregate_sum/height_aggregate_count if height_aggregate_count else None) if not include_trees else (sum(height_values)/len(height_values) if height_values else None),
             "observed_sample_basal_area_m2":sample_ba,
             "dbh_class_tree_counts":bins,
             "warning":"amostra bruta das árvores selecionadas; não é densidade por hectare nem estimativa da AOI"},

@@ -18,10 +18,11 @@ import sqlite3
 import statistics
 import unicodedata
 from pathlib import Path
+from inventory_runtime_paths import inventory_database_path
 
 ROOT = Path(__file__).resolve().parent
 PANEL = ROOT / "data" / "ifn_fesv_mato_grosso_agb_candidates_v1.csv"
-DB = ROOT / "data" / "national_inventory_microdata_v1.sqlite"
+DB = inventory_database_path()
 UF_NAME = {"MT": "Mato Grosso"}
 PANEL_SHA256 = "f677e2fbc8288b36e5614c1e3ada47fdc5becd3694fccb8d150d9e2d6e361ea8"
 AGGREGATE_PANEL = ROOT / "data" / "structural_aggregate_evidence_v1.csv"
@@ -279,13 +280,37 @@ def _estimate_ifn_agb_comparison(*, biome, physiognomy, area_ha,
     try:
         with sqlite3.connect(f"file:{DB.resolve()}?mode=ro", uri=True, timeout=5) as conn:
             conn.row_factory = sqlite3.Row
-            matches = list(conn.execute(
+            lat_delta=float(max_distance_km)/110.574
+            lon_delta=min(180.0,float(max_distance_km)/max(111.320*math.cos(math.radians(lat)),1e-6))
+            south=max(-90.0,lat-lat_delta); north=min(90.0,lat+lat_delta)
+            west=lon-lon_delta; east=lon+lon_delta
+            spatial="x.ua_center_lat BETWEEN ? AND ?"
+            spatial_params=[south,north]
+            if west < -180.0:
+                spatial+=" AND (x.ua_center_lon BETWEEN ? AND 180 OR x.ua_center_lon BETWEEN ? AND ?)"
+                spatial_params.extend((west+360.0,-180.0,east))
+            elif east > 180.0:
+                spatial+=" AND (x.ua_center_lon BETWEEN ? AND 180 OR x.ua_center_lon BETWEEN -180 AND ?)"
+                spatial_params.extend((west,east-360.0))
+            else:
+                spatial+=" AND x.ua_center_lon BETWEEN ? AND ?"
+                spatial_params.extend((west,east))
+            select_sql=(
                 "SELECT x.ua_id,x.uf,x.source_biome,x.ibge_legenda_1,x.match_status, "
                 "s.observation_count,s.mean_dbh_cm,s.mean_total_height_m,s.summed_sample_basal_area_m2 "
                 "FROM ifn_sampling_unit_ibge_crosswalk x "
                 "JOIN ifn_sampling_unit_summary s ON s.ua_id=x.ua_id AND s.uf=x.uf "
-                "WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND x.uf=?",
-                (UF_NAME["MT"],)))
+            )
+            matches=list(conn.execute(select_sql+
+                "WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND x.uf=? "
+                "AND x.source_biome=? AND x.ibge_legenda_1=? AND "+spatial,
+                [UF_NAME["MT"],str(biome).strip(),str(physiognomy).strip(),*spatial_params]))
+            if not matches:
+                # Preserve the historical accent/case-insensitive match while
+                # bounding the fallback to UAs near the target, never the tree table.
+                matches=list(conn.execute(select_sql+
+                    "WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND x.uf=? AND "+spatial,
+                    [UF_NAME["MT"],*spatial_params]))
     except (sqlite3.Error, KeyError) as exc:
         return {"status": "N/D", "reason": "CONSULTA_BASE_IFN_EXPANDIDA_FALHOU",
                 "diagnostic": type(exc).__name__}

@@ -43,13 +43,13 @@ jobs:
               assert archive.testzip() is None
               body = archive.read("word/document.xml").decode("utf-8")
               assert version in body, f"Word specification missing current app version {version}"
-              assert "V88.166" in body, "Word specification missing current V88.166 checkpoint"
+              assert "V88.167" in body, "Word specification missing current V88.167 checkpoint"
           for name in (
               "docs/PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-11-04_v52.md",
               "docs/ESPECIFICACAO_SOLO_PRONASOLOS_0_100_2026-10-28.md",
           ):
               text = Path(name).read_text(encoding="utf-8")
-              assert "V88.166" in text, f"{name} missing current V88.166 checkpoint"
+              assert "V88.167" in text, f"{name} missing current V88.167 checkpoint"
               assert version in text, f"{name} missing current app version {version}"
           print(f"CURRENT_VERSION_DOCUMENTS_SYNC_OK {version}")
           PY
