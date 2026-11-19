@@ -104,6 +104,10 @@ def update(docx_in, docx_out, entry_markup, *, baseline, head_sha, code_sha, dat
         xml, report["cover_state"] = _replace_paragraph_text(xml, "Estado vigente", cover_state, prefix)
         if not report["cover_state"]:
             xml, report["cover_state"] = _replace_paragraph_text(xml, "CANDIDATA", cover_state, prefix)
+        if not report["cover_state"]:
+            # V88.169 Word cover uses this compact label instead of the older
+            # "Estado vigente"/"CANDIDATA" labels. Keep the state refreshable.
+            xml, report["cover_state"] = _replace_paragraph_text(xml, "FH→PAINEL LOCAL:", cover_state, prefix)
     if cover_checkpoint:
         xml, report["cover_checkpoint"] = _replace_paragraph_text(xml, "Checkpoint V", cover_checkpoint, prefix)
     if cover_verification:
