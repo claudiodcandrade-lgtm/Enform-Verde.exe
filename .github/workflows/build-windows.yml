@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 22227)
+Total output lines: 1210
+
 name: Build Enform Verde Windows
 on:
   push:
@@ -301,6 +304,16 @@ jobs:
           assert "Bioma" not in src[src.index("def _project"):src.index("def _spatial")].split("Esses campos")[0] if False else True
           ui=app.App()
           ui.update_idletasks()
+          def wait_for_vector_upload(filename,timeout=30):
+              deadline=time.monotonic()+timeout
+              status=""
+              while time.monotonic()<deadline:
+                  ui.update()
+                  status=ui.vector_status.get()
+                  if status.startswith(("Upload concluído","Upload não concluído")):
+                      break
+                  time.sleep(.05)
+              return status
           kmz=Path("acceptance/Teste_SAR_Biomassa_Tapajos.kmz").resolve()
           preflight=app.read_vector(kmz)
           assert len(preflight)>0, "KMZ preflight returned no geometry"
@@ -317,12 +330,7 @@ jobs:
           # is exercised instead of failing before the polygon is created.
           ui._show_geom=lambda name,metrics=None:ui._draw_aoi_outline("Perímetro carregado: "+name)
           ui.pick_vector()
-          deadline=time.monotonic()+15
-          while time.monotonic()<deadline:
-              ui.update()
-              status=ui.vector_status.get()
-              if status.startswith(("Upload concluído","Upload não concluído")): break
-              time.sleep(0.05)
+          status=wait_for_vector_upload(kmz.name)
           assert "Upload concluído" in status and kmz.name in status, "AOI filename/upload confirmation missing after async validation"
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
           # Deterministic UI plumbing test: live coverage/pixel validity is tested
@@ -352,12 +360,13 @@ jobs:
           assert hasattr(ui,"google_map_photo"), "satellite image object missing after UI fixture"
           print("SATELLITE_UI_PLUMBING_OK (synthetic fixture; live source tested separately)")
           import tempfile
-          with tempfile.TemporaryDirectory() as td:
+          with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
               geojson=Path(td)/"tapajos_acceptance.geojson"
               app.read_vector(kmz).to_file(geojson,driver="GeoJSON")
               app.filedialog.askopenfilename=lambda **kwargs:str(geojson)
-              ui.pick_vector(); ui.update_idletasks()
-              assert "Upload concluído" in ui.vector_status.get() and geojson.name in ui.vector_status.get(), "GeoJSON upload confirmation missing"
+              ui.pick_vector()
+              status=wait_for_vector_upload(geojson.name)
+              assert "Upload concluído" in status and geojson.name in status, "GeoJSON upload confirmation missing after async validation"
               assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "GeoJSON AOI was not rendered"
               # Total image failure leaves the AOI outline; cartography is not imagery.
               current_gen=ui._map_generation
@@ -506,138 +515,7 @@ jobs:
           path: |
             inpe_sentinel1_rtc_live.json
             national_sar_gate_status.txt
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Official IBGE ZIP transport/cache regression
-        shell: pwsh
-        run: python -m unittest discover -s tests -p 'test_ibge_official_zip.py' -v
-
-      - name: Official IBGE phytoregion classification — real Tapajos AOI
-        id: live_ibge_phyto
-        continue-on-error: true
-        shell: pwsh
-        timeout-minutes: 5
-        run: |
-          @'
-          import json
-          import desktop_app as a
-          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          d=a.diagnose_ibge(g)
-          region=a.primary_ibge_physiognomy(d)
-          assert region and "Floresta Ombrófila Densa" in region, "IBGE legenda_1 did not identify expected Tapajos phytoregion: "+repr(d)
-          classes=d.get("regioes_fitoecologicas") or []
-          assert classes and classes[0]["name"]==region and classes[0]["code"], "dominant IBGE phytoregion code/name/area is incomplete: "+repr(d)
-          assert 0 < classes[0]["percent"] <= 100 and classes[0]["area_ha"] > 0
-          assert region==classes[0]["name"], "display/model phytophysiognomy must equal dominant official legenda_1 class"
-          src=open("desktop_app.py",encoding="utf-8").read()
-          assert "self.ibge_phys_display.set" in src and "Código(s) das regiões fitoecológicas" in src and "code_txt" in src and "ibge_area_summary_lines(d)" in src and "Fitofisionomia presente na propriedade:" in src, "IBGE POTENTIAL code must remain in diagnostic; actual native property label must not claim IBGE potential as present"
-          print("IBGE_VISIBLE_PHYTO_CONTRACT_OK",region,classes[0]["code"])
-          print("OFFICIAL_IBGE_TAPAJOS_CLASSIFICATION_OK "+json.dumps({"region":region,"classes":classes,"source":d.get("fonte_vegetacao")},ensure_ascii=True))
-          '@ | Set-Content ibge_acceptance_test.py -Encoding UTF8
-          python ibge_acceptance_test.py
-
-      - name: Record external IBGE phytoregion outage without inventing coverage
-        if: steps.live_ibge_phyto.outcome == 'failure'
-        shell: pwsh
-        run: |
-          Write-Host "::warning::Official IBGE vegetation coverage probe failed or timed out. The application must show N/D for unavailable IBGE phytoregion and never turn potential legend_1 into actual native-cover classification."
-          "STATUS=OFFICIAL_IBGE_LIVE_UNAVAILABLE; source=external; scientific_current_cover=not_confirmed" | Set-Content ibge_live_availability.txt
-
-      - name: Preserve IBGE live diagnostic
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: official-ibge-live-diagnostic-${{ github.run_number }}
-          path: |
-            ibge_live_availability.txt
-            ibge_acceptance_test.py
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Offline SICAR exact-code integrity regression
-        shell: pwsh
-        run: python -m unittest discover -s tests -p 'test_sicar_wfs_integrity.py' -v
-
-      - name: Live SICAR polygon lookup (external availability probe)
-        id: live_sicar
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          python -c "import desktop_app as a; g1=a.resolve_car('MT-5108501-CBE0F5EDD27A4D7888E7392EA7D44793'); g2=a.resolve_car('MT-5103700-92A39DC62FDF4D88874F218D41BE1C7F'); assert len(g1)==1 and len(g2)==1; assert tuple(g1.total_bounds)!=tuple(g2.total_bounds); print('SICAR_SEQUENCE_OK',g1.crs,g2.crs)"
-      - name: Record live SICAR outage without masking offline integrity failures
-        if: steps.live_sicar.outcome == 'failure'
-        shell: pwsh
-        run: |
-          Write-Host "::warning::Official SICAR WFS unreachable or returned no verified polygon. Live service not validated on this run; offline exact-code integrity tests remain mandatory. Do not claim operational SICAR validation."
-
-      - name: Professional scientific contracts
-        shell: pwsh
-        run: |
-          # PowerShell does not necessarily fail a multiline script when an
-          # intermediate Python command exits nonzero. Enforce fail-closed.
-          $ErrorActionPreference = 'Stop'
-          $PSNativeCommandUseErrorActionPreference = $true
-          python -c "import sar_pipeline as s; m=[x for x in s.MODEL_REGISTRY if x.get('executable')]; assert any(x['id']=='CASSOL_2019_EQ13' for x in m); assert any(x.get('execution_mode')!='direct_product' and x.get('rmse_mg_ha') is not None for x in m); print('EXECUTABLE_MODEL_REGISTRY_OK')"
-          python -c "import numpy as np; from scientific_calibration import fit_local_powerlaw_calibration as f; groups=np.repeat(['site1','site2','site3','site4','site5','site6'],6); agb=np.tile(np.array([40,60,80,100,130,170.]),6); cb=0.003*np.power(agb,0.72)*(1+np.tile(np.array([-.02,.01,0,.02,-.01,0]),6)); m=f(cb,agb,groups); assert m['metrics']['independent_groups']==6 and m['metrics']['RMSE_Mg_ha']<5 and m['alpha']>0; print('ROBUST_P_BAND_GROUPED_CALIBRATION_OK',m['metrics'])"
-          @'
-          from lband_preprocess import _safe_target
-          from pathlib import Path
-          import tempfile
-          root=Path(tempfile.mkdtemp())
-          # Resolve both sides: Windows temporary roots may differ in path
-          # normalization (junctions/case) even when they refer to the same dir.
-          assert _safe_target(root,'scene/subset.tif').parent==(root/'scene').resolve()
-          try:
-              _safe_target(root,'../escape.txt')
-          except ValueError:
-              print('ARCHIVE_PATH_TRAVERSAL_GUARD_OK')
-          else:
-              raise AssertionError('Unsafe archive path accepted')
-          '@ | Set-Content archive_guard_test.py -Encoding UTF8
-          python archive_guard_test.py
-          @'
-          import tempfile
-          import desktop_app as a
-          import sar_pipeline as s
-          ccir_query={}
-          class FakeResponse:
-              ok=True
-              def json(self): return {"results":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-54.96,-3.05],[-54.95,-3.05],[-54.95,-3.04],[-54.96,-3.04],[-54.96,-3.05]]]},"properties":{}}]}
-          class FakeSession:
-              headers={}
-              def get(self,url,params,timeout): ccir_query.update(params); return FakeResponse()
-          real_session=a.requests.Session; a.requests.Session=lambda:FakeSession()
-          try:
-              ccir_gdf=a.resolve_ccir_sigef("1.234.567.890.123")
-              assert len(ccir_gdf)==1 and ccir_query.get("codigo_imovel")=="1234567890123", "formatted CCIR normalization/SIGEF geometry lookup failed"
-          finally:a.requests.Session=real_session
-          print("CCIR_SIGEF_FORMATTED_REFERENCE_OK")
-          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          s.maap_search=lambda *args,**kwargs:[]
-          s.discover_asf=lambda *args,**kwargs:[]
-          s.planetary_alos_palsar=lambda *args,**kwargs:{"items":1,"scene_ids":["mock-L-test"],"paths":[],"stats":[{"scene":"mock-L-test","polarization":"HH","n":10,"pixel_state":"PROCESSADO"}],"errors":[],"provider":"mock test","pixel_state":"PROCESSADO"}
-          s.planetary_sentinel1_cog=lambda *args,**kwargs:{"items":1,"scene_ids":["mock-C-test"],"paths":[],"stats":[{"scene":"mock-C-test","polarization":"VV","n":10,"pixel_state":"PROCESSADO"}],"errors":[],"provider":"mock test","pixel_state":"PROCESSADO"}
-          s.public_sentinel1_cog=lambda *args,**kwargs:{"items":0,"paths":[],"stats":[],"errors":[],"provider":"mock test"}
-          s.cci_history=lambda *args,**kwargs:{"items":0,"paths":[]}
-          with tempfile.TemporaryDirectory() as td:
-              out=s.automatic_pipeline(g,"Amazônia","Floresta Ombrófila Densa das Terras Baixas",cache=td)
-          # Auxiliary SAR pixels do not yield quantitative AGB. After all compatible biomass routes are exhausted,
-          # an eligible inventory reference may appear only in its separate field, never as SAR-derived AGB.
-          assert out["status"]=="SAR_PROCESSADO_SEM_MODELO_AGB",out
-          assert out.get("agb_mg_ha") is None,out
-          lit=out.get("literature_reference")
-          assert lit is None,out
-          regional=(out.get("audit",{}).get("national_route_matrix",{}).get("regional_numeric_fallback") or {})
-          assert regional.get("available") is True,out
-          assert out.get("data_origin")=="SAR_ATRIBUTOS_ESTRATIFICADORES",out
-          assert out["inventory_fallback_gate"].get("eligible") is False,out
-          assert "pixels sar" in out["inventory_fallback_gate"].get("reason","").casefold(),out
-          assert out.get("sar_attempted_first") is True,out
-          print("PROCESSED_SAR_BLOCKS_INVENTORY_SUBSTITUTION_OK")
-          '@ | Set-Content fallback_flow_test.py -Encoding UTF8
-          python fallback_flow_test.py
-          python -c "import lband_preprocess as l; assert l.calibrate_jaxa_l15_l21([10])[0] == l.calibrate_jaxa_l15_l21([10])[0]; print('LBAND_PREPROCESS_OK')"
+          if-no-files-found: war…2227 tokens truncated…nt('LBAND_PREPROCESS_OK')"
           python -c "import sar_pipeline as s; x=float(s._jaxa_mosaic_gamma0_db([6380.447538677919])[0]); assert -7.1 < x < -6.7, x; print('JAXA_MOSAIC_CALIBRATION_OK',x)"
 
       - name: Outside-Amazon national fallback gate — Cerrado

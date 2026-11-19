@@ -11,4 +11,6 @@
 
 Candidata experimental. FH real em Sinop e handoff FH/AGB até o payload do dashboard passaram na candidata anterior. A conclusão do EXE limpo da v3.26.79 permaneceu presa no autoteste por mais de 25 minutos, sem expor qual subprocesso estava aguardando. A v3.26.80 melhora a consulta fitossociológica e adiciona limites/identificação de etapa para localizar esse bloqueio.
 
+**Correção do gate GUI (19/11/2026):** o teste de upload GeoJSON verificava a confirmação imediatamente, embora `pick_vector()` leia em worker e atualize a interface por fila. O gate agora aguarda um estado terminal para KMZ e GeoJSON, com limite de 30 s, e verifica o polígono renderizado. A falha registrada foi uma corrida no teste, não uma reprodução confirmada de congelamento geral do programa. O build/autoteste Windows deve passar novamente antes de disponibilizar o pacote desta candidata.
+
 Build Windows, autoteste em pasta limpa e checksum desta candidata ainda precisam concluir no mesmo SHA antes da disponibilização do ZIP. Homologação científica independente e validação de campo permanecem pendentes.
