@@ -95,10 +95,14 @@ class ReleaseVersioningTests(unittest.TestCase):
 
     def test_only_current_word_checkpoint_watches_the_shared_updater(self):
         workflows = ROOT / ".github" / "workflows"
-        for version in ("165", "167", "168", "169", "170", "171"):
+        for version in ("165", "167", "168", "169", "170"):
             text = (workflows / f"sync-v88-{version}-word.yml").read_text(encoding="utf-8")
             paths = text.split("    paths:\n", 1)[1].split("permissions:\n", 1)[0]
             self.assertNotIn("tools/update_spec_docx.py", paths)
+        previous = (workflows / "sync-v88-171-word.yml").read_text(encoding="utf-8")
+        previous_triggers = previous.split("permissions:\n", 1)[0]
+        self.assertIn("workflow_dispatch:", previous_triggers)
+        self.assertNotIn("push:", previous_triggers)
         current = (workflows / "sync-v88-172-word.yml").read_text(encoding="utf-8")
         paths = current.split("    paths:\n", 1)[1].split("permissions:\n", 1)[0]
         self.assertIn("tools/update_spec_docx.py", paths)
