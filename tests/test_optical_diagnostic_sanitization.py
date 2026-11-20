@@ -27,10 +27,16 @@ class OpticalDiagnosticSanitizationTests(unittest.TestCase):
         self.assertIn("[URL_REDACTED]", cleaned)
         self.assertIn("token=[REDACTED]", cleaned)
 
-    def test_map_has_copy_diagnostic_button(self):
+    def test_map_uses_local_thematic_legend_instead_of_optical_diagnostics(self):
         source = SOURCE.read_text(encoding="utf-8")
-        self.assertIn('text="COPIAR DIAGNÓSTICO ÓPTICO",command=self.copy_optical_diagnostic', source)
-        self.assertIn('"provider_failures"', source)
+        spatial=next(node for node in ast.walk(ast.parse(source))
+                     if isinstance(node,ast.FunctionDef) and node.name=="_spatial")
+        self.assertNotIn('COPIAR DIAGNÓSTICO ÓPTICO',ast.unparse(spatial))
+        self.assertIn('Legenda com classes, área, percentual e origem',ast.unparse(spatial))
+        geometry=next(node for node in ast.walk(ast.parse(source))
+                       if isinstance(node,ast.FunctionDef) and node.name=="_show_geom")
+        self.assertIn('_draw_land_use_map',ast.unparse(geometry))
+        self.assertNotIn('_schedule_optical_map_fit',ast.unparse(geometry))
 
 
 if __name__ == "__main__":

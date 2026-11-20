@@ -10,7 +10,7 @@ class ExcelExecutiveContract(unittest.TestCase):
     def setUpClass(cls):
         tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
         cls.export = next(fn for fn in ast.walk(tree)
-                          if isinstance(fn, ast.FunctionDef) and fn.name=="export_excel")
+                          if isinstance(fn, ast.FunctionDef) and fn.name=="export_carbon_excel")
         cls.src = ast.unparse(cls.export)
 
     def test_summary_precedes_all_existing_tabs(self):
@@ -43,7 +43,8 @@ class ExcelExecutiveContract(unittest.TestCase):
         self.assertIn('Nome científico',self.src)
         self.assertIn('Área basal média',self.src)
         self.assertEqual(self.src.count('LineChart()'),2)
-        self.assertEqual(self.src.count('BarChart()'),1)
+        self.assertEqual(self.src.count('BarChart()'),2)
+        self.assertIn('Estoques de carbono por compartimento',self.src)
         self.assertIn('Fonte:',self.src)
         self.assertIn('Pixels SAR',self.src)
 

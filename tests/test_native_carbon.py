@@ -269,7 +269,7 @@ class NativeCarbonTests(unittest.TestCase):
             App._present_native_carbon(stub,native,land)
             self.assertIn('FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: FOD',captured[0])
             path=Path(d)/'native.xlsx'
-            with patch('desktop_app.filedialog.asksaveasfilename',return_value=str(path)):App.export_excel(stub)
+            with patch('desktop_app.filedialog.asksaveasfilename',return_value=str(path)):App.export_carbon_excel(stub)
             wb=load_workbook(path)
             self.assertIn('372',wb['Resumo Executivo']['H10'].value)
             self.assertNotIn('465',wb['Resumo Executivo']['H10'].value)

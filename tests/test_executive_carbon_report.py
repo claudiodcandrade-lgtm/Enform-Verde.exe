@@ -51,6 +51,23 @@ class ExecutiveCarbonReportTests(unittest.TestCase):
         self.assertTrue(any("1.30 tC/ha" in x for x in lines))
         self.assertTrue(any("IC95%" in x for x in lines))
 
+    def test_measurable_uncertainty_reports_all_three_units(self):
+        native={"area_aoi_ha":10,"native_area_ha":10,"known_total_tc":1000,"complete":False,
+            "strata":[{"class_name":"FOD","physiognomy":"FOD","area_ha":10,"components":[
+                {"parametro":"Biomassa aérea","tc":100,"total_tc":1000,
+                 "area_ha":10,"quantified_area_ha":10,"agb_uncertainty_mg_ha":10}]}]}
+        lines=executive_carbon_lines(native,lambda x:f"{x:.2f}" if x is not None else "N/D")
+        text="\n".join(lines)
+        self.assertIn("incerteza mensurável: ±4.70 tC/ha | ±17.23 tCO₂e/ha | 4.70%",text)
+        self.assertIn("NÃO é IC95%",text)
+
+    def test_combined_total_uncertainty_also_uses_three_units(self):
+        native={"area_aoi_ha":10,"native_area_ha":10,"known_total_tc":1000,"complete":True,
+                "total_uncertainty":{"se_tC":10},"strata":[]}
+        lines=executive_carbon_lines(native,lambda x:f"{x:.2f}" if x is not None else "N/D")
+        self.assertTrue(any("incerteza combinada: ±1.00 tC/ha | ±3.67 tCO₂e/ha | 1.00%" in line
+                            for line in lines))
+
     def test_experimental_litter_is_reported_separately_from_known_pool_total(self):
         native={"components":[{"parametro":"Serapilheira","known_total_tc":None}],
             "strata":[{"class_name":"FESV","physiognomy":"FESV","area_ha":100,

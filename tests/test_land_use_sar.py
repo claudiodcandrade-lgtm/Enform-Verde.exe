@@ -152,7 +152,7 @@ class LandUseTests(unittest.TestCase):
             stub=SimpleNamespace(project={'area_ha':1,'land_use':land,'analysis_aoi_hash':geometry_hash(aoi)},gdf=aoi,name=text,biome=text,phys=text,sensor=text,
                                  status=SimpleNamespace(set=lambda value:None))
             with patch('desktop_app.filedialog.asksaveasfilename',return_value=str(path)):
-                App.export_excel(stub)
+                App.export_carbon_excel(stub)
             wb=load_workbook(path)
             self.assertIsNone(wb['Resumo Executivo']['C9'].value)
             self.assertEqual(wb['Resumo Executivo']['E9'].value,'NÃO CALCULADO')

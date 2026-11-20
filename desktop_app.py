@@ -86,7 +86,7 @@ def _sar_details_report_excerpt(details):
         "inventory_fallback_gate":fallback}
 
 
-APP_VERSION="3.26.82-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.84-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -1642,6 +1642,52 @@ def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             errors.append(f"{day}: {type(exc).__name__}: {exc}")
     raise RuntimeError("NASA GIBS sem imagem disponível nos últimos 7 dias: "+" | ".join(errors[-2:]))
 
+class CarbonTableGrid:
+    """Compact, scrollable executive table with a visible border around every cell."""
+    def __init__(self,parent,headings,widths):
+        self._headings=list(headings); self._widths=list(widths); self._rows=[]; self._next_id=0
+        self.canvas=tk.Canvas(parent,height=250,background="#FFFFFF",highlightthickness=1,
+                              highlightbackground="#AAB8B2")
+        self.xscroll=ttk.Scrollbar(parent,orient="horizontal",command=self.canvas.xview)
+        self.yscroll=ttk.Scrollbar(parent,orient="vertical",command=self.canvas.yview)
+        self.canvas.configure(xscrollcommand=self.xscroll.set,yscrollcommand=self.yscroll.set)
+        self.canvas.grid(row=0,column=0,sticky="nsew"); self.yscroll.grid(row=0,column=1,sticky="ns")
+        self.xscroll.grid(row=1,column=0,sticky="ew")
+        parent.rowconfigure(0,weight=1); parent.columnconfigure(0,weight=1)
+        self.body=tk.Frame(self.canvas,background="#AAB8B2")
+        self.window=self.canvas.create_window((0,0),window=self.body,anchor="nw")
+        self.body.bind("<Configure>",lambda _event:self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self._render()
+
+    def get_children(self,_item=""):
+        return tuple(iid for iid,_values in self._rows)
+
+    def delete(self,iid):
+        self._rows=[row for row in self._rows if row[0]!=iid]
+        self._render()
+
+    def insert(self,_parent,_index,values):
+        iid=self._next_id; self._next_id+=1; self._rows.append((iid,tuple(values)))
+        self._render(); return iid
+
+    def _render(self):
+        for child in self.body.winfo_children():child.destroy()
+        for col,(heading,width) in enumerate(zip(self._headings,self._widths)):
+            self.body.grid_columnconfigure(col,minsize=width,weight=0)
+            tk.Label(self.body,text=heading,width=max(12,width//8),wraplength=width-12,
+                justify="center",anchor="center",font=("Segoe UI",9,"bold"),
+                fg="#FFFFFF",bg="#0B3D2E",relief="solid",borderwidth=1,
+                padx=5,pady=7).grid(row=0,column=col,sticky="nsew")
+        for row_index,(_iid,values) in enumerate(self._rows,1):
+            fill="#FFFFFF" if row_index%2 else "#F4F6F5"
+            for col,(value,width) in enumerate(zip(values,self._widths)):
+                tk.Label(self.body,text=str(value),width=max(12,width//8),wraplength=width-12,
+                    justify="left",anchor="w",font=("Segoe UI",9),fg="#34413E",bg=fill,
+                    relief="solid",borderwidth=1,padx=6,pady=7).grid(row=row_index,column=col,sticky="nsew")
+        self.body.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
@@ -1805,16 +1851,11 @@ class App(tk.Tk):
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
         ttk.Button(row,text="Baixar raster COS 0–30 cm (auxiliar)",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
-        ttk.Button(row,text="VISUALIZAR SATÉLITE + POLÍGONO",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
+        ttk.Label(row,text="Mapa temático local de uso/cobertura após a análise",foreground="#155D43").pack(side="left",padx=8)
         ttk.Button(row,text="−",width=3,command=self.map_zoom_out).pack(side="left",padx=(12,2))
         ttk.Button(row,text="+",width=3,command=self.map_zoom_in).pack(side="left",padx=2)
         ttk.Button(row,text="AJUSTAR AOI",command=self.map_zoom_fit).pack(side="left",padx=(2,8))
         ttk.Label(row,text="Zoom: botões ± ou roda do mouse",foreground="#666").pack(side="left",padx=(6,0))
-        keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
-        ttk.Label(keyrow,text="Chave Google Maps Static API (requer faturamento ativo):").pack(side="left")
-        self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
-        ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Fundo óptico: CBERS-4A/WFI prioritária; Sentinel-2 como alternativa. Leitura por quadrantes ≤512 px; falhas preservam o perímetro e o diagnóstico.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
@@ -1846,9 +1887,9 @@ class App(tk.Tk):
         ibgebox.columnconfigure(1,weight=1)
 
         map_frame=ttk.Frame(f); map_frame.pack(fill="both",expand=True,pady=(2,6))
-        self.map_status=tk.StringVar(value="Aguardando carregamento de imagem de referência.")
+        self.map_status=tk.StringVar(value="Aguardando classificação temática de uso/cobertura.")
         ttk.Label(map_frame,textvariable=self.map_status,anchor="w",foreground="#52645E").grid(row=0,column=0,sticky="ew",pady=(0,4))
-        ttk.Button(map_frame,text="COPIAR DIAGNÓSTICO ÓPTICO",command=self.copy_optical_diagnostic).grid(row=0,column=1,sticky="e",padx=(8,0),pady=(0,4))
+        ttk.Label(map_frame,text="Legenda com classes, área, percentual e origem",foreground="#52645E").grid(row=0,column=1,sticky="e",padx=(8,0),pady=(0,4))
         self.map_canvas=tk.Canvas(map_frame,height=560,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
                                   xscrollincrement=20,yscrollincrement=20)
         self.map_hscroll=ttk.Scrollbar(map_frame,orient="horizontal",command=self.map_canvas.xview)
@@ -1862,7 +1903,7 @@ class App(tk.Tk):
         self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
         self.map_canvas.bind("<Button-5>",lambda e:self.map_zoom_out())
         self.map_canvas.bind("<Double-Button-1>",lambda e:self.map_zoom_fit())
-        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
+        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue um perímetro para ver o mapa temático após a análise.",fill="#455")
         self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
 
         spatial_box=ttk.LabelFrame(f,text="Detalhes do perímetro e diagnóstico",style="Exec.TLabelframe"); spatial_box.pack(fill="x",pady=4)
@@ -1886,7 +1927,7 @@ class App(tk.Tk):
 
     def _apply_map_zoom(self):
         if self.gdf is None:return
-        self.show_google_map(refresh=True,prefer_public=True)
+        self._draw_land_use_map(self.project.get("land_use") or {})
 
     def map_zoom_in(self):
         if self.gdf is None:return
@@ -2240,7 +2281,7 @@ class App(tk.Tk):
         self.status.set("Diagnóstico óptico desta AOI copiado. Ele não contém URLs assinadas nem credenciais.")
 
     def _on_map_resize(self,event=None):
-        """Keep the selected basemap fitted after a real canvas resize."""
+        """Redraw the local thematic map after a canvas resize."""
         if self.gdf is None:return
         size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
         # Compare canvas to canvas, not the differently-sized image request.
@@ -2249,13 +2290,6 @@ class App(tk.Tk):
         self._last_canvas_size=size
         # Tk emits several Configure events when a large scrollable page first
         # lays out. Do not invalidate/restart a remote scene search for each.
-        if self._optical_worker_running:return
-        if self._satellite_map_visible:
-            if self._map_refresh_job is not None:
-                try:self.after_cancel(self._map_refresh_job)
-                except Exception:pass
-            self._map_refresh_job=self.after(450,self._refresh_satellite_after_resize)
-            return
         if self._map_redraw_job is not None:
             try:self.after_cancel(self._map_redraw_job)
             except Exception:pass
@@ -2269,8 +2303,75 @@ class App(tk.Tk):
     def _redraw_map_after_resize(self):
         self._map_redraw_job=None
         if self.gdf is None:return
-        if not self._satellite_map_visible:
-            self.show_google_map(refresh=True,prefer_public=True)
+        self._draw_land_use_map(self.project.get("land_use") or {})
+
+    def _draw_land_use_map(self,land=None):
+        """Render class polygons locally; never initiate optical/network reads."""
+        if self.gdf is None:return
+        land=land or {}; vector_path=land.get("vector_path")
+        if not vector_path or not Path(vector_path).is_file():
+            self._draw_aoi_outline("Perímetro da AOI — aguardando classes de uso/cobertura")
+            if hasattr(self,"map_status"):
+                self.map_status.set("Mapa temático indisponível até concluir a classificação. O perímetro está visível.")
+            return
+        try:
+            import geopandas as gpd
+            from pyproj import CRS
+            if getattr(self,"_land_use_map_cache_key",None)!=str(vector_path):
+                self._land_use_map_cache=gpd.read_file(vector_path)
+                self._land_use_map_cache_key=str(vector_path)
+            frame=self._land_use_map_cache.copy()
+            if frame.empty or "class_name" not in frame.columns:
+                raise ValueError("Arquivo de interseção sem classes temáticas")
+            frame=frame.to_crs(4326)
+            union=self.gdf.to_crs(4326).geometry.union_all(); center=union.centroid
+            local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
+            frame=frame.to_crs(local); bounds=frame.total_bounds
+            minx,miny,maxx,maxy=map(float,bounds)
+            w=max(300,self.map_canvas.winfo_width()); h=max(220,self.map_canvas.winfo_height()); pad=24
+            legend_w=min(300,max(180,int(w*0.38))); map_w=max(220,w-legend_w-16)
+            dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6)
+            scale=min((map_w-2*pad)/dx,(h-2*pad)/dy)/max(0.30,min(8.0,float(self._map_extent_factor)))
+            ox=(map_w-dx*scale)/2; oy=(h-dy*scale)/2
+            colors=["#2E8B57","#D6A21D","#8E6BBE","#5B9BD5","#C96B3B","#9BCB77","#B8B8B8","#4C788E"]
+            names=list(dict.fromkeys(str(x) for x in frame["class_name"].fillna("Não classificado")))
+            palette={name:colors[i%len(colors)] for i,name in enumerate(names)}
+            stats={}
+            for record in land.get("classes",[]):
+                if not isinstance(record,dict):continue
+                key=str(record.get("class_name") or "Não classificado")
+                item=stats.setdefault(key,{"area_ha":0.0,"area_pct":0.0,"sources":set()})
+                item["area_ha"]+=float(record.get("area_ha") or 0)
+                item["area_pct"]+=float(record.get("area_pct") or 0)
+                if record.get("source"):item["sources"].add(str(record["source"]))
+            self.map_canvas.delete("all"); self.map_canvas.configure(bg="#F4F6F5"); self._satellite_map_visible=False
+            def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
+            for row in frame.itertuples():
+                label=str(getattr(row,"class_name","Não classificado")); geom=row.geometry
+                polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in polys:
+                    coords=list(poly.simplify(max(dx,dy)/1800,preserve_topology=True).exterior.coords)
+                    pts=[]
+                    for x,y in coords:pts.extend(xy(x,y))
+                    if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill=palette.get(label,"#B8B8B8"),outline="#FFFFFF",width=1)
+            self.map_canvas.create_text(12,12,anchor="nw",text="USO E COBERTURA — classificação da análise",fill="#24382D",font=("Segoe UI",10,"bold"))
+            legend_x=map_w+12
+            self.map_canvas.create_rectangle(legend_x-5,24,w-8,42+len(names)*32,fill="#FFFFFF",outline="#708078")
+            legend_y=34
+            for name in names:
+                item=stats.get(name,{})
+                area=float(item.get("area_ha") or 0); pct=float(item.get("area_pct") or 0)
+                source=", ".join(sorted(item.get("sources") or [])) or str(land.get("status") or "origem não informada")
+                self.map_canvas.create_rectangle(legend_x,legend_y,legend_x+12,legend_y+12,fill=palette[name],outline="")
+                self.map_canvas.create_text(legend_x+18,legend_y,anchor="nw",width=max(120,w-legend_x-35),
+                    text=f"{name}: {area:.2f} ha ({pct:.1f}%)\n{source[:54]}",fill="#24382D",font=("Segoe UI",8))
+                legend_y+=32
+            status=str(land.get("status") or "estado N/D")
+            self.map_status.set("Mapa temático local: "+status+". Classes e origem seguem a legenda; categorias experimentais não indicam validação de campo.")
+            self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
+        except Exception as exc:
+            self._draw_aoi_outline("Perímetro da AOI — falha ao desenhar classes")
+            self.map_status.set("Falha técnica no mapa temático: "+type(exc).__name__+"; perímetro preservado.")
 
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
         """Render the AOI in a local metric projection and fit it to the live canvas."""
@@ -2300,9 +2401,9 @@ class App(tk.Tk):
                 for coord in poly.exterior.coords:pts.extend(xy(coord[0],coord[1]))
                 if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
         self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
-        self._map_provider="OPTICAL_LOADING"
+        self._map_provider="LOCAL_VECTOR_ONLY"
         if hasattr(self,"map_status"):
-            self.map_status.set("Imagem óptica em carregamento; perímetro da AOI visível temporariamente.")
+            self.map_status.set("Perímetro visível; mapa temático aparecerá quando a classificação terminar.")
         # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
         bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
         self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)
@@ -2673,25 +2774,18 @@ class App(tk.Tk):
             f,"QUADRO EXECUTIVO — CARBONO NATIVO",
             "Estoque, cobertura, compartimentos ausentes e incerteza serão resumidos após a análise.")
         self.carbon_exec_box.pack(fill="x",pady=(6,2))
+        self.carbon_stock_box=ttk.LabelFrame(f,text="ESTOQUE DE CARBONO — DESTAQUE EXECUTIVO",style="Exec.TLabelframe",padding=(12,8))
+        self.carbon_stock_box.pack(fill="x",pady=(3,5))
+        self.carbon_stock_var=tk.StringVar(value="Aguardando análise de carbono.")
+        ttk.Label(self.carbon_stock_box,textvariable=self.carbon_stock_var,justify="left",
+                  foreground="#0B3D2E",font=("Segoe UI",14,"bold")).pack(anchor="w")
         carbon_table_box=ttk.LabelFrame(f,text="ESTOQUE POR COMPARTIMENTO E INCERTEZA",style="Exec.TLabelframe")
         carbon_table_box.pack(fill="x",pady=(4,6))
-        carbon_columns=("compartment","density","stock","uncertainty","coverage","status")
-        self.carbon_dashboard_table=ttk.Treeview(carbon_table_box,columns=carbon_columns,show="headings",height=6)
-        for column,title,width,anchor in (
-            ("compartment","Compartimento",185,"w"),
-            ("density","Densidade (tC/ha | tCO₂e/ha)",220,"e"),
-            ("stock","Estoque conhecido (tC | tCO₂e)",220,"e"),
-            ("uncertainty","Incerteza por hectare e natureza",500,"w"),
-            ("coverage","Área quantificada (ha)",155,"e"),
-            ("status","Estado",330,"w"),
-        ):
-            self.carbon_dashboard_table.heading(column,text=title)
-            self.carbon_dashboard_table.column(column,width=width,minwidth=90,anchor=anchor,stretch=True)
-        carbon_xscroll=ttk.Scrollbar(carbon_table_box,orient="horizontal",command=self.carbon_dashboard_table.xview)
-        self.carbon_dashboard_table.configure(xscrollcommand=carbon_xscroll.set)
-        self.carbon_dashboard_table.pack(fill="x",expand=True)
-        carbon_xscroll.pack(fill="x")
-        ttk.Label(carbon_table_box,text="Densidade e estoque em tC e tCO₂e usam somente a área quantificada do compartimento. N/D não significa zero; IC, desvio-padrão, sensibilidade e incerteza não mensurável são identificados separadamente.",wraplength=1200).pack(anchor="w",padx=6,pady=(2,4))
+        self.carbon_dashboard_table=CarbonTableGrid(
+            carbon_table_box,
+            ["Compartimento","Densidade","Estoque conhecido","Incerteza mensurável / variabilidade","Área quantificada","Estado"],
+            [150,155,165,390,125,195])
+        ttk.Label(carbon_table_box,text="Densidade e estoque usam somente a área quantificada. Incerteza mensurável: tC/ha, tCO₂e/ha e %; N/D não significa zero. Desvio espacial e sensibilidade parcial são identificados como tais.",wraplength=1200).grid(row=2,column=0,columnspan=2,sticky="w",padx=6,pady=(4,5))
         self._populate_carbon_dashboard({})
         result_box=ttk.LabelFrame(f,text="Relatório detalhado e auditoria",style="Exec.TLabelframe"); result_box.pack(fill="both",expand=True,pady=8)
         ttk.Button(result_box,text="COPIAR RELATÓRIO DE CARBONO",command=lambda:self._copy_report(self.res,"Relatório de carbono")).pack(anchor="e",padx=6,pady=4)
@@ -2735,6 +2829,7 @@ class App(tk.Tk):
 
     def _present_cultivated_monitoring(self,land):
         """Present concise results and keep full evidence in a separate audit view."""
+        self._draw_land_use_map(land)
         from agricultural_native_policy import has_cultivated_area
         self._weather_query_generation+=1
         self._last_land=land
@@ -3431,11 +3526,21 @@ class App(tk.Tk):
             return format_ptbr(value,2) if isinstance(value,(int,float)) and value is not None else "N/D"
         for row in carbon_dashboard_rows(native or {}):
             unc=row.get("uncertainty_tc_ha")
-            unc_text=("± "+number(unc)+" tC/ha | ± "+number(unc*44/12)+" tCO₂e/ha — "+row["uncertainty_kind"]
-                      if unc is not None else row["uncertainty_kind"])
+            kind=str(row["uncertainty_kind"])
+            if unc is not None:
+                prefix="DP espacial descritivo: " if "descritivo" in kind.casefold() else "± "
+                joiner=" | " if prefix.endswith(": ") else " | ± "
+                unc_text=(prefix+number(unc)+" tC/ha"+joiner+number(unc*44/12)+" tCO₂e/ha | "+
+                          number(row.get("uncertainty_percent"))+"% — "+kind)
+            else:unc_text="Incerteza total: N/D — "+kind
+            if row.get("sensitivity_tc_ha") is not None:
+                sens=row["sensitivity_tc_ha"]
+                unc_text+=("\nSENSIBILIDADE PARCIAL: ± "+number(sens)+" tC/ha | ± "+
+                          number(sens*44/12)+" tCO₂e/ha | "+number(row.get("sensitivity_percent"))+"% — "+
+                          str(row.get("sensitivity_kind") or "não é incerteza total"))
             density=row.get("tc_ha"); stock=row.get("stock_tc")
-            density_text=(number(density)+" | "+number(density*44/12) if density is not None else "N/D")
-            stock_text=(number(stock)+" | "+number(stock*44/12) if stock is not None else "N/D")
+            density_text=(number(density)+" tC/ha | "+number(density*44/12)+" tCO₂e/ha" if density is not None else "N/D")
+            stock_text=(number(stock)+" tC | "+number(stock*44/12)+" tCO₂e" if stock is not None else "N/D")
             table.insert("","end",values=(row["compartment"],density_text,
                 stock_text,unc_text,number(row.get("area_ha")),row["status"]))
     def _refresh_overall_executive_summary(self):
@@ -3451,13 +3556,17 @@ class App(tk.Tk):
         total=native.get("known_total_tc")
         carbon=(format_ptbr(total,2)+" tC conhecidos; "+("parcial" if not native.get("complete") else "completo")
                 if total is not None else "N/D — sem estimador quantitativo elegível")
-        optical=self.project.get("optical_diagnostic") or {}
-        optical_status=str(optical.get("provider") or optical.get("status") or self._map_provider or "carregamento pendente")
+        if hasattr(self,"carbon_stock_var"):
+            if isinstance(total,(int,float)):
+                label="ESTOQUE TOTAL" if native.get("complete") else "SOMA PARCIAL CONHECIDA — NÃO É O TOTAL COMPLETO"
+                self.carbon_stock_var.set(label+"\n"+format_ptbr(total,2)+" tC  |  "+
+                    format_ptbr(float(total)*44/12,2)+" tCO₂e")
+            else:self.carbon_stock_var.set("ESTOQUE DE CARBONO: N/D — nenhum estimador quantitativo elegível.")
         vigor=str(self.project.get("executive_vigor_status") or "análise de vigor SAR em processamento")
         self.overall_exec_var.set("\n".join([
             "AOI: "+(format_ptbr(area,2)+" ha" if area is not None else "N/D"),
             "Uso e cobertura: "+land_status,
-            "Fundo óptico: "+optical_status,
+            "Mapa temático local: "+str(land.get("status") or "aguardando classes de uso/cobertura"),
             "SAR atual: "+sar_status,
             "Altura FH: "+height_status,
             "Carbono nativo: "+carbon,
@@ -3493,14 +3602,16 @@ class App(tk.Tk):
         self._map_generation+=1
         self._satellite_map_visible=False
         if hasattr(self,"map_status"):
-            self.map_status.set("Aguardando imagem de referência para a nova AOI.")
+            self.map_status.set("Aguardando classificação de uso/cobertura para a nova AOI.")
         if getattr(self,"_map_refresh_job",None) is not None:
             try:self.after_cancel(self._map_refresh_job)
             except Exception:pass
             self._map_refresh_job=None
         if hasattr(self,"map_canvas"):
             self.map_canvas.delete("all")
-            self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
+            self.map_canvas.create_text(20,20,anchor="nw",text="Carregue um perímetro para ver o mapa temático após a análise.",fill="#455")
+        if keep_geometry and self.gdf is not None:
+            self._draw_land_use_map({})
         self.soil_raster=None
         self.sar_paths=[]
         self.land_use_config=None
@@ -3613,17 +3724,10 @@ class App(tk.Tk):
         if hasattr(self,"ibge_phys_display"):
             self.ibge_phys_display.set("Aguardando mapeamento da vegetação nativa; mapa potencial IBGE não confirma presença atual.")
         self._set(self.spatial_text,f"Perímetro: {src}\nÁrea de referência (EPSG:6933): {format_ptbr(m['area_ha'],2)} ha\nÁrea UTM (apenas diagnóstico): {format_ptbr(m['area_utm_ha'],2)} ha — EPSG:{m['utm_epsg']}\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nPercentuais e estoques da AOI utilizam a área equivalente EPSG:6933.\n\nPerímetro válido para recorte espacial.")
-        # The basemap is a visualization only. An offline renderer, satellite
-        # provider or Tk canvas failure must never prevent the scientific AOI
-        # setup from launching the independent IBGE diagnostic worker.
-        try:
-            self._schedule_optical_map_fit(f"Perímetro carregado: {src} — imagem orbital em busca")
-        except Exception as exc:
-            self.project["map_preview_error"] = f"{type(exc).__name__}: {exc}"
-            try:
-                self._draw_aoi_outline("Perímetro carregado — prévia cartográfica indisponível")
-            except Exception:
-                pass
+        # Local AOI preview only; classification polygons replace it after the
+        # analysis. No optical scene search is started from geometry loading.
+        try:self._draw_land_use_map(self.project.get("land_use") or {})
+        except Exception as exc:self.project["map_preview_error"]=f"{type(exc).__name__}: {exc}"
         self.status.set(f"Perímetro carregado: {src}; diagnóstico IBGE em segundo plano."); self.update_idletasks()
         self._ibge_generation+=1; generation=self._ibge_generation; geometry=self.gdf.copy(); self._ibge_pending=True
         def worker():
@@ -4303,6 +4407,59 @@ class App(tk.Tk):
         fert_audit.write_text(json.dumps(fertility or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
 
     def export_excel(self):
+        dialog=tk.Toplevel(self); dialog.title("Escolher planilha para exportação"); dialog.transient(self); dialog.grab_set()
+        ttk.Label(dialog,text="Qual planilha deseja exportar?",font=("Segoe UI",12,"bold"),padding=12).pack(fill="x")
+        ttk.Button(dialog,text="Planilha de carbono nativo — estoques, incertezas e gráficos",
+                   command=lambda:(dialog.destroy(),self.export_carbon_excel())).pack(fill="x",padx=14,pady=6)
+        ttk.Button(dialog,text="Planilha de monitoramento agrícola — uso/cobertura, vigor e safra",
+                   command=lambda:(dialog.destroy(),self.export_monitoring_excel())).pack(fill="x",padx=14,pady=6)
+        ttk.Button(dialog,text="Cancelar",command=dialog.destroy).pack(anchor="e",padx=14,pady=12)
+
+    def export_monitoring_excel(self):
+        from analysis_pipeline_contract import geometry_hash
+        try:
+            expected_hash=self.project.get("analysis_aoi_hash")
+            if not expected_hash or geometry_hash(self.gdf)!=expected_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE — reexecute a análise antes de exportar.")
+        except Exception as exc:return messagebox.showerror("Excel de monitoramento",str(exc))
+        land=self.project.get("land_use") or {}
+        if not land:return messagebox.showwarning("Excel de monitoramento","Execute a análise agrícola antes de exportar.")
+        path=filedialog.asksaveasfilename(title="Salvar planilha de monitoramento agrícola",initialfile="Monitoramento_Agricola_Enform.xlsx",defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
+        if not path:return
+        from openpyxl import Workbook
+        from openpyxl.styles import Font,PatternFill,Alignment
+        from openpyxl.chart import BarChart,Reference
+        wb=Workbook(); ws=wb.active; ws.title="Painel Executivo"; ws.append(["Monitoramento agrícola — Enform Verde"])
+        ws.append(["Propriedade",self.name.get()]); ws.append(["Estado da classificação",land.get("status","N/D")]); ws.append(["Área da AOI (ha)",land.get("area_aoi_ha")]); ws.append(["Vigor e previsão de safra","Consulte a aba Vigor e Safra; estados N/D mantêm o motivo e a fonte."])
+        classes=land.get("classes") or []; ws.append([]); ws.append(["Classe de uso/cobertura","Origem","Área (ha)","Área (%)","Taxonomia / ressalva"])
+        start=ws.max_row+1
+        for row in classes:ws.append([row.get("class_name"),row.get("source"),row.get("area_ha"),row.get("area_pct"),row.get("taxonomy")])
+        for cell in ws[1]:cell.font=Font(size=16,bold=True,color="FFFFFF");cell.fill=PatternFill("solid",fgColor="0B3D2E")
+        for col,width in {"A":38,"B":34,"C":16,"D":16,"E":76}.items():ws.column_dimensions[col].width=width
+        ws.freeze_panes="A8"; ws.auto_filter.ref=f"A7:E{ws.max_row}"
+        for row in ws.iter_rows():
+            for cell in row:cell.alignment=Alignment(vertical="top",wrap_text=True)
+        chart=BarChart();chart.title="Área por classe de uso/cobertura";chart.y_axis.title="Área (ha)";chart.x_axis.title="Classe"
+        if classes:
+            chart.add_data(Reference(ws,min_col=3,min_row=7,max_row=7+len(classes)),titles_from_data=True)
+            chart.set_categories(Reference(ws,min_col=1,min_row=8,max_row=7+len(classes)));ws.add_chart(chart,"G2")
+        audit=wb.create_sheet("Vigor e Safra")
+        audit.append(["Relatório executivo de vigor e safra"])
+        for cell in audit[1]:cell.font=Font(size=16,bold=True,color="FFFFFF");cell.fill=PatternFill("solid",fgColor="0B3D2E")
+        report=""
+        try:report=self.crop_res.get("1.0","end-1c")
+        except Exception:pass
+        audit.append(["Status",self.project.get("executive_vigor_status","N/D — consulte relatório e auditoria")])
+        audit.append(["Relatório integral"])
+        for line in (report or "N/D — não há relatório agrícola nesta execução.").splitlines():audit.append([line])
+        audit.column_dimensions["A"].width=110;audit.column_dimensions["B"].width=70
+        for row in audit.iter_rows():
+            for cell in row:cell.alignment=Alignment(vertical="top",wrap_text=True)
+        try:wb.save(path)
+        except Exception as exc:return messagebox.showerror("Excel de monitoramento",str(exc))
+        messagebox.showinfo("Excel de monitoramento","Planilha de monitoramento agrícola exportada com classes, áreas, origens e relatório de vigor/safra.\n"+str(path))
+
+    def export_carbon_excel(self):
         from analysis_pipeline_contract import geometry_hash
         try:
             expected_hash=self.project.get("analysis_aoi_hash")
@@ -4790,6 +4947,20 @@ class App(tk.Tk):
             chart.merge_cells(span)
         for col in "ABCDEFGHIJKL":chart.column_dimensions[col].width=17
         chart.column_dimensions["A"].width=20;chart.column_dimensions["D"].width=22;chart.column_dimensions["G"].width=28
+        chart["N1"]="Estoques de carbono por compartimento (apenas valores quantificados)"
+        chart["N1"].font=Font(bold=True,color=green)
+        for col,title in zip((14,15,16),("Compartimento","tC","tCO₂e")):
+            chart.cell(3,col,title).font=Font(bold=True,color=white)
+            chart.cell(3,col).fill=PatternFill("solid",fgColor=orange)
+        stock_components=[r for r in rows_total if r[0] and r[0]!="TOTAL CONHECIDO (não extrapolado)" and r[4] is not None]
+        for idx,row in enumerate(stock_components,4):
+            chart.cell(idx,14,str(row[0]));chart.cell(idx,15,float(row[4]));chart.cell(idx,16,float(row[5]))
+        if stock_components:
+            for col,title,anchor in ((15,"Estoque conhecido por compartimento (tC)","N5"),(16,"Estoque conhecido por compartimento (tCO₂e)","V5")):
+                bc=BarChart();bc.type="bar";bc.style=10;bc.title=title;bc.y_axis.title="Compartimento";bc.x_axis.title=title.split("(")[-1].rstrip(")")
+                bc.add_data(Reference(chart,min_col=col,min_row=3,max_row=3+len(stock_components)),titles_from_data=True)
+                bc.set_categories(Reference(chart,min_col=14,min_row=4,max_row=3+len(stock_components)))
+                bc.height=8;bc.width=16;chart.add_chart(bc,anchor)
         for c in ("A2","A3","A4","D2","D3","D4","G2","G3","G4"):
             chart[c].alignment=Alignment(wrap_text=True,vertical="center")
         chart["A2"]="Distribuição diamétrica média e participação da área basal por classe DAP."
@@ -4978,10 +5149,18 @@ class App(tk.Tk):
             stock=part.get("known_total_tc")
             pool=uncertainty_by_pool.get(part.get("parametro"),{})
             uncertainty_value=pool.get("uncertainty_tc_ha")
-            uncertainty_text=(format_ptbr(uncertainty_value,2)+" tC/ha | "+
-                format_ptbr(uncertainty_value*44/12,2)+" tCO₂e/ha; "+
-                str(pool.get("uncertainty_kind")) if uncertainty_value is not None else
-                str(pool.get("uncertainty_kind") or "N/D"))
+            uncertainty_kind=str(pool.get("uncertainty_kind") or "")
+            if uncertainty_value is not None:
+                uncertainty_label="DP espacial descritivo: " if "descritivo" in uncertainty_kind.casefold() else "± "
+                uncertainty_text=(uncertainty_label+format_ptbr(uncertainty_value,2)+" tC/ha | "+
+                    ("" if uncertainty_label.endswith(": ") else "± ")+format_ptbr(uncertainty_value*44/12,2)+
+                    " tCO₂e/ha | "+format_ptbr(pool.get("uncertainty_percent"),2)+"%; "+uncertainty_kind)
+            elif pool.get("sensitivity_tc_ha") is not None:
+                sensitivity=pool["sensitivity_tc_ha"]
+                uncertainty_text=("Incerteza total N/D; sensibilidade parcial ±"+format_ptbr(sensitivity,2)+
+                    " tC/ha | ±"+format_ptbr(sensitivity*44/12,2)+" tCO₂e/ha | "+
+                    format_ptbr(pool.get("sensitivity_percent"),2)+"%; "+str(pool.get("sensitivity_kind")))
+            else:uncertainty_text=uncertainty_kind or "N/D"
             drow("CARBONO",part.get("parametro") or "Compartimento",
                  part.get("tc_on_quantified_area"),
                  (part.get("tc_on_quantified_area")*44/12

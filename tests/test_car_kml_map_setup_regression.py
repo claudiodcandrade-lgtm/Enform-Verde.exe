@@ -58,7 +58,7 @@ class TestCarKmlMapSetup(unittest.TestCase):
                 self.after_calls = []
             def _set(self, widget, value):
                 self.spatial_report = value
-            def _schedule_optical_map_fit(self, label):
+            def _draw_land_use_map(self, land):
                 raise RuntimeError("visualization unavailable")
             def _draw_aoi_outline(self, label):
                 raise RuntimeError("canvas unavailable")
@@ -104,7 +104,8 @@ class TestCarKmlMapSetup(unittest.TestCase):
             self.assertIn(name, funcs)
             calls = [n.func.attr for n in ast.walk(funcs[name]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)]
             self.assertIn("_show_geom",calls)
-        self.assertIn("_schedule_optical_map_fit", [n.func.attr for n in ast.walk(funcs["_show_geom"]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)])
+        self.assertIn("_draw_land_use_map", [n.func.attr for n in ast.walk(funcs["_show_geom"]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)])
+        self.assertNotIn("_schedule_optical_map_fit", [n.func.attr for n in ast.walk(funcs["_show_geom"]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)])
         self.assertTrue(any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "after" and any(isinstance(arg, ast.Attribute) and arg.attr == "_poll_ibge" for arg in n.args) for n in ast.walk(funcs["_show_geom"])))
 
 if __name__ == "__main__":

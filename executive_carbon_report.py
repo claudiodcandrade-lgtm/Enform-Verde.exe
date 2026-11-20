@@ -111,6 +111,8 @@ def executive_carbon_lines(native, fmt):
     table=["ESTOQUES POR COMPARTIMENTO — tC e tCO₂e são estoques nas áreas quantificadas; "
            "densidades usam somente a cobertura indicada:"]
     all_components=[c for st in native.get("strata",[]) for c in st.get("components",[])]
+    from carbon_dashboard_table import carbon_dashboard_rows
+    dashboard_by_pool={row["compartment"]:row for row in carbon_dashboard_rows(native)}
     pool_results={}
     for pool in ("Biomassa aérea","Biomassa subterrânea","Necromassa aérea",
                  "Necromassa subterrânea","Serapilheira","Solo 0–100 cm"):
@@ -120,37 +122,35 @@ def executive_carbon_lines(native, fmt):
         covered=sum(float(r.get("quantified_area_ha",r.get("area_ha") or 0)) for r in quantified)
         stock=sum(float(r["total_tc"]) for r in quantified) if quantified else None
         density=(stock/covered if stock is not None and covered>0 else None)
-        row_unc=[]
-        for r in quantified:
-            u=uncertainty_for_pool(r)
-            if (u.get("scope") != "sensitivity"
-                    and u.get("absolute_tc_ha") is not None and u.get("percent") is not None):
-                row_unc.append((float(u["absolute_tc_ha"]),float(u["percent"])))
-        if density is not None and row_unc and len(row_unc)==len(quantified):
-            # A single stratum needs no cross-stratum covariance. Multiple
-            # strata combine by area-weighted variance only when independence
-            # is explicitly documented; otherwise uncertainty stays N/D.
-            independent=(len(quantified)==1 or all(
-                r.get("uncertainty_independence")=="independent_strata" for r in quantified))
-            if independent and len(quantified)==1:
-                sigma=row_unc[0][0]
-            elif independent:
-                sigma=math.sqrt(sum((float(r.get("quantified_area_ha",r.get("area_ha")))*u[0])**2
-                                    for r,u in zip(quantified,row_unc)))/covered
-            else:
-                sigma=None
-            unc_abs=(sigma*44/12 if sigma is not None else None)
-            unc_pct=(100*sigma/density if sigma is not None and density>0 else None)
-        else:
-            unc_abs=unc_pct=None
-        pool_results[pool]=(density,unc_abs)
+        dashboard=dashboard_by_pool.get(pool,{})
+        sigma=dashboard.get("uncertainty_tc_ha")
+        unc_abs=(float(sigma)*44/12 if sigma is not None else None)
+        unc_pct=(100*float(sigma)/density if sigma is not None and density>0 else None)
+        sensitivity=dashboard.get("sensitivity_tc_ha")
+        uncertainty_kind=str(dashboard.get("uncertainty_kind") or "")
+        # Spatial soil SD describes mapped/sample heterogeneity. It is not a
+        # predictive uncertainty contribution to the combined stock error.
+        combined_unc=(None if "descritivo" in uncertainty_kind.casefold() else unc_abs)
+        pool_results[pool]=(density,combined_unc)
         coverage_pct=(100*covered/area if area>0 else None)
         stock_text=(fmt(stock)+" tC | "+fmt(stock*44/12)+" tCO₂e" if stock is not None else "estoque N/D")
         density_text=(fmt(density)+" tC/ha | "+fmt(density*44/12)+" tCO₂e/ha"
                       if density is not None else "densidade N/D")
-        uncertainty_text=("incerteza: "+fmt(unc_abs)+" tCO₂e/ha ("+fmt(unc_pct)+"%)"
-                          if unc_abs is not None and unc_pct is not None else
-                          ("incerteza não mensurável" if stock is not None else "incerteza N/D"))
+        if unc_abs is not None and unc_pct is not None:
+            if "descritivo" in uncertainty_kind.casefold():
+                uncertainty_text=("DP espacial descritivo: "+fmt(sigma)+" tC/ha | "+
+                    fmt(unc_abs)+" tCO₂e/ha | "+fmt(unc_pct)+"%; "+uncertainty_kind)
+            else:
+                uncertainty_text=("incerteza mensurável: ±"+fmt(sigma)+" tC/ha | ±"+
+                    fmt(unc_abs)+" tCO₂e/ha | "+fmt(unc_pct)+"%; "+uncertainty_kind)
+        elif sensitivity is not None:
+            sensitivity_pct=100*float(sensitivity)/density if density and sensitivity is not None else None
+            uncertainty_text=("incerteza total: N/D; sensibilidade parcial: ±"+fmt(sensitivity)+" tC/ha | ±"+
+                fmt(float(sensitivity)*44/12)+" tCO₂e/ha | "+fmt(sensitivity_pct)+"%; "+
+                str(dashboard.get("sensitivity_kind")))
+        else:
+            uncertainty_text=(str(dashboard.get("uncertainty_kind") or "incerteza não mensurável")
+                              if stock is not None else "incerteza N/D")
         coverage_text=(fmt(covered)+" ha ("+fmt(coverage_pct)+"% da área nativa)"
                        if coverage_pct is not None else "cobertura N/D")
         table.append("• "+pool+": "+stock_text+"; "+density_text+"; "+uncertainty_text+
@@ -189,7 +189,8 @@ def executive_carbon_lines(native, fmt):
                  ("; densidade: "+fmt(total_density)+" tC/ha | "+fmt(total_density*44/12)+" tCO₂e/ha"
                   if total_density is not None else
                   "; densidade do total: N/D — cobertura/compartimentos incompletos")+
-                 ("; incerteza combinada: "+fmt(total_unc_abs)+" tCO₂e/ha ("+fmt(total_unc_pct)+"%)"
+                 ("; incerteza combinada: ±"+fmt(total_unc_abs*12/44)+" tC/ha | ±"+
+                  fmt(total_unc_abs)+" tCO₂e/ha | "+fmt(total_unc_pct)+"%"
                   if total_unc_abs is not None and total_unc_pct is not None else
                   ("; incerteza combinada não mensurável" if known is not None else
                    "; incerteza combinada N/D"))+".")
