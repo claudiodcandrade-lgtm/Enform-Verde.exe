@@ -20,6 +20,8 @@ class DashboardReleaseFeatureTests(unittest.TestCase):
         renderer=self.source("_draw_land_use_map")
         for token in ("class_name","source","area_ha","area_pct","vector_path"):
             self.assertIn(token,renderer)
+        self.assertIn("USO E COBERTURA — classificação da análise",renderer)
+        self.assertIn("Mapa temático local",renderer)
 
     def test_excel_menu_distinguishes_carbon_and_agricultural_workbooks(self):
         menu=self.source("export_excel")

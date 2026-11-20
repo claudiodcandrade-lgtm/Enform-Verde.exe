@@ -897,3 +897,11 @@ A candidata `3.26.84-PRECAMPO-EXPERIMENTAL` melhora o relatório de carbono: inc
 Esta mudança não deve retroceder em resultados mensuráveis já obtidos, inclusive no Tapajós. Não altera dados, equações, elegibilidade ou cálculos. Se a AOI da Fazenda Maria Eduarda não sustentar uma incerteza específica, manter N/D somente naquela célula e explicar o motivo; não propagar essa insuficiência às demais áreas.
 
 Validação candidata: 43 testes focados de quadro, relatório (incluindo incerteza combinada), exportação, mapa, versionamento e contratos de interface passaram; `py_compile` passou. Regressão ampla após DOCX: 1.107 coletados, 74 erros de importação/execução por dependências ausentes, 32 ignorados e 1 falha de leitura live Sentinel-1 VV/VH; o coletor inspecionou 197 módulos e falhou. Não houve build Windows, gate visual Tk ou EXE limpo. Não distribuir até gates verdes nem declarar homologação científica.
+
+
+### V88.175 — gates alinhados ao mapa temático local (20/11/2026)
+- O requisito de imagem óptica foi retirado do fluxo e dos gates de liberação conforme decisão do proprietário. O workflow não exige mais CBERS/Sentinel-2, cobertura óptica amostral nem renderização de imagem orbital no canvas.
+- O gate GUI agora verifica a apresentação local dos polígonos de uso/cobertura com legenda de classe, área, percentual e origem, sem iniciar consulta óptica ao carregar a geometria. Permanecem obrigatórios os gates independentes de SAR, FH/AGB, inventários, painéis, Excel, responsividade, build Windows, verificações do EXE e autoteste em pasta limpa.
+- A falha anterior `CBERS-first tiled optical-background contract missing` era uma asserção obsoleta, contraditória com a decisão de abandonar imagem óptica. A alteração corrige o critério de aceitação; não declara aprovada a versão nem altera resultados científicos.
+- Os cinco testes locais `test_dashboard_release_features` passaram e o YAML do workflow foi interpretado. O coletor geral inspecionou 197 módulos, mas não passou por dependências ausentes neste runtime; a suíte integral ainda não foi executada novamente. A nova execução Windows precisa validar o mapa local, os demais gates e produzir o EXE antes da distribuição.
+- A candidata permanece experimental. A validação científica independente de campo continua pendente.

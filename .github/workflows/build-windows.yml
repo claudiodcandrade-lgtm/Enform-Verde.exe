@@ -227,22 +227,20 @@ jobs:
           assert 'header.create_text(34,55,text="enform"' not in header_block and '3.15.0-MULTISOURCE' not in header_block, "duplicate branding/version overlay regression"
           assert "Aspect ratio is preserved" in header_block and "header.bind(\"<Configure>\"" in header_block, "responsive full-mask rendering missing"
           assert "win_w=max(1100,min(1713,screen_w-48))" in src and "header_h=210" in src and "width=288" in src, "responsive approved dashboard proportions missing"
-          assert "cbers4a_wfi_preview" in src and "sentinel2_earthsearch_preview" in src and "sentinel2_preview" in src, "CBERS-4A/Sentinel-2 real-pixel providers missing"
-          map_worker=src[src.index("        def worker():",src.index("def show_google_map")):src.index("        threading.Thread(target=worker",src.index("def show_google_map"))]
-          assert map_worker.index("cbers4a_wfi_preview(g,out_w=w") < map_worker.index("sentinel2_earthsearch_preview(g,out_w=w") < map_worker.index("sentinel2_preview(g,extent_factor=extent_factor)") < map_worker.index("if cached_optical:") < map_worker.index("nasa_gibs_preview(g,out_w=w") < map_worker.index("im=esri_export(rs,service="), "CBERS-4A remains primary; Sentinel-2, optical cache, NASA and Esri are bounded fallbacks"
+          assert "Mapa temático local de uso/cobertura após a análise" in src, "local land-use map UI label missing"
+          assert "Legenda com classes, área, percentual e origem" in src, "land-use legend UI label missing"
+          thematic=src[src.index("def _draw_land_use_map"):src.index("def _draw_aoi_outline",src.index("def _draw_land_use_map"))]
+          for token in ("USO E COBERTURA — classificação da análise","class_name","area_ha","area_pct","source"):
+              assert token in thematic, f"local thematic map contract missing {token}"
+          geometry=src[src.index("def _show_geom"):src.index("def _poll_ibge",src.index("def _show_geom"))]
+          assert "_draw_land_use_map" in geometry and "show_google_map" not in geometry and "_schedule_optical_map_fit" not in geometry, "geometry loading must render local map without optical search"
           tls_src=open("tls_setup.py",encoding="utf-8").read()
           assert "_uses_windows_schannel" in tls_src and "WINDOWS_SCHANNEL_CA_LIMIT" in tls_src and "GDAL_HTTP_UNSAFESSL" in tls_src, "Windows Schannel trust handling or TLS verification missing"
-          for optical_fn in ("cbers4a_wfi_preview","sentinel2_earthsearch_preview","sentinel2_preview"):
-              optical_body=src[src.index("def "+optical_fn):src.find("\ndef ",src.index("def "+optical_fn)+4)]
-              assert "tls_setup.gdal_env()" in optical_body, f"{optical_fn} must use platform-safe shared GDAL TLS settings"
-              assert "verify=False" not in optical_body and "GDAL_HTTP_UNSAFESSL=YES" not in optical_body, f"{optical_fn} must preserve TLS verification"
-          assert "offline_brazil_preview" not in src and "offline_ibge_map.json.gz" not in src, "cartographic raster background must not block optical imagery"
           assert "Fitofisionomias (SAR atual / potencial IBGE):" in src and "ibge_phys_display" in src and "ibge_biome_display" in src and "format_property_physiognomies" in src, "visible actual property physiognomy panel missing"
           assert "def pick_ibge_physiognomy" in src and "FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA" in src and "Carbono por Formação" in src and "AGB por Fitofisionomia" in src, "per-class IBGE SAR reporting/export missing"
           import gravimetric_stock as gs
           assert gs.litter_stock_from_quadrats([250,500],[0.25,0.25])["n_independent_units"] == 2, "gravimetric module runtime contract failed"
           assert "Área do polígono:" in src and "aoi_area_display" in src, "visible polygon area field missing"
-          assert "CBERS-4A/WFI" in src and "Sentinel-2" in src and "OPTICAL_COG_TILE_SIZE=512" in src, "tiled optical imagery priority missing"
           assert "NÃO ESTIMADO / EXCLUÍDO DO TOTAL" in src and "sar_details" in src, "per-stratum SAR-only diagnostic report missing"
           ibge_reader=src[src.index("def _read_zip_bbox"):src.index("def _field",src.index("def _read_zip_bbox"))]
           assert "pyogrio.read_dataframe" in ibge_reader and "extractall" not in ibge_reader, "IBGE memory-safe bbox reader missing"
@@ -273,16 +271,12 @@ jobs:
           assert "sar_agb_blocker" in sar_src and "missing_predictors" in sar_src, "exact SAR AGB blocker diagnostics missing"
           assert "_jaxa_mosaic_gamma0_db" in sar_src and "np.square(a)" in sar_src, "JAXA mosaic gamma0 calibration regression"
           assert "BUILTIN_LITERATURE=[]" in sar_src, "generic numeric AGB literature fallback must remain disabled"
-          assert "VISUALIZAR SATÉLITE + POLÍGONO" in src and "Fundo óptico: CBERS-4A/WFI prioritária; Sentinel-2 como alternativa. Leitura por quadrantes ≤512 px" in src, "CBERS-first tiled optical-background contract missing"
           assert "Upload concluído ✓" in src and "vector_status" in src, "vector upload filename/status confirmation missing"
           assert "def _draw_aoi_outline" in src, "offline AOI map preview missing"
-          assert "def _schedule_optical_map_fit" in src and "imagem orbital em busca" in src, "AOI outline and optical request must start automatically"
-          assert "_map_generation" in src and "_refresh_satellite_after_resize" in src, "map stale-response/resize guards missing"
+          assert "_draw_land_use_map" in src and "_redraw_map_after_resize" in src, "local thematic map rendering/resize support missing"
           assert "def map_zoom_in" in src and "def map_zoom_out" in src and "def map_zoom_fit" in src and "_map_extent_factor" in src, "geographic map zoom controls missing"
-          assert "def _apply_map_zoom" in src and "_map_provider" in src and "def _draw_aoi_outline" in src, "map zoom and local AOI outline missing"
+          assert "def _apply_map_zoom" in src and "def _draw_aoi_outline" in src, "map zoom and local AOI outline missing"
           assert "map_hscroll" in src and "map_vscroll" in src and "scrollregion" in src, "map/tab scrollbars missing"
-          assert "generation!=self._map_generation" in src, "stale asynchronous map response guard missing"
-          assert "threading.Thread(target=worker" in src, "satellite map network requests must not block the UI"
           assert Path("enform_header.png").exists() and Path("enform_header.png").stat().st_size > 20000, "forest/logo visual asset missing"
           import scientific_calibration as sc
           assert len(sc.SCIENTIFIC_INVENTORY_REGISTRY) >= 7, "scientific inventory registry incomplete"
@@ -362,32 +356,24 @@ jobs:
           app.read_vector=original_read_vector
           ui._pending_execute=False
           assert any(ui.map_canvas.type(i)=="polygon" for i in ui.map_canvas.find_all()), "Tapajos polygon was not rendered in the map preview"
-          # Deterministic UI plumbing test: live coverage/pixel validity is tested
-          # separately below and must not be hidden by a mocked provider here.
-          from PIL import Image
-          import numpy as np
-          app._store_satellite_preview_cache=lambda *args,**kwargs: None
-          def synthetic_optical_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
-              yy,xx=np.indices((int(out_h),int(out_w)))
-              rgb=np.stack((35+(xx%180)//2,55+(yy%120)//2,
-                            40+((xx+yy)%100)//3),axis=2).astype(np.uint8)
-              return {
-              "image":Image.fromarray(rgb),
-              "datetime":"2026-11-09T00:00:00Z","date_range":["2026-11-09","2026-11-09"],
-              "scene_ids":["SYNTHETIC_UI_FIXTURE_ONLY"],"provider":"CBERS-4A/WFI SYNTHETIC UI FIXTURE ONLY",
-              "resolution_m":55,"pixel_count":int(out_w)*int(out_h),
-              "aoi_coverage_fraction":1.0,"cloud_pixels_included":False,"polygons":[]}
-          app.cbers4a_wfi_preview=synthetic_optical_preview
-          import time
-          ui.google_maps_key.set("")
-          ui.show_google_map()
-          deadline=time.time()+10
-          while time.time()<deadline and not ui._satellite_map_visible:
-              ui.update(); time.sleep(.08)
-          assert ui._satellite_map_visible, "synthetic optical fixture did not render in the UI"
-          assert ui._map_provider.startswith("CBERS-4A/WFI SYNTHETIC UI FIXTURE ONLY"), f"UI provider provenance missing: {ui._map_provider}"
-          assert hasattr(ui,"google_map_photo"), "satellite image object missing after UI fixture"
-          print("SATELLITE_UI_PLUMBING_OK (synthetic fixture; live source tested separately)")
+          # Verify the user-facing local vector map path. Optical imagery is no longer a release requirement.
+          from shapely.geometry import box
+          import geopandas as gpd
+          import tempfile
+          with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td_map:
+              thematic_path=Path(td_map)/"thematic.geojson"
+              gpd.GeoDataFrame(
+                  [{"class_name":"Vegetação nativa","geometry":box(-55.0,-3.0,-54.9,-2.9)},
+                   {"class_name":"Soja","geometry":box(-54.9,-3.0,-54.8,-2.9)}],
+                  crs="EPSG:4326").to_file(thematic_path,driver="GeoJSON")
+              ui.project["land_use"]={"vector_path":str(thematic_path),"status":"SAR_MODELO_EXPERIMENTAL",
+                  "classes":[{"class_name":"Vegetação nativa","area_ha":120.0,"area_pct":60.0,"source":"SAR experimental"},
+                             {"class_name":"Soja","area_ha":80.0,"area_pct":40.0,"source":"SAR experimental"}]}
+              ui._draw_land_use_map(ui.project["land_use"])
+              canvas_text=" ".join(str(ui.map_canvas.itemcget(item,"text")) for item in ui.map_canvas.find_all() if ui.map_canvas.type(item)=="text")
+              assert "USO E COBERTURA" in canvas_text and "Vegetação nativa" in canvas_text and "Soja" in canvas_text, "thematic classes were not rendered in local map legend"
+              assert "120.00 ha" in canvas_text and "60.0%" in canvas_text and "SAR experimental" in canvas_text, "thematic map legend omitted area, percent, or source"
+              assert not ui._satellite_map_visible, "local thematic map must not masquerade as optical imagery"
           import tempfile
           with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
               geojson=Path(td)/"tapajos_acceptance.geojson"
@@ -410,66 +396,6 @@ jobs:
           print("GUI_CONTRACT_OK")
           '@ | Set-Content gui_contract_test.py -Encoding UTF8
           python gui_contract_test.py
-      - name: Live Sentinel-2 polygon preview — actual Tapajos KMZ
-        continue-on-error: true
-        shell: pwsh
-        timeout-minutes: 8
-        run: |
-          @'
-          import desktop_app as a
-          g=a.read_vector("acceptance/Teste_SAR_Biomassa_Tapajos.kmz")
-          import requests
-          try:
-              p=a.sentinel2_preview(g,out_h=420,extent_factor=1.36)
-          except (requests.exceptions.Timeout,requests.exceptions.ConnectionError) as exc:
-              # Public imagery outage is not a software regression. Never
-              # report a successful live preview if the catalog timed out.
-              print("LIVE_SENTINEL2_UNAVAILABLE_EXTERNAL",type(exc).__name__,str(exc))
-          except requests.exceptions.HTTPError as exc:
-              code=getattr(getattr(exc,"response",None),"status_code",None)
-              if code not in (429,500,502,503,504):raise
-              print("LIVE_SENTINEL2_UNAVAILABLE_EXTERNAL",code,str(exc))
-          else:
-              assert p["image"].height==420 and p["image"].width>=420
-              assert p["polygons"] and len(p["polygons"][0])>=6
-              assert p["scene_id"] and p["provider"].startswith("Sentinel-2")
-              assert 0 <= float(p["cloud_cover"]) <= 100
-              print("LIVE_SENTINEL2_PREVIEW_OK",p["scene_id"],p["datetime"],p["cloud_cover"],p["image"].size)
-          quadrants=list(a._iter_optical_quadrants(1024,768))
-          assert len(quadrants)==4 and max(w*h for _,_,w,h in quadrants)<=512*512
-          print("OPTICAL_QUADRANTS_OK",quadrants)
-          '@ | Set-Content live_sentinel2_preview.py -Encoding UTF8
-          python live_sentinel2_preview.py
-
-      - name: Live real optical pixels — Brazilian biomes and geographic extremes
-        shell: pwsh
-        timeout-minutes: 45
-        run: python tools/live_optical_coverage_brazil.py
-      - name: Upload Brazilian optical coverage smoke report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: optical-background-brazil-sample-${{ github.run_number }}
-          path: optical_coverage_brazil_smoke.json
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Live real optical worker-to-Tk-canvas smoke — Sinop
-        shell: pwsh
-        timeout-minutes: 7
-        run: python tools/live_gui_optical_sinop.py
-
-      - name: Upload live Sinop optical GUI evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: optical-gui-sinop-live-${{ github.run_number }}
-          path: |
-            optical_gui_sinop_live.json
-            optical_gui_sinop_canvas_debug.png
-          if-no-files-found: warn
-          retention-days: 30
-
       - name: Live public SAR pixel processing and regional fallback — actual Tapajos KMZ
         shell: pwsh
         run: |
