@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 35895)
+Total output lines: 874
+
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
 ## V88.16 — resultado nacional com incerteza e estado auditável (12/11/2026)
 Objetivo obrigatório: para qualquer AOI do Brasil, concluir cada módulo com o melhor resultado cientificamente sustentado ou estado N/D/ERRO_TECNICO, sempre com fonte, período, cobertura, método e incerteza. Quantificar incerteza quando suportada por dados/desenho amostral; caso contrário declarar “incerteza não quantificada” e motivo, sem inventar precisão ou converter N/D em zero.
@@ -305,181 +308,7 @@ A versão candidata permanece `3.26.33-PRECAMPO-EXPERIMENTAL`, agora identificad
 
 ## Atualização operacional V88.55 (14/11/2026)
 
-Esta alteração de imagem não modifica os métodos de carbono do solo, as profundidades nem as fontes de dados da especificação. Para contexto operacional do produto: CBERS-4A/WFI é o fundo óptico prioritário e Sentinel-2 L2A a alternativa. A evidência Windows observou cobertura CBERS em 11/11 janelas representativas e exibição em canvas Tk numa janela ao redor do centroide de Sinop; não foi executado o KML integral da Fazenda Maria Eduarda. A suíte completa do dashboard teve 1.156 testes aprovados; o job foi bloqueado exclusivamente pelo guard de sincronização documental. Permanecem necessários novo CI após esta atualização, execução ponta a ponta da AOI integral e validação de campo. O estado segue pré-campo experimental, não homologado.
-
-
-# REVISÃO V87.1 — 05/11/2026 — CORREÇÃO CIENTÍFICA V87.1: limites marginais do SOC 0–100 cm
-
-Preservar, para os horizontes 0–5, 5–15, 15–30, 30–60 e 60–100 cm, a soma ponderada dos limites marginais oficiais e a rastreabilidade por horizonte. Identificar o resultado como envelope marginal oficial (`marginal_envelope_available=true`); manter `predictive_uncertainty_quantified=false`, pois a soma dos limites não representa intervalo conjunto de confiança de 95% e não inclui correlação, transferência, viés ou incerteza total da propriedade. Ausência/erro de serviço permanece N/D com motivo. O estoque central recuperado não deve desaparecer apenas porque os limites marginais não estão disponíveis. Esta regra não altera as fontes oficiais Embrapa/PronaSolos nem a profundidade de 0–100 cm.
-
-
-## V88.56 — confirmação final de CI e build Windows (14/11/2026)
-
-- O código da versão 3.26.35 permanece no SHA `417e93141ec035d5bb414abb620224d490580927`. O SHA `b4f7adcd4da162021df35187dabef7cc435fcd1e` contém apenas sincronização documental, restauração das marcações científicas V87.1 e rebuild; nenhuma alteração de runtime foi introduzida depois do código testado.
-- No dashboard CI #43635716670, a suíte completa terminou com 1.156 testes aprovados. O contrato rápido pré-campo #43635716654 e a máscara SAR experimental de Sinop #43635716643 passaram. Uma execução intermediária do contrato pré-campo falhou porque o marcador V87.1 havia sido omitido dos documentos; o texto foi restaurado e o contrato passou no SHA final.
-- O build Windows #43635716635 passou no SHA documental b4f7adcd4da162021df35187dabef7cc435fcd1e. O EXE 3.26.35 passou autoteste em pasta limpa. Artefato Actions 14130517119, 197.798.620 bytes; SHA-256 do ZIP `33b359aea8f60573b4ae39851b096e1616bb85d4b39654fdf03c0bfedd050aab`; SHA-256 do EXE `a7bc32707554ff870fa470d83381172bb0427751d508e9b28263a1a214fc81f4`.
-- CBERS-4A/WFI foi lido com pixels reais em 11/11 janelas brasileiras representativas, com cobertura reportada de 100% por janela (mínimo de aceite 95%). O painel Tk mostrou CBERS real numa janela ao redor do centroide de Sinop; Sentinel-2 real no Tapajós passou. Foram aprovados o teste live de SAR no Tapajós, o catálogo INPE Sentinel-1 RTC em amostras dos seis biomas e a prova de pixels ESA BIOMASS FH em Sinop.
-- Essas evidências não incluem o KML integral da Fazenda Maria Eduarda até o dashboard e não provam cobertura contínua nacional para todo local e data. O gate científico independente #43635716646 permanece reprovado por ausência de observações de campo independentes. Não homologado; manter pré-campo experimental.
-
-
-### Auditoria do código e limite da evidência
-
-A revisão V88.49 cobriu cache CCI por análise, retentativas e persistência da auditoria Sentinel-1 e o handoff SAR ao dashboard. Foi uma auditoria direcionada, não uma auditoria exaustiva de todos os módulos e fluxos do produto. Os testes verdes cobrem os contratos e cenários executados; não provam que todas as falhas recorrentes estejam eliminadas nem cobrem toda AOI. Manter essa distinção e realizar revisão estrutural/integração ponta a ponta antes de alegar correção definitiva.
-
-
-## V88.59 — sincronização documental do pacote (14/11/2026)
-
-Esta versão sincroniza a especificação do solo com a candidata de software 3.26.36 e as correções arquiteturais SAR registradas no prompt e na especificação técnica. Não altera fontes, profundidade, métodos, cálculos, incertezas ou interpretação do carbono/fertilidade do solo.
-
-## Nota de sincronização V88.60
-
-O build Windows `3.26.36-PRECAMPO-EXPERIMENTAL` passou no self-test em pasta limpa (workflow `43642362176`). Esta atualização registra o estado da versão e não altera as exigências técnicas de carbono do solo 0–100 cm. O resultado de build não representa validação de campo nem homologação científica.
-
-
-## V88.62 — incerteza transversal para estimativas de carbono
-
-O carbono do solo 0–100 cm deve apresentar incerteza junto ao resultado em tC/ha e %, método, horizontes/atributos incluídos, cobertura, fonte e limitações. Distinguir incerteza amostral, de mapeamento/modelo e transferência; envelopes marginais por horizonte não devem ser rotulados IC95% conjunto. Se parcial, explicitar componentes e lacunas. Quando o valor estimado tiver suporte, mas a incerteza de algum parâmetro não puder ser mensurada, apresentar o resultado e rotular exatamente “incerteza não mensurável”, identificando o parâmetro e o motivo. N/D aplica-se ao valor somente quando ele próprio não tiver suporte. Esta regra integra o contrato comum a todos os compartimentos de carbono e não altera as fontes oficiais de solo ou a profundidade estabelecida.
-
-
-## V88.63 — rótulo quando a incerteza não puder ser mensurada
-
-Para o estoque de carbono do solo 0–100 cm, quando o valor tiver suporte mas a incerteza de um ou mais parâmetros não puder ser quantificada, manter a estimativa e apresentar exatamente “incerteza não mensurável”, com parâmetro, motivo e fonte consultada. N/D é reservado ao próprio estoque sem suporte. Distinguir limitações dos horizontes, envelope marginal, incerteza amostral e erro de transferência.
-
-
-## V88.63 — sincronização das regressões da candidata 3.26.37
-
-O teste integral da revisão anterior executou 1.160 testes; as regressões agora exigem “incerteza não mensurável” para estoques suportados sem incerteza quantificável. A nova revisão deve repetir CI e build Windows no mesmo SHA; manter resultado experimental pré-campo até esses gates e as validações de campo.
-
-## Evidência de validação da candidata 3.26.37
-
-Commit validado: `9c4c60c76ce5cd88ec6ff29420db36c2d631c8e2`. Dashboard: 1.160 testes aprovados e guard documental sem pendências (execução 43652675732). Build Windows: aprovado, incluindo smoke óptico nacional, leitura no canvas Tk, SAR real e autoteste do EXE em pasta limpa (execução 43652675738). Provas independentes reais ESA BIOMASS FH e Sentinel-1 Sinop também aprovadas. Artefato `Enform-Verde-Windows-v3.26.37-PRECAMPO-EXPERIMENTAL`: 197.799.200 bytes; SHA-256 do pacote: `sha256:65b49f7980f3058bd5b8c55fdbd806d62188b1a931e1e37bbdc28e1062832232`.
-
-Estado: candidata experimental pré-campo. A homologação científica independente permanece reprovada por ausência de validação de campo e de execução ponta a ponta do KML completo da Fazenda Maria Eduarda até o painel; não usar estes gates como comprovação de homologação ou desempenho de campo.
-
-
-## V88.64 — continuidade do pipeline quando a etapa de solo falha
-
-A etapa de pedologia/PronaSolos não pode apagar resultados SAR, uso da terra ou carbono que já tenham sido calculados. Falhas de pedologia e fertilidade devem ser declaradas por módulo, com motivo e estado N/D/ERRO_TECNICO; os módulos anteriores permanecem vinculados à mesma execução e AOI. O status do solo não altera as fontes oficiais, a profundidade de 0–100 cm, nem autoriza imputação de carbono ou fertilidade. Um checkpoint de auditoria é complementar à apresentação do resultado; se falhar, registrar a falha sem descartar saídas válidas.
-
-A candidata 3.26.38 ainda precisa passar suíte, dashboard e build Windows no mesmo commit. Esta alteração arquitetural não comprova cobertura PronaSolos nem execução integral da Fazenda Maria Eduarda.
-
-
-## V88.65 — validação do pipeline e preservação dos estados de solo
-
-No commit de código dc79606d4073da23cf5c83aed54a23d500f1ef1a, dashboard e build Windows passaram; a candidata preserva resultados SAR/uso da terra quando uma etapa posterior de carbono, pedologia ou fertilidade falha e apresenta estado e motivo por módulo. O build incluiu fontes live e autoteste do EXE. Isso não comprova cobertura PronaSolos em toda AOI nem substitui a execução integral do KML privado de Sinop até o painel. Carbono do solo permanece 0–100 cm e fontes de solo continuam oficiais; não imputar valores.
-
-## Nota de sincronização V88.66
-
-Nesta revisão foram priorizadas as rotas Sentinel-1 de uso do solo e carbono nativo. Não houve mudança nos métodos de carbono do solo, PronaSolos ou fertilidade. A estimativa pedológica continua independente do status de classificação SAR. O pipeline geral mantém o estado técnico e a evidência de cobertura SAR vinculados ao mesmo run_id/hash da AOI.
-
-
-## Registro V88.67 de sincronização documental
-
-Na candidata 3.26.39 (commit `3172277b02dd59de24861c8dd8abfc8e5159d49a`), a CI e o build Windows passaram; essa evidência não modifica nem valida por si só as estimativas de carbono do solo. O módulo PronaSolos 0–100 cm continua condicionado à interseção e leitura de perfis reais, profundidade efetiva e cobertura; incerteza não suportada deve aparecer como “incerteza não mensurável”. O handoff live SAR até máscara de carbono e dashboard ainda não foi comprovado na AOI integral da Fazenda Maria Eduarda. O estoque de carbono do solo não deve ser inferido da aprovação do build ou da prova de pixels SAR.
-
-
-## Registro V88.68 — integração até os painéis
-
-A mudança de handoff SAR em validação acrescenta ao payload executivo as máscaras semânticas e a identidade da execução. Ela não altera a metodologia de carbono do solo. Os estoques 0–100 cm continuam dependendo de interseção/leituras válidas de fontes Embrapa/PronaSolos e dos respectivos parâmetros; uma máscara SAR, por si só, não gera nem valida carbono do solo. Exibir N/D, motivo e “incerteza não mensurável” quando não houver suporte.
-
-
-## Registro corretivo da integração e dos gates (15/11/2026)
-A suíte integral no commit d95542c executou 1.164 testes e encontrou duas falhas de contrato, não falhas de processamento: o teste documental ainda exigia editar o arquivo histórico V43, embora o guard de produção considere V43 imutável; e o workflow de SAR não repetia a declaração explícita `scikit-learn==1.8.0` exigida pelo teste de pinagem, apesar de a dependência já constar em requirements_desktop.txt. Ambas as exigências foram corrigidas no commit 70e7460aa5d7e9a0e479f0a7e155c72443b5c24f. A suíte, o build e o fluxo live para Sinop e Tapajós precisam ser aprovados no SHA final. Não declarar versão funcional até isso ocorrer.
-
-
-## V88.70 — resultado final de CI e handoff (15/11/2026)
-Código validado: SHA af64ae3b85188c5180192a92469fbe4313453025, candidata Enform Verde 3.26.39-PRECAMPO-EXPERIMENTAL.
-
-- Suíte integral do dashboard: 1.164 testes aprovados, run 43672912037. Contrato pré-campo aprovado, run 43672912023.
-- Handoff real Sentinel-1 → classificação de uso → máscaras de carbono → payload do dashboard aprovado em amostra de Sinop e AOI/KMZ público do Tapajós, run 43672912011. Sinop amostral: 1.084,73 ha; 30 cenas, 12 meses, 1.692 pixels. Tapajós: 1.290,69 ha; 29 cenas, 12 meses, 2.016 pixels. O mesmo analysis_run_id e hash da AOI foi preservado no payload.
-- Build Windows e autoteste do executável em cópia limpa aprovados, run 43672912029. Artefato Enform-Verde-Windows-v3.26.39-PRECAMPO-EXPERIMENTAL, 197.812.692 bytes, SHA-256 0180af23e8ca4a4bf2b7a5ed2056eb7f5f7725d5687e98a8c823ba5dcde13c4c.
-- Smokes do fundo óptico, cobertura amostral em biomas/extremos e envio ao canvas Windows em Sinop aprovados. Leitura Sentinel-1 RTC em sítios representativos dos seis biomas aprovada. Essas amostras não demonstram toda coordenada/data do Brasil.
-- A causa confirmada foi o uso de catálogos diferentes: a classificação anual buscava MPC, enquanto a triagem Sentinel-1 recente também consultava INPE. A atualização usa MPC+INPE e propaga as máscaras e a identidade da análise até o painel.
-- O KML integral privado da Fazenda Maria Eduarda (1.459,91 ha) NÃO foi usado: Sinop foi testada em uma AOI pública de 1.084,73 ha. Fazer o teste integral da fazenda em ambiente controlado e manter o arquivo fora de repositórios, logs e artefatos públicos.
-- O carbono chegou ao painel, mas está incompleto (complete=false): em ambos os AOIs, necromassa e serapilheira ficaram não estimadas; erros de transferência alométrica, erro de mapa e covariâncias não foram quantificados; não há IC95% do total. Valores parciais não são estoque total. As classes SAR são experimentais e sem validação local independente; o gate científico continua reprovado e a versão não é homologada.
-
-Status: candidata experimental operacionalmente validada para os cenários e AOIs de teste descritos; pendem execução do KML integral de Maria Eduarda, completar suporte de dados e incertezas de todos os compartimentos e validação de campo antes de homologação.
-
-
-## Nota de integração V88.71 — preservar fluxo independente do solo
-A correção da entrega SAR/óptica não altera as fontes nem os métodos do compartimento solo. Carbono 0–100 cm e fertilidade continuam independentes da classificação semântica SAR; falha de provedor SAR não autoriza imputação de solo, e falha PronaSolos não deve descartar resultados válidos de SAR/uso do solo. Cada módulo mantém seu próprio estado, fonte, cobertura e incerteza, vinculados ao mesmo run_id/hash da AOI.
-
-### Sincronização documental V88.71 (15/11/2026)
-
-A atualização 3.26.40 não altera o método de carbono do solo. Esta nota sincroniza a especificação de solos com o checkpoint do fluxo óptico/SAR: falha de imagem ou de classificação SAR não pode preencher compartimentos de solo, e resultados de carbono continuam dependentes de fonte, profundidade, cobertura e incerteza documentadas. A candidata permanece não homologada até CI, build Windows e validação ponta a ponta no ambiente-alvo.
-
-### Registro de regressão de fixture Windows
-
-O gate da interface rejeitou corretamente uma imagem de teste uniformemente colorida. O fixture foi atualizado para textura espacial e o teste de interface foi reforçado. O método do solo não mudou; o gate científico continua independente da aprovação do executável.
-
-### Checkpoint documental V88.72 (15/11/2026)
-
-A versão 3.26.41 corrige apenas a coerência dos avisos de estado SAR: ausência de configuração externa deixa de contradizer a aplicação experimental do LEM+ embarcado. A metodologia de carbono do solo não mudou; cobertura, estoque parcial e incerteza do mapa continuam apresentados separadamente, sem extrapolação para a área sem pixels nem conversão de desvio espacial em IC95%.
-
-Código candidato V88.72: `f1171c24cc0c3c835819f537344d4ad1804aae46`. A alteração em `land_use_sar` não modifica cálculo de carbono do solo.
-
-SHA da árvore candidata remota de código: `273297ee097d7f45f1a9d55ba45695aa8a813273`; alteração SAR não modifica o método do solo.
-
-
-## Checkpoint V88.72 — candidata 3.26.41 (15/11/2026)
-
-V88.72 — validação final da candidata 3.26.41 (15/11/2026). No commit remoto 5ba46b2763155054e8b026399be1ce37503f0ecd, a suíte integral do dashboard passou; o handoff SAR live de Sinop amostral e Tapajós passou; a leitura real ESA BIOMASS FH em Sinop passou; a matriz óptica de amostra nacional passou; Sentinel-2 real no Tapajós e envio da imagem ao canvas Tk do Windows em Sinop passaram. Os smokes SAR live em Tapajós e nos seis biomas, consultas IBGE/SICAR e contratos quantitativos também passaram. O EXE 3.26.41 foi compilado, executado em pasta limpa e publicado no artefato Enform-Verde-Windows-v3.26.41-PRECAMPO-EXPERIMENTAL (197.815.436 bytes; digest SHA-256 do artefato GitHub: 08a7199eea857668bf582ed7d05f2dc472a9ace57c6d633fd35503fa547fd619). Esses testes demonstram o fluxo nos AOIs públicos/amostrais definidos na CI, não a execução do KML privado integral da Fazenda Maria Eduarda. Carbono pode permanecer parcial/N/D e a incerteza deve continuar declarada por compartimento. O gate científico de homologação segue reprovado por falta de validação independente de campo; manter experimental, sem declarar homologação nacional.
-
-
-## Nota de integração V88.73 — camada temporal e cobertura quantificada
-
-A cartografia IBGE de fitofisionomia continua exclusivamente potencial, de referência e visual; não confirma cobertura atual. O relatório de carbono deve declarar o período da máscara espacial usada. Resultados por compartimento são calculados sobre hectares efetivamente quantificados e mostram cobertura (ha e %); não projetar para estratos sem suporte. O estoque total continua parcial/N/D se faltar compartimento ou cobertura. O modelo LEM+ que representa o último ano agrícola completo é um produto anual e não substitui a classificação semântica atual nem bloqueia a contingência atual. Candidatos orbitais recentes ficam num produto próprio. A imagem óptica é visual; na indisponibilidade, desenhar camada IBGE potencial já carregada e AOI, com aviso, sem bloquear a análise.
-
-
-## Nota V88.74 — gates de handoff temporal
-
-O teste de fluxo SAR até carbono/dashboard deve validar explicitamente safra e escopo do mapa anual e não exigir que esse produto seja declarado atual. A rota de contingência precisa ser testada quando a máscara semântica atual estiver indisponível. O painel de carbono deve informar o período da máscara espacial. O smoke visual Windows deve verificar pixels do canvas.
-
-
-## Nota V88.75 — escopo temporal da auditoria LEM+
-
-O campo execution_scope do LEM+ deve declarar o AOI integral e o último ano agrícola completo usado. result_applied_to_annual_map e result_applied_to_current_aoi são flags distintas; o mapa anual não pode ser registrado como resultado semântico atual. Os testes de imagem devem avaliar pixels reais do canvas e os testes SAR devem afirmar o limite de tentativas por cena.
-
-
-## V88.76 — mapa de contingência visual
-
-A camada IBGE de fitofisionomia deve ser carregada de modo assíncrono após falha de imagem óptica, quando CBERS, Sentinel-2 e demais fundos visuais não responderem. Seu uso é exclusivamente cartográfico e potencial. O limite da AOI precisa permanecer visível imediatamente. Disponibilidade de fundo óptico/cartográfico não bloqueia a execução de análise nem altera cálculos de carbono ou uso atual.
-
-
-<!-- V88_77_OPTICAL_SMOKE_SYNTAX_FIX -->
-## V88.77 — gate de compilação do smoke óptico
-O script de auditoria de cobertura óptica precisa compilar no runtime Windows antes de executar. Foi corrigida a docstring não terminada em `tools/live_optical_coverage_brazil.py`; a quebra impedia a compilação integral e o build Windows, ainda que os testes unitários e de regressão passassem. A compilação corrigida deve ser reexecutada e confirmada no commit final.
-
-
-<!-- V88_78_DOC_AUDIT_WINDOW -->
-## V88.78 — sincronização cronológica do gate
-A especificação foi atualizada após o ajuste do workflow Word, junto com o prompt canônico, para que a auditoria documental reconheça os documentos dentro da janela posterior à última mudança efetiva. O gate deve ser executado sobre este commit ou posterior; a correção do smoke de compilação continua pendente de confirmação final pelo build integral.
-
-
-<!-- V88_79_OPERATIONAL_VALIDATION_2026_11_15 -->
-## V88.79 — evidência operacional e limites (15/11/2026)
-O build Windows `3.26.42-PRECAMPO-EXPERIMENTAL` passou no SHA `8551bcaf84586af71ae574abda8a6e37e467f4d3`. Suíte integral: 1.173 testes. Build limpo: UI smoke, verificação de módulos/paridade Python-EXE, rede e aceitação do KMZ Tapajós passaram. Pixels CBERS-4A foram lidos com cobertura 100% em 11/11 pontos amostrais; smoke do canvas Windows passou mantendo AOI visível como fallback. Integração live Sentinel-1 para amostra pública de Sinop e Tapajós entregou saídas SAR, uso da terra, carbono e payload de dashboard.
-
-Esta evidência comprova transmissão ponta a ponta somente nos AOIs de teste. Não comprova execução do KML privado Fazenda Maria Eduarda nem validação local. O SAR aplicado é experimental e referente à safra completa 2025/2026; a classificação semântica atual continua N/D. Carbono é parcial, compartimentos ausentes não são zero, e nenhuma incerteza total é inventada. Ausência de suporte de solo/compartimento deve permanecer explicitamente N/D/“incerteza não mensurável”, conforme o caso. O gate científico permanece reprovado até validação independente de campo.
-
-
-<!-- V88_80_GUI_WORKER_TERMINAL_GATE -->
-## V88.80 — prova visual terminal da janela
-A captura inicial com `AOI_LOCAL_FALLBACK` somente prova que o canvas não está preto; como o AOI é renderizado antes de iniciar consultas, ela não confirma o término do worker óptico/IBGE. O smoke agora espera o estado terminal, após pixels CBERS/Sentinel-2 ou fallback cartográfico final. O novo smoke/build deve passar antes de confirmar a integração visual. A camada IBGE permanece rotulada como potencial e, em falha também do IBGE, o perímetro local é último fallback com aviso.
-
-## V88.82 — contrato de entrega ponta a ponta (15/11/2026)
-
-Toda etapa publicada deve ter o mesmo `analysis_run_id` e hash da AOI. Altura SAR só é exposta se pixels numéricos válidos foram lidos; a saída preserva contagem, métrica/unidade, produto, fonte, banda, cenas, distribuição e natureza da dispersão. O painel e o Excel devem apresentar o valor por estrato ou N/D com causa, sem converter SD espacial em IC95. O arquivo `proveniencia_sar_painel.json` registra o payload recebido com run ID e hash. O carbono derivado de raízes e do solo permanece compartimentado e não pode usar altura quando o produto de altura não chegou à etapa consumidora.
-
-## V88.83 — fragmentação, cache e consulta por estrato (15/11/2026)
-
-A aquisição de horizontes PronaSolos e limites oficiais de carbono deve ser feita uma vez por AOI e reutilizada nas interseções de cada estrato. As consultas zonais preservam o recorte espacial e não repetem chamadas WCS por polígono temático. Cache só é reutilizado quando produto, manifesto, hash do mosaico e hashes de todos os tiles-fonte conferem.
-
-Janelas WCS são subdivididas em tiles de até 1024×1024 pixels; uma requisição 2048×2048 torna-se quatro quadrantes. Os tiles mantêm os pixels originais e são expostos por um VRT indexado. O cálculo lê janelas do VRT e não cria array integral adicional. CRS, resolução, nodata, tipo e alinhamento precisam ser compatíveis; caso contrário, a cobertura falha com diagnóstico. Coberturas de tile único seguem GeoTIFF. Esta estratégia reduz memória de pico e escrita duplicada; a quantidade total de pixels e a resolução não diminuem.
-
-Para o carbono de Tapajós, a fonte gravimétrica de serapilheira pode corresponder a rótulo amplo `Formação florestal` somente dentro da geocerca publicada, com subtipo IBGE não confirmado e incerteza de transferência explicitada. A equação de Cairns estima raízes totais vivas e mortas. Sensibilidade devida à AGB é componente parcial; não deve ser intitulada IC95 ou incerteza total. Não somar raízes mortas novamente. Incerteza combinada permanece N/D/“incerteza não mensurável” sem erros completos e dependência/covariância adequados.
-
-Validação local do código `f797c6320baa9713cbcba6c199cb05357f0c5de8` / candidata 3.26.44: 54 testes direcionados e 1.182 testes da suíte integral aprovados; um teste ignorado; coleta de 174 módulos e compilação Python aprovadas. Build Windows/workflows do commit final e KML privado integral da Fazenda Maria Eduarda permanecem pendentes; a candidata não está homologada.
+Esta alteração de imagem não modifica os métodos de carbono do solo, as profundidades nem as fontes de dados da especificação. Para contexto operacional do produto: CBERS-4A/WFI é o fundo óptico prioritário e Sentinel-2 L2A a alternativa. A evidência Windows observou cobertura CBERS em 11/11 janelas representativas e exibição em canvas Tk numa janela ao redor do centroide de Sinop; não foi executado o KML integral da Fazenda Maria Eduarda. A suíte completa do dashboard teve 1.156 testes aprovados; o job foi bloqueado exclusivamente pelo guard de sincronização documental. Permanecem necessários novo CI após esta atualização, execução ponta a ponta da AOI integral e validação de campo. O estado segue pré-campo exp…5895 tokens truncated…duarda permanecem pendentes; a candidata não está homologada.
 
 ## V88.84 — estado do CI, fundo óptico e otimização (15/11/2026)
 
@@ -869,3 +698,6 @@ A variabilidade espacial do estoque SOC 0–100 cm pode ser consolidada entre es
 
 ### Nota V88.174 — DP espacial também em percentual (20/11/2026)
 No quadro executivo, quando a camada de SOC fornece somente desvio-padrão espacial, apresentar o valor por hectare em tC/ha e sua conversão em tCO₂e/ha e percentual da densidade média do estrato. Rotular como DP espacial descritivo, não erro preditivo/IC95%, e não incorporar como erro do estoque total sem suporte estatístico. Não alterar os estoques SOC calculados.
+# Atualização da versão 3.26.84-PRECAMPO-EXPERIMENTAL — V88.174 (20/11/2026)
+
+O painel executivo de carbono agora apresenta a incerteza mensurável em tC/ha, tCO₂e/ha e %, mantendo densidade, estoque, área quantificada e estado por compartimento em tabela delimitada. O desvio padrão espacial do solo permanece descritivo e separado da incerteza preditiva; esta atualização não altera os valores, fontes ou cálculos de carbono do solo 0–100 cm.
