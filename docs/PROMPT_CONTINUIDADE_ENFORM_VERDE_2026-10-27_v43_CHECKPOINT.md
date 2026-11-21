@@ -17,6 +17,13 @@ O arquivo `PROMPT_CONTINUIDADE_ENFORM_VERDE_2026-10-27_v43.md` neste checkout n�
 - Os cinco testes locais `test_dashboard_release_features` passaram e o YAML do workflow foi interpretado. O coletor geral inspecionou 197 módulos, mas não passou por dependências ausentes neste runtime; a suíte integral ainda não foi executada novamente. A nova execução Windows precisa validar o mapa local, os demais gates e produzir o EXE antes da distribuição.
 - A candidata permanece experimental. A validação científica independente de campo continua pendente.
 
+## V88.179 — checkpoint de revalidação e diagnóstico do timeout (21/11/2026)
+
+- O FH real ESA MAAP passou no ensaio CI separado e o EXE passou build, módulo/dados, paridade, visual e leitura real de CBERS/Sentinel-1, mas o aceite Tapajós em pasta limpa expirou novamente aos 900 s no SHA `5c31cd705307a2f76df02207719ad142d5d544a1`.
+- A leitura progressiva FH não resolveu o timeout. `acceptance_test` agora registra etapas e stack traces de todas as threads a cada 60 segundos; o workflow inclui o arquivo de progresso na saída de diagnóstico. Identificar a chamada bloqueante antes de uma nova correção; não mascarar com aumento do timeout.
+- Regressão funcional passou, porém o gate documental falhou porque a última mudança funcional não alterou Word e especificação PronaSolos após o SHA de código. A documentação V88.179 sincroniza o prompt V52, este checkpoint, o DOCX e a especificação de solo.
+- Reexecutar regressão integral, coletor, regra documental, build, SAR live e aceite limpo no novo SHA. Sem EXE disponível até o aceite e handoff final passarem. Sem homologação científica independente ou validação de campo.
+
 
 ## V88.177 — FH, inventários horizontais e evidência Embrapa (21/11/2026)
 

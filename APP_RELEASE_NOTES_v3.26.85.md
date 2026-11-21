@@ -23,3 +23,9 @@ Verificação local: 1.360 testes passaram e 1 foi ignorado; o coletor inspecion
 O primeiro aceite Tapajós do EXE em pasta limpa excedeu 900 segundos. A inspeção encontrou que a rota podia baixar até oito rasters FH antes de verificar a cobertura da AOI. A candidata em revisão verifica os candidatos sucessivamente e só transfere outro quando a primeira cena não contém pixels H100 válidos na geometria analisada. O cache zonal agora distingue a geometria exata. O candidato sem pixels continua levando à próxima cena; não se converte falha técnica em ausência.
 
 39 testes focados passaram; a regressão completa passou com 1.356 testes e 1 ignorado, incluindo o teste adicional de fallback ao segundo candidato. O build e o aceite Windows em pasta limpa precisam passar no SHA corrigido antes da distribuição. Esta correção ainda não autoriza distribuição nem demonstra, sozinha, que todos os relatos de congelamento foram eliminados.
+
+## Revalidação: aceite Tapajós ainda excede o limite
+
+No SHA `5c31cd705307a2f76df02207719ad142d5d544a1`, o EXE compilou e passou UI, dependências/módulos, paridade Python/Windows, padrão visual e leitura real de pixels CBERS-4A/Sentinel-1. O teste SAR real do ESA MAAP também passou. Ainda assim, o aceite Tapajós em pasta limpa voltou a exceder 900 segundos; a otimização de busca FH, portanto, não resolveu o bloqueio. Nenhum artefato foi liberado.
+
+A aceitação agora registra as etapas e despeja periodicamente as pilhas Python durante o processamento, incluindo esse arquivo no diagnóstico de timeout. Regressão documental também exigiu sincronizar a especificação de solos após mudanças de código. Reexecutar regressão, SAR live e EXE limpo no novo SHA antes de considerar a candidata liberada.

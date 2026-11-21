@@ -54,6 +54,9 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("EXE_SMOKE_EXIT label=$Label", text)
         self.assertIn("COMPILED_EXE_TIMEOUT label=$Label", text)
         self.assertIn("$diagnosticFiles = switch ($Label)", text)
+        self.assertIn("enform_verde_acceptance_progress.txt", text)
+        self.assertIn('faulthandler.dump_traceback_later(60,repeat=True,file=progress)',
+                      (ROOT / "desktop_app.py").read_text(encoding="utf-8"))
         self.assertIn("Invoke-CheckedExe 'tapajos-acceptance'", text)
         self.assertIn("Aggregated inventory evidence is missing beside the frozen Python module runtime", text)
         self.assertIn("Compiled inventory evidence is missing the two eligible Tapajos aggregate references", text)
