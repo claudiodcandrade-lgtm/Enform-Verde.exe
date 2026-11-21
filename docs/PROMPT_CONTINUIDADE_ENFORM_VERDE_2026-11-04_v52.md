@@ -4,7 +4,7 @@ Candidato `3.26.84-PRECAMPO-EXPERIMENTAL`, origem testada `297e944338a12983d604b
 
 Evidências do SHA de origem: 1.352 testes da suíte completa passaram; build Windows 3.26.84 e smokes do EXE compilado (UI, módulos/dados, visual, rede e aceite Tapajós) passaram; FH real foi lido e entregue ao dashboard no caminho semântico SAR→uso da terra→carbono→dashboard para a amostra pública de Sinop e KML de Tapajós. O EXE tem SHA-256 `c56d1c6ca8a360af0119863ce7d44b28a1c1ee832e6878ea51e80cc0f94833`. O SAR e as estimativas continuam experimentais, sem homologação de campo.
 
-Limite importante da rota de AGB: no ensaio real, a AGB veio do ESA CCI Biomass v7.0. A base IFN expandida e o catálogo mult fonte foram consultados, mas não houve inventário/agregado com compatibilidade suficiente para suporte numérico nas AOIs testadas. Não afirmar que o CCI foi calibrado por inventários nem que a contingência de média de inventários forneceu valor nesse ensaio. Ver checkpoint `docs/spec_updates/V88.176_MAPA_VETORIAL_CI_EVIDENCIAS_RELEASE.md`.
+Limite importante da rota de AGB: no ensaio real, a AGB veio do ESA CCI Biomass v7.0. A base IFN expandida e o catálogo mult fonte foram consultados, mas não houve inventário/agregado com compatibilidade suficiente para suporte numérico nas AOIs testadas. Não afirmar que o CCI foi calibrado por inventários nem que a contingência de média de inventários forneceu valor nesse ensaio. Ver checkpoint `docs/spec_updates/V88.176_MAPA_VETORIAL_CI_EVIDENCIAS_RELEASE.md`. A especificação Word é sincronizada automaticamente a partir desse checkpoint.
 
 ### V88.169 — passagem obrigatória FH real → dashboard (19/11/2026)
 
