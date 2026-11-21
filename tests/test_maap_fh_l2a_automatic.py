@@ -35,6 +35,35 @@ class _Text:
 
 
 class AutomaticFHL2ATests(unittest.TestCase):
+    def test_fh_without_supported_equation_is_explicitly_blocked_and_audited(self):
+        aoi=gpd.GeoDataFrame(geometry=[box(-55.21,-11.89,-55.17,-11.85)],crs="EPSG:4326")
+        item={"id":"BIOMASS_FP_FH__L2A_NO_EQUATION","_product_type":"FP_FH__L2A",
+              "_collection":"BiomassLevel2a","_stage":"OPERATIONAL_L2A","assets":{}}
+        with patch.object(sp,"national_predictive_route_matrix",return_value={}), \
+             patch.object(sp,"download_gtdx_height",return_value={"available":False,"catalog_search_complete":True,"pagination_complete":True,"pixel_read_complete":True,"valid_pixel_count":0,"technical_error_count":0}), \
+             patch.object(sp,"download_maap_height",return_value={"available":True,"paths":["/test/fh.tif"],"fh_items":1}), \
+             patch.object(sp,"role",return_value="HEIGHT"), \
+             patch.object(sp,"_zonal",return_value={"mean":21.5,"sd":4.3,"n":1200,"min":4.0,"max":36.0}), \
+             patch.object(sp,"tapajos_h100_structure_agb",return_value=None), \
+             patch.object(sp,"planetary_alos_palsar",return_value={"items":0,"stats":[]}), \
+             patch.object(sp,"discover_asf",return_value=[]), \
+             patch.object(sp,"planetary_sentinel1_cog",return_value={"items":0,"stats":[]}), \
+             patch.object(sp,"inpe_sentinel1_rtc",return_value={"catalogued":0,"stats":[],"pixel_state":"SEM_CENAS"}), \
+             patch.object(sp,"public_sentinel1_cog",return_value={"items":0,"stats":[]}), \
+             patch.object(sp,"_cci_history_for_analysis",return_value={"items":0,"paths":[],"catalog_search_complete":True,"pagination_complete":True,"technical_error_count":0}), \
+             patch("inventory_agb_comparison.published_inventory_evidence",return_value={
+                 "horizontal_structure_references":[{"metric":"basal_area","center":20.0}],
+                 "status":"REFERENCIAS_PUBLICADAS_LISTADAS"}):
+            result=sp.automatic_pipeline(aoi,"Amazônia","Floresta Estacional Sempre-Verde",
+                cache="/tmp/enform-fh-no-equation",biomass_catalog_items=[item],
+                biomass_search_audit={"queries":[{"product_type":"FP_FH__L2A",
+                    "catalog_search_complete":True,"pagination_complete":True}],
+                    "errors":[],"height_queries_complete":True,"height_catalog_item_count":1})
+        audit=result["audit"]["height_structure_model"]
+        self.assertEqual(audit["status"],"FH_DISPONIVEL_SEM_EQUACAO_REGIONAL_COMPATIVEL")
+        self.assertTrue(audit["not_used_as_agb_predictor"])
+        self.assertEqual(len(audit["horizontal_inventory_references"]),1)
+
     def test_real_fh_l2a_route_preserves_product_and_zonal_height(self):
         aoi=gpd.GeoDataFrame(
             geometry=[box(-55.21,-11.89,-55.17,-11.85)],crs="EPSG:4326")
@@ -104,6 +133,10 @@ class AutomaticFHL2ATests(unittest.TestCase):
         self.assertEqual(sar["data_origin"],"SAR_P_HEIGHT_X_INVENTORY_STRUCTURE")
         self.assertEqual(sar["height_n_valid_pixels"],8)
         self.assertEqual(sar["sar_height"]["product"],"FP_FH__L2A")
+        sar["regional_inventory_structure_reference"]={"status":"SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA",
+            "units":[{"ua_id":"UA_TEST"}],"raw_tree_sample_summary":{"mean_dbh_cm":24.0,
+            "mean_individual_tree_height_m":13.0,"observed_sample_basal_area_m2":2.5},
+            "model_predictor_eligible":False,"eligibility_reason":"sem expansão por hectare"}
 
         native=summarize_native_carbon(
             aoi,gpd.GeoDataFrame({"class_name":["Floresta Ombrófila Densa"],
@@ -111,6 +144,7 @@ class AutomaticFHL2ATests(unittest.TestCase):
             lambda frame,phys: estimate_native_components(
                 frame,phys,"Amazônia",lambda *_:sar,lambda *_:{}))
         stratum=native["strata"][0]
+        self.assertEqual(stratum["sar_details"]["regional_inventory_structure_reference"]["units"][0]["ua_id"],"UA_TEST")
         agb=next(row for row in stratum["components"] if row["parametro"]=="Biomassa aérea")
         self.assertAlmostEqual(agb["tc"],sar["agb_mg_ha"]*.47)
 

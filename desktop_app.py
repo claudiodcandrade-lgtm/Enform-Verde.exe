@@ -83,10 +83,16 @@ def _sar_details_report_excerpt(details):
         "height_n_valid_pixels":details.get("height_n_valid_pixels"),
         "height_absence_certificate":certificate(details.get("height_absence_certificate")),
         "priority_height_route_gate":priority,"inventory_agb_comparison":comparison,
+        "height_structure_model":({key:(details.get("height_structure_model") or {}).get(key)
+            for key in ("status","reason","model_id","height_mean_m","basal_area_m2_ha",
+                "inventory_source","not_used_as_agb_predictor","not_added_to_stock_total")
+            if key in (details.get("height_structure_model") or {})}
+            if isinstance(details.get("height_structure_model"),dict) else None),
+        "regional_inventory_structure_reference":details.get("regional_inventory_structure_reference"),
         "inventory_fallback_gate":fallback}
 
 
-APP_VERSION="3.26.84-PRECAMPO-EXPERIMENTAL"
+APP_VERSION="3.26.85-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
@@ -672,10 +678,28 @@ def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
             biodiversity=select_official_inventory_units(
                 biome=b,physiognomy=p,longitude=float(centroid.x),latitude=float(centroid.y),
                 max_distance_km=250.0,max_units=100,include_trees=False)
+            summary=biodiversity.get("raw_tree_sample_summary") or {}
+            selected_units=biodiversity.get("units") or []
+            estimate["regional_inventory_structure_reference"]={
+                "status":biodiversity.get("status","N/D"),
+                "selection":biodiversity.get("selection") or {},
+                "units":[{"ua_id":u.get("ua_id"),"uf":u.get("uf"),
+                    "distance_km":u.get("distance_km"),
+                    "campaign":u.get("campaign"),"source":u.get("source") or u.get("crosswalk_source"),
+                    "crosswalk_method":u.get("match_status")}
+                    for u in selected_units],
+                "raw_tree_sample_summary":summary,
+                "interpretation":biodiversity.get("interpretation"),
+                "model_predictor_eligible":False,
+                "eligibility_reason":"Os campos disponíveis são agregados de árvores amostradas, sem expansão por área/desenho amostral harmonizado nem pareamento pixel-parcela; portanto não substituem G (m²/ha) compatível para a equação FH×AGB.",
+                "not_added_to_stock_total":True}
             estimate["inventory_biodiversity_reference"]=(
                 biodiversity.get("biodiversity_reference") or
                 {"status":"N/D","reason":biodiversity.get("reason") or biodiversity.get("status")})
         except Exception as exc:
+            estimate["regional_inventory_structure_reference"]={
+                "status":"ERRO_TECNICO_CONSULTA_IFN","reason":type(exc).__name__,
+                "model_predictor_eligible":False,"not_added_to_stock_total":True}
             estimate["inventory_biodiversity_reference"]={
                 "status":"N/D","reason":"CONSULTA_FITOSSOCIOLOGICA_IFN_FALHOU",
                 "diagnostic":type(exc).__name__}
@@ -4255,7 +4279,23 @@ class App(tk.Tk):
                             "; n parcelas="+str(ref.get("n_plots") or "N/D")+"; fonte="+
                             str(ref.get("citation") or "N/D")+"; uso="+str(ref.get("statistical_use") or "baliza regional"))
                 sar_audit=sar_details.get("audit") or {}
+                fh_model=sar_audit.get("height_structure_model") or sar_details.get("height_structure_model") or {}
+                if isinstance(fh_model,dict):
+                    lines.append("  ROTA FH × INVENTÁRIO: "+str(fh_model.get("status") or "N/D")+
+                        (" — "+str(fh_model.get("reason")) if fh_model.get("reason") else ""))
+                horizontal=sar_details.get("regional_inventory_structure_reference")
+                if isinstance(horizontal,dict):
+                    raw=horizontal.get("raw_tree_sample_summary") or {}
+                    lines.append("  INVENTÁRIO HORIZONTAL REGIONAL: "+str(horizontal.get("status"))+
+                        "; UAs compatíveis selecionadas="+str(len(horizontal.get("units") or []))+
+                        "; DAP médio bruto="+format_ptbr(raw.get("mean_dbh_cm"),2)+" cm; altura individual média="+
+                        format_ptbr(raw.get("mean_individual_tree_height_m"),2)+" m; área basal observada bruta="+
+                        format_ptbr(raw.get("observed_sample_basal_area_m2"),2)+" m² de amostra (não por ha).")
+                    lines.append("    Elegível como preditor da equação FH–AGB: NÃO — "+str(horizontal.get("eligibility_reason") or "não há expansão amostral harmonizada e pareamento para calibração."))
                 cci_audit=sar_audit.get("cci") or {}
+                cci_inventory=(cci_audit.get("inventory_use_contract") or {})
+                if cci_inventory:
+                    lines.append("  ESA CCI + INVENTÁRIOS: rota secundária independente; fontes regionais compatíveis são listadas para comparação. Calibração numérica CCI–inventário aplicada: NÃO — "+str(cci_inventory.get("reason") or "não há pares parcela–pixel compatíveis suficientes."))
                 if cci_audit.get("saturation_risk_note"):
                     lines.append("  LIMITAÇÃO ESA CCI: "+str(cci_audit["saturation_risk_note"]))
                 biodiversity=sar_details.get("inventory_biodiversity_reference")

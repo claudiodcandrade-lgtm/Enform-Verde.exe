@@ -884,3 +884,12 @@ O painel executivo de carbono agora apresenta a incerteza mensurável em tC/ha, 
 - A falha anterior `CBERS-first tiled optical-background contract missing` era uma asserção obsoleta, contraditória com a decisão de abandonar imagem óptica. A alteração corrige o critério de aceitação; não declara aprovada a versão nem altera resultados científicos.
 - Os cinco testes locais `test_dashboard_release_features` passaram e o YAML do workflow foi interpretado. O coletor geral inspecionou 197 módulos, mas não passou por dependências ausentes neste runtime; a suíte integral ainda não foi executada novamente. A nova execução Windows precisa validar o mapa local, os demais gates e produzir o EXE antes da distribuição.
 - A candidata permanece experimental. A validação científica independente de campo continua pendente.
+
+
+## V88.177 — FH, inventários horizontais e evidência Embrapa (21/11/2026)
+
+A candidata `3.26.85-PRECAMPO-EXPERIMENTAL` acrescenta metadados verificáveis por cultura para rotas de previsão encontradas na Embrapa. Isso não integra automaticamente solvers nem altera o painel PAM/FAO calibrado (soja e milho). Modelos de domínio regional/varietal permanecem restritos ao domínio publicado; vigor SAR só entra como preditor após validação apropriada.
+
+Na rota de carbono, FH×G quantitativo segue restrito ao suporte local calibrado de Tapajós. Consultas IFN por fitofisionomia e proximidade e os agregados horizontais publicados ficam anexados como evidência regional. DAP, altura e área basal brutos não são por hectare sem desenho/expansão harmonizados. Se FH for lido sem equação compatível, o relatório o explicita e não inventa AGB. CCI pode ser a segunda estimativa, com inventários AGB/horizontais reportados para comparação; não há recalibração numérica CCI–inventário sem pares AGB parcela–pixel adequados. Médias AGB compatíveis de diferentes fontes permanecem a contingência final. Não transferir coeficientes Tapajós nacionalmente.
+
+Validação do código no commit local: 1.360 testes passaram, 1 ignorado; 197 módulos inspecionados pelo coletor. Integrações FH sintéticas e CCI secundário passaram. Gates Windows, build, verificações do EXE e teste limpo ainda precisam passar no CI. Sem homologação científica de campo.

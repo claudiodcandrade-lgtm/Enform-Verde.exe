@@ -130,6 +130,9 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             app.after = lambda *_: None
             app._execute_main = lambda **kwargs: App._execute_main(app, **kwargs)
             app._present_native_carbon = lambda *args, **kwargs: App._present_native_carbon(app, *args, **kwargs)
+            # The revised monitor presenter also redraws the local thematic
+            # map; this handoff fixture isolates report text and has no canvas.
+            app._draw_land_use_map = lambda *_: None
             app._present_cultivated_monitoring = lambda land_result: App._present_cultivated_monitoring(app, land_result)
 
             # Execute the same callback the Tk event loop schedules. The two

@@ -2225,6 +2225,14 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
                 {key:value for key,value in height_structure_estimate.items()
                  if key!="audit"} if isinstance(height_structure_estimate,dict)
                 else height_structure_estimate)
+            if height_structure_estimate is None:
+                audit["height_structure_model"]={
+                    "status":"FH_DISPONIVEL_SEM_EQUACAO_REGIONAL_COMPATIVEL",
+                    "reason":"FH foi lido, mas não existe equação FH×inventário com suporte espacial, estrutura horizontal harmonizada e calibração de AGB compatíveis para esta região/fitofisionomia.",
+                    "horizontal_inventory_references":(audit.get("published_inventory_evidence") or {}).get("horizontal_structure_references",[]),
+                    "not_used_as_agb_predictor":True,
+                    "not_added_to_stock_total":True,
+                    "next_route":"CCI_AGB; se indisponível, média de inventários AGB pertinentes com incerteza e limitações explícitas"}
         except Exception as e:
             audit["height_structure_model"]={"status":"ERROR","reason":str(e)}
     # Download/read the official L2B product bundle. Open products are attempted without credentials first;
@@ -2473,6 +2481,13 @@ def automatic_pipeline(gdf,biome,phys,offline_token="",cache=None,library_rows=N
             if is_humid_tropical else
             "Produto regional/global derivado de SAR; requer calibração e validação compatíveis antes de ser apresentado como estimativa local.")
         audit["cci"]["priority_selection_gate"]=cci_gate
+        audit["cci"]["inventory_use_contract"]={
+            "role":"CCI é estimativa secundária independente acompanhada por comparação regional de inventários compatíveis",
+            "inventory_calibration_applied":False,
+            "reason":"Não há, nesta rota, conjunto harmonizado e suficiente de pares AGB parcela–pixel CCI por região para estimar viés/coeficientes de recalibração. Referências horizontais (G, DAP, altura) sem expansão e referências AGB sem pareamento ficam separadas como comparação, não calibração.",
+            "inventory_sources_consulted":list((audit.get("published_inventory_evidence") or {}).get("sources") or []),
+            "ifn_microdata_consulted":True,
+            "not_added_to_stock_total":True}
         if int(cci.get("technical_error_count") or 0)>0:
             audit["warnings"].append("ESA CCI teve erro técnico durante busca/leitura; a contingência por inventários fica bloqueada até corrigir a rota.")
         elif cci_gate.get("eligible") and (cci.get("catalog_search_complete") is not True

@@ -18,6 +18,15 @@ class TestCropSpecificRegistry(unittest.TestCase):
         self.assertTrue(model_contract("Soja")["existing_panel_available"])
         self.assertFalse(model_contract("Citros")["existing_panel_available"])
         self.assertEqual(model_contract("Outras")["status"],"N/D")
+    def test_embrapa_candidates_are_documented_without_promoting_calibration(self):
+        for crop in MODEL_REGISTRY:
+            evidence=model_contract(crop)["embrapa_evidence"]
+            self.assertTrue(evidence.get("route"),crop)
+            self.assertTrue(evidence.get("status"),crop)
+            self.assertTrue(evidence.get("limitation"),crop)
+            self.assertTrue(evidence.get("source_urls"),crop)
+        self.assertFalse(model_contract("Sorgo")["existing_panel_available"])
+        self.assertEqual(CURRENT_CALIBRATED_PANEL,{"Soja","Milho"})
 
 if __name__=="__main__":
     unittest.main()
