@@ -5612,6 +5612,15 @@ if __name__=="__main__":
             (Path(tempfile.gettempdir())/"enform_verde_module_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
             sys.exit(1)
     elif "--acceptance-test" in sys.argv:
+        # Breadcrumb before entering the full workflow. If the clean-folder
+        # runner times out before acceptance_test writes its detailed stages,
+        # this marker distinguishes dispatch from temp-path discovery issues.
+        try:
+            entry_path=Path(tempfile.gettempdir())/"enform_verde_acceptance_entry.txt"
+            entry_path.write_text(json.dumps({"argv":sys.argv,"tempdir":tempfile.gettempdir(),
+                "executable":sys.executable},ensure_ascii=True)+"\n",encoding="utf-8")
+        except Exception:
+            pass
         try:acceptance_test(sys.argv[sys.argv.index("--acceptance-test")+1])
         except Exception:
             (Path(tempfile.gettempdir())/"enform_verde_acceptance_error.txt").write_text(traceback.format_exc(),encoding="utf-8")

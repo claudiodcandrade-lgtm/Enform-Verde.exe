@@ -965,12 +965,16 @@ jobs:
                 'module-check' { @('enform_verde_module_check_error.txt') }
                 'visual-check' { @('enform_verde_visual_check_error.txt','enform_verde_visual_check.txt') }
                 'network-check' { @('enform_verde_network_check_error.txt','enform_verde_network_check.json') }
-                'tapajos-acceptance' { @('enform_verde_acceptance_error.txt','enform_verde_acceptance_result.json','enform_verde_acceptance_progress.txt') }
+                'tapajos-acceptance' { @('enform_verde_acceptance_entry.txt','enform_verde_acceptance_error.txt','enform_verde_acceptance_result.json','enform_verde_acceptance_progress.txt') }
                 default { @() }
               }
               foreach ($file in $diagnosticFiles) {
-                $log = Join-Path $env:TEMP $file
-                if (Test-Path $log) { Get-Content $log -ErrorAction SilentlyContinue }
+              $roots = @($env:TEMP,$env:TMP,[System.IO.Path]::GetTempPath(),(Join-Path $env:LOCALAPPDATA 'Temp'),$dst) |
+                Where-Object { $_ } | Select-Object -Unique
+              foreach ($root in $roots) {
+                $log = Join-Path $root $file
+                if (Test-Path $log) { Write-Host "ACCEPTANCE_DIAGNOSTIC path=$log"; Get-Content $log -ErrorAction SilentlyContinue }
+              }
               }
               throw "COMPILED_EXE_TIMEOUT label=$Label timeout_seconds=$TimeoutSeconds"
             }

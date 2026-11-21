@@ -29,3 +29,7 @@ O primeiro aceite Tapajós do EXE em pasta limpa excedeu 900 segundos. A inspeç
 No SHA `5c31cd705307a2f76df02207719ad142d5d544a1`, o EXE compilou e passou UI, dependências/módulos, paridade Python/Windows, padrão visual e leitura real de pixels CBERS-4A/Sentinel-1. O teste SAR real do ESA MAAP também passou. Ainda assim, o aceite Tapajós em pasta limpa voltou a exceder 900 segundos; a otimização de busca FH, portanto, não resolveu o bloqueio. Nenhum artefato foi liberado.
 
 A aceitação agora registra as etapas e despeja periodicamente as pilhas Python durante o processamento, incluindo esse arquivo no diagnóstico de timeout. Regressão documental também exigiu sincronizar a especificação de solos após mudanças de código. Reexecutar regressão, SAR live e EXE limpo no novo SHA antes de considerar a candidata liberada.
+
+## V88.180 — diagnóstico do aceite Windows ainda sem captura
+
+O SHA `f4d44e7` passou a regressão completa (1.357 testes, 1 ignorado), o dashboard, as provas SAR/FH e o build Windows. O EXE copiado para pasta limpa voltou a expirar após 900 s. Embora o coletor incluísse o log de progresso, o runner não localizou o arquivo no diretório temporário padrão; portanto a pilha que bloqueia ainda não foi capturada e não há nova versão distribuível. A próxima revisão registra um marcador na entrada do `--acceptance-test` e busca todos os diagnósticos nos caminhos temporários efetivamente usados pelo Python e pelo Windows. A versão permanece experimental.
