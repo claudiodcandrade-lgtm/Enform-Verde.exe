@@ -90,6 +90,61 @@ class BiomassL2aTests(unittest.TestCase):
         self.assertEqual(len(calls),1)
         self.assertTrue(calls[0].endswith("i_fh.tiff"))
 
+    def test_pipeline_mode_stops_downloading_after_first_valid_aoi_height(self):
+        items=[]
+        for i in range(3):
+            obj=item(f"BIO_FP_FH__L2A_{i}","FP_FH__L2A")
+            obj["_product_type"]="FP_FH__L2A"
+            obj["_stage"]="OPERATIONAL_L2A"
+            items.append(obj)
+        download_calls=[]
+        def fake_download(url,target,token=None):
+            download_calls.append(url)
+            Path(target).write_bytes(b"mock-raster")
+            return str(target)
+        valid_height={"height_mean_m":31.0,"height_sd_m":2.0,
+            "height_n_valid_pixels":8,"product":"FP_FH__L2A",
+            "paths":["first_height.tif"]}
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(sp,"_biomass_product_assets",return_value=[("fh","https://example/fh.tif")]), \
+             patch.object(sp,"_download",side_effect=fake_download), \
+             patch.object(sp,"_extract_biomass_height_assets",side_effect=lambda p,d:["first_height.tif"]), \
+             patch.object(sp,"_read_biomass_fh_zonal",return_value=(valid_height,{"zonal_read_audit":[]})):
+            result=sp.download_maap_height(object(),None,td,items=items,
+                stop_after_first_aoi_hit=True)
+        self.assertTrue(result["pixel_read_complete"])
+        self.assertEqual(result["candidate_downloads_attempted"],1)
+        self.assertEqual(result["candidate_downloads_total"],3)
+        self.assertFalse(result["candidate_download_complete"])
+        self.assertEqual(result["zonal_height"],valid_height)
+        self.assertEqual(len(download_calls),1)
+
+    def test_pipeline_mode_tries_next_height_when_first_candidate_misses_aoi(self):
+        items=[]
+        for i in range(2):
+            obj=item(f"BIO_FP_FH__L2A_MISS_{i}","FP_FH__L2A")
+            obj["_product_type"]="FP_FH__L2A"
+            obj["_stage"]="OPERATIONAL_L2A"
+            items.append(obj)
+        attempt=iter([
+            (None,{"zonal_read_audit":[{"status":"SEM_PIXELS_VALIDOS_NA_AOI"}]}),
+            ({"height_mean_m":29.0,"height_sd_m":1.5,
+              "height_n_valid_pixels":6,"paths":["second_height.tif"]},
+             {"zonal_read_audit":[{"status":"PIXELS_VALIDOS_LIDOS"}]})])
+        calls=[]
+        def fake_download(url,target,token=None):
+            calls.append(url);Path(target).write_bytes(b"mock-raster");return str(target)
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(sp,"_biomass_product_assets",return_value=[("fh","https://example/fh.tif")]), \
+             patch.object(sp,"_download",side_effect=fake_download), \
+             patch.object(sp,"_extract_biomass_height_assets",side_effect=lambda p,d:[Path(p).name+"_height.tif"]), \
+             patch.object(sp,"_read_biomass_fh_zonal",side_effect=lambda *args:next(attempt)):
+            result=sp.download_maap_height(object(),None,td,items=items,
+                stop_after_first_aoi_hit=True)
+        self.assertEqual(result["candidate_downloads_attempted"],2)
+        self.assertEqual(result["zonal_height"]["height_n_valid_pixels"],6)
+        self.assertEqual(len(calls),2)
+
     def test_zonal_reader_tries_next_candidate_after_empty_aoi(self):
         download={"paths":["fh_one_height.tif","fh_two_height.tif"],
                   "candidate_download_complete":True,"technical_error_count":0}

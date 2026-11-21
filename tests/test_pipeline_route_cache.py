@@ -23,6 +23,7 @@ class BiomassAnalysisRouteCacheTests(unittest.TestCase):
         direct_agb = {"status": "SAR_PROCESSADO", "agb_mg_ha": 390.0,
             "uncertainty_mg_ha": 55.0, "stats": [], "n_valid_pixels": 20}
         route_cache = {}
+        aoi=object()
         with patch.object(sar, "national_predictive_route_matrix", return_value={}), \
              patch.object(sar, "download_maap_height", return_value={
                  "available": True, "paths": ["fh_height.tif"]}) as height_download, \
@@ -32,9 +33,9 @@ class BiomassAnalysisRouteCacheTests(unittest.TestCase):
              patch.object(sar, "download_maap_agb", return_value={
                  "available": True, "paths": ["agb.tif"]}) as agb_download, \
              patch.object(sar, "process_real_sar", return_value=direct_agb):
-            first = sar.automatic_pipeline(object(), "Amazônia", "Floresta", cache="/tmp/cache-test",
+            first = sar.automatic_pipeline(aoi, "Amazônia", "Floresta", cache="/tmp/cache-test",
                 biomass_catalog_items=items, pipeline_route_cache=route_cache)
-            second = sar.automatic_pipeline(object(), "Amazônia", "Floresta", cache="/tmp/cache-test",
+            second = sar.automatic_pipeline(aoi, "Amazônia", "Floresta", cache="/tmp/cache-test",
                 biomass_catalog_items=items, pipeline_route_cache=route_cache)
 
         self.assertEqual(first["data_origin"], "SAR_P_HEIGHT_X_INVENTORY_STRUCTURE")

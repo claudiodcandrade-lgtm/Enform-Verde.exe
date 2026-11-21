@@ -17,3 +17,9 @@
 ## Verificação e disponibilidade
 
 Verificação local: 1.360 testes passaram e 1 foi ignorado; o coletor inspecionou 197 módulos sem falhas; compilação Python e diff passaram. Os testes sintéticos FH→dashboard e FH sem equação→rota CCI passaram. O teste visual Tk local não iniciou por falta de display. Ainda são necessários os gates Windows (`--module-check`, `--visual-check`, `--network-check`), build e autoteste do EXE em pasta limpa antes de disponibilizar pacote. Esta candidata continua experimental, sem homologação científica ou validação de campo.
+
+## Correção em revisão: transferências FH por demanda
+
+O primeiro aceite Tapajós do EXE em pasta limpa excedeu 900 segundos. A inspeção encontrou que a rota podia baixar até oito rasters FH antes de verificar a cobertura da AOI. A candidata em revisão verifica os candidatos sucessivamente e só transfere outro quando a primeira cena não contém pixels H100 válidos na geometria analisada. O cache zonal agora distingue a geometria exata. O candidato sem pixels continua levando à próxima cena; não se converte falha técnica em ausência.
+
+39 testes focados passaram; a regressão completa passou com 1.356 testes e 1 ignorado, incluindo o teste adicional de fallback ao segundo candidato. O build e o aceite Windows em pasta limpa precisam passar no SHA corrigido antes da distribuição. Esta correção ainda não autoriza distribuição nem demonstra, sozinha, que todos os relatos de congelamento foram eliminados.
