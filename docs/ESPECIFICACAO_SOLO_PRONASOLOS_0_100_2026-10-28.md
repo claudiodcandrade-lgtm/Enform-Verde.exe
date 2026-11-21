@@ -1,3 +1,7 @@
+## V88.176 — evidência de integração e regra de mapa (21/11/2026)
+
+O painel de solo 0–100 cm e sua fonte PronaSolos permanecem independentes da renderização cartográfica óptica. A interface usa mapa temático vetorial de uso/cobertura, com classe, área, percentual e origem; imagem óptica não é gate de liberação. O build Windows `3.26.84-PRECAMPO-EXPERIMENTAL` e o smoke de interface passaram no SHA `297e944338a12983d604bf35d2fe45a9a911c790`; o teste SAR real reportou pixel→dashboard para Sinop público e Tapajós. Valores de carbono do solo e demais compartimentos continuam sujeitos à fonte, cobertura e incerteza declaradas; a análise não recebeu homologação científica de campo. AGB do ensaio real veio de ESA CCI Biomass v7.0, sem inventário compatível suficiente para calibração numérica por inventário. Detalhe: `docs/spec_updates/V88.176_MAPA_VETORIAL_CI_EVIDENCIAS_RELEASE.md`.
+
 <!-- V88_16_NATIONAL_RESULT_WITH_UNCERTAINTY -->
 ## V88.16 — resultado nacional com incerteza e estado auditável (12/11/2026)
 Objetivo obrigatório: para qualquer AOI do Brasil, concluir cada módulo com o melhor resultado cientificamente sustentado ou estado N/D/ERRO_TECNICO, sempre com fonte, período, cobertura, método e incerteza. Quantificar incerteza quando suportada por dados/desenho amostral; caso contrário declarar “incerteza não quantificada” e motivo, sem inventar precisão ou converter N/D em zero.
