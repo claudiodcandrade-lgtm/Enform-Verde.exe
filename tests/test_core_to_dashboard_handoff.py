@@ -99,6 +99,10 @@ class CoreToDashboardHandoffTests(unittest.TestCase):
             self.assertEqual(len(scheduled), 1, "poll deve encaminhar a carga à execução principal")
             app.project = {"version": "test"}
             app.gdf = aoi
+            # This handoff test verifies dashboard delivery, not Tk map rendering.
+            # Keep the map renderer out of the headless fixture so a missing
+            # canvas cannot open a modal error dialog and hang CI indefinitely.
+            app._draw_land_use_map = lambda _land: None
             app.car = SimpleNamespace(get=lambda: "")
             app.ccir = SimpleNamespace(get=lambda: "")
             app.active_source = None
