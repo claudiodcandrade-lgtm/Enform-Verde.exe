@@ -1,4 +1,149 @@
-YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ¥µÁ½ÉĞÍåÌ°©Í½¸°µ…Ñ °Ñ•µÁ™¥±”°É”°é¥Á™¥±”°Ñ¡É•…‘¥¹œ°ÅÕ•Õ”°ÑÉ…•‰…¬°‰…Í”ØĞ°¥¼°½Ì°É•ÅÕ•ÍÑÌ°ÕÕ¥°Ñ¥µ”)¥µÁ½ÉĞÑ±Í}Í•ÑÕÀ€€ŒXàÜ¸Ìäè½¹”Q1LÑÉÕÍĞÍÑ½É”™½ÈÉ•ÅÕ•ÍÑÌ90€¡]¥¹‘½İÌÍÑ½É”€¬•ÉÑ¥™¤€¬=L¤)Ñ±Í}Í•ÑÕÀ¹½¹™¥ÕÉ” ¤)™É½´‘…Ñ•Ñ¥µ”¥µÁ½ÉĞ‘…Ñ•Ñ¥µ”°Ñ¥µ•é½¹”)™É½´Á…Ñ¡±¥ˆ¥µÁ½ÉĞA…Ñ )™É½´‘•¥µ…°¥µÁ½ÉĞ•¥µ…°°I=U9}!1}U@)¥µÁ½ÉĞÑ­¥¹Ñ•È…ÌÑ¬)¥µÁ½ÉĞİ•‰‰É½İÍ•È)™É½´Ñ­¥¹Ñ•È¥µÁ½ÉĞÑÑ¬°™¥±•‘¥…±½œ°µ•ÍÍ…•‰½à°Í¥µÁ±•‘¥…±½œ)¥µÁ½ÉĞ¹ÕµÁä…Ì¹À)¥µÁ½ÉĞÁ…¹‘…Ì…ÌÁ)™É½´½Á•¹Áåá°¥µÁ½ÉĞ]½É­‰½½¬)™É½´½Á•¹Áåá°¹ÍÑå±•Ì¥µÁ½ÉĞ½¹Ğ°A…ÑÑ•É¹¥±°°±¥¹µ•¹Ğ°	½É‘•È°M¥‘”)™É½´A%0¥µÁ½ÉĞ%µ…”°%µ…•Q¬)™É½´Í…É}Á¥Á•±¥¹”¥µÁ½ÉĞ‘¥Í½Ù•É}Í…È°ÁÉ½•ÍÍ}É•…±}Í…È°…ÕÑ½µ…Ñ¥}Á¥Á•±¥¹”°5=1}I%MQId°µ½‘•±}É•¥ÍÑÉå}É½İÌ°Í¥•¹Ñ¥™¥}…±¥‰É…Ñ¥½¹}É•Á½ÉĞ°‘Í•}…•ÍÍ}Ñ½­•¸)™É½´±‰…¹‘}ÁÉ•ÁÉ½•ÍÌ¥µÁ½ÉĞÁÉ•ÁÉ½•ÍÍ}±‰…¹)™É½´¥¹Ù•¹Ñ½Éå}ÍÑÉÕÑÕÉ”¥µÁ½ÉĞÍÕµµ…É¥é•}¥¹Ù•¹Ñ½Éå}ÍØ)™É½´½™™¥¥…±}¥¹Ù•¹Ñ½Éå}¡…ÉÙ•ÍĞ¥µÁ½ÉĞ¡…ÉÙ•ÍÑ}É•‘…Á”°¡…ÉÙ•ÍÑ}Í¥¹…™±½È°A91}A=IQ0°%9MQ%QUQ%=91}A=IQ1L°M=UI}!%II!d)™É½´É…Ù¥µ•ÑÉ¥}ÍÑ½¬¥µÁ½ÉĞ±¥ÑÑ•É}ÍÑ½­}™É½µ}ÅÕ…‘É…ÑÌ°±¥ÑÑ•É}‘•ÁÑ¡}µ…ÍÍ}…±¥‰É…Ñ¥½¸°¹•É½µ…ÍÍ}±¥¹•}¥¹Ñ•ÉÍ•Ñ}ÍÑ½¬°…É‰½¹}ÍÑ½­}™É½µ}µ…ÍÌ)™É½´…É‰½¹}½µÁ…ÉÑµ•¹ÑÌ¥µÁ½ÉĞÑ…Á…©½Í}±¥ÑÑ•É}ÍÑ½­}½µÁ½¹•¹Ğ°Í…¹Ñ½}…µ‰É½Í¥½}±¥ÑÑ•É}ÍÑ½­}½µÁ½¹•¹Ğ°Á…¹Ñ…¹…±}¹¡•½±…¹‘¥…}±¥ÑÑ•É}…É‰½¹}½µÁ½¹•¹Ğ°Ñ…Á…©½Í}¹•É½µ…ÍÍ}½µÁ½¹•¹ÑÌ°¥™¹}¹•É½µ…ÍÍ}½µÁ½¹•¹Ğ°¥¹™•É}Õ™}™É½µ}…½¤°É½İÍ}™½É}½µÁ…ÉÑµ•¹Ğ°½µÁ½¹•¹Ñ}¡…Í}½¹™¥‘•¹•}¥¹Ñ•ÉÙ…°)™É½´µ…Á‰¥½µ…Í}é½¹…°¥µÁ½ÉĞµ…Á‰¥½µ…Í}±…ÍÍ}Á•É•¹Ñ…•Ì)™É½´±…¹‘}ÕÍ•}Í…È¥µÁ½ÉĞÉÕ¹}±…¹‘}ÕÍ”°É•Á½ÉÑ}±¥¹•Ì…Ì±…¹‘}ÕÍ•}É•Á½ÉÑ}±¥¹•Ì)™É½´¹…Ñ¥Ù•}…É‰½¸¥µÁ½ÉĞÍÕµµ…É¥é•}¹…Ñ¥Ù•}…É‰½¸°•ÍÑ¥µ…Ñ•}¹…Ñ¥Ù•}½µÁ½¹•¹ÑÌ()‘•˜}É•ÅÕ¥É•}Ù¥Í¥‰±•}½ÁÑ¥…±}¥µ…”¡¥µ…”±ÁÉ½Ù¥‘•È¤è(€€€€ˆˆ‰I•©•Ğ‰±…¹¬½‰±…¬¥µ…•Éä‰•™½É”…¡¥¹œ½È‘•±…É¥¹œÑ¡”µ…À±½…‘•¸ˆˆˆ(€€€¥˜¥µ…”¥Ì9½¹”½È¹½Ğ¡…Í…ÑÑÈ¡¥µ…”°‰½¹Ù•ÉĞˆ¤è(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È¡ÍÑÈ¡ÁÉ½Ù¥‘•È¤¬ˆÉ•Ñ½É¹½Ô¥µ…•´ƒÍÁÑ¥„¥¹Û…±¥‘„ˆ¤(€€€Á¥á•±Ìõ¹À¹…Í…ÉÉ…ä¡¥µ…”¹½¹Ù•ÉĞ ‰Iˆ¤±‘ÑåÁ”õ¹À¹Õ¥¹Ğà¤(€€€¥˜Á¥á•±Ì¹¹‘¥´„ôÌ½ÈÁ¥á•±Ì¹Í¡…Á•lÉt„ôÌ½ÈÁ¥á•±Ì¹Í¡…Á•lÁtğÈ½ÈÁ¥á•±Ì¹Í¡…Á•lÅtğÈè(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È¡ÍÑÈ¡ÁÉ½Ù¥‘•È¤¬ˆÉ•Ñ½É¹½Ô¥µ…•´ƒÍÁÑ¥„Í•´‘¥µ•¹ÏÕ•ÌÛ…±¥‘…Ìˆ¤(€€€€Œ=É…¹”=$ÍÑå±¥¹œµÕÍĞ¹½Ğµ…­”…¸½Ñ¡•Éİ¥Í”‰±…¬É…ÍÑ•ÈÁ…ÍÌ¸(€€€½Ù•É±…äô¡Á¥á•±Ílè°è°ÁtøÄÔÀ¤˜¡Á¥á•±Ílè°è°ÅtøØÔ¤˜¡Á¥á•±Ílè°è°ÅtğÄäÀ¤˜¡Á¥á•±Ílè°è°ÉtğÄÄÀ¤(€€€½ÁÑ¥…±}Á¥á•±ÌõÁ¥á•±Ímù½Ù•É±…åt(€€€¥˜½ÁÑ¥…±}Á¥á•±Ì¹Í¥é”ğÌ©µ…à ÄØ±¥¹Ğ¡Á¥á•±Ì¹Í¡…Á•lÁt©Á¥á•±Ì¹Í¡…Á•lÅt¨À¸ÀÔ¤¤è(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È¡ÍÑÈ¡ÁÉ½Ù¥‘•È¤¬ˆÉ•Ñ½É¹½ÔÍ½µ•¹Ñ”¼½¹Ñ½É¹¼=$°Í•´Á¥á•±ÌƒÍÁÑ¥½ÌÙ•É¥™¥…Ù•¥Ìˆ¤(€€€±Õµ¥¹…¹”õ½ÁÑ¥…±}Á¥á•±Ì¹…ÍÑåÁ”¡¹À¹™±½…ĞÌÈ¤¹µ•…¸¡…á¥ÌôÄ¤(€€€Àääõ™±½…Ğ¡¹À¹Á•É•¹Ñ¥±”¡±Õµ¥¹…¹”°ää¤¤(€€€ÍÁÉ•…õ™±½…Ğ¡¹À¹ÍÑ¡±Õµ¥¹…¹”¤¤(€€€Ù¥Í¥‰±•}™É…Ñ¥½¸õ™±½…Ğ¡¹À¹µ•…¸¡±Õµ¥¹…¹”øà¸À¤¤(€€€¥˜ÀääğÈÀ¸À½ÈÍÁÉ•…ğÔ¸À½ÈÙ¥Í¥‰±•}™É…Ñ¥½¸ğÀ¸ÄÔè(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È¡ÍÑÈ¡ÁÉ½Ù¥‘•È¤¬ˆÉ•Ñ½É¹½Ô¥µ…•´ƒÍÁÑ¥„ÁÉ•Ñ„½•´‰É…¹¼ì™…±±‰…¬…Ñ¥Ù…‘¼ˆ¤(€€€É•ÑÕÉ¸¥µ…”(()‘•˜}Í…¹¥Ñ¥é•}½ÁÑ¥…±}‘¥…¹½ÍÑ¥}Ñ•áĞ¡Ù…±Õ”¤è(€€€€ˆˆ‰I•µ½Ù”É•µ½Ñ”UI1Ì…¹É•‘•¹Ñ¥…°µ±¥­”ÅÕ•ÉäÙ…±Õ•Ì‰•™½É”±¥Á‰½…É•áÁ½ÉĞ¸ˆˆˆ(€€€Ñ•áĞõÍÑÈ¡Ù…±Õ”½È€ˆˆ¤(€€€Ñ•áĞõÉ”¹ÍÕˆ¡È‰¡ÑÑÁÌüè¼½myqÍt¬ˆ°‰mUI1}IQtˆ±Ñ•áĞ¤(€€€Ñ•áĞõÉ”¹ÍÕˆ¡Èˆ ı¤¤¡Í¥ñÑ½­•¹ñ±¥•¹Ñ}Í•É•ÑñÁ…ÍÍİ½É¤ô¡mx™qÍt¬¤ˆ±È‰pÄõmIQtˆ±Ñ•áĞ¤(€€€É•ÑÕÉ¸Ñ•áÑlèÄÈÀÁt(()‘•˜}Í…É}‘•Ñ…¥±Í}É•Á½ÉÑ}•á•ÉÁĞ¡‘•Ñ…¥±Ì¤è(€€€€ˆˆ‰-••À½¸µÍÉ••¸MHÑ•áĞ½µÁ…ĞìÁÉ•Í•ÉÙ”™Õ±°ÁÉ½Ù•¹…¹”¥¸)M=8¸ˆˆˆ(€€€¥˜¹½Ğ¥Í¥¹ÍÑ…¹”¡‘•Ñ…¥±Ì±‘¥Ğ¤è(€€€€€€€É•ÑÕÉ¸ì‰ÍÑ…ÑÕÌˆè‰8½ˆ°‰É•…Í½¸ˆè‰ÁÉ½Ù•¹§©¹¥„MH»¼‘¥ÍÁ½»µÙ•°‰ô(€€€…Õ‘¥Ğõ‘•Ñ…¥±Ì¹•Ğ ‰…Õ‘¥Ğˆ¤¥˜¥Í¥¹ÍÑ…¹”¡‘•Ñ…¥±Ì¹•Ğ ‰…Õ‘¥Ğˆ¤±‘¥Ğ¤•±Í”íô(€€€‘•˜•ÉÑ¥™¥…Ñ”¡Ù…±Õ”¤è(€€€€€€€¥˜¹½Ğ¥Í¥¹ÍÑ…¹”¡Ù…±Õ”±‘¥Ğ¤éÉ•ÑÕÉ¸9½¹”(€€€€€€€™¥•±‘Ìô ‰É½ÕÑ”ˆ°‰…Ñ…±½}Í•…É¡}½µÁ±•Ñ”ˆ°‰Á…¥¹…Ñ¥½¹}½µÁ±•Ñ”ˆ°‰Á¥á•±}É•…‘}½µÁ±•Ñ”ˆ°(€€€€€€€€€€€€€€€€‰…¹‘¥‘…Ñ•}Í•¹•}½Õ¹Ğˆ°‰Ñ•¡¹¥…±}•ÉÉ½É}½Õ¹Ğˆ°‰½Ù•É…•}…‰Í•¹•}½¹™¥Éµ•ˆ¤(€€€€€€€É•ÑÕÉ¸ì‰ÍÑ…ÑÕÌˆéÙ…±Õ”¹•Ğ ‰ÍÑ…ÑÕÌˆ¤°‰±½‰…±}Í•…É¡}½µÁ±•Ñ”ˆéÙ…±Õ”¹•Ğ ‰±½‰…±}Í•…É¡}½µÁ±•Ñ”ˆ¤°(€€€€€€€€€€€€€€€€‰Á…¥¹…Ñ¥½¹}½µÁ±•Ñ”ˆéÙ…±Õ”¹•Ğ ‰Á…¥¹…Ñ¥½¹}½µÁ±•Ñ”ˆ¤°‰Á¥á•±}É•…‘}½µÁ±•Ñ”ˆéÙ…±Õ”¹•Ğ ‰Á¥á•±}É•…‘}½µÁ±•Ñ”ˆ¤°(€€€€€€€€€€€€€€€€‰É½ÕÑ•Ìˆémí­•äéÉ½ÕÑ”¹•Ğ¡­•ä¤™½È­•ä¥¸™¥•±‘Ì¥˜­•ä¥¸É½ÕÑ•ô(€€€€€€€€€€€€€€€€€€€™½ÈÉ½ÕÑ”¥¸Ù…±Õ”¹•Ğ ‰É½ÕÑ•Ìˆ±mt¤¥˜¥Í¥¹ÍÑ…¹”¡É½ÕÑ”±‘¥Ğ¥uô(€€€½µÁ…É¥Í½¸õ‘•Ñ…¥±Ì¹•Ğ ‰¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸ˆ¤(€€€¥˜¥Í¥¹ÍÑ…¹”¡½µÁ…É¥Í½¸±‘¥Ğ¤è(€€€€€€€½µÁ…É¥Í½¸õí­•äé½µÁ…É¥Í½¸¹•Ğ¡­•ä¤™½È­•ä¥¸€ ‰ÍÑ…ÑÕÌˆ°‰É•…Í½¸ˆ°‰¹}Õ…}½µÁ…Ñ¥Ù•¥Ìˆ°(€€€€€€€€€€€€‰¥¹Ù•¹Ñ½Éå}¹}Õ¹¥ÅÕ•}Í…µÁ±¥¹}Õ¹¥ÑÌˆ°‰ÁÕ‰±¥Í¡•‘}…É•…Ñ•}½Õ¹Ğˆ°‰ÁÕ‰±¥Í¡•‘}ÍÑÉÕÑÕÉ…±}É•™•É•¹•}½Õ¹Ğˆ°(€€€€€€€€€€€€‰µ…Ñ¡•‘}ÁÕ‰±¥Í¡•‘}¥¹Ù•¹Ñ½Éå}Í½ÕÉ•Ìˆ°‰‰…Í•}¥™¹}•áÁ…¹‘¥‘…}ÕÍ…‘„ˆ°‰¹½Ñ}…‘‘•‘}Ñ½}ÍÑ½­}Ñ½Ñ…°ˆ°(€€€€€€€€€€€€‰ÕÍ…‰±•}¥¹Ù•¹Ñ½Éå}Í½ÕÉ•Í}½¹ÍÕ±Ñ•ˆ¤¥˜­•ä¥¸½µÁ…É¥Í½¹ô(€€€•±Í”è(€€€€€€€½µÁ…É¥Í½¸õ9½¹”(€€€™…±±‰…¬õ…Õ‘¥Ğ¹•Ğ ‰¥¹Ù•¹Ñ½Éå}™…±±‰…­}…Ñ”ˆ¤(€€€™…±±‰…¬õí­•äé™…±±‰…¬¹•Ğ¡­•ä¤™½È­•ä¥¸€ ‰•±¥¥‰±”ˆ°‰É•…Í½¸ˆ¤¥˜­•ä¥¸™…±±‰…­ô¥˜¥Í¥¹ÍÑ…¹”¡™…±±‰…¬±‘¥Ğ¤•±Í”9½¹”(€€€ÁÉ¥½É¥Ñäõ…Õ‘¥Ğ¹•Ğ ‰ÁÉ¥½É¥Ñå}¡•¥¡Ñ}É½ÕÑ•}…Ñ”ˆ¤(€€€ÁÉ¥½É¥Ñäõí­•äéÁÉ¥½É¥Ñä¹•Ğ¡­•ä¤™½È­•ä¥¸€ ‰ÍÑ…ÑÕÌˆ°‰É•…Í½¸ˆ°‰¥}…¹‘¥‘…Ñ•}…Ù…¥±…‰±”ˆ°‰¥}ÁÉ½µ½Ñ•ˆ¤¥˜­•ä¥¸ÁÉ¥½É¥Ñåô¥˜¥Í¥¹ÍÑ…¹”¡ÁÉ¥½É¥Ñä±‘¥Ğ¤•±Í”9½¹”(€€€É•ÑÕÉ¸ì‰ÍÑ…ÑÕÌˆé‘•Ñ…¥±Ì¹•Ğ ‰ÍÑ…ÑÕÌˆ¤°‰‘…Ñ…}½É¥¥¸ˆé‘•Ñ…¥±Ì¹•Ğ ‰‘…Ñ…}½É¥¥¸ˆ¤°(€€€€€€€€‰Í½ÕÉ”ˆé‘•Ñ…¥±Ì¹•Ğ ‰Í½ÕÉ”ˆ¤°‰…‰}µ}¡„ˆé‘•Ñ…¥±Ì¹•Ğ ‰…‰}µ}¡„ˆ¤°(€€€€€€€€‰Õ¹•ÉÑ…¥¹Ñå}µ}¡„ˆé‘•Ñ…¥±Ì¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñå}µ}¡„ˆ¤°‰¡•¥¡Ñ}É½ÕÑ•}ÍÑ…ÑÕÌˆé‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}É½ÕÑ•}ÍÑ…ÑÕÌˆ¤°(€€€€€€€€‰¡•¥¡Ñ}µ•…¹}´ˆé‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}µ•…¹}´ˆ¤°‰¡•¥¡Ñ}Í‘}´ˆé‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}Í‘}´ˆ¤°(€€€€€€€€‰¡•¥¡Ñ}¹}Ù…±¥‘}Á¥á•±Ìˆé‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}¹}Ù…±¥‘}Á¥á•±Ìˆ¤°(€€€€€€€€‰¡•¥¡Ñ}…‰Í•¹•}•ÉÑ¥™¥…Ñ”ˆé•ÉÑ¥™¥…Ñ”¡‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}…‰Í•¹•}•ÉÑ¥™¥…Ñ”ˆ¤¤°(€€€€€€€€‰ÁÉ¥½É¥Ñå}¡•¥¡Ñ}É½ÕÑ•}…Ñ”ˆéÁÉ¥½É¥Ñä°‰¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸ˆé½µÁ…É¥Í½¸°(€€€€€€€€‰¡•¥¡Ñ}ÍÑÉÕÑÕÉ•}µ½‘•°ˆè¡í­•äè¡‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}ÍÑÉÕÑÕÉ•}µ½‘•°ˆ¤½Èíô¤¹•Ğ¡­•ä¤(€€€€€€€€€€€™½È­•ä¥¸€ ‰ÍÑ…ÑÕÌˆ°‰É•…Í½¸ˆ°‰µ½‘•±}¥ˆ°‰¡•¥¡Ñ}µ•…¹}´ˆ°‰‰…Í…±}…É•…}´É}¡„ˆ°(€€€€€€€€€€€€€€€€‰¥¹Ù•¹Ñ½Éå}Í½ÕÉ”ˆ°‰¹½Ñ}ÕÍ•‘}…Í}…‰}ÁÉ•‘¥Ñ½Èˆ°‰¹½Ñ}…‘‘•‘}Ñ½}ÍÑ½­}Ñ½Ñ…°ˆ¤(€€€€€€€€€€€¥˜­•ä¥¸€¡‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}ÍÑÉÕÑÕÉ•}µ½‘•°ˆ¤½Èíô¥ô(€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}ÍÑÉÕÑÕÉ•}µ½‘•°ˆ¤±‘¥Ğ¤•±Í”9½¹”¤°(€€€€€€€€‰É•¥½¹…±}¥¹Ù•¹Ñ½Éå}ÍÑÉÕÑÕÉ•}É•™•É•¹”ˆé‘•Ñ…¥±Ì¹•Ğ ‰É•¥½¹…±}¥¹Ù•¹Ñ½Éå}ÍÑÉÕÑÕÉ•}É•™•É•¹”ˆ¤°(€€€€€€€€‰¥¹Ù•¹Ñ½Éå}™…±±‰…­}…Ñ”ˆé™…±±‰…­ô(()AA}YIM%=8ôˆÌ¸ÈØ¸àÔµAI5A<µaAI%59Q0ˆ)=I9ôˆåÀØˆì=IMPôˆŒÁÍÉˆìI8ôˆŒÄÔÕĞÌˆìA1ôˆÑÙÔˆìQaPôˆŒÌĞĞÄÍˆ((Œ½¹Ñ•Ì¥µÁ±•µ•¹Ñ…‘…Ì¹¼µ½Ñ½È¸Y…±½É•ÌµÁÉ½áäÏ¼Í•µÁÉ”É½ÑÕ±…‘½Ì½µ¼5=1=L¸)M=UILõì(€‰ÁÉ½Ñ½½°ˆè‰!¥„•Ğ…°¸€ ÈÀÄĞ¤°µ‰É…Á„±½É•ÍÑ…Ì°½Õµ•¹Ñ½Ì€ÈØØˆ°(€‰Í½¥°ˆè‰AÉ½¹…M½±½Ì½µ‰É…Á„M½±½Ì°•ÍÑ½ÅÕ”‘”…É‰½¹¼½ÉŸ‰¹¥¼€äÀ´°Á•É™¥Ì€ÃŠLÌÀ¼ØÀ¼ÄÀÀ´€¬‘¥…»ÍÍÑ¥¼‘”¥¹•ÉÑ•é„ˆ°(€‰‘•…‘İ½½ˆè‰M½%8ƒŠP·¥‘¥…Ì‘”¥¹Ù•¹Ó…É¥¼Á½È•ÍÑÉ…Ñ¼ìÉ‡µé•Ì™¥¹…Ìµ½ÉÑ…Ì¹¼Q…Á…«ÍÌè9M1	µ<€¼=I90€ÄÄÄØˆ°(€‰±¥ÑÑ•Èˆè‰9Õ¹•Ì€ ÈÀÄÔ¤€¬9…Í¥µ•¹Ñ¼•Ğ…°¸€ ÈÀÈĞ¤ƒŠPA…¹Ñ…¹…°½9¡•½³‰¹‘¥„½´%äÔ”…µ½ÍÑÉ…°ìÑ…µ‹¥´Q…Á…«ÍÌ”M…¹Ñ¼µ‰ËÍÍ¥¼•½•É…‘½Ìˆ°)ô)I==Q}IQ%<ôÀ¸ÈØìI==Q}1=\ôÀ¸ÄàìI==Q}!% ôÀ¸ÌÀ)I	=9}IQ%=8ôÀ¸ĞÜ()‘•˜}áå}½½É‘Ì¡½½É‘Ì¤è(€€€€ˆˆ‰I•ÑÕÉ¸€Éµ…À½½É‘¥¹…Ñ•Ì™É½´-50É¥¹Ì°¥¹½É¥¹œ½ÁÑ¥½¹…°…±Ñ¥ÑÕ‘”¸ˆˆˆ(€€€É•ÑÕÉ¸l¡™±½…Ğ¡½½É‘lÁt¤±™±½…Ğ¡½½É‘lÅt¤¤™½È½½É¥¸½½É‘Ít()‘•˜™½Éµ…Ñ}ÁÑ‰È¡Ù…±Õ”±‘•¥µ…±ÌôÈ¤è(€€€€ˆˆ‰½Éµ…Ğ„¹Õµ•É¥ŒÉ•ÍÕ±Ğ™½È	É…é¥±¥…¸É•…‘•ÉÌİ¥Ñ ¡…±˜µÕÀÉ½Õ¹‘¥¹œ¸ˆˆˆ(€€€¥˜Ù…±Õ”¥Ì9½¹”éÉ•ÑÕÉ¸€‰8½ˆ(€€€Á±…•Ìõ¥¹Ğ¡‘•¥µ…±Ì¤(€€€É½Õ¹‘•õ•¥µ…°¡ÍÑÈ¡Ù…±Õ”¤¤¹ÅÕ…¹Ñ¥é”¡•¥µ…° Ä¤¹Í…±•ˆ µÁ±…•Ì¤±É½Õ¹‘¥¹œõI=U9}!1}U@¤(€€€É…Üõ˜‰íÉ½Õ¹‘•è°¹íÁ±…•Íõ™ôˆ(€€€É•ÑÕÉ¸É…Ü¹É•Á±…” ˆ°ˆ°‰qàÀÀˆ¤¹É•Á±…” ˆ¸ˆ°ˆ°ˆ¤¹É•Á±…” ‰qàÀÀˆ°ˆ¸ˆ¤()‘•˜™½Éµ…Ñ}É•ÍÕ±Ñ}©Í½¸¡Ù…±Õ”¤è(€€€€ˆˆ‰I•¹‘•È‘¥…¹½ÍÑ¥Œ¹Õµ•É¥ŒÙ…±Õ•ÌÕÍ¥¹œÁĞµ	HÍ•Á…É…Ñ½ÉÌİ¥Ñ¡½ÕĞ¡…¹¥¹œÍÑ½É•‘…Ñ„¸ˆˆˆ(€€€¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”±‰½½°¤½ÈÙ…±Õ”¥Ì9½¹”éÉ•ÑÕÉ¸Ù…±Õ”(€€€¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”°¡¥¹Ğ±™±½…Ğ±•¥µ…°¤¤è(€€€€€€€É•ÑÕÉ¸™½Éµ…Ñ}ÁÑ‰È¡Ù…±Õ”°À¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”±¥¹Ğ¤•±Í”€Ø¤(€€€¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”±‘¥Ğ¤éÉ•ÑÕÉ¸íÍÑÈ¡¬¤é™½Éµ…Ñ}É•ÍÕ±Ñ}©Í½¸¡Ø¤™½È¬±Ø¥¸Ù…±Õ”¹¥Ñ•µÌ ¥ô(€€€¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”°¡±¥ÍĞ±ÑÕÁ±”¤¤éÉ•ÑÕÉ¸m™½Éµ…Ñ}É•ÍÕ±Ñ}©Í½¸¡Ø¤™½ÈØ¥¸Ù…±Õ•t(€€€É•ÑÕÉ¸Ù…±Õ”()‘•˜…ÁÁ}É•Í½ÕÉ”¡¹…µ”¤è(€€€‰…Í”õA…Ñ ¡•Ñ…ÑÑÈ¡ÍåÌ°‰}5%AMLˆ±A…Ñ ¡ÍåÌ¹•á•ÕÑ…‰±”¤¹Á…É•¹Ğ¤¤¥˜•Ñ…ÑÑÈ¡ÍåÌ°‰™É½é•¸ˆ±…±Í”¤•±Í”A…Ñ ¡}}™¥±•}|¤¹Á…É•¹Ğ(€€€Àõ‰…Í”½¹…µ”(€€€¥˜À¹•á¥ÍÑÌ ¤éÉ•ÑÕÉ¸À(€€€€Œ½¹•‘¥È‰Õ¥±‘Ìµ…ä­••À‘…Ñ„‰•Í¥‘”Ñ¡”•á•ÕÑ…‰±”É…Ñ¡•ÈÑ¡…¸¥¹Í¥‘”}¥¹Ñ•É¹…°(€€€ÄõA…Ñ ¡ÍåÌ¹•á•ÕÑ…‰±”¤¹Á…É•¹Ğ½¹…µ”¥˜•Ñ…ÑÑÈ¡ÍåÌ°‰™É½é•¸ˆ±…±Í”¤•±Í”À(€€€É•ÑÕÉ¸Ä()‘•˜…‰}µ•á¥…¹„¡‘‰¡}´¤è(€€€É•ÑÕÉ¸€À¸ÄÄàĞ©¹À¹Á½İ•È¡¹À¹…Í…ÉÉ…ä¡‘‰¡}´±‘ÑåÁ”õ™±½…Ğ¤°È¸ÔÌ¤()‘•˜±½…‘}¥¹Ù•¹Ñ½Éä¡Á…Ñ ¤è(€€€‘˜õÁ¹É•…‘}•á•°¡Á…Ñ ±Í¡••Ñ}¹…µ”ô‰	¥½µ…ÍÍ„ƒ…ÉÙ½É•ÌÙ¥Ù…Ìˆ±ÕÍ•½±Ìô‰éˆ¤(€€€‘˜¹½±Õµ¹Ìõl‰Á±½Ğˆ°‰ÑÉ•”ˆ°‰‘‰¡}´ˆ°‰¡•¥¡Ñ}´ˆ°‰ÍÁ•¥•Ì‰tì‘™l‰Á±½Ğ‰tõ‘™l‰Á±½Ğ‰t¹™™¥±° ¤(€€€‘˜õ‘™m‘™l‰ÑÉ•”‰t¹¹½Ñ¹„ ¤€˜‘™l‰‘‰¡}´‰t¹¹½Ñ¹„ ¥t¹½Áä ¤(€€€‘™l‰‘‰¡}´‰tõÁ¹Ñ½}¹Õµ•É¥Œ¡‘™l‰‘‰¡}´‰t±•ÉÉ½ÉÌô‰½•É”ˆ¤¨ÄÀÀ(€€€‘™l‰¡•¥¡Ñ}´‰tõÁ¹Ñ½}¹Õµ•É¥Œ¡‘™l‰¡•¥¡Ñ}´‰t±•ÉÉ½ÉÌô‰½•É”ˆ¤(€€€É•ÑÕÉ¸‘™m‘™l‰‘‰¡}´‰t¹‰•Ñß[h‘éì¶»§q«^uen(10,400)].copy()
+import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid, time
+import tls_setup  # V87.39: one TLS trust store for requests AND GDAL (Windows store + certifi + OS)
+tls_setup.configure()
+from datetime import datetime, timezone
+from pathlib import Path
+from decimal import Decimal, ROUND_HALF_UP
+import tkinter as tk
+import webbrowser
+from tkinter import ttk, filedialog, messagebox, simpledialog
+import numpy as np
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from PIL import Image, ImageTk
+from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
+from lband_preprocess import preprocess_lband
+from inventory_structure import summarize_inventory_csv
+from official_inventory_harvest import harvest_redape, harvest_sinaflor, PNLA_PORTAL, INSTITUTIONAL_PORTALS, SOURCE_HIERARCHY
+from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
+from carbon_compartments import tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, pantanal_nhecolandia_litter_carbon_component, tapajos_necromass_components, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
+from mapbiomas_zonal import mapbiomas_class_percentages
+from land_use_sar import run_land_use, report_lines as land_use_report_lines
+from native_carbon import summarize_native_carbon, estimate_native_components
+
+def _require_visible_optical_image(image,provider):
+    """Reject blank/black imagery before caching or declaring the map loaded."""
+    if image is None or not hasattr(image,"convert"):
+        raise RuntimeError(str(provider)+" retornou imagem Ã³ptica invÃ¡lida")
+    pixels=np.asarray(image.convert("RGB"),dtype=np.uint8)
+    if pixels.ndim!=3 or pixels.shape[2]!=3 or pixels.shape[0]<2 or pixels.shape[1]<2:
+        raise RuntimeError(str(provider)+" retornou imagem Ã³ptica sem dimensÃµes vÃ¡lidas")
+    # Orange AOI styling must not make an otherwise black raster pass.
+    overlay=(pixels[:,:,0]>150)&(pixels[:,:,1]>65)&(pixels[:,:,1]<190)&(pixels[:,:,2]<110)
+    optical_pixels=pixels[~overlay]
+    if optical_pixels.size<3*max(16,int(pixels.shape[0]*pixels.shape[1]*0.05)):
+        raise RuntimeError(str(provider)+" retornou somente o contorno AOI, sem pixels Ã³pticos verificÃ¡veis")
+    luminance=optical_pixels.astype(np.float32).mean(axis=1)
+    p99=float(np.percentile(luminance,99))
+    spread=float(np.std(luminance))
+    visible_fraction=float(np.mean(luminance>8.0))
+    if p99<20.0 or spread<5.0 or visible_fraction<0.15:
+        raise RuntimeError(str(provider)+" retornou imagem Ã³ptica preta/em branco; fallback ativado")
+    return image
+
+
+def _sanitize_optical_diagnostic_text(value):
+    """Remove remote URLs and credential-like query values before clipboard export."""
+    text=str(value or "")
+    text=re.sub(r"https?://[^\s]+","[URL_REDACTED]",text)
+    text=re.sub(r"(?i)(sig|token|client_secret|password)=([^&\s]+)",r"\1=[REDACTED]",text)
+    return text[:1200]
+
+
+def _sar_details_report_excerpt(details):
+    """Keep on-screen SAR text compact; preserve full provenance in JSON."""
+    if not isinstance(details,dict):
+        return {"status":"N/D","reason":"proveniÃªncia SAR nÃ£o disponÃ­vel"}
+    audit=details.get("audit") if isinstance(details.get("audit"),dict) else {}
+    def certificate(value):
+        if not isinstance(value,dict):return None
+        fields=("route","catalog_search_complete","pagination_complete","pixel_read_complete",
+                "candidate_scene_count","technical_error_count","coverage_absence_confirmed")
+        return {"status":value.get("status"),"global_search_complete":value.get("global_search_complete"),
+                "pagination_complete":value.get("pagination_complete"),"pixel_read_complete":value.get("pixel_read_complete"),
+                "routes":[{key:route.get(key) for key in fields if key in route}
+                    for route in value.get("routes",[]) if isinstance(route,dict)]}
+    comparison=details.get("inventory_agb_comparison")
+    if isinstance(comparison,dict):
+        comparison={key:comparison.get(key) for key in ("status","reason","n_ua_compativeis",
+            "inventory_n_unique_sampling_units","published_aggregate_count","published_structural_reference_count",
+            "matched_published_inventory_sources","base_ifn_expandida_usada","not_added_to_stock_total",
+            "usable_inventory_sources_consulted") if key in comparison}
+    else:
+        comparison=None
+    fallback=audit.get("inventory_fallback_gate")
+    fallback={key:fallback.get(key) for key in ("eligible","reason") if key in fallback} if isinstance(fallback,dict) else None
+    priority=audit.get("priority_height_route_gate")
+    priority={key:priority.get(key) for key in ("status","reason","cci_candidate_available","cci_promoted") if key in priority} if isinstance(priority,dict) else None
+    return {"status":details.get("status"),"data_origin":details.get("data_origin"),
+        "source":details.get("source"),"agb_mg_ha":details.get("agb_mg_ha"),
+        "uncertainty_mg_ha":details.get("uncertainty_mg_ha"),"height_route_status":details.get("height_route_status"),
+        "height_mean_m":details.get("height_mean_m"),"height_sd_m":details.get("height_sd_m"),
+        "height_n_valid_pixels":details.get("height_n_valid_pixels"),
+        "height_absence_certificate":certificate(details.get("height_absence_certificate")),
+        "priority_height_route_gate":priority,"inventory_agb_comparison":comparison,
+        "height_structure_model":({key:(details.get("height_structure_model") or {}).get(key)
+            for key in ("status","reason","model_id","height_mean_m","basal_area_m2_ha",
+                "inventory_source","not_used_as_agb_predictor","not_added_to_stock_total")
+            if key in (details.get("height_structure_model") or {})}
+            if isinstance(details.get("height_structure_model"),dict) else None),
+        "regional_inventory_structure_reference":details.get("regional_inventory_structure_reference"),
+        "inventory_fallback_gate":fallback}
+
+
+APP_VERSION="3.26.85-PRECAMPO-EXPERIMENTAL"
+ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
+
+# Fontes implementadas no motor. Valores-proxy sÃ£o sempre rotulados como MODELADOS.
+SOURCES={
+ "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
+ "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgÃ¢nico 90 m, perfis 0â€“30/60/100 cm + diagnÃ³stico de incerteza",
+ "deadwood":"SFB/IFN â€” mÃ©dias de inventÃ¡rio por estrato; raÃ­zes finas mortas no TapajÃ³s: NASA LBA-ECO / ORNL DAAC 1116",
+ "litter":"Nunes (2015) + Nascimento et al. (2024) â€” Pantanal/NhecolÃ¢ndia com IC95% amostral; tambÃ©m TapajÃ³s e Santo AmbrÃ³sio geocercados",
+}
+ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
+CARBON_FRACTION=0.47
+
+def _xy_coords(coords):
+    """Return 2D map coordinates from KML rings, ignoring optional altitude."""
+    return [(float(coord[0]),float(coord[1])) for coord in coords]
+
+def format_ptbr(value,decimals=2):
+    """Format a numeric result for Brazilian readers with half-up rounding."""
+    if value is None:return "N/D"
+    places=int(decimals)
+    rounded=Decimal(str(value)).quantize(Decimal(1).scaleb(-places),rounding=ROUND_HALF_UP)
+    raw=f"{rounded:,.{places}f}"
+    return raw.replace(",","\x00").replace(".",",").replace("\x00",".")
+
+def format_result_json(value):
+    """Render diagnostic numeric values using pt-BR separators without changing stored data."""
+    if isinstance(value,bool) or value is None:return value
+    if isinstance(value,(int,float,Decimal)):
+        return format_ptbr(value,0 if isinstance(value,int) else 6)
+    if isinstance(value,dict):return {str(k):format_result_json(v) for k,v in value.items()}
+    if isinstance(value,(list,tuple)):return [format_result_json(v) for v in value]
+    return value
+
+def app_resource(name):
+    base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
+    p=base/name
+    if p.exists():return p
+    # onedir builds may keep data beside the executable rather than inside _internal
+    q=Path(sys.executable).parent/name if getattr(sys,"frozen",False) else p
+    return q
+
+def agb_mexiana(dbh_cm):
+    return 0.1184*np.power(np.asarray(dbh_cm,dtype=float),2.53)
+
+def load_inventory(path):
+    df=pd.read_excel(path,sheet_name="Biomassa Ã¡rvores vivas",usecols="A:E")
+    df.columns=["plot","tree","dbh_m","height_m","species"]; df["plot"]=df["plot"].ffill()
+    df=df[df["tree"].notna() & df["dbh_m"].notna()].copy()
+    df["dbh_cm"]=pd.to_numeric(df["dbh_m"],errors="coerce")*100
+    df["height_m"]=pd.to_numeric(df["height_m"],errors="coerce")
+    return df[df["dbh_cm"].between(10,400)].copy()
 
 def summarize_inventory(df,plot_area_m2=250):
     d=df.copy(); d["agb_kg"]=agb_mexiana(d["dbh_cm"])
@@ -156,7 +301,181 @@ def _ibge_cache():
     root.mkdir(parents=True,exist_ok=True); return root
 
 def _download_zip(url,folder,tag):
-    """OffYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ¥¥…°%	i%@…¡”İ¥Ñ …Ñ½µ¥Œ¥¹Ñ•É¥Ñä¡•¬…¹ÑÉ…¹Í¥•¹ĞÉ•ÑÉ¥•Ì¸ˆˆˆ(€€€™É½´Ñ½½±Ì¹¥‰•}½™™¥¥…±}é¥À¥µÁ½ÉĞ‘½İ¹±½…‘}¥‰•}é¥À(€€€É•ÑÕÉ¸‘½İ¹±½…‘}¥‰•}é¥À¡ÕÉ°°™½±‘•È°Ñ…œ°AA}YIM%=8¤()‘•˜}É•…‘}é¥Á}‰‰½à¡éÁ…Ñ ±‰‰½àĞÌÈØ±ÁÉ•™•ÉÉ•ô ‰…É•„ˆ°¤¤è(€€€€ˆˆ‰I•…½¹±äÁ½±å½¹Ì¥¹Ñ•ÉÍ•Ñ¥¹œÑ¡”ÁÉ½Á•ÉÑä‰‰½à‘¥É•Ñ±ä™É½´i%@€¡0€½ÙÍ¥é¥À¤¸ˆˆˆ(€€€¥µÁ½ÉĞÁå½É¥¼(€€€™É½´ÁåÁÉ½¨¥µÁ½ÉĞQÉ…¹Í™½Éµ•È(€€€ÙÍ¤ô‰é¥Àè¼¼ˆ­A…Ñ ¡éÁ…Ñ ¤¹…Í}Á½Í¥à ¤(€€€±…å•ÉÌõÁå½É¥¼¹±¥ÍÑ}±…å•ÉÌ¡ÙÍ¤¤(€€€…¹‘¥‘…Ñ•Ìõmt(€€€™½ÈÉ½Ü¥¸±…å•ÉÌè(€€€€€€€¹…µ”õÍÑÈ¡É½İlÁt¤ì•½´õÍÑÈ¡É½İlÅt½È€ˆˆ¤(€€€€€€€¥˜€‰Á½±å½¸ˆ¥¸•½´¹±½İ•È ¤è(€€€€€€€€€€€Í½É”õÍÕ´ ÄÀ™½Èà¥¸ÁÉ•™•ÉÉ•¥˜à¹±½İ•È ¤¥¸¹…µ”¹±½İ•È ¤¤¬ Ô¥˜€‰‰É…Í¥°ˆ¥¸¹…µ”¹±½İ•È ¤•±Í”€À¤(€€€€€€€€€€€…¹‘¥‘…Ñ•Ì¹…ÁÁ•¹ ¡Í½É”±¹…µ”¤¤(€€€¥˜¹½Ğ…¹‘¥‘…Ñ•ÌéÉ…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰A…½Ñ”%	Í•´…µ…‘„Á½±¥½¹…°É•½¹¡•¥‘„¸ˆ¤(€€€±…å•Èõµ…à¡…¹‘¥‘…Ñ•Ì¥lÅt(€€€¥¹™¼õÁå½É¥¼¹É•…‘}¥¹™¼¡ÙÍ¤±±…å•Èõ±…å•È¤(€€€ÉÌõ¥¹™¼¹•Ğ ‰ÉÌˆ¤(€€€‰ˆõÑÕÁ±”¡™±½…Ğ¡à¤™½Èà¥¸‰‰½àĞÌÈØ¤(€€€¥˜ÉÌ…¹ÍÑÈ¡ÉÌ¤¹ÕÁÁ•È ¤¹½Ğ¥¸€ ‰AMèĞÌÈØˆ°‰AMèĞØÜĞˆ¤è(€€€€€€€ÑÈõQÉ…¹Í™½Éµ•È¹™É½µ}ÉÌ ‰AMèĞÌÈØˆ±ÉÌ±…±İ…åÍ}áäõQÉÕ”¤(€€€€€€€àÄ±äÄõÑÈ¹ÑÉ…¹Í™½É´¡‰‰lÁt±‰‰lÅt¤ìàÈ±äÈõÑÈ¹ÑÉ…¹Í™½É´¡‰‰lÉt±‰‰lÍt¤ì‰ˆô¡µ¥¸¡àÄ±àÈ¤±µ¥¸¡äÄ±äÈ¤±µ…à¡àÄ±àÈ¤±µ…à¡äÄ±äÈ¤¤(€€€œõÁå½É¥¼¹É•…‘}‘…Ñ…™É…µ”¡ÙÍ¤±±…å•Èõ±…å•È±‰‰½àõ‰ˆ±ÕÍ•}…ÉÉ½Üõ…±Í”¤(€€€¥˜œ¹•µÁÑäéÉ…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰…µ…‘„%	»¼É•Ñ½É¹½ÔÁ½³µ½¹½Ì¹¼•¹Ù•±½Á”‘„ÁÉ½ÁÉ¥•‘…‘”¸ˆ¤(€€€É•ÑÕÉ¸œ()‘•˜}™¥•±¡½±Ì±…¹‘¥‘…Ñ•Ì¤è(€€€±½ÜõíÍÑÈ¡Œ¤¹±½İ•È ¤éŒ™½ÈŒ¥¸½±Íô(€€€™½Èà¥¸…¹‘¥‘…Ñ•Ìè(€€€€€€€¥˜à¹±½İ•È ¤¥¸±½ÜéÉ•ÑÕÉ¸±½İmà¹±½İ•È ¥t(€€€™½ÈŒ¥¸½±Ìè(€€€€€€€±ŒõÍÑÈ¡Œ¤¹±½İ•È ¤(€€€€€€€¥˜…¹ä¡à¹±½İ•È ¤¥¸±Œ™½Èà¥¸…¹‘¥‘…Ñ•Ì¤éÉ•ÑÕÉ¸Œ(€€€É•ÑÕÉ¸9½¹”()‘•˜}Í¡…É•Ì¡ÁÉ½©•Ğ±Ñ¡•µ”±™¥•±‘Ì¤è(€€€¥µÁ½ÉĞ•½Á…¹‘…Ì…ÌÁ(€€€ÀõÁÉ½©•Ğ¹Ñ½}ÉÌ ‰AMèØäÌÌˆ¤ìĞõÑ¡•µ”¹Ñ½}ÉÌ ‰AMèØäÌÌˆ¤€€Œ•ÅÕ…°µ…É•„™½È	É…é¥°(€€€ÑÉäè(€€€€€€€¥µÁ½ÉĞÍ¡…Á•±ä(€€€€€€€Ál‰•½µ•ÑÉä‰tõÀ¹•½µ•ÑÉä¹µ…À¡±…µ‰‘„œéÍ¡…Á•±ä¹µ…­•}Ù…±¥¡œ¤¥˜œ¥Ì¹½Ğ9½¹”…¹¹½Ğœ¹¥Í}Ù…±¥•±Í”œ¤(€€€€€€€Ñl‰•½µ•ÑÉä‰tõĞ¹•½µ•ÑÉä¹µ…À¡±…µ‰‘„œéÍ¡…Á•±ä¹µ…­•}Ù…±¥¡œ¤¥˜œ¥Ì¹½Ğ9½¹”…¹¹½Ğœ¹¥Í}Ù…±¥•±Í”œ¤(€€€•á•ÁĞá•ÁÑ¥½¸èÁ…ÍÌ(€€€¥¹Ñ•ÈõÁ¹½Ù•É±…ä¡Ğ±Áml‰•½µ•ÑÉä‰ut±¡½Üô‰¥¹Ñ•ÉÍ•Ñ¥½¸ˆ±­••Á}•½µ}ÑåÁ”õ…±Í”¤(€€€€ŒI•©•Ğ½Ù•É±…ÁÁ¥¹œ%	Á½±å½¹ÌÉ…Ñ¡•ÈÑ¡…¸‘½Õ‰±”½Õ¹Ğ¹…Ñ¥Ù”¡•Ñ…É•Ì¸(€€€€ŒQ¡”Ñ•ÍĞ¥ÌÁ•É™½Éµ•…™Ñ•È±¥ÁÁ¥¹œ•Ù•Éä™•…ÑÕÉ”Ñ¼Ñ¡”=$¸(€€€¥¹Ñ•Èõ¥¹Ñ•Ém¥¹Ñ•È¹•½µ•ÑÉä¹¹½Ñ¹„ ¤€˜ù¥¹Ñ•È¹•½µ•ÑÉä¹¥Í}•µÁÑåt¹½Áä ¤(€€€¥˜¥¹Ñ•È¹•µÁÑäéÉ•ÑÕÉ¸mt(€€€Õ¹¥½¹}…É•„õ™±½…Ğ¡¥¹Ñ•È¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹…É•„¤(€€€ÍÕµµ•‘}…É•„õ™±½…Ğ¡¥¹Ñ•È¹•½µ•ÑÉä¹…É•„¹ÍÕ´ ¤¤(€€€¥˜ÍÕµµ•‘}…É•„µÕ¹¥½¹}…É•„€øµ…à Ä¸À±Õ¹¥½¹}…É•„¨Å”´à¤è(€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰M½‰É•Á½Í§Ÿ¼•¹ÑÉ”Á½³µ½¹½Ì%	èƒ…É•„…µ‹µÕ„ì±…ÍÍ¥™¥‡Ÿ¼‰±½ÅÕ•…‘„¸ˆ¤(€€€¥¹Ñ•Él‰}¡„‰tõ¥¹Ñ•È¹•½µ•ÑÉä¹…É•„¼ÄÀÀÀÀ(€€€Ñ½Ñ…°õ™±½…Ğ¡¥¹Ñ•Él‰}¡„‰t¹ÍÕ´ ¤¤(€€€¥˜Ñ½Ñ…°ğôÀéÉ•ÑÕÉ¸mt(€€€½ÕĞõmt(€€€…½¥}…É•„õ™±½…Ğ¡À¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹…É•„¼ÄÀÀÀÀ¤(€€€½Ù•É•õµ¥¸¡Ñ½Ñ…°±…½¥}…É•„¤(€€€µ¥ÍÍ¥¹œõµ…à À¸À±…½¥}…É•„µ½Ù•É•¤(€€€™½È™¥•±¥¸™¥•±‘Ìè(€€€€€€€¥˜™¥•±…¹™¥•±¥¸¥¹Ñ•È¹½±Õµ¹Ìè(€€€€€€€€€€€œõ¥¹Ñ•È¹É½ÕÁ‰ä¡™¥•±±‘É½Á¹„õ…±Í”¥l‰}¡„‰t¹ÍÕ´ ¤¹Í½ÉÑ}Ù…±Õ•Ì¡…Í•¹‘¥¹œõ…±Í”¤(€€€€€€€€€€€±…ÍÍ•Ìõl¡ÍÑÈ¡¬¤¥˜Á¹¹½Ñ¹„¡¬¤•±Í”€‰;¼±…ÍÍ¥™¥…‘¼ˆ±™±½…Ğ¡Ø¤±™±½…Ğ¡Ø½…½¥}…É•„¨ÄÀÀ¤¤™½È¬±Ø¥¸œ¹¥Ñ•µÌ ¤¥˜ØøÁt(€€€€€€€€€€€¥˜µ¥ÍÍ¥¹œùµ…à À¸ÀÄ±…½¥}…É•„¨Å”´à¤é±…ÍÍ•Ì¹…ÁÁ•¹  ‰M•´½‰•ÉÑÕÉ„%	ˆ±µ¥ÍÍ¥¹œ±™±½…Ğ¡µ¥ÍÍ¥¹œ½…½¥}…É•„¨ÄÀÀ¤¤¤(€€€€€€€€€€€½ÕĞ¹…ÁÁ•¹ ¡™¥•±±±…ÍÍ•Ì¤¤(€€€É•ÑÕÉ¸½ÕĞ()‘•˜}Í¡…É•Í}İ¥Ñ¡}½‘”¡ÁÉ½©•Ğ±Ñ¡•µ”±¹…µ•}™¥•±±½‘•}™¥•±¤è(€€€€ˆˆ‰É•„µİ•¥¡Ñ•%	É•¥½¸¹…µ•ÌÉ•Ñ…¥¹¥¹œÑ¡•¥È½™™¥¥…°Á¡åÑ½É•¥½¸½‘”¸ˆˆˆ(€€€¥µÁ½ÉĞ•½Á…¹‘…Ì…ÌÁ(€€€ÀõÁÉ½©•Ğ¹Ñ½}ÉÌ ‰AMèØäÌÌˆ¤ìĞõÑ¡•µ”¹Ñ½}ÉÌ ‰AMèØäÌÌˆ¤€€Œ•ÅÕ…°µ…É•„™½È	É…é¥°(€€€ÑÉäè(€€€€€€€¥µÁ½ÉĞÍ¡…Á•±ä(€€€€€€€Ál‰•½µ•ÑÉä‰tõÀ¹•½µ•ÑÉä¹µ…À¡±…µ‰‘„œéÍ¡…Á•±ä¹µ…­•}Ù…±¥¡œ¤¥˜œ¥Ì¹½Ğ9½¹”…¹¹½Ğœ¹¥Í}Ù…±¥•±Í”œ¤(€€€€€€€Ñl‰•½µ•ÑÉä‰tõĞ¹•½µ•ÑÉä¹µ…À¡±…µ‰‘„œéÍ¡…Á•±ä¹µ…­•}Ù…±¥¡œ¤¥˜œ¥Ì¹½Ğ9½¹”…¹¹½Ğœ¹¥Í}Ù…±¥•±Í”œ¤(€€€•á•ÁĞá•ÁÑ¥½¸èÁ…ÍÌ(€€€½±Õµ¹Ìõl‰•½µ•ÑÉäˆ±¹…µ•}™¥•±‘t¬¡m½‘•}™¥•±‘t¥˜½‘•}™¥•±•±Í”mt¤(€€€¥¹Ñ•ÈõÁ¹½Ù•É±…ä¡Ñm½±Õµ¹Ít±Áml‰•½µ•ÑÉä‰ut±¡½Üô‰¥¹Ñ•ÉÍ•Ñ¥½¸ˆ±­••Á}•½µ}ÑåÁ”õ…±Í”¤(€€€€ŒI•©•Ğ½Ù•É±…ÁÁ¥¹œ%	Á½±å½¹ÌÉ…Ñ¡•ÈÑ¡…¸‘½Õ‰±”½Õ¹Ğ¹…Ñ¥Ù”¡•Ñ…É•Ì¸(€€€€ŒQ¡”Ñ•ÍĞ¥ÌÁ•É™½Éµ•…™Ñ•È±¥ÁÁ¥¹œ•Ù•Éä™•…ÑÕÉ”Ñ¼Ñ¡”=$¸(€€€¥¹Ñ•Èõ¥¹Ñ•Ém¥¹Ñ•È¹•½µ•ÑÉä¹¹½Ñ¹„ ¤€˜ù¥¹Ñ•È¹•½µ•ÑÉä¹¥Í}•µÁÑåt¹½Áä ¤(€€€¥˜¥¹Ñ•È¹•µÁÑäéÉ•ÑÕÉ¸mt(€€€Õ¹¥½¹}…É•„õ™±½…Ğ¡¥¹Ñ•È¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹…É•„¤(€€€ÍÕµµ•‘}…É•„õ™±½…Ğ¡¥¹Ñ•È¹•½µ•ÑÉä¹…É•„¹ÍÕ´ ¤¤(€€€¥˜ÍÕµµ•‘}…É•„µÕ¹¥½¹}…É•„€øµ…à Ä¸À±Õ¹¥½¹}…É•„¨Å”´à¤è(€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰M½‰É•Á½Í§Ÿ¼•¹ÑÉ”Á½³µ½¹½Ì%	èƒ…É•„…µ‹µÕ„ì±…ÍÍ¥™¥‡Ÿ¼‰±½ÅÕ•…‘„¸ˆ¤(€€€¥¹Ñ•Él‰}¡„‰tõ¥¹Ñ•È¹•½µ•ÑÉä¹…É•„¼ÄÀÀÀÀìÑ½Ñ…°õ™±½…Ğ¡¥¹Ñ•Él‰}¡„‰t¹ÍÕ´ ¤¤(€€€¥˜Ñ½Ñ…°ğôÀéÉ•ÑÕÉ¸mt(€€€­•åÌõm¹…µ•}™¥•±‘t¬¡m½‘•}™¥•±‘t¥˜½‘•}™¥•±•±Í”mt¤(€€€½ÕĞõ¥¹Ñ•È¹É½ÕÁ‰ä¡­•åÌ±‘É½Á¹„õ…±Í”¥l‰}¡„‰t¹ÍÕ´ ¤¹Í½ÉÑ}Ù…±Õ•Ì¡…Í•¹‘¥¹œõ…±Í”¤(€€€…½¥}…É•„õ™±½…Ğ¡À¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹…É•„¼ÄÀÀÀÀ¸À¤(€€€¥˜…½¥}…É•„ğôÀéÉ…¥Í”Y…±Õ•ÉÉ½È ‰=$Í•´ƒ…É•„µ•¹ÍÕË…Ù•°Á…É„É•§¼™¥Ñ½•½³Í¥„¸ˆ¤(€€€É•½É‘Ìõmì‰¹…µ”ˆéÍÑÈ¡­•ålÁt¥˜¥Í¥¹ÍÑ…¹”¡­•ä±ÑÕÁ±”¤•±Í”­•ä¤°(€€€€€€€€€€€€€‰½‘”ˆè¡ÍÑÈ¡­•ålÅt¤¥˜½‘•}™¥•±…¹¥Í¥¹ÍÑ…¹”¡­•ä±ÑÕÁ±”¤…¹­•ålÅt¥Ì¹½Ğ9½¹”•±Í”9½¹”¤°(€€€€€€€€€€€€€‰…É•…}¡„ˆé™±½…Ğ¡…É•„¤°‰Á•É•¹Ğˆé™±½…Ğ¡…É•„½…½¥}…É•„¨ÄÀÀ¥ô(€€€€€€€€€€€€™½È­•ä±…É•„¥¸½ÕĞ¹¥Ñ•µÌ ¤¥˜…É•„øÁt(€€€€ŒA•É•¹Ñ…•Ì‘•ÍÉ¥‰”Ñ¡”İ¡½±”=$°¥¹±Õ‘¥¹œ…¹äÕ¹µ…ÁÁ•É•µ…¥¹‘•È¸(€€€µ¥ÍÍ¥¹œõµ…à À¸À±…½¥}…É•„µÕ¹¥½¹}…É•„¼ÄÀÀÀÀ¸À¤(€€€¥˜µ¥ÍÍ¥¹œùµ…à À¸ÀÄ±…½¥}…É•„¨Å”´à¤è(€€€€€€€É•½É‘Ì¹…ÁÁ•¹¡ì‰¹…µ”ˆè‰M•´½‰•ÉÑÕÉ„%	ˆ°‰½‘”ˆé9½¹”°‰…É•…}¡„ˆéµ¥ÍÍ¥¹œ°(€€€€€€€€€€€€€€€€€€€€€€€€‰Á•É•¹Ğˆéµ¥ÍÍ¥¹œ½…½¥}…É•„¨ÄÀÁô¤(€€€É•ÑÕÉ¸É•½É‘Ì()‘•˜ÁÉ¥µ…Éå}¥‰•}Á¡åÍ¥½¹½µä¡‘¥…¹½Í¥Ì¤è(€€€€ˆˆ‰I•ÑÕÉ¸Ñ¡”‘½µ¥¹…¹ĞÕÉÉ•¹Ğ%	Á¡åÑ½•½É…Á¡¥ŒÉ•¥½¸€¡±••¹‘|Ä¤¸((€€€±••¹‘|È‘•ÍÉ¥‰•ÌÑ¡”ÁÉ•‘½µ¥¹…¹ĞÙ••Ñ…Ñ¥½¸½Ù•È±…ÍÌ…¹¥ÌÕÍ•™Õ°…Ì(€€€„Í•½¹‘…Éä‘•ÍÉ¥ÁÑ½È°‰ÕĞ¥Ğ¥Ì¹½Ğ„ÍÕ‰ÍÑ¥ÑÕÑ”™½ÈÑ¡”Á¡åÑ½•½É…Á¡¥Œ(€€€É•¥½¸É•ÅÕ•ÍÑ•™½Èµ½‘•°µ‘½µ…¥¸Í•±•Ñ¥½¸¸(€€€€ˆˆˆ(€€€™½ÈÉ½ÕÀ¥¸€¡‘¥…¹½Í¥Ì½Èíô¤¹•Ğ ‰Ù••Ñ……¼ˆ±mt¤è(€€€€€€€¥˜ÍÑÈ¡É½ÕÀ¹•Ğ ‰…µÁ¼ˆ°ˆˆ¤¤¹…Í•™½± ¤ôô‰±••¹‘…|Äˆè(€€€€€€€€€€€±…ÍÍ•ÌõÉ½ÕÀ¹•Ğ ‰±…ÍÍ•Ìˆ¤½Èmt(€€€€€€€€€€€¥˜±…ÍÍ•ÌéÉ•ÑÕÉ¸ÍÑÈ¡±…ÍÍ•ÍlÁulÁt¤(€€€É•ÑÕÉ¸€ˆˆ()‘•˜¥‰•}…É•…}ÍÕµµ…Éå}±¥¹•Ì¡‘¥…¹½Í¥Ì¤è(€€€€ˆˆ‰I•…‘…‰±”%	½Ù•É…”ÍÕµµ…Éäİ¥Ñ ½ÉÉ•Ğ…É•„½Á•É•¹Ñ…”½É‘•É¥¹œ¸ˆˆˆ(€€€É½ÕÁÌõíÍÑÈ¡à¹•Ğ ‰…µÁ¼ˆ°ˆˆ¤¤¹…Í•™½± ¤éà¹•Ğ ‰±…ÍÍ•Ìˆ¤½Èmt(€€€€€€€€€€€™½Èà¥¸€¡‘¥…¹½Í¥Ì½Èíô¤¹•Ğ ‰Ù••Ñ……¼ˆ±mt¥ô(€€€±¥¹•Ìõmt(€€€±…‰•±Ìô  ‰±••¹‘…|Äˆ°‰I•§¼™¥Ñ½•½³Í¥„A=Q9%0%	€¡»¼½µÁÉ½Ù„½‰•ÉÑÕÉ„…ÑÕ…°¤ˆ¤°(€€€€€€€€€€€€ ‰±••¹‘…|Èˆ°‰½‰•ÉÑÕÉ„Ù••Ñ…°…ÉÑ½Ë…™¥„%	€¡±••¹‘…|ÈìÉ•™•Ë©¹¥„°»¼½µÁÉ½Ù„½‰•ÉÑÕÉ„…ÑÕ…°¤ˆ¤¤(€€€™½È™¥•±±±…‰•°¥¸±…‰•±Ìè(€€€€€€€É½İÌõÉ½ÕÁÌ¹•Ğ¡™¥•±¤½Èmt(€€€€€€€¥˜¹½ĞÉ½İÌè(€€€€€€€€€€€½¹Ñ¥¹Õ”(€€€€€€€±¥¹•Ì¹…ÁÁ•¹¡±…‰•°¬ˆèˆ¤(€€€€€€€™½ÈÉ½Ü¥¸É½İÌè(€€€€€€€€€€€¥˜±•¸¡É½Ü¤ğÌè(€€€€€€€€€€€€€€€½¹Ñ¥¹Õ”(€€€€€€€€€€€¹…µ”±…É•…}¡„±Á•É•¹ĞõÉ½İlèÍt(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹¡˜ˆ€í¹…µ•ôƒŠPí™½Éµ…Ñ}ÁÑ‰È¡™±½…Ğ¡…É•…}¡„¤°È¥ô¡„€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€˜ˆ¡í™½Éµ…Ñ}ÁÑ‰È¡™±½…Ğ¡Á•É•¹Ğ¤°È¥ô”‘„=$¤ˆ¤(€€€€€€€€€€€•á•ÁĞ€¡QåÁ•ÉÉ½È±Y…±Õ•ÉÉ½È¤è(€€€€€€€€€€€€€€€½¹Ñ¥¹Õ”(€€€¥˜¹½Ğ…¹ä¡±¥¹”¹ÍÑ…ÉÑÍİ¥Ñ  ‰I•§¼™¥Ñ½•½³Í¥„A=Q9%0ˆ¤™½È±¥¹”¥¸±¥¹•Ì¤è(€€€€€€€•ÉÉ½Èô¡‘¥…¹½Í¥Ì½Èíô¤¹•Ğ ‰Ù••Ñ……½}•ÉÉ½Èˆ¤(€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ‰I•§¼™¥Ñ½•½³Í¥„A=Q9%0%	€¡±••¹‘…|Ä°»¼½‰•ÉÑÕÉ„…ÑÕ…°¤è€ˆ(€€€€€€€€€€€€€€€€€€€€€¬ ‰»¼‘¥ÍÁ½»µÙ•°ƒŠP€ˆ­ÍÑÈ¡•ÉÉ½È¤¥˜•ÉÉ½È•±Í”€‰Í•´±…ÍÍ”¥¹Ñ•ÉÍ•Ñ…‘„ˆ¤¤(€€€É•ÑÕÉ¸±¥¹•Ì()‘•˜±½…‘}¥‰•}±…¹‘}ÕÍ•}É•™•É•¹”¡ÁÉ½©•Ğ¤è(€€€€ˆˆ‰UÍ”Ñ¡”½™™¥¥…°…¡•½‰‰½à%	Á½±å½¹Ì™½ÈÑ¡”™…±±‰…¬Á…ÉÑ¥Ñ¥½¸¸ˆˆˆ(€€€É½½Ğõ}¥‰•}…¡” ¤¼‰Ù••Ñ……½|ÈÀÈØˆ(€€€…É¡¥Ù”õ}‘½İ¹±½…‘}é¥À¡%	}Y|ÈÀÈÙ}UI0±É½½Ğ°‰Ù••}…É•…|ÈÀÈØˆ¤(€€€±…å•Èõ}É•…‘}é¥Á}‰‰½à¡…É¡¥Ù”±ÑÕÁ±”¡ÁÉ½©•Ğ¹Ñ½}ÉÌ ‰AMèĞÌÈØˆ¤¹Ñ½Ñ…±}‰½Õ¹‘Ì¤° ‰Ù••}…É•„ˆ°‰…É•„ˆ°‰‰É…Í¥°ˆ¤¤(€€€™¥•±õ}™¥•±¡±…å•È¹½±Õµ¹Ì±l‰±••¹‘…|Ä‰t¤(€€€¥˜¹½Ğ™¥•±éÉ…¥Í”Y…±Õ•ÉÉ½È ‰…µ…‘„½™¥¥…°%	Í•´±••¹‘…|Ä¸ˆ¤(€€€É•ÑÕÉ¸±…å•È±™¥•±()‘•˜}Ù•É¥™¥•‘}Í…É}¡•¥¡Ñ}‘•Ñ…¥±Ì¡‘•Ñ…¥±Ì¤è(€€€€ˆˆ‰I•ÑÕÉ¸½¹±äÑ¡”¥¹‘•Á•¹‘•¹Ñ±äµ•…ÍÕÉ•…¹½Áäµ¡•¥¡ĞÁÉ½‘ÕĞÉ•½É¸ˆˆˆ(€€€¥˜¹½Ğ¥Í¥¹ÍÑ…¹”¡‘•Ñ…¥±Ì±‘¥Ğ¤éÉ•ÑÕÉ¸íô(€€€¹•ÍÑ•õ‘•Ñ…¥±Ì¹•Ğ ‰Í…É}¡•¥¡Ğˆ¤(€€€¥˜¥Í¥¹ÍÑ…¹”¡¹•ÍÑ•±‘¥Ğ¤éÉ•ÑÕÉ¸¹•ÍÑ•(€€€€Œ1•…äÉ•½É‘Ì…¸ÍÕÁÁ±ä¡•¥¡Ğµ•Ñ…‘…Ñ„…ĞÑ¡”Ñ½À±•Ù•°°‰ÕĞ…¸(€€€€ŒÁÉ½‘ÕĞÌ¥‘•¹Ñ¥Ñä½Á…Ñ µÕÍĞ¹•Ù•È‰”µ¥Í±…‰•±•…Ì„¡•¥¡ĞÁÉ½‘ÕĞ¸(€€€¥˜‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}µ•ÑÉ¥Œˆ¤…¹€‰¤ˆ¹½Ğ¥¸ÍÑÈ¡‘•Ñ…¥±Ì¹•Ğ ‰ÁÉ½‘ÕĞˆ¤½È€ˆˆ¤¹…Í•™½± ¤è(€€€€€€€É•ÑÕÉ¸‘•Ñ…¥±Ì(€€€É•ÑÕÉ¸íô(()‘•˜}Í…É}‘…Í¡‰½…É‘}Á…å±½…¡¹…Ñ¥Ù”°±…¹õ9½¹”¤è(€€€€ˆˆ‰AÉ•Í•ÉÙ”…É‰½¸MH‘•Ñ…¥±Ì…¹…¹¹Õ…°Í•µ…¹Ñ¥Œµ…Í­Ì…Ğ‘…Í¡‰½…É±•Ù•°¸ˆˆˆ(€€€ÍÑÉ…Ñ„õmt(€€€¡•¥¡Ñ}ÁÉ½‘ÕÑÌõmt(€€€™½È¥Ñ•´¥¸€¡¹…Ñ¥Ù”½Èíô¤¹•Ğ ‰ÍÑÉ…Ñ„ˆ±mt¤½Èmtè(€€€€€€€‘•Ñ…¥±Ìõ¥Ñ•´¹•Ğ ‰Í…É}‘•Ñ…¥±Ìˆ¤½Èíô(€€€€€€€…Õ‘¥Ğõ¥Ñ•´¹•Ğ ‰Í…É}…Õ‘¥Ğˆ¤½Èíô(€€€€€€€¥˜‘•Ñ…¥±Ì½È…Õ‘¥Ğè(€€€€€€€€€€€€Œ-••À$½…¹…¹½Áäµ¡—[h‘éì¶»§q«^ught source records distinct.
+    """Official IBGE ZIP cache with atomic integrity check and transient retries."""
+    from tools.ibge_official_zip import download_ibge_zip
+    return download_ibge_zip(url, folder, tag, APP_VERSION)
+
+def _read_zip_bbox(zpath,bbox4326,preferred=("area",)):
+    """Read only polygons intersecting the property bbox directly from ZIP (GDAL /vsizip)."""
+    import pyogrio
+    from pyproj import Transformer
+    vsi="zip://"+Path(zpath).as_posix()
+    layers=pyogrio.list_layers(vsi)
+    candidates=[]
+    for row in layers:
+        name=str(row[0]); geom=str(row[1] or "")
+        if "polygon" in geom.lower():
+            score=sum(10 for x in preferred if x.lower() in name.lower())+(5 if "brasil" in name.lower() else 0)
+            candidates.append((score,name))
+    if not candidates:raise RuntimeError("Pacote IBGE sem camada poligonal reconhecida.")
+    layer=max(candidates)[1]
+    info=pyogrio.read_info(vsi,layer=layer)
+    crs=info.get("crs")
+    bb=tuple(float(x) for x in bbox4326)
+    if crs and str(crs).upper() not in ("EPSG:4326","EPSG:4674"):
+        tr=Transformer.from_crs("EPSG:4326",crs,always_xy=True)
+        x1,y1=tr.transform(bb[0],bb[1]); x2,y2=tr.transform(bb[2],bb[3]); bb=(min(x1,x2),min(y1,y2),max(x1,x2),max(y1,y2))
+    g=pyogrio.read_dataframe(vsi,layer=layer,bbox=bb,use_arrow=False)
+    if g.empty:raise RuntimeError("A camada IBGE nÃ£o retornou polÃ­gonos no envelope da propriedade.")
+    return g
+
+def _field(cols,candidates):
+    low={str(c).lower():c for c in cols}
+    for x in candidates:
+        if x.lower() in low:return low[x.lower()]
+    for c in cols:
+        lc=str(c).lower()
+        if any(x.lower() in lc for x in candidates):return c
+    return None
+
+def _shares(project,theme,fields):
+    import geopandas as gpd
+    p=project.to_crs("EPSG:6933"); t=theme.to_crs("EPSG:6933")  # equal-area for Brazil
+    try:
+        import shapely
+        p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+        t["geometry"]=t.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+    except Exception: pass
+    inter=gpd.overlay(t,p[["geometry"]],how="intersection",keep_geom_type=False)
+    # Reject overlapping IBGE polygons rather than double count native hectares.
+    # The test is performed after clipping every feature to the AOI.
+    inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
+    if inter.empty:return []
+    union_area=float(inter.geometry.union_all().area)
+    summed_area=float(inter.geometry.area.sum())
+    if summed_area-union_area > max(1.0,union_area*1e-8):
+        raise ValueError("SobreposiÃ§Ã£o entre polÃ­gonos IBGE: Ã¡rea ambÃ­gua; classificaÃ§Ã£o bloqueada.")
+    inter["_ha"]=inter.geometry.area/10000
+    total=float(inter["_ha"].sum())
+    if total<=0:return []
+    out=[]
+    aoi_area=float(p.geometry.union_all().area/10000)
+    covered=min(total,aoi_area)
+    missing=max(0.0,aoi_area-covered)
+    for field in fields:
+        if field and field in inter.columns:
+            g=inter.groupby(field,dropna=False)["_ha"].sum().sort_values(ascending=False)
+            classes=[(str(k) if pd.notna(k) else "NÃ£o classificado",float(v),float(v/aoi_area*100)) for k,v in g.items() if v>0]
+            if missing>max(0.01,aoi_area*1e-8):classes.append(("Sem cobertura IBGE",missing,float(missing/aoi_area*100)))
+            out.append((field,classes))
+    return out
+
+def _shares_with_code(project,theme,name_field,code_field):
+    """Area-weighted IBGE region names retaining their official phytoregion code."""
+    import geopandas as gpd
+    p=project.to_crs("EPSG:6933"); t=theme.to_crs("EPSG:6933")  # equal-area for Brazil
+    try:
+        import shapely
+        p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+        t["geometry"]=t.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
+    except Exception: pass
+    columns=["geometry",name_field]+([code_field] if code_field else [])
+    inter=gpd.overlay(t[columns],p[["geometry"]],how="intersection",keep_geom_type=False)
+    # Reject overlapping IBGE polygons rather than double count native hectares.
+    # The test is performed after clipping every feature to the AOI.
+    inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
+    if inter.empty:return []
+    union_area=float(inter.geometry.union_all().area)
+    summed_area=float(inter.geometry.area.sum())
+    if summed_area-union_area > max(1.0,union_area*1e-8):
+        raise ValueError("SobreposiÃ§Ã£o entre polÃ­gonos IBGE: Ã¡rea ambÃ­gua; classificaÃ§Ã£o bloqueada.")
+    inter["_ha"]=inter.geometry.area/10000; total=float(inter["_ha"].sum())
+    if total<=0:return []
+    keys=[name_field]+([code_field] if code_field else [])
+    out=inter.groupby(keys,dropna=False)["_ha"].sum().sort_values(ascending=False)
+    aoi_area=float(p.geometry.union_all().area/10000.0)
+    if aoi_area<=0:raise ValueError("AOI sem Ã¡rea mensurÃ¡vel para regiÃ£o fitoecolÃ³gica.")
+    records=[{"name":str(key[0] if isinstance(key,tuple) else key),
+             "code":(str(key[1]) if code_field and isinstance(key,tuple) and key[1] is not None else None),
+             "area_ha":float(area),"percent":float(area/aoi_area*100)}
+             for key,area in out.items() if area>0]
+    # Percentages describe the whole AOI, including any unmapped remainder.
+    missing=max(0.0,aoi_area-union_area/10000.0)
+    if missing>max(0.01,aoi_area*1e-8):
+        records.append({"name":"Sem cobertura IBGE","code":None,"area_ha":missing,
+                        "percent":missing/aoi_area*100})
+    return records
+
+def primary_ibge_physiognomy(diagnosis):
+    """Return the dominant current IBGE phytogeographic region (legend_1).
+
+    legend_2 describes the predominant vegetation cover class and is useful as
+    a secondary descriptor, but it is not a substitute for the phytogeographic
+    region requested for model-domain selection.
+    """
+    for group in (diagnosis or {}).get("vegetacao",[]):
+        if str(group.get("campo","")).casefold()=="legenda_1":
+            classes=group.get("classes") or []
+            if classes:return str(classes[0][0])
+    return ""
+
+def ibge_area_summary_lines(diagnosis):
+    """Readable IBGE coverage summary with correct area/percentage ordering."""
+    groups={str(x.get("campo","")).casefold():x.get("classes") or []
+            for x in (diagnosis or {}).get("vegetacao",[])}
+    lines=[]
+    labels=(("legenda_1","RegiÃ£o fitoecolÃ³gica POTENCIAL IBGE (nÃ£o comprova cobertura atual)"),
+            ("legenda_2","Cobertura vegetal cartogrÃ¡fica IBGE (legenda_2; referÃªncia, nÃ£o comprova cobertura atual)"))
+    for field,label in labels:
+        rows=groups.get(field) or []
+        if not rows:
+            continue
+        lines.append(label+":")
+        for row in rows:
+            if len(row)<3:
+                continue
+            name,area_ha,percent=row[:3]
+            try:
+                lines.append(f"  {name} â€” {format_ptbr(float(area_ha),2)} ha "
+                             f"({format_ptbr(float(percent),2)}% da AOI)")
+            except (TypeError,ValueError):
+                continue
+    if not any(line.startswith("RegiÃ£o fitoecolÃ³gica POTENCIAL") for line in lines):
+        error=(diagnosis or {}).get("vegetacao_error")
+        lines.append("RegiÃ£o fitoecolÃ³gica POTENCIAL IBGE (legenda_1, nÃ£o cobertura atual): "
+                     +("nÃ£o disponÃ­vel â€” "+str(error) if error else "sem classe intersectada"))
+    return lines
+
+def load_ibge_land_use_reference(project):
+    """Use the official cached/bbox IBGE polygons for the fallback partition."""
+    root=_ibge_cache()/"vegetacao_2026"
+    archive=_download_zip(IBGE_VEGE_2026_URL,root,"vege_area_2026")
+    layer=_read_zip_bbox(archive,tuple(project.to_crs("EPSG:4326").total_bounds),("vege_area","area","brasil"))
+    field=_field(layer.columns,["legenda_1"])
+    if not field:raise ValueError("Camada oficial IBGE sem legenda_1.")
+    return layer,field
+
+def _verified_sar_height_details(details):
+    """Return only the independently measured canopy-height product record."""
+    if not isinstance(details,dict):return {}
+    nested=details.get("sar_height")
+    if isinstance(nested,dict):return nested
+    # Legacy records can supply height metadata at the top level, but an AGB
+    # product's identity/path must never be mislabeled as a height product.
+    if details.get("height_metric") and "cci" not in str(details.get("product") or "").casefold():
+        return details
+    return {}
+
+
+def _sar_dashboard_payload(native, land=None):
+    """Preserve carbon SAR details and annual semantic masks at dashboard level."""
+    strata=[]
+    height_products=[]
+    for item in (native or {}).get("strata",[]) or []:
+        details=item.get("sar_details") or {}
+        audit=item.get("sar_audit") or {}
+        if details or audit:
+            # Keep CCI/AGB and canopy-height source records distinct.
             height_details=_verified_sar_height_details(details)
             row={"physiognomy":item.get("physiognomy") or item.get("class_name"),
                            "class_name":item.get("class_name"),"area_ha":item.get("area_ha"),
@@ -300,8 +619,146 @@ def _analyze_soil_stages(aoi):
     else:
         started=time.perf_counter()
         try:
-            fYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬ÕÉ½´Í½¥±}™•ÉÑ¥±¥Ñå}é½¹…°¥µÁ½ÉĞ…¹…±åé•}™•ÉÑ¥±¥Ñä(€€€€€€€€€€€™•ÉÑ¥±¥Ñäõ…¹…±åé•}™•ÉÑ¥±¥Ñä¡…½¤±Õ¹¥ÑÌõé½¹•Ì¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€™•ÉÑ¥±¥Ñäõì‰ÍÑ…ÑÕÌˆè‰II=}Q9%=}IQ%1%ˆ°‰É•…Í½¸ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÈĞÁt°(€€€€€€€€€€€€€€€€€€€€€€€‰Õ¹¥ÑÌˆéíô°‰±…å•ÉÌˆémuô(€€€€€€€€€€€•ÉÉ½ÉÌ¹…ÁÁ•¹¡ì‰ÍÑ…”ˆè‰™•ÉÑ¥±¥Ñäˆ°‰ÍÑ…ÑÕÌˆè‰II=}Q9%<ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€‰•ÉÉ½É}ÑåÁ”ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|°‰É•…Í½¸ˆéÍÑÈ¡•áŒ¥lèÌÀÁuô¤(€€€€€€€Ñ¥µ¥¹Íl‰™•ÉÑ¥±¥Ñå}Í•½¹‘Ì‰tõÉ½Õ¹¡Ñ¥µ”¹Á•É™}½Õ¹Ñ•È ¤µÍÑ…ÉÑ•°Ì¤(€€€É•ÑÕÉ¸Á•‘½±½ä±™•ÉÑ¥±¥Ñä±•ÉÉ½ÉÌ±Ñ¥µ¥¹Ì(()‘•˜¹…Ñ¥Ù•}…É‰½¹}…¹…±åÍ¥Ì¡…½¤±±…¹±‰¥½µ”±Í…É}½ÁÑ¥½¹Ìõ9½¹”±Í…É}Á…Ñ¡Ìõ9½¹”¤è(€€€¥µÁ½ÉĞ•½Á…¹‘…Ì…ÌÁ(€€€±…ÍÍ•ÌõÁ¹É•…‘}™¥±”¡±…¹‘l‰Ù•Ñ½É}Á…Ñ ‰t¤(€€€½ÁÑ¥½¹Ìõ‘¥Ğ¡Í…É}½ÁÑ¥½¹Ì½Èíô¤(€€€€Œ=ÁÑ¥½¹…°•áÑ•É¹…±±ä±¥•¹Í•°±…ÍÌµÍÁ•¥™¥Œ¥¹Ù•¹Ñ½Éä½‰Í•ÉÙ…Ñ¥½¹Ì¸(€€€€Œ9•Ù•È™½Éİ…É„‘…Ñ„µ…¹¥™•ÍĞ…Ì„MHµ½‘•°Á…É…µ•Ñ•È¸(€€€¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹”õ½ÁÑ¥½¹Ì¹Á½À ‰¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹”ˆ±9½¹”¤(€€€¥¹Ù•¹Ñ½Éå}µ…¹¥™•ÍĞõ½ÁÑ¥½¹Ì¹Á½À ‰¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}µ…¹¥™•ÍĞˆ±9½¹”¤(€€€‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}É•½É‘Ìõ½ÁÑ¥½¹Ì¹Á½À ‰‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}É•½É‘Ìˆ±9½¹”¤(€€€…Ñ…±½}…¡”õíô(€€€Í½¥±}Í½ÕÉ•}…¡”õíô(€€€€ŒM¡…É•½¹±ä…É½ÍÌÍÑÉ…Ñ„¥¸Ñ¡¥ÌÍ¥¹±”ÁÉ½Á•ÉÑä…¹…±åÍ¥Ì¸$‘¥Í½Ù•Éä(€€€€Œ¥ÌÑ¥±”µ‰…Í•°Í¼É•ÕÍ”¥ÑÌå•…È½¡½ÍĞÉ•ÍÕ±Ğİ¡¥±”É•…±Õ±…Ñ¥¹œé½¹…°(€€€€ŒÍÑ…Ñ¥ÍÑ¥Ì……¥¹ÍĞ•… •á…Ğ¹…Ñ¥Ù”µÍÑÉ…ÑÕ´•½µ•ÑÉä¸(€€€Á¥Á•±¥¹•}É½ÕÑ•}…¡”õíô(€€€‘•˜Í…É}•ÍÑ¥µ…Ñ½È¡™É…µ”±ˆ±À¤è(€€€€€€€¥˜Í…É}Á…Ñ¡ÌéÉ•ÑÕÉ¸ÁÉ½•ÍÍ}É•…±}Í…È¡™É…µ”±Í…É}Á…Ñ¡Ì±ˆ±À¤(€€€€€€€€ŒM•…É ½™™¥¥…°	%=5ML½±±•Ñ¥½¹Ì½¹”……¥¹ÍĞÑ¡”™Õ±°=$°Ñ¡•¸(€€€€€€€€ŒÉ•ÕÍ”Ñ¡”‘¥Í½Ù•É•ÁÉ½‘ÕÑÌİ¡¥±”É•…‘¥¹œ•… ¹…Ñ¥Ù”ÍÑÉ…ÑÕ´Ì(€€€€€€€€Œ½İ¸Á¥á•°İ¥¹‘½Ü¸Q¡¥Ì…Ù½¥‘ÌÉ•Á•…Ñ•…Ñ…±½œÉ½Õ¹ÑÉ¥ÁÌÁ•È±…ÍÌ¸(€€€€€€€¥˜€‰‰¥½µ…ÍÍ}…Ñ…±½œˆ¹½Ğ¥¸…Ñ…±½}…¡”è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€™É½´Í…É}Á¥Á•±¥¹”¥µÁ½ÉĞ‰¥½µ…ÍÍ}°É‰}Í•…É (€€€€€€€€€€€€€€€™½Õ¹õ‰¥½µ…ÍÍ}°É‰}Í•…É ¡…½¤±±¥µ¥ĞôÄÀÀ±É•ÑÕÉ¹}…Õ‘¥ĞõQÉÕ”¤(€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡™½Õ¹±ÑÕÁ±”¤…¹±•¸¡™½Õ¹¤ôôÈè(€€€€€€€€€€€€€€€€€€€…Ñ…±½}…¡•l‰‰¥½µ…ÍÍ}…Ñ…±½œ‰tô¡™½Õ¹‘lÁt±™½Õ¹‘lÅt¤(€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€…Ñ…±½}…¡•l‰‰¥½µ…ÍÍ}…Ñ…±½œ‰tô¡™½Õ¹±ì(€€€€€€€€€€€€€€€€€€€€€€€€‰ÅÕ•É¥•Ìˆémt°‰•ÉÉ½ÉÌˆél‰U%Q}5QQ}U9Y%1	1‰t°(€€€€€€€€€€€€€€€€€€€€€€€€‰¡•¥¡Ñ}ÅÕ•É¥•Í}½µÁ±•Ñ”ˆé…±Í•ô¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€€€€€…Ñ…±½}…¡•l‰‰¥½µ…ÍÍ}…Ñ…±½œ‰tô¡mt±ì(€€€€€€€€€€€€€€€€€€€€‰ÅÕ•É¥•Ìˆémt°‰•ÉÉ½ÉÌˆémÑåÁ”¡•áŒ¤¹}}¹…µ•}}t°(€€€€€€€€€€€€€€€€€€€€‰¡•¥¡Ñ}ÅÕ•É¥•Í}½µÁ±•Ñ”ˆé…±Í”°(€€€€€€€€€€€€€€€€€€€€‰Ñ•¡¹¥…±}•ÉÉ½ÈˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÄàÁuô¤(€€€€€€€¥Ñ•µÌ±…Õ‘¥Ğõ…Ñ…±½}…¡•l‰‰¥½µ…ÍÍ}…Ñ…±½œ‰t(€€€€€€€•ÍÑ¥µ…Ñ”õ…ÕÑ½µ…Ñ¥}Á¥Á•±¥¹”¡™É…µ”±ˆ±À±‰¥½µ…ÍÍ}…Ñ…±½}¥Ñ•µÌõ¥Ñ•µÌ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰¥½µ…ÍÍ}Í•…É¡}…Õ‘¥Ğõ…Õ‘¥Ğ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€Á¥Á•±¥¹•}É½ÕÑ•}…¡”õÁ¥Á•±¥¹•}É½ÕÑ•}…¡”°¨©½ÁÑ¥½¹Ì¤(€€€€€€€€Œ¥Ñ½ÍÍ½¥½±½¥…°É•™•É•¹”™É½´¹•…É‰ä%8Í…µÁ±¥¹œÕ¹¥ÑÌ¥Ì­•ÁĞ(€€€€€€€€Œ¥¹‘•Á•¹‘•¹Ğ½˜Ñ¡”…É‰½¸µ½‘•°…¹É•µ…¥¹Ì…Ù…¥±…‰±”İ¡•¸ ƒ\(€€€€€€€€Œ¥¹Ù•¹Ñ½ÉäÍÑÉÕÑÕÉ”°É…Ñ¡•ÈÑ¡…¸$°¥ÌÑ¡”Í•±•Ñ•É½ÕÑ”¸(€€€€€€€ÑÉäè(€€€€€€€€€€€™É½´¥¹Ù•¹Ñ½Éå}µ¥É½‘…Ñ…}±¥‰É…Éä¥µÁ½ÉĞÍ•±•Ñ}½™™¥¥…±}¥¹Ù•¹Ñ½Éå}Õ¹¥ÑÌ(€€€€€€€€€€€•¹ÑÉ½¥õ™É…µ”¹Ñ½}ÉÌ ‰AMèĞÌÈØˆ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹•¹ÑÉ½¥(€€€€€€€€€€€‰¥½‘¥Ù•ÉÍ¥ÑäõÍ•±•Ñ}½™™¥¥…±}¥¹Ù•¹Ñ½Éå}Õ¹¥ÑÌ (€€€€€€€€€€€€€€€‰¥½µ”õˆ±Á¡åÍ¥½¹½µäõÀ±±½¹¥ÑÕ‘”õ™±½…Ğ¡•¹ÑÉ½¥¹à¤±±…Ñ¥ÑÕ‘”õ™±½…Ğ¡•¹ÑÉ½¥¹ä¤°(€€€€€€€€€€€€€€€µ…á}‘¥ÍÑ…¹•}­´ôÈÔÀ¸À±µ…á}Õ¹¥ÑÌôÄÀÀ±¥¹±Õ‘•}ÑÉ••Ìõ…±Í”¤(€€€€€€€€€€€ÍÕµµ…Éäõ‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰É…İ}ÑÉ••}Í…µÁ±•}ÍÕµµ…Éäˆ¤½Èíô(€€€€€€€€€€€Í•±•Ñ•‘}Õ¹¥ÑÌõ‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰Õ¹¥ÑÌˆ¤½Èmt(€€€€€€€€€€€•ÍÑ¥µ…Ñ•l‰É•¥½¹…±}¥¹Ù•¹Ñ½Éå}ÍÑÉÕÑÕÉ•}É•™•É•¹”‰tõì(€€€€€€€€€€€€€€€€‰ÍÑ…ÑÕÌˆé‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰ÍÑ…ÑÕÌˆ°‰8½ˆ¤°(€€€€€€€€€€€€€€€€‰Í•±•Ñ¥½¸ˆé‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰Í•±•Ñ¥½¸ˆ¤½Èíô°(€€€€€€€€€€€€€€€€‰Õ¹¥ÑÌˆémì‰Õ…}¥ˆéÔ¹•Ğ ‰Õ…}¥ˆ¤°‰Õ˜ˆéÔ¹•Ğ ‰Õ˜ˆ¤°(€€€€€€€€€€€€€€€€€€€€‰‘¥ÍÑ…¹•}­´ˆéÔ¹•Ğ ‰‘¥ÍÑ…¹•}­´ˆ¤°(€€€€€€€€€€€€€€€€€€€€‰…µÁ…¥¸ˆéÔ¹•Ğ ‰…µÁ…¥¸ˆ¤°‰Í½ÕÉ”ˆéÔ¹•Ğ ‰Í½ÕÉ”ˆ¤½ÈÔ¹•Ğ ‰É½ÍÍİ…±­}Í½ÕÉ”ˆ¤°(€€€€€€€€€€€€€€€€€€€€‰É½ÍÍİ…±­}µ•Ñ¡½ˆéÔ¹•Ğ ‰µ…Ñ¡}ÍÑ…ÑÕÌˆ¥ô(€€€€€€€€€€€€€€€€€€€™½ÈÔ¥¸Í•±•Ñ•‘}Õ¹¥ÑÍt°(€€€€€€€€€€€€€€€€‰É…İ}ÑÉ••}Í…µÁ±•}ÍÕµµ…ÉäˆéÍÕµµ…Éä°(€€€€€€€€€€€€€€€€‰¥¹Ñ•ÉÁÉ•Ñ…Ñ¥½¸ˆé‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰¥¹Ñ•ÉÁÉ•Ñ…Ñ¥½¸ˆ¤°(€€€€€€€€€€€€€€€€‰µ½‘•±}ÁÉ•‘¥Ñ½É}•±¥¥‰±”ˆé…±Í”°(€€€€€€€€€€€€€€€€‰•±¥¥‰¥±¥Ñå}É•…Í½¸ˆè‰=Ì…µÁ½Ì‘¥ÍÁ½»µÙ•¥ÌÏ¼…É•…‘½Ì‘”ƒ…ÉÙ½É•Ì…µ½ÍÑÉ…‘…Ì°Í•´•áÁ…¹Ï¼Á½Èƒ…É•„½‘•Í•¹¡¼…µ½ÍÑÉ…°¡…Éµ½¹¥é…‘¼¹•´Á…É•…µ•¹Ñ¼Á¥á•°µÁ…É•±„ìÁ½ÉÑ…¹Ñ¼»¼ÍÕ‰ÍÑ¥ÑÕ•´€¡·
-È½¡„¤½µÁ…ÓµÙ•°Á…É„„•ÅÕ‡Ÿ¼#]¸ˆ°(€€€€€€€€€€€€€€€€‰¹½Ñ}…‘‘•‘}Ñ½}ÍÑ½­}Ñ½Ñ…°ˆéQÉÕ•ô(€€€€€€€€€€€•ÍÑ¥µ…Ñ•l‰¥¹Ù•¹Ñ½Éå}‰¥½‘¥Ù•ÉÍ¥Ñå}É•™•É•¹”‰tô (€€€€€€€€€€€€€€€‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰‰¥½‘¥Ù•ÉÍ¥Ñå}É•™•É•¹”ˆ¤½È(€€€€€€€€€€€€€€€ì‰ÍÑ…ÑÕÌˆè‰8½ˆ°‰É•…Í½¸ˆé‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰É•…Í½¸ˆ¤½È‰¥½‘¥Ù•ÉÍ¥Ñä¹•Ğ ‰ÍÑ…ÑÕÌˆ¥ô¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€•ÍÑ¥µ…Ñ•l‰É•¥½¹…±}¥¹Ù•¹Ñ½Éå}ÍÑÉÕÑÕÉ•}É•™•É•¹”‰tõì(€€€€€€€€€€€€€€€€‰ÍÑ…ÑÕÌˆè‰II=}Q9%=}=9MU1Q}%8ˆ°‰É•…Í½¸ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|°(€€€€€€€€€€€€€€€€‰µ½‘•±}ÁÉ•‘¥Ñ½É}•±¥¥‰±”ˆé…±Í”°‰¹½Ñ}…‘‘•‘}Ñ½}ÍÑ½­}Ñ½Ñ…°ˆéQÉÕ•ô(€€€€€€€€€€€•ÍÑ¥µ…Ñ•l‰¥¹Ù•¹Ñ½Éå}‰¥½‘¥Ù•ÉÍ¥Ñå}É•™•É•¹”‰tõì(€€€€€€€€€€€€€€€€‰ÍÑ…ÑÕÌˆè‰8½ˆ°‰É•…Í½¸ˆè‰=9MU1Q}%Q=MM=%=1=%}%9}1!=Tˆ°(€€€€€€€€€€€€€€€€‰‘¥…¹½ÍÑ¥ŒˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}}ô(€€€€€€€€ŒáÁ½Í”‰½Ñ µ¥É½‘…Ñ„½µÁ…É¥Í½¹Ì…¹ÁÕ‰±¥Í¡•¡½É¥é½¹Ñ…°½(€€€€€€€€Œ…É•…Ñ•Ì™½È•Ù•ÉäÁÉ¥µ…Éäµ•Ñ¡½¸É•…Ñ•Ì…É”É•¥½¹…°(€€€€€€€€Œ‰•¹¡µ…É­Ì°¹•Ù•ÈÍå¹Ñ¡•Ñ¥ŒÁ±½ÑÌ½È…‘‘¥Ñ¥½¹ÌÑ¼Ñ¡”ÍÑ½¬Ñ½Ñ…°¸(€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡•ÍÑ¥µ…Ñ”±‘¥Ğ¤è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€™É½´¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸¥µÁ½ÉĞ•ÍÑ¥µ…Ñ•}¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸(€€€€€€€€€€€€€€€•¹ÑÉ½¥õ™É…µ”¹Ñ½}ÉÌ ‰AMèĞÌÈØˆ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹•¹ÑÉ½¥(€€€€€€€€€€€€€€€…É•„õ™±½…Ğ¡™É…µ”¹Ñ½}ÉÌ ‰AMèØäÌÌˆ¤¹•½µ•ÑÉä¹…É•„¹ÍÕ´ ¤¤¼ÄÀÀÀÀ¸À(€€€€€€€€€€€€€€€•ÍÑ¥µ…Ñ•l‰¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸‰tõ•ÍÑ¥µ…Ñ•}¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸ (€€€€€€€€€€€€€€€€€€€‰¥½µ”õˆ±Á¡åÍ¥½¹½µäõÀ±…É•…}¡„õ…É•„°(€€€€€€€€€€€€€€€€€€€•¹ÑÉ½¥‘}±½¸õ™±½…Ğ¡•¹ÑÉ½¥¹à¤±•¹ÑÉ½¥‘}±…Ğõ™±½…Ğ¡•¹ÑÉ½¥¹ä¤¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€€€€€•ÍÑ¥µ…Ñ•l‰¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸‰tõì(€€€€€€€€€€€€€€€€€€€€‰ÍÑ…ÑÕÌˆè‰8½ˆ°‰É•…Í½¸ˆè‰=9MU1Q}%9Y9QI%=M}5U1Q%=9Q}9=}=91U%ˆ°(€€€€€€€€€€€€€€€€€€€€‰‘¥…¹½ÍÑ¥ŒˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}}ô(€€€€€€€É•ÑÕÉ¸•ÍÑ¥µ…Ñ”(€€€‘•˜•ÍÑ¥µ…Ñ½È¡™É…µ”±Á¡åÌ¤è(€€€€€€€¥˜€‰ÁÉ•Á…É•ˆ¹½Ğ¥¸Í½¥±}Í½ÕÉ•}…¡”è(€€€€€€€€€€€Í½¥±}Í½ÕÉ•}…¡•l‰ÁÉ•Á…É•‰tõ}ÁÉ•Á…É•}ÁÉ½¹…Í½±½Í}Í½ÕÉ•Ì¡…½¤¤(€€€€€€€‘•˜Í½¥±}•ÍÑ¥µ…Ñ½È¡ÍÑÉ…ÑÕ´¤è(€€€€€€€€€€€É•ÑÕÉ¸ÁÉ½¹…Í½±½Í}Í½}ÁÉ½™¥±•Ì¡ÍÑÉ…ÑÕ´±ÁÉ•Á…É•õÍ½¥±}Í½ÕÉ•}…¡•l‰ÁÉ•Á…É•‰t¤(€€€€€€€É•ÑÕÉ¸•ÍÑ¥µ…Ñ•}¹…Ñ¥Ù•}½µÁ½¹•¹ÑÌ¡™É…µ”±Á¡åÌ±‰¥½µ”±Í…É}•ÍÑ¥µ…Ñ½È±Í½¥±}•ÍÑ¥µ…Ñ½È°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ÁÉ½Á•ÉÑå}…½¤õ…½¤±¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹”õ¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹”¤(€€€É•ÍÕ±ĞõÍÕµµ…É¥é•}¹…Ñ¥Ù•}…É‰½¸¡…½¤±±…ÍÍ•Ì±•ÍÑ¥µ…Ñ½È°¡±…¹¹•Ğ ‰Ù…±¥‘…Ñ¥½¸ˆ¤½Èíô¤¹•Ğ ‰±…ÍÍ}µ•Ñ…‘…Ñ„ˆ¤¤(€€€…¹¹Õ…±}Í½Á”ô¡±…¹¹•Ğ ‰…¹¹Õ…±}Í…É}±…ÍÍ¥™¥…Ñ¥½¸ˆ¤½Èíô¤(€€€É•ÍÕ±Ñl‰±…¹‘}½Ù•É}Á•É¥½‰tô (€€€€€€€€‰Í…™É„…¹Õ…°€ˆ­ÍÑÈ¡…¹¹Õ…±}Í½Á”¹•Ğ ‰Í•…Í½¸ˆ¤¤¬(€€€€€€€€ˆƒŠP·…Í…É„•áÁ•É¥µ•¹Ñ…°ì»¼É•ÁÉ•Í•¹Ñ„½‰•ÉÑÕÉ„…ÑÕ…°ˆ(€€€€€€€¥˜…¹¹Õ…±}Í½Á”¹•Ğ ‰…ÁÁ±¥•ˆ¤•±Í”(€€€€€€€€‰±…ÍÍ¥™¥‡Ÿ¼Í•·‰¹Ñ¥„MH…ÑÕ…°ˆ¥˜±…¹¹•Ğ ‰ÕÉÉ•¹Ñ}Í•µ…¹Ñ¥}±…ÍÍ¥™¥…Ñ¥½¹}ÍÑ…ÑÕÌˆ¤ôô‰1MM%%=}A=I}MI}QU0ˆ(€€€€€€€•±Í”€‰½‰•ÉÑÕÉ„¹…Ñ¥Ù„…ÑÕ…°»¼½¹™¥Éµ…‘„Á½È±…ÍÍ¥™¥…‘½ÈÍ•·‰¹Ñ¥¼MHˆ¤(€€€¹…Ñ¥Ù•}ÍÑÉ…Ñ„õmÍĞ™½ÈÍĞ¥¸É•ÍÕ±Ğ¹•Ğ ‰ÍÑÉ…Ñ„ˆ±mt¤¥˜™±½…Ğ¡ÍĞ¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤øÁt(€€€€ŒEÕ•ÉäÑ¡”‰Õ¹‘±•%8ÑÉ•”µ¥É½‘…Ñ„½¹±ä…Ì…¸…Õ‘¥Ñ…‰±”ÍÑÉÕÑÕÉ…°(€€€€ŒÉ•™•É•¹”¸Q¡•Í”É•½É‘Ì…É”Í•±•Ñ•‰ä±½…Ñ¥½¸°M‰¥½µ”…¹•á…Ğ(€€€€Œ%	Y••Ñ‡Ÿ¼±••¹‘…|Ä¸Q¡•ä…É”¹•Ù•È½¹Ù•ÉÑ•¥¹Ñ¼Á•Èµ¡•Ñ…É”(€€€€Œ½È…¹½Áä¡•¥¡Ğ¡•É”èÑ¡”%8É½İÌ‘¼¹½ĞÍÕÁÁ±äÑ¡”=$ÌÍ…µÁ±¥¹œ(€€€€Œ•áÁ…¹Í¥½¸İ•¥¡ÑÌ½È„±½…±±äÙ…±¥‘…Ñ•…±±½µ•ÑÉ¥ŒÑÉ…¹Í™•Èµ½‘•°¸(€€€É•ÍÕ±Ñl‰¥™¹}ÍÑÉÕÑÕÉ…±}É•™•É•¹•Ì‰tõmt(€€€ÑÉäè(€€€€€€€™É½´¥¹Ù•¹Ñ½Éå}µ¥É½‘…Ñ…}±¥‰É…Éä¥µÁ½ÉĞ€¡½™™¥¥…±}¥¹Ù•¹Ñ½Éå}‘…Ñ…‰…Í•}ÍÑ…ÑÕÌ°(€€€€€€€€€€€Í•±•Ñ}½™™¥¥…±}¥¹Ù•¹Ñ½Éå}Õ¹¥ÑÌ¤(€€€€€€€•¹ÑÉ½¥õ…½¤¹Ñ½}ÉÌ ‰AMèĞÌÈØˆ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹•¹ÑÉ½¥(€€€€€€€‘‰}ÍÑ…ÑÕÌõ½™™¥¥…±}¥¹Ù•¹Ñ½Éå}‘…Ñ…‰…Í•}ÍÑ…ÑÕÌ ¤(€€€€€€€É•ÍÕ±Ñl‰¥™¹}‘…Ñ…‰…Í•}ÍÑ…ÑÕÌ‰tõ‘‰}ÍÑ…ÑÕÌ(€€€€€€€¥˜‘‰}ÍÑ…ÑÕÌ¹•Ğ ‰½Á•É…Ñ¥½¹…±}™½É}ÑÉ••}Í•±•Ñ¥½¸ˆ¤è(€€€€€€€€€€€™½ÈÁ½Ñ•¹Ñ¥…°¥¸±…¹¹•Ğ ‰Á½Ñ•¹Ñ¥…±}Á¡åÍ¥½¹½µå}¥¹Ñ•ÉÍ•Ñ¥½¹Ìˆ¤½Èmtè(€€€€€€€€€€€€€€€Á¡åÌõÍÑÈ¡Á½Ñ•¹Ñ¥…°¹•Ğ ‰¹…µ”ˆ¤½È€ˆˆ¤¹ÍÑÉ¥À ¤(€€€€€€€€€€€€€€€…É•„õ™±½…Ğ¡Á½Ñ•¹Ñ¥…°¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤(€€€€€€€€€€€€€€€¥˜¹½ĞÁ¡åÌ½ÈÁ¡åÌôô‰M•´½‰•ÉÑÕÉ„%	ˆ½È…É•„ğôÀè(€€€€€€€€€€€€€€€€€€€½¹Ñ¥¹Õ”(€€€€€€€€€€€€€€€Í•±•Ñ•õÍ•±•Ñ}½™™¥¥…±}¥¹Ù•¹Ñ½Éå}Õ¹¥ÑÌ (€€€€€€€€€€€€€€€€€€€‰¥½µ”õ‰¥½µ”±Á¡åÍ¥½¹½µäõÁ¡åÌ±±½¹¥ÑÕ‘”õ•¹ÑÉ½¥¹à°(€€€€€€€€€€€€€€€€€€€±…Ñ¥ÑÕ‘”õ•¹ÑÉ½¥¹ä±µ…á}‘¥ÍÑ…¹•}­´ôÈÔÀ±µ…á}Õ¹¥ÑÌôÔ±¥¹±Õ‘•}ÑÉ••Ìõ…±Í”¤(€€€€€€€€€€€€€€€É•ÍÕ±Ñl‰¥™¹}ÍÑÉÕÑÕÉ…±}É•™•É•¹•Ì‰t¹…ÁÁ•¹¡ì(€€€€€€€€€€€€€€€€€€€€‰Á¡åÍ¥½¹½µäˆéÁ¡åÌ°‰Á½Ñ•¹Ñ¥…±}¥‰•}…É•…}¡„ˆé…É•„°(€€€€€€€€€€€€€€€€€€€€‰…É•…}‰…Í¥Ìˆè‰Á½Ñ•¹¥…°%	±••¹‘…|Äì»¼½¹™¥Éµ„½‰—[h‘éì¶»§q«^vtura nativa atual",
+            from soil_fertility_zonal import analyze_fertility
+            fertility=analyze_fertility(aoi,units=zones)
+        except Exception as exc:
+            fertility={"status":"ERRO_TECNICO_FERTILIDADE","reason":type(exc).__name__+": "+str(exc)[:240],
+                       "units":{},"layers":[]}
+            errors.append({"stage":"fertility","status":"ERRO_TECNICO",
+                           "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+        timings["fertility_seconds"]=round(time.perf_counter()-started,3)
+    return pedology,fertility,errors,timings
+
+
+def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
+    import geopandas as gpd
+    classes=gpd.read_file(land["vector_path"])
+    options=dict(sar_options or {})
+    # Optional externally licensed, class-specific inventory observations.
+    # Never forward a data manifest as a SAR model parameter.
+    inventory_evidence=options.pop("inventory_evidence",None)
+    inventory_manifest=options.pop("inventory_evidence_manifest",None)
+    biodiversity_inventory_records=options.pop("biodiversity_inventory_records",None)
+    catalog_cache={}
+    soil_source_cache={}
+    # Shared only across strata in this single property analysis. CCI discovery
+    # is tile-based, so reuse its year/host result while recalculating zonal
+    # statistics against each exact native-stratum geometry.
+    pipeline_route_cache={}
+    def sar_estimator(frame,b,p):
+        if sar_paths:return process_real_sar(frame,sar_paths,b,p)
+        # Search official BIOMASS collections once against the full AOI, then
+        # reuse the discovered products while reading each native stratum's
+        # own pixel window. This avoids repeated catalog round trips per class.
+        if "biomass_catalog" not in catalog_cache:
+            try:
+                from sar_pipeline import biomass_l2b_search
+                found=biomass_l2b_search(aoi,limit=100,return_audit=True)
+                if isinstance(found,tuple) and len(found)==2:
+                    catalog_cache["biomass_catalog"]=(found[0],found[1])
+                else:
+                    catalog_cache["biomass_catalog"]=(found,{
+                        "queries":[],"errors":["AUDIT_METADATA_UNAVAILABLE"],
+                        "height_queries_complete":False})
+            except Exception as exc:
+                catalog_cache["biomass_catalog"]=([],{
+                    "queries":[],"errors":[type(exc).__name__],
+                    "height_queries_complete":False,
+                    "technical_error":type(exc).__name__+": "+str(exc)[:180]})
+        items,audit=catalog_cache["biomass_catalog"]
+        estimate=automatic_pipeline(frame,b,p,biomass_catalog_items=items,
+                                    biomass_search_audit=audit,
+                                    pipeline_route_cache=pipeline_route_cache,**options)
+        # Fitossociological reference from nearby IFN sampling units is kept
+        # independent of the carbon model and remains available when FH Ã—
+        # inventory structure, rather than CCI, is the selected AGB route.
+        try:
+            from inventory_microdata_library import select_official_inventory_units
+            centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
+            biodiversity=select_official_inventory_units(
+                biome=b,physiognomy=p,longitude=float(centroid.x),latitude=float(centroid.y),
+                max_distance_km=250.0,max_units=100,include_trees=False)
+            summary=biodiversity.get("raw_tree_sample_summary") or {}
+            selected_units=biodiversity.get("units") or []
+            estimate["regional_inventory_structure_reference"]={
+                "status":biodiversity.get("status","N/D"),
+                "selection":biodiversity.get("selection") or {},
+                "units":[{"ua_id":u.get("ua_id"),"uf":u.get("uf"),
+                    "distance_km":u.get("distance_km"),
+                    "campaign":u.get("campaign"),"source":u.get("source") or u.get("crosswalk_source"),
+                    "crosswalk_method":u.get("match_status")}
+                    for u in selected_units],
+                "raw_tree_sample_summary":summary,
+                "interpretation":biodiversity.get("interpretation"),
+                "model_predictor_eligible":False,
+                "eligibility_reason":"Os campos disponÃ­veis sÃ£o agregados de Ã¡rvores amostradas, sem expansÃ£o por Ã¡rea/desenho amostral harmonizado nem pareamento pixel-parcela; portanto nÃ£o substituem G (mÂ²/ha) compatÃ­vel para a equaÃ§Ã£o FHÃ—AGB.",
+                "not_added_to_stock_total":True}
+            estimate["inventory_biodiversity_reference"]=(
+                biodiversity.get("biodiversity_reference") or
+                {"status":"N/D","reason":biodiversity.get("reason") or biodiversity.get("status")})
+        except Exception as exc:
+            estimate["regional_inventory_structure_reference"]={
+                "status":"ERRO_TECNICO_CONSULTA_IFN","reason":type(exc).__name__,
+                "model_predictor_eligible":False,"not_added_to_stock_total":True}
+            estimate["inventory_biodiversity_reference"]={
+                "status":"N/D","reason":"CONSULTA_FITOSSOCIOLOGICA_IFN_FALHOU",
+                "diagnostic":type(exc).__name__}
+        # Expose both microdata comparisons and published horizontal/AGB
+        # aggregates for every primary method. Aggregates are regional
+        # benchmarks, never synthetic plots or additions to the stock total.
+        if isinstance(estimate,dict):
+            try:
+                from inventory_agb_comparison import estimate_inventory_agb_comparison
+                centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
+                area=float(frame.to_crs("EPSG:6933").geometry.area.sum())/10000.0
+                estimate["inventory_agb_comparison"]=estimate_inventory_agb_comparison(
+                    biome=b,physiognomy=p,area_ha=area,
+                    centroid_lon=float(centroid.x),centroid_lat=float(centroid.y))
+            except Exception as exc:
+                estimate["inventory_agb_comparison"]={
+                    "status":"N/D","reason":"CONSULTA_INVENTARIOS_MULTIFONTE_NAO_CONCLUIDA",
+                    "diagnostic":type(exc).__name__}
+        return estimate
+    def estimator(frame,phys):
+        if "prepared" not in soil_source_cache:
+            soil_source_cache["prepared"]=_prepare_pronasolos_sources(aoi)
+        def soil_estimator(stratum):
+            return pronasolos_soc_profiles(stratum,prepared=soil_source_cache["prepared"])
+        return estimate_native_components(frame,phys,biome,sar_estimator,soil_estimator,
+                                          property_aoi=aoi,inventory_evidence=inventory_evidence)
+    result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
+    annual_scope=(land.get("annual_sar_classification") or {})
+    result["land_cover_period"]=(
+        "safra anual "+str(annual_scope.get("season"))+
+        " â€” mÃ¡scara experimental; nÃ£o representa cobertura atual"
+        if annual_scope.get("applied") else
+        "classificaÃ§Ã£o semÃ¢ntica SAR atual" if land.get("current_semantic_classification_status")=="CLASSIFICADO_POR_SAR_ATUAL"
+        else "cobertura nativa atual nÃ£o confirmada por classificador semÃ¢ntico SAR")
+    native_strata=[st for st in result.get("strata",[]) if float(st.get("area_ha") or 0)>0]
+    # Query the bundled IFN tree microdata only as an auditable structural
+    # reference. These records are selected by location, SFB biome and exact
+    # IBGE VegetaÃ§Ã£o legenda_1. They are never converted into per-hectare AGB
+    # or canopy height here: the IFN rows do not supply the AOI's sampling
+    # expansion weights or a locally validated allometric transfer model.
+    result["ifn_structural_references"]=[]
+    try:
+        from inventory_microdata_library import (official_inventory_database_status,
+            select_official_inventory_units)
+        centroid=aoi.to_crs("EPSG:4326").geometry.union_all().centroid
+        db_status=official_inventory_database_status()
+        result["ifn_database_status"]=db_status
+        if db_status.get("operational_for_tree_selection"):
+            for potential in land.get("potential_physiognomy_intersections") or []:
+                phys=str(potential.get("name") or "").strip()
+                area=float(potential.get("area_ha") or 0)
+                if not phys or phys=="Sem cobertura IBGE" or area<=0:
+                    continue
+                selected=select_official_inventory_units(
+                    biome=biome,physiognomy=phys,longitude=centroid.x,
+                    latitude=centroid.y,max_distance_km=250,max_units=5,include_trees=False)
+                result["ifn_structural_references"].append({
+                    "physiognomy":phys,"potential_ibge_area_ha":area,
+                    "area_basis":"potencial IBGE legenda_1; nÃ£o confirma cobertura nativa atual",
                     "selection":selected,
                     "use_status":"REFERENCIA_ESTRUTURAL_SEM_EXPANSAO_POR_HECTARE_NEM_EQUACAO_AGB_VALIDADA"})
     except Exception as exc:
@@ -449,7 +906,164 @@ def _attach_embrapa_official_soc_bounds(gdf, stock_result, stock_paths):
             raise ValueError(status.get("reason") or "Limites oficiais incompletos")
     except Exception as exc:
         status = {"status":"N/D",
-                  "reason":type(exc).__name__+": "+str(exc).YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬ÕÍÁ±¥Ğ ‰¡ÑÑÁÌè¼¼ˆ¥lÁulèÄàÁt°(€€€€€€€€€€€€€€€€€€‰ÁÉ•‘¥Ñ¥Ù•}Õ¹•ÉÑ…¥¹Ñå}ÅÕ…¹Ñ¥™¥•ˆé…±Í•ô(€€€Ñ½Ál‰½™™¥¥…±}Õ¹•ÉÑ…¥¹Ñä‰t€ôÍÑ…ÑÕÌ(€€€Ñ½Ál‰ÁÉ•‘¥Ñ¥Ù•}Õ¹•ÉÑ…¥¹Ñå}ÅÕ…¹Ñ¥™¥•‰t€ô‰½½° (€€€€€€€ÍÑ…ÑÕÌ¹•Ğ ‰ÁÉ•‘¥Ñ¥Ù•}Õ¹•ÉÑ…¥¹Ñå}ÅÕ…¹Ñ¥™¥•ˆ¤¤(€€€ÍÑ½­}É•ÍÕ±Ğ¹Í•Ñ‘•™…Õ±Ğ ‰}‘¥…¹½ÍÑ¥Œˆ±íô¥l‰½™™¥¥…±}Õ¹•ÉÑ…¥¹Ñä‰t€ôÍÑ…ÑÕÌ(€€€É•ÑÕÉ¸ÍÑ½­}É•ÍÕ±Ğ(()‘•˜}ÁÉ•Á…É•}ÁÉ½¹…Í½±½Í}Í½ÕÉ•Ì¡‘˜¤è(€€€€ˆˆ‰ÅÕ¥É”Í½¥°É…ÍÑ•ÉÌ½‰½Õ¹‘Ì½¹”™½ÈÑ¡”İ¡½±”=$°Ñ¡•¸É•ÕÍ”±½…±±ä¸((€€€Q¡”ÁÉ•Ù¥½ÕÌÁ•ÈµÍÑÉ…ÑÕ´…±±Ì…ÕÍ••… MH±…ÍÌÑ¼É•ÅÕ•ÍĞÑ¡”Í…µ”(€€€™¥Ù”]L¡½É¥é½¹Ì…¹ÁÉ•‘¥Ñ¥½¸µ‰½Õ¹…Á…‰¥±¥Ñ¥•Ì……¥¸¸AÉ•Á…É…Ñ¥½¸¥Ì(€€€=$µÍ½Á•ì…±°±…Ñ•È…É‰½¸Ù…±Õ•ÌÍÑ¥±°ÕÍ”•á…ĞÍÑÉ…ÑÕ·]Á¥á•°½Ù•É±…åÌ¸(€€€€ˆˆˆ(€€€™É½´Í½¥±}ÁÉ½¹…Í½±½Í}é½¹…°¥µÁ½ÉĞÙ•É¥™¥•‘}±½…±}¡½É¥é½¹Ì(€€€ÁÉ•Á…É•õì‰Á…Ñ¡Ìˆé9½¹”°‰ÁÉ½Ù•¹…¹”ˆé9½¹”°‰½™™¥¥…±}Á…Ñ¡Ìˆé9½¹”°(€€€€€€€€€€€€€€‰½™™¥¥…±}ÁÉ½Ù•¹…¹”ˆé9½¹”°‰±½…±}…Õ‘¥Ğˆé9½¹”°‰İÍ}…Õ‘¥Ğˆé9½¹”°(€€€€€€€€€€€€€€‰½™™¥¥…±}…Õ‘¥Ğˆé9½¹•ô(€€€ÑÉäè(€€€€€€€ÁÉ•Á…É•‘l‰Á…Ñ¡Ì‰tõÙ•É¥™¥•‘}±½…±}¡½É¥é½¹Ì ¤(€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€ÁÉ•Á…É•‘l‰±½…±}…Õ‘¥Ğ‰tõì‰ÍÑ…ÑÕÌˆè‰1=1}M=%1}!}II=Hˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰É•…Í½¸ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÈĞÁuô(€€€¥˜ÁÉ•Á…É•‘l‰Á…Ñ¡Ì‰t¥Ì9½¹”è(€€€€€€€ÑÉäè(€€€€€€€€€€€™É½´ÁÉ½¹…Í½±½Í}İÌ¥µÁ½ÉĞ™•Ñ¡}¡½É¥é½¹Ì(€€€€€€€€€€€…ÅÕ¥É•õ™•Ñ¡}¡½É¥é½¹Ì¡‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¤(€€€€€€€€€€€ÁÉ•Á…É•‘l‰Á…Ñ¡Ì‰tõ…ÅÕ¥É•‘l‰Á…Ñ¡Ì‰t(€€€€€€€€€€€ÁÉ•Á…É•‘l‰ÁÉ½Ù•¹…¹”‰tõ…ÅÕ¥É•‘l‰ÁÉ½Ù•¹…¹”‰t(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€ÁÉ•Á…É•‘l‰İÍ}…Õ‘¥Ğ‰tõì‰Ñ…É•Ñ}ÍÑ…ÑÕÌˆè‰]M}%9%MA=9%Y0ˆ°(€€€€€€€€€€€€€€€€‰É•…Í½¸ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÌÀÁuô(€€€ÑÉäè(€€€€€€€™É½´Í½¥±}Í½}½™™¥¥…±}Õ¹•ÉÑ…¥¹Ñä¥µÁ½ÉĞ™•Ñ¡}½™™¥¥…±}‰½Õ¹‘Ì(€€€€€€€‰½Õ¹‘Ìõ™•Ñ¡}½™™¥¥…±}‰½Õ¹‘Ì¡‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¤(€€€€€€€ÁÉ•Á…É•‘l‰½™™¥¥…±}Á…Ñ¡Ì‰tõ‰½Õ¹‘Íl‰Á…Ñ¡Ì‰t(€€€€€€€ÁÉ•Á…É•‘l‰½™™¥¥…±}ÁÉ½Ù•¹…¹”‰tõ‰½Õ¹‘Íl‰ÁÉ½Ù•¹…¹”‰t(€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€ÁÉ•Á…É•‘l‰½™™¥¥…±}…Õ‘¥Ğ‰tõì‰ÍÑ…ÑÕÌˆè‰8½ˆ°(€€€€€€€€€€€€‰É•…Í½¸ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¤¹ÍÁ±¥Ğ ‰¡ÑÑÁÌè¼¼ˆ¥lÁulèÈĞÁt°(€€€€€€€€€€€€‰ÁÉ•‘¥Ñ¥Ù•}Õ¹•ÉÑ…¥¹Ñå}ÅÕ…¹Ñ¥™¥•ˆé…±Í•ô(€€€É•ÑÕÉ¸ÁÉ•Á…É•(()‘•˜ÁÉ½¹…Í½±½Í}Í½}ÁÉ½™¥±•Ì¡‘˜±µ…á}Á½¥¹ÑÌôÌØ±ÁÉ•Á…É•õ9½¹”¤è(€€€€ˆˆ‰AÉ½¹…M½±½Ì½µ‰É…Á„M½±½Ì€äÀ´M=ÍÑ½­Ì€¡5œ½¡„¤¸(€€€á…ĞÁ½±å½¸ƒ\É…ÜµÉ…ÍÑ•È¥¹Ñ•ÉÍ•Ñ¥½¸¥ÌÁÉ•™•ÉÉ•¸%‘•¹Ñ¥™äµÁ½¥¹Ğ(€€€Í…µÁ±¥¹œ¥Ì„±…ÍĞÉ•Í½ÉĞ…¹½¹±ä…•ÁÑ•…Ì„½µÁ±•Ñ”°Í¥¹±”µÍ•ÉÙ¥”(€€€Í…µÁ±”½Ù•ÈÑ¡”İ¡½±”=$ƒ\Á¡åÍ¥½¹½µäÍÑÉ…ÑÕ´¸ˆˆˆ(€€€™É½´Í½¥±}ÁÉ½¹…Í½±½Í}é½¹…°¥µÁ½ÉĞÙ•É¥™¥•‘}±½…±}¡½É¥é½¹Ì°µ…ÁÁ•‘}Í½¥±|Á|ÄÀÁ}½¹}Á½±å½¸(€€€±½…±}…Õ‘¥Ğõ9½¹”íİÍ}…Õ‘¥Ğõ9½¹”(€€€¥˜ÁÉ•Á…É•¥Ì¹½Ğ9½¹”è(€€€€€€€±½…±}Á…Ñ¡ÌõÁÉ•Á…É•¹•Ğ ‰Á…Ñ¡Ìˆ¤(€€€€€€€±½…±}…Õ‘¥ĞõÁÉ•Á…É•¹•Ğ ‰±½…±}…Õ‘¥Ğˆ¤(€€€€€€€İÍ}…Õ‘¥ĞõÁÉ•Á…É•¹•Ğ ‰İÍ}…Õ‘¥Ğˆ¤(€€€€€€€¥˜±½…±}Á…Ñ¡Ìè(€€€€€€€€€€€Í½ÕÉ•}±…‰•°ô ‰µ‰É…Á„M½±½Ì½AÉ½¹…M½±½Ì€äÀ´ØÈÀÈÄƒŠP…¡”±½…°Ù•É¥™¥…‘¼ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€¥˜ÁÉ•Á…É•¹•Ğ ‰ÁÉ½Ù•¹…¹”ˆ¤¥Ì9½¹”•±Í”(€€€€€€€€€€€€€€€€€€€€€€€€€€‰µ‰É…Á„M½±½Ì½AÉ½¹…M½±½Ì€äÀ´ØÈÀÈÄƒŠP]L‰…¥á…‘¼Õµ„Ù•èÁ…É„„=$ˆ¤(€€€€€€€€€€€É•ÍÕ±Ğõµ…ÁÁ•‘}Í½¥±|Á|ÄÀÁ}½¹}Á½±å½¸¡‘˜±±½…±}Á…Ñ¡Ì±Í½ÕÉ•}±…‰•°õÍ½ÕÉ•}±…‰•°°(€€€€€€€€€€€€€€€½™™¥¥…±}‰½Õ¹‘}Á…Ñ¡ÌõÁÉ•Á…É•¹•Ğ ‰½™™¥¥…±}Á…Ñ¡Ìˆ¤°(€€€€€€€€€€€€€€€½™™¥¥…±}ÁÉ½Ù•¹…¹”õÁÉ•Á…É•¹•Ğ ‰½™™¥¥…±}ÁÉ½Ù•¹…¹”ˆ¤¤(€€€€€€€€€€€É•ÍÕ±Ğ¹Í•Ñ‘•™…Õ±Ğ ‰}‘¥…¹½ÍÑ¥Œˆ±íô¥l‰İÍ}ÁÉ½Ù•¹…¹”‰tõÁÉ•Á…É•¹•Ğ ‰ÁÉ½Ù•¹…¹”ˆ¤(€€€€€€€€€€€¥˜ÁÉ•Á…É•¹•Ğ ‰½™™¥¥…±}…Õ‘¥Ğˆ¤è(€€€€€€€€€€€€€€€É•ÍÕ±Ğ¹Í•Ñ‘•™…Õ±Ğ ‰}‘¥…¹½ÍÑ¥Œˆ±íô¥l‰½™™¥¥…±}Õ¹•ÉÑ…¥¹Ñä‰tõÁÉ•Á…É•‘l‰½™™¥¥…±}…Õ‘¥Ğ‰t(€€€€€€€€€€€€€€€¥˜É•ÍÕ±Ğ¹•Ğ ˆÃŠLÄÀÀ´ˆ¤è(€€€€€€€€€€€€€€€€€€€É•ÍÕ±ÑlˆÃŠLÄÀÀ´‰ul‰½™™¥¥…±}Õ¹•ÉÑ…¥¹Ñä‰tõÁÉ•Á…É•‘l‰½™™¥¥…±}…Õ‘¥Ğ‰t(€€€€€€€€€€€¥˜É•ÍÕ±Ğ¹•Ğ ˆÃŠLÄÀÀ´ˆ±íô¤¹•Ğ ‰Ñ}¡„ˆ¤¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€É•ÑÕÉ¸É•ÍÕ±Ğ(€€€€€€€€€€€¥˜±½…±}Á…Ñ¡Ì…¹ÁÉ•Á…É•¹•Ğ ‰ÁÉ½Ù•¹…¹”ˆ¤¥Ì9½¹”è(€€€€€€€€€€€€€€€±½…±}…Õ‘¥ĞõÉ•ÍÕ±Ğ¹•Ğ ‰}‘¥…¹½ÍÑ¥Œˆ¤(€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€İÍ}…Õ‘¥ĞõÉ•ÍÕ±Ğ¹•Ğ ‰}‘¥…¹½ÍÑ¥Œˆ¤(€€€•±Í”è(€€€€€€€±½…±}Á…Ñ¡ÌõÙ•É¥™¥•‘}±½…±}¡½É¥é½¹Ì ¤(€€€€€€€¥˜±½…±}Á…Ñ¡Ìè(€€€€€€€€€€€±½…±}É•ÍÕ±Ğõµ…ÁÁ•‘}Í½¥±|Á|ÄÀÁ}½¹}Á½±å½¸¡‘˜±±½…±}Á…Ñ¡Ì¤(€€€€€€€€€€€¥˜±½…±}É•ÍÕ±Ğ¹•Ğ ˆÃŠLÄÀÀ´ˆ±íô¤¹•Ğ ‰Ñ}¡„ˆ¤¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€É•ÑÕÉ¸}…ÑÑ…¡}•µ‰É…Á…}½™™¥¥…±}Í½}‰½Õ¹‘Ì¡‘˜±±½…±}É•ÍÕ±Ğ±±½…±}Á…Ñ¡Ì¤(€€€€€€€€€€€±½…±}…Õ‘¥Ğõ±½…±}É•ÍÕ±Ğ¹•Ğ ‰}‘¥…¹½ÍÑ¥Œˆ¤(€€€€€€€ÑÉäè(€€€€€€€€€€€™É½´ÁÉ½¹…Í½±½Í}İÌ¥µÁ½ÉĞ™•Ñ¡}¡½É¥é½¹Ì(€€€€€€€€€€€…ÅÕ¥É•õ™•Ñ¡}¡½É¥é½¹Ì¡‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¤(€€€€€€€€€€€İÍ}É•ÍÕ±Ğõµ…ÁÁ•‘}Í½¥±|Á|ÄÀÁ}½¹}Á½±å½¸ (€€€€€€€€€€€€€€€‘˜±…ÅÕ¥É•‘l‰Á…Ñ¡Ì‰t°(€€€€€€€€€€€€€€€Í½ÕÉ•}±…‰•°ô‰µ‰É…Á„M½±½Ì½AÉ½¹…M½±½Ì€äÀ´ØÈÀÈÄƒŠPÉ…ÍÑ•ÉÌ‰ÉÕÑ½ÌÙ¥„]L•½%¹™¼ˆ¤(€€€€€€€€€€€İÍ}É•ÍÕ±Ğ¹Í•Ñ‘•™…Õ±Ğ ‰}‘¥…¹½ÍÑ¥Œˆ±íô¥l‰İÍ}ÁÉ½Ù•¹…¹”‰tõ…ÅÕ¥É•‘l‰ÁÉ½Ù•¹…¹”‰t(€€€€€€€€€€€¥˜İÍ}É•ÍÕ±Ğ¹•Ğ ˆÃŠLÄÀÀ´ˆ±íô¤¹•Ğ ‰Ñ}¡„ˆ¤¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€É•ÑÕÉ¸}…ÑÑ…¡}•µ‰É…Á…}½™™¥¥…±}Í½}‰½Õ¹‘Ì¡‘˜±İÍ}É•ÍÕ±Ğ±…ÅÕ¥É•‘l‰Á…Ñ¡Ì‰t¤(€€€€€€€€€€€İÍ}…Õ‘¥ĞõİÍ}É•ÍÕ±Ğ¹•Ğ ‰}‘¥…¹½ÍÑ¥Œˆ¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€İÍ}…Õ‘¥Ğõì‰Ñ…É•Ñ}ÍÑ…ÑÕÌˆè‰]M}%9%MA=9%Y0ˆ°‰É•…Í½¸ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÌÀÁuô(€€€¥µÁ½ÉĞÉ•ÅÕ•ÍÑÌ(€€€œõ‘˜¹Ñ½}ÉÌ ÌàÔÜ¤ì•½´õœ¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤(€€€µ¥¹à±µ¥¹ä±µ…áà±µ…áäõ•½´¹‰½Õ¹‘Ì(€€€™É½´ÁÉ½¹…Í½±½Í}¥‘•¹Ñ¥™ä¥µÁ½ÉĞMIY%}9%QL°‰Õ¥±‘}¥‘•¹Ñ¥™å}Á…É…µÌ°•áÑÉ…Ñ}Á…¥É•‘}¡½É¥é½¹Ì(€€€±…å•É}¥‘ÌõlÈ°Ì°Ğ°Ô°Ùt(€€€™É½´ÁÉ½¹…Í½±½Í}¥‘•¹Ñ¥™ä¥µÁ½ÉĞÍ…µÁ±•}Á½¥¹ÑÍ}¥¹}ÍÑÉ…ÑÕ´(€€€Á½¥¹ÑÌõÍ…µÁ±•}Á½¥¹ÑÍ}¥¹}ÍÑÉ…ÑÕ´¡•½´±µ…á}Á½¥¹ÑÌ¤(€€€¥˜¹½ĞÁ½¥¹ÑÌè(€€€€€€€É•ÑÕÉ¸ì‰}‘¥…¹½ÍÑ¥Œˆéì‰Ñ…É•Ñ}ÍÑ…ÑÕÌˆè‰M5}A=9Q=M}5=MQI%Lˆ°‰Ñ…É•Ñ|Á|ÄÀÁ}…Ù…¥±…‰±”ˆé…±Í”°(€€€€€€€€€€€€€€€€‰±½…±}É…ÍÑ•É}…Õ‘¥Ğˆé±½…±}…Õ‘¥Ğ°‰İÍ}É…ÍÑ•É}…Õ‘¥ĞˆéİÍ}…Õ‘¥Ñõô(€€€Í•ÍÍ¥½¸õÉ•ÅÕ•ÍÑÌ¹M•ÍÍ¥½¸ ¤(€€€…ÑÑ•µÁÑÌõmt(€€€½‰Í•ÉÙ…Ñ¥½¹Ìõ9½¹”(€€€Í•±•Ñ•‘}Í•ÉÙ¥”õ9½¹”(€€€€Œ¼¹½Ğµ¥àÁÉ½‘ÕÑÌ¥¸„ÁÉ½™¥±”=Hİ¥Ñ¡¥¸Ñ¡”Í…µ”ÍÑÉ…ÑÕ´¸Í•ÉÙ¥”(€€€€ŒµÕÍĞÉ•ÑÕÉ¸…±°™¥Ù”¡½É¥é½¹Ì…Ğ•Ù•ÉäÉ•ÁÉ½‘Õ¥‰±”…É•„µÕ¹¥™½É´Á½¥¹Ğ¸(€€€™½È•¹‘Á½¥¹Ğ¥¸MIY%}9%QLè(€€€€€€€ÕÉÉ•¹Ğõmt(€€€€€€€•ÉÉ½ÉÌõmt(€€€€€€€™½ÈÁ½¥¹Ğ¥¸Á½¥¹ÑÌè(€€€€€€€€€€€Á…É…µÌõ‰Õ¥±‘}¥‘•¹Ñ¥™å}Á…É…µÌ¡Á½¥¹Ğ¹à±Á½¥¹Ğ¹ä°¡µ¥¹à±µ¥¹ä±µ…áà±µ…áä¤±±…å•É}¥‘Ì¤(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€É•ÍÁ½¹Í”õÍ•ÍÍ¥½¸¹•Ğ¡•¹‘Á½¥¹Ğ±Á…É…µÌõÁ…É…µÌ±Ñ¥µ•½ÕĞô Ô°ÄÈ¤¤(€€€€€€€€€€€€€€€É•ÍÁ½¹Í”¹É…¥Í•}™½É}ÍÑ…ÑÕÌ ¤(€€€€€€€€€€€€€€€ÕÉÉ•¹Ğ¹…ÁÁ•¹¡•áÑÉ…Ñ}Á…¥É•‘}¡½É¥é½¹Ì¡É•ÍÁ½¹Í”¹©Í½¸ ¤±±…å•É}¥‘Ì¤¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€€€€€ÕÉÉ•¹Ğ¹…ÁÁ•¹¡íô¤(€€€€€€€€€€€€€€€•ÉÉ½ÉÌ¹…ÁÁ•¹¡ÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÄØÁt¤(€€€€€€€Ù…±¥õÍÕ´¡…±°¡±…å•È¥¸ÁÉ½™¥±”™½È±…å•È¥¸€ È°Ì°Ğ°Ô°Ø¤¤™½ÈÁÉ½™¥±”¥¸ÕÉÉ•¹Ğ¤(€€€€€€€…ÑÑ•µÁÑÌ¹…ÁÁ•¹¡ì‰Í•ÉÙ¥”ˆé•¹‘Á½¥¹Ğ°‰½µÁ±•Ñ•}Á½¥¹ÑÌˆéÙ…±¥°(€€€€€€€€€€€€€€€€€€€€€€€€€‰É•ÅÕ•ÍÑ•‘}Á½¥¹ÑÌˆé±•¸¡Á½¥¹ÑÌ¤°‰•ÉÉ½ÉÌˆé•ÉÉ½ÉÍlèÍuô¤(€€€€€€€¥˜Ù…±¥ôõ±•¸¡Á½¥¹ÑÌ¤è(€€€€€€€€€€€½‰Í•ÉÙ…Ñ¥½¹ÌõÕÉÉ•¹Ğ(€€€€€€€€€€€Í•±•Ñ•‘}Í•ÉÙ¥”õ•¹‘Á½¥¹Ğ(€€€€€€€€€€€‰É•…¬(€€€¥˜½‰Í•ÉÙ…Ñ¥½¹Ì¥Ì9½¹”è(€€€€€€€É•ÑÕÉ¸ì‰}‘¥…¹½ÍÑ¥Œˆéì‰Ñ…É•Ñ}ÍÑ…ÑÕÌˆè‰MIY%=}M5}5=MQI}=5A1Qˆ°(€€€€€€€€€€€€€€€€‰É•…Í½¸ˆè‰9•¹¡Õ´Í•ÉÙ§¼É•Ñ½É¹½Ô½Ì¥¹¼¡½É¥é½¹Ñ•Ì•´Ñ½‘½Ì½ÌÁ½¹Ñ½Ì…µ½ÍÑÉ…¥Ìì•ÍÑ½ÅÕ”€ÃŠLÄÀÀ´µ…¹Ñ¥‘¼½µ¼8½¸€ˆ¬€ˆğ€ˆ¹©½¥¸¡•ÉÉ½È™½È…ÑÑ•µÁĞ¥¸…ÑÑ•µÁÑÌ™½È•ÉÉ½È¥¸…ÑÑ•µÁÑl‰•ÉÉ½ÉÌ‰t¥lèÌÀÁt°(€€€€€€€€€€€€€€€€‰Í•ÉÙ¥•Í}¡•­•ˆé…ÑÑ•µÁÑÌ°‰Í…µÁ±•Í}É•ÅÕ•ÍÑ•ˆé±•¸¡Á½¥¹ÑÌ¤°(€€€€€€€€€€€€€€€€‰ÅÕ•Éå}Á½¥¹ÑÍ}¥¹Í¥‘•}ÍÑÉ…ÑÕ´ˆé±•¸¡Á½¥¹ÑÌ¤°‰Ñ…É•Ñ|Á|ÄÀÁ}…Ù…¥±…‰±”ˆé…±Í”°(€€€€€€€€€€€€€€€€‰¹½}Á…ÉÑ¥…±}Í…µÁ±•}•áÑÉ…Á½±…Ñ¥½¸ˆéQÉÕ”°(€€€€€€€€€€€€€€€€‰±½…±}É…ÍÑ•É}…Õ‘¥Ğˆé±½…±}…Õ‘¥Ğ°‰İÍ}É…ÍÑ•É}…Õ‘¥ĞˆéİÍ}…Õ‘¥Ñõô(€€€™É½´Í½¥±}ÁÉ½™¥±•}ÍÑ…ÑÌ¥µÁ½ÉĞÍÕµµ…É¥é•}Á…¥É•‘}Í½¥±}ÁÉ½™¥±•Ì(€€€½ÕĞõÍÕµµ…É¥é•}Á…¥É•‘}Í½¥±}ÁÉ½™¥±•Ì¡½‰Í•ÉÙ…Ñ¥½¹Ì¤(€€€½ÕÑl‰}‘¥…¹½ÍÑ¥Œ‰tõì‰Í…µÁ±•Í}É•ÅÕ•ÍÑ•ˆé±•¸¡Á½¥¹ÑÌ¤°(€€€€€€€€‰Ù…±¥‘}‰å}±…å•ÈˆéìˆÃŠLÔˆé±•¸¡Á½¥¹ÑÌ¤°ˆ×ŠLÄÔˆé±•¸¡Á½¥¹ÑÌ¤°ˆÄ×ŠLÌÀˆé±•¸¡Á½¥¹ÑÌ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€ˆÌÃŠLØÀˆé±•¸¡Á½¥¹ÑÌ¤°ˆØÃŠLÄÀÀˆé±•¸¡Á½¥¹ÑÌ¥ô°(€€€€€€€€‰Í•ÉÙ¥”ˆéÍ•±•Ñ•‘}Í•ÉÙ¥”°‰Í•ÉÙ¥•Í}¡•­•ˆé…ÑÑ•µÁÑÌ°(€€€€€€€€‰Í•±•Ñ•‘}Á½¥¹ÑÍ}‰å}Í•ÉÙ¥”ˆéí•¹‘Á½¥¹Ğè¡±•¸¡Á½¥¹ÑÌ¤¥˜•¹‘Á½¥¹ĞôõÍ•±•Ñ•‘}Í•ÉÙ¥”•±Í”€À¤™½È•¹‘Á½¥¹Ğ¥¸MIY%}9%QMô°(€€€€€€€€‰¹½}É½ÍÍ}Í•ÉÙ¥•}¡½É¥é½¹}½µ‰¥¹…Ñ¥½¸ˆéQÉÕ”°‰Í¥¹±•}Í•ÉÙ¥•}™½É}•¹Ñ¥É•}ÍÑÉ…ÑÕ´ˆéQÉÕ”°(€€€€€€€€‰ÅÕ•Éå}Á½¥¹ÑÍ}¥¹Í¥‘•}ÍÑÉ…ÑÕ´ˆé±•¸¡Á½¥¹ÑÌ¤°‰Ñ…É•Ñ}‘•ÁÑ¡}´ˆèÄÀÀ°(€€€€€€€€‰Ñ…É•Ñ|Á|ÄÀÁ}…Ù…¥±…‰±”ˆèˆÃŠLÄÀÀ´ˆ¥¸½ÕĞ°(€€€€€€€€‰±½…±}É…ÍÑ•É}…Õ‘¥Ğˆé±½…±}…Õ‘¥Ğ°‰İÍ}É…ÍÑ•É}…Õ‘¥ĞˆéİÍ}…Õ‘¥Ğ°(€€€€€€€€‰µ•Ñ¡½ˆè‰¥‘•¹Ñ¥™å}Á½¥¹Ñ}Í…µÁ±¥¹}™…±±‰…¬ˆ°(€€€€€€€€‰Ñ…É•Ñ}ÍÑ…ÑÕÌˆè‰5=MQI}=5A1Q}MIY%=}U9%<ˆ°(€€€€€€€€‰ÍÁ…Ñ¥…±}Í…µÁ±¥¹}¹½Ñ”ˆè‰µ½ÍÑÉ„•ÍÁ…¥…°É•ÁÉ½‘ÕÓµÙ•°‘•¹ÑÉ¼‘¼Á½³µ½¹¼ìÍ•´¥¹Ñ•ÉÙ…±¼ÁÉ•‘¥Ñ¥Ù¼¹•´•ÉÉ¼‘¼µ…Á„¸‰ô(€€€É•ÑÕÉ¸½ÕĞ()‘•˜Í•±™}Ñ•ÍĞ ¤è(€€€…ÍÍ•ÉĞ…‰Ì¡™±½…Ğ¡…‰}µ•á¥…¹„ ÄÀ¤¤´À¸ÄÄàĞ¨ÄÀ¨¨È¸ÔÌ¤ğÅ”´à(€€€…ÍÍ•ÉĞI==Q}1=\ñI==Q}IQ%<ñI==Q}!% (€€€…ÍÍ•ÉĞ…‰Ì¡I	=9}IQ%=8´À¸ĞÜ¤ğÅ”´ä(€€€…ÍÍ•ÉĞ™½Éµ…Ñ}ÁÑ‰È ÄÈÌĞÔ¸ØÜà°È¤ôôˆÄÈ¸ÌĞÔ°Øàˆ…¹™½Éµ…Ñ}ÁÑ‰È ÄÈÌĞÔØÜ¸à°È¤ôôˆÄ¸ÈÌĞ¸ÔØÜ°àÀˆ…¹™½Éµ…Ñ}ÁÑ‰È ÄÈ¸Ô°À¤ôôˆÄÌˆ…¹™½Éµ…Ñ}ÁÑ‰È ´ÄÈÌĞ¸Ô°Ä¤ôôˆ´Ä¸ÈÌĞ°Ôˆ…¹™½Éµ…Ñ}É•ÍÕ±Ñ}©Í½¸¡ì‰„ˆèÄÈÌĞÔ¸ÈÕô¤ôõì‰„ˆèˆÄÈ¸ÌĞÔ°ÈÔÀÀÀÀ‰ô(€€€¥˜ÍåÌ¹ÍÑ‘½ÕĞ¥Ì¹½Ğ9½¹”éÁÉ¥¹Ğ ‰9=I5}YI}M1}QMS[h‘éì¶»§q«^wOK")
+                  "reason":type(exc).__name__+": "+str(exc).split("https://")[0][:180],
+                  "predictive_uncertainty_quantified":False}
+    top["official_uncertainty"] = status
+    top["predictive_uncertainty_quantified"] = bool(
+        status.get("predictive_uncertainty_quantified"))
+    stock_result.setdefault("_diagnostic",{})["official_uncertainty"] = status
+    return stock_result
+
+
+def _prepare_pronasolos_sources(gdf):
+    """Acquire soil rasters/bounds once for the whole AOI, then reuse locally.
+
+    The previous per-stratum calls caused each SAR class to request the same
+    five WCS horizons and prediction-bound capabilities again. Preparation is
+    AOI-scoped; all later carbon values still use exact stratumÃ—pixel overlays.
+    """
+    from soil_pronasolos_zonal import verified_local_horizons
+    prepared={"paths":None,"provenance":None,"official_paths":None,
+              "official_provenance":None,"local_audit":None,"wcs_audit":None,
+              "official_audit":None}
+    try:
+        prepared["paths"]=verified_local_horizons()
+    except Exception as exc:
+        prepared["local_audit"]={"status":"LOCAL_SOIL_CACHE_ERROR",
+                                  "reason":type(exc).__name__+": "+str(exc)[:240]}
+    if prepared["paths"] is None:
+        try:
+            from pronasolos_wcs import fetch_horizons
+            acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
+            prepared["paths"]=acquired["paths"]
+            prepared["provenance"]=acquired["provenance"]
+        except Exception as exc:
+            prepared["wcs_audit"]={"target_status":"WCS_INDISPONIVEL",
+                "reason":type(exc).__name__+": "+str(exc)[:300]}
+    try:
+        from soil_soc_official_uncertainty import fetch_official_bounds
+        bounds=fetch_official_bounds(gdf.to_crs(4326).geometry.union_all())
+        prepared["official_paths"]=bounds["paths"]
+        prepared["official_provenance"]=bounds["provenance"]
+    except Exception as exc:
+        prepared["official_audit"]={"status":"N/D",
+            "reason":type(exc).__name__+": "+str(exc).split("https://")[0][:240],
+            "predictive_uncertainty_quantified":False}
+    return prepared
+
+
+def pronasolos_soc_profiles(gdf,max_points=36,prepared=None):
+    """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha).
+    Exact polygon Ã— raw-raster intersection is preferred. Identify-point
+    sampling is a last resort and only accepted as a complete, single-service
+    sample over the whole AOI Ã— physiognomy stratum."""
+    from soil_pronasolos_zonal import verified_local_horizons, mapped_soil_0_100_on_polygon
+    local_audit=None;wcs_audit=None
+    if prepared is not None:
+        local_paths=prepared.get("paths")
+        local_audit=prepared.get("local_audit")
+        wcs_audit=prepared.get("wcs_audit")
+        if local_paths:
+            source_label=("Embrapa Solos/PronaSolos 90 m v2021 â€” cache local verificado"
+                          if prepared.get("provenance") is None else
+                          "Embrapa Solos/PronaSolos 90 m v2021 â€” WCS baixado uma vez para a AOI")
+            result=mapped_soil_0_100_on_polygon(gdf,local_paths,source_label=source_label,
+                official_bound_paths=prepared.get("official_paths"),
+                official_provenance=prepared.get("official_provenance"))
+            result.setdefault("_diagnostic",{})["wcs_provenance"]=prepared.get("provenance")
+            if prepared.get("official_audit"):
+                result.setdefault("_diagnostic",{})["official_uncertainty"]=prepared["official_audit"]
+                if result.get("0â€“100 cm"):
+                    result["0â€“100 cm"]["official_uncertainty"]=prepared["official_audit"]
+            if result.get("0â€“100 cm",{}).get("tc_ha") is not None:
+                return result
+            if local_paths and prepared.get("provenance") is None:
+                local_audit=result.get("_diagnostic")
+            else:
+                wcs_audit=result.get("_diagnostic")
+    else:
+        local_paths=verified_local_horizons()
+        if local_paths:
+            local_result=mapped_soil_0_100_on_polygon(gdf,local_paths)
+            if local_result.get("0â€“100 cm",{}).get("tc_ha") is not None:
+                return _attach_embrapa_official_soc_bounds(gdf,local_result,local_paths)
+            local_audit=local_result.get("_diagnostic")
+        try:
+            from pronasolos_wcs import fetch_horizons
+            acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
+            wcs_result=mapped_soil_0_100_on_polygon(
+                gdf,acquired["paths"],
+                source_label="Embrapa Solos/PronaSolos 90 m v2021 â€” rasters brutos via WCS GeoInfo")
+            wcs_result.setdefault("_diagnostic",{})["wcs_provenance"]=acquired["provenance"]
+            if wcs_result.get("0â€“100 cm",{}).get("tc_ha") is not None:
+                return _attach_embrapa_official_soc_bounds(gdf,wcs_result,acquired["paths"])
+            wcs_audit=wcs_result.get("_diagnostic")
+        except Exception as exc:
+            wcs_audit={"target_status":"WCS_INDISPONIVEL","reason":type(exc).__name__+": "+str(exc)[:300]}
+    import requests
+    gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
+    minx,miny,maxx,maxy=geom.bounds
+    from pronasolos_identify import SERVICE_CANDIDATES, build_identify_params, extract_paired_horizons
+    layer_ids=[2,3,4,5,6]
+    from pronasolos_identify import sample_points_in_stratum
+    points=sample_points_in_stratum(geom,max_points)
+    if not points:
+        return {"_diagnostic":{"target_status":"SEM_PONTOS_AMOSTRAIS","target_0_100_available":False,
+                "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit}}
+    session=requests.Session()
+    attempts=[]
+    observations=None
+    selected_service=None
+    # Do not mix products in a profile OR within the same stratum. A service
+    # must return all five horizons at every reproducible area-uniform point.
+    for endpoint in SERVICE_CANDIDATES:
+        current=[]
+        errors=[]
+        for point in points:
+            params=build_identify_params(point.x,point.y,(minx,miny,maxx,maxy),layer_ids)
+            try:
+                response=session.get(endpoint,params=params,timeout=(5,12))
+                response.raise_for_status()
+                current.append(extract_paired_horizons(response.json(),layer_ids))
+            except Exception as exc:
+                current.append({})
+                errors.append(type(exc).__name__+": "+str(exc)[:160])
+        valid=sum(all(layer in profile for layer in (2,3,4,5,6)) for profile in current)
+        attempts.append({"service":endpoint,"complete_points":valid,
+                         "requested_points":len(points),"errors":errors[:3]})
+        if valid==len(points):
+            observations=current
+            selected_service=endpoint
+            break
+    if observations is None:
+        return {"_diagnostic":{"target_status":"SERVICO_SEM_AMOSTRA_COMPLETA",
+                "reason":"Nenhum serviÃ§o retornou os cinco horizontes em todos os pontos amostrais; estoque 0â€“100 cm mantido como N/D. "+ " | ".join(error for attempt in attempts for error in attempt["errors"])[:300],
+                "services_checked":attempts,"samples_requested":len(points),
+                "query_points_inside_stratum":len(points),"target_0_100_available":False,
+                "no_partial_sample_extrapolation":True,
+                "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit}}
+    from soil_profile_stats import summarize_paired_soil_profiles
+    out=summarize_paired_soil_profiles(observations)
+    out["_diagnostic"]={"samples_requested":len(points),
+        "valid_by_layer":{"0â€“5":len(points),"5â€“15":len(points),"15â€“30":len(points),
+                          "30â€“60":len(points),"60â€“100":len(points)},
+        "service":selected_service,"services_checked":attempts,
+        "selected_points_by_service":{endpoint:(len(points) if endpoint==selected_service else 0) for endpoint in SERVICE_CANDIDATES},
+        "no_cross_service_horizon_combination":True,"single_service_for_entire_stratum":True,
+        "query_points_inside_stratum":len(points),"target_depth_cm":100,
+        "target_0_100_available":"0â€“100 cm" in out,
+        "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit,
+        "method":"identify_point_sampling_fallback",
+        "target_status":"AMOSTRA_COMPLETA_SERVICO_UNICO",
+        "spatial_sampling_note":"Amostra espacial reprodutÃ­vel dentro do polÃ­gono; sem intervalo preditivo nem erro do mapa."}
+    return out
+
+def self_test():
+    assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8
+    assert ROOT_LOW<ROOT_RATIO<ROOT_HIGH
+    assert abs(CARBON_FRACTION-0.47)<1e-9
+    assert format_ptbr(12345.678,2)=="12.345,68" and format_ptbr(1234567.8,2)=="1.234.567,80" and format_ptbr(12.5,0)=="13" and format_ptbr(-1234.5,1)=="-1.234,5" and format_result_json({"a":12345.25})=={"a":"12.345,250000"}
+    if sys.stdout is not None:print("ENFORM_VERDE_SELF_TEST_OK")
 
 def acceptance_test(kmz_path):
     """Run the real TapajÃ³s SAR acceptance path from the compiled executable."""
@@ -594,7 +1208,166 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
         with rasterio.open(href) as src:
             b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
             dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0)
-        YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Ô€€€™…Ñ½Èõµ…à À¸ÌÀ±µ¥¸ à¸À±™±½…Ğ¡•áÑ•¹Ñ}™…Ñ½È¤¤¤ìàô¡‰álÁt­‰álÉt¤¼Èìäô¡‰álÅt­‰álÍt¤¼È(€€€€€€€€€€€İˆô¡àµ‘à©™…Ñ½È¼È±äµ‘ä©™…Ñ½È¼È±à­‘à©™…Ñ½È¼È±ä­‘ä©™…Ñ½È¼È¤(€€€€€€€€€€€İ¥¸õ™É½µ}‰½Õ¹‘Ì ©İˆ±ÑÉ…¹Í™½É´õÍÉŒ¹ÑÉ…¹Í™½É´¤¹É½Õ¹‘}½™™Í•ÑÌ ¤¹É½Õ¹‘}±•¹Ñ¡Ì ¤(€€€€€€€€€€€½ÕÑ}Üõµ…à ÜÀÀ±µ¥¸ ÄÈÀÀ±É½Õ¹¡½ÕÑ} ©µ…à¡™±½…Ğ¡İ¥¸¹İ¥‘Ñ ¤°Ä¸À¤½µ…à¡™±½…Ğ¡İ¥¸¹¡•¥¡Ğ¤°Ä¸À¤¤¤¤(€€€€€€€€€€€…ÉÈõÍÉŒ¹É•…¡¥¹‘•á•ÌõlÄ°È°Ít±İ¥¹‘½Üõİ¥¸±½ÕÑ}Í¡…Á”ô Ì±½ÕÑ} ±½ÕÑ}Ü¤°(€€€€€€€€€€€€€€€€€€€€€€€€É•Í…µÁ±¥¹œõÉ…ÍÑ•É¥¼¹•¹ÕµÌ¹I•Í…µÁ±¥¹œ¹‰¥±¥¹•…È±‰½Õ¹‘±•ÍÌõQÉÕ”±™¥±±}Ù…±Õ”ôÀ¤(€€€€€€€€€€€Éˆõ¹À¹µ½Ù•…á¥Ì¡…ÉÈ°À°È¤(€€€€€€€€€€€Ù…±¥õ¹À¹¥Í™¥¹¥Ñ”¡Éˆ¤¹…±°¡…á¥ÌôÈ¤˜¡ÉˆøÀ¤¹…¹ä¡…á¥ÌôÈ¤(€€€€€€€€€€€Ñ…É•Ñ}ÑÉ…¹Í™½É´õÍÉŒ¹İ¥¹‘½İ}ÑÉ…¹Í™½É´¡İ¥¸¤©É…ÍÑ•É¥¼¹™™¥¹”¹Í…±” (€€€€€€€€€€€€€€€™±½…Ğ¡İ¥¸¹İ¥‘Ñ ¤½½ÕÑ}Ü±™±½…Ğ¡İ¥¸¹¡•¥¡Ğ¤½½ÕÑ} ¤(€€€€€€€€€€€…½¥}•½µ•ÑÉäõÑÉ…¹Í™½Éµ}•½´ ‰AMèĞÌÈØˆ±ÍÉŒ¹ÉÌ±•½´¤(€€€€€€€€€€€…½¥}µ…Í¬õ•½µ•ÑÉå}µ…Í¬¡m…½¥}•½µ•ÑÉåt±½ÕÑ}Í¡…Á”ô¡½ÕÑ} ±½ÕÑ}Ü¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ÑÉ…¹Í™½É´õÑ…É•Ñ}ÑÉ…¹Í™½É´±¥¹Ù•ÉĞõQÉÕ”¤(€€€€€€€€€€€…½¥}½Ù•É…”õ™±½…Ğ ¡Ù…±¥™…½¥}µ…Í¬¤¹ÍÕ´ ¤½µ…à Ä±¥¹Ğ¡…½¥}µ…Í¬¹ÍÕ´ ¤¤¤¤(€€€€€€€€€€€¥˜…½¥}½Ù•É…”ğÀ¸äÔè(€€€€€€€€€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰M•¹Ñ¥¹•°´ÈA±…¹•Ñ…Éä½µÁÕÑ•È»¼½‰É”€äÔ”‘½ÌÁ¥á•±Ì‘„=$ˆ¤(€€€€€€€€€€€¥˜Éˆ¹‘ÑåÁ”„õ¹À¹Õ¥¹Ğàè(€€€€€€€€€€€€€€€Ù…±¥õÉ‰m¹À¹¥Í™¥¹¥Ñ”¡Éˆ¤˜¡ÉˆøÀ¥t(€€€€€€€€€€€€€€€¡¤õ™±½…Ğ¡¹À¹Á•É•¹Ñ¥±”¡Ù…±¥°ää¤¤¥˜Ù…±¥¹Í¥é”•±Í”€Ä¸À(€€€€€€€€€€€€€€€Éˆõ¹À¹±¥À¡Éˆ½µ…à¡¡¤°Å”´ä¤¨ÈÔÔ°À°ÈÔÔ¤¹…ÍÑåÁ”¡¹À¹Õ¥¹Ğà¤(€€€€€€€€€€€Ù¥•Üõ%µ…”¹™É½µ…ÉÉ…ä¡Éˆ°‰Iˆ¤ìİĞõÍÉŒ¹İ¥¹‘½İ}ÑÉ…¹Í™½É´¡İ¥¸¤ìÁ½±å½¹Ìõmt(€€€€€€€€€€€™½È•½´À¥¸œ¹•½µ•ÑÉäè(€€€€€€€€€€€€€€€•½µÌõ±¥ÍĞ¡•½´À¹•½µÌ¤¥˜•½´À¹•½µ}ÑåÁ”ôô‰5Õ±Ñ¥A½±å½¸ˆ•±Í”€¡m•½´Át¥˜•½´À¹•½µ}ÑåÁ”ôô‰A½±å½¸ˆ•±Í”mt¤(€€€€€€€€€€€€€€€™½ÈÁ½±ä¥¸•½µÌè(€€€€€€€€€€€€€€€€€€€½½É‘Ìõ±¥ÍĞ¡Á½±ä¹•áÑ•É¥½È¹½½É‘Ì¤(€€€€€€€€€€€€€€€€€€€±½¸õmÁlÁt™½ÈÀ¥¸½½É‘Ítì±…ĞõmÁlÅt™½ÈÀ¥¸½½É‘Ít(€€€€€€€€€€€€€€€€€€€áà±åäõÑÉ…¹Í™½É´ ‰AMèĞÌÈØˆ±ÍÉŒ¹ÉÌ±±½¸±±…Ğ¤ìÁÑÌõmt(€€€€€€€€€€€€€€€€€€€™½Èà±ä¥¸é¥À¡áà±åä¤è(€€€€€€€€€€€€€€€€€€€€€€€½°±É½Üô¡ùİĞ¤¨¡à±ä¤(€€€€€€€€€€€€€€€€€€€€€€€ÁÑÌ¹•áÑ•¹¡m™±½…Ğ¡½°¤©½ÕÑ}Ü½µ…à¡™±½…Ğ¡İ¥¸¹İ¥‘Ñ ¤°Ä¸À¤±™±½…Ğ¡É½Ü¤©½ÕÑ} ½µ…à¡™±½…Ğ¡İ¥¸¹¡•¥¡Ğ¤°Ä¸À¥t¤(€€€€€€€€€€€€€€€€€€€¥˜±•¸¡ÁÑÌ¤øôØéÁ½±å½¹Ì¹…ÁÁ•¹¡ÁÑÌ¤(€€€É•ÑÕÉ¸ì‰¥µ…”ˆéÙ¥•Ü°‰Á½±å½¹ÌˆéÁ½±å½¹Ì°‰Í•¹•}¥ˆé¥Ğ¹•Ğ ‰¥ˆ¤°‰‘…Ñ•Ñ¥µ”ˆé‘Ğ°‰±½Õ‘}½Ù•Èˆé±½Õ°(€€€€€€€€€€€€‰ÁÉ½Ù¥‘•Èˆè‰M•¹Ñ¥¹•°´È0É€¼5¥É½Í½™ĞA±…¹•Ñ…Éä½µÁÕÑ•Èˆ°‰…ÍÍ•Ğˆè‰Ù¥ÍÕ…°ˆ°(€€€€€€€€€€€€‰…½¥}½Ù•É…•}™É…Ñ¥½¸ˆé…½¥}½Ù•É…•ô((()‘•˜}™•Ñ¡}ÍÑ…}™•…ÑÕÉ•Í}Á…•¡ÕÉ°±‰½‘ä°¨±Ñ¥µ•½ÕĞô à°ĞÔ¤±µ…á}Á…•ÌôÈÀ¤è(€€€€ˆˆ‰•Ñ Á…•MQÉ•ÍÕ±ÑÌÍ¼„™¥ÉÍĞµÁ…”±¥µ¥Ğ…¹¹½Ğ¡¥‘”=$Í•¹•Ì¸ˆˆˆ(€€€É•ÍÁ½¹Í”õÉ•ÅÕ•ÍÑÌ¹Á½ÍĞ¡ÕÉ°±©Í½¸õ‰½‘ä±Ñ¥µ•½ÕĞõÑ¥µ•½ÕĞ¤(€€€É•ÍÁ½¹Í”¹É…¥Í•}™½É}ÍÑ…ÑÕÌ ¤íÁ…å±½…õÉ•ÍÁ½¹Í”¹©Í½¸ ¤(€€€™•…ÑÕÉ•Ìõ±¥ÍĞ¡Á…å±½…¹•Ğ ‰™•…ÑÕÉ•Ìˆ¤½Èmt¤íÁ…•ÌôÄ(€€€İ¡¥±”Á…•Ìñµ…á}Á…•Ìè(€€€€€€€±¥¹¬õ¹•áĞ ¡à™½Èà¥¸Á…å±½…¹•Ğ ‰±¥¹­Ìˆ±mt¤¥˜à¹•Ğ ‰É•°ˆ¤ôô‰¹•áĞˆ…¹à¹•Ğ ‰¡É•˜ˆ¤¤±9½¹”¤(€€€€€€€¥˜¹½Ğ±¥¹¬é‰É•…¬(€€€€€€€¥˜ÍÑÈ¡±¥¹¬¹•Ğ ‰µ•Ñ¡½ˆ°‰Pˆ¤¤¹ÕÁÁ•È ¤ôô‰A=MPˆè(€€€€€€€€€€€É•ÍÁ½¹Í”õÉ•ÅÕ•ÍÑÌ¹Á½ÍĞ¡±¥¹­l‰¡É•˜‰t±©Í½¸õ±¥¹¬¹•Ğ ‰‰½‘äˆ¤½È‰½‘ä°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¡•…‘•ÉÌõ±¥¹¬¹•Ğ ‰¡•…‘•ÉÌˆ¤½Èíô±Ñ¥µ•½ÕĞõÑ¥µ•½ÕĞ¤(€€€€€€€•±Í”è(€€€€€€€€€€€É•ÍÁ½¹Í”õÉ•ÅÕ•ÍÑÌ¹•Ğ¡±¥¹­l‰¡É•˜‰t±Ñ¥µ•½ÕĞõÑ¥µ•½ÕĞ¤(€€€€€€€É•ÍÁ½¹Í”¹É…¥Í•}™½É}ÍÑ…ÑÕÌ ¤íÁ…å±½…õÉ•ÍÁ½¹Í”¹©Í½¸ ¤(€€€€€€€Á…”õÁ…å±½…¹•Ğ ‰™•…ÑÕÉ•Ìˆ¤½Èmt(€€€€€€€¥˜¹½ĞÁ…”é‰É•…¬(€€€€€€€™•…ÑÕÉ•Ì¹•áÑ•¹¡Á…”¤íÁ…•Ì¬ôÄ(€€€É•ÑÕÉ¸™•…ÑÕÉ•Ì(()=AQ%1}=}Q%1}M%iôÔÄÈ)=AQ%1}5a}M9}9%QLôÌ()‘•˜}¥Ñ•É}½ÁÑ¥…±}ÅÕ…‘É…¹ÑÌ¡İ¥‘Ñ ±¡•¥¡Ğ±Ñ¥±•}Í¥é”õ=AQ%1}=}Q%1}M%i¤è(€€€€ˆˆ‰e¥•±‰½Õ¹‘•Á¥á•°İ¥¹‘½İÌÍ¼ÁÉ•Ù¥•ÜÉ•…‘Ì¹•Ù•ÈÍ…±”İ¥Ñ =$Í¥é”¸ˆˆˆ(€€€İ¥‘Ñ õ¥¹Ğ¡İ¥‘Ñ ¤í¡•¥¡Ğõ¥¹Ğ¡¡•¥¡Ğ¤íÑ¥±•}Í¥é”õ¥¹Ğ¡Ñ¥±•}Í¥é”¤(€€€¥˜İ¥‘Ñ ğôÀ½È¡•¥¡ĞğôÀ½ÈÑ¥±•}Í¥é”ğôÀéÉ…¥Í”Y…±Õ•ÉÉ½È ‰¥µ•¹ÏÕ•ÌƒÍÁÑ¥…Ì¥¹Û…±¥‘…Ìˆ¤(€€€™½Èä¥¸É…¹” À±¡•¥¡Ğ±Ñ¥±•}Í¥é”¤è(€€€€€€€™½Èà¥¸É…¹” À±İ¥‘Ñ ±Ñ¥±•}Í¥é”¤è(€€€€€€€€€€€å¥•±à±ä±µ¥¸¡Ñ¥±•}Í¥é”±İ¥‘Ñ µà¤±µ¥¸¡Ñ¥±•}Í¥é”±¡•¥¡Ğµä¤(()‘•˜}É•…‘}½ÁÑ¥…±}½}ÅÕ…‘É…¹ÑÌ¡ÍÉŒ±Ñ…É•Ñ}ÑÉ…¹Í™½É´±Ñ…É•Ñ}ÉÌ±İ¥‘Ñ ±¡•¥¡Ğ°¨±…Ñ•½É¥…°õ…±Í”¤è(€€€€ˆˆ‰I•…„É•µ½Ñ”=‰ä‰½Õ¹‘•ÅÕ…‘É…¹ÑÌ…¹É•ÁÉ½©•Ğ¥¹Ñ¼½¹”ÁÉ•Ù¥•Ü¸ˆˆˆ(€€€¥µÁ½ÉĞÉ…ÍÑ•É¥¼(€€€™É½´É…ÍÑ•É¥¼¹•¹ÕµÌ¥µÁ½ÉĞI•Í…µÁ±¥¹œ(€€€™É½´É…ÍÑ•É¥¼¹ÑÉ…¹Í™½É´¥µÁ½ÉĞ…ÉÉ…å}‰½Õ¹‘Ì(€€€™É½´É…ÍÑ•É¥¼¹İ…ÉÀ¥µÁ½ÉĞÑÉ…¹Í™½Éµ}‰½Õ¹‘Ì±É•ÁÉ½©•Ğ(€€€™É½´É…ÍÑ•É¥¼¹İ¥¹‘½İÌ¥µÁ½ÉĞ™É½µ}‰½Õ¹‘Ì±]¥¹‘½Ü(€€€¥˜¹½ĞÍÉŒ¹ÉÌéÉ…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰=ƒÍÁÑ¥¼Í•´ILˆ¤(€€€‘ÑåÁ”õ¹À¹Õ¥¹Ğà¥˜…Ñ•½É¥…°•±Í”¹À¹™±½…ĞÌÈ(€€€¹½‘…Ñ„ôÀ¥˜…Ñ•½É¥…°•±Í”¹À¹¹…¸(€€€½ÕÑÁÕĞõ¹À¹™Õ±° ¡¥¹Ğ¡¡•¥¡Ğ¤±¥¹Ğ¡İ¥‘Ñ ¤¤±¹½‘…Ñ„±‘ÑåÁ”õ‘ÑåÁ”¤(€€€µ•Ñ¡½õI•Í…µÁ±¥¹œ¹¹•…É•ÍĞ¥˜…Ñ•½É¥…°•±Í”I•Í…µÁ±¥¹œ¹‰¥±¥¹•…È(€€€™½Èá½™˜±å½™˜±Ñ¥±•}Ü±Ñ¥±•} ¥¸}¥Ñ•É}½ÁÑ¥…±}ÅÕ…‘É…¹ÑÌ¡İ¥‘Ñ ±¡•¥¡Ğ¤è(€€€€€€€Ñ¥±•}ÑÉ…¹Í™½É´õÑ…É•Ñ}ÑÉ…¹Í™½É´©É…ÍÑ•É¥¼¹™™¥¹”¹ÑÉ…¹Í±…Ñ¥½¸¡á½™˜±å½™˜¤(€€€€€€€Ñ¥±•}‰½Õ¹‘Ìõ…ÉÉ…å}‰½Õ¹‘Ì¡Ñ¥±•} ±Ñ¥±•}Ü±Ñ¥±•}ÑÉ…¹Í™½É´¤(€€€€€€€ÍÉ}‰½Õ¹‘ÌõÑÉ…¹Í™½Éµ}‰½Õ¹‘Ì¡Ñ…É•Ñ}ÉÌ±ÍÉŒ¹ÉÌ°©Ñ¥±•}‰½Õ¹‘Ì±‘•¹Í¥™å}ÁÑÌôÄÄ¤(€€€€€€€İ¥¸õ™É½µ}‰½Õ¹‘Ì ©ÍÉ}‰½Õ¹‘Ì±ÑÉ…¹Í™½É´õÍÉŒ¹ÑÉ…¹Í™½É´¤¹É½Õ¹‘}½™™Í•ÑÌ ¤¹É½Õ¹‘}±•¹Ñ¡Ì ¤(€€€€€€€ÑÉäéİ¥¸õİ¥¸¹¥¹Ñ•ÉÍ•Ñ¥½¸¡]¥¹‘½Ü À°À±ÍÉŒ¹İ¥‘Ñ ±ÍÉŒ¹¡•¥¡Ğ¤¤(€€€€€€€•á•ÁĞÉ…ÍÑ•É¥¼¹•ÉÉ½ÉÌ¹]¥¹‘½İÉÉ½Èé½¹Ñ¥¹Õ”(€€€€€€€¥˜İ¥¸¹İ¥‘Ñ ğÄ½Èİ¥¸¹¡•¥¡ĞğÄé½¹Ñ¥¹Õ”(€€€€€€€É…ÜõÍÉŒ¹É•… Ä±İ¥¹‘½Üõİ¥¸±½ÕÑ}Í¡…Á”ô¡Ñ¥±•} ±Ñ¥±•}Ü¤±µ…Í­•õQÉÕ”±É•Í…µÁ±¥¹œõµ•Ñ¡½¤(€€€€€€€¥˜…Ñ•½É¥…°è(€€€€€€€€€€€‘…Ñ„õÉ…Ü¹™¥±±• À¤¹…ÍÑåÁ”¡¹À¹Õ¥¹Ğà±½Áäõ…±Í”¤(€€€€€€€•±Í”è(€€€€€€€€€€€€Œ½¹Ù•ÉĞµ…Í­•¥¹Ñ••ÈÍ½ÕÉ•Ì‰•™½É”™¥±±¥¹œ9…8ì™¥±±¥¹œ…¸(€€€€€€€€€€€€Œ¥¹Ñ••È5…Í­•‘ÉÉ…äİ¥Ñ 9…8É…¥Í•Ì½¸Í½µ”É…ÍÑ•É¥¼‰Õ¥±‘Ì¸(€€€€€€€€€€€‘…Ñ„õ¹À¹µ„¹™¥±±•¡É…Ü¹…ÍÑåÁ”¡¹À¹™±½…ĞÌÈ¤±¹À¹¹…¸¤¹…ÍÑåÁ”¡¹À¹™±½…ĞÌÈ±½Áäõ…±Í”¤(€€€€€€€Í…±•õÍÉŒ¹İ¥¹‘½İ}ÑÉ…¹Í™½É´¡İ¥¸¤©É…ÍÑ•É¥¼¹™™¥¹”¹Í…±” (€€€€€€€€€€€™±½…Ğ¡İ¥¸¹İ¥‘Ñ ¤½Ñ¥±•}Ü±™±½…Ğ¡İ¥¸¹¡•¥¡Ğ¤½Ñ¥±•} ¤(€€€€€€€Ñ…É•Ğõ½ÕÑÁÕÑmå½™˜éå½™˜­Ñ¥±•} ±á½™˜éá½™˜­Ñ¥±•}İt(€€€€€€€É•ÁÉ½©•Ğ¡‘…Ñ„±Ñ…É•Ğ±ÍÉ}ÑÉ…¹Í™½É´õÍ…±•±ÍÉ}ÉÌõÍÉŒ¹ÉÌ±ÍÉ}¹½‘…Ñ„õ¹½‘…Ñ„°(€€€€€€€€€€€€€€€€€‘ÍÑ}ÑÉ…¹Í™½É´õÑ¥±•}ÑÉ…¹Í™½É´±‘ÍÑ}ÉÌõÑ…É•Ñ}ÉÌ±‘ÍÑ}¹½‘…Ñ„õ¹½‘…Ñ„°(€€€€€€€€€€€€€€€€€É•Í…µÁ±¥¹œõµ•Ñ¡½¤(€€€É•ÑÕÉ¸½ÕÑÁÕĞ(()‘•˜Í•¹Ñ¥¹•°É}•…ÉÑ¡Í•…É¡}ÁÉ•Ù¥•Ü¡‘˜±½ÕÑ}ÜôÄÀÀÀ±½ÕÑ} ôÔØÀ±•áÑ•¹Ñ}™…Ñ½ÈôÄ¸ÌØ¤è(€€€€ˆˆ‰I•…°M•¹Ñ¥¹•°´ÈI=Á¥á•±Ì°Í•¹”™…±±‰…¬…¹Á¥á•°µ…±¥¹•=$½Ù•É±…ä¸((€€€M•…É É•ÍÕ±ÑÌ…É”½¹±ä…¹‘¥‘…Ñ•Ìè…¸…ÑÕ…°Ñ¡É•”µ‰…¹É…ÍÑ•ÈÉ•…İ¥Ñ (€€€¹½¹‰±…¹¬Á¥á•±Ì¥ÌÉ•ÅÕ¥É•‰•™½É”‘•±…É¥¹œ…¹ä¥µ…”±½…‘•¸(€€€€ˆˆˆ(€€€¥µÁ½ÉĞÑ¥µ”(€€€¥µÁ½ÉĞÉ…ÍÑ•É¥¼(€€€™É½´É…ÍÑ•É¥¼¹İ…ÉÀ¥µÁ½ÉĞÑÉ…¹Í™½Éµ}‰½Õ¹‘Ì°ÑÉ…¹Í™½É´°ÑÉ…¹Í™½Éµ}•½´°É•ÁÉ½©•Ğ°I•Í…µÁ±¥¹œ(€€€™É½´É…ÍÑ•É¥¼¹™•…ÑÕÉ•Ì¥µÁ½ÉĞ•½µ•ÑÉå}µ…Í¬(€€€™É½´É…ÍÑ•É¥¼¹İ¥¹‘½İÌ¥µÁ½ÉĞ™É½µ}‰½Õ¹‘Ì°]¥¹‘½Ü(€€€œõ‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹½Áä ¤(€€€•½´õœ¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤¹}}•½}¥¹Ñ•É™…•}|(€€€‰½‘äõì‰½±±•Ñ¥½¹Ìˆél‰Í•¹Ñ¥¹•°´Èµ°É„‰t°‰¥¹Ñ•ÉÍ•ÑÌˆé•½´°‰±¥µ¥ĞˆèØÀ°(€€€€€€€€€€‰Í½ÉÑ‰äˆémì‰™¥•±ˆè‰ÁÉ½Á•ÉÑ¥•Ì¹‘…Ñ•Ñ¥µ”ˆ°‰‘¥É•Ñ¥½¸ˆè‰‘•ÍŒ‰õuô(€€€•ÉÉ½ÉÌõmt(€€€¥Ñ•µÌõmt(€€€™½È…ÑÑ•µÁĞ¥¸É…¹” Ì¤è(€€€€€€€ÑÉäè(€€€€€€€€€€€¥Ñ•µÌõ}™•Ñ¡}ÍÑ…}™•…ÑÕÉ•Í}Á…• ‰¡ÑÑÁÌè¼½•…ÉÑ µÍ•…É ¹…İÌ¹•±•µ•¹ĞàĞ¹½´½ØÄ½Í•…É ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰½‘ä±Ñ¥µ•½ÕĞô à°ÌÔ¤±µ…á}Á…•ÌôÈÀ¤(€€€€€€€€€€€‰É•…¬(€€€€€€€•á•ÁĞÉ•ÅÕ•ÍÑÌ¹•á•ÁÑ¥½¹Ì¹I•ÅÕ•ÍÑá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€¥˜…ÑÑ•µÁĞôôÈéÉ…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰…ÉÑ M•…É MQ¥¹‘¥ÍÁ½»µÙ•°è€ˆ­ÑåÁ”¡•áŒ¤¹}}¹…µ•}|¤™É½´9½¹”(€€€€€€€€€€€Ñ¥µ”¹Í±••À Ä¸È¨¡…ÑÑ•µÁĞ¬Ä¤¤(€€€¡½¥•Ìõmt(€€€™½È¥Ñ•´¥¸¥Ñ•µÌè(€€€€€€€…ÍÍ•ÑÌõ¥Ñ•´¹•Ğ ‰…ÍÍ•ÑÌˆ¤½Èíô(€€€€€€€¥˜¹½Ğ…±° ¡…ÍÍ•ÑÌ¹•Ğ¡¬¤½Èíô¤¹•Ğ ‰¡É•˜ˆ¤™½È¬¥¸€ ‰É•ˆ°‰É••¸ˆ°‰‰±Õ”ˆ¤¤é½¹Ñ¥¹Õ”(€€€€€€€ÁÉ½ÁÌõ¥Ñ•´¹•Ğ ‰ÁÉ½Á•ÉÑ¥•Ìˆ¤½Èíô(€€€€€€€‘ĞõÍÑÈ¡ÁÉ½ÁÌ¹•Ğ ‰‘…Ñ•Ñ¥µ”ˆ¤½È€ˆˆ¤(€€€€€€€ÑÉäé±½Õõ™±½…Ğ¡ÁÉ½ÁÌ¹•Ğ ‰•¼é±½Õ‘}½Ù•Èˆ°ÄÀÀ¸À¤¤(€€€€€€€•á•ÁĞ€¡Y…±Õ•ÉÉ½È±QåÁ•ÉÉ½È¤é±½ÕôÄÀÀ¸À(€€€€€€€¡½¥•Ì¹…ÁÁ•¹ ¡±½Õ±‘Ğ±¥Ñ•´±…ÍÍ•ÑÌ¤¤(€€€¥˜¹½Ğ¡½¥•ÌéÉ…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰…Ó…±½¼…ÉÑ M•…É Í•´•¹…Ì0ÉI¹„=$ˆ¤(€€€€ŒAÉ•™•ÈÉ••¹Ğ±•…ÈÍ•¹•Ì°‰ÕĞ9YH™…¥°©ÕÍĞ‰•…ÕÍ”Ñ¡”™¥ÉÍĞ=(€€€€Œ¥Ì¥¹…•ÍÍ¥‰±”½È¥ÑÌÙ¥•İÁ½ÉĞ½¹Ñ…¥¹Ì¹¼…ÑÕ…°‘…Ñ„¸(€€€±•…ÈõÍ½ÉÑ• ¡à™½Èà¥¸¡½¥•Ì¥˜álÁtğôÈÀ¤±­•äõ±…µ‰‘„àéálÅt±É•Ù•ÉÍ”õQÉÕ”¤(€€€½Ñ¡•ÈõÍ½ÉÑ• ¡à™½Èà¥¸¡½¥•Ì¥˜álÁtøÈÀ¤±­•äõ±…µ‰‘„àè¡álÁt±álÅt¤¤(€€€€Œ	½Õ¹É•µ½Ñ”ÑÉ…™™¥Œ…¹™…±±‰…¬±…Ñ•¹ä¸±½¹œ…Ñ…±½œ½˜¥¹…•ÍÍ¥‰±”(€€€€Œ=ÌµÕÍĞ¹•Ù•È‘•±…äÑ¡”¹•áĞÁÉ½Ù¥‘•È½È±•…Ù”Q¬…ÁÁ•…É¥¹œ™É½é•¸¸(€€€Á½½°ô¡±•…È­½Ñ¡•È¥lé=AQ%1}5a}M9}9%QMt(€€€‰½Õ¹‘ÌõÑÕÁ±”¡µ…À¡™±½…Ğ±œ¹Ñ½Ñ…±}‰½Õ¹‘Ì¤¤(€€€½ÕÑ}İ¥‘Ñ õµ…à ÌÈÀ±µ¥¸ ÄÀÈĞ±¥¹Ğ¡½ÕÑ}Ü¤¤¤(€€€½ÕÑ}¡•¥¡Ğõµ…à ÈĞÀ±µ¥¸ ÜØà±¥¹Ğ¡½ÕÑ} ¤¤¤(€€€€Œ-•å±•ÍÌM•¹Ñ¥¹•°´ÈÑÉ…¹ÍÁ½ÉĞ½¸]¥¹‘½İÌè…Ù½¥µÕ±Ñ¥Á…ÉĞ‰åÑ”É…¹•Ì(€€€€Œ…¹!¹•½Ñ¥…Ñ¥½¸É•©•Ñ•‰äÍ½µ”Q1Lµ¥¹ÍÁ•Ñ¥¹œÁÉ½á¥•Ì¸(€€€‰…Í•}•¹Øõì‰1}%M	1}I%I}=9}=A8ˆè‰5AQe}%Hˆ°‰1}!QQA}Q%5=UPˆèˆÄàˆ°(€€€€€€€€€‰1}!QQA}5a}IQIdˆèˆÄˆ°¨©Ñ±Í}Í•ÑÕÀ¹‘…±}•¹Ø ¥ô(€€€€ŒI•Á•…Ğ•… Í•¹”İ¥Ñ ¥¹‘•Á•¹‘•¹Ğ0ÑÉ…¹ÍÁ½ÉÑÌ‰•™½É”…‰…¹‘½¹¥¹œ¥ÑÌ(€€€€ŒÁ¥á•±ÌìÑ¡¥ÌÍÁ•¥™¥…±±ä¡…¹‘±•Ì]¥¹!QQ@½Q1LÁÉ½á¥•ÌÑ¡…ĞÉ•©•Ğ½¹”(€€€€ŒI…¹”½!½µ‰¥¹…Ñ¥½¸™½È•Ù•Éä…¹‘¥‘…Ñ”Í•¹”¸(€€€•áÁ…¹‘•‘}Á½½°õmt(€€€™½È¥¹‘•à±…¹‘¥‘…Ñ”¥¸•¹Õµ•É…Ñ”¡Á½½°¤è(ƒ[h‘éì¶»§q«^t      c,dt,item,assets=candidate
+            factor=max(0.30,min(8.0,float(extent_factor))); cx=(bx[0]+bx[2])/2; cy=(bx[1]+bx[3])/2
+            wb=(cx-dx*factor/2,cy-dy*factor/2,cx+dx*factor/2,cy+dy*factor/2)
+            win=from_bounds(*wb,transform=src.transform).round_offsets().round_lengths()
+            out_w=max(700,min(1200,round(out_h*max(float(win.width),1.0)/max(float(win.height),1.0))))
+            arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
+                         resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
+            rgb=np.moveaxis(arr,0,2)
+            valid=np.isfinite(rgb).all(axis=2)&(rgb>0).any(axis=2)
+            target_transform=src.window_transform(win)*rasterio.Affine.scale(
+                float(win.width)/out_w,float(win.height)/out_h)
+            aoi_geometry=transform_geom("EPSG:4326",src.crs,geom)
+            aoi_mask=geometry_mask([aoi_geometry],out_shape=(out_h,out_w),
+                                   transform=target_transform,invert=True)
+            aoi_coverage=float((valid&aoi_mask).sum()/max(1,int(aoi_mask.sum())))
+            if aoi_coverage<0.95:
+                raise RuntimeError("Sentinel-2 Planetary Computer nÃ£o cobre 95% dos pixels da AOI")
+            if rgb.dtype!=np.uint8:
+                valid=rgb[np.isfinite(rgb)&(rgb>0)]
+                hi=float(np.percentile(valid,99)) if valid.size else 1.0
+                rgb=np.clip(rgb/max(hi,1e-9)*255,0,255).astype(np.uint8)
+            view=Image.fromarray(rgb,"RGB"); wt=src.window_transform(win); polygons=[]
+            for geom0 in g.geometry:
+                geoms=list(geom0.geoms) if geom0.geom_type=="MultiPolygon" else ([geom0] if geom0.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    coords=list(poly.exterior.coords)
+                    lon=[p[0] for p in coords]; lat=[p[1] for p in coords]
+                    xx,yy=transform("EPSG:4326",src.crs,lon,lat); pts=[]
+                    for x,y in zip(xx,yy):
+                        col,row=(~wt)*(x,y)
+                        pts.extend([float(col)*out_w/max(float(win.width),1.0),float(row)*out_h/max(float(win.height),1.0)])
+                    if len(pts)>=6:polygons.append(pts)
+    return {"image":view,"polygons":polygons,"scene_id":it.get("id"),"datetime":dt,"cloud_cover":cloud,
+            "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual",
+            "aoi_coverage_fraction":aoi_coverage}
+
+
+
+def _fetch_stac_features_paged(url,body,*,timeout=(8,45),max_pages=20):
+    """Fetch paged STAC results so a first-page limit cannot hide AOI scenes."""
+    response=requests.post(url,json=body,timeout=timeout)
+    response.raise_for_status();payload=response.json()
+    features=list(payload.get("features") or []);pages=1
+    while pages<max_pages:
+        link=next((x for x in payload.get("links",[]) if x.get("rel")=="next" and x.get("href")),None)
+        if not link:break
+        if str(link.get("method","GET")).upper()=="POST":
+            response=requests.post(link["href"],json=link.get("body") or body,
+                                   headers=link.get("headers") or {},timeout=timeout)
+        else:
+            response=requests.get(link["href"],timeout=timeout)
+        response.raise_for_status();payload=response.json()
+        page=payload.get("features") or []
+        if not page:break
+        features.extend(page);pages+=1
+    return features
+
+
+OPTICAL_COG_TILE_SIZE=512
+OPTICAL_MAX_SCENE_CANDIDATES=3
+
+def _iter_optical_quadrants(width,height,tile_size=OPTICAL_COG_TILE_SIZE):
+    """Yield bounded pixel windows so preview reads never scale with AOI size."""
+    width=int(width);height=int(height);tile_size=int(tile_size)
+    if width<=0 or height<=0 or tile_size<=0:raise ValueError("DimensÃµes Ã³pticas invÃ¡lidas")
+    for y in range(0,height,tile_size):
+        for x in range(0,width,tile_size):
+            yield x,y,min(tile_size,width-x),min(tile_size,height-y)
+
+
+def _read_optical_cog_quadrants(src,target_transform,target_crs,width,height,*,categorical=False):
+    """Read a remote COG by bounded quadrants and reproject into one preview."""
+    import rasterio
+    from rasterio.enums import Resampling
+    from rasterio.transform import array_bounds
+    from rasterio.warp import transform_bounds,reproject
+    from rasterio.windows import from_bounds,Window
+    if not src.crs:raise RuntimeError("COG Ã³ptico sem CRS")
+    dtype=np.uint8 if categorical else np.float32
+    nodata=0 if categorical else np.nan
+    output=np.full((int(height),int(width)),nodata,dtype=dtype)
+    method=Resampling.nearest if categorical else Resampling.bilinear
+    for xoff,yoff,tile_w,tile_h in _iter_optical_quadrants(width,height):
+        tile_transform=target_transform*rasterio.Affine.translation(xoff,yoff)
+        tile_bounds=array_bounds(tile_h,tile_w,tile_transform)
+        src_bounds=transform_bounds(target_crs,src.crs,*tile_bounds,densify_pts=11)
+        win=from_bounds(*src_bounds,transform=src.transform).round_offsets().round_lengths()
+        try:win=win.intersection(Window(0,0,src.width,src.height))
+        except rasterio.errors.WindowError:continue
+        if win.width<1 or win.height<1:continue
+        raw=src.read(1,window=win,out_shape=(tile_h,tile_w),masked=True,resampling=method)
+        if categorical:
+            data=raw.filled(0).astype(np.uint8,copy=False)
+        else:
+            # Convert masked integer sources before filling NaN; filling an
+            # integer MaskedArray with NaN raises on some rasterio builds.
+            data=np.ma.filled(raw.astype(np.float32),np.nan).astype(np.float32,copy=False)
+        scaled=src.window_transform(win)*rasterio.Affine.scale(
+            float(win.width)/tile_w,float(win.height)/tile_h)
+        target=output[yoff:yoff+tile_h,xoff:xoff+tile_w]
+        reproject(data,target,src_transform=scaled,src_crs=src.crs,src_nodata=nodata,
+                  dst_transform=tile_transform,dst_crs=target_crs,dst_nodata=nodata,
+                  resampling=method)
+    return output
+
+
+def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """Real Sentinel-2 RGB COG pixels, scene fallback and pixel-aligned AOI overlay.
+
+    Search results are only candidates: an actual three-band raster read with
+    nonblank pixels is required before declaring any image loaded.
+    """
+    import time
+    import rasterio
+    from rasterio.warp import transform_bounds, transform, transform_geom, reproject, Resampling
+    from rasterio.features import geometry_mask
+    from rasterio.windows import from_bounds, Window
+    g=gdf.to_crs(4326).copy()
+    geom=g.geometry.union_all().__geo_interface__
+    body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":60,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    errors=[]
+    items=[]
+    for attempt in range(3):
+        try:
+            items=_fetch_stac_features_paged("https://earth-search.aws.element84.com/v1/search",
+                                              body,timeout=(8,35),max_pages=20)
+            break
+        except requests.exceptions.RequestException as exc:
+            if attempt==2:raise RuntimeError("Earth Search STAC indisponÃ­vel: "+type(exc).__name__) from None
+            time.sleep(1.2*(attempt+1))
+    choices=[]
+    for item in items:
+        assets=item.get("assets") or {}
+        if not all((assets.get(k) or {}).get("href") for k in ("red","green","blue")):continue
+        props=item.get("properties") or {}
+        dt=str(props.get("datetime") or "")
+        try:cloud=float(props.get("eo:cloud_cover",100.0))
+        except (ValueError,TypeError):cloud=100.0
+        choices.append((cloud,dt,item,assets))
+    if not choices:raise RuntimeError("CatÃ¡logo Earth Search sem cenas L2A RGB na AOI")
+    # Prefer recent clear scenes, but NEVER fail just because the first COG
+    # is inaccessible or its viewport contains no actual data.
+    clear=sorted((x for x in choices if x[0]<=20),key=lambda x:x[1],reverse=True)
+    other=sorted((x for x in choices if x[0]>20),key=lambda x:(x[0],x[1]))
+    # Bound remote traffic and fallback latency. A long catalog of inaccessible
+    # COGs must never delay the next provider or leave Tk appearing frozen.
+    pool=(clear+other)[:OPTICAL_MAX_SCENE_CANDIDATES]
+    bounds=tuple(map(float,g.total_bounds))
+    out_width=max(320,min(1024,int(out_w)))
+    out_height=max(240,min(768,int(out_h)))
+    # Keyless Sentinel-2 transport on Windows: avoid multipart byte ranges
+    # and HEAD negotiation rejected by some TLS-inspecting proxies.
+    base_env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"18",
+         "GDAL_HTTP_MAX_RETRY":"1",**tls_setup.gdal_env()}
+    # Repeat each scene with independent GDAL transports before abandoning its
+    # pixels; this specifically handles WinHTTP/TLS proxies that reject one
+    # Range/HEAD combination for every candidate scene.
+    expanded_pool=[]
+    for index,candidate in enumerate(pool):
+        c,dt,item,assets=candidate
         # Exercise all Windows transport modes on the best candidate. Later
         # scenes are single-pass failover, preventing retry multiplication.
         expanded_pool.extend((c,dt,item,assets,strategy)
@@ -733,7 +1506,160 @@ def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
             dt=datetime.fromisoformat(stamp.replace("Z","+00:00"))
             scenes.append((dt,item))
         except (ValueError,OverflowError):continue
-    if not scenes:raise RuntimeError("CatÃ¡logo INPE YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ»¼™½É¹••Ô‘…Ñ…Ì‘”…ÅÕ¥Í§Ÿ¼	IL´Ñ½]$Û…±¥‘…Ìˆ¤(€€€Í•¹•Ì¹Í½ÉĞ¡­•äõ±…µ‰‘„Á…¥ÈéÁ…¥ÉlÁt±É•Ù•ÉÍ”õQÉÕ”¤(€€€É‰}±•…Èõ¹À¹™Õ±° ¡¡•¥¡Ğ±İ¥‘Ñ °Ì¤±¹À¹¹…¸±‘ÑåÁ”õ¹À¹™±½…ĞÌÈ¤(€€€É‰}½‰Í•ÉÙ•õ¹À¹™Õ±° ¡¡•¥¡Ğ±İ¥‘Ñ °Ì¤±¹À¹¹…¸±‘ÑåÁ”õ¹À¹™±½…ĞÌÈ¤(€€€Í½ÕÉ•}‘…Ñ•ÌõmtíÍ•¹•}¥‘Ìõmtí•ÉÉ½ÉÌõmt((€€€‘•˜É•…‘}½}İ¥¹‘½Ü¡¡É•˜±…Ñ•½É¥…°õ…±Í”¤è(€€€€€€€€ˆˆ‰I•…½¹±ä‰½Õ¹‘•€ÔÄÉÁàÅÕ…‘É…¹ÑÌ™É½´„É•µ½Ñ”=¸ˆˆˆ(€€€€€€€İ¥Ñ É…ÍÑ•É¥¼¹½Á•¸¡¡É•˜¤…ÌÍÉŒè(€€€€€€€€€€€É•ÑÕÉ¸}É•…‘}½ÁÑ¥…±}½}ÅÕ…‘É…¹ÑÌ (€€€€€€€€€€€€€€€ÍÉŒ±Ñ…É•Ñ}ÑÉ…¹Í™½É´°‰AMèĞÌÈØˆ±İ¥‘Ñ ±¡•¥¡Ğ±…Ñ•½É¥…°õ…Ñ•½É¥…°¤((€€€…ÑÑ•µÁÑÍ}‰å}Í•¹”õíô(€€€ÍÕ•ÍÍ™Õ±}Í•¹•}¥‘ÌõÍ•Ğ ¤(€€€ÑÉ…¹ÍÁ½ÉÑ}½Õ¹ÑÌõì‰U1Q}5U1Q%I9ˆèÀ°‰MI%1}!QQ@ÄÄˆèÀ°‰MI%1}9=}5U1Q%A1a}!QQ@ÄÄˆèÁô(€€€€ŒQ¡É•”É••¹Ğ…¹‘¥‘…Ñ•Ì…É”•¹½Õ ™½È„Ù¥ÍÕ…°µ½Í…¥ŒìÑÉå¥¹œ„İ¡½±”(€€€€Œ…Ñ…±½œ…¸ÍÑ…±°Ñ¡”U$™½Èµ¥¹ÕÑ•Ìİ¡•¸…¸•¹‘Á½¥¹Ğ¥ÌÕ¹¡•…±Ñ¡ä¸(€€€•áÁ…¹‘•‘}Í•¹•Ìõmt(€€€™½È¥¹‘•à°¡‘Ğ±¥Ñ•´¤¥¸•¹Õµ•É…Ñ”¡Í•¹•Ílé=AQ%1}5a}M9}9%QMt¤è(€€€€€€€•áÁ…¹‘•‘}Í•¹•Ì¹•áÑ•¹ ¡‘Ğ±¥Ñ•´±ÍÑÉ…Ñ•ä¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€™½ÈÍÑÉ…Ñ•ä¥¸€¡É…¹” Ì¤¥˜¥¹‘•àôôÀ•±Í”€ À°¤¤¤(€€€™½È‘Ğ±¥Ñ•´±ÑÉ…¹ÍÁ½ÉÑ}ÍÑÉ…Ñ•ä¥¸•áÁ…¹‘•‘}Í•¹•Ìè(€€€€€€€Í•¹•}¥õÍÑÈ¡¥Ñ•´¹•Ğ ‰¥ˆ°ˆˆ¤¤(€€€€€€€¥˜Í•¹•}¥¥¸ÍÕ•ÍÍ™Õ±}Í•¹•}¥‘Ìé½¹Ñ¥¹Õ”(€€€€€€€…ÑÑ•µÁÑÍ}‰å}Í•¹•mÍ•¹•}¥‘tõ…ÑÑ•µÁÑÍ}‰å}Í•¹”¹•Ğ¡Í•¹•}¥°À¤¬Ä(€€€€€€€ÑÉ…¹ÍÁ½ÉÑ}½Õ¹ÑÍl ‰U1Q}5U1Q%I9ˆ°‰MI%1}!QQ@ÄÄˆ°‰MI%1}9=}5U1Q%A1a}!QQ@ÄÄˆ¥mÑÉ…¹ÍÁ½ÉÑ}ÍÑÉ…Ñ•åut¬ôÄ(€€€€€€€…ÍÍ•ÑÌõ¥Ñ•´¹•Ğ ‰…ÍÍ•ÑÌˆ¤½Èíô(€€€€€€€­•åÌô ‰	9ÄÔˆ°‰	9ÄĞˆ°‰	9ÄÌˆ¤(€€€€€€€¥˜¹½Ğ…±° ¡…ÍÍ•ÑÌ¹•Ğ¡¬¤½Èíô¤¹•Ğ ‰¡É•˜ˆ¤™½È¬¥¸­•åÌ¤½È¹½Ğ€¡…ÍÍ•ÑÌ¹•Ğ ‰5M,ˆ¤½Èíô¤¹•Ğ ‰¡É•˜ˆ¤è(€€€€€€€€€€€•ÉÉ½ÉÌ¹…ÁÁ•¹¡ÍÑÈ¡¥Ñ•´¹•Ğ ‰¥ˆ°ˆˆ¤¤¬ˆÍ•´I½5M,ˆ¤í½¹Ñ¥¹Õ”(€€€€€€€Í•¹”õ¹À¹™Õ±° ¡¡•¥¡Ğ±İ¥‘Ñ °Ì¤±¹À¹¹…¸±‘ÑåÁ”õ¹À¹™±½…ĞÌÈ¤(€€€€€€€ÑÉäè(€€€€€€€€€€€•¹Øõì‰1}!QQA}Q%5=UPˆèˆÄàˆ°‰1}!QQA}5a}IQIdˆèˆÄˆ°(€€€€€€€€€€€€€€€€€‰1}!QQA}5U1Q%I9ˆè‰eLˆ°(€€€€€€€€€€€€€€€€€‰1}%M	1}I%I}=9}=A8ˆè‰5AQe}%Hˆ°¨©Ñ±Í}Í•ÑÕÀ¹‘…±}•¹Ø ¥ô(€€€€€€€€€€€¥˜ÑÉ…¹ÍÁ½ÉÑ}ÍÑÉ…Ñ•äôôÄè(€€€€€€€€€€€€€€€•¹Ø¹ÕÁ‘…Ñ”¡ì‰1}!QQA}5U1Q%I9ˆè‰MI%0ˆ°‰1}!QQA}5I}=9MUQ%Y}I9Lˆè‰9<ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰A1}YM%1}UI1}UM}!ˆè‰9<ˆ°‰1}!QQA}YIM%=8ˆèˆÄ¸Ä‰ô¤(€€€€€€€€€€€•±¥˜ÑÉ…¹ÍÁ½ÉÑ}ÍÑÉ…Ñ•äôôÈè(€€€€€€€€€€€€€€€•¹Ø¹ÕÁ‘…Ñ”¡ì‰1}!QQA}5U1Q%I9ˆè‰MI%0ˆ°‰1}!QQA}5U1Q%A1`ˆè‰9<ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰A1}YM%1}UI1}UM}!ˆè‰9<ˆ°‰1}!QQA}YIM%=8ˆèˆÄ¸Ä‰ô¤(€€€€€€€€€€€İ¥Ñ É…ÍÑ•É¥¼¹¹Ø ¨©•¹Ø¤è(€€€€€€€€€€€€€€€µ…Í¬õÉ•…‘}½}İ¥¹‘½Ü¡…ÍÍ•ÑÍl‰5M,‰ul‰¡É•˜‰t±…Ñ•½É¥…°õQÉÕ”¤(€€€€€€€€€€€€€€€€ŒÕÉÉ•¹Ğ%9A…Ñ…±½Õ”½±±•Ñ¥½¸‘•™¥¹•Ì5M,è€ÄÈÜ±•…È°(€€€€€€€€€€€€€€€€Œ€ÈÔÔ±½Õ°€À¹¼‘…Ñ„¸A¥á•±Ì½ÕÑÍ¥‘”±•…È…É”¹•Ù•È‰±•¹‘•¸(€€€€€€€€€€€€€€€±•…Èõµ…Í¬ôôÄÈÜ(€€€€€€€€€€€€€€€™½È‰…¹‘}¥‘à±­•ä¥¸•¹Õµ•É…Ñ”¡­•åÌ¤è(€€€€€€€€€€€€€€€€€€€‰…¹õÉ•…‘}½}İ¥¹‘½Ü¡…ÍÍ•ÑÍm­•åul‰¡É•˜‰t¤(€€€€€€€€€€€€€€€€€€€Í•¹•lè°è±‰…¹‘}¥‘átõ‰…¹(€€€€€€€€€€€½‰Í•ÉÙ•õ¹À¹¥Í™¥¹¥Ñ”¡Í•¹”¤¹…±°¡…á¥ÌôÈ¤€˜€¡Í•¹”øÀ¤¹…¹ä¡…á¥ÌôÈ¤€˜€¡µ…Í¬„ôÀ¤(€€€€€€€€€€€Ù…±¥õ±•…È€˜½‰Í•ÉÙ•(€€€€€€€€€€€Ñ…­•}½‰Í•ÉÙ•õ½‰Í•ÉÙ•€˜ù¹À¹¥Í™¥¹¥Ñ”¡É‰}½‰Í•ÉÙ•¤¹…±°¡…á¥ÌôÈ¤(€€€€€€€€€€€Ñ…­•}±•…ÈõÙ…±¥€˜ù¹À¹¥Í™¥¹¥Ñ”¡É‰}±•…È¤¹…±°¡…á¥ÌôÈ¤(€€€€€€€€€€€¥˜Ñ…­•}½‰Í•ÉÙ•¹…¹ä ¤éÉ‰}½‰Í•ÉÙ•‘mÑ…­•}½‰Í•ÉÙ•‘tõÍ•¹•mÑ…­•}½‰Í•ÉÙ•‘t(€€€€€€€€€€€¥˜Ñ…­•}±•…È¹…¹ä ¤éÉ‰}±•…ÉmÑ…­•}±•…ÉtõÍ•¹•mÑ…­•}±•…Ét(€€€€€€€€€€€¥˜Ñ…­•}½‰Í•ÉÙ•¹…¹ä ¤½ÈÑ…­•}±•…È¹…¹ä ¤è(€€€€€€€€€€€€€€€Í•¹•}¥‘Ì¹…ÁÁ•¹¡Í•¹•}¥¤íÍÕ•ÍÍ™Õ±}Í•¹•}¥‘Ì¹…‘¡Í•¹•}¥¤íÍ½ÕÉ•}‘…Ñ•Ì¹…ÁÁ•¹¡‘Ğ¹‘…Ñ” ¤¹¥Í½™½Éµ…Ğ ¤¤(€€€€€€€€€€€½Ù•É•õ¥¹Ğ ¡¹À¹¥Í™¥¹¥Ñ”¡É‰}±•…È¤¹…±°¡…á¥ÌôÈ¤™…½¥}µ…Í¬¤¹ÍÕ´ ¤¤(€€€€€€€€€€€½‰Í•ÉÙ•‘}½Ù•É•õ¥¹Ğ ¡¹À¹¥Í™¥¹¥Ñ”¡É‰}½‰Í•ÉÙ•¤¹…±°¡…á¥ÌôÈ¤™…½¥}µ…Í¬¤¹ÍÕ´ ¤¤(€€€€€€€€€€€¥˜½Ù•É•½…½¥}Á¥á•±ÌøôÀ¸äà½È½‰Í•ÉÙ•‘}½Ù•É•½…½¥}Á¥á•±ÌøôÀ¸äàé‰É•…¬(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€ÑÉäè‘•Ñ…¥°õÍÑÈ¡•áŒ¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸è‘•Ñ…¥°ô‰µ•¹Í…•´‘„•á—Ÿ¼»¼‘•½‘¥™¥…Ù•°ˆ(€€€€€€€€€€€•ÉÉ½ÉÌ¹…ÁÁ•¹¡Í•¹•}¥¬ˆÑÉ…¹ÍÁ½ÉÑ”ôˆ­ÍÑÈ¡ÑÉ…¹ÍÁ½ÉÑ}ÍÑÉ…Ñ•ä¬Ä¤¬ˆè€ˆ­ÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­‘•Ñ…¥°¹•¹½‘” ‰ÕÑ˜´àˆ°‰É•Á±…”ˆ¤¹‘•½‘” ‰ÕÑ˜´àˆ¥lèäÁt¤(€€€ÉˆõÉ‰}±•…È¹½Áä ¤(€€€¡½±•Ìõù¹À¹¥Í™¥¹¥Ñ”¡Éˆ¤¹…±°¡…á¥ÌôÈ¤(€€€½‰Í•ÉÙ•õ¹À¹¥Í™¥¹¥Ñ”¡É‰}½‰Í•ÉÙ•¤¹…±°¡…á¥ÌôÈ¤˜¡É‰}½‰Í•ÉÙ•øÀ¤¹…¹ä¡…á¥ÌôÈ¤(€€€€Œ	…­É½Õ¹¥µ…•Éäµ…ä¥¹±Õ‘”±½Õ‘Ì¥˜¹¼±•…ÈÁ¥á•°•á¥ÍÑÌì­••À¥Ğ(€€€€Œ•áÁ±¥¥Ñ±ä±…‰•±±•¥¹ÍÑ•…½˜Í¥±•¹Ñ±äÍ¡½İ¥¹œ…¸Õ¹É•±…Ñ•…ÉÑ½É…Á¡¥Œµ…À¸(€€€±½Õ‘}™…±±‰…­}ÕÍ•õ‰½½° ¡¡½±•Ì™½‰Í•ÉÙ•¤¹…¹ä ¤¤(€€€É‰m¡½±•Ì™½‰Í•ÉÙ•‘tõÉ‰}½‰Í•ÉÙ•‘m¡½±•Ì™½‰Í•ÉÙ•‘t(€€€Ù…±¥õ¹À¹¥Í™¥¹¥Ñ”¡Éˆ¤¹…±°¡…á¥ÌôÈ¤˜¡ÉˆøÀ¤¹…¹ä¡…á¥ÌôÈ¤(€€€¥˜Ù…±¥¹ÍÕ´ ¤ñµ…à àÀ±¡•¥¡Ğ©İ¥‘Ñ ¼¼ÈÀÀ¤è(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰	IL´Ñ½]$Í•´Á¥á•±ÌÉ•…¥ÌIÍÕ™¥¥•¹Ñ•Ì¹„=$¸€ˆ¬ˆì€ˆ¹©½¥¸¡•ÉÉ½ÉÍlèÍt¤¤(€€€…½¥}½Ù•É…”õ™±½…Ğ ¡Ù…±¥™…½¥}µ…Í¬¤¹ÍÕ´ ¤½…½¥}Á¥á•±Ì¤(€€€¥˜…½¥}½Ù•É…”ğÀ¸äÔè(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰	IL´Ñ½]$»¼½‰É”€äÔ”‘½ÌÁ¥á•±Ì‘„=$ì½‰•ÉÑÕÉ„ôˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€™½Éµ…Ğ¡…½¥}½Ù•É…”°ˆ¸Í˜ˆ¤¬ˆ¸€ˆ¬ˆì€ˆ¹©½¥¸¡•ÉÉ½ÉÍlèÍt¤¤(€€€¡¤õ™±½…Ğ¡¹À¹Á•É•¹Ñ¥±”¡É‰mÙ…±¥‘t°ää¤¤(€€€¥˜¹½Ğ¹À¹¥Í™¥¹¥Ñ”¡¡¤¤½È¡¤ğôÀéÉ…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰I•™±•Ó‰¹¥„	IL´Ñ¥¹Û…±¥‘„ˆ¤(€€€¥µ…”õ%µ…”¹™É½µ…ÉÉ…ä¡¹À¹±¥À¡¹À¹¹…¹}Ñ½}¹Õ´¡Éˆ±¹…¸ôÀ¸À¤½¡¤¨ÈÔÔ°À°ÈÔÔ¤¹…ÍÑåÁ”¡¹À¹Õ¥¹Ğà¤°‰Iˆ¤(€€€™É½´A%0¥µÁ½ÉĞ%µ…•É…Ü(€€€‘É…Üõ%µ…•É…Ü¹É…Ü¡¥µ…”°‰I	ˆ¤(€€€™½ÈÍ¡…Á”¥¸œ¹•½µ•ÑÉäè(€€€€€€€•½µÌõ±¥ÍĞ¡Í¡…Á”¹•½µÌ¤¥˜Í¡…Á”¹•½µ}ÑåÁ”ôô‰5Õ±Ñ¥A½±å½¸ˆ•±Í”€¡mÍ¡…Á•t¥˜Í¡…Á”¹•½µ}ÑåÁ”ôô‰A½±å½¸ˆ•±Í”mt¤(€€€€€€€™½ÈÁ½±ä¥¸•½µÌè(€€€€€€€€€€€ÁÑÌõl ¡àµİ•ÍĞ¤¼¡•…ÍĞµİ•ÍĞ¤©İ¥‘Ñ °¡¹½ÉÑ µä¤¼¡¹½ÉÑ µÍ½ÕÑ ¤©¡•¥¡Ğ¤(€€€€€€€€€€€€€€€€™½Èà±ä¥¸}áå}½½É‘Ì¡Á½±ä¹•áÑ•É¥½È¹½½É‘Ì¥t(€€€€€€€€€€€¥˜±•¸¡ÁÑÌ¤øôĞé‘É…Ü¹Á½±å½¸¡ÁÑÌ±™¥±°ô ÈÔÔ°ÄÌà°À°ÌÈ¤±½ÕÑ±¥¹”ô ÈÔÔ°ÄÌà°À°ÈÔÔ¤¤í‘É…Ü¹±¥¹”¡ÁÑÌ±İ¥‘Ñ ôÌ±™¥±°ô ÈÔÔ°ÄÌà°À°ÈÔÔ¤¤(€€€É•ÑÕÉ¸ì‰¥µ…”ˆé¥µ…”¹É•Í¥é” ¡¥¹Ğ¡½ÕÑ}Ü¤±¥¹Ğ¡½ÕÑ} ¤¤±%µ…”¹I•Í…µÁ±¥¹œ¹19i=L¤°(€€€€€€€€€€€€‰‘…Ñ•Ñ¥µ”ˆéµ…à¡Í½ÕÉ•}‘…Ñ•Ì¤°‰‘…Ñ•}É…¹”ˆémµ¥¸¡Í½ÕÉ•}‘…Ñ•Ì¤±µ…à¡Í½ÕÉ•}‘…Ñ•Ì¥t°‰Í•¹•}¥‘ÌˆéÍ•¹•}¥‘Ì°(€€€€€€€€€€€€‰ÁÉ½Ù¥‘•Èˆè‰	IL´Ñ½]$0ĞµMH€¼%9AMQ€¡=°½µÁ½Í§Ÿ¼I‘”Á¥á•±Ì±…É½Ì¤ˆ°(€€€€€€€€€€€€‰É•Í½±ÕÑ¥½¹}´ˆèÔÔ°‰Á¥á•±}½Õ¹Ğˆé¥¹Ğ¡Ù…±¥¹ÍÕ´ ¤¤°‰…½¥}½Ù•É…•}™É…Ñ¥½¸ˆé…½¥}½Ù•É…”°(€€€€€€€€€€€€‰ÑÉ…¹ÍÁ½ÉÑ}…ÑÑ•µÁÑ}½Õ¹ĞˆéÍÕ´¡…ÑÑ•µÁÑÍ}‰å}Í•¹”¹Ù…±Õ•Ì ¤¤°(€€€€€€€€€€€€‰ÑÉ…¹ÍÁ½ÉÑ}ÍÑÉ…Ñ•å}½Õ¹ÑÌˆéÑÉ…¹ÍÁ½ÉÑ}½Õ¹ÑÌ°(€€€€€€€€€€€€‰±½Õ‘}Á¥á•±Í}¥¹±Õ‘•ˆé±½Õ‘}™…±±‰…­}ÕÍ•°‰Á½±å½¹Ìˆémuô(()‘•˜}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡•}Á…Ñ¡Ì¡‘˜±•áÑ•¹Ñ}™…Ñ½È±½ÕÑ}Ü±½ÕÑ} ¤è(€€€€ˆˆ‰MÑ…‰±”Á•Èµ=$½Ù¥•İÁ½ÉĞ…¡”ì¹•Ù•È‘•Á•¹‘Ì½¸Ñ¡”ÁÉ½•ÍÌ]¸ˆˆˆ(€€€¥µÁ½ÉĞ¡…Í¡±¥ˆ(€€€•½´õ‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤(€€€Ñ½­•¸õ¡…Í¡±¥ˆ¹Í¡„ÈÔØ¡•½´¹İ­ˆ­˜‰ñí™±½…Ğ¡•áÑ•¹Ñ}™…Ñ½È¤è¸Ñ™õñí¥¹Ğ¡½ÕÑ}Ü¥õáí¥¹Ğ¡½ÕÑ} ¥ôˆ¹•¹½‘” ‰…Í¥¤ˆ¤¤¹¡•á‘¥•ÍĞ ¤(€€€É½½ĞõA…Ñ ¡½Ì¹•¹Ù¥É½¸¹•Ğ ‰1=1AAQˆ±A…Ñ ¹¡½µ” ¤¤¤¼‰¹™½ÉµY•É‘”ˆ¼‰M…Ñ•±±¥Ñ•…¡”ˆ(€€€É•ÑÕÉ¸É½½Ğ¼¡Ñ½­•¸¬ˆ¹Á¹œˆ¤±É½½Ğ¼¡Ñ½­•¸¬ˆ¹©Í½¸ˆ¤(()‘•˜}ÍÑ½É•}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡”¡‘˜±•áÑ•¹Ñ}™…Ñ½È±½ÕÑ}Ü±½ÕÑ} ±¥µ…”±Á½±å½¹Ì±ÁÉ½Ù¥‘•È±É•‘¥Ğ¤è(€€€ÑÉäè(€€€€€€€¥µ…•}Á…Ñ ±µ•Ñ…}Á…Ñ õ}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡•}Á…Ñ¡Ì¡‘˜±•áÑ•¹Ñ}™…Ñ½È±½ÕÑ}Ü±½ÕÑ} ¤(€€€€€€€¥µ…•}Á…Ñ ¹Á…É•¹Ğ¹µ­‘¥È¡Á…É•¹ÑÌõQÉÕ”±•á¥ÍÑ}½¬õQÉÕ”¤(€€€€€€€¥µ…•}ÑµÀõ¥µ…•}Á…Ñ ¹İ¥Ñ¡}ÍÕ™™¥à ˆ¹ÑµÀ¹Á¹œˆ¤íµ•Ñ…}ÑµÀõµ•Ñ…}Á…Ñ ¹İ¥Ñ¡}ÍÕ™™¥à ˆ¹ÑµÀˆ¤(€€€€€€€¥µ…”¹Í…Ù”¡¥µ…•}ÑµÀ±™½Éµ…Ğô‰A9ˆ¤(€€€€€€€µ•Ñ„õì‰ÁÉ½Ù¥‘•ÈˆéÍÑÈ¡ÁÉ½Ù¥‘•È¤°‰É•‘¥ĞˆéÍÑÈ¡É•‘¥Ğ¤°‰ÍÑ½É•‘}ÕÑŒˆé‘…Ñ•Ñ¥µ”¹¹½Ü¡Ñ¥µ•é½¹”¹ÕÑŒ¤¹¥Í½™½Éµ…Ğ ¤°(€€€€€€€€€€€€€€‰Á½±å½¹ÌˆéÁ½±å½¹Ì°‰İ¥‘Ñ ˆé¥¹Ğ¡½ÕÑ}Ü¤°‰¡•¥¡Ğˆé¥¹Ğ¡½ÕÑ} ¥ô(€€€€€€€µ•Ñ…}ÑµÀ¹İÉ¥Ñ•}Ñ•áĞ¡©Í½¸¹‘ÕµÁÌ¡µ•Ñ„±•¹ÍÕÉ•}…Í¥¤õ…±Í”¤±•¹½‘¥¹œô‰ÕÑ˜´àˆ¤(€€€€€€€¥µ…•}ÑµÀ¹É•Á±…”¡¥µ…•}Á…Ñ ¤íµ•Ñ…}ÑµÀ¹É•Á±…”¡µ•Ñ…}Á…Ñ ¤(€€€•á•ÁĞá•ÁÑ¥½¸è(€€€€€€€€Œ…¡”¥Ì½¹±ä„É•Í¥±¥•¹”…¥ì„İÉ¥Ñ”™…¥±ÕÉ”…¹¹½Ğ‰±½¬‘¥ÍÁ±…ä¸(€€€€€€€É•ÑÕÉ¸(()‘•˜}É•…‘}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡”¡‘˜±•áÑ•¹Ñ}™…Ñ½È±½ÕÑ}Ü±½ÕÑ} ¤è(€€€ÑÉäè(€€€€€€€¥µ…•}Á…Ñ ±µ•Ñ…}Á…Ñ õ}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡•}Á…Ñ¡Ì¡‘˜±•áÑ•¹Ñ}™…Ñ½È±½ÕÑ}Ü±½ÕÑ} ¤(€€€€€€€µ•Ñ„õ©Í½¸¹±½…‘Ì¡µ•Ñ…}Á…Ñ ¹É•…‘}Ñ•áĞ¡•¹½‘¥¹œô‰ÕÑ˜´àˆ¤¤(€€€€€€€İ¥Ñ %µ…”¹½Á•¸¡¥µ…•}Á…Ñ ¤…Ì…¡•é¥µ…”õ…¡•¹½¹Ù•ÉĞ ‰Iˆ¤¹½Áä ¤(€€€€€€€É•ÑÕÉ¸¥µ…”±µ•Ñ„(€€€•á•ÁĞá•ÁÑ¥½¸è(€€€€€€€É•ÑÕÉ¸9½¹”(()‘•˜¹…Í…}¥‰Í}ÁÉ•Ù¥•Ü¡‘˜±½ÕÑ}ÜôÄÀÀÀ±½ÕÑ} ôÔØÀ±•áÑ•¹Ñ}™…Ñ½ÈôÄ¸ÌØ¤è(€€€€ˆˆ‰-•å±•ÍÌÁÕ‰±¥Œ9M%	LY%%ILÑÉÕ”µ½±½ÈÁÉ•Ù¥•ÜìÙ¥ÍÕ…°½¹Ñ•áĞ½¹±ä¸ˆˆˆ(€€€™É½´‘…Ñ•Ñ¥µ”¥µÁ½ÉĞÑ¥µ•‘•±Ñ„(€€€™É½´A%0¥µÁ½ÉĞ%µ…•É…Ü(€€€œõ‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹½Áä ¤(€€€µ¥¹à±µ¥¹ä±µ…áà±µ…áäõµ…À¡™±½…Ğ±œ¹Ñ½Ñ…±}‰½Õ¹‘Ì¤(€€€‘àõµ…à¡µ…áàµµ¥¹à°Å”´à¤ì‘äõµ…à¡µ…áäµµ¥¹ä°Å”´à¤(€€€àô¡µ¥¹à­µ…áà¤¼Èìäô¡µ¥¹ä­µ…áä¤¼È(€€€™…Ñ½Èõµ…à À¸ÌÀ±µ¥¸ à¸À±™±½…Ğ¡•áÑ•¹Ñ}™…Ñ½È¤¤¤(€€€İ•ÍĞ±•…ÍĞõàµ‘à©™…Ñ½È¼È±à­‘à©™…Ñ½È¼È(€€€Í½ÕÑ ±¹½ÉÑ õäµ‘ä©™…Ñ½È¼È±ä­‘ä©™…Ñ½È¼È(€€€€Œ-••ÀÑ¡”É•ÅÕ•ÍÑ•¥µ…”ÁÉ½Á½ÉÑ¥½¹Ìİ¡¥±”…½Õ¹Ñ¥¹œ™½È±½¹¥ÑÕ‘”Í…±”¸(€€€É…Ñ¥¼õµ…à À¸Ä±™±½…Ğ¡½ÕÑ}Ü¤¤½µ…à Ä¸À±™±½…Ğ¡½ÕÑ} ¤¤(€€€½Í±…Ğõµ…à À¸ÈÔ±µ…Ñ ¹½Ì¡µ…Ñ ¹É…‘¥…¹Ì¡ä¤¤¤(€€€±½¹}ÍÁ…¸õµ…à¡•…ÍĞµİ•ÍĞ°Å”´à¤ì±…Ñ}ÍÁ…¸õµ…à¡¹½ÉÑ µÍ½ÕÑ °Å”´à¤(€€€¥˜±½¹}ÍÁ…¸©½Í±…Ğ½±…Ñ}ÍÁ…¸€ğÉ…Ñ¥¼è(€€€€€€€±½¹}ÍÁ…¸õ±…Ñ}ÍÁ…¸©É…Ñ¥¼½½Í±…Ğ(€€€€€€€İ•ÍĞ±•…ÍĞõàµ±½¹}ÍÁ…¸¼È±à­±½¹}ÍÁ…¸¼È(€€€•±Í”è(€€€€€€€±…Ñ}ÍÁ…¸õ±½¹}ÍÁ…¸©½Í±…Ğ½É…Ñ¥¼(€€€€€€€Í½ÕÑ ±¹½ÉÑ õäµ±…Ñ}ÍÁ…¸¼È±ä­±…Ñ}ÍÁ…¸¼È(€€€İ¥‘Ñ õµ‡[h‘éì¶»§q«^t(320,min(1600,int(out_w))); height=max(240,min(1200,int(out_h)))
+    if not scenes:raise RuntimeError("CatÃ¡logo INPE nÃ£o forneceu datas de aquisiÃ§Ã£o CBERS-4A/WFI vÃ¡lidas")
+    scenes.sort(key=lambda pair:pair[0],reverse=True)
+    rgb_clear=np.full((height,width,3),np.nan,dtype=np.float32)
+    rgb_observed=np.full((height,width,3),np.nan,dtype=np.float32)
+    source_dates=[];scene_ids=[];errors=[]
+
+    def read_cog_window(href,categorical=False):
+        """Read only bounded 512px quadrants from a remote COG."""
+        with rasterio.open(href) as src:
+            return _read_optical_cog_quadrants(
+                src,target_transform,"EPSG:4326",width,height,categorical=categorical)
+
+    attempts_by_scene={}
+    successful_scene_ids=set()
+    transport_counts={"DEFAULT_MULTIRANGE":0,"SERIAL_HTTP11":0,"SERIAL_NO_MULTIPLEX_HTTP11":0}
+    # Three recent candidates are enough for a visual mosaic; trying a whole
+    # catalog can stall the GUI for minutes when an endpoint is unhealthy.
+    expanded_scenes=[]
+    for index,(dt,item) in enumerate(scenes[:OPTICAL_MAX_SCENE_CANDIDATES]):
+        expanded_scenes.extend((dt,item,strategy)
+                               for strategy in (range(3) if index==0 else (0,)))
+    for dt,item,transport_strategy in expanded_scenes:
+        scene_id=str(item.get("id",""))
+        if scene_id in successful_scene_ids:continue
+        attempts_by_scene[scene_id]=attempts_by_scene.get(scene_id,0)+1
+        transport_counts[("DEFAULT_MULTIRANGE","SERIAL_HTTP11","SERIAL_NO_MULTIPLEX_HTTP11")[transport_strategy]]+=1
+        assets=item.get("assets") or {}
+        keys=("BAND15","BAND14","BAND13")
+        if not all((assets.get(k) or {}).get("href") for k in keys) or not (assets.get("CMASK") or {}).get("href"):
+            errors.append(str(item.get("id",""))+" sem RGB/CMASK");continue
+        scene=np.full((height,width,3),np.nan,dtype=np.float32)
+        try:
+            env={"GDAL_HTTP_TIMEOUT":"18","GDAL_HTTP_MAX_RETRY":"1",
+                 "GDAL_HTTP_MULTIRANGE":"YES",
+                 "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",**tls_setup.gdal_env()}
+            if transport_strategy==1:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
+            elif transport_strategy==2:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MULTIPLEX":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
+            with rasterio.Env(**env):
+                mask=read_cog_window(assets["CMASK"]["href"],categorical=True)
+                # Current INPE catalogue collection defines CMASK: 127 clear,
+                # 255 cloud, 0 no data. Pixels outside clear are never blended.
+                clear=mask==127
+                for band_idx,key in enumerate(keys):
+                    band=read_cog_window(assets[key]["href"])
+                    scene[:,:,band_idx]=band
+            observed=np.isfinite(scene).all(axis=2) & (scene>0).any(axis=2) & (mask!=0)
+            valid=clear & observed
+            take_observed=observed & ~np.isfinite(rgb_observed).all(axis=2)
+            take_clear=valid & ~np.isfinite(rgb_clear).all(axis=2)
+            if take_observed.any():rgb_observed[take_observed]=scene[take_observed]
+            if take_clear.any():rgb_clear[take_clear]=scene[take_clear]
+            if take_observed.any() or take_clear.any():
+                scene_ids.append(scene_id);successful_scene_ids.add(scene_id);source_dates.append(dt.date().isoformat())
+            covered=int((np.isfinite(rgb_clear).all(axis=2)&aoi_mask).sum())
+            observed_covered=int((np.isfinite(rgb_observed).all(axis=2)&aoi_mask).sum())
+            if covered/aoi_pixels>=0.98 or observed_covered/aoi_pixels>=0.98:break
+        except Exception as exc:
+            try: detail=str(exc)
+            except Exception: detail="mensagem da exceÃ§Ã£o nÃ£o decodificÃ¡vel"
+            errors.append(scene_id+" transporte="+str(transport_strategy+1)+": "+type(exc).__name__+": "+detail.encode("utf-8","replace").decode("utf-8")[:90])
+    rgb=rgb_clear.copy()
+    holes=~np.isfinite(rgb).all(axis=2)
+    observed=np.isfinite(rgb_observed).all(axis=2)&(rgb_observed>0).any(axis=2)
+    # Background imagery may include clouds if no clear pixel exists; keep it
+    # explicitly labelled instead of silently showing an unrelated cartographic map.
+    cloud_fallback_used=bool((holes&observed).any())
+    rgb[holes&observed]=rgb_observed[holes&observed]
+    valid=np.isfinite(rgb).all(axis=2)&(rgb>0).any(axis=2)
+    if valid.sum()<max(80,height*width//200):
+        raise RuntimeError("CBERS-4A/WFI sem pixels reais RGB suficientes na AOI. "+"; ".join(errors[:3]))
+    aoi_coverage=float((valid&aoi_mask).sum()/aoi_pixels)
+    if aoi_coverage<0.95:
+        raise RuntimeError("CBERS-4A/WFI nÃ£o cobre 95% dos pixels da AOI; cobertura="+
+                           format(aoi_coverage,".3f")+". "+"; ".join(errors[:3]))
+    hi=float(np.percentile(rgb[valid],99))
+    if not np.isfinite(hi) or hi<=0:raise RuntimeError("ReflectÃ¢ncia CBERS-4A invÃ¡lida")
+    image=Image.fromarray(np.clip(np.nan_to_num(rgb,nan=0.0)/hi*255,0,255).astype(np.uint8),"RGB")
+    from PIL import ImageDraw
+    draw=ImageDraw.Draw(image,"RGBA")
+    for shape in g.geometry:
+        geoms=list(shape.geoms) if shape.geom_type=="MultiPolygon" else ([shape] if shape.geom_type=="Polygon" else [])
+        for poly in geoms:
+            pts=[((x-west)/(east-west)*width,(north-y)/(north-south)*height)
+                 for x,y in _xy_coords(poly.exterior.coords)]
+            if len(pts)>=4:draw.polygon(pts,fill=(255,138,0,32),outline=(255,138,0,255));draw.line(pts,width=3,fill=(255,138,0,255))
+    return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
+            "datetime":max(source_dates),"date_range":[min(source_dates),max(source_dates)],"scene_ids":scene_ids,
+            "provider":"CBERS-4A/WFI L4-SR / INPE STAC (COG, composiÃ§Ã£o RGB de pixels claros)",
+            "resolution_m":55,"pixel_count":int(valid.sum()),"aoi_coverage_fraction":aoi_coverage,
+            "transport_attempt_count":sum(attempts_by_scene.values()),
+            "transport_strategy_counts":transport_counts,
+            "cloud_pixels_included":cloud_fallback_used,"polygons":[]}
+
+
+def _satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h):
+    """Stable per-AOI/viewport cache; never depends on the process CWD."""
+    import hashlib
+    geom=gdf.to_crs(4326).geometry.union_all()
+    token=hashlib.sha256(geom.wkb+f"|{float(extent_factor):.4f}|{int(out_w)}x{int(out_h)}".encode("ascii")).hexdigest()
+    root=Path(os.environ.get("LOCALAPPDATA",Path.home()))/"EnformVerde"/"SatelliteCache"
+    return root/(token+".png"),root/(token+".json")
+
+
+def _store_satellite_preview_cache(gdf,extent_factor,out_w,out_h,image,polygons,provider,credit):
+    try:
+        image_path,meta_path=_satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h)
+        image_path.parent.mkdir(parents=True,exist_ok=True)
+        image_tmp=image_path.with_suffix(".tmp.png");meta_tmp=meta_path.with_suffix(".tmp")
+        image.save(image_tmp,format="PNG")
+        meta={"provider":str(provider),"credit":str(credit),"stored_utc":datetime.now(timezone.utc).isoformat(),
+              "polygons":polygons,"width":int(out_w),"height":int(out_h)}
+        meta_tmp.write_text(json.dumps(meta,ensure_ascii=False),encoding="utf-8")
+        image_tmp.replace(image_path);meta_tmp.replace(meta_path)
+    except Exception:
+        # Cache is only a resilience aid; a write failure cannot block display.
+        return
+
+
+def _read_satellite_preview_cache(gdf,extent_factor,out_w,out_h):
+    try:
+        image_path,meta_path=_satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h)
+        meta=json.loads(meta_path.read_text(encoding="utf-8"))
+        with Image.open(image_path) as cached:image=cached.convert("RGB").copy()
+        return image,meta
+    except Exception:
+        return None
+
+
+def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """Keyless public NASA GIBS VIIRS true-color preview; visual context only."""
+    from datetime import timedelta
+    from PIL import ImageDraw
+    g=gdf.to_crs(4326).copy()
+    minx,miny,maxx,maxy=map(float,g.total_bounds)
+    dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8)
+    cx=(minx+maxx)/2; cy=(miny+maxy)/2
+    factor=max(0.30,min(8.0,float(extent_factor)))
+    west,east=cx-dx*factor/2,cx+dx*factor/2
+    south,north=cy-dy*factor/2,cy+dy*factor/2
+    # Keep the requested image proportions while accounting for longitude scale.
+    ratio=max(0.1,float(out_w))/max(1.0,float(out_h))
+    coslat=max(0.25,math.cos(math.radians(cy)))
+    lon_span=max(east-west,1e-8); lat_span=max(north-south,1e-8)
+    if lon_span*coslat/lat_span < ratio:
+        lon_span=lat_span*ratio/coslat
+        west,east=cx-lon_span/2,cx+lon_span/2
+    else:
+        lat_span=lon_span*coslat/ratio
+        south,north=cy-lat_span/2,cy+lat_span/2
+    width=max(320,min(1600,int(out_w))); height=max(240,min(1200,int(out_h)))
     endpoint="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
     today=datetime.now(timezone.utc).date()
     errors=[]
@@ -865,8 +1791,134 @@ class App(tk.Tk):
         ttk.Label(action,text="AnÃ¡lise de carbono",style="Title.TLabel").pack(side="left")
         ttk.Button(action,text="Salvar relatÃ³rio",command=self.save_report).pack(side="right",padx=(8,0))
         ttk.Button(action,text="Exportar Excel",command=self.export_excel).pack(side="right",padx=(8,0))
-        ttk.ButtonYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Ô¡…Ñ¥½¸±Ñ•áĞô‰AHAMEU%Mˆ±½µµ…¹õÍ•±˜¹±•…É}É•Í•…É ¤¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ±Á…‘àô à°À¤¤(€€€€€€€Í•±˜¹±½‰…±}•á•ÕÑ•}‰Ñ¸õÑÑ¬¹	ÕÑÑ½¸¡…Ñ¥½¸±Ñ•áĞô‰aUQH;1%Mˆ±½µµ…¹õÍ•±˜¹•á•ÕÑ”±ÍÑå±”ô‰IÕ¸¹Q	ÕÑÑ½¸ˆ¤(€€€€€€€Í•±˜¹±½‰…±}•á•ÕÑ•}‰Ñ¸¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ±Á…‘àô à°À¤¤((€€€€€€€‰½‘äõÑÑ¬¹É…µ”¡É½½Ğ¤ì‰½‘ä¹Á…¬¡™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤(€€€€€€€¹…ØõÑ¬¹É…µ”¡‰½‘ä±İ¥‘Ñ ôÈàà±‰œôˆÙáàˆ±¡¥¡±¥¡Ñ‰…­É½Õ¹ôˆáÁÀˆ±¡¥¡±¥¡ÑÑ¡¥­¹•ÍÌôÄ¤(€€€€€€€¹…Ø¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰äˆ¤ì¹…Ø¹Á…­}ÁÉ½Á……Ñ”¡…±Í”¤(€€€€€€€µ…¥¸õÑÑ¬¹É…µ”¡‰½‘ä±Á…‘‘¥¹œô ÄØ°à°ÌÈ°Ø¤¤ìµ…¥¸¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤((€€€€€€€Í•±˜¹¹ˆõÑÑ¬¹9½Ñ•‰½½¬¡µ…¥¸¤ìÍ•±˜¹¹ˆ¹Á…¬¡™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤(€€€€€€€Í•±˜¹Ñ…‰Ìõmt(€€€€€€€™½È¸¥¸l‰AÉ½ÁÉ¥•‘…‘”€¡H¤ˆ°‰5…Á…Ì”±¥µ¥Ñ•Ìˆ°‰…ÉÉ•…ÈÁÉ½‘ÕÑ½ÌMH€¼ˆ°‰…É‰½¹¼ƒŠP™½Éµ‡ŸÕ•Ì¹…Ñ¥Ù…Ìˆ°‰	…Í”¥•¹Óµ™¥„”5½‘•±½Ìˆ°‰5½¹¥Ñ½É…µ•¹Ñ¼ƒŠPƒ…É•…ÌÕ±Ñ¥Ù…‘…Ì‰tè(€€€€€€€€€€€˜õÑÑ¬¹É…µ”¡Í•±˜¹¹ˆ±Á…‘‘¥¹œôÄĞ¤ìÍ•±˜¹¹ˆ¹…‘¡˜±Ñ•áĞõ¸¤ìÍ•±˜¹Ñ…‰Ì¹…ÁÁ•¹¡˜¤((€€€€€€€¹…Ù}¥Ñ•µÌõl(€€€€€€€€€€ ‹Š2€€%»µ¥¼ˆ°À¤° ‹ŠZŒ€€AÉ½ÁÉ¥•‘…‘”€¡H¤ˆ°À¤° ‹Š^¬€€5…Á…Ì”±¥µ¥Ñ•Ìˆ°Ä¤°(€€€€€€€€€€ ‹Š^ €€¥Ñ½™¥Í¥½¹½µ¥„€¡%	¤ˆ°Ä¤° ‹Š^€€…ÉÉ•…ÈÁÉ½‘ÕÑ½Íq¸€€€€MH€¼ˆ°È¤°(€€€€€€€€€€ ‹Š^$€€	¥½µ…ÍÍ„¥É•„€¡¤ˆ°Ì¤° ‹Šf €€…É‰½¹¼¹¼M½±¼ˆ°Ì¤°(€€€€€€€€€€ ‹Š^<€€…É‰½¹¼Q½Ñ…°ˆ°Ì¤° ‹ŠZ€€I•ÍÕ±Ñ…‘½Ì”I•±…ÓÍÉ¥¼ˆ°Ì¤°(€€€€€€€€€€ ‹Â~2Ä€€5½¹¥Ñ½É…µ•¹Ñ¼‘•q¸€€€€ƒ…É•…ÌÕ±Ñ¥Ù…‘…Ìˆ°Ô¤° ‹Šjd€€½¹™¥ÕÉ‡ŸÕ•Ìˆ°È¤° ‹ŠZ”€€	…Í”¥•¹Óµ™¥„•q¸€€€€5½‘•±½Ìˆ°Ğ¤° ‹ŠN`€€M½‰É”ˆ°Ğ¥t(€€€€€€€Í•±˜¹¹…Ù}‰ÕÑÑ½¹Ìõmt(€€€€€€€™½È±…‰•°±¥‘à¥¸¹…Ù}¥Ñ•µÌè(€€€€€€€€€€€‰Ñ¸õÑ¬¹	ÕÑÑ½¸¡¹…Ø±Ñ•áĞõ±…‰•°±…¹¡½Èô‰Üˆ±©ÕÍÑ¥™äô‰±•™Ğˆ±É•±¥•˜ô‰™±…Ğˆ±‰ôÀ°(€€€€€€€€€€€€€€€€€€€€€€€€€‰œôˆÙáàˆ±™œôˆŒÈÌÍĞäˆ±…Ñ¥Ù•‰…­É½Õ¹ôˆÕÁˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€™½¹Ğô ‰M•½”U$ˆ°ÄÀ¤±Á…‘àôÈÀ±Á…‘äôÄÄ°(€€€€€€€€€€€€€€€€€€€€€€€€€½µµ…¹õ±…µ‰‘„¤õ¥‘àéÍ•±˜¹¹ˆ¹Í•±•Ğ¡¤¤¤(€€€€€€€€€€€‰Ñ¸¹Á…¬¡™¥±°ô‰àˆ±Á…‘äôÀ¤ìÍ•±˜¹¹…Ù}‰ÕÑÑ½¹Ì¹…ÁÁ•¹ ¡‰Ñ¸±¥‘à¤¤(€€€€€€€‘•˜µ…É­}Ñ…ˆ¡•Ù•¹Ğõ9½¹”¤è(€€€€€€€€€€€ÕÈõÍ•±˜¹¹ˆ¹¥¹‘•à¡Í•±˜¹¹ˆ¹Í•±•Ğ ¤¤(€€€€€€€€€€€™½È‰Ñ¸±¥‘à¥¸Í•±˜¹¹…Ù}‰ÕÑÑ½¹Ìè(€€€€€€€€€€€€€€€¥˜¥‘àôõÕÈè(€€€€€€€€€€€€€€€€€€€‰Ñ¸¹½¹™¥ÕÉ”¡‰œôˆŒÀàÜÌÍˆ±™œô‰İ¡¥Ñ”ˆ±™½¹Ğô ‰M•½”U$ˆ°ÄÀ°‰‰½±ˆ¤¤(€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€‰Ñ¸¹½¹™¥ÕÉ”¡‰œôˆÙáàˆ±™œôˆŒÈÌÍĞäˆ±™½¹Ğô ‰M•½”U$ˆ°ÄÀ¤¤(€€€€€€€Í•±˜¹¹ˆ¹‰¥¹ ˆğñ9½Ñ•‰½½­Q…‰¡…¹•øøˆ±µ…É­}Ñ…ˆ¤((€€€€€€€Í•±˜¹}ÁÉ½©•Ğ ¤ìÍ•±˜¹}ÍÁ…Ñ¥…° ¤ìÍ•±˜¹}É•µ½Ñ” ¤ìÍ•±˜¹}É•ÍÕ±ÑÌ ¤ìÍ•±˜¹}Í½ÕÉ•Ì ¤ìÍ•±˜¹}Õ±Ñ¥Ù…Ñ•‘}É•ÍÕ±ÑÌ ¤(€€€€€€€µ…É­}Ñ…ˆ ¤(€€€€€€€™½½Ñ•ÈõÑÑ¬¹É…µ”¡É½½Ğ±Á…‘‘¥¹œô ÄĞ°Ğ¤¤ì™½½Ñ•È¹Á…¬¡™¥±°ô‰àˆ±Í¥‘”ô‰‰½ÑÑ½´ˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡™½½Ñ•È±Ñ•áĞô‰Øˆ­AA}YIM%=8¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌõÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰AÉ½¹Ñ¼¸%¹™½Éµ”¼H½Ô…ÉÉ•Õ”¼Ù•Ñ½È‘„ÁÉ½ÁÉ¥•‘…‘”¸ˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡™½½Ñ•È±Ñ•áÑÙ…É¥…‰±”õÍ•±˜¹ÍÑ…ÑÕÌ±…¹¡½Èô‰•¹Ñ•Èˆ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰àˆ±•áÁ…¹õQÉÕ”¤(€€€€€€€ÑÑ¬¹1…‰•°¡™½½Ñ•È±Ñ•áĞô‰M¥ÍÑ•µ„‘”ÍÑ¥µ…Ñ¥Ù„‘”ÍÑ½ÅÕ•Ì‘”…É‰½¹¼•´Y••Ñ‡Ÿ¼9…Ñ¥Ù„ˆ¤¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ¤((€€€‘•˜}•á•ÕÑ¥Ù•}…É¡Í•±˜±Á…É•¹Ğ±Ñ¥Ñ±”±¥¹¥Ñ¥…°°¨±İÉ…Á±•¹Ñ ôÄÀĞÀ¤è(€€€€€€€€ˆˆ‰É•…Ñ”Ñ¡”Í…µ”±•…É±ä‰½É‘•É••á•ÕÑ¥Ù”µÍÕµµ…Éä‰½à¥¸•… Ñ…ˆ¸ˆˆˆ(€€€€€€€‰½àõÑÑ¬¹1…‰•±É…µ”¡Á…É•¹Ğ±Ñ•áĞõÑ¥Ñ±”±ÍÑå±”ô‰á•Œ¹Q1…‰•±™É…µ”ˆ±Á…‘‘¥¹œô ÄÀ°Ü¤¤(€€€€€€€Ù…±Õ”õÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”õ¥¹¥Ñ¥…°¤(€€€€€€€±…‰•°õÑÑ¬¹1…‰•°¡‰½à±Ñ•áÑÙ…É¥…‰±”õÙ…±Õ”±©ÕÍÑ¥™äô‰±•™Ğˆ±…¹¡½Èô‰Üˆ±İÉ…Á±•¹Ñ õİÉ…Á±•¹Ñ °(€€€€€€€€€€€€€€€€€€€€€€€™½É•É½Õ¹õQaP¤(€€€€€€€±…‰•°¹Á…¬¡™¥±°ô‰àˆ±•áÁ…¹õQÉÕ”¤(€€€€€€€‘•˜É•Í¥é”¡•Ù•¹Ğ¤è(€€€€€€€€€€€±…‰•°¹½¹™¥ÕÉ”¡İÉ…Á±•¹Ñ õµ…à ÌÈÀ±•Ù•¹Ğ¹İ¥‘Ñ ´Èà¤¤(€€€€€€€‰½à¹‰¥¹ ˆñ½¹™¥ÕÉ”øˆ±É•Í¥é”¤(€€€€€€€É•ÑÕÉ¸‰½à±Ù…±Õ”((€€€ÍÑ…Ñ¥µ•Ñ¡½(€€€‘•˜}•á•ÕÑ¥Ù•}•á•ÉÁĞ¡É•Á½ÉĞ±±…‰•±Ì°¨±±¥µ¥ĞôÔ¤è(€€€€€€€€ˆˆ‰A¥¬‘•¥Í¥½¸±¥¹•Ì™½ÈÑ¡”™É…µ•…Éì±•…Ù”™Õ±°É•Á½ÉĞ‰•±½Ü¸ˆˆˆ(€€€€€€€±¥¹•Ìõm±¥¹”¹ÍÑÉ¥À ¤™½È±¥¹”¥¸ÍÑÈ¡É•Á½ÉĞ½È€ˆˆ¤¹ÍÁ±¥Ñ±¥¹•Ì ¤¥˜±¥¹”¹ÍÑÉ¥À ¥t(€€€€€€€Í•±•Ñ•õmt(€€€€€€€™½È±…‰•°¥¸±…‰•±Ìè(€€€€€€€€€€€±¥¹”õ¹•áĞ ¡à™½Èà¥¸±¥¹•Ì¥˜à¹…Í•™½± ¤¹ÍÑ…ÉÑÍİ¥Ñ ¡±…‰•°¹…Í•™½± ¤¤¤±9½¹”¤(€€€€€€€€€€€¥˜±¥¹”…¹±¥¹”¹½Ğ¥¸Í•±•Ñ•è(€€€€€€€€€€€€€€€Í•±•Ñ•¹…ÁÁ•¹¡±¥¹”¤(€€€€€€€€€€€¥˜±•¸¡Í•±•Ñ•¤øõ±¥µ¥Ğè(€€€€€€€€€€€€€€€‰É•…¬(€€€€€€€€Œ%˜„É•Á½ÉĞÌÁÉ•™•ÉÉ•¡•…‘¥¹Ì¡…¹”°ÍÑ¥±°Í¡½Ü¥ÑÌ½Á•¹¥¹œ(€€€€€€€€ŒÉ•ÍÕ±Ğ±¥¹•Ì¥¹ÍÑ•…½˜±•…Ù¥¹œÑ¡”•á•ÕÑ¥Ù”…É‰±…¹¬¸(€€€€€€€É•ÑÕÉ¸€‰q¸ˆ¹©½¥¸¡Í•±•Ñ•½È±¥¹•Ílé±¥µ¥Ñt¤¥˜±¥¹•Ì•±Í”€‰…‘½Ì•á•ÕÑ¥Ù½Ì…¥¹‘„¥¹‘¥ÍÁ½»µÙ•¥Ìì½¹ÍÕ±Ñ”„…Õ‘¥Ñ½É¥„Á…É„¼µ½Ñ¥Ù¼¸ˆ((€€€‘•˜}ÁÉ½©•Ğ¡Í•±˜¤è(€€€€€€€˜õÍ•±˜¹Ñ…‰ÍlÁtìÑÑ¬¹1…‰•°¡˜±Ñ•áĞô‰‰É¥È…»…±¥Í”ˆ±ÍÑå±”ô‰ ¹Q1…‰•°ˆ¤¹É¥¡É½ÜôÀ±½±Õµ¸ôÀ±½±Õµ¹ÍÁ…¸ôĞ±ÍÑ¥­äô‰Üˆ¤(€€€€€€€Í•±˜¹¹…µ”õÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰AÉ½©•Ñ¼¹™½É´Y•É‘”ˆ¤ìÍ•±˜¹…ÈõÑ¬¹MÑÉ¥¹Y…È ¤ìÍ•±˜¹¥ÈõÑ¬¹MÑÉ¥¹Y…È ¤(€€€€€€€Í•±˜¹‰¥½µ”õÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ôˆˆ¤ìÍ•±˜¹Á¡åÌõÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ôˆˆ¤(€€€€€€€™¥•±‘Ìõl ‰AÉ½©•Ñ¼ˆ±Í•±˜¹¹…µ”¤° ‰H€¼M%Hˆ±Í•±˜¹…È¤° ‰%HƒŠPÍ‘¥¼%9I½M9H€ ÄÌ“µ¥Ñ½Ì¤ˆ±Í•±˜¹¥È¥t(€€€€€€€™½È¤°¡±…ˆ±Ù…È¤¥¸•¹Õµ•É…Ñ”¡™¥•±‘Ì°Ä¤è(€€€€€€€€€€€ÑÑ¬¹1…‰•°¡˜±Ñ•áĞõ±…ˆ¤¹É¥¡É½Üõ¤±½±Õµ¸ôÀ±ÍÑ¥­äô‰Üˆ±Á…‘äôà¤(€€€€€€€€€€€ÑÑ¬¹¹ÑÉä¡˜±Ñ•áÑÙ…É¥…‰±”õÙ…È±İ¥‘Ñ ôØÈ¤¹É¥¡É½Üõ¤±½±Õµ¸ôÄ±ÍÑ¥­äô‰•Üˆ±Á…‘àôÄÀ¤(€€€€€€€ÑÑ¬¹1…‰•°¡˜±Ñ•áĞô‰½¹ÍÕ±Ñ„H½M%H½Ô%H½M%½½ÉÉ”…ÕÑ½µ…Ñ¥…µ•¹Ñ”…¼ÁÉ•ÍÍ¥½¹…ÈaUQH;1%M¸ˆ±™½É•É½Õ¹ôˆŒÔÈØĞÕˆ±İÉ…Á±•¹Ñ ôäÀÀ¤¹É¥¡É½ÜôĞ±½±Õµ¸ôÀ±½±Õµ¹ÍÁ…¸ôÌ±ÍÑ¥­äô‰Üˆ±Á…‘äô ÄÈ°Ğ¤¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡˜±Ñ•áĞô‰IIHIEU%Y<YQ=I%0ˆ±½µµ…¹õÍ•±˜¹Á¥­}Ù•Ñ½È±ÍÑå±”ô‰IÕ¸¹Q	ÕÑÑ½¸ˆ¤¹É¥¡É½ÜôÔ±½±Õµ¸ôÄ±ÍÑ¥­äô‰Üˆ±Á…‘äôÄÀ±Á…‘àôÄÀ¤(€€€€€€€ÑÑ¬¹1…‰•°¡˜±Ñ•áĞô‰-50ƒŠˆ-5hƒŠˆM!@ƒŠˆ•½)M=8ƒŠˆA-ˆ±™½É•É½Õ¹ôˆŒØØØˆ¤¹É¥¡É½ÜôÔ±½±Õµ¸ôÈ±ÍÑ¥­äô‰Üˆ¤(€€€€€€€Í•±˜¹Ù•Ñ½É}ÍÑ…ÑÕÌõÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰9•¹¡Õ´…ÉÅÕ¥Ù¼Ù•Ñ½É¥…°…ÉÉ•…‘¼¸ˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡˜±Ñ•áÑÙ…É¥…‰±”õÍ•±˜¹Ù•Ñ½É}ÍÑ…ÑÕÌ±™½É•É½Õ¹ôˆŒÄÔÕĞÌˆ±İÉ…Á±•¹Ñ ôäÀÀ¤¹É¥¡É½ÜôØ±½±Õµ¸ôÄ±½±Õµ¹ÍÁ…¸ôÌ±ÍÑ¥­äô‰Üˆ±Á…‘àôÄÀ±Á…‘äô È°à¤¤(€€€€€€€Í•±˜¹ÁÉ½Á•ÉÑå}•á•}‰½à±Í•±˜¹ÁÉ½Á•ÉÑå}•á•}Ù…ÈõÍ•±˜¹}•á•ÕÑ¥Ù•}…É (€€€€€€€€€€€˜°‰EUI<aUQ%Y<ƒŠPAI=AI%ˆ°(€€€€€€€€€€€€‰A•Ëµµ•ÑÉ¼è…Õ…É‘…¹‘¼…ÉÅÕ¥Ù¼°H½Ô%H¸…»…±¥Í”½µ—„…ÃÍÌÙ…±¥‘…È„•½µ•ÑÉ¥„¸ˆ¤(€€€€€€€Í•±˜¹ÁÉ½Á•ÉÑå}•á•}‰½à¹É¥¡É½ÜôÜ±½±Õµ¸ôÀ±½±Õµ¹ÍÁ…¸ôĞ±ÍÑ¥­äô‰•Üˆ±Á…‘äô ÄÈ°Ğ¤¤(€€€€€€€˜¹½±Õµ¹½¹™¥ÕÉ” Ä±İ•¥¡ĞôÄ¤((€€€‘•˜}ÍÁ…Ñ¥…°¡Í•±˜¤è(€€€€€€€¡½ÍĞõÍ•±˜¹Ñ…‰ÍlÅt(€€€€€€€Ñ…‰}…¹Ù…ÌõÑ¬¹…¹Ù…Ì¡¡½ÍĞ±‰œôˆÑÙÔˆ±¡¥¡±¥¡ÑÑ¡¥­¹•ÍÌôÀ¤(€€€€€€€Ñ…‰}ØõÑÑ¬¹MÉ½±±‰…È¡¡½ÍĞ±½É¥•¹Ğô‰Ù•ÉÑ¥…°ˆ±½µµ…¹õÑ…‰}…¹Ù…Ì¹åÙ¥•Ü¤(€€€€€€€Ñ…‰}…¹Ù…Ì¹½¹™¥ÕÉ”¡åÍÉ½±±½µµ…¹õÑ…‰}Ø¹Í•Ğ¤(€€€€€€€Ñ…‰}…¹Ù…Ì¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤ìÑ…‰}Ø¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ±™¥±°ô‰äˆ¤(€€€€€€€˜õÑÑ¬¹É…µ”¡Ñ…‰}…¹Ù…Ì±Á…‘‘¥¹œô À°À°ÄÀ°ÄÀ¤¤(€€€€€€€İ¥¸õÑ…‰}…¹Ù…Ì¹É•…Ñ•}İ¥¹‘½Ü  À°À¤±İ¥¹‘½Üõ˜±…¹¡½Èô‰¹Üˆ¤(€€€€€€€‘•˜Íå¹}ÍÉ½±°¡•Ù•¹Ğõ9½¹”¤è(€€€€€€€€€€€Ñ…‰}…¹Ù…Ì¹½¹™¥ÕÉ”¡ÍÉ½±±É•¥½¸õÑ…‰}…¹Ù…Ì¹‰‰½à ‰…±°ˆ¤¤(€€€€€€€€€€€Ñ…‰}…¹Ù…Ì¹¥Ñ•µ½¹™¥ÕÉ”¡İ¥¸±İ¥‘Ñ õµ…à ÜÀÀ±Ñ…‰}…¹Ù…Ì¹İ¥¹™½}İ¥‘Ñ  ¤¤¤(€€€€€€€˜¹‰¥¹ ˆñ½¹™¥ÕÉ”øˆ±Íå¹}ÍÉ½±°¤ìÑ…‰}…¹Ù…Ì¹‰¥¹ ˆñ½¹™¥ÕÉ”øˆ±Íå¹}ÍÉ½±°¤((€€€€€€€ÑÑ¬¹1…‰•°¡˜±Ñ•áĞô‰A•Ëµµ•ÑÉ¼°‘¥…»ÍÍÑ¥¼”Í½±¼ˆ±ÍÑå±”ô‰ ¹Q1…‰•°ˆ¤¹Á…¬¡…¹¡½Èô‰Üˆ¤(€€€€€€€Í•±˜¹ÍÁ…Ñ¥…±}•á•}‰½à±Í•±˜¹ÍÁ…Ñ¥…±}•á•}Ù…ÈõÍ•±˜¹}•á•ÕÑ¥Ù•}…É (€€€€€€€€€€€˜°‰EUI<aUQ%Y<ƒŠPƒIIK)9%Lˆ°(€€€€€€€€€€€€‹É•„°‰¥½µ„”É•™•Ë©¹¥…Ì%	Í•Ë¼É•ÍÕµ¥‘½Ì…ÃÍÌ…ÉÉ•…È¼Á•Ëµµ•ÑÉ¼¸ˆ¤(€€€€€€€Í•±˜¹ÍÁ…Ñ¥…±}•á•}‰½à¹Á…¬¡™¥±°ô‰àˆ±Á…‘äô Ø°Ğ¤¤(€€€€€€€É½ÜõÑÑ¬¹É…µ”¡˜¤ìÉ½Ü¹Á…¬¡™¥±°ô‰àˆ±Á…‘äôà¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡É½Ü±Ñ•áĞô‰	…¥á…ÈÉ…ÍÑ•È=L€ÃŠLÌÀ´€¡…Õá¥±¥…È¤ˆ±½µµ…¹õÍ•±˜¹…ÕÑ½}Í½¥°¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡É½Ü±Ñ•áĞô‰…ÉÉ•…È•½Q%‘”=Lˆ±½µµ…¹õÍ•±˜¹Á¥­}Í½¥°¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àôà¤(€€€€€€€ÑÑ¬¹1…‰•°¡É½Ü±Ñ•áĞô‰5…Á„Ñ•·…Ñ¥¼±½…°‘”ÕÍ¼½½‰•ÉÑÕÉ„…ÃÍÌ„…»…±¥Í”ˆ±™½É•É½Õ¹ôˆŒÄÔÕĞÌˆ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àôà¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡É½Ü±Ñ•áĞô‹Š"Hˆ±İ¥‘Ñ ôÌ±½µµ…¹õÍ•±˜¹µ…Á}é½½µ}½ÕĞ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àô ÄÈ°È¤¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡É½Ü±Ñ•áĞôˆ¬ˆ±İ¥‘Ñ ôÌ±½µµ…¹õÍ•±˜¹µ…Á}é½½µ}¥¸¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àôÈ¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡É½Ü±Ñ•áĞô‰)UMQH=$ˆ±½µµ…¹õÍ•±˜¹µ…Á}é½½µ}™¥Ğ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àô È°à¤¤(€€€€€€€ÑÑ¬¹1…‰•°¡É½Ü±Ñ•áĞô‰i½½´è‰½ÓÕ•Ìƒ
-Ä½ÔÉ½‘„‘¼µ½ÕÍ”ˆ±™½É•É½Õ¹ôˆŒØØØˆ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àô Ø°À¤¤((€€€€€€€¥‰•‰½àõÑÑ¬¹1…‰•±É…µ”¡˜±Ñ•áĞô‰±…ÍÍ¥™¥‡Ÿ¼½™¥¥…°%	ˆ±Á…‘‘¥¹œô ÄÀ°Ü¤¤ì¥‰•‰½à¹Á…¬¡™¥±°ô‰àˆ±Á…‘äô À°Ø¤¤(€€€€€€€Í•±˜¹¥‰•}‰¥½µ•}‘¥ÍÁ±…äõÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰Õ…É‘…¹‘¼Á•Ëµµ•ÑÉ¼¸ˆ¤(€€€€€€€Í•±˜¹¥‰•}Á¡åÍ}‘¥ÍÁ±…äõÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰Õ…É‘…¹‘¼µ…Á•…µ•¹Ñ¼‘„Ù••Ñ‡Ÿ¼¹…Ñ¥Ù„”¥¹Ñ•ÉÍ—Ÿ¼%	¸ˆ¤(€€€€€€€Í•±˜¹…½¥}…É•…}‘¥ÍÁ±…äõÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰Õ…É‘…¹‘¼Á•Ëµµ•ÑÉ¼¸ˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡¥‰•‰½à±Ñ•áĞô‰	¥½µ„èˆ±™½¹Ğô ‰M•½”U$ˆ°ä°‰‰½±ˆ¤¤¹É¥¡É½ÜôÀ±½±Õµ¸ôÀ±ÍÑ¥­äô‰¹Üˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡¥‰•‰½à±Ñ•áÑÙ…É¥…‰±”õÍ•±˜¹¥‰•}‰¥½µ•}‘¥ÍÁ±…ä±İÉ…Á±•¹Ñ ôàĞÀ¤¹É¥¡É½ÜôÀ±½±Õµ¸ôÄ±ÍÑ¥­äô‰Üˆ±Á…‘àô à°À¤¤(€€€€€€€ÑÑ¬¹1…‰•°¡¥‰•‰½à±Ñ•áĞô‰¥Ñ½™¥Í¥½¹½µ¥…Ì€¡MH…ÑÕ…°€¼Á½Ñ•¹¥…°%	¤èˆ±™½¹Ğô ‰M•½”U$ˆ°ä°‰‰½±ˆ¤¤¹É¥¡É½ÜôÄ±½±Õµ¸ôÀ±ÍÑ¥­äô‰¹Üˆ±Á…‘äô Ğ°À¤¤(€€€€€€€€Œ5Õ±Ñ¥±¥¹”É•…µ½¹±äÑ•áĞè½µÁ±•Ñ”±…ÍÌ¹…µ•ÌÍÑ…äÙ¥Í¥‰±”…Ğ…¹äİ¥¹‘½Üİ¥‘Ñ ¸(€€€€€€€Á¡åÍ}™É…µ”õÑÑ¬¹É…µ”¡¥‰•‰½à¤(€€€€€€€Á¡åÍ}™É…µ”¹É¥¡É½ÜôÄ±½±Õµ¸ôÄ±ÍÑ¥­äô‰•Üˆ±Á…‘àô à°À¤±Á…‘äô Ğ°À¤¤(€€€€€€€Í•±˜¹¥‰•}Á¡åÍ}Ñ•áĞ÷[h‘éì¶»§q«^tk.Text(phys_frame,height=4,width=45,wrap="word",font=("Segoe UI",9),
+        ttk.Button(action,text="APAGAR PESQUISA",command=self.clear_research).pack(side="right",padx=(8,0))
+        self.global_execute_btn=ttk.Button(action,text="EXECUTAR ANÃLISE",command=self.execute,style="Run.TButton")
+        self.global_execute_btn.pack(side="right",padx=(8,0))
+
+        body=ttk.Frame(root); body.pack(fill="both",expand=True)
+        nav=tk.Frame(body,width=288,bg="#F6F8F8",highlightbackground="#D8E0E0",highlightthickness=1)
+        nav.pack(side="left",fill="y"); nav.pack_propagate(False)
+        main=ttk.Frame(body,padding=(16,8,32,6)); main.pack(side="left",fill="both",expand=True)
+
+        self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True)
+        self.tabs=[]
+        for n in ["Propriedade (CAR)","Mapas e limites","Carregar produtos SAR / AGB","Carbono â€” formaÃ§Ãµes nativas","Base CientÃ­fica e Modelos","Monitoramento â€” Ã¡reas cultivadas"]:
+            f=ttk.Frame(self.nb,padding=14); self.nb.add(f,text=n); self.tabs.append(f)
+
+        nav_items=[
+          ("âŒ‚   InÃ­cio",0),("â–£   Propriedade (CAR)",0),("â—«   Mapas e limites",1),
+          ("â—ˆ   Fitofisionomia (IBGE)",1),("â—†   Carregar produtos\n     SAR / AGB",2),
+          ("â—‰   Biomassa AÃ©rea (AGB)",3),("â™¨   Carbono no Solo",3),
+          ("â—   Carbono Total",3),("â–¤   Resultados e RelatÃ³rio",3),
+          ("ğŸŒ±   Monitoramento de\n     Ã¡reas cultivadas",5),("âš™   ConfiguraÃ§Ãµes",2),("â–¥   Base CientÃ­fica e\n     Modelos",4),("â“˜   Sobre",4)]
+        self.nav_buttons=[]
+        for label,idx in nav_items:
+            btn=tk.Button(nav,text=label,anchor="w",justify="left",relief="flat",bd=0,
+                          bg="#F6F8F8",fg="#233B49",activebackground="#E5F0EB",
+                          font=("Segoe UI",10),padx=20,pady=11,
+                          command=lambda i=idx:self.nb.select(i))
+            btn.pack(fill="x",pady=0); self.nav_buttons.append((btn,idx))
+        def mark_tab(event=None):
+            cur=self.nb.index(self.nb.select())
+            for btn,idx in self.nav_buttons:
+                if idx==cur:
+                    btn.configure(bg="#08733F",fg="white",font=("Segoe UI",10,"bold"))
+                else:
+                    btn.configure(bg="#F6F8F8",fg="#233B49",font=("Segoe UI",10))
+        self.nb.bind("<<NotebookTabChanged>>",mark_tab)
+
+        self._project(); self._spatial(); self._remote(); self._results(); self._sources(); self._cultivated_results()
+        mark_tab()
+        footer=ttk.Frame(root,padding=(14,4)); footer.pack(fill="x",side="bottom")
+        ttk.Label(footer,text="v"+APP_VERSION).pack(side="left")
+        self.status=tk.StringVar(value="Pronto. Informe o CAR ou carregue o vetor da propriedade.")
+        ttk.Label(footer,textvariable=self.status,anchor="center").pack(side="left",fill="x",expand=True)
+        ttk.Label(footer,text="Sistema de Estimativa de Estoques de Carbono em VegetaÃ§Ã£o Nativa").pack(side="right")
+
+    def _executive_card(self,parent,title,initial,*,wraplength=1040):
+        """Create the same clearly bordered executive-summary box in each tab."""
+        box=ttk.LabelFrame(parent,text=title,style="Exec.TLabelframe",padding=(10,7))
+        value=tk.StringVar(value=initial)
+        label=ttk.Label(box,textvariable=value,justify="left",anchor="w",wraplength=wraplength,
+                        foreground=TEXT)
+        label.pack(fill="x",expand=True)
+        def resize(event):
+            label.configure(wraplength=max(320,event.width-28))
+        box.bind("<Configure>",resize)
+        return box,value
+
+    @staticmethod
+    def _executive_excerpt(report,labels,*,limit=5):
+        """Pick decision lines for the framed card; leave full report below."""
+        lines=[line.strip() for line in str(report or "").splitlines() if line.strip()]
+        selected=[]
+        for label in labels:
+            line=next((x for x in lines if x.casefold().startswith(label.casefold())),None)
+            if line and line not in selected:
+                selected.append(line)
+            if len(selected)>=limit:
+                break
+        # If a report's preferred headings change, still show its opening
+        # result lines instead of leaving the executive card blank.
+        return "\n".join(selected or lines[:limit]) if lines else "Dados executivos ainda indisponÃ­veis; consulte a auditoria para o motivo."
+
+    def _project(self):
+        f=self.tabs[0]; ttk.Label(f,text="Abrir anÃ¡lise",style="H.TLabel").grid(row=0,column=0,columnspan=4,sticky="w")
+        self.name=tk.StringVar(value="Projeto Enform Verde"); self.car=tk.StringVar(); self.ccir=tk.StringVar()
+        self.biome=tk.StringVar(value=""); self.phys=tk.StringVar(value="")
+        fields=[("Projeto",self.name),("CAR / SICAR",self.car),("CCIR â€” cÃ³digo INCRA/SNCR (13 dÃ­gitos)",self.ccir)]
+        for i,(lab,var) in enumerate(fields,1):
+            ttk.Label(f,text=lab).grid(row=i,column=0,sticky="w",pady=8)
+            ttk.Entry(f,textvariable=var,width=62).grid(row=i,column=1,sticky="ew",padx=10)
+        ttk.Label(f,text="A consulta CAR/SICAR ou CCIR/SIGEF ocorre automaticamente ao pressionar EXECUTAR ANÃLISE.",foreground="#52645E",wraplength=900).grid(row=4,column=0,columnspan=3,sticky="w",pady=(12,4))
+        ttk.Button(f,text="CARREGAR ARQUIVO VETORIAL",command=self.pick_vector,style="Run.TButton").grid(row=5,column=1,sticky="w",pady=10,padx=10)
+        ttk.Label(f,text="KML â€¢ KMZ â€¢ SHP â€¢ GeoJSON â€¢ GPKG",foreground="#666").grid(row=5,column=2,sticky="w")
+        self.vector_status=tk.StringVar(value="Nenhum arquivo vetorial carregado.")
+        ttk.Label(f,textvariable=self.vector_status,foreground="#155D43",wraplength=900).grid(row=6,column=1,columnspan=3,sticky="w",padx=10,pady=(2,8))
+        self.property_exec_box,self.property_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO â€” PROPRIEDADE",
+            "PerÃ­metro: aguardando arquivo, CAR ou CCIR. A anÃ¡lise comeÃ§a apÃ³s validar a geometria.")
+        self.property_exec_box.grid(row=7,column=0,columnspan=4,sticky="ew",pady=(12,4))
+        f.columnconfigure(1,weight=1)
+
+    def _spatial(self):
+        host=self.tabs[1]
+        tab_canvas=tk.Canvas(host,bg="#F4F6F5",highlightthickness=0)
+        tab_v=ttk.Scrollbar(host,orient="vertical",command=tab_canvas.yview)
+        tab_canvas.configure(yscrollcommand=tab_v.set)
+        tab_canvas.pack(side="left",fill="both",expand=True); tab_v.pack(side="right",fill="y")
+        f=ttk.Frame(tab_canvas,padding=(0,0,10,10))
+        win=tab_canvas.create_window((0,0),window=f,anchor="nw")
+        def sync_scroll(event=None):
+            tab_canvas.configure(scrollregion=tab_canvas.bbox("all"))
+            tab_canvas.itemconfigure(win,width=max(700,tab_canvas.winfo_width()))
+        f.bind("<Configure>",sync_scroll); tab_canvas.bind("<Configure>",sync_scroll)
+
+        ttk.Label(f,text="PerÃ­metro, diagnÃ³stico e solo",style="H.TLabel").pack(anchor="w")
+        self.spatial_exec_box,self.spatial_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO â€” ÃREA E REFERÃŠNCIAS",
+            "Ãrea, bioma e referÃªncias IBGE serÃ£o resumidos apÃ³s carregar o perÃ­metro.")
+        self.spatial_exec_box.pack(fill="x",pady=(6,4))
+        row=ttk.Frame(f); row.pack(fill="x",pady=8)
+        ttk.Button(row,text="Baixar raster COS 0â€“30 cm (auxiliar)",command=self.auto_soil).pack(side="left")
+        ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
+        ttk.Label(row,text="Mapa temÃ¡tico local de uso/cobertura apÃ³s a anÃ¡lise",foreground="#155D43").pack(side="left",padx=8)
+        ttk.Button(row,text="âˆ’",width=3,command=self.map_zoom_out).pack(side="left",padx=(12,2))
+        ttk.Button(row,text="+",width=3,command=self.map_zoom_in).pack(side="left",padx=2)
+        ttk.Button(row,text="AJUSTAR AOI",command=self.map_zoom_fit).pack(side="left",padx=(2,8))
+        ttk.Label(row,text="Zoom: botÃµes Â± ou roda do mouse",foreground="#666").pack(side="left",padx=(6,0))
+
+        ibgebox=ttk.LabelFrame(f,text="ClassificaÃ§Ã£o oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
+        self.ibge_biome_display=tk.StringVar(value="Aguardando perÃ­metro.")
+        self.ibge_phys_display=tk.StringVar(value="Aguardando mapeamento da vegetaÃ§Ã£o nativa e interseÃ§Ã£o IBGE.")
+        self.aoi_area_display=tk.StringVar(value="Aguardando perÃ­metro.")
+        ttk.Label(ibgebox,text="Bioma:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
+        ttk.Label(ibgebox,textvariable=self.ibge_biome_display,wraplength=840).grid(row=0,column=1,sticky="w",padx=(8,0))
+        ttk.Label(ibgebox,text="Fitofisionomias (SAR atual / potencial IBGE):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
+        # Multiline read-only text: complete class names stay visible at any window width.
+        phys_frame=ttk.Frame(ibgebox)
+        phys_frame.grid(row=1,column=1,sticky="ew",padx=(8,0),pady=(4,0))
+        self.ibge_phys_text=tk.Text(phys_frame,height=4,width=45,wrap="word",font=("Segoe UI",9),
                                    foreground="#155D43",background="#F4F6F5",relief="flat",
                                    borderwidth=0,highlightthickness=0,state="disabled")
         phys_scroll=ttk.Scrollbar(phys_frame,orient="vertical",command=self.ibge_phys_text.yview)
@@ -1010,7 +2062,145 @@ class App(tk.Tk):
 
     def show_google_map(self,refresh=False,prefer_public=False):
         """Visual-only CBERS-4A/WFI primary backdrop; Sentinel-2 fallback; never an analytical input."""
-        if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polÃ­gYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ½¹¼ÁÉ¥µ•¥É¼¸ˆ¤(€€€€€€€¥˜Í•±˜¹}½ÁÑ¥…±}İ½É­•É}ÉÕ¹¹¥¹œè(€€€€€€€€€€€Í•±˜¹}½ÁÑ¥…±}É•™É•Í¡}Á•¹‘¥¹œô¡‰½½°¡É•™É•Í ¤±‰½½°¡ÁÉ•™•É}ÁÕ‰±¥Œ¤¤(€€€€€€€€€€€Í•±˜¹µ…Á}ÍÑ…ÑÕÌ¹Í•Ğ ‰%µ…•´•´…ÉÉ•…µ•¹Ñ¼ì¼¹½Ù¼•¹ÅÕ…‘É…µ•¹Ñ¼Í•Ë„ÁÉ½•ÍÍ…‘¼•´Í•Õ¥‘„¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€Í•±˜¹}ÍÉ½±±}ÍÁ…Ñ¥…±}İ¥‘•Ñ}¥¹Ñ½}Ù¥•Ü¡Í•±˜¹µ…Á}…¹Ù…Ì¤(€€€€€€€Í•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤(€€€€€€€¥˜¹½Ğ•Ñ…ÑÑÈ¡Í•±˜°‰}Í…Ñ•±±¥Ñ•}µ…Á}Ù¥Í¥‰±”ˆ±…±Í”¤è(€€€€€€€€€€€Í•±˜¹}‘É…İ}…½¥}½ÕÑ±¥¹” ‰…ÉÉ•…¹‘¼¥µ…•´ƒÍÁÑ¥„É•…°ƒŠP•á¥‰¥¹‘¼¼Á•Ëµµ•ÑÉ¼Ñ•µÁ½É…É¥…µ•¹Ñ”ˆ¤(€€€€€€€Í•±˜¹}µ…Á}•¹•É…Ñ¥½¸¬ôÄì•¹•É…Ñ¥½¸õÍ•±˜¹}µ…Á}•¹•É…Ñ¥½¸(€€€€€€€œõÍ•±˜¹‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹½Áä ¤(€€€€€€€Ù¥•İÁ½ÉÑ}Üõµ…à ÔÀÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}İ¥‘Ñ  ¤¤ìÙ¥•İÁ½ÉÑ} õµ…à ÈàÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}¡•¥¡Ğ ¤¤(€€€€€€€‘¥ÍÁ±…å}Í…±”õµ…à Ä¸À±µ¥¸ Ğ¸À°Ä¸ÌØ½µ…à¡™±½…Ğ¡Í•±˜¹}µ…Á}•áÑ•¹Ñ}™…Ñ½È¤°À¸ÌÀ¤¤¤(€€€€€€€€Œ-••À„‰½Õ¹‘•‘¥ÍÁ±…äÉ…ÍÑ•ÈìÉ•µ½Ñ”ÁÉ½Ù¥‘•ÉÌ…É”É•…¥¸€ğôÔÄÉÁà(€€€€€€€€ŒÅÕ…‘É…¹ÑÌ°Í¼Ù•Éä±…É”…¹Ù…ÌÍ¥é•Ì…¹¹½ĞÑÉ¥•È¥…¹Ğ=É•…‘Ì¸(€€€€€€€Üõµ…à ÔÀÀ±µ¥¸ ÄØÀÀ±É½Õ¹¡Ù¥•İÁ½ÉÑ}Ü©‘¥ÍÁ±…å}Í…±”¤¤¤(€€€€€€€ õµ…à ÈàÀ±µ¥¸ ÄÈÀÀ±É½Õ¹¡Ù¥•İÁ½ÉÑ} ©‘¥ÍÁ±…å}Í…±”¤¤¤(€€€€€€€É…Ñ¥¼õÜ½µ…à¡ °Ä¤(€€€€€€€¥˜É…Ñ¥¼øôÄè(€€€€€€€€€€€É•Å}ÜôÄÈÀÀìÉ•Å} õµ…à ÌÈÀ±µ¥¸ ÄÈÀÀ±É½Õ¹ ÄÈÀÀ½É…Ñ¥¼¤¤¤(€€€€€€€•±Í”è(€€€€€€€€€€€É•Å} ôÄÈÀÀìÉ•Å}Üõµ…à ÌÈÀ±µ¥¸ ÄÈÀÀ±É½Õ¹ ÄÈÀÀ©É…Ñ¥¼¤¤¤(€€€€€€€­•äõÍ•±˜¹½½±•}µ…ÁÍ}­•ä¹•Ğ ¤¹ÍÑÉ¥À ¤ì•áÑ•¹Ñ}™…Ñ½Èõµ…à À¸ÌÀ±µ¥¸ à¸À±™±½…Ğ¡Í•±˜¹}µ…Á}•áÑ•¹Ñ}™…Ñ½È¤¤¤(€€€€€€€…¡•‘}ÁÉ•Ù¥•Üõ}É•…‘}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡”¡œ±•áÑ•¹Ñ}™…Ñ½È±Ü± ¤(€€€€€€€…¡•‘}½ÁÑ¥…°õ9½¹”(€€€€€€€¥˜…¡•‘}ÁÉ•Ù¥•Üè(€€€€€€€€€€€…¡•‘}¥µ…”±…¡•‘}µ•Ñ„õ…¡•‘}ÁÉ•Ù¥•Ü(€€€€€€€€€€€…¡•‘}ÁÉ½Ù¥‘•ÈõÍÑÈ¡…¡•‘}µ•Ñ„¹•Ğ ‰ÁÉ½Ù¥‘•Èˆ¤½È€ˆˆ¤(€€€€€€€€€€€¥˜€‰	ILˆ¥¸…¡•‘}ÁÉ½Ù¥‘•È¹ÕÁÁ•È ¤½È€‰M9Q%90´Èˆ¥¸…¡•‘}ÁÉ½Ù¥‘•È¹ÕÁÁ•È ¤è(€€€€€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€€€€€}É•ÅÕ¥É•}Ù¥Í¥‰±•}½ÁÑ¥…±}¥µ…”¡…¡•‘}¥µ…”°‰…¡”€ˆ­…¡•‘}ÁÉ½Ù¥‘•È¤(€€€€€€€€€€€€€€€€€€€…¡•‘}½ÁÑ¥…°ô¡…¡•‘}¥µ…”±…¡•‘}µ•Ñ„±…¡•‘}ÁÉ½Ù¥‘•È¤(€€€€€€€€€€€€€€€€€€€É•‘¥Ğô‰%µ…•´ƒÍÁÑ¥„•´…¡”ƒŠˆ™½¹Ñ”½É¥¥¹…°è€ˆ­…¡•‘}ÁÉ½Ù¥‘•È(€€€€€€€€€€€€€€€€€€€Í•±˜¹}™¥¹¥Í¡}Í…Ñ•±±¥Ñ•}µ…À¡•¹•É…Ñ¥½¸±…¡•‘}¥µ…”±…¡•‘}µ•Ñ„¹•Ğ ‰Á½±å½¹Ìˆ¤½Èmt°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰!ƒMAQ%<ƒŠˆ€ˆ­…¡•‘}ÁÉ½Ù¥‘•È±9½¹”±É•‘¥Ğ±9½¹”¤(€€€€€€€€€€€€€€€€€€€Í•±˜¹µ…Á}ÍÑ…ÑÕÌ¹Í•Ğ ‰á¥‰¥¹‘¼¥µ…•´ƒÍÁÑ¥„•´…¡”•¹ÅÕ…¹Ñ¼…ÑÕ…±¥é„	IL´Ñ”M•¹Ñ¥¹•°´ËŠ˜ˆ¤(€€€€€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸è(€€€€€€€€€€€€€€€€€€€€Œ…¡”•¹ÑÉä™É½´…¸•…É±¥•È‰Õ¥±µÕÍĞ¹•Ù•ÈÉ•ÍÕÉÉ•Ğ(€€€€€€€€€€€€€€€€€€€€Œ„‰±…¹¬…¹Ù…Ì½ÈÁÉ•Ù•¹ĞÑ¡”±¥Ù”ÁÉ½Ù¥‘•È™…¥±½Ù•È¸(€€€€€€€€€€€€€€€€€€€™½È‰…‘}Á…Ñ ¥¸}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡•}Á…Ñ¡Ì¡œ±•áÑ•¹Ñ}™…Ñ½È±Ü± ¤è(€€€€€€€€€€€€€€€€€€€€€€€ÑÉäé‰…‘}Á…Ñ ¹Õ¹±¥¹¬¡µ¥ÍÍ¥¹}½¬õQÉÕ”¤(€€€€€€€€€€€€€€€€€€€€€€€•á•ÁĞ=MÉÉ½ÈéÁ…ÍÌ(€€€€€€€¥˜¹½ĞÉ•™É•Í éÍ•±˜¹µ…Á}ÍÑ…ÑÕÌ¹Í•Ğ ‰…ÉÉ•…¹‘¼	IL´Ñ½]$ìM•¹Ñ¥¹•°´ÈÍ•Ë„Ñ•¹Ñ…‘¼•´Í•Õ¥‘„¸ˆ¤(€€€€€€€Í•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤((€€€€€€€‘•˜É¥¹Ì ¤è(€€€€€€€€€€€½ÕĞõmt(€€€€€€€€€€€ÍÁ…¸õµ…à¡™±½…Ğ¡œ¹Ñ½Ñ…±}‰½Õ¹‘ÍlÉtµœ¹Ñ½Ñ…±}‰½Õ¹‘ÍlÁt¤±™±½…Ğ¡œ¹Ñ½Ñ…±}‰½Õ¹‘ÍlÍtµœ¹Ñ½Ñ…±}‰½Õ¹‘ÍlÅt¤°Å”´Ü¤(€€€€€€€€€€€Ñ½°õµ…à¡ÍÁ…¸¼ÄØÀÀ¸À°Å”´Ü¤(€€€€€€€€€€€™½È•½´¥¸œ¹•½µ•ÑÉäè(€€€€€€€€€€€€€€€•½µÌõ±¥ÍĞ¡•½´¹•½µÌ¤¥˜•½´¹•½µ}ÑåÁ”ôô‰5Õ±Ñ¥A½±å½¸ˆ•±Í”€¡m•½µt¥˜•½´¹•½µ}ÑåÁ”ôô‰A½±å½¸ˆ•±Í”mt¤(€€€€€€€€€€€€€€€™½ÈÁ½±ä¥¸•½µÌè(€€€€€€€€€€€€€€€€€€€½½É‘Ìõ±¥ÍĞ¡Á½±ä¹Í¥µÁ±¥™ä¡Ñ½°±ÁÉ•Í•ÉÙ•}Ñ½Á½±½äõQÉÕ”¤¹•áÑ•É¥½È¹½½É‘Ì¤(€€€€€€€€€€€€€€€€€€€¥˜±•¸¡½½É‘Ì¤øÈÈÀè(€€€€€€€€€€€€€€€€€€€€€€€ÍÑ•Àõµ…à Ä±µ…Ñ ¹•¥°¡±•¸¡½½É‘Ì¤¼ÈÈÀ¤¤ì½½É‘Ìõ½½É‘ÍlèéÍÑ•Át(€€€€€€€€€€€€€€€€€€€€€€€¥˜½½É‘Íl´Åt„õ½½É‘ÍlÁté½½É‘Ì¹…ÁÁ•¹¡½½É‘ÍlÁt¤(€€€€€€€€€€€€€€€€€€€¥˜±•¸¡½½É‘Ì¤øôĞé½ÕĞ¹…ÁÁ•¹¡½½É‘Ì¤(€€€€€€€€€€€É•ÑÕÉ¸½ÕĞ((€€€€€€€‘•˜½½±•}¥µ…”¡ÉÌ¤è(€€€€€€€€€€€¥˜¹½Ğ­•äéÉ•ÑÕÉ¸9½¹”(€€€€€€€€€€€Ñ…É•Ñ}É…Ñ¥¼õÜ½µ…à¡ °Ä¤(€€€€€€€€€€€¥˜Ñ…É•Ñ}É…Ñ¥¼€øô€Äè(€€€€€€€€€€€€€€€…Á¥}ÜôØĞÀ(€€€€€€€€€€€€€€€…Á¥} õµ…à Ä±É½Õ¹¡…Á¥}Ü½Ñ…É•Ñ}É…Ñ¥¼¤¤(€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€…Á¥} ôØĞÀ(€€€€€€€€€€€€€€€…Á¥}Üõµ…à Ä±É½Õ¹¡…Á¥} ©Ñ…É•Ñ}É…Ñ¥¼¤¤(€€€€€€€€€€€Á…É…µÌõl ‰Í¥é”ˆ±˜‰í…Á¥}İõáí…Á¥}¡ôˆ¤° ‰Í…±”ˆ°ˆÈˆ¤° ‰µ…ÁÑåÁ”ˆ°‰Í…Ñ•±±¥Ñ”ˆ¤° ‰™½Éµ…Ğˆ°‰Á¹œˆ¤° ‰­•äˆ±­•ä¥t(€€€€€€€€€€€™½È½½É‘Ì¥¸ÉÌè(€€€€€€€€€€€€€€€ÁÑÌô‰ğˆ¹©½¥¸¡˜‰í±…Ğè¸Ù™ô±í±½¸è¸Ù™ôˆ™½È±½¸±±…Ğ¥¸½½É‘Ì¤(€€€€€€€€€€€€€€€Á…É…µÌ¹…ÁÁ•¹  ‰Á…Ñ ˆ°‰½±½ÈèÁá™˜á„ÀÁ™™ñİ•¥¡ĞèÑñ™¥±±½±½ÈèÁá™˜á„ÀÀÌÍğˆ­ÁÑÌ¤¤(€€€€€€€€€€€ÉÈõÉ•ÅÕ•ÍÑÌ¹•Ğ ‰¡ÑÑÁÌè¼½µ…ÁÌ¹½½±•…Á¥Ì¹½´½µ…ÁÌ½…Á¤½ÍÑ…Ñ¥µ…Àˆ±Á…É…µÌõÁ…É…µÌ±Ñ¥µ•½ÕĞô à°ÌÔ¤¤(€€€€€€€€€€€ÉÈ¹É…¥Í•}™½É}ÍÑ…ÑÕÌ ¤(€€€€€€€€€€€¥˜€‰¥µ…”ˆ¹½Ğ¥¸€¡ÉÈ¹¡•…‘•ÉÌ¹•Ğ ‰½¹Ñ•¹ĞµQåÁ”ˆ¤½È€ˆˆ¤¹±½İ•È ¤è(€€€€€€€€€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰É•ÍÁ½ÍÑ„½½±”»¼ƒ¤¥µ…•´ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸%µ…”¹½Á•¸¡¥¼¹	åÑ•Í%<¡ÉÈ¹½¹Ñ•¹Ğ¤¤¹½¹Ù•ÉĞ ‰Iˆ¤¹É•Í¥é” ¡Ü± ¤±%µ…”¹I•Í…µÁ±¥¹œ¹19i=L¤((€€€€€€€‘•˜•ÍÉ¥}•áÁ½ÉĞ¡ÉÌ±Í•ÉÙ¥”ô‰]½É±‘}%µ…•Éäˆ±±…‰•°ô‰ÍÉ¤ˆ¤è((€€€€€€€€€€€µ¥¹à±µ¥¹ä±µ…áà±µ…áäõµ…À¡™±½…Ğ±œ¹Ñ½Ñ…±}‰½Õ¹‘Ì¤(€€€€€€€€€€€‘àõµ…à¡µ…áàµµ¥¹à°Å”´à¤ì‘äõµ…à¡µ…áäµµ¥¹ä°Å”´à¤ìàô¡µ¥¹à­µ…áà¤¼Èìäô¡µ¥¹ä­µ…áä¤¼È(€€€€€€€€€€€‰àô¡àµ‘à©•áÑ•¹Ñ}™…Ñ½È¼È±äµ‘ä©•áÑ•¹Ñ}™…Ñ½È¼È±à­‘à©•áÑ•¹Ñ}™…Ñ½È¼È±ä­‘ä©•áÑ•¹Ñ}™…Ñ½È¼È¤(€€€€€€€€€€€Á…É…µÌõì‰‰‰½àˆèˆ°ˆ¹©½¥¸¡˜‰íØè¸á™ôˆ™½ÈØ¥¸‰à¤°‰‰‰½áMHˆèˆĞÌÈØˆ°‰¥µ…•MHˆèˆĞÌÈØˆ°(€€€€€€€€€€€€€€€€€€€€‰Í¥é”ˆé˜‰íÉ•Å}İô±íÉ•Å}¡ôˆ°‰™½Éµ…Ğˆè‰©Áœˆ°‰˜ˆè‰¥µ…”ˆ°‰‘Á¤ˆèˆäØ‰ô(€€€€€€€€€€€ÉÈõÉ•ÅÕ•ÍÑÌ¹•Ğ¡˜‰¡ÑÑÁÌè¼½Í•ÉÙ•È¹…É¥Í½¹±¥¹”¹½´½É%L½É•ÍĞ½Í•ÉÙ¥•Ì½íÍ•ÉÙ¥•ô½5…ÁM•ÉÙ•È½•áÁ½ÉĞˆ±Á…É…µÌõÁ…É…µÌ±Ñ¥µ•½ÕĞô à°ÌÔ¤¤(€€€€€€€€€€€ÉÈ¹É…¥Í•}™½É}ÍÑ…ÑÕÌ ¤(€€€€€€€€€€€¥˜€‰¥µ…”ˆ¹½Ğ¥¸€¡ÉÈ¹¡•…‘•ÉÌ¹•Ğ ‰½¹Ñ•¹ĞµQåÁ”ˆ¤½È€ˆˆ¤¹±½İ•È ¤è(€€€€€€€€€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰É•ÍÁ½ÍÑ„ÍÉ¤»¼ƒ¤¥µ…•´ˆ¤(€€€€€€€€€€€¥´õ%µ…”¹½Á•¸¡¥¼¹	åÑ•Í%<¡ÉÈ¹½¹Ñ•¹Ğ¤¤¹½¹Ù•ÉĞ ‰Iˆ¤(€€€€€€€€€€€™É½´A%0¥µÁ½ÉĞ%µ…•É…Ü(€€€€€€€€€€€õ%µ…•É…Ü¹É…Ü¡¥´°‰I	ˆ¤ì¥Ü±¥ õ¥´¹Í¥é”(€€€€€€€€€€€‘•˜Áà¡±½¸±±…Ğ¤è(€€€€€€€€€€€€€€€É•ÑÕÉ¸€ ¡±½¸µ‰álÁt¤½µ…à¡‰álÉtµ‰álÁt°Å”´ÄÈ¤©¥Ü°(€€€€€€€€€€€€€€€€€€€€€€€€¡‰álÍtµ±…Ğ¤½µ…à¡‰álÍtµ‰álÅt°Å”´ÄÈ¤©¥ ¤(€€€€€€€€€€€™½È½½É‘Ì¥¸ÉÌè(€€€€€€€€€€€€€€€ÁÑÌõmÁà¡™±½…Ğ¡±½¸¤±™±½…Ğ¡±…Ğ¤¤™½È±½¸±±…Ğ¥¸½½É‘Ít(€€€€€€€€€€€€€€€¥˜±•¸¡ÁÑÌ¤øôĞè(€€€€€€€€€€€€€€€€€€€¹Á½±å½¸¡ÁÑÌ±™¥±°ô ÈÔÔ°ÄÌà°À°Ğà¤±½ÕÑ±¥¹”ô ÈÔÔ°ÄÌà°À°ÈÔÔ¤¤(€€€€€€€€€€€€€€€€€€€¹±¥¹”¡ÁÑÌ±İ¥‘Ñ õµ…à Ì±É½Õ¹¡¥Ü¼ĞÀÀ¤¤±™¥±°ô ÈÔÔ°ÄÌà°À°ÈÔÔ¤±©½¥¹Ğô‰ÕÉÙ”ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸¥´¹É•Í¥é” ¡Ü± ¤±%µ…”¹I•Í…µÁ±¥¹œ¹19i=L¤((€€€€€€€‘•˜İ½É­•È ¤è(€€€€€€€€€€€•ÉÉ½ÉÌõmtìÉÌõÉ¥¹Ì ¤(€€€€€€€€€€€¥˜¹½ĞÉÌè(€€€€€€€€€€€€€€€Í•±˜¹}µ…Á}ÅÕ•Õ”¹ÁÕĞ ¡•¹•É…Ñ¥½¸±9½¹”±mt°‰5…Á„ˆ±9½¹”±9½¹”°‰•½µ•ÑÉ¥„Í•´Á½³µ½¹¼ÕÑ¥±¥ë…Ù•°ˆ¤¤(€€€€€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€Àõ‰•ÉÌÑ…}İ™¥}ÁÉ•Ù¥•Ü¡œ±½ÕÑ}ÜõÜ±½ÕÑ} õ ±•áÑ•¹Ñ}™…Ñ½Èõ•áÑ•¹Ñ}™…Ñ½È¤(€€€€€€€€€€€€€€€}É•ÅÕ¥É•}Ù¥Í¥‰±•}½ÁÑ¥…±}¥µ…”¡À¹•Ğ ‰¥µ…”ˆ¤±À¹•Ğ ‰ÁÉ½Ù¥‘•Èˆ°‰	IL´Ñ½]$ˆ¤¤(€€€€€€€€€€€€€€€‘ÈõÀ¹•Ğ ‰‘…Ñ•}É…¹”ˆ¤½ÈmÀ¹•Ğ ‰‘…Ñ•Ñ¥µ”ˆ¤½È€ˆˆ±À¹•Ğ ‰‘…Ñ•Ñ¥µ”ˆ¤½È€ˆ‰t(€€€€€€€€€€€€€€€±½Õ‘}¹½Ñ”ôˆƒŠˆ¹ÕÙ•¹Ì•´±…Õ¹…Ìˆ¥˜À¹•Ğ ‰±½Õ‘}Á¥á•±Í}¥¹±Õ‘•ˆ¤•±Í”€ˆƒŠˆÁ¥á•±Ì±…É½Ìˆ(€€€€€€€€€€€€€€€½ÁåÉ¥¡Ğõ˜‰	IL´Ñ½]$ƒŠˆ%9AƒŠˆ€ÔÔ´ƒŠˆí‘ÉlÁu÷ŠMí‘ÉlÅuõí±½Õ‘}¹½Ñ•ôˆ(€€€€€€€€€€€€€€€}ÍÑ½É•}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡”¡œ±•áÑ•¹Ñ}™…Ñ½È±Ü± ±Ál‰¥µ…”‰t±mt±Ál‰ÁÉ½Ù¥‘•È‰t±½ÁåÉ¥¡Ğ¤(€€€€€€€€€€€€€€€Í•±˜¹}Í…Ù•}½ÁÑ¥…±}‘¥…¹½ÍÑ¥Œ¡•¹•É…Ñ¥½¸±Ál‰ÁÉ½Ù¥‘•È‰t±•ÉÉ½ÉÌ¤(€€€€€€€€€€€€€€€Í•±˜¹}½ÁÑ¥…±}…ÑÑ•µÁÑÍ}‰å}•¹•É…Ñ¥½¹m•¹•É…Ñ¥½¹tõ±¥ÍĞ¡•ÉÉ½ÉÌ¤(€€€€€€€€€€€€€€€Í•±˜¹}µ…Á}ÅÕ•Õ”¹ÁÕĞ ¡•¹•É…Ñ¥½¸±Ál‰¥µ…”‰t±mt±Ál‰ÁÉ½Ù¥‘•È‰t±9½¹”±½ÁåÉ¥¡Ğ±9½¹”¤¤(€€€€€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”é•ÉÉ½ÉÌ¹…ÁÁ•¹ ‰	IL´Ñ½]$%9Aè€ˆ­ÍÑÈ¡”¤¤(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€ÀõÍ•¹Ñ¥¹•°É}•…ÉÑ¡Í•…É¡}ÁÉ•Ù¥•Ü¡œ±½ÕÑ}ÜõÜ±½ÕÑ} õ ±•áÑ•¹Ñ}™…Ñ½Èõ•áÑ•¹Ñ}™…Ñ½È¤(€€€€€€€€€€€€€€€}É•ÅÕ¥É•}Ù¥Í¥‰±•}½ÁÑ¥…±}¥µ…”¡À¹•Ğ ‰¥µ…”ˆ¤±À¹•Ğ ‰ÁÉ½Ù¥‘•Èˆ°‰M•¹Ñ¥¹•°´È…ÉÑ M•…É ˆ¤¤(€€€€€€€€€€€€€€€½ÁåÉ¥¡Ğõ˜‰M•¹Ñ¥¹•°´È0ÉƒŠˆ…ÉÑ M•…É ½]LƒŠˆì¡À¹•Ğ ‘…Ñ•Ñ¥µ”œ¤½È€œœ¥lèÄÁuôƒŠˆ¹ÕÙ•¹Ìí™½Éµ…Ñ}ÁÑ‰È¡™±½…Ğ¡À¹•Ğ ±½Õ‘}½Ù•Èœ°À¤¤°Ä¥ô”ˆ(€€€€€€€€€€€€€€€}ÍÑ½É•}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡”¡œ±•áÑ•¹Ñ}™…Ñ½È±Ü± ±Ál‰¥µ…”‰t±Ál‰Á½±å½¹Ì‰t±Ál‰ÁÉ½Ù¥‘•È‰t±½ÁåÉ¥¡Ğ¤(€€€€€€€€€€€€€€€Í•±˜¹}Í…Ù•}½ÁÑ¥…±}‘¥…¹½ÍÑ¥Œ¡•¹•É…Ñ¥½¸±Ál‰ÁÉ½Ù¥‘•È‰t±•ÉÉ½ÉÌ¤(€€€€€€€€€€€€€€€Í•±˜¹}½ÁÑ¥…±}…ÑÑ•µÁÑÍ}‰å}•¹•É…Ñ¥½¹m•¹•É…Ñ¥½¹tõ±¥ÍĞ¡•ÉÉ½ÉÌ¤(€€€€€€€€€€€€€€€Í•±˜¹}µ…Á}ÅÕ•Õ”¹ÁÕĞ ¡•¹•É…Ñ¥½¸±Ál‰¥µ…”‰t±Ál‰Á½±å½¹Ì‰t±Ál‰ÁÉ½Ù¥‘•È‰t±9½¹”±½ÁåÉ¥¡Ğ±9½¹”¤¤(€€€€€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”é•ÉÉ½ÉÌ¹…ÁÁ•¹ ‰M•¹Ñ¥¹•°´È…ÉÑ M•…É ½]Lè€ˆ­ÍÑÈ¡”¤¤(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€ÀõÍ•¹Ñ¥¹•°É}ÁÉ•Ù¥•Ü¡œ±•áÑ•¹Ñ}™…Ñ½Èõ•áÑ•¹Ñ}™…Ñ½È¤(€€€€€€€€€€€€€€€}É•ÅÕ¥É•}Ù¥Í¥‰±•}½ÁÑ¥…±}¥µ…”¡À¹•Ğ ‰¥µ…”ˆ¤±À¹•Ğ ‰ÁÉ½Ù¥‘•Èˆ°‰M•¹Ñ¥¹•°´È5Aˆ¤¤(€€€€€€€€€€€€€€€½ÁåÉ¥¡Ğõ˜‰M•¹Ñ¥¹•°´È0ÉƒŠˆA±…¹•Ñ…Éä½µÁÕÑ•ÈƒŠˆì¡À¹•Ğ ‘…Ñ•Ñ¥µ”œ¤½È€œœ¥lèÄÁuôƒŠˆ¹ÕÙ•¹Ì‘„•¹„í™½Éµ…Ñ}ÁÑ‰È¡™±½…Ğ¡À¹•Ğ ±½Õ‘}½Ù•Èœ°À¤¤°Ä¥ô”ˆ(€€€€€€€€€€€€€€€}ÍÑ½É•}Í…Ñ•±±¥Ñ•}ÁÉ•Ù¥•İ}…¡”¡œ±•áÑ•¹Ñ}™…Ñ½È±Ü± ±Ál‰¥µ…”‰t±Ál‰Á½±å½¹Ì‰t±Ál‰ÁÉ½Ù¥‘•È‰t±½ÁåÉ¥¡Ğ¤(€€€€€€€€€€€€€€€Í•±˜¹}Í…Ù•}½ÁÑ¥…±}‘¥…¹½ÍÑ¥Œ¡•¹•É…Ñ¥½¸±Ál‰ÁÉ½Ù¥‘•È‰t±•ÉÉ½ÉÌ¤(€€€€€€€€€€€€€€€Í•±˜¹}½ÁÑ¥…±}…ÑÑ•µÁÑÍ}‰å}•¹•É…Ñ¥½¹m•¹•É…Ñ¥½¹tõ±¥ÍĞ¡•ÉÉ½ÉÌ¤(€€€€€€€€€€€€€€€Í•±˜¹}µ…Á}ÅÕ•Õ”¹ÁÕĞ ¡•¹•É…Ñ¥½¸±Ál‰¥µ…”‰t±Ál‰Á½±å½¹Ì‰t±Ál‰ÁÉ½Ù¥‘•È‰t±9½¹”±½ÁåÉ¥¡Ğ±9½¹”¤¤(€€€€€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€€€€€•á•Ã[h‘éì¶»§q«^t Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
+        if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polÃ­gono primeiro.")
+        if self._optical_worker_running:
+            self._optical_refresh_pending=(bool(refresh),bool(prefer_public))
+            self.map_status.set("Imagem em carregamento; o novo enquadramento serÃ¡ processado em seguida.")
+            return
+        self._scroll_spatial_widget_into_view(self.map_canvas)
+        self.update_idletasks()
+        if not getattr(self,"_satellite_map_visible",False):
+            self._draw_aoi_outline("Carregando imagem Ã³ptica real â€” exibindo o perÃ­metro temporariamente")
+        self._map_generation+=1; generation=self._map_generation
+        g=self.gdf.to_crs(4326).copy()
+        viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
+        display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
+        # Keep a bounded display raster; remote providers are read in <=512px
+        # quadrants, so very large canvas sizes cannot trigger giant COG reads.
+        w=max(500,min(1600,round(viewport_w*display_scale)))
+        h=max(280,min(1200,round(viewport_h*display_scale)))
+        ratio=w/max(h,1)
+        if ratio>=1:
+            req_w=1200; req_h=max(320,min(1200,round(1200/ratio)))
+        else:
+            req_h=1200; req_w=max(320,min(1200,round(1200*ratio)))
+        key=self.google_maps_key.get().strip(); extent_factor=max(0.30,min(8.0,float(self._map_extent_factor)))
+        cached_preview=_read_satellite_preview_cache(g,extent_factor,w,h)
+        cached_optical=None
+        if cached_preview:
+            cached_image,cached_meta=cached_preview
+            cached_provider=str(cached_meta.get("provider") or "")
+            if "CBERS" in cached_provider.upper() or "SENTINEL-2" in cached_provider.upper():
+                try:
+                    _require_visible_optical_image(cached_image,"cache "+cached_provider)
+                    cached_optical=(cached_image,cached_meta,cached_provider)
+                    credit="Imagem Ã³ptica em cache â€¢ fonte original: "+cached_provider
+                    self._finish_satellite_map(generation,cached_image,cached_meta.get("polygons") or [],
+                                               "CACHE Ã“PTICO â€¢ "+cached_provider,None,credit,None)
+                    self.map_status.set("Exibindo imagem Ã³ptica em cache enquanto atualiza CBERS-4A e Sentinel-2â€¦")
+                except Exception:
+                    # A cache entry from an earlier build must never resurrect
+                    # a blank canvas or prevent the live provider failover.
+                    for bad_path in _satellite_preview_cache_paths(g,extent_factor,w,h):
+                        try:bad_path.unlink(missing_ok=True)
+                        except OSError:pass
+        if not refresh:self.map_status.set("Carregando CBERS-4A/WFI; Sentinel-2 serÃ¡ tentado em seguida.")
+        self.update_idletasks()
+
+        def rings():
+            out=[]
+            span=max(float(g.total_bounds[2]-g.total_bounds[0]),float(g.total_bounds[3]-g.total_bounds[1]),1e-7)
+            tol=max(span/1600.0,1e-7)
+            for geom in g.geometry:
+                geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    coords=list(poly.simplify(tol,preserve_topology=True).exterior.coords)
+                    if len(coords)>220:
+                        step=max(1,math.ceil(len(coords)/220)); coords=coords[::step]
+                        if coords[-1]!=coords[0]:coords.append(coords[0])
+                    if len(coords)>=4:out.append(coords)
+            return out
+
+        def google_image(rs):
+            if not key:return None
+            target_ratio=w/max(h,1)
+            if target_ratio >= 1:
+                api_w=640
+                api_h=max(1,round(api_w/target_ratio))
+            else:
+                api_h=640
+                api_w=max(1,round(api_h*target_ratio))
+            params=[("size",f"{api_w}x{api_h}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
+            for coords in rs:
+                pts="|".join(f"{lat:.6f},{lon:.6f}" for lon,lat in coords)
+                params.append(("path","color:0xff8a00ff|weight:4|fillcolor:0xff8a0033|"+pts))
+            rr=requests.get("https://maps.googleapis.com/maps/api/staticmap",params=params,timeout=(8,35))
+            rr.raise_for_status()
+            if "image" not in (rr.headers.get("Content-Type") or "").lower():
+                raise RuntimeError("resposta Google nÃ£o Ã© imagem")
+            return Image.open(io.BytesIO(rr.content)).convert("RGB").resize((w,h),Image.Resampling.LANCZOS)
+
+        def esri_export(rs,service="World_Imagery",label="Esri"):
+
+            minx,miny,maxx,maxy=map(float,g.total_bounds)
+            dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8); cx=(minx+maxx)/2; cy=(miny+maxy)/2
+            bx=(cx-dx*extent_factor/2,cy-dy*extent_factor/2,cx+dx*extent_factor/2,cy+dy*extent_factor/2)
+            params={"bbox":",".join(f"{v:.8f}" for v in bx),"bboxSR":"4326","imageSR":"4326",
+                    "size":f"{req_w},{req_h}","format":"jpg","f":"image","dpi":"96"}
+            rr=requests.get(f"https://server.arcgisonline.com/ArcGIS/rest/services/{service}/MapServer/export",params=params,timeout=(8,35))
+            rr.raise_for_status()
+            if "image" not in (rr.headers.get("Content-Type") or "").lower():
+                raise RuntimeError("resposta Esri nÃ£o Ã© imagem")
+            im=Image.open(io.BytesIO(rr.content)).convert("RGB")
+            from PIL import ImageDraw
+            d=ImageDraw.Draw(im,"RGBA"); iw,ih=im.size
+            def px(lon,lat):
+                return ((lon-bx[0])/max(bx[2]-bx[0],1e-12)*iw,
+                        (bx[3]-lat)/max(bx[3]-bx[1],1e-12)*ih)
+            for coords in rs:
+                pts=[px(float(lon),float(lat)) for lon,lat in coords]
+                if len(pts)>=4:
+                    d.polygon(pts,fill=(255,138,0,48),outline=(255,138,0,255))
+                    d.line(pts,width=max(3,round(iw/400)),fill=(255,138,0,255),joint="curve")
+            return im.resize((w,h),Image.Resampling.LANCZOS)
+
+        def worker():
+            errors=[]; rs=rings()
+            if not rs:
+                self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polÃ­gono utilizÃ¡vel"))
+                return
+            try:
+                p=cbers4a_wfi_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","CBERS-4A/WFI"))
+                dr=p.get("date_range") or [p.get("datetime") or "",p.get("datetime") or ""]
+                cloud_note=" â€¢ nuvens em lacunas" if p.get("cloud_pixels_included") else " â€¢ pixels claros"
+                copyright=f"CBERS-4A/WFI â€¢ INPE â€¢ 55 m â€¢ {dr[0]}â€“{dr[1]}{cloud_note}"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],[],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,p["image"],[],p["provider"],None,copyright,None))
+                return
+            except Exception as e:errors.append("CBERS-4A/WFI INPE: "+str(e))
+            try:
+                p=sentinel2_earthsearch_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","Sentinel-2 Earth Search"))
+                copyright=f"Sentinel-2 L2A â€¢ Earth Search/AWS â€¢ {(p.get('datetime') or '')[:10]} â€¢ nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
+                return
+            except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
+            try:
+                p=sentinel2_preview(g,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","Sentinel-2 MPC"))
+                copyright=f"Sentinel-2 L2A â€¢ Planetary Computer â€¢ {(p.get('datetime') or '')[:10]} â€¢ nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
+                return
+            except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
             if cached_optical:
                 image,meta,original=cached_optical
                 credit="Imagem Ã³ptica em cache â€¢ fonte original: "+original
@@ -1141,7 +2331,135 @@ class App(tk.Tk):
         self.clipboard_clear(); self.clipboard_append(report); self.update_idletasks()
         self.status.set("DiagnÃ³stico Ã³ptico desta AOI copiado. Ele nÃ£o contÃ©m URLs assinadas nem credenciais.")
 
-    def _on_map_rYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ•Í¥é”¡Í•±˜±•Ù•¹Ğõ9½¹”¤è(€€€€€€€€ˆˆ‰I•‘É…ÜÑ¡”±½…°Ñ¡•µ…Ñ¥Œµ…À…™Ñ•È„…¹Ù…ÌÉ•Í¥é”¸ˆˆˆ(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸(€€€€€€€Í¥é”ô¡µ…à ÌÀÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}İ¥‘Ñ  ¤¤±µ…à ÈÈÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}¡•¥¡Ğ ¤¤¤(€€€€€€€€Œ½µÁ…É”…¹Ù…ÌÑ¼…¹Ù…Ì°¹½ĞÑ¡”‘¥™™•É•¹Ñ±äµÍ¥é•¥µ…”É•ÅÕ•ÍĞ¸(€€€€€€€€Œ=Ñ¡•Éİ¥Í”„ÍÉ½±±‰…È½½¹™¥ÕÉ”å±”…¸Á•ÉÁ•ÑÕ…±±äÉ•ÍÑ…ÉĞÑ¡”İ½É­•È¸(€€€€€€€¥˜Í¥é”ôõÍ•±˜¹}±…ÍÑ}…¹Ù…Í}Í¥é”éÉ•ÑÕÉ¸(€€€€€€€Í•±˜¹}±…ÍÑ}…¹Ù…Í}Í¥é”õÍ¥é”(€€€€€€€€ŒQ¬•µ¥ÑÌÍ•Ù•É…°½¹™¥ÕÉ”•Ù•¹ÑÌİ¡•¸„±…É”ÍÉ½±±…‰±”Á…”™¥ÉÍĞ(€€€€€€€€Œ±…åÌ½ÕĞ¸¼¹½Ğ¥¹Ù…±¥‘…Ñ”½É•ÍÑ…ÉĞ„É•µ½Ñ”Í•¹”Í•…É ™½È•… ¸(€€€€€€€¥˜Í•±˜¹}µ…Á}É•‘É…İ}©½ˆ¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€ÑÉäéÍ•±˜¹…™Ñ•É}…¹•°¡Í•±˜¹}µ…Á}É•‘É…İ}©½ˆ¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸éÁ…ÍÌ(€€€€€€€Í•±˜¹}µ…Á}É•‘É…İ}©½ˆõÍ•±˜¹…™Ñ•È ÄÀÀ±Í•±˜¹}É•‘É…İ}µ…Á}…™Ñ•É}É•Í¥é”¤((€€€‘•˜}É•™É•Í¡}Í…Ñ•±±¥Ñ•}…™Ñ•É}É•Í¥é”¡Í•±˜¤è(€€€€€€€Í•±˜¹}µ…Á}É•™É•Í¡}©½ˆõ9½¹”(€€€€€€€¥˜Í•±˜¹‘˜¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€Í•±˜¹Í¡½İ}½½±•}µ…À¡É•™É•Í õQÉÕ”±ÁÉ•™•É}ÁÕ‰±¥ŒõQÉÕ”¤((€€€‘•˜}É•‘É…İ}µ…Á}…™Ñ•É}É•Í¥é”¡Í•±˜¤è(€€€€€€€Í•±˜¹}µ…Á}É•‘É…İ}©½ˆõ9½¹”(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸(€€€€€€€Í•±˜¹}‘É…İ}±…¹‘}ÕÍ•}µ…À¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰±…¹‘}ÕÍ”ˆ¤½Èíô¤((€€€‘•˜}‘É…İ}±…¹‘}ÕÍ•}µ…À¡Í•±˜±±…¹õ9½¹”¤è(€€€€€€€€ˆˆ‰I•¹‘•È±…ÍÌÁ½±å½¹Ì±½…±±äì¹•Ù•È¥¹¥Ñ¥…Ñ”½ÁÑ¥…°½¹•Ñİ½É¬É•…‘Ì¸ˆˆˆ(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸(€€€€€€€±…¹õ±…¹½ÈíôìÙ•Ñ½É}Á…Ñ õ±…¹¹•Ğ ‰Ù•Ñ½É}Á…Ñ ˆ¤(€€€€€€€¥˜¹½ĞÙ•Ñ½É}Á…Ñ ½È¹½ĞA…Ñ ¡Ù•Ñ½É}Á…Ñ ¤¹¥Í}™¥±” ¤è(€€€€€€€€€€€Í•±˜¹}‘É…İ}…½¥}½ÕÑ±¥¹” ‰A•Ëµµ•ÑÉ¼‘„=$ƒŠP…Õ…É‘…¹‘¼±…ÍÍ•Ì‘”ÕÍ¼½½‰•ÉÑÕÉ„ˆ¤(€€€€€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰µ…Á}ÍÑ…ÑÕÌˆ¤è(€€€€€€€€€€€€€€€Í•±˜¹µ…Á}ÍÑ…ÑÕÌ¹Í•Ğ ‰5…Á„Ñ•·…Ñ¥¼¥¹‘¥ÍÁ½»µÙ•°…Ó¤½¹±Õ¥È„±…ÍÍ¥™¥‡Ÿ¼¸<Á•Ëµµ•ÑÉ¼•ÍÓ„Ù¥ÏµÙ•°¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€ÑÉäè(€€€€€€€€€€€¥µÁ½ÉĞ•½Á…¹‘…Ì…ÌÁ(€€€€€€€€€€€™É½´ÁåÁÉ½¨¥µÁ½ÉĞIL(€€€€€€€€€€€¥˜•Ñ…ÑÑÈ¡Í•±˜°‰}±…¹‘}ÕÍ•}µ…Á}…¡•}­•äˆ±9½¹”¤„õÍÑÈ¡Ù•Ñ½É}Á…Ñ ¤è(€€€€€€€€€€€€€€€Í•±˜¹}±…¹‘}ÕÍ•}µ…Á}…¡”õÁ¹É•…‘}™¥±”¡Ù•Ñ½É}Á…Ñ ¤(€€€€€€€€€€€€€€€Í•±˜¹}±…¹‘}ÕÍ•}µ…Á}…¡•}­•äõÍÑÈ¡Ù•Ñ½É}Á…Ñ ¤(€€€€€€€€€€€™É…µ”õÍ•±˜¹}±…¹‘}ÕÍ•}µ…Á}…¡”¹½Áä ¤(€€€€€€€€€€€¥˜™É…µ”¹•µÁÑä½È€‰±…ÍÍ}¹…µ”ˆ¹½Ğ¥¸™É…µ”¹½±Õµ¹Ìè(€€€€€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰ÉÅÕ¥Ù¼‘”¥¹Ñ•ÉÍ—Ÿ¼Í•´±…ÍÍ•ÌÑ•·…Ñ¥…Ìˆ¤(€€€€€€€€€€€™É…µ”õ™É…µ”¹Ñ½}ÉÌ ĞÌÈØ¤(€€€€€€€€€€€Õ¹¥½¸õÍ•±˜¹‘˜¹Ñ½}ÉÌ ĞÌÈØ¤¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤ì•¹Ñ•ÈõÕ¹¥½¸¹•¹ÑÉ½¥(€€€€€€€€€€€±½…°õIL¹™É½µ}ÁÉ½¨Ğ¡˜ˆ­ÁÉ½¨õ…•Å€­±…Ñ|Àõí™±½…Ğ¡•¹Ñ•È¹ä¥ô€­±½¹|Àõí™±½…Ğ¡•¹Ñ•È¹à¥ô€­‘…ÑÕ´õ]LàĞ€­Õ¹¥ÑÌõ´€­¹½}‘•™Ìˆ¤(€€€€€€€€€€€™É…µ”õ™É…µ”¹Ñ½}ÉÌ¡±½…°¤ì‰½Õ¹‘Ìõ™É…µ”¹Ñ½Ñ…±}‰½Õ¹‘Ì(€€€€€€€€€€€µ¥¹à±µ¥¹ä±µ…áà±µ…áäõµ…À¡™±½…Ğ±‰½Õ¹‘Ì¤(€€€€€€€€€€€Üõµ…à ÌÀÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}İ¥‘Ñ  ¤¤ì õµ…à ÈÈÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}¡•¥¡Ğ ¤¤ìÁ…ôÈĞ(€€€€€€€€€€€±••¹‘}Üõµ¥¸ ÌÀÀ±µ…à ÄàÀ±¥¹Ğ¡Ü¨À¸Ìà¤¤¤ìµ…Á}Üõµ…à ÈÈÀ±Üµ±••¹‘}Ü´ÄØ¤(€€€€€€€€€€€‘àõµ…à¡µ…áàµµ¥¹à°Å”´Ø¤ì‘äõµ…à¡µ…áäµµ¥¹ä°Å”´Ø¤(€€€€€€€€€€€Í…±”õµ¥¸ ¡µ…Á}Ü´È©Á…¤½‘à°¡ ´È©Á…¤½‘ä¤½µ…à À¸ÌÀ±µ¥¸ à¸À±™±½…Ğ¡Í•±˜¹}µ…Á}•áÑ•¹Ñ}™…Ñ½È¤¤¤(€€€€€€€€€€€½àô¡µ…Á}Üµ‘à©Í…±”¤¼Èì½äô¡ µ‘ä©Í…±”¤¼È(€€€€€€€€€€€½±½ÉÌõlˆŒÉáÔÜˆ°ˆÙÈÅˆ°ˆŒáÙ		ˆ°ˆŒÕå	Ôˆ°ˆäÙÍˆ°ˆŒå	ÜÜˆ°ˆááàˆ°ˆŒÑÜàá‰t(€€€€€€€€€€€¹…µ•Ìõ±¥ÍĞ¡‘¥Ğ¹™É½µ­•åÌ¡ÍÑÈ¡à¤™½Èà¥¸™É…µ•l‰±…ÍÍ}¹…µ”‰t¹™¥±±¹„ ‰;¼±…ÍÍ¥™¥…‘¼ˆ¤¤¤(€€€€€€€€€€€Á…±•ÑÑ”õí¹…µ”é½±½ÉÍm¤•±•¸¡½±½ÉÌ¥t™½È¤±¹…µ”¥¸•¹Õµ•É…Ñ”¡¹…µ•Ì¥ô(€€€€€€€€€€€ÍÑ…ÑÌõíô(€€€€€€€€€€€™½ÈÉ•½É¥¸±…¹¹•Ğ ‰±…ÍÍ•Ìˆ±mt¤è(€€€€€€€€€€€€€€€¥˜¹½Ğ¥Í¥¹ÍÑ…¹”¡É•½É±‘¥Ğ¤é½¹Ñ¥¹Õ”(€€€€€€€€€€€€€€€­•äõÍÑÈ¡É•½É¹•Ğ ‰±…ÍÍ}¹…µ”ˆ¤½È€‰;¼±…ÍÍ¥™¥…‘¼ˆ¤(€€€€€€€€€€€€€€€¥Ñ•´õÍÑ…ÑÌ¹Í•Ñ‘•™…Õ±Ğ¡­•ä±ì‰…É•…}¡„ˆèÀ¸À°‰…É•…}ÁĞˆèÀ¸À°‰Í½ÕÉ•ÌˆéÍ•Ğ ¥ô¤(€€€€€€€€€€€€€€€¥Ñ•µl‰…É•…}¡„‰t¬õ™±½…Ğ¡É•½É¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤(€€€€€€€€€€€€€€€¥Ñ•µl‰…É•…}ÁĞ‰t¬õ™±½…Ğ¡É•½É¹•Ğ ‰…É•…}ÁĞˆ¤½È€À¤(€€€€€€€€€€€€€€€¥˜É•½É¹•Ğ ‰Í½ÕÉ”ˆ¤é¥Ñ•µl‰Í½ÕÉ•Ì‰t¹…‘¡ÍÑÈ¡É•½É‘l‰Í½ÕÉ”‰t¤¤(€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹‘•±•Ñ” ‰…±°ˆ¤ìÍ•±˜¹µ…Á}…¹Ù…Ì¹½¹™¥ÕÉ”¡‰œôˆÑÙÔˆ¤ìÍ•±˜¹}Í…Ñ•±±¥Ñ•}µ…Á}Ù¥Í¥‰±”õ…±Í”(€€€€€€€€€€€‘•˜áä¡à±ä¤éÉ•ÑÕÉ¸½à¬¡™±½…Ğ¡à¤µµ¥¹à¤©Í…±”± ´¡½ä¬¡™±½…Ğ¡ä¤µµ¥¹ä¤©Í…±”¤(€€€€€€€€€€€™½ÈÉ½Ü¥¸™É…µ”¹¥Ñ•ÉÑÕÁ±•Ì ¤è(€€€€€€€€€€€€€€€±…‰•°õÍÑÈ¡•Ñ…ÑÑÈ¡É½Ü°‰±…ÍÍ}¹…µ”ˆ°‰;¼±…ÍÍ¥™¥…‘¼ˆ¤¤ì•½´õÉ½Ü¹•½µ•ÑÉä(€€€€€€€€€€€€€€€Á½±åÌõ±¥ÍĞ¡•½´¹•½µÌ¤¥˜•½´¹•½µ}ÑåÁ”ôô‰5Õ±Ñ¥A½±å½¸ˆ•±Í”€¡m•½µt¥˜•½´¹•½µ}ÑåÁ”ôô‰A½±å½¸ˆ•±Í”mt¤(€€€€€€€€€€€€€€€™½ÈÁ½±ä¥¸Á½±åÌè(€€€€€€€€€€€€€€€€€€€½½É‘Ìõ±¥ÍĞ¡Á½±ä¹Í¥µÁ±¥™ä¡µ…à¡‘à±‘ä¤¼ÄàÀÀ±ÁÉ•Í•ÉÙ•}Ñ½Á½±½äõQÉÕ”¤¹•áÑ•É¥½È¹½½É‘Ì¤(€€€€€€€€€€€€€€€€€€€ÁÑÌõmt(€€€€€€€€€€€€€€€€€€€™½Èà±ä¥¸½½É‘ÌéÁÑÌ¹•áÑ•¹¡áä¡à±ä¤¤(€€€€€€€€€€€€€€€€€€€¥˜±•¸¡ÁÑÌ¤øôØéÍ•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}Á½±å½¸ ©ÁÑÌ±™¥±°õÁ…±•ÑÑ”¹•Ğ¡±…‰•°°ˆááàˆ¤±½ÕÑ±¥¹”ôˆˆ±İ¥‘Ñ ôÄ¤(€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}Ñ•áĞ ÄÈ°ÄÈ±…¹¡½Èô‰¹Üˆ±Ñ•áĞô‰UM<=	IQUIƒŠP±…ÍÍ¥™¥‡Ÿ¼‘„…»…±¥Í”ˆ±™¥±°ôˆŒÈĞÌàÉˆ±™½¹Ğô ‰M•½”U$ˆ°ÄÀ°‰‰½±ˆ¤¤(€€€€€€€€€€€±••¹‘}àõµ…Á}Ü¬ÄÈ(€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}É•Ñ…¹±”¡±••¹‘}à´Ô°ÈĞ±Ü´à°ĞÈ­±•¸¡¹…µ•Ì¤¨ÌÈ±™¥±°ôˆˆ±½ÕÑ±¥¹”ôˆŒÜÀàÀÜàˆ¤(€€€€€€€€€€€±••¹‘}äôÌĞ(€€€€€€€€€€€™½È¹…µ”¥¸¹…µ•Ìè(€€€€€€€€€€€€€€€¥Ñ•´õÍÑ…ÑÌ¹•Ğ¡¹…µ”±íô¤(€€€€€€€€€€€€€€€…É•„õ™±½…Ğ¡¥Ñ•´¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤ìÁĞõ™±½…Ğ¡¥Ñ•´¹•Ğ ‰…É•…}ÁĞˆ¤½È€À¤(€€€€€€€€€€€€€€€Í½ÕÉ”ôˆ°€ˆ¹©½¥¸¡Í½ÉÑ•¡¥Ñ•´¹•Ğ ‰Í½ÕÉ•Ìˆ¤½Èmt¤¤½ÈÍÑÈ¡±…¹¹•Ğ ‰ÍÑ…ÑÕÌˆ¤½È€‰½É¥•´»¼¥¹™½Éµ…‘„ˆ¤(€€€€€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}É•Ñ…¹±”¡±••¹‘}à±±••¹‘}ä±±••¹‘}à¬ÄÈ±±••¹‘}ä¬ÄÈ±™¥±°õÁ…±•ÑÑ•m¹…µ•t±½ÕÑ±¥¹”ôˆˆ¤(€€€€€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}Ñ•áĞ¡±••¹‘}à¬Äà±±••¹‘}ä±…¹¡½Èô‰¹Üˆ±İ¥‘Ñ õµ…à ÄÈÀ±Üµ±••¹‘}à´ÌÔ¤°(€€€€€€€€€€€€€€€€€€€Ñ•áĞõ˜‰í¹…µ•ôèí…É•„è¸É™ô¡„€¡íÁĞè¸Å™ô”¥q¹íÍ½ÕÉ•lèÔÑuôˆ±™¥±°ôˆŒÈĞÌàÉˆ±™½¹Ğô ‰M•½”U$ˆ°à¤¤(€€€€€€€€€€€€€€€±••¹‘}ä¬ôÌÈ(€€€€€€€€€€€ÍÑ…ÑÕÌõÍÑÈ¡±…¹¹•Ğ ‰ÍÑ…ÑÕÌˆ¤½È€‰•ÍÑ…‘¼8½ˆ¤(€€€€€€€€€€€Í•±˜¹µ…Á}ÍÑ…ÑÕÌ¹Í•Ğ ‰5…Á„Ñ•·…Ñ¥¼±½…°è€ˆ­ÍÑ…ÑÕÌ¬ˆ¸±…ÍÍ•Ì”½É¥•´Í•Õ•´„±••¹‘„ì…Ñ•½É¥…Ì•áÁ•É¥µ•¹Ñ…¥Ì»¼¥¹‘¥…´Ù…±¥‘‡Ÿ¼‘”…µÁ¼¸ˆ¤(€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹½¹™¥ÕÉ”¡ÍÉ½±±É•¥½¸õÍ•±˜¹µ…Á}…¹Ù…Ì¹‰‰½à ‰…±°ˆ¤¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€Í•±˜¹}‘É…İ}…½¥}½ÕÑ±¥¹” ‰A•Ëµµ•ÑÉ¼‘„=$ƒŠP™…±¡„…¼‘•Í•¹¡…È±…ÍÍ•Ìˆ¤(€€€€€€€€€€€Í•±˜¹µ…Á}ÍÑ…ÑÕÌ¹Í•Ğ ‰…±¡„Ó¥¹¥„¹¼µ…Á„Ñ•·…Ñ¥¼è€ˆ­ÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆìÁ•Ëµµ•ÑÉ¼ÁÉ•Í•ÉÙ…‘¼¸ˆ¤((€€€‘•˜}‘É…İ}…½¥}½ÕÑ±¥¹”¡Í•±˜±±…‰•°ô‰AË¤µÙ¥ÍÕ…±¥é‡Ÿ¼‘„=$ˆ¤è(€€€€€€€€ˆˆ‰I•¹‘•ÈÑ¡”=$¥¸„±½…°µ•ÑÉ¥ŒÁÉ½©•Ñ¥½¸…¹™¥Ğ¥ĞÑ¼Ñ¡”±¥Ù”…¹Ù…Ì¸ˆˆˆ(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸(€€€€€€€Í•±˜¹}Í…Ñ•±±¥Ñ•}µ…Á}Ù¥Í¥‰±”õ…±Í”(€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹½¹™¥ÕÉ”¡‰œôˆÁˆ¤(€€€€€€€œõÍ•±˜¹‘˜¹Ñ½}ÉÌ ĞÌÈØ¤ìÕ¹¥½¸õœ¹•½µ•ÑÉä¹Õ¹¥½¹}…±° ¤ì•¹Ñ•ÈõÕ¹¥½¸¹•¹ÑÉ½¥(€€€€€€€™É½´ÁåÁÉ½¨¥µÁ½ÉĞIL(€€€€€€€±½…°õIL¹™É½µ}ÁÉ½¨Ğ¡˜ˆ­ÁÉ½¨õ…•Å€­±…Ñ|Àõí™±½…Ğ¡•¹Ñ•È¹ä¥ô€­±½¹|Àõí™±½…Ğ¡•¹Ñ•È¹à¥ô€­‘…ÑÕ´õ]LàĞ€­Õ¹¥ÑÌõ´€­¹½}‘•™Ìˆ¤(€€€€€€€ÁÉ½©•Ñ•õœ¹Ñ½}ÉÌ¡±½…°¤ìµ¥¹à±µ¥¹ä±µ…áà±µ…áäõµ…À¡™±½…Ğ±ÁÉ½©•Ñ•¹Ñ½Ñ…±}‰½Õ¹‘Ì¤(€€€€€€€Üõµ…à ÌÀÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}İ¥‘Ñ  ¤¤ì õµ…à ÈÈÀ±Í•±˜¹µ…Á}…¹Ù…Ì¹İ¥¹™½}¡•¥¡Ğ ¤¤ìÁ…õµ…à ÌÀ±µ¥¸ ÜÀ±¥¹Ğ¡µ¥¸¡Ü± ¤¨À¸ÄÈ¤¤¤(€€€€€€€‘àõµ…à¡µ…áàµµ¥¹à°Å”´Ø¤ì‘äõµ…à¡µ…áäµµ¥¹ä°Å”´Ø¤ìÍ…±”õµ¥¸ ¡Ü´È©Á…¤½‘à°¡ ´È©Á…¤½‘ä¤(€€€€€€€‘É…İ}Üõ‘à©Í…±”ì‘É…İ} õ‘ä©Í…±”ì½àô¡Üµ‘É…İ}Ü¤¼Èì½äô¡ µ‘É…İ} ¤¼È(€€€€€€€Í•±˜¹}±…ÍÑ}µ…Á}Í¥é”ô¡Ü± ¤ìÍ•±˜¹µ…Á}…¹Ù…Ì¹‘•±•Ñ” ‰…±°ˆ¤ìÍ•±˜¹µ…Á}…¹Ù…Ì¹½¹™¥ÕÉ”¡‰œôˆÁˆ¤(€€€€€€€€Œ1½…°=$½ÕÑ±¥¹”¥Ì¥µµ•‘¥…Ñ”…¹¥¹‘•Á•¹‘•¹Ğ½˜É•µ½Ñ”¥µ…•Éä¸(€€€€€€€™½È™É…Œ¥¸€ À¸ÈÔ°À¸Ô°À¸ÜÔ¤è(€€€€€€€€€€€àõÁ…¬¡Ü´È©Á…¤©™É…ŒìäõÁ…¬¡ ´È©Á…¤©™É…Œ(€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}±¥¹”¡à±Á…±à± µÁ…±™¥±°ôˆåÑˆ±‘…Í ô È°Ğ¤¤(€€€€€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}±¥¹”¡Á…±ä±ÜµÁ…±ä±™¥±°ôˆåÑˆ±‘…Í ô È°Ğ¤¤(€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}Ñ•áĞ¡Ü´ÄĞ°ÄĞ±…¹¡½Èô‰¹”ˆ±Ñ•áĞô‰8ˆ±™¥±°ôˆŒÈĞÌàÉˆ±™½¹Ğô ‰M•½”U$ˆ°ÄÀ°‰‰½±ˆ¤¤(€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}±¥¹”¡Ü´ÈÀ°Ğà±Ü´ÈÀ°ÈĞ±™¥±°ôˆŒÈĞÌàÉˆ±İ¥‘Ñ ôÈ±…ÉÉ½Üô‰™¥ÉÍĞˆ¤(€€€€€€€‘•˜áä¡à±ä¤éÉ•ÑÕÉ¸½à¬¡™±½…Ğ¡à¤µµ¥¹à¤©Í…±”± ´¡½ä¬¡™±½…Ğ¡ä¤µµ¥¹ä¤©Í…±”¤(€€€€€€€™½È•½´¥¸ÁÉ½©•Ñ•¹•½µ•ÑÉäè(€€€€€€€€€€€Á½±åÌõ±¥ÍĞ¡•½´¹•½µÌ¤¥˜•½´¹•½µ}ÑåÁ”ôô‰5Õ±Ñ¥A½±å½¸ˆ•±Í”€¡m•½µt¥˜•½´¹•½µ}ÑåÁ”ôô‰A½±å½¸ˆ•±Í”mt¤(€€€€€€€€€€€™½ÈÁ½±ä¥¸Á½±åÌè(€€€€€€€€€€€€€€€ÁÑÌõmt(€€€€€€€€€€€€€€€™½È½½É¥¸Á½±ä¹•áÑ•É¥½È¹½½É‘ÌéÁÑÌ¹•áÑ•¹¡áä¡½½É‘lÁt±½½É‘lÅt¤¤(€€€€€€€€€€€€€€€¥˜±•¸¡ÁÑÌ¤øôØéÍ•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}Á½±å½¸ ©ÁÑÌ±™¥±°ôˆáĞÑˆ±ÍÑ¥ÁÁ±”ô‰É…äÔÀˆ±½ÕÑ±¥¹”ôˆàÜÔÀÀˆ±İ¥‘Ñ ôÌ¤(€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}Ñ•áĞ ÄÈ°ÄÈ±…¹¡½Èô‰¹Üˆ±Ñ•áĞõ±…‰•°±™¥±°ôˆŒÈĞÌàÉˆ±™½¹Ğô ‰M•½”U$ˆ°ÄÀ°‰‰½±ˆ¤¤(€€€€€€€Í•±˜¹}µ…Á}ÁÉ½Ù¥‘•Èô‰1=1}YQ=I}=91dˆ(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰µ…Á}ÍÑ…ÑÕÌˆ¤è(€€€€€€€€€€€Í•±˜¹µ…Á}ÍÑ…ÑÕÌ¹Í•Ğ ‰A•Ëµµ•ÑÉ¼Ù¥ÏµÙ•°ìµ…Á„Ñ•·…Ñ¥¼…Á…É••Ë„ÅÕ…¹‘¼„±…ÍÍ¥™¥‡Ÿ¼Ñ•Éµ¥¹…È¸ˆ¤(€€€€€€€€ŒM…±”‰…È¥Ì…±Õ±…Ñ•™É½´Ñ¡”±½…°ÁÉ½©•Ñ¥½¸ìÑ¡”=$¥Ì¹•Ù•ÈÍÑÉ•Ñ¡•Ñ¼Ñ¡”Á…¹•°¸(€€€€€€€‰…É}´õµ…à Ä¸À±‘É…İ}Ü¨À¸Äà¼ÄÀÀÀ¤¨ÄÀÀÀì‰…É}Áàõ‰…É}´©Í…±”ì‰àõµ…à Äà±ÜµÁ…µ‰…É}Áà¤ì‰äõ ´ÈĞ(€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}±¥¹”¡‰à±‰ä±‰à­‰…É}Áà±‰ä±™¥±°ôˆŒÈĞÌàÉˆ±İ¥‘Ñ ôÌ¤(€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}±¥¹”¡‰à±‰ä´Ô±‰à±‰ä¬Ğ±™¥±°ôˆŒÈĞÌàÉˆ±İ¥‘Ñ ôÈ¤ìÍ•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}±¥¹”¡‰à­‰…É}Áà±‰ä´Ô±‰à­‰…É}Áà±‰ä¬Ğ±™¥±°ôˆŒÈĞÌàÉˆ±İ¥‘Ñ ôÈ¤(€€€€€€€Í•±˜¹µ…Á}…¹Ù…Ì¹É•…Ñ•}Ñ•áĞ¡‰à¯[h‘éì¶»§q«^var_px/2,by-7,text=f"{bar_m/1000:g} km",anchor="s",fill="#24382D",font=("Segoe UI",8,"bold"))
+    def _on_map_resize(self,event=None):
+        """Redraw the local thematic map after a canvas resize."""
+        if self.gdf is None:return
+        size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
+        # Compare canvas to canvas, not the differently-sized image request.
+        # Otherwise a scrollbar/Configure cycle can perpetually restart the worker.
+        if size==self._last_canvas_size:return
+        self._last_canvas_size=size
+        # Tk emits several Configure events when a large scrollable page first
+        # lays out. Do not invalidate/restart a remote scene search for each.
+        if self._map_redraw_job is not None:
+            try:self.after_cancel(self._map_redraw_job)
+            except Exception:pass
+        self._map_redraw_job=self.after(100,self._redraw_map_after_resize)
+
+    def _refresh_satellite_after_resize(self):
+        self._map_refresh_job=None
+        if self.gdf is not None:
+            self.show_google_map(refresh=True,prefer_public=True)
+
+    def _redraw_map_after_resize(self):
+        self._map_redraw_job=None
+        if self.gdf is None:return
+        self._draw_land_use_map(self.project.get("land_use") or {})
+
+    def _draw_land_use_map(self,land=None):
+        """Render class polygons locally; never initiate optical/network reads."""
+        if self.gdf is None:return
+        land=land or {}; vector_path=land.get("vector_path")
+        if not vector_path or not Path(vector_path).is_file():
+            self._draw_aoi_outline("PerÃ­metro da AOI â€” aguardando classes de uso/cobertura")
+            if hasattr(self,"map_status"):
+                self.map_status.set("Mapa temÃ¡tico indisponÃ­vel atÃ© concluir a classificaÃ§Ã£o. O perÃ­metro estÃ¡ visÃ­vel.")
+            return
+        try:
+            import geopandas as gpd
+            from pyproj import CRS
+            if getattr(self,"_land_use_map_cache_key",None)!=str(vector_path):
+                self._land_use_map_cache=gpd.read_file(vector_path)
+                self._land_use_map_cache_key=str(vector_path)
+            frame=self._land_use_map_cache.copy()
+            if frame.empty or "class_name" not in frame.columns:
+                raise ValueError("Arquivo de interseÃ§Ã£o sem classes temÃ¡ticas")
+            frame=frame.to_crs(4326)
+            union=self.gdf.to_crs(4326).geometry.union_all(); center=union.centroid
+            local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
+            frame=frame.to_crs(local); bounds=frame.total_bounds
+            minx,miny,maxx,maxy=map(float,bounds)
+            w=max(300,self.map_canvas.winfo_width()); h=max(220,self.map_canvas.winfo_height()); pad=24
+            legend_w=min(300,max(180,int(w*0.38))); map_w=max(220,w-legend_w-16)
+            dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6)
+            scale=min((map_w-2*pad)/dx,(h-2*pad)/dy)/max(0.30,min(8.0,float(self._map_extent_factor)))
+            ox=(map_w-dx*scale)/2; oy=(h-dy*scale)/2
+            colors=["#2E8B57","#D6A21D","#8E6BBE","#5B9BD5","#C96B3B","#9BCB77","#B8B8B8","#4C788E"]
+            names=list(dict.fromkeys(str(x) for x in frame["class_name"].fillna("NÃ£o classificado")))
+            palette={name:colors[i%len(colors)] for i,name in enumerate(names)}
+            stats={}
+            for record in land.get("classes",[]):
+                if not isinstance(record,dict):continue
+                key=str(record.get("class_name") or "NÃ£o classificado")
+                item=stats.setdefault(key,{"area_ha":0.0,"area_pct":0.0,"sources":set()})
+                item["area_ha"]+=float(record.get("area_ha") or 0)
+                item["area_pct"]+=float(record.get("area_pct") or 0)
+                if record.get("source"):item["sources"].add(str(record["source"]))
+            self.map_canvas.delete("all"); self.map_canvas.configure(bg="#F4F6F5"); self._satellite_map_visible=False
+            def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
+            for row in frame.itertuples():
+                label=str(getattr(row,"class_name","NÃ£o classificado")); geom=row.geometry
+                polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in polys:
+                    coords=list(poly.simplify(max(dx,dy)/1800,preserve_topology=True).exterior.coords)
+                    pts=[]
+                    for x,y in coords:pts.extend(xy(x,y))
+                    if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill=palette.get(label,"#B8B8B8"),outline="#FFFFFF",width=1)
+            self.map_canvas.create_text(12,12,anchor="nw",text="USO E COBERTURA â€” classificaÃ§Ã£o da anÃ¡lise",fill="#24382D",font=("Segoe UI",10,"bold"))
+            legend_x=map_w+12
+            self.map_canvas.create_rectangle(legend_x-5,24,w-8,42+len(names)*32,fill="#FFFFFF",outline="#708078")
+            legend_y=34
+            for name in names:
+                item=stats.get(name,{})
+                area=float(item.get("area_ha") or 0); pct=float(item.get("area_pct") or 0)
+                source=", ".join(sorted(item.get("sources") or [])) or str(land.get("status") or "origem nÃ£o informada")
+                self.map_canvas.create_rectangle(legend_x,legend_y,legend_x+12,legend_y+12,fill=palette[name],outline="")
+                self.map_canvas.create_text(legend_x+18,legend_y,anchor="nw",width=max(120,w-legend_x-35),
+                    text=f"{name}: {area:.2f} ha ({pct:.1f}%)\n{source[:54]}",fill="#24382D",font=("Segoe UI",8))
+                legend_y+=32
+            status=str(land.get("status") or "estado N/D")
+            self.map_status.set("Mapa temÃ¡tico local: "+status+". Classes e origem seguem a legenda; categorias experimentais nÃ£o indicam validaÃ§Ã£o de campo.")
+            self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
+        except Exception as exc:
+            self._draw_aoi_outline("PerÃ­metro da AOI â€” falha ao desenhar classes")
+            self.map_status.set("Falha tÃ©cnica no mapa temÃ¡tico: "+type(exc).__name__+"; perÃ­metro preservado.")
+
+    def _draw_aoi_outline(self,label="PrÃ©-visualizaÃ§Ã£o da AOI"):
+        """Render the AOI in a local metric projection and fit it to the live canvas."""
+        if self.gdf is None:return
+        self._satellite_map_visible=False
+        self.map_canvas.configure(bg="#EAF0EC")
+        g=self.gdf.to_crs(4326); union=g.geometry.union_all(); center=union.centroid
+        from pyproj import CRS
+        local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
+        projected=g.to_crs(local); minx,miny,maxx,maxy=map(float,projected.total_bounds)
+        w=max(300,self.map_canvas.winfo_width()); h=max(220,self.map_canvas.winfo_height()); pad=max(30,min(70,int(min(w,h)*0.12)))
+        dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6); scale=min((w-2*pad)/dx,(h-2*pad)/dy)
+        draw_w=dx*scale; draw_h=dy*scale; ox=(w-draw_w)/2; oy=(h-draw_h)/2
+        self._last_map_size=(w,h); self.map_canvas.delete("all"); self.map_canvas.configure(bg="#EAF0EC")
+        # Local AOI outline is immediate and independent of remote imagery.
+        for frac in (0.25,0.5,0.75):
+            gx=pad+(w-2*pad)*frac; gy=pad+(h-2*pad)*frac
+            self.map_canvas.create_line(gx,pad,gx,h-pad,fill="#C9D4CF",dash=(2,4))
+            self.map_canvas.create_line(pad,gy,w-pad,gy,fill="#C9D4CF",dash=(2,4))
+        self.map_canvas.create_text(w-14,14,anchor="ne",text="N",fill="#24382D",font=("Segoe UI",10,"bold"))
+        self.map_canvas.create_line(w-20,48,w-20,24,fill="#24382D",width=2,arrow="first")
+        def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
+        for geom in projected.geometry:
+            polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+            for poly in polys:
+                pts=[]
+                for coord in poly.exterior.coords:pts.extend(xy(coord[0],coord[1]))
+                if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
+        self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
+        self._map_provider="LOCAL_VECTOR_ONLY"
+        if hasattr(self,"map_status"):
+            self.map_status.set("PerÃ­metro visÃ­vel; mapa temÃ¡tico aparecerÃ¡ quando a classificaÃ§Ã£o terminar.")
+        # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
+        bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
+        self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)
+        self.map_canvas.create_line(bx,by-5,bx,by+4,fill="#24382D",width=2); self.map_canvas.create_line(bx+bar_px,by-5,bx+bar_px,by+4,fill="#24382D",width=2)
+        self.map_canvas.create_text(bx+bar_px/2,by-7,text=f"{bar_m/1000:g} km",anchor="s",fill="#24382D",font=("Segoe UI",8,"bold"))
         b4326=g.total_bounds
         bbox_txt=f"{format_ptbr(b4326[0],5)}; {format_ptbr(b4326[1],5)}  â†’  {format_ptbr(b4326[2],5)}; {format_ptbr(b4326[3],5)}"
         self.map_canvas.create_text(12,h-12,anchor="sw",text=bbox_txt,fill="#4A5B54",font=("Segoe UI",8))
@@ -1257,7 +2575,130 @@ class App(tk.Tk):
         ttk.Button(row,text="CAMADA IBGE FITOFISIONOMIAS",command=self.pick_ibge_physiognomy).pack(side="left",padx=8)
         landrow=ttk.Frame(f); landrow.pack(fill="x",pady=4)
         ttk.Button(landrow,text="CONFIGURAR CLASSIFICAÃ‡ÃƒO SAR DE USO",command=self.pick_land_use_config).pack(side="left")
-        ttk.Button(landrow,text="IDENTIFICAR USO DO SOLO",command=self.classify_land_use_ui).pYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àôà¤(€€€€€€€Í•±˜¹±…¹‘}ÕÍ•}½¹™¥œõ9½¹”ìÍ•±˜¹}±…¹‘}ÕÍ•}ÉÕ¹¹¥¹œõ…±Í”(€€€€€€€Í•±˜¹±…¹‘}ÕÍ•}ÍÑ…Ñ”õÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰%‘•¹Ñ¥™¥…‘½É•ÌMH¥¹ÍÑ…±…‘½Ìè‰ÕÍ„…ÕÑ½·…Ñ¥„ì…±Ñ•É¹…Ñ¥Ù„5…Á	¥½µ…ÌÁ…É„½‰•ÉÑÕÉ„…ÑÕ…°”%	Á…É„™¥Ñ½™¥Í¥½¹½µ¥„¸ˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡±…¹‘É½Ü±Ñ•áÑÙ…É¥…‰±”õÍ•±˜¹±…¹‘}ÕÍ•}ÍÑ…Ñ”±İÉ…Á±•¹Ñ ôÔÀÀ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àôà¤(€€€€€€€¹…Ñ¥Ù•}É½ÜõÑÑ¬¹É…µ”¡˜¤í¹…Ñ¥Ù•}É½Ü¹Á…¬¡™¥±°ô‰àˆ±Á…‘äô È°Ø¤¤(€€€€€€€Í•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}‘…Ñ„õ9½¹”ìÍ•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}µ…¹¥™•ÍĞõ9½¹”(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡¹…Ñ¥Ù•}É½Ü±Ñ•áĞô‰IIHY%)9%L%9Y9SI%<€¡)M=8¤ˆ°(€€€€€€€€€€€€€€€€€€½µµ…¹õÍ•±˜¹Á¥­}¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹”¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ¤(€€€€€€€Í•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}ÍÑ…Ñ”õÑ¬¹MÑÉ¥¹Y…È (€€€€€€€€€€€Ù…±Õ”ô‰=Á¥½¹…°èÉ•™•Ë©¹¥…Ì±¥•¹¥…‘…Ì½µÁ…ÓµÙ•¥Ì½´™¥Ñ½™¥Í¥½¹½µ¥„ìÕÍ¼•áÁ•É¥µ•¹Ñ…°°»¼¡½µ½±½…‘¼¸ˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡¹…Ñ¥Ù•}É½Ü±Ñ•áÑÙ…É¥…‰±”õÍ•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}ÍÑ…Ñ”°(€€€€€€€€€€€€€€€€€İÉ…Á±•¹Ñ ôØàÀ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àôà¤(€€€€€€€Í•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}É•½É‘Ìõ9½¹”(€€€€€€€‰¥½‘¥Ù•ÉÍ¥Ñå}É½ÜõÑÑ¬¹É…µ”¡˜¤í‰¥½‘¥Ù•ÉÍ¥Ñå}É½Ü¹Á…¬¡™¥±°ô‰àˆ±Á…‘äô À°Ø¤¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡‰¥½‘¥Ù•ÉÍ¥Ñå}É½Ü±Ñ•áĞô‰IIH%9Y9SI%<%Q=MM=%=3M%<MXˆ°(€€€€€€€€€€€€€€€€€€½µµ…¹õÍ•±˜¹Á¥­}‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éä¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ¤(€€€€€€€Í•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}ÍÑ…Ñ”õÑ¬¹MÑÉ¥¹Y…È (€€€€€€€€€€€Ù…±Õ”ô‰I•ÍÕµ¼É•¥½¹…°‘”•ÍÃ¥¥•Ì”‘¥ÍÑÉ¥‰Õ§Ÿ¼‘¥…·¥ÑÉ¥„ì»¼É•ÁÉ•Í•¹Ñ„µ•‘§Ÿ¼‘„ÁÉ½ÁÉ¥•‘…‘”¸ˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡‰¥½‘¥Ù•ÉÍ¥Ñå}É½Ü±Ñ•áÑÙ…É¥…‰±”õÍ•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}ÍÑ…Ñ”°(€€€€€€€€€€€€€€€€€İÉ…Á±•¹Ñ ôàÀÀ¤¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±Á…‘àôà¤(€€€€€€€Í•±˜¹Í…É}Á…Ñ¡ÌõmtìÍ•±˜¹¥‰•}Á¡åÍ¥½¹½µå}‘˜õ9½¹”ìÍ•±˜¹¥‰•}±…ÍÍ}™¥•±õ9½¹”(€€€€€€€Í•±˜¹Í•¹Í½ÈõÑ¬¹MÑÉ¥¹Y…È¡Ù…±Õ”ô‰ÕÑ½·…Ñ¥¼ƒŠPMHÁÉ¥µ•¥É¼è@ƒŠH0ƒŠH`ƒŠHƒŠH$ì±¥Ñ•É…ÑÕÉ„½µ½‘•±…•´Í½µ•¹Ñ”…ÃÍÌ™…±¡„‘½Õµ•¹Ñ…‘„ˆ¤(€€€€€€€É•µ½Ñ•}‰½àõÑÑ¬¹1…‰•±É…µ”¡˜±Ñ•áĞô‰•Ñ…±¡•ÌÓ¥¹¥½Ì”ÁÉ½Ù•¹§©¹¥„MH€¼ˆ±ÍÑå±”ô‰á•Œ¹Q1…‰•±™É…µ”ˆ¤ìÉ•µ½Ñ•}‰½à¹Á…¬¡™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”±Á…‘äôà¤(€€€€€€€Í•±˜¹É•µ½Ñ•}Ñ•áĞõÑ¬¹Q•áĞ¡É•µ½Ñ•}‰½à±¡•¥¡ĞôÄà±İÉ…Àô‰İ½Éˆ±åÍÉ½±±½µµ…¹õ±…µ‰‘„€©„éÉ•µ½Ñ•}ÍÉ½±°¹Í•Ğ ©„¤¤(€€€€€€€É•µ½Ñ•}ÍÉ½±°õÑÑ¬¹MÉ½±±‰…È¡É•µ½Ñ•}‰½à±½É¥•¹Ğô‰Ù•ÉÑ¥…°ˆ±½µµ…¹õÍ•±˜¹É•µ½Ñ•}Ñ•áĞ¹åÙ¥•Ü¤(€€€€€€€Í•±˜¹É•µ½Ñ•}Ñ•áĞ¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤ìÉ•µ½Ñ•}ÍÉ½±°¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ±™¥±°ô‰äˆ¤(€€€€€€€Í•±˜¹}‰¥¹‘}Ñ•áÑ}ÍÉ½±°¡Í•±˜¹É•µ½Ñ•}Ñ•áĞ¤(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É•µ½Ñ•}Ñ•áĞ°‰…»…±¥Í”ƒ¤…ÕÑ½·…Ñ¥„”MHµ%IMP¸I½Ñ…ÌÃé‰±¥…ÌÏ¼Ñ•¹Ñ…‘…ÌÍ•´É•‘•¹¥…¥Ìì…ÉÑ¡‘…Ñ„1½¥¸ƒ¤½Á¥½¹…°Á…É„±¥‰•É…È9%MH½MÁÉ½Ñ•¥‘¼¹q¹q¹!¥•É…ÉÅÕ¥„½‰É¥…ÓÍÉ¥„éq¸Ä¸M	%=5MLA}	}0É€¡@µ‰…¹°€¬¥¹•ÉÑ•é„¤íq¸È¸µ½‘•±½ÌMH0½`•á•ÕÓ…Ù•¥Ì½µÁ…ÓµÙ•¥Ì½´™¥Ñ½™¥Í¥½¹½µ¥„”…ÑÉ¥‰ÕÑ½Ì‘¥ÍÁ½»µÙ•¥Ìíq¸Ì¸M$	¥½µ…ÍÌ0­½µ¼Ï¥É¥”¡¥ÍÓÍÉ¥„íq¸Ğ¸±¥Ñ•É…ÑÕÉ„Í½µ•¹Ñ”½µ¼…™•É§Ÿ¼½™…±±‰…¬ÅÕ…¹‘¼¹•¹¡Õ´ÁÉ½‘ÕÑ¼MHÅÕ…¹Ñ¥Ñ…Ñ¥Ù¼ÁÕ‘•ÈÍ•ÈÁÉ½•ÍÍ…‘¼¹q¹q¹I•É„èMHƒ¤M5AIÑ•¹Ñ…‘¼ÁÉ¥µ•¥É¼¸M”™½È¥µÁ½ÍÏµÙ•°ÁÉ½•ÍÏ„µ±¼°„ÑÉ¥±¡„É•¥ÍÑÉ„¼µ½Ñ¥Ù¼”ÏÌ•¹Ó¼ÕÍ„±¥Ñ•É…ÑÕÉ„½µ½‘•±…•´½µÁ…ÓµÙ•°°¥‘•¹Ñ¥™¥…‘„½µ¼Í•Õ¹“…É¥„”½´¥¹•ÉÑ•é„•áÁ³µ¥Ñ„¸ˆ¤((€€€‘•˜Á¥­}¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹”¡Í•±˜¤è(€€€€€€€™¥±•¹…µ”õ™¥±•‘¥…±½œ¹…Í­½Á•¹™¥±•¹…µ” (€€€€€€€€€€€Ñ¥Ñ±”ô‰%¹Ù•¹Ó…É¥½ÌÁ…É„•ÍÑ¥µ…Ñ¥Ù…Ì•áÁ•É¥µ•¹Ñ…¥Ì‘”…É‰½¹¼ˆ°(€€€€€€€€€€€™¥±•ÑåÁ•Ìõl ‰5…¹¥™•ÍÑ¼)M=8ˆ°ˆ¨¹©Í½¸ˆ¥t¤(€€€€€€€¥˜¹½Ğ™¥±•¹…µ”è(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€Í•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}•¹•É…Ñ¥½¹Íl‰•Ù¥‘•¹”‰t¬ôÄ(€€€€€€€•¹•É…Ñ¥½¸õÍ•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}•¹•É…Ñ¥½¹Íl‰•Ù¥‘•¹”‰t(€€€€€€€Í•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}ÍÑ…Ñ”¹Í•Ğ ‰1•¹‘¼”Ù…±¥‘…¹‘¼µ…¹¥™•ÍÑ¼•´Í•Õ¹‘¼Á±…¹¼ì½ÌÉ•¥ÍÑÉ½Ì«„…•¥Ñ½ÌÍ•Õ•´ÁÉ•Í•ÉÙ…‘½Ì¸ˆ¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰1•¹‘¼•Ù¥“©¹¥…Ì‘”¥¹Ù•¹Ó…É¥¼™½É„‘„¥¹Ñ•É™…—Š˜ˆ¤(€€€€€€€‘•˜±½… ¤è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€™É½´¹…Ñ¥Ù•}•Ù¥‘•¹•}µ…¹¥™•ÍĞ¥µÁ½ÉĞ±½…‘}¹…Ñ¥Ù•}¥¹Ù•¹Ñ½Éå}µ…¹¥™•ÍĞ(€€€€€€€€€€€€€€€É•ÍÕ±Ğô¡QÉÕ”±±½…‘}¹…Ñ¥Ù•}¥¹Ù•¹Ñ½Éå}µ…¹¥™•ÍĞ¡™¥±•¹…µ”¤¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒéÉ•ÍÕ±Ğô¡…±Í”±˜‰íÑåÁ”¡•áŒ¤¹}}¹…µ•}}ôèí•áôˆ¤(€€€€€€€€€€€Í•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}ÅÕ•Õ•Íl‰•Ù¥‘•¹”‰t¹ÁÕĞ ¡•¹•É…Ñ¥½¸°©É•ÍÕ±Ğ¤¤(€€€€€€€Ñ¡É•…‘¥¹œ¹Q¡É•…¡Ñ…É•Ğõ±½…±¹…µ”ô‰¹™½Éµ%¹Ù•¹Ñ½Éå5…¹¥™•ÍĞˆ±‘…•µ½¸õQÉÕ”¤¹ÍÑ…ÉĞ ¤(€€€€€€€Í•±˜¹…™Ñ•È ÄÀÀ±Í•±˜¹}Á½±±}¥¹Ù•¹Ñ½Éå}ÕÁ±½…°‰•Ù¥‘•¹”ˆ±•¹•É…Ñ¥½¸±™¥±•¹…µ”¤((€€€‘•˜Á¥­}‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éä¡Í•±˜¤è(€€€€€€€™¥±•¹…µ”õ™¥±•‘¥…±½œ¹…Í­½Á•¹™¥±•¹…µ”¡Ñ¥Ñ±”ô‰%¹Ù•¹Ó…É¥¼™¥Ñ½ÍÍ½¥½³Í¥¼•½ÉÉ•™•É•¹¥…‘¼ˆ°(€€€€€€€€€€€™¥±•ÑåÁ•Ìõl ‰MX‘”ƒ…ÉÙ½É•Ìˆ°ˆ¨¹ÍØˆ¤° ‰Q½‘½Ìˆ°ˆ¨¸¨ˆ¥t¤(€€€€€€€¥˜¹½Ğ™¥±•¹…µ”éÉ•ÑÕÉ¸(€€€€€€€Í•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}•¹•É…Ñ¥½¹Íl‰‰¥½‘¥Ù•ÉÍ¥Ñä‰t¬ôÄ(€€€€€€€•¹•É…Ñ¥½¸õÍ•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}•¹•É…Ñ¥½¹Íl‰‰¥½‘¥Ù•ÉÍ¥Ñä‰t(€€€€€€€Í•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}ÍÑ…Ñ”¹Í•Ğ ‰1•¹‘¼…ÉÅÕ¥Ù¼•´Í•Õ¹‘¼Á±…¹¼ìÉ•¥ÍÑÉ½Ì«„…•¥Ñ½ÌÍ•Õ•´ÁÉ•Í•ÉÙ…‘½Ì¸ˆ¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰1•¹‘¼¥¹Ù•¹Ó…É¥¼™¥Ñ½ÍÍ½¥½³Í¥¼™½É„‘„¥¹Ñ•É™…—Š˜ˆ¤(€€€€€€€‘•˜±½… ¤è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€™É½´‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éä¥µÁ½ÉĞ±½…‘}‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}ÍØ(€€€€€€€€€€€€€€€É•ÍÕ±Ğô¡QÉÕ”±±½…‘}‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}ÍØ¡™¥±•¹…µ”¤¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒéÉ•ÍÕ±Ğô¡…±Í”±˜‰íÑåÁ”¡•áŒ¤¹}}¹…µ•}}ôèí•áôˆ¤(€€€€€€€€€€€Í•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}ÅÕ•Õ•Íl‰‰¥½‘¥Ù•ÉÍ¥Ñä‰t¹ÁÕĞ ¡•¹•É…Ñ¥½¸°©É•ÍÕ±Ğ¤¤(€€€€€€€Ñ¡É•…‘¥¹œ¹Q¡É•…¡Ñ…É•Ğõ±½…±¹…µ”ô‰¹™½Éµ	¥½‘¥Ù•ÉÍ¥Ñå%¹Ù•¹Ñ½Éäˆ±‘…•µ½¸õQÉÕ”¤¹ÍÑ…ÉĞ ¤(€€€€€€€Í•±˜¹…™Ñ•È ÄÀÀ±Í•±˜¹}Á½±±}¥¹Ù•¹Ñ½Éå}ÕÁ±½…°‰‰¥½‘¥Ù•ÉÍ¥Ñäˆ±•¹•É…Ñ¥½¸±™¥±•¹…µ”¤((€€€‘•˜}Á½±±}¥¹Ù•¹Ñ½Éå}ÕÁ±½…¡Í•±˜±­¥¹±•¹•É…Ñ¥½¸±™¥±•¹…µ”¤è(€€€€€€€ÕÉÉ•¹ĞõÍ•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}•¹•É…Ñ¥½¹Ì¹•Ğ¡­¥¹¤(€€€€€€€¥˜•¹•É…Ñ¥½¸„õÕÉÉ•¹ĞéÉ•ÑÕÉ¸(€€€€€€€Á•¹‘¥¹œõ9½¹”ìÄõÍ•±˜¹}¥¹Ù•¹Ñ½Éå}±½…‘}ÅÕ•Õ•Ím­¥¹‘t(€€€€€€€İ¡¥±”QÉÕ”è(€€€€€€€€€€€ÑÉäé¥Ñ•´õÄ¹•Ñ}¹½İ…¥Ğ ¤(€€€€€€€€€€€•á•ÁĞÅÕ•Õ”¹µÁÑäé‰É•…¬(€€€€€€€€€€€¥˜¥Ñ•µlÁtôõ•¹•É…Ñ¥½¸éÁ•¹‘¥¹œõ¥Ñ•´í‰É•…¬(€€€€€€€¥˜Á•¹‘¥¹œ¥Ì9½¹”è(€€€€€€€€€€€¥˜Í•±˜¹İ¥¹™½}•á¥ÍÑÌ ¤éÍ•±˜¹…™Ñ•È ÄÀÀ±Í•±˜¹}Á½±±}¥¹Ù•¹Ñ½Éå}ÕÁ±½…±­¥¹±•¹•É…Ñ¥½¸±™¥±•¹…µ”¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€|±½¬±Á…å±½…õÁ•¹‘¥¹œ(€€€€€€€¥˜¹½Ğ½¬è(€€€€€€€€€€€±…‰•°ô¡Í•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}ÍÑ…Ñ”¥˜­¥¹ôô‰•Ù¥‘•¹”ˆ•±Í”Í•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}ÍÑ…Ñ”¤(€€€€€€€€€€€±…‰•°¹Í•Ğ ‰ÉÅÕ¥Ù¼¹½Ù¼É•ÕÍ…‘¼ì‰…Í”…¹Ñ•É¥½Éµ•¹Ñ”…•¥Ñ„ÁÉ•Í•ÉÙ…‘„¸€ˆ­ÍÑÈ¡Á…å±½…¥lèÈĞÁt¤(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰…±¡„Ó¥¹¥„…¼±•È¼¥¹Ù•¹Ó…É¥¼ìÉ•¥ÍÑÉ½Ì…¹Ñ•É¥½É•Ì™½É…´µ…¹Ñ¥‘½Ì¸ˆ¤(€€€€€€€€€€€µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰%¹Ù•¹Ó…É¥¼»¼…ÉÉ•…‘¼ˆ±ÍÑÈ¡Á…å±½…¤¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€¥˜­¥¹ôô‰•Ù¥‘•¹”ˆè(€€€€€€€€€€€Á…­…”õÁ…å±½…(€€€€€€€€€€€Í•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}‘…Ñ„õÁ…­…•l‰É•½É‘Ì‰t(€€€€€€€€€€€Í•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}µ…¹¥™•ÍĞõì‰™¥±•¹…µ”ˆéÁ…­…•l‰™¥±•¹…µ”‰t°‰Í¡„ÈÔØˆéÁ…­…•l‰Í¡„ÈÔØ‰t°(€€€€€€€€€€€€€€€€‰•Ù¥‘•¹•}ÍÑ…ÑÕÌˆéÁ…­…•l‰•Ù¥‘•¹•}ÍÑ…ÑÕÌ‰t°‰¹}É•½É‘Ìˆé±•¸¡Á…­…•l‰É•½É‘Ì‰t¥ô(€€€€€€€€€€€Í•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}ÍÑ…Ñ”¹Í•Ğ¡ÍÑÈ¡±•¸¡Á…­…•l‰É•½É‘Ì‰t¤¤¬ˆÉ•¥ÍÑÉ½ÌƒŠP€ˆ­Á…­…•l‰™¥±•¹…µ”‰t¬(€€€€€€€€€€€€€€€€ˆƒŠP•ÍÑ¥µ…Ñ¥Ù…ÌÍ•Õ¹“…É¥…Ì•áÁ•É¥µ•¹Ñ…¥ÌìÙ…±¥‘‡Ÿ¼¥¹‘•Á•¹‘•¹Ñ”Á•¹‘•¹Ñ”¸ˆ¤(€€€€€€€€€€€µ•ÍÍ…”õ˜‰%¹Ù•¹Ó…É¥¼…¹•á…‘¼èí±•¸¡Á…­…•lÉ•½É‘Ìt¥ôÉ•¥ÍÑÉ½Ì¸UÍ¼Í•Õ¹“…É¥¼•áÁ•É¥µ•¹Ñ…°ì½µÁ…Ñ¥‰¥±¥‘…‘””¥¹•ÉÑ•é„…Ù…±¥…‘…ÌÁ½È•ÍÑÉ…Ñ¼¸ˆ(€€€€€€€•±Í”è(€€€€€€€€€€€É½İÌõÁ…å±½…ìÍ•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}É•½É‘ÌõÉ½İÌ(€€€€€€€€€€€Í•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}ÍÑ…Ñ”¹Í•Ğ¡ÍÑÈ¡±•¸¡É½İÌ¤¤¬ˆƒ…ÉÙ½É•Ì±¥•¹¥…‘…ÌƒŠP€ˆ­A…Ñ ¡™¥±•¹…µ”¤¹¹…µ”¬(€€€€€€€€€€€€€€€€ˆìÍ•Ë„™¥±ÑÉ…‘¼Á½È‰¥½µ„°™¥Ñ½™¥Í¥½¹½µ¥„”µ¥É½ÉÉ•§¼¸ˆ¤(€€€€€€€€€€€µ•ÍÍ…”õ˜‰%¹Ù•¹Ó…É¥¼™¥Ñ½ÍÍ½¥½³Í¥¼…ÉÉ•…‘¼èí±•¸¡É½İÌ¥ôƒ…ÉÙ½É•Ì¸I•™•Ë©¹¥„É•¥½¹…°°»¼µ•‘§Ÿ¼‘„ÁÉ½ÁÉ¥•‘…‘”¸ˆ(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰Í¥•¹•}•á•}Ù…Èˆ¤éÍ•±˜¹Í¥•¹•}•á•}Ù…È¹Í•Ğ¡µ•ÍÍ…”¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰%¹Ù•¹Ó…É¥¼±¥‘¼”Ù…±¥‘…‘¼ì™½¹Ñ•Ì”É•¥ÍÑÉ½ÌÁÉ•Í•ÉÙ…‘½ÌÁ…É„…»…±¥Í”¸ˆ¤((€€€‘•˜Á¥­}±…¹‘}ÕÍ•}½¹™¥œ¡Í•±˜¤è(€€€€€€€Àõ™¥±•‘¥…±½œ¹…Í­½Á•¹™¥±•¹…µ”¡Ñ¥Ñ±”ô‰½¹ÑÉ…Ñ¼‘”…ÑÉ¥‰ÕÑ½Ì”É•™•Ë©¹¥…ÌMHˆ±™¥±•ÑåÁ•Ìõl ‰½¹™¥ÕÉ‡Ÿ¼)M=8ˆ°ˆ¨¹©Í½¸ˆ¥t¤(€€€€€€€¥˜Àè(€€€€€€€€€€€Í•±˜¹±…¹‘}ÕÍ•}½¹™¥œõÀ(€€€€€€€€€€€Í•±˜¹±…¹‘}ÕÍ•}ÍÑ…Ñ”¹Í•Ğ ‰½¹™¥ÕÉ‡Ÿ¼…ÉÉ•…‘„è€ˆ­A…Ñ ¡À¤¹¹…µ”¬ˆì•±•¥‰¥±¥‘…‘”Í•Ë„Ù…±¥‘…‘„¹„•á•×Ÿ¼¸ˆ¤((€€€‘•˜±…ÍÍ¥™å}±…¹‘}ÕÍ•}Õ¤¡Í•±˜¤è(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰UÍ¼‘¼Í½±¼ˆ°‰…ÉÉ•Õ”¼Á•Ëµµ•ÑÉ¼ÁÉ¥µ•¥É¼¸ˆ¤(€€€€€€€¥˜Í•±˜¹}±…¹‘}ÕÍ•}ÉÕ¹¹¥¹œ½ÈÍ•±˜¹}…¹…±åÍ¥Í}ÉÕ¹¹¥¹œéÉ•ÑÕÉ¸(€€€€€€€Í•±˜¹}±…¹‘}ÕÍ•}ÉÕ¹¹¥¹œõQÉÕ”(€€€€€€€•¹•É…Ñ¥½¸õÍ•±˜¹}…¹…±åÍ¥Í}•¹•É…Ñ¥½¸(€€€€€€€™É…µ”õÍ•±˜¹‘˜ì½¹™¥œõÍ•±˜¹±…¹‘}ÕÍ•}½¹™¥œ(€€€€€€€¥‰”õÍ•±˜¹¥‰•}Á¡åÍ¥½¹½µå}‘˜(€€€€€€€™¥•±õÍ•±˜¹¥‰•}±…ÍÍ}™¥•±½È€‰±••¹‘…|Äˆ(€€€€€€€½ÕÑÁÕĞõA…Ñ ¹¡½µ” ¤¼ˆ¹•¹™½Éµ}Ù•É‘”ˆ¼‰ÕÍ½}Í½±¼ˆ½ÕÕ¥¹ÕÕ¥Ğ ¤¹¡•álèÄÉt(€€€€€€€É•ÍÕ±Ñ}ÅÕ•Õ”õÅÕ•Õ”¹EÕ•Õ” ¤(€€€€€€€Í•±˜¹±…¹‘}ÕÍ•}ÍÑ…Ñ”¹Í•Ğ ‰±…ÍÍ¥™¥…¹‘¼”Ù•É¥™¥…¹‘¼½¹™¥…»„•´Í•Õ¹‘¼Á±…¹¿Š˜ˆ¤(€€€€€€€‘•˜İ½É­•È ¤è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€É•™•É•¹”õ¥‰”íÉ•™•É•¹•}™¥•±õ™¥•±(€€€€€€€€€€€€€€€¥˜É•™•É•¹”¥Ì9½¹”è(€€€€€€€€€€€€€€€€€€€ÑÉäéÉ•™•É•¹”±É•™•É•¹•}™¥•±õ±½…‘}¥‰•}±…¹‘}ÕÍ•}É•™•É•¹”¡™É…µ”¤(€€€€€€€€€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸éÁ…ÍÌ(€€€€€€€€€€€€€€€É•ÍÕ±Ñ}ÅÕ•Õ”¹ÁÕĞ ¡QÉÕ”±ÉÕ¹}±…¹‘}ÕÍ”¡™É…µ”±½ÕÑÁÕĞ±½¹™¥œ±¥‰”õÉ•™•É•¹”±¥‰•}™¥•±õÉ•™•É•¹•}™¥•±±Í…É}Á…Ñ¡Ìõ•Ñ…ÑÑÈ¡Í•±˜°Í…É}Á…Ñ¡Ìœ±9½¹”¤¤¤¤(€€€ƒ[h‘éì¶»§q«^t       except Exception as exc:result_queue.put((False,str(exc)))
+        ttk.Button(landrow,text="IDENTIFICAR USO DO SOLO",command=self.classify_land_use_ui).pack(side="left",padx=8)
+        self.land_use_config=None; self._land_use_running=False
+        self.land_use_state=tk.StringVar(value="Identificadores SAR instalados: busca automÃ¡tica; alternativa MapBiomas para cobertura atual e IBGE para fitofisionomia.")
+        ttk.Label(landrow,textvariable=self.land_use_state,wraplength=500).pack(side="left",padx=8)
+        native_row=ttk.Frame(f);native_row.pack(fill="x",pady=(2,6))
+        self.inventory_evidence_data=None; self.inventory_evidence_manifest=None
+        ttk.Button(native_row,text="CARREGAR EVIDÃŠNCIAS DE INVENTÃRIO (JSON)",
+                   command=self.pick_inventory_evidence).pack(side="left")
+        self.inventory_evidence_state=tk.StringVar(
+            value="Opcional: referÃªncias licenciadas compatÃ­veis com fitofisionomia; uso experimental, nÃ£o homologado.")
+        ttk.Label(native_row,textvariable=self.inventory_evidence_state,
+                  wraplength=680).pack(side="left",padx=8)
+        self.biodiversity_inventory_records=None
+        biodiversity_row=ttk.Frame(f);biodiversity_row.pack(fill="x",pady=(0,6))
+        ttk.Button(biodiversity_row,text="CARREGAR INVENTÃRIO FITOSSOCIOLÃ“GICO CSV",
+                   command=self.pick_biodiversity_inventory).pack(side="left")
+        self.biodiversity_inventory_state=tk.StringVar(
+            value="Resumo regional de espÃ©cies e distribuiÃ§Ã£o diamÃ©trica; nÃ£o representa mediÃ§Ã£o da propriedade.")
+        ttk.Label(biodiversity_row,textvariable=self.biodiversity_inventory_state,
+                  wraplength=800).pack(side="left",padx=8)
+        self.sar_paths=[]; self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
+        self.sensor=tk.StringVar(value="AutomÃ¡tico â€” SAR primeiro: P â†’ L â†’ X â†’ C â†’ CCI; literatura/modelagem somente apÃ³s falha documentada")
+        remote_box=ttk.LabelFrame(f,text="Detalhes tÃ©cnicos e proveniÃªncia SAR / AGB",style="Exec.TLabelframe"); remote_box.pack(fill="both",expand=True,pady=8)
+        self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
+        remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
+        self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.remote_text)
+        self._set(self.remote_text,"A anÃ¡lise Ã© automÃ¡tica e SAR-FIRST. Rotas pÃºblicas sÃ£o tentadas sem credenciais; Earthdata Login Ã© opcional para liberar NISAR/ASF protegido.\n\nHierarquia obrigatÃ³ria:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executÃ¡veis compatÃ­veis com fitofisionomia e atributos disponÃ­veis;\n3. ESA CCI Biomass L+C como sÃ©rie histÃ³rica;\n4. literatura somente como aferiÃ§Ã£o/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR Ã© SEMPRE tentado primeiro. Se for impossÃ­vel processÃ¡-lo, a trilha registra o motivo e sÃ³ entÃ£o usa literatura/modelagem compatÃ­vel, identificada como secundÃ¡ria e com incerteza explÃ­cita.")
+
+    def pick_inventory_evidence(self):
+        filename=filedialog.askopenfilename(
+            title="InventÃ¡rios para estimativas experimentais de carbono",
+            filetypes=[("Manifesto JSON","*.json")])
+        if not filename:
+            return
+        self._inventory_load_generations["evidence"]+=1
+        generation=self._inventory_load_generations["evidence"]
+        self.inventory_evidence_state.set("Lendo e validando manifesto em segundo plano; os registros jÃ¡ aceitos seguem preservados.")
+        self.status.set("Lendo evidÃªncias de inventÃ¡rio fora da interfaceâ€¦")
+        def load():
+            try:
+                from native_evidence_manifest import load_native_inventory_manifest
+                result=(True,load_native_inventory_manifest(filename))
+            except Exception as exc:result=(False,f"{type(exc).__name__}: {exc}")
+            self._inventory_load_queues["evidence"].put((generation,*result))
+        threading.Thread(target=load,name="EnformInventoryManifest",daemon=True).start()
+        self.after(100,self._poll_inventory_upload,"evidence",generation,filename)
+
+    def pick_biodiversity_inventory(self):
+        filename=filedialog.askopenfilename(title="InventÃ¡rio fitossociolÃ³gico georreferenciado",
+            filetypes=[("CSV de Ã¡rvores","*.csv"),("Todos","*.*")])
+        if not filename:return
+        self._inventory_load_generations["biodiversity"]+=1
+        generation=self._inventory_load_generations["biodiversity"]
+        self.biodiversity_inventory_state.set("Lendo arquivo em segundo plano; registros jÃ¡ aceitos seguem preservados.")
+        self.status.set("Lendo inventÃ¡rio fitossociolÃ³gico fora da interfaceâ€¦")
+        def load():
+            try:
+                from biodiversity_inventory import load_biodiversity_inventory_csv
+                result=(True,load_biodiversity_inventory_csv(filename))
+            except Exception as exc:result=(False,f"{type(exc).__name__}: {exc}")
+            self._inventory_load_queues["biodiversity"].put((generation,*result))
+        threading.Thread(target=load,name="EnformBiodiversityInventory",daemon=True).start()
+        self.after(100,self._poll_inventory_upload,"biodiversity",generation,filename)
+
+    def _poll_inventory_upload(self,kind,generation,filename):
+        current=self._inventory_load_generations.get(kind)
+        if generation!=current:return
+        pending=None; q=self._inventory_load_queues[kind]
+        while True:
+            try:item=q.get_nowait()
+            except queue.Empty:break
+            if item[0]==generation:pending=item;break
+        if pending is None:
+            if self.winfo_exists():self.after(100,self._poll_inventory_upload,kind,generation,filename)
+            return
+        _,ok,payload=pending
+        if not ok:
+            label=(self.inventory_evidence_state if kind=="evidence" else self.biodiversity_inventory_state)
+            label.set("Arquivo novo recusado; base anteriormente aceita preservada. "+str(payload)[:240])
+            self.status.set("Falha tÃ©cnica ao ler o inventÃ¡rio; registros anteriores foram mantidos.")
+            messagebox.showwarning("InventÃ¡rio nÃ£o carregado",str(payload))
+            return
+        if kind=="evidence":
+            package=payload
+            self.inventory_evidence_data=package["records"]
+            self.inventory_evidence_manifest={"filename":package["filename"],"sha256":package["sha256"],
+                "evidence_status":package["evidence_status"],"n_records":len(package["records"])}
+            self.inventory_evidence_state.set(str(len(package["records"]))+" registros â€” "+package["filename"]+
+                " â€” estimativas secundÃ¡rias experimentais; validaÃ§Ã£o independente pendente.")
+            message=f"InventÃ¡rio anexado: {len(package['records'])} registros. Uso secundÃ¡rio experimental; compatibilidade e incerteza avaliadas por estrato."
+        else:
+            rows=payload; self.biodiversity_inventory_records=rows
+            self.biodiversity_inventory_state.set(str(len(rows))+" Ã¡rvores licenciadas â€” "+Path(filename).name+
+                "; serÃ¡ filtrado por bioma, fitofisionomia e microrregiÃ£o.")
+            message=f"InventÃ¡rio fitossociolÃ³gico carregado: {len(rows)} Ã¡rvores. ReferÃªncia regional, nÃ£o mediÃ§Ã£o da propriedade."
+        if hasattr(self,"science_exec_var"):self.science_exec_var.set(message)
+        self.status.set("InventÃ¡rio lido e validado; fontes e registros preservados para anÃ¡lise.")
+
+    def pick_land_use_config(self):
+        p=filedialog.askopenfilename(title="Contrato de atributos e referÃªncias SAR",filetypes=[("ConfiguraÃ§Ã£o JSON","*.json")])
+        if p:
+            self.land_use_config=p
+            self.land_use_state.set("ConfiguraÃ§Ã£o carregada: "+Path(p).name+"; elegibilidade serÃ¡ validada na execuÃ§Ã£o.")
+
+    def classify_land_use_ui(self):
+        if self.gdf is None:return messagebox.showwarning("Uso do solo","Carregue o perÃ­metro primeiro.")
+        if self._land_use_running or self._analysis_running:return
+        self._land_use_running=True
+        generation=self._analysis_generation
+        frame=self.gdf; config=self.land_use_config
+        ibge=self.ibge_physiognomy_gdf
+        field=self.ibge_class_field or "legenda_1"
+        output=Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12]
+        result_queue=queue.Queue()
+        self.land_use_state.set("Classificando e verificando confianÃ§a em segundo planoâ€¦")
+        def worker():
+            try:
+                reference=ibge;reference_field=field
+                if reference is None:
+                    try:reference,reference_field=load_ibge_land_use_reference(frame)
+                    except Exception:pass
+                result_queue.put((True,run_land_use(frame,output,config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))))
+            except Exception as exc:result_queue.put((False,str(exc)))
         def poll():
             try:ok,result=result_queue.get_nowait()
             except queue.Empty:
@@ -1389,8 +2830,107 @@ class App(tk.Tk):
         self.carbon_stock_var=tk.StringVar(value="Aguardando anÃ¡lise de carbono.")
         ttk.Label(self.carbon_stock_box,textvariable=self.carbon_stock_var,justify="left",
                   foreground="#0B3D2E",font=("Segoe UI",14,"bold")).pack(anchor="w")
-        carbon_table_box=ttk.LabelFrame(f,text="ESTOQUE POR COMPARYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬ÕQ%59Q<%9IQiˆ±ÍÑå±”ô‰á•Œ¹Q1…‰•±™É…µ”ˆ¤(€€€€€€€…É‰½¹}Ñ…‰±•}‰½à¹Á…¬¡™¥±°ô‰àˆ±Á…‘äô Ğ°Ø¤¤(€€€€€€€Í•±˜¹…É‰½¹}‘…Í¡‰½…É‘}Ñ…‰±”õ…É‰½¹Q…‰±•É¥ (€€€€€€€€€€€…É‰½¹}Ñ…‰±•}‰½à°(€€€€€€€€€€€l‰½µÁ…ÉÑ¥µ•¹Ñ¼ˆ°‰•¹Í¥‘…‘”ˆ°‰ÍÑ½ÅÕ”½¹¡•¥‘¼ˆ°‰%¹•ÉÑ•é„µ•¹ÍÕË…Ù•°€¼Ù…É¥…‰¥±¥‘…‘”ˆ°‹É•„ÅÕ…¹Ñ¥™¥…‘„ˆ°‰ÍÑ…‘¼‰t°(€€€€€€€€€€€lÄÔÀ°ÄÔÔ°ÄØÔ°ÌäÀ°ÄÈÔ°ÄäÕt¤(€€€€€€€ÑÑ¬¹1…‰•°¡…É‰½¹}Ñ…‰±•}‰½à±Ñ•áĞô‰•¹Í¥‘…‘””•ÍÑ½ÅÕ”ÕÍ…´Í½µ•¹Ñ”„ƒ…É•„ÅÕ…¹Ñ¥™¥…‘„¸%¹•ÉÑ•é„µ•¹ÍÕË…Ù•°èÑ½¡„°Ñ?Š
-	”½¡„”€”ì8½»¼Í¥¹¥™¥„é•É¼¸•ÍÙ¥¼•ÍÁ…¥…°”Í•¹Í¥‰¥±¥‘…‘”Á…É¥…°Ï¼¥‘•¹Ñ¥™¥…‘½Ì½µ¼Ñ…¥Ì¸ˆ±İÉ…Á±•¹Ñ ôÄÈÀÀ¤¹É¥¡É½ÜôÈ±½±Õµ¸ôÀ±½±Õµ¹ÍÁ…¸ôÈ±ÍÑ¥­äô‰Üˆ±Á…‘àôØ±Á…‘äô Ğ°Ô¤¤(€€€€€€€Í•±˜¹}Á½ÁÕ±…Ñ•}…É‰½¹}‘…Í¡‰½…É¡íô¤(€€€€€€€É•ÍÕ±Ñ}‰½àõÑÑ¬¹1…‰•±É…µ”¡˜±Ñ•áĞô‰I•±…ÓÍÉ¥¼‘•Ñ…±¡…‘¼”…Õ‘¥Ñ½É¥„ˆ±ÍÑå±”ô‰á•Œ¹Q1…‰•±™É…µ”ˆ¤ìÉ•ÍÕ±Ñ}‰½à¹Á…¬¡™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”±Á…‘äôà¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡É•ÍÕ±Ñ}‰½à±Ñ•áĞô‰=A%HI1SMI%<I	=9<ˆ±½µµ…¹õ±…µ‰‘„éÍ•±˜¹}½Áå}É•Á½ÉĞ¡Í•±˜¹É•Ì°‰I•±…ÓÍÉ¥¼‘”…É‰½¹¼ˆ¤¤¹Á…¬¡…¹¡½Èô‰”ˆ±Á…‘àôØ±Á…‘äôĞ¤(€€€€€€€Í•±˜¹É•ÌõÑ¬¹Q•áĞ¡É•ÍÕ±Ñ}‰½à±¡•¥¡ĞôÈÌ±İÉ…Àô‰İ½Éˆ±åÍÉ½±±½µµ…¹õ±…µ‰‘„€©„éÉ•ÍÕ±Ñ}ÍÉ½±°¹Í•Ğ ©„¤¤(€€€€€€€É•ÍÕ±Ñ}ÍÉ½±°õÑÑ¬¹MÉ½±±‰…È¡É•ÍÕ±Ñ}‰½à±½É¥•¹Ğô‰Ù•ÉÑ¥…°ˆ±½µµ…¹õÍ•±˜¹É•Ì¹åÙ¥•Ü¤(€€€€€€€Í•±˜¹É•Ì¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤ìÉ•ÍÕ±Ñ}ÍÉ½±°¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ±™¥±°ô‰äˆ¤(€€€€€€€Í•±˜¹}‰¥¹‘}Ñ•áÑ}ÍÉ½±°¡Í•±˜¹É•Ì¤(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É•Ì°‰±¥ÅÕ”•´aUQH;1%MÅÕ…¹‘¼¡½ÕÙ•È‘…‘½ÌÍÕ™¥¥•¹Ñ•Ì¸ˆ¤(€€€‘•˜}Õ±Ñ¥Ù…Ñ•‘}É•ÍÕ±ÑÌ¡Í•±˜¤è(€€€€€€€€ˆˆ‰M•Á…É…Ñ”½¹¥Í”•á•ÕÑ¥Ù”É•ÍÕ±ÑÌ™É½´ÑÉ…•…‰±”Ñ•¡¹¥…°…Õ‘¥Ğ¸ˆˆˆ(€€€€€€€˜õÍ•±˜¹}ÍÉ½±±…‰±•}Ñ…‰}½¹Ñ•¹Ğ¡Í•±˜¹Ñ…‰ÍlÕt¤(€€€€€€€ÑÑ¬¹1…‰•°¡˜±Ñ•áĞô‰5½¹¥Ñ½É…µ•¹Ñ¼‘”ƒ…É•…ÌÕ±Ñ¥Ù…‘…Ìˆ±ÍÑå±”ô‰ ¹Q1…‰•°ˆ¤¹Á…¬¡…¹¡½Èô‰Üˆ¤(€€€€€€€ÑÑ¬¹1…‰•°¡˜±Ñ•áĞô‰•Ñ•Ÿ¼‘”ƒ…É•…ÌÕ±Ñ¥Ù…‘…ÌÁÉ¥µ•¥É¼ì¥‘•¹Ñ¥™¥‡Ÿ¼‘„Õ±ÑÕÉ„Í½µ•¹Ñ”ÅÕ…¹‘¼„•Ù¥“©¹¥„”„Ù…±¥‘‡Ÿ¼Á•Éµ¥Ñ¥É•´¸ˆ°(€€€€€€€€€€€€€€€€€İÉ…Á±•¹Ñ ôÄÀÀÀ¤¹Á…¬¡…¹¡½Èô‰Üˆ±Á…‘äô Ğ°à¤¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡˜±Ñ•áĞô‰QU1%iHA%905Q=I=3M%<ƒŠP1%5%;	5%<9MA=]H€¼AQˆ±½µµ…¹õÍ•±˜¹ÅÕ•Éå}É½Á}İ•…Ñ¡•È¤¹Á…¬¡…¹¡½Èô‰Üˆ±Á…‘äô À°à¤¤(€€€€€€€Í•±˜¹É½Á}•á•}‰½à±Í•±˜¹É½Á}•á•}Ù…ÈõÍ•±˜¹}•á•ÕÑ¥Ù•}…É (€€€€€€€€€€€˜°‰EUI<aUQ%Y<ƒŠPI%U1QUI°Y%=HMIˆ°(€€€€€€€€€€€€‰Õ…É‘…¹‘¼…»…±¥Í”¸±…ÍÍ•Ì…ÑÕ…¥Ì°•»…É¥¼‘”Í…™É„°™½¹Ñ•Ì”¥¹•ÉÑ•é„…Á…É••Ë¼É•ÍÕµ¥‘½Ì…ÅÕ¤¸ˆ¤(€€€€€€€Í•±˜¹É½Á}•á•}‰½à¹Á…¬¡™¥±°ô‰àˆ±Á…‘äô À°à¤¤(€€€€€€€Ù¥•İÌõÑÑ¬¹9½Ñ•‰½½¬¡˜¤íÙ¥•İÌ¹Á…¬¡™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤(€€€€€€€•á•}™É…µ”õÑÑ¬¹É…µ”¡Ù¥•İÌ¤í…Õ‘¥Ñ}™É…µ”õÑÑ¬¹É…µ”¡Ù¥•İÌ¤(€€€€€€€Ù¥•İÌ¹…‘¡•á•}™É…µ”±Ñ•áĞô‰A…¥¹•°•á•ÕÑ¥Ù¼ˆ¤(€€€€€€€Ù¥•İÌ¹…‘¡…Õ‘¥Ñ}™É…µ”±Ñ•áĞô‰Õ‘¥Ñ½É¥„Ó¥¹¥„ˆ¤(€€€€€€€•á•}‰½àõÑÑ¬¹1…‰•±É…µ”¡•á•}™É…µ”±Ñ•áĞô‰I•ÍÕµ¼”¥¹‘¥…‘½É•Ì•á•ÕÑ¥Ù½Ìˆ±ÍÑå±”ô‰á•Œ¹Q1…‰•±™É…µ”ˆ¤í•á•}‰½à¹Á…¬¡™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤(€€€€€€€…Õ‘¥Ñ}‰½àõÑÑ¬¹1…‰•±É…µ”¡…Õ‘¥Ñ}™É…µ”±Ñ•áĞô‰I…ÍÑÉ•…‰¥±¥‘…‘”°™½¹Ñ•Ì”‘¥…»ÍÍÑ¥½Ìˆ±ÍÑå±”ô‰á•Œ¹Q1…‰•±™É…µ”ˆ¤í…Õ‘¥Ñ}‰½à¹Á…¬¡™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡•á•}‰½à±Ñ•áĞô‰=A%HIMU5<aUQ%Y<K5=1ˆ±½µµ…¹õ±…µ‰‘„éÍ•±˜¹}½Áå}É•Á½ÉĞ¡Í•±˜¹É½Á}É•Ì°‰I•ÍÕµ¼…Ëµ½±„ˆ¤¤¹Á…¬¡…¹¡½Èô‰”ˆ±Á…‘àôØ±Á…‘äôĞ¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡…Õ‘¥Ñ}‰½à±Ñ•áĞô‰=A%HU%Q=I%S%9%ˆ±½µµ…¹õ±…µ‰‘„éÍ•±˜¹}½Áå}É•Á½ÉĞ¡Í•±˜¹É½Á}…Õ‘¥Ğ°‰Õ‘¥Ñ½É¥„Ó¥¹¥„ˆ¤¤¹Á…¬¡…¹¡½Èô‰”ˆ±Á…‘àôØ±Á…‘äôĞ¤(€€€€€€€Í•±˜¹É½Á}É•ÌõÑ¬¹Q•áĞ¡•á•}‰½à±¡•¥¡ĞôÈÀ±İÉ…Àô‰İ½Éˆ±åÍÉ½±±½µµ…¹õ±…µ‰‘„€©„é•á•}ÍÉ½±°¹Í•Ğ ©„¤¤(€€€€€€€•á•}ÍÉ½±°õÑÑ¬¹MÉ½±±‰…È¡•á•}‰½à±½É¥•¹Ğô‰Ù•ÉÑ¥…°ˆ±½µµ…¹õÍ•±˜¹É½Á}É•Ì¹åÙ¥•Ü¤(€€€€€€€Í•±˜¹É½Á}É•Ì¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤í•á•}ÍÉ½±°¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ±™¥±°ô‰äˆ¤(€€€€€€€Í•±˜¹É½Á}…Õ‘¥ĞõÑ¬¹Q•áĞ¡…Õ‘¥Ñ}‰½à±¡•¥¡ĞôÈÀ±İÉ…Àô‰İ½Éˆ±åÍÉ½±±½µµ…¹õ±…µ‰‘„€©„é…Õ‘¥Ñ}ÍÉ½±°¹Í•Ğ ©„¤¤(€€€€€€€…Õ‘¥Ñ}ÍÉ½±°õÑÑ¬¹MÉ½±±‰…È¡…Õ‘¥Ñ}‰½à±½É¥•¹Ğô‰Ù•ÉÑ¥…°ˆ±½µµ…¹õÍ•±˜¹É½Á}…Õ‘¥Ğ¹åÙ¥•Ü¤(€€€€€€€Í•±˜¹É½Á}…Õ‘¥Ğ¹Á…¬¡Í¥‘”ô‰±•™Ğˆ±™¥±°ô‰‰½Ñ ˆ±•áÁ…¹õQÉÕ”¤í…Õ‘¥Ñ}ÍÉ½±°¹Á…¬¡Í¥‘”ô‰É¥¡Ğˆ±™¥±°ô‰äˆ¤(€€€€€€€Í•±˜¹}‰¥¹‘}Ñ•áÑ}ÍÉ½±°¡Í•±˜¹É½Á}É•Ì¤íÍ•±˜¹}‰¥¹‘}Ñ•áÑ}ÍÉ½±°¡Í•±˜¹É½Á}…Õ‘¥Ğ¤(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É½Á}É•Ì°‰A%90aUQ%Y<ƒŠPAIY%O<MIMq¹q¸ˆ(€€€€€€€€€€€€€€€€€€‰%‘…‘”ÁÉ½Û…Ù•°‘„±…Ù½ÕÉ„è%9%MA=;5Y0ƒŠPÉ•ÅÕ•È•Ù¥“©¹¥„™•¹½³Í¥„MHÙ…±¥‘…‘„¹q¸ˆ(€€€€€€€€€€€€€€€€€€‰ÍÑ…‘¼™¥Ñ½ÍÍ…¹¥Ó…É¥¼…Á…É•¹Ñ”è%9%MA=;5Y0ƒŠP½ÃŸÕ•Ìè	½´°7¥‘¥¼½ÔIÕ¥´ìÉ•ÅÕ•Èµ½‘•±¼”•Ù¥“©¹¥„Ù…±¥‘…‘½Ì¸;¼ƒ¤‘¥…»ÍÍÑ¥¼‘”‘½•»„½ÔÁÉ…„¹q¸ˆ(€€€€€€€€€€€€€€€€€€‰AÉ•Ù¥Ï¼‘”Í…™É„è…ÃÍÌ„…»…±¥Í”ƒŠPµ½‘•±¼…±¥‰É…‘¼¹¼¡¥ÍÓÍÉ¥¼A4€¡Í½©„”µ¥±¡¼ì•áÁ•É¥µ•¹Ñ…°°Ù…±¥‘…‘¼™½É„‘„…µ½ÍÑÉ„¤°½´Ù¥½È…ÕÑ½·…Ñ¥¼M•¹Ñ¥¹•°´ÄÅÕ…¹‘¼¡½ÕÙ•Èµ…Á„‘”É•™•Ë©¹¥„¹q¹q¸ˆ(€€€€€€€€€€€€€€€€€€‰á•ÕÑ”„…»…±¥Í”Á…É„½¹ÍÕ±Ñ…È½‰•ÉÑÕÉ„°Õ±ÑÕÉ„”‘¥ÍÁ½¹¥‰¥±¥‘…‘”‘½Ì‘…‘½Ì¸ˆ¤(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É½Á}…Õ‘¥Ğ°‰ÑÉ¥±¡„‘”…Õ‘¥Ñ½É¥„‘„…»…±¥Í”Í•Ë„…ÁÉ•Í•¹Ñ…‘„…ÅÕ¤¸ˆ¤((€€€‘•˜}ÁÉ•Í•¹Ñ}Õ±Ñ¥Ù…Ñ•‘}µ½¹¥Ñ½É¥¹œ¡Í•±˜±±…¹¤è(€€€€€€€€ˆˆ‰AÉ•Í•¹Ğ½¹¥Í”É•ÍÕ±ÑÌ…¹­••À™Õ±°•Ù¥‘•¹”¥¸„Í•Á…É…Ñ”…Õ‘¥ĞÙ¥•Ü¸ˆˆˆ(€€€€€€€Í•±˜¹}‘É…İ}±…¹‘}ÕÍ•}µ…À¡±…¹¤(€€€€€€€™É½´…É¥Õ±ÑÕÉ…±}¹…Ñ¥Ù•}Á½±¥ä¥µÁ½ÉĞ¡…Í}Õ±Ñ¥Ù…Ñ•‘}…É•„(€€€€€€€Í•±˜¹}İ•…Ñ¡•É}ÅÕ•Éå}•¹•É…Ñ¥½¸¬ôÄ(€€€€€€€Í•±˜¹}±…ÍÑ}±…¹õ±…¹(€€€€€€€±…ÍÍ•Ìõ±…¹¹•Ğ ‰±…ÍÍ•Ìˆ±mt¤(€€€€€€€¹½¹}¹…Ñ¥Ù”õm¥Ñ•´™½È¥Ñ•´¥¸±…ÍÍ•Ì¥˜¥Ñ•´¹•Ğ ‰¹…Ñ¥Ù•}ÍÑ…ÑÕÌˆ¤¥Ì…±Í”…¹(€€€€€€€€€€€€€€€€€€€¹½ĞÍÑÈ¡¥Ñ•´¹•Ğ ‰Í½ÕÉ”ˆ¤½È€ˆˆ¤¹ÍÑ…ÉÑÍİ¥Ñ  ‰MI}aAI%59Q1}5=1<ˆ¤…¹(€€€€€€€€€€€€€€€€€€€™±½…Ğ¡¥Ñ•´¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤øÁt(€€€€€€€¹…Ñ¥Ù”õm¥Ñ•´™½È¥Ñ•´¥¸±…ÍÍ•Ì¥˜¥Ñ•´¹•Ğ ‰¹…Ñ¥Ù•}ÍÑ…ÑÕÌˆ¤¥ÌQÉÕ”…¹™±½…Ğ¡¥Ñ•´¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤øÁt(€€€€€€€±…ÍÍ¥™¥•‘}¡„õÍÕ´¡™±½…Ğ¡¥Ñ•´¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤™½È¥Ñ•´¥¸±…ÍÍ•Ì¤(€€€€€€€…½¥}¡„õ™±½…Ğ¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤(€€€€€€€½µÁ±•Ñ•}½Ù•É…”õ…½¥}¡„øÀ…¹…‰Ì¡±…ÍÍ¥™¥•‘}¡„µ…½¥}¡„¤ğõµ…à À¸ÀÔ°À¸ÀÀÄ©…½¥}¡„¤(€€€€€€€¹…Ñ¥Ù•}½ÕÉÉ•¹”õ±…¹¹•Ğ ‰¹…Ñ¥Ù•}½ÕÉÉ•¹”ˆ¤¥˜¥Í¥¹ÍÑ…¹”¡±…¹¹•Ğ ‰¹…Ñ¥Ù•}½ÕÉÉ•¹”ˆ¤±‘¥Ğ¤•±Í”íô(€€€€€€€¹…Ñ¥Ù•}…É•„ô¡™±½…Ğ¡¹…Ñ¥Ù•}½ÕÉÉ•¹•l‰…É•…}¡„‰t¤¥˜¹…Ñ¥Ù•}½ÕÉÉ•¹”¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰‘•Ñ•Ñ•‘}‰å}Ù…±¥‘…Ñ•‘}MHˆ…¹¹…Ñ¥Ù•}½ÕÉÉ•¹”¹•Ğ ‰…É•…}¡„ˆ¤¥Ì¹½Ğ9½¹”•±Í”9½¹”¤(€€€€€€€¹…Ñ¥Ù•}ÍÕµµ…Éäô ‰Y••Ñ‡Ÿ¼¹…Ñ¥Ù„‘•Ñ•Ñ…‘„Á½ÈMHÙ…±¥‘…‘¼è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡¹…Ñ¥Ù•}…É•„°È¤¬(€€€€€€€€€€€€€€€€€€€€€€€€ˆ¡„ìÍ•´½¹™¥Éµ‡Ÿ¼‘”…µÁ¼¸ˆ¥˜¹…Ñ¥Ù•}…É•„¥Ì¹½Ğ9½¹”…¹¹…Ñ¥Ù•}…É•„øÀ•±Í”(€€€€€€€€€€€€€€€€€€€€€€€€‰=½ÉË©¹¥„‘”Ù••Ñ‡Ÿ¼¹…Ñ¥Ù„è8½ƒŠP…ÕÏ©¹¥„‘”·…Í…É„Í•·‰¹Ñ¥„MHÙ…±¥‘…‘„»¼Í¥¹¥™¥„€À¡„¸ˆ¤(€€€€€€€¥˜¹½Ğ¡…Í}Õ±Ñ¥Ù…Ñ•‘}…É•„¡±…ÍÍ•Ì¤…¹½µÁ±•Ñ•}½Ù•É…”…¹±…¹¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰MI}1%Y0ˆè(€€€€€€€€€€€Í•±˜¹}É½Á}µ½¹¥Ñ½É¥¹}‰…Í•}É•Á½ÉĞô‰Í•´Õ±Ñ¥Ù½Ì‘•Ñ•Ñ…‘½Íq¸ˆ­¹…Ñ¥Ù•}ÍÕµµ…Éä(€€€€€€€€€€€…Õ‘¥Ñ}‘¥ÈõA…Ñ ¡±…¹¹•Ğ ‰Ù•Ñ½É}Á…Ñ ˆ¤½È€¡A…Ñ ¹¡½µ” ¤¼ˆ¹•¹™½Éµ}Ù•É‘”ˆ¼‰…Õ‘¥Ñ½É¥…Ìˆ€¤¤¹Á…É•¹Ğ(€€€€€€€€€€€±…¹‘}…Õ‘¥Ğõ…Õ‘¥Ñ}‘¥È¼‰ÕÍ½}Í½±½}…Õ‘¥Ñ½É¥„¹©Í½¸ˆ(€€€€€€€€€€€Í•±˜¹}İÉ¥Ñ•}©Í½¹}‰…­É½Õ¹¡±…¹±±…¹‘}…Õ‘¥Ğ¤(€€€€€€€€€€€Í•±˜¹}É½Á}µ½¹¥Ñ½É¥¹}…Õ‘¥Ñ}‰…Í”ô ‰9•¹¡Õµ„±…ÍÍ”‘”Õ±Ñ¥Ù¼™½¤•¹½¹ÑÉ…‘„¹„ƒ…É•„Ñ½Ñ…±µ•¹Ñ”½‰•ÉÑ„Á•±„±…ÍÍ¥™¥‡Ÿ¼¹q¸ˆ¬(€€€€€€€€€€€€€€€¹…Ñ¥Ù•}ÍÕµµ…Éä¬‰q¹q¹Õ‘¥Ñ½É¥„¥¹Ñ•É…°•´)M=8°É…Ù…‘„•´Í•Õ¹‘¼Á±…¹¼éq¸ˆ­ÍÑÈ¡±…¹‘}…Õ‘¥Ğ¤¤(€€€€€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰É½Á}•á•}Ù…Èˆ¤è(€€€€€€€€€€€€€€€Í•±˜¹É½Á}•á•}Ù…È¹Í•Ğ ‰½‰•ÉÑÕÉ„MHè±…ÍÍ¥™¥‡Ÿ¼•±•ŸµÙ•°•´Ñ½‘„„=$¹q¸ˆ(€€€€€€€€€€€€€€€€€€€€‰Õ±Ñ¥Ù½Ì¥‘•¹Ñ¥™¥…‘½Ìè¹•¹¡Õ´¹q¸ˆ­¹…Ñ¥Ù•}ÍÕµµ…Éä¤(€€€€€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É½Á}É•Ì±Í•±˜¹}É½Á}µ½¹¥Ñ½É¥¹}‰…Í•}É•Á½ÉĞ¤(€€€€€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É½Á}…Õ‘¥Ğ±Í•±˜¹}É½Á}µ½¹¥Ñ½É¥¹}…Õ‘¥Ñ}‰…Í”¤(€€€€€€€€€€€•¹•É…Ñ¥½¸õÍ•±˜¹}İ•…Ñ¡•É}ÅÕ•Éå}•¹•É…Ñ¥½¸(€€€€€€€€€€€…¹…±åÍ¥Í}¥õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤(€€€€€€€€€€€‘•˜ÍÑ…ÉÑ}İ•…Ñ¡•É}¥™}ÕÉÉ•¹Ğ ¤è(€€€€€€€€€€€€€€€¥˜€¡•¹•É…Ñ¥½¸ôõÍ•±˜¹}İ•…Ñ¡•É}ÅÕ•Éå}•¹•É…Ñ¥½¸(€€€€€€€€€€€€€€€€€€€…¹…¹…±åÍ¥Í}¥ôõÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤(€€€€€€€€€€€€€€€€€€€…¹Í•±˜¹‘˜¥Ì¹½Ğ9½¹”¤è(€€€€€€€€€€€€€€€€€€€Í•±˜¹ÅÕ•Éå}É½Á}İ•…Ñ¡•È ¤(€€€€€€€€€€€Í•±˜¹…™Ñ•È ÄÀÀ±ÍÑ…ÉÑ}İ•…Ñ¡•É}¥™}ÕÉÉ•¹Ğ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€™É½´É½Á}É•Á½ÉÑ}½¹Í¥ÍÑ•¹ä¥µÁ½ÉĞÕÉÉ•¹Ñ}É½Á}…É•…}‰å}Í•µ…¹Ñ¥}Í…È(€€€€€€€É½Á}¡„±•¹•É¥}Õ±Ñ¥Ù…Ñ•‘}¡„õÕÉÉ•¹Ñ}É½Á}…É•…}‰å}Í•µ…¹Ñ¥}Í…È¡±…¹¤(€€€€€€€Í•µ…¹Ñ¥}…É•…}ÍÕÁÁ½ÉÑ•õÉ½Á}¡„¥Ì¹½Ğ9½¹”(€€€€€€€µ•…ÍÕÉ•‘}É½Á}¡„õÉ½Á}¡„½È€À¸À(€€€€€€€µ•…ÍÕÉ•‘}•¹•É¥}¡„õ•¹•É¥}Õ±Ñ¥Ù…Ñ•‘}¡„½È€À¸À(€€€€€€€½Ñ¡•É}¹½¹}¹…Ñ¥Ù•}¡„õÍÕ´¡™±½…Ğ¡à¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤™½Èà¥¸¹½¹}¹…Ñ¥Ù”¤µµ•…ÍÕÉ•‘}É½Á}¡„µµ•…ÍÕÉ•‘}•¹•É¥}¡„(€€€€€€€•á•ÕÑ¥Ù”õl‰A%90aUQ%Y<ƒŠP5=9%Q=I59Q<K5=1ˆ°(€€€€€€€€€€€€€€€€€€€‰ÍÑ…‘¼‘„±…ÍÍ¥™¥‡Ÿ¼MH…ÑÕ…°è€ˆ­ÍÑÈ¡±…¹¹•Ğ ‰ÍÑ…ÑÕÌˆ°‰8½ˆ¤¤¬(€€€€€€€€€€€€€€€€€€€ˆƒŠP5…Á	¥½µ…Ì»¼‘•Ñ•Éµ¥¹„±…ÍÍ•Ì°ƒ…É•…Ì°Ù¥½È½ÔÍ…™É„…ÑÕ…¥Ì¸ˆ°(€€€€€€€€€€€€€€€€€€€‹IQ=Q0=$è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡…½¥}¡„°È¤¬ˆ¡„€ ÄÀÀ”¤ˆ°(€€€€€€€€€€€€€€€€€€€‹É•„½´±…ÍÍ•ÌÍ•·‰¹Ñ¥…ÌMH…ÑÕ…¥Ìè€ˆ¬¡™½Éµ…Ñ}ÁÑ‰È¡±…ÍÍ¥™¥•‘}¡„°È¤¬ˆ¡„ˆ¥˜Í•µ…¹Ñ¥}…É•…}ÍÕÁÁ½ÉÑ••±Í”€‰8½ƒŠP±…ÍÍ¥™¥…‘½ÈMH…ÑÕ…°¥¹‘¥ÍÁ½»µÙ•°ˆ¤°(€€€€€€€€€€€€€€€€€€€‰IMU5<a1UM%Y<=	IQUI€¡½ÌÉÕÁ½Ì»¼Í”Í½‰É•ÃÕ•´¤èˆ°(€€€€€€€€€€€€€€€€€€€ˆ€Y••Ñ‡Ÿ¼¹…Ñ¥Ù„è€ˆ¬¡™½Éµ…Ñ}ÁÑ‰È¡¹…Ñ¥Ù•}…É•„°È¤¬ˆ¡„€ ˆ­™½Éµ…Ñ}ÁÑ‰È ÄÀÀ©¹…Ñ¥Ù•}…É•„½…½¥}¡„¥˜…½¥}¡„•±Í”€À°È¤¬ˆ”§[h‘éì¶»§q«^v if native_area is not None else "N/D â€” nÃ£o converter ausÃªncia de mÃ¡scara em 0 ha"),
+        carbon_table_box=ttk.LabelFrame(f,text="ESTOQUE POR COMPARTIMENTO E INCERTEZA",style="Exec.TLabelframe")
+        carbon_table_box.pack(fill="x",pady=(4,6))
+        self.carbon_dashboard_table=CarbonTableGrid(
+            carbon_table_box,
+            ["Compartimento","Densidade","Estoque conhecido","Incerteza mensurÃ¡vel / variabilidade","Ãrea quantificada","Estado"],
+            [150,155,165,390,125,195])
+        ttk.Label(carbon_table_box,text="Densidade e estoque usam somente a Ã¡rea quantificada. Incerteza mensurÃ¡vel: tC/ha, tCOâ‚‚e/ha e %; N/D nÃ£o significa zero. Desvio espacial e sensibilidade parcial sÃ£o identificados como tais.",wraplength=1200).grid(row=2,column=0,columnspan=2,sticky="w",padx=6,pady=(4,5))
+        self._populate_carbon_dashboard({})
+        result_box=ttk.LabelFrame(f,text="RelatÃ³rio detalhado e auditoria",style="Exec.TLabelframe"); result_box.pack(fill="both",expand=True,pady=8)
+        ttk.Button(result_box,text="COPIAR RELATÃ“RIO DE CARBONO",command=lambda:self._copy_report(self.res,"RelatÃ³rio de carbono")).pack(anchor="e",padx=6,pady=4)
+        self.res=tk.Text(result_box,height=23,wrap="word",yscrollcommand=lambda *a:result_scroll.set(*a))
+        result_scroll=ttk.Scrollbar(result_box,orient="vertical",command=self.res.yview)
+        self.res.pack(side="left",fill="both",expand=True); result_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.res)
+        self._set(self.res,"Clique em EXECUTAR ANÃLISE quando houver dados suficientes.")
+    def _cultivated_results(self):
+        """Separate concise executive results from traceable technical audit."""
+        f=self._scrollable_tab_content(self.tabs[5])
+        ttk.Label(f,text="Monitoramento de Ã¡reas cultivadas",style="H.TLabel").pack(anchor="w")
+        ttk.Label(f,text="DetecÃ§Ã£o de Ã¡reas cultivadas primeiro; identificaÃ§Ã£o da cultura somente quando a evidÃªncia e a validaÃ§Ã£o permitirem.",
+                  wraplength=1000).pack(anchor="w",pady=(4,8))
+        ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÃ“GICO â€” CLIMA DINÃ‚MICO NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
+        self.crop_exec_box,self.crop_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO â€” AGRICULTURA, VIGOR E SAFRA",
+            "Aguardando anÃ¡lise. Classes atuais, cenÃ¡rio de safra, fontes e incerteza aparecerÃ£o resumidos aqui.")
+        self.crop_exec_box.pack(fill="x",pady=(0,8))
+        views=ttk.Notebook(f);views.pack(fill="both",expand=True)
+        exec_frame=ttk.Frame(views);audit_frame=ttk.Frame(views)
+        views.add(exec_frame,text="Painel executivo")
+        views.add(audit_frame,text="Auditoria tÃ©cnica")
+        exec_box=ttk.LabelFrame(exec_frame,text="Resumo e indicadores executivos",style="Exec.TLabelframe");exec_box.pack(fill="both",expand=True)
+        audit_box=ttk.LabelFrame(audit_frame,text="Rastreabilidade, fontes e diagnÃ³sticos",style="Exec.TLabelframe");audit_box.pack(fill="both",expand=True)
+        ttk.Button(exec_box,text="COPIAR RESUMO EXECUTIVO AGRÃCOLA",command=lambda:self._copy_report(self.crop_res,"Resumo agrÃ­cola")).pack(anchor="e",padx=6,pady=4)
+        ttk.Button(audit_box,text="COPIAR AUDITORIA TÃ‰CNICA",command=lambda:self._copy_report(self.crop_audit,"Auditoria tÃ©cnica")).pack(anchor="e",padx=6,pady=4)
+        self.crop_res=tk.Text(exec_box,height=20,wrap="word",yscrollcommand=lambda *a:exec_scroll.set(*a))
+        exec_scroll=ttk.Scrollbar(exec_box,orient="vertical",command=self.crop_res.yview)
+        self.crop_res.pack(side="left",fill="both",expand=True);exec_scroll.pack(side="right",fill="y")
+        self.crop_audit=tk.Text(audit_box,height=20,wrap="word",yscrollcommand=lambda *a:audit_scroll.set(*a))
+        audit_scroll=ttk.Scrollbar(audit_box,orient="vertical",command=self.crop_audit.yview)
+        self.crop_audit.pack(side="left",fill="both",expand=True);audit_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.crop_res);self._bind_text_scroll(self.crop_audit)
+        self._set(self.crop_res,"PAINEL EXECUTIVO â€” PREVISÃƒO DE SAFRAS\n\n"
+                  "Idade provÃ¡vel da lavoura: INDISPONÃVEL â€” requer evidÃªncia fenolÃ³gica SAR validada.\n"
+                  "Estado fitossanitÃ¡rio aparente: INDISPONÃVEL â€” opÃ§Ãµes: Bom, MÃ©dio ou Ruim; requer modelo e evidÃªncia validados. NÃ£o Ã© diagnÃ³stico de doenÃ§a ou praga.\n"
+                  "PrevisÃ£o de safra: apÃ³s a anÃ¡lise â€” modelo calibrado no histÃ³rico PAM (soja e milho; experimental, validado fora da amostra), com vigor automÃ¡tico Sentinel-1 quando houver mapa de referÃªncia.\n\n"
+                  "Execute a anÃ¡lise para consultar cobertura, cultura e disponibilidade dos dados.")
+        self._set(self.crop_audit,"A trilha de auditoria da anÃ¡lise serÃ¡ apresentada aqui.")
+
+    def _present_cultivated_monitoring(self,land):
+        """Present concise results and keep full evidence in a separate audit view."""
+        self._draw_land_use_map(land)
+        from agricultural_native_policy import has_cultivated_area
+        self._weather_query_generation+=1
+        self._last_land=land
+        classes=land.get("classes",[])
+        non_native=[item for item in classes if item.get("native_status") is False and
+                    not str(item.get("source") or "").startswith("SAR_EXPERIMENTAL_MODELO") and
+                    float(item.get("area_ha") or 0)>0]
+        native=[item for item in classes if item.get("native_status") is True and float(item.get("area_ha") or 0)>0]
+        classified_ha=sum(float(item.get("area_ha") or 0) for item in classes)
+        aoi_ha=float(self.project.get("area_ha") or 0)
+        complete_coverage=aoi_ha>0 and abs(classified_ha-aoi_ha)<=max(0.05,0.001*aoi_ha)
+        native_occurrence=land.get("native_occurrence") if isinstance(land.get("native_occurrence"),dict) else {}
+        native_area=(float(native_occurrence["area_ha"]) if native_occurrence.get("status")=="detected_by_validated_SAR" and native_occurrence.get("area_ha") is not None else None)
+        native_summary=("VegetaÃ§Ã£o nativa detectada por SAR validado: "+format_ptbr(native_area,2)+
+                        " ha; sem confirmaÃ§Ã£o de campo." if native_area is not None and native_area>0 else
+                        "OcorrÃªncia de vegetaÃ§Ã£o nativa: N/D â€” ausÃªncia de mÃ¡scara semÃ¢ntica SAR validada nÃ£o significa 0 ha.")
+        if not has_cultivated_area(classes) and complete_coverage and land.get("status")=="SAR_ELEGIVEL":
+            self._crop_monitoring_base_report="sem cultivos detectados\n"+native_summary
+            audit_dir=Path(land.get("vector_path") or (Path.home()/".enform_verde"/"auditorias" )).parent
+            land_audit=audit_dir/"uso_solo_auditoria.json"
+            self._write_json_background(land,land_audit)
+            self._crop_monitoring_audit_base=("Nenhuma classe de cultivo foi encontrada na Ã¡rea totalmente coberta pela classificaÃ§Ã£o.\n"+
+                native_summary+"\n\nAuditoria integral em JSON, gravada em segundo plano:\n"+str(land_audit))
+            if hasattr(self,"crop_exec_var"):
+                self.crop_exec_var.set("Cobertura SAR: classificaÃ§Ã£o elegÃ­vel em toda a AOI.\n"
+                    "Cultivos identificados: nenhum.\n"+native_summary)
+            self._set(self.crop_res,self._crop_monitoring_base_report)
+            self._set(self.crop_audit,self._crop_monitoring_audit_base)
+            generation=self._weather_query_generation
+            analysis_id=self.project.get("analysis_run_id")
+            def start_weather_if_current():
+                if (generation==self._weather_query_generation
+                    and analysis_id==self.project.get("analysis_run_id")
+                    and self.gdf is not None):
+                    self.query_crop_weather()
+            self.after(100,start_weather_if_current)
+            return
+        from crop_report_consistency import current_crop_area_by_semantic_sar
+        crop_ha,generic_cultivated_ha=current_crop_area_by_semantic_sar(land)
+        semantic_area_supported=crop_ha is not None
+        measured_crop_ha=crop_ha or 0.0
+        measured_generic_ha=generic_cultivated_ha or 0.0
+        other_non_native_ha=sum(float(x.get("area_ha") or 0) for x in non_native)-measured_crop_ha-measured_generic_ha
+        executive=["PAINEL EXECUTIVO â€” MONITORAMENTO AGRÃCOLA",
+                   "Estado da classificaÃ§Ã£o SAR atual: "+str(land.get("status","N/D"))+
+                   " â€” MapBiomas nÃ£o determina classes, Ã¡reas, vigor ou safra atuais.",
+                   "ÃREA TOTAL DA AOI: "+format_ptbr(aoi_ha,2)+" ha (100%)",
+                   "Ãrea com classes semÃ¢nticas SAR atuais: "+(format_ptbr(classified_ha,2)+" ha" if semantic_area_supported else "N/D â€” classificador SAR atual indisponÃ­vel"),
+                   "RESUMO EXCLUSIVO DE COBERTURA (os grupos nÃ£o se sobrepÃµem):",
+                   "  VegetaÃ§Ã£o nativa: "+(format_ptbr(native_area,2)+" ha ("+format_ptbr(100*native_area/aoi_ha if aoi_ha else 0,2)+"%)" if native_area is not None else "N/D â€” nÃ£o converter ausÃªncia de mÃ¡scara em 0 ha"),
                    "  Lavouras identificadas por classificador SAR atual validado: "+(format_ptbr(crop_ha,2)+" ha" if semantic_area_supported else "N/D â€” classificaÃ§Ã£o atual indisponÃ­vel; nÃ£o equivale a 0 ha"),
                    "  Ãreas agrÃ­colas sem identificaÃ§Ã£o de cultura: "+(format_ptbr(generic_cultivated_ha,2)+" ha" if semantic_area_supported else "N/D â€” classificaÃ§Ã£o atual indisponÃ­vel"),
                    "  Outros usos nÃ£o nativos: "+(format_ptbr(max(0,other_non_native_ha),2)+" ha" if land.get("status")=="SAR_ELEGIVEL" else "N/D â€” classe semÃ¢ntica SAR nÃ£o validada"),
@@ -1493,7 +3033,118 @@ class App(tk.Tk):
                         format_ptbr(point.get("cultivated_candidate_area_ha"),2)+
                         " ha de candidato agrÃ­cola no recorte temporal atÃ© a data; " +
                         str(point.get("scene_count"))+" cenas / "+
-                        format_ptbr(point.get("span_days"),1)+" dias; cultura N/D; inceYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬ÕÉÑ•é„»¼ÅÕ…¹Ñ¥™¥…‘„¸ˆ¤(€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€•á•ÕÑ¥Ù”¹…ÁÁ•¹ ˆ€€ˆ­‘…Ñ•}±…‰•°¬ˆèÍ•´ƒ…É•„…¹‘¥‘…Ñ„…±Õ³…Ù•°ƒŠP€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€ÍÑÈ¡Á½¥¹Ğ¹•Ğ ‰É•…Í½¸ˆ¤½ÈÁ½¥¹Ğ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤½È€‰Ï¥É¥”¥¹ÍÕ™¥¥•¹Ñ”ˆ¥lèÄàÁt¤(€€€€€€€€€€€•á•ÕÑ¥Ù”¹…ÁÁ•¹ ‹É•„…¹‘¥‘…Ñ„Á½È‘…Ñ„è±…ÍÍ¥™¥‡Ÿ¼•áÁ•É¥µ•¹Ñ…°•´©…¹•±„·ÍÙ•°‘”…Ó¤€ÄÔÀ‘¥…Ìì±…ÍÍ•Ì»¼Ï¼¡•Ñ…É•Ì…Ëµ½±…Ì½¹™¥Éµ…‘½Ì”½ÌÁ½¹Ñ½Ì»¼½¹ÍÑ¥ÑÕ•´½‰Í•ÉÙ‡ŸÕ•Ì‘”…µÁ¼¥¹‘•Á•¹‘•¹Ñ•Ì¸ˆ¤(€€€€€€€•±Í”è(€€€€€€€€€€€•á•ÕÑ¥Ù”¹…ÁÁ•¹ ‰8½ƒŠP»¼¡½ÕÙ”Ï¥É¥”‘”•¹…ÌMH½µÁ…ÓµÙ•°”±•ŸµÙ•°Á…É„…±Õ±…È…¹‘¥‘…Ñ½Ì•áÁ•É¥µ•¹Ñ…¥ÌÁ½È‘…Ñ„¸ˆ¤(€€€€€€€€Œµ½ÍÑ±äÕÉ‰…¸±…ÍÍ¥™¥…Ñ¥½¸¥¸…¸½Á•É…Ñ½ÈµÍÕÁÁ±¥•…É¥Õ±ÑÕÉ…°=$(€€€€€€€€Œ¥Ì„E…¹½µ…±ä°¹½ĞÁ•Éµ¥ÍÍ¥½¸Ñ¼•É…Í”É•…°±…ÍÌ´ÈĞÁ¥á•±Ì½È(€€€€€€€€ŒÉ•±…‰•°Ñ¡•´…ÌÉ½ÁÌ™É½´Ñ¡”™¥±•¹…µ”½È¡¥ÍÑ½É¥…°±½…Ñ¥½¸¸(€€€€€€€ÕÉ‰…¹}¡„õÍÕ´¡™±½…Ğ¡¥Ñ•´¹•Ğ ‰…É•…}¡„ˆ¤½È€À¤™½È¥Ñ•´¥¸±…ÍÍ•Ì(€€€€€€€€€€€€€€€€€€€€¥˜ÍÑÈ¡¥Ñ•´¹•Ğ ‰±…ÍÍ}¹…µ”ˆ¤½È€ˆˆ¤€ôô€‰%¹™É…•ÍÑÉÕÑÕÉ„UÉ‰…¹„ˆ¤(€€€€€€€¥˜…½¥}¡„øÀ…¹ÕÉ‰…¹}¡„½…½¥}¡„øôÀ¸Ôè(€€€€€€€€€€€•á•ÕÑ¥Ù”¹…ÁÁ•¹ (€€€€€€€€€€€€€€€€‰1IQ=9M%MS)9%IQ=K%è€ˆ¬(€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡ÕÉ‰…¹}¡„°È¤¬ˆ¡„€ ˆ¬(€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È ÄÀÀ©ÕÉ‰…¹}¡„½…½¥}¡„°È¤¬(€€€€€€€€€€€€€€€€ˆ”¤±…ÍÍ¥™¥…‘½Ì½µ¼%¹™É…•ÍÑÉÕÑÕÉ„UÉ‰…¹„¹¼5…Á	¥½µ…Ì…¹Õ…°¸€ˆ¬(€€€€€€€€€€€€€€€€‰Y•É¥™¥…ÈÁ½Í¥¥½¹…µ•¹Ñ¼½IL‘¼-5h°µ…Á„Q%°±…ÍÍ”€ÈĞ°…¹¼‘„¥µ…•´”€ˆ¬(€€€€€€€€€€€€€€€€‰¥¹Ñ•ÉÍ—Ÿ¼‘”Á¥á•±Ì…¹Ñ•Ì‘”…ÑÉ¥‰Õ¥ÈÕÍ¼…Ëµ½±„ì¹•¹¡Õµ„±…ÍÍ”™½¤…±Ñ•É…‘„…ÕÑ½µ…Ñ¥…µ•¹Ñ”¸ˆ¤(€€€€€€€Í•½¹‘}‘•Ñ•Ñ¥½¹Ìõ±…¹¹•Ğ ‰Í•½¹‘}É½Á}‘•Ñ•Ñ¥½¸ˆ¤¥˜¥Í¥¹ÍÑ…¹”¡±…¹¹•Ğ ‰Í•½¹‘}É½Á}‘•Ñ•Ñ¥½¸ˆ¤±±¥ÍĞ¤•±Í”mt(€€€€€€€™½È‘•Ñ•Ñ¥½¸¥¸Í•½¹‘}‘•Ñ•Ñ¥½¹Ìè(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€‘•Ñ•Ñ¥½¹}…É•„õ™±½…Ğ¡‘•Ñ•Ñ¥½¸¹•Ğ ‰½Ù•É±…Á}…É•…}¡„ˆ¤½È€À¤(€€€€€€€€€€€•á•ÁĞ€¡QåÁ•ÉÉ½È±Y…±Õ•ÉÉ½È¤è(€€€€€€€€€€€€€€€‘•Ñ•Ñ¥½¹}…É•„ôÀ(€€€€€€€€€€€¥˜‘•Ñ•Ñ¥½¹}…É•„øÀè(€€€€€€€€€€€€€€€•á•ÕÑ¥Ù”¹…ÁÁ•¹ ‰•Ñ•Ÿ¼½µÁ±•µ•¹Ñ…È•áÁ•É¥µ•¹Ñ…°‘”€ˆ­ÍÑÈ¡‘•Ñ•Ñ¥½¸¹•Ğ ‰É½Àˆ¤¤¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆè€ˆ­™½Éµ…Ñ}ÁÑ‰È¡‘•Ñ•Ñ¥½¹}…É•„°È¤¬ˆ¡„‘”Í½‰É•Á½Í§Ÿ¼€¡Í…™É„€Èì»¼Í½µ…Èƒ€ƒ…É•„Ñ½Ñ…°‘„ÁÉ½ÁÉ¥•‘…‘”¤¸ˆ¤(€€€€€€€…•}…ÍÍ•ÍÍµ•¹Ğõ±…¹¹•Ğ ‰ÁÉ½‰…‰±•}É½Á}…”ˆ¤¥˜¥Í¥¹ÍÑ…¹”¡±…¹¹•Ğ ‰ÁÉ½‰…‰±•}É½Á}…”ˆ¤±‘¥Ğ¤•±Í”íô(€€€€€€€…•}Ù…±Õ”õ…•}…ÍÍ•ÍÍµ•¹Ğ¹•Ğ ‰µ½¹Ñ¡Ìˆ¤¥˜€¡…•}…ÍÍ•ÍÍµ•¹Ğ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰Ù…±¥‘…Ñ•ˆ…¹(€€€€€€€€€€€€€€€€€€…•}…ÍÍ•ÍÍµ•¹Ğ¹•Ğ ‰™É•Í¡¹•ÍÍ}ÍÑ…ÑÕÌˆ¤ôô‰•¹…Í}É••¹Ñ•Í}¥‘•¹Ñ¥™¥…‘…Ìˆ¤•±Í”9½¹”(€€€€€€€ÑÉäè(€€€€€€€€€€€…•}Ù…±Õ”õ™±½…Ğ¡…•}Ù…±Õ”¤(€€€€€€€€€€€…•}Ñ•áĞô¡™½Éµ…Ñ}ÁÑ‰È¡…•}Ù…±Õ”°Ä¤¬ˆµ•Í•Ìˆ¥˜…•}Ù…±Õ”øôÀ•±Í”(€€€€€€€€€€€€€€€€€€€€€€‰%9%MA=;5Y0ƒŠPÍ•´•ÍÑ¥µ…Ñ¥Ù„™•¹½³Í¥„MHÙ…±¥‘…‘„ˆ¤(€€€€€€€•á•ÁĞ€¡QåÁ•ÉÉ½È±Y…±Õ•ÉÉ½È¤è(€€€€€€€€€€€…•}Ñ•áĞô‰%9%MA=;5Y0ƒŠPÍ•´•ÍÑ¥µ…Ñ¥Ù„™•¹½³Í¥„MHÙ…±¥‘…‘„ˆ(€€€€€€€¡•…±Ñ õ±…¹¹•Ğ ‰…ÁÁ…É•¹Ñ}Á¡åÑ½Í…¹¥Ñ…Éå}ÍÑ…Ñ”ˆ¤¥˜¥Í¥¹ÍÑ…¹”¡±…¹¹•Ğ ‰…ÁÁ…É•¹Ñ}Á¡åÑ½Í…¹¥Ñ…Éå}ÍÑ…Ñ”ˆ¤±‘¥Ğ¤•±Í”íô(€€€€€€€¡•…±Ñ¡}Ù…±Õ”õÍÑÈ¡¡•…±Ñ ¹•Ğ ‰…Ñ•½Éäˆ°ˆˆ¤¤¹ÍÑÉ¥À ¤¹…Í•™½± ¤(€€€€€€€¡•…±Ñ¡}½ÁÑ¥½¹Ìõì‰‰½´ˆè‰	½´ˆ°‰·¥‘¥¼ˆè‰7¥‘¥¼ˆ°‰µ•‘¥¼ˆè‰7¥‘¥¼ˆ°‰ÉÕ¥´ˆè‰IÕ¥´‰ô(€€€€€€€¡•…±Ñ¡}Ñ•áĞô¡¡•…±Ñ¡}½ÁÑ¥½¹Ím¡•…±Ñ¡}Ù…±Õ•t¥˜€¡¡•…±Ñ ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰Ù…±¥‘…Ñ•ˆ…¹(€€€€€€€€€€€€€€€€€€€€¡•…±Ñ ¹•Ğ ‰™É•Í¡¹•ÍÍ}ÍÑ…ÑÕÌˆ¤ôô‰•¹…Í}É••¹Ñ•Í}¥‘•¹Ñ¥™¥…‘…Ìˆ…¹¡•…±Ñ¡}Ù…±Õ”¥¸¡•…±Ñ¡}½ÁÑ¥½¹Ì¤•±Í”(€€€€€€€€€€€€€€€€€€€€€‰%9%MA=;5Y0ƒŠP½ÃŸÕ•Ìè	½´°7¥‘¥¼½ÔIÕ¥´ˆ¤(€€€€€€€™½É•…ÍĞõ±…¹¹•Ğ ‰å¥•±‘}™½É•…ÍĞˆ¤¥˜¥Í¥¹ÍÑ…¹”¡±…¹¹•Ğ ‰å¥•±‘}™½É•…ÍĞˆ¤±‘¥Ğ¤•±Í”íô(€€€€€€€¥¹Ñ•ÉÙ…°õ™½É•…ÍĞ¹•Ğ ‰ÁÉ•‘¥Ñ¥½¹}¥¹Ñ•ÉÙ…±}Ñ}¡„ˆ¤¥˜¥Í¥¹ÍÑ…¹”¡™½É•…ÍĞ¹•Ğ ‰ÁÉ•‘¥Ñ¥½¹}¥¹Ñ•ÉÙ…±}Ñ}¡„ˆ¤±‘¥Ğ¤•±Í”íô(€€€€€€€Õ¹¥Ñ}½¹Ù•ÉÍ¥½¹}…Õ‘¥Ğõ9½¹”(€€€€€€€ÁÉ½‘ÕÑ¥Ù¥Ñå}Ñ•áĞô‰	1=EUƒŠPµ½‘•±¼½Ù…±¥‘‡Ÿ¼¥•¹Óµ™¥„¥¹ÍÕ™¥¥•¹Ñ•Ìˆ(€€€€€€€ÁÉ½‘ÕÑ¥½¹}Ñ•áĞô‰%9%MA=;5Y0ƒŠPƒ…É•„‘„Õ±ÑÕÉ„¹¼Á½³µ½¹¼»¼ÅÕ…¹Ñ¥™¥…‘„ˆ(€€€€€€€™É½´•áÁ•É¥µ•¹Ñ…±}…Õ‘¥Ğ¥µÁ½ÉĞ•±¥¥‰±•}•áÁ•É¥µ•¹Ñ…±}å¥•±°…Õ‘¥Ñ}å¥•±‘}™½É•…ÍĞ(€€€€€€€å¥•±‘}¥Í}•áÁ•É¥µ•¹Ñ…°õ•±¥¥‰±•}•áÁ•É¥µ•¹Ñ…±}å¥•±¡™½É•…ÍĞ¤(€€€€€€€¥˜™½É•…ÍĞ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰ÁÉ•Ù¥Í…½}Ù…±¥‘…‘„ˆ½Èå¥•±‘}¥Í}•áÁ•É¥µ•¹Ñ…°è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€Ù…±Õ”õ™±½…Ğ¡™½É•…ÍÑl‰å¥•±‘}Ñ}¡„‰t¤ì±½Üõ™±½…Ğ¡¥¹Ñ•ÉÙ…±l‰±½İ•È‰t¤ì¡¥ õ™±½…Ğ¡¥¹Ñ•ÉÙ…±l‰ÕÁÁ•È‰t¤(€€€€€€€€€€€€€€€¥˜Ù…±Õ”øôÀ…¹€Àğõ±½ÜğõÙ…±Õ”ğõ¡¥ è(€€€€€€€€€€€€€€€€€€€™É½´…É¥Õ±ÑÕÉ…±}å¥•±‘}Õ¹¥ÑÌ¥µÁ½ÉĞÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥Ù¥Ñä°ÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥½¸(€€€€€€€€€€€€€€€€€€€É½Á}¹…µ”õ™½É•…ÍĞ¹•Ğ ‰É½Àˆ°€ˆˆ¤(€€€€€€€€€€€€€€€€€€€ÁÉ½‘ÕĞõÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥Ù¥Ñä¡Ù…±Õ”±É½Á}¹…µ”¤(€€€€€€€€€€€€€€€€€€€Õ¹¥Ñ}½¹Ù•ÉÍ¥½¹}…Õ‘¥ĞõÁÉ½‘ÕÑl‰½¹Ù•ÉÍ¥½¸‰t(€€€€€€€€€€€€€€€€€€€±½İ}Õ¹¥ĞõÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥Ù¥Ñä¡±½Ü±É½Á}¹…µ”¤(€€€€€€€€€€€€€€€€€€€¡¥¡}Õ¹¥ĞõÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥Ù¥Ñä¡¡¥ ±É½Á}¹…µ”¤(€€€€€€€€€€€€€€€€€€€‰…Í¥Ìôˆ€¡Í……Ì‘”€ØÀ­œ¤ˆ¥˜ÁÉ½‘ÕÑl‰Õ¹¥Ğ‰tôô‰Í……Ì½¡„ˆ•±Í”€ˆˆ(€€€€€€€€€€€€€€€€€€€ÁÉ½‘ÕÑ¥Ù¥Ñå}Ñ•áĞô¡™½Éµ…Ñ}ÁÑ‰È¡ÁÉ½‘ÕÑl‰Ù…±Õ”‰t°È¤¬ˆ€ˆ­ÁÉ½‘ÕÑl‰Õ¹¥Ğ‰t­‰…Í¥Ì¬(€€€€€€€€€€€€€€€€€€€€€€€€ˆ€ ˆ­™½Éµ…Ñ}ÁÑ‰È¡±½İ}Õ¹¥Ñl‰Ù…±Õ”‰t°È¤¬‹ŠLˆ­™½Éµ…Ñ}ÁÑ‰È¡¡¥¡}Õ¹¥Ñl‰Ù…±Õ”‰t°È¤¬ˆ€ˆ­ÁÉ½‘ÕÑl‰Õ¹¥Ğ‰t¬ˆ¤ˆ¤(€€€€€€€€€€€€€€€€€€€É½Á}…É•„õ™½É•…ÍĞ¹•Ğ ‰É½Á}…É•…}¡„ˆ¤(€€€€€€€€€€€€€€€€€€€¥˜É½Á}…É•„¥Ì¹½Ğ9½¹”…¹™±½…Ğ¡É½Á}…É•„¤øÀè(€€€€€€€€€€€€€€€€€€€€€€€Ñ½Ñ…°õÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥½¸¡Ù…±Õ”±É½Á}…É•„±É½Á}¹…µ”¤(€€€€€€€€€€€€€€€€€€€€€€€±½İ•É}Ñ½Ñ…°õÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥½¸¡±½Ü±É½Á}…É•„±É½Á}¹…µ”¥l‰Ù…±Õ•}Ğ‰t(€€€€€€€€€€€€€€€€€€€€€€€ÕÁÁ•É}Ñ½Ñ…°õÁÉ½‰…‰±•}ÁÉ½‘ÕÑ¥½¸¡¡¥ ±É½Á}…É•„±É½Á}¹…µ”¥l‰Ù…±Õ•}Ğ‰t(€€€€€€€€€€€€€€€€€€€€€€€ÁÉ½‘ÕÑ¥½¹}Ñ•áĞô¡™½Éµ…Ñ}ÁÑ‰È¡Ñ½Ñ…±l‰Ù…±Õ•}Ğ‰t°È¤¬ˆĞ¹¼Á½³µ½¹¼€ ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡±½İ•É}Ñ½Ñ…°°È¤¬‹ŠLˆ­™½Éµ…Ñ}ÁÑ‰È¡ÕÁÁ•É}Ñ½Ñ…°°È¤¬ˆĞ¤°ƒ…É•„‘„Õ±ÑÕÉ„è€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡É½Á}…É•„°È¤¬ˆ¡„ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€¥˜Ñ½Ñ…±l‰Í…­Ì‰t¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€€€€€€€€€€€€€ÁÉ½‘ÕÑ¥½¹}Ñ•áĞ¬ôˆì•ÅÕ¥Ù…±•¹Ñ”„€ˆ­™½Éµ…Ñ}ÁÑ‰È¡Ñ½Ñ…±l‰Í…­Ì‰t°È¤¬ˆÍ……Ì‘”€ØÀ­œˆ(€€€€€€€€€€€•á•ÁĞ€¡-•åÉÉ½È±QåÁ•ÉÉ½È±Y…±Õ•ÉÉ½È¤è(€€€€€€€€€€€€€€€ÁÉ½‘ÕÑ¥Ù¥Ñå}Ñ•áĞô‰	1=EUƒŠP¥¹Ñ•ÉÙ…±¼ÁÉ•‘¥Ñ¥Ù¼…ÕÍ•¹Ñ”½Ô¥¹Û…±¥‘¼ˆ(€€€€€€€¥˜å¥•±‘}¥Í}•áÁ•É¥µ•¹Ñ…°è(€€€€€€€€€€€ÁÉ½‘ÕÑ¥Ù¥Ñå}Ñ•áĞô‰MQ%5Q%YaAI%59Q0€¡»¼¡½µ½±½…‘„¤ƒŠP€ˆ­ÁÉ½‘ÕÑ¥Ù¥Ñå}Ñ•áĞ(€€€€€€€€€€€¥˜¹½ĞÁÉ½‘ÕÑ¥½¹}Ñ•áĞ¹ÍÑ…ÉÑÍİ¥Ñ  ‰%9%MA=;5Y0ˆ¤è(€€€€€€€€€€€€€€€ÁÉ½‘ÕÑ¥½¹}Ñ•áĞô‰MQ%5Q%YaAI%59Q0€¡»¼¡½µ½±½…‘„¤ƒŠP€ˆ­ÁÉ½‘ÕÑ¥½¹}Ñ•áĞ(€€€€€€€É½Á}±…‰•±ÌõÍ½ÉÑ•¡íÍÑÈ¡¬¤™½È¬¥¸€ ¡±…¹¹•Ğ ‰å¥•±‘}™½É•…ÍĞˆ¤½Èíô¤¹•Ğ ‰É½Àˆ¤°¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜¬…¹ÍÑÈ¡¬¤¹ÍÑÉ¥À ¥ô¤(€€€€€€€É½Á}±…‰•±Ì€¬ôÍ½ÉÑ•¡íÍÑÈ¡¥Ñ•´¹•Ğ ‰±…ÍÍ}¹…µ”ˆ¤¤¹É•Á±…” ‰1…Ù½ÕÉ„‘”€ˆ°ˆˆ¤™½È¥Ñ•´¥¸±…ÍÍ•Ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜ÍÑÈ¡¥Ñ•´¹•Ğ ‰±…ÍÍ}¹…µ”ˆ¤½È€ˆˆ¤¹ÍÑ…ÉÑÍİ¥Ñ  ‰1…Ù½ÕÉ„‘”€ˆ¥ô¤(€€€€€€€É½Á}±…‰•±Ìõ±¥ÍĞ¡‘¥Ğ¹™É½µ­•åÌ¡É½Á}±…‰•±Ì¤¤(€€€€€€€•á•ÕÑ¥Ù”¹•áÑ•¹¡lˆˆ°‰A%90aUQ%Y<ƒŠPAIY%O<MILˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€‰Q¥Á¼‘”Õ±Ñ¥Ù¼è€ˆ¬ ˆì€ˆ¹©½¥¸¡É½Á}±…‰•±Ì¤¥˜É½Á}±…‰•±Ì•±Í”€‰8½ƒŠPÕ±ÑÕÉ„»¼¥‘•¹Ñ¥™¥…‘„ˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€‰%‘…‘”ÁÉ½Û…Ù•°‘„±…Ù½ÕÉ„è€ˆ­…•}Ñ•áĞ°(€€€€€€€€€€€€€€€€€€€€€€€€€€‰ÍÑ…‘¼™¥Ñ½ÍÍ…¹¥Ó…É¥¼…Á…É•¹Ñ”è€ˆ­¡•…±Ñ¡}Ñ•áĞ°(€€€€€€€€€€€€€€€€€€€€€€€€€€‰AÉ½‘ÕÑ¥Ù¥‘…‘”•ÍÑ¥µ…‘„¹¼µ½µ•¹Ñ¼‘•ÍÍ„…»…±¥Í”è€ˆ­ÁÉ½‘ÕÑ¥Ù¥Ñå}Ñ•áĞ°(€€€€€€€€€€€€€€€€€€€€€€€€€€‰AÉ½‘×Ÿ¼ÁÉ½Û…Ù•°è€ˆ­ÁÉ½‘ÕÑ¥½¹}Ñ•áĞ°(€€€€€€€€€€€€€€€€€€€€€€€€€€‰ÍÑ…‘¼…Á…É•¹Ñ”ƒ¤Õ´Í¥¹…°É•µ½Ñ¼¥¹•ÍÁ•µ™¥¼ì»¼ƒ¤‘¥…»ÍÍÑ¥¼‘”‘½•»„½ÔÁÉ…„¸ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€‰…É‰½¹¼¹…Ñ¥Ù¼è…±Õ±…‘¼Í•Á…É…‘…µ•¹Ñ”¹„…‰„‘”™½Éµ‡ŸÕ•Ì¹…Ñ¥Ù…Ì¸‰t¤(€€€€€€€…Õ‘¥Ğõl‰U%Q=I%S%9%ƒŠPUM<<M=1<°U1QUIL=9QLˆ°(€€€€€€€€€€€€€€€‰%‘„•á•×Ÿ¼è€ˆ­ÍÑÈ¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤½È€‰8½ˆ¤°(€€€€€€€€€€€€€€€‰ÍÑ…‘¼‘„•Ñ…Á„¹¼Á¥Á•±¥¹”è€ˆ­ÍÑÈ  ¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Á¥Á•±¥¹•}…Õ‘¥Ğˆ¤½Èíô¤¹•Ğ ‰ÍÑ…•Ìˆ¤½Èíô¤¹•Ğ ‰±…¹‘}ÕÍ”ˆ±íô¤¹•Ğ ‰ÍÑ…ÑÕÌˆ±±…¹¹•Ğ ‰ÍÑ…ÑÕÌˆ°‰8½ˆ¤¤¤°(€€€€€€€€€€€€€€€‰7¥Ñ½‘¼è€ˆ­ÍÑÈ¡±…¹¹•Ğ ‰µ•Ñ¡½ˆ°‰»¼¥¹™½Éµ…‘¼ˆ¤¤°(€€€€€€€€€€€€€€€‰AÉ¥½É¥‘…‘”‘”™½¹Ñ•Ìè€ˆ­ÍÑÈ¡±…¹¹•Ğ ‰ÁÉ¥½É¥Ñäˆ°‰»¼¥¹™½Éµ…‘„ˆ¤¤°(€€€€€€€€€€€€€€€‰%¹•ÉÑ•é„‘„ƒ…É•„½±…ÍÍ¥™¥‡Ÿ¼è€ˆ­ÍÑÈ¡±…¹¹•Ğ ‰…É•…}Õ¹•ÉÑ…¥¹Ñäˆ¤½È€‰¥¹•ÉÑ•é„»¼µ•¹ÍÕË…Ù•°ƒŠP±…ÍÍ¥™¥‡Ÿ¼¿…É•„ˆ¤°(€€€€€€€€€€€€€€€‰½¹Ñ”5…Á	¥½µ…Ìè€ˆ­ÍÑÈ¡±…¹¹•Ğ ‰µ…Á‰¥½µ…Í}Í½ÕÉ”ˆ°‰»¼‘¥ÍÁ½»µÙ•°ˆ¤¤°(€€€€€€€€€€€€€€€‰Ù¥Í½Ìè‰t­mÍÑÈ¡à¤™½Èà¥¸±…¹¹•Ğ ‰İ…É¹¥¹Ìˆ±mt¤½Èl‰¹•¹¡Õ´‰ut(€€€€€€€…Õ‘¥Ñ}‘¥ÈõA…Ñ ¡±…¹¹•Ğ ‰Ù•Ñ½É}Á…Ñ ˆ¤½È€¡A…Ñ ¹¡½µ” ¤¼ˆ¹•¹™½Éµ}Ù•É‘”ˆ¼‰…Õ‘¥Ñ½É¥…Ìˆ€¤¤¹Á…É•¹Ğ(€€€€€€€±…¹‘}…Õ‘¥Ğõ…Õ‘¥Ñ}‘¥È¼‰ÕÍ½}Í½±½}…Õ‘¥Ñ½É¥„¹©Í½¸ˆ(€€€€€€€Í•±˜¹}İÉ¥Ñ•}©Í½¹}‰…­É½Õ¹¡±…¹±±…¹‘}…Õ‘¥Ğ¤(€€€€€€€…Õ‘¥Ğ¹•áÑ•¹¡lˆˆ°‰M¹…ÁÍ¡½Ğ¥¹Ñ•É…°‘¼·Í‘Õ±¼‘”ÕÍ¼‘¼Í½±¼€¡)M=8¤èˆ±ÍÑÈ¡±…¹‘}…Õ‘¥Ğ¥t¤(€€€€€€€…Õ‘¥Ğ¹•áÑ•¹¡lˆˆ°‰±…ÍÍ•Ì°™½¹Ñ•Ì”µ•Ñ…‘…‘½Ìè‰t¤(€€€€€€€…Õ‘¥Ğ¹•áÑ•¹¡lˆˆ°€‰AÉ½Ù•¹§©¹¥„‘½Ì¥¹‘¥…‘½É•Ì•á•ÕÑ¥Ù½Ìèˆ°(€€€€€€€€€€€€€€€€€€€€€©Í½¸¹‘ÕµÁÌ¡ì‰…É¥Õ±ÑÕÉ•}¡¥ÍÑ½É¥…±}½¹Ñ¥¹•¹äˆé½¹Ñ¥¹•¹ä°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰ÁÉ½‰…‰±•}É½Á}…”ˆé…•}…ÍÍ•ÍÍµ•¹Ğ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰…ÁÁ…É•¹Ñ}Á¡åÑ½Í…¹¥Ñ…Éå}ÍÑ…Ñ”ˆé¡•…±Ñ °(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰å¥•±‘}™½É•…ÍĞˆé™½É•…ÍĞ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰•áÁ•É¥µ•¹Ñ…±}Í•…Í½¹…±}Í…É}±…ÍÍ¥™¥…Ñ¥½¸ˆéÍ•…Í½¹…±}Í‡[h‘éì¶»§q«^v,
+                        format_ptbr(point.get("span_days"),1)+" dias; cultura N/D; incerteza nÃ£o quantificada.")
+                else:
+                    executive.append("  "+date_label+": sem Ã¡rea candidata calculÃ¡vel â€” "+
+                        str(point.get("reason") or point.get("status") or "sÃ©rie insuficiente")[:180])
+            executive.append("Ãrea candidata por data: classificaÃ§Ã£o experimental em janela mÃ³vel de atÃ© 150 dias; classes nÃ£o sÃ£o hectares agrÃ­colas confirmados e os pontos nÃ£o constituem observaÃ§Ãµes de campo independentes.")
+        else:
+            executive.append("N/D â€” nÃ£o houve sÃ©rie de cenas SAR compatÃ­vel e legÃ­vel para calcular candidatos experimentais por data.")
+        # A mostly urban classification in an operator-supplied agricultural AOI
+        # is a QA anomaly, not permission to erase real class-24 pixels or
+        # relabel them as crops from the filename or historical location.
+        urban_ha=sum(float(item.get("area_ha") or 0) for item in classes
+                     if str(item.get("class_name") or "") == "Infraestrutura Urbana")
+        if aoi_ha>0 and urban_ha/aoi_ha>=0.5:
+            executive.append(
+                "ALERTA DE CONSISTÃŠNCIA CARTOGRÃFICA: "+
+                format_ptbr(urban_ha,2)+" ha ("+
+                format_ptbr(100*urban_ha/aoi_ha,2)+
+                "%) classificados como Infraestrutura Urbana no MapBiomas anual. "+
+                "Verificar posicionamento/CRS do KMZ, mapa TIFF, classe 24, ano da imagem e "+
+                "interseÃ§Ã£o de pixels antes de atribuir uso agrÃ­cola; nenhuma classe foi alterada automaticamente.")
+        second_detections=land.get("second_crop_detection") if isinstance(land.get("second_crop_detection"),list) else []
+        for detection in second_detections:
+            try:
+                detection_area=float(detection.get("overlap_area_ha") or 0)
+            except (TypeError,ValueError):
+                detection_area=0
+            if detection_area>0:
+                executive.append("DetecÃ§Ã£o complementar experimental de "+str(detection.get("crop"))+
+                                 ": "+format_ptbr(detection_area,2)+" ha de sobreposiÃ§Ã£o (safra 2; nÃ£o somar Ã  Ã¡rea total da propriedade).")
+        age_assessment=land.get("probable_crop_age") if isinstance(land.get("probable_crop_age"),dict) else {}
+        age_value=age_assessment.get("months") if (age_assessment.get("status")=="validated" and
+                   age_assessment.get("freshness_status")=="cenas_recentes_identificadas") else None
+        try:
+            age_value=float(age_value)
+            age_text=(format_ptbr(age_value,1)+" meses" if age_value>=0 else
+                      "INDISPONÃVEL â€” sem estimativa fenolÃ³gica SAR validada")
+        except (TypeError,ValueError):
+            age_text="INDISPONÃVEL â€” sem estimativa fenolÃ³gica SAR validada"
+        health=land.get("apparent_phytosanitary_state") if isinstance(land.get("apparent_phytosanitary_state"),dict) else {}
+        health_value=str(health.get("category","")).strip().casefold()
+        health_options={"bom":"Bom","mÃ©dio":"MÃ©dio","medio":"MÃ©dio","ruim":"Ruim"}
+        health_text=(health_options[health_value] if (health.get("status")=="validated" and
+                     health.get("freshness_status")=="cenas_recentes_identificadas" and health_value in health_options) else
+                     "INDISPONÃVEL â€” opÃ§Ãµes: Bom, MÃ©dio ou Ruim")
+        forecast=land.get("yield_forecast") if isinstance(land.get("yield_forecast"),dict) else {}
+        interval=forecast.get("prediction_interval_t_ha") if isinstance(forecast.get("prediction_interval_t_ha"),dict) else {}
+        unit_conversion_audit=None
+        productivity_text="BLOQUEADA â€” modelo/validaÃ§Ã£o cientÃ­fica insuficientes"
+        production_text="INDISPONÃVEL â€” Ã¡rea da cultura no polÃ­gono nÃ£o quantificada"
+        from experimental_audit import eligible_experimental_yield, audit_yield_forecast
+        yield_is_experimental=eligible_experimental_yield(forecast)
+        if forecast.get("status")=="previsao_validada" or yield_is_experimental:
+            try:
+                value=float(forecast["yield_t_ha"]); low=float(interval["lower"]); high=float(interval["upper"])
+                if value>=0 and 0<=low<=value<=high:
+                    from agricultural_yield_units import probable_productivity, probable_production
+                    crop_name=forecast.get("crop", "")
+                    product=probable_productivity(value,crop_name)
+                    unit_conversion_audit=product["conversion"]
+                    low_unit=probable_productivity(low,crop_name)
+                    high_unit=probable_productivity(high,crop_name)
+                    basis=" (sacas de 60 kg)" if product["unit"]=="sacas/ha" else ""
+                    productivity_text=(format_ptbr(product["value"],2)+" "+product["unit"]+basis+
+                        " ("+format_ptbr(low_unit["value"],2)+"â€“"+format_ptbr(high_unit["value"],2)+" "+product["unit"]+")")
+                    crop_area=forecast.get("crop_area_ha")
+                    if crop_area is not None and float(crop_area)>0:
+                        total=probable_production(value,crop_area,crop_name)
+                        lower_total=probable_production(low,crop_area,crop_name)["value_t"]
+                        upper_total=probable_production(high,crop_area,crop_name)["value_t"]
+                        production_text=(format_ptbr(total["value_t"],2)+" t no polÃ­gono ("+
+                            format_ptbr(lower_total,2)+"â€“"+format_ptbr(upper_total,2)+" t), Ã¡rea da cultura: "+
+                            format_ptbr(crop_area,2)+" ha")
+                        if total["sacks"] is not None:
+                            production_text+="; equivalente a "+format_ptbr(total["sacks"],2)+" sacas de 60 kg"
+            except (KeyError,TypeError,ValueError):
+                productivity_text="BLOQUEADA â€” intervalo preditivo ausente ou invÃ¡lido"
+        if yield_is_experimental:
+            productivity_text="ESTIMATIVA EXPERIMENTAL (nÃ£o homologada) â€” "+productivity_text
+            if not production_text.startswith("INDISPONÃVEL"):
+                production_text="ESTIMATIVA EXPERIMENTAL (nÃ£o homologada) â€” "+production_text
+        crop_labels=sorted({str(k) for k in ((land.get("yield_forecast") or {}).get("crop"),)
+                            if k and str(k).strip()})
+        crop_labels += sorted({str(item.get("class_name")).replace("Lavoura de ","") for item in classes
+                               if str(item.get("class_name") or "").startswith("Lavoura de ")})
+        crop_labels=list(dict.fromkeys(crop_labels))
+        executive.extend(["","PAINEL EXECUTIVO â€” PREVISÃƒO DE SAFRAS",
+                          "Tipo de cultivo: "+("; ".join(crop_labels) if crop_labels else "N/D â€” cultura nÃ£o identificada"),
+                          "Idade provÃ¡vel da lavoura: "+age_text,
+                          "Estado fitossanitÃ¡rio aparente: "+health_text,
+                          "Produtividade estimada no momento dessa anÃ¡lise: "+productivity_text,
+                          "ProduÃ§Ã£o provÃ¡vel: "+production_text,
+                          "Estado aparente Ã© um sinal remoto inespecÃ­fico; nÃ£o Ã© diagnÃ³stico de doenÃ§a ou praga.",
+                          "Carbono nativo: calculado separadamente na aba de formaÃ§Ãµes nativas."])
+        audit=["AUDITORIA TÃ‰CNICA â€” USO DO SOLO, CULTURAS E FONTES",
+               "ID da execuÃ§Ã£o: "+str(self.project.get("analysis_run_id") or "N/D"),
+               "Estado da etapa no pipeline: "+str(((self.project.get("pipeline_audit") or {}).get("stages") or {}).get("land_use",{}).get("status",land.get("status","N/D"))),
+               "MÃ©todo: "+str(land.get("method","nÃ£o informado")),
+               "Prioridade de fontes: "+str(land.get("priority","nÃ£o informada")),
+               "Incerteza da Ã¡rea/classificaÃ§Ã£o: "+str(land.get("area_uncertainty") or "incerteza nÃ£o mensurÃ¡vel â€” classificaÃ§Ã£o/Ã¡rea"),
+               "Fonte MapBiomas: "+str(land.get("mapbiomas_source","nÃ£o disponÃ­vel")),
+               "Avisos:"]+[str(x) for x in land.get("warnings",[]) or ["nenhum"]]
+        audit_dir=Path(land.get("vector_path") or (Path.home()/".enform_verde"/"auditorias" )).parent
+        land_audit=audit_dir/"uso_solo_auditoria.json"
+        self._write_json_background(land,land_audit)
+        audit.extend(["","Snapshot integral do mÃ³dulo de uso do solo (JSON):",str(land_audit)])
+        audit.extend(["","Classes, fontes e metadados:"])
+        audit.extend(["", "ProveniÃªncia dos indicadores executivos:",
+                      json.dumps({"agriculture_historical_contingency":contingency,
+                                  "probable_crop_age":age_assessment,
+                                  "apparent_phytosanitary_state":health,
+                                  "yield_forecast":forecast,
+                                  "experimental_seasonal_sar_classification":seasonal_sar,
                                   "yield_calculation_trace":audit_yield_forecast(forecast,analysis_id=self.project.get("analysis_run_id")),
                                   "yield_unit_conversion":unit_conversion_audit},ensure_ascii=False,indent=2,default=str)])
         # Keep acquisition and processing evidence alongside the executive
@@ -1619,7 +3270,123 @@ class App(tk.Tk):
             # with the independent NASA POWER/CPTEC dashboard requests.
             try:
                 fc_lines,fc_audit=crop_future.result()
-                # Do notYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Ô­••À„ÍÑ…±”€‰	1=EUˆ¡•…‘±¥¹”…™Ñ•ÈÑ¡”…±¥‰É…Ñ•(€€€€€€€€€€€€€€€€Œ•áÁ•É¥µ•¹Ñ…°Á…¹•°¡…ÌÉ•ÑÕÉ¹•„¹Õµ•É¥ŒÉ•ÍÕ±Ğ¸…É‰½¸(€€€€€€€€€€€€€€€€ŒÁÉ•Í•¹Ñ…Ñ¥½¸…¹¹…Ñ¥Ù”µÍÑ½¬É½ÕÑ¥¹•Ì…É”Õ¹Ñ½Õ¡•¸(€€€€€€€€€€€€€€€Á…¹•±}É•ÍÕ±ÑÌ€ôl¡É½Á}¹…µ”°¥Ñ•´¤™½ÈÉ½Á}¹…µ”°¥Ñ•´¥¸™}…Õ‘¥Ğ¹•Ğ ‰É½ÁÌˆ°íô¤¹¥Ñ•µÌ ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡¥Ñ•´°‘¥Ğ¤…¹¥Ñ•´¹•Ğ ‰™½É•…ÍÑ}µ½‘•°ˆ¤€ôô€‰Á…¹•°ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€…¹¥Í¥¹ÍÑ…¹”¡¥Ñ•´¹•Ğ ‰™½É•…ÍĞˆ¤°‘¥Ğ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€…¹€‰ÁÉ½‘ÕÑ¥½¸ˆ¥¸¥Ñ•µl‰™½É•…ÍĞ‰ut(€€€€€€€€€€€€€€€¥˜±•¸¡Á…¹•±}É•ÍÕ±ÑÌ¤€ôô€Äè(€€€€€€€€€€€€€€€€€€€É½Á}¹…µ”°Á…¹•±}•¹ÑÉä€ôÁ…¹•±}É•ÍÕ±ÑÍlÁt(€€€€€€€€€€€€€€€€€€€Á…¹•°€ôÁ…¹•±}•¹ÑÉål‰™½É•…ÍĞ‰t(€€€€€€€€€€€€€€€€€€€À€ôÁ…¹•±l‰ÁÉ½‘ÕÑ¥½¸‰t(€€€€€€€€€€€€€€€€€€€™¥•±‘Ì€ôÀ¹•Ğ ‰™¥•±‘Í}­}¡„ˆ°íô¤(€€€€€€€€€€€€€€€€€€€Ø€ô¹•áĞ¡¥Ñ•È¡™¥•±‘Ì¹Ù…±Õ•Ì ¤¤°9½¹”¤(€€€€€€€€€€€€€€€€€€€Ğ€ôÀ¹•Ğ ‰ÁÉ½‘ÕÑ¥½¹}Ğˆ¤(€€€€€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡Ø°‘¥Ğ¤…¹¥Í¥¹ÍÑ…¹”¡Ğ°‘¥Ğ¤è(€€€€€€€€€€€€€€€€€€€€€€€™É½´É½Á}É•Á½ÉÑ}½¹Í¥ÍÑ•¹ä¥µÁ½ÉĞÉ•µ½Ù•}ÍÕÁ•ÉÍ•‘•‘}å¥•±‘}Á±…•¡½±‘•ÉÌ(€€€€€€€€€€€€€€€€€€€€€€€•á•ÕÑ¥Ù”€ôÉ•µ½Ù•}ÍÕÁ•ÉÍ•‘•‘}å¥•±‘}Á±…•¡½±‘•ÉÌ (€€€€€€€€€€€€€€€€€€€€€€€€€€€•á•ÕÑ¥Ù”°É•Á±…•}å¥•±‘}É•ÍÕ±ÑÌõQÉÕ”¤(€€€€€€€€€€€€€€€€€€€€€€€¥¹ÁÕÑÌ€ôÁ…¹•±}•¹ÑÉä¹•Ğ ‰™½É•…ÍÑ}¥¹ÁÕÑÌˆ¤½Èíô(€€€€€€€€€€€€€€€€€€€€€€€µ…Í­}Í½ÕÉ”€ôÍÑÈ¡¥¹ÁÕÑÌ¹•Ğ ‰É½Á}µ…Í­}Í½ÕÉ”ˆ¤½ÈÁ…¹•±}•¹ÑÉä¹•Ğ ‰¥‘•¹Ñ¥™¥…Ñ¥½¹}Í½ÕÉ”ˆ¤½È€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€µ…Í­}Í•…Í½¸€ôÍÑÈ¡¥¹ÁÕÑÌ¹•Ğ ‰É½Á}µ…Í­}Í•…Í½¸ˆ¤½È€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€É½Á}…É•„€ô™±½…Ğ¡¥¹ÁÕÑÌ¹•Ğ ‰É½Á}…É•…}¡„ˆ¤½ÈÁ…¹•±}•¹ÑÉä¹•Ğ ‰…É•…}¡„ˆ¤½È€À¸À¤(€€€€€€€€€€€€€€€€€€€€€€€¥˜µ…Í­}Í½ÕÉ”€ôô€‰MI}aAI%59Q1}9U0ˆè(€€€€€€€€€€€€€€€€€€€€€€€€€€€…É•…}‰…Í¥Ì€ô€ ‹…É•„‘„·…Í…É„MH•áÁ•É¥µ•¹Ñ…°‘„Í…™É„€ˆ€¬µ…Í­}Í•…Í½¸€¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€ ˆ€¬™½Éµ…Ñ}ÁÑ‰È¡É½Á}…É•„°€È¤€¬€ˆ¡„¤ìÁ•ÉÍ¥ÍÓ©¹¥„Á…É„„Í…™É„ÁÉ½©•Ñ…‘„ƒ¤¡¥ÃÍÑ•Í”ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€•±¥˜µ…Í­}Í½ÕÉ”€ôô€‰MI}Y1%<ˆè(€€€€€€€€€€€€€€€€€€€€€€€€€€€…É•…}‰…Í¥Ì€ô€‹…É•„‘„·…Í…É„MH…•¥Ñ„Á…É„„Õ±ÑÕÉ„€ ˆ€¬™½Éµ…Ñ}ÁÑ‰È¡É½Á}…É•„°€È¤€¬€ˆ¡„¤ˆ(€€€€€€€€€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€€€€€€€€€…É•…}‰…Í¥Ì€ô€‹…É•„‘„Õ±ÑÕÉ„8½ì‰…Í”è€ˆ€¬µ…Í­}Í½ÕÉ”(€€€€€€€€€€€€€€€€€€€€€€€•á•ÕÑ¥Ù”€¬ôl(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰AÉ½‘ÕÑ¥Ù¥‘…‘”•ÍÑ¥µ…‘„¹¼µ½µ•¹Ñ¼‘•ÍÍ„…»…±¥Í”èMQ%5Q%YaAI%59Q0É•¥½¹…°ƒŠP€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ùl‰µ•‘¥…¸‰t€¼€ÄÀÀÀ°€È¤€¬€ˆĞ½¡„€¡¥¹Ñ•ÉÙ…±¼€äÀ”è€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ùl‰ÀÀÔ‰t€¼€ÄÀÀÀ°€È¤€¬€‹ŠLˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ùl‰ÀäÔ‰t€¼€ÄÀÀÀ°€È¤€¬€ˆĞ½¡„¤ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬€  ˆì•ÅÕ¥Ù…±•¹Ñ”„€ˆ€¬™½Éµ…Ñ}ÁÑ‰È¡Ùl‰µ•‘¥…¸‰t€¼€ØÀ°€È¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬€ˆÍ……Ì½¡„€ ØÀ­œ½Í…„ì¥¹Ñ•ÉÙ…±¼€äÀ”è€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ùl‰ÀÀÔ‰t€¼€ØÀ°€È¤€¬€‹ŠLˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ùl‰ÀäÔ‰t€¼€ØÀ°€È¤€¬€ˆÍ……Ì½¡„¤ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜ÍÑÈ¡É½Á}¹…µ”¤¹ÍÑÉ¥À ¤¹…Í•™½± ¤€ôô€‰Í½©„ˆ•±Í”€ˆˆ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬€  ˆì¥¹•ÉÑ•é„É•±…Ñ¥Ù„€¡¥¹Ñ•ÉÙ…±¼ÁÉ•‘¥Ñ¥Ù¼€äÀ”°‰…Í”µ•‘¥…¹„¤è€´ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È ÄÀÀ€¨€¡Ùl‰µ•‘¥…¸‰t€´Ùl‰ÀÀÔ‰t¤€¼Ùl‰µ•‘¥…¸‰t°€Ä¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬€ˆ”€¼€¬ˆ€¬™½Éµ…Ñ}ÁÑ‰È ÄÀÀ€¨€¡Ùl‰ÀäÔ‰t€´Ùl‰µ•‘¥…¸‰t¤€¼Ùl‰µ•‘¥…¸‰t°€Ä¤€¬€ˆ”ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜ÍÑÈ¡É½Á}¹…µ”¤¹ÍÑÉ¥À ¤¹…Í•™½± ¤€ôô€‰Í½©„ˆ…¹Ùl‰µ•‘¥…¸‰t€ø€À(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€•±Í”€ ˆì¥¹•ÉÑ•é„É•±…Ñ¥Ù„è8½€¡µ•‘¥…¹„¥Õ…°„é•É¼¤ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜ÍÑÈ¡É½Á}¹…µ”¤¹ÍÑÉ¥À ¤¹…Í•™½± ¤€ôô€‰Í½©„ˆ•±Í”€ˆˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰AÉ½‘×Ÿ¼ÁÉ½Û…Ù•°è;I%<aAI%59Q0=9%%=90ƒŠP€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ñl‰µ•‘¥…¸‰t°€È¤€¬€ˆĞ€¡¥¹Ñ•ÉÙ…±¼€äÀ”è€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ñl‰ÀÀÔ‰t°€È¤€¬€‹ŠLˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬™½Éµ…Ñ}ÁÑ‰È¡Ñl‰ÀäÔ‰t°€È¤€¬€ˆĞ¤ìƒ…É•„…Á±¥…‘„è€ˆ€¬…É•…}‰…Í¥Ì°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰	…Í”‘”ÁÉ½‘ÕÑ¥Ù¥‘…‘”èÁ…¥¹•°¡¥ÍÓÍÉ¥¼A4€¬±¥µ„½‰…±…»¼£µ‘É¥¼¸€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬€ ‰Y¥½ÈMH…ÑÕ…°»¼™½¤¥¹½ÉÁ½É…‘¼è»¼£„·…Í…É„Í•·‰¹Ñ¥„…ÑÕ…°‘”€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰Õ±ÑÕÉ„½µÁ…ÓµÙ•°ìÙ•©„¼‘¥…»ÍÍÑ¥¼•ÍÑÉÕÑÕÉ…°MHÉ•±…Ñ¥Ù¼•´Í•Á…É…‘¼¸ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜¹½Ğ€¡¥¹ÁÕÑÌ¹•Ğ ‰ÕÉÉ•¹Ñ}É½Á}ÍÁ•¥™¥}Í…É}Ù¥½É}ÕÍ•ˆ¤½È(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥¹ÁÕÑÌ¹•Ğ ‰•áÁ•É¥µ•¹Ñ…±}ÕÉÉ•¹Ñ}Í…É}Ù¥½É}½¹‘¥Ñ¥½¹•‘}å¥•±ˆ¤¤•±Í”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ ‰Y¥½ÈMH‘…Ñ…‘¼¥¹½ÉÁ½É…‘¼½¹‘¥¥½¹…±µ•¹Ñ”Í½‰É”·…Í…É„…¹Õ…°•áÁ•É¥µ•¹Ñ…°ì€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰„Á•Éµ…»©¹¥„‘„Õ±ÑÕÉ„»¼™½¤½¹™¥Éµ…‘„¸ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜¥¹ÁÕÑÌ¹•Ğ ‰•áÁ•É¥µ•¹Ñ…±}ÕÉÉ•¹Ñ}Í…É}Ù¥½É}½¹‘¥Ñ¥½¹•‘}å¥•±ˆ¤•±Í”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰Y¥½ÈMH‘…Ñ…‘¼Í½‰É”·…Í…É„‘”Õ±ÑÕÉ„™½¤¥¹½ÉÁ½É…‘¼½¹™½Éµ”¼½¹ÑÉ…Ñ¼‘¼µ½‘•±¼¸ˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰QÉ…¹Í™•Ë©¹¥„‘„·…Í…É„¿…É•„É•ÑÉ½ÍÁ•Ñ¥Ù„Á…É„„Í…™É„ÁÉ½©•Ñ…‘„è€ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬ÍÑÈ¡¥¹ÁÕÑÌ¹•Ğ ‰…É•…}ÑÉ…¹Í™•É}Õ¹•ÉÑ…¥¹Ñäˆ¤½È€‰»¼…Á±¥…Ù•°ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬€ˆì¥¹•ÉÑ•é„‘”±…ÍÍ¥™¥‡Ÿ¼½ÑÉ…¹Í™•Ë©¹¥„»¼¥¹±×µ‘„¹¼¥¹Ñ•ÉÙ…±¼‘”ÁÉ½‘ÕÑ¥Ù¥‘…‘”¸‰t(€€€€€€€€€€€€€€€•á•ÕÑ¥Ù”¬õ™}±¥¹•Ì(€€€€€€€€€€€€€€€…Õ‘¥Ñ}Ñ•áĞ¬õlˆˆ°‰AIY%O<MIƒŠPU%Q=I%ˆ±©Í½¸¹‘ÕµÁÌ¡™}…Õ‘¥Ğ±•¹ÍÕÉ•}…Í¥¤õ…±Í”±¥¹‘•¹ĞôÈ±‘•™…Õ±ĞõÍÑÈ¥t(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€€€€€•á•ÕÑ¥Ù”¬õlˆˆ°‰AÉ•Ù¥Ï¼‘”Í…™É„è%9%MA=;5Y0ƒŠP€ˆ­ÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÈÀÁut(€€€€€€€€€€€™¥¹…±±äè(€€€€€€€€€€€€€€€É½Á}•á•ÕÑ½È¹Í¡ÕÑ‘½İ¸¡İ…¥Ğõ…±Í”°…¹•±}™ÕÑÕÉ•Ìõ…±Í”¤(€€€€€€€€€€€‘•˜ÁÉ•Í•¹Ğ ¤è(€€€€€€€€€€€€€€€¥˜ÅÕ•Éå}¥„õÍ•±˜¹}İ•…Ñ¡•É}ÅÕ•Éå}•¹•É…Ñ¥½¸½È…¹…±åÍ¥Í}¥„õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤è(€€€€€€€€€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€€€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰É½Á}•á•}Ù…Èˆ¤è(€€€€€€€€€€€€€€€€€€€…ÉõÍ•±˜¹}•á•ÕÑ¥Ù•}•á•ÉÁĞ ‰q¸ˆ¹©½¥¸¡•á•ÕÑ¥Ù”¤°(€€€€€€€€€€€€€€€€€€€€€€€€ ‹IQ=Q0=$èˆ°‰ÍÑ…‘¼‘„±…ÍÍ¥™¥‡Ÿ¼MH…ÑÕ…°èˆ°‰Q¥Á¼‘”Õ±Ñ¥Ù¼èˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€‰AÉ½‘ÕÑ¥Ù¥‘…‘”•ÍÑ¥µ…‘„¹¼µ½µ•¹Ñ¼‘•ÍÍ„…»…±¥Í”èˆ°‰AÉ½‘×Ÿ¼ÁÉ½Û…Ù•°èˆ¤¤(€€€€€€€€€€€€€€€€€€€™É½´É½Á}Ù¥½É}‘…Í¡‰½…É‘}ÍÕµµ…Éä¥µÁ½ÉĞÉ½Á}Ù¥½É}‘…Í¡‰½…É‘}±¥¹•Ì(€€€€€€€€€€€€€€€€€€€…É¬ô‰q¹q¹Y%=HMH%Q<9AIY%O=q¸ˆ¬‰q¸ˆ¹©½¥¸ (€€€€€€€€€€€€€€€€€€€€€€€É½Á}Ù¥½É}‘…Í¡‰½…É‘}±¥¹•Ì¡™}…Õ‘¥Ğ±™½Éµ…Ñ}ÁÑ‰È¤¤(€€€€€€€€€€€€€€€€€€€Í•±˜¹É½Á}•á•}Ù…È¹Í•Ğ¡…É¤(€€€€€€€€€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É½Á}É•Ì°‰q¸ˆ¹©½¥¸¡•á•ÕÑ¥Ù”¤¤(€€€€€€€€€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É½Á}…Õ‘¥Ğ°‰q¸ˆ¹©½¥¸¡…Õ‘¥Ñ}Ñ•áĞ¤¤(€€€€€€€€€€€Í•±˜¹…™Ñ•È À±ÁÉ•Í•¹Ğ¤(€€€€€€€Í•±˜¹…™Ñ•È àÀ±Í•±˜¹}Á½±±}É½Á}™½É•…ÍÑ}ÅÕ•Õ”±ÅÕ•Éå}¥±…¹…±åÍ¥Í}¥¤(€€€€€€€Ñ¡É•…‘¥¹œ¹Q¡É•…¡Ñ…É•Ğõİ½É­•È±‘…•µ½¸õQÉÕ”¤¹ÍÑ…ÉĞ ¤((€€€‘•˜}Á½±±}É½Á}™½É•…ÍÑ}ÅÕ•Õ”¡Í•±˜±ÅÕ•Éå}¥±…¹…±åÍ¥Í}¥¤è(€€€€€€€¥˜ÅÕ•Éå}¥„õÍ•±˜¹}İ•…Ñ¡•É}ÅÕ•Éå}•¹•É…Ñ¥½¸½È…¹…±åÍ¥Í}¥„õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤è(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€É•ÍÕ±Ğõ9½¹”(€€€€€€€İ¡¥±”QÉÕ”è(€€€€€€€€€€€ÑÉäé¥Ñ•´õÍ•±˜¹}É½Á}™½É•…ÍÑ}ÅÕ•Õ”¹•Ñ}¹½İ…¥Ğ ¤(€€€€€€€€€€€•á•ÁĞÅÕ•Õ”¹µÁÑäé‰É•…¬(€€€€€€€€€€€¥˜¥Ñ•µlÁtôõÅÕ•Éå}¥…¹¥Ñ•µlÅtôõ…¹…±åÍ¥Í}¥è(€€€€€€€€€€€€€€€É•ÍÕ±Ğõ¥Ñ•´í‰É•…¬(€€€€€€€¥˜É•ÍÕ±Ğ¥Ì9½¹”è(€€€€€€€€€€€¥˜Í•±˜¹İ¥¹™½}•á¥ÍÑÌ ¤éÍ•±˜¹…™Ñ•È ÄÀÀ±Í•±˜¹}Á½±±}É½Á}™½É•…ÍÑ}ÅÕ•Õ”±ÅÕ•Éå}¥±…¹…±åÍ¥Í}¥¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€É•ÍÕ±Ñ}ÅÕ•Éä±É•ÍÕ±Ñ}…¹…±åÍ¥Ì±‰…Í•}É•Á½ÉĞ±…Õ‘¥Ñ}‰…Í”±™}±¥¹•Ì±™}…Õ‘¥ĞõÉ•ÍÕ±Ğ(€€€€€€€™É½´É½Á}Ù¥½É}‘…Í¡‰½…É‘}ÍÕµµ…Éä¥µÁ½ÉĞÉ½Á}Ù¥½É}‘…Í¡‰½…É‘}±¥¹•Ì(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰É½Á}Ù¥½É}™½É•…ÍÑ}…Õ‘¥Ğ‰tõ™}…Õ‘¥Ğ(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰•á•ÕÑ¥Ù•}Ù¥½É}ÍÑ…ÑÕÌ‰tô‰q¸ˆ¹©½¥¸¡É½Á}Ù¥½É}‘…Í¡‰½…É‘}±¥¹•Ì¡™}…Õ‘¥Ğ±™½Éµ…Ñ}ÁÑ‰È¤¤(€€€€€€€Í•±˜¹}É•™É•Í¡}½Ù•É…±±}•á•ÕÑ¥Ù•}ÍÕµµ…Éä ¤(€€€€€€€É•Á½ÉĞô¡m‰…Í•}É•Á½ÉĞ°ˆ‰t¥˜‰…Í•}É•Á½ÉĞ•±Í”mt¤­l‰Y%=HMHAIY%O<MIƒŠPIMU1Q<%9A99Q=9MU1Q1%7Q%‰t­™}±¥¹•Ì(€€€€€€€…Õ‘¥Ñ}É•Á½ÉĞô¡m…Õ‘¥Ñ}‰…Í”°ˆ‰t¥˜…Õ‘¥Ñ}‰…Í”•±Í”mt¤­l‰Y%=HMHAIY%O<ƒŠPU%Q=I%ˆ±©Í½¸¹‘ÕµÁÌ¡™}…Õ‘¥Ğ±•¹ÍÕÉ•}…Í¥¤õ…±Í”±¥¹‘•¹ĞôÈ±‘•™…Õ±ĞõÍÑÈ¥t(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É½Á}É•Ì°‰q¸ˆ¹©½¥¸¡É•Á½ÉĞ¤¤ìÍ•±˜¹}Í•Ğ¡Í•±˜¹É½Á}…Õ‘¥Ğ°‰q¸ˆ¹©½¥¸¡…Õ‘¥Ñ}É•Á½ÉĞ¤¤(€€€€€€€ÍÕµµ…ÉäõÍ•±˜¹}•á•ÕÑ¥Ù•}•á•ÉÁĞ ‰q¸ˆ¹©½¥¸¡É•Á½ÉĞ¤°(€€€€€€€€€€€€ ‹IQ=Q0=$èˆ°‰ÍÑ…‘¼‘„±…ÍÍ¥™¥‡Ÿ¼MH…ÑÕ…°èˆ°‰Q¥Á¼‘”Õ±Ñ¥Ù¼èˆ°‰AÉ½‘ÕÑ¥Ù¥‘…‘”•ÍÑ¥µ…‘„¹¼µ½µ•¹Ñ¼‘•ÍÍ„…»…±¥Í”èˆ¤¤(€€€€€€€ÍÕµµ…Éä¬ô‰q¹q¹Y%=HMH%Q<9AIY%O=q¸ˆ­Í•±˜¹ÁÉ½©•Ñl‰•á•ÕÑ¥Ù•}Ù¥½É}ÍÑ…ÑÕÌ‰t(€€€€€€€Í•±˜¹É½Á}•á•}Ù…È¹Í•Ğ¡ÍÕµµ…Éä¤((€€€‘•˜}Í½ÕÉ•Ì¡Í•±˜¤è(€€€€€€€˜õÍ•±˜¹Ñ…‰ÍlÑtìÑÑ¬¹1…‰•°¡˜±Ñ•áĞô‰I…ÍÑÉ•…‰¥±¥‘…‘”µ•Ñ½‘½³Í¥„ˆ±ÍÑå±”ô‰ ¹Q1…‰•°ˆ¤¹Á…¬¡…¹¡½Èô‰Üˆ¤(€€€€€€€Í•±˜¹Í¥•¹•}•á•}‰½à±Í•±˜¹Í¥•¹•}•á•}Ù…ÈõÍ•±˜¹}•á•ÕÑ¥Ù•}…É (€€€€€€€€€€€˜°‰EUI<aUQ%Y<ƒŠP	M%9S5%ˆ°(€€€€€€€€€€€€‰5½‘•±½Ì”¥¹Ù•¹Ó…É¥½Ìè½¹ÍÕ±Ñ”¼•ÍÑ…‘¼‘”‘¥ÍÁ½¹¥‰¥±¥‘…‘””½µÁ…Ñ¥‰¥±¥‘…‘”…¹Ñ•Ì‘”¥¹Ñ•ÉÁÉ•Ñ…ÈÉ•ÍÕ±Ñ…‘½Ì¸ˆ¤(€€€€€€€Í•±˜¹Í¥•¹•}•á•}‰½à¹Á…¬¡™¥±°ô‰àˆ±Á…‘äô Ø°Ğ¤¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡˜±Ñ•áĞô‰IMU5%H%9Y9SI%<€¡@€¬ƒI	M0¤ˆ±½µµ…¹õÍ•±˜¹ÍÕµµ…É¥é•}¥¹Ù•¹Ñ½Éå}Õ¤¤¹Á…¬¡…¹¡½Èô‰Üˆ±Á…‘äô Ø°È¤¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡›[h‘éì¶»§q«^ttext="AMPLIAR BIBLIOTECA â€” FONTES HIERARQUIZADAS",command=self.harvest_official_inventory_ui).pack(anchor="w",pady=2)
+                # Do not keep a stale "BLOQUEADA" headline after the calibrated
+                # experimental panel has returned a numeric result. Carbon
+                # presentation and native-stock routines are untouched.
+                panel_results = [(crop_name, item) for crop_name, item in fc_audit.get("crops", {}).items()
+                                 if isinstance(item, dict) and item.get("forecast_model") == "panel"
+                                 and isinstance(item.get("forecast"), dict)
+                                 and "production" in item["forecast"]]
+                if len(panel_results) == 1:
+                    crop_name, panel_entry = panel_results[0]
+                    panel = panel_entry["forecast"]
+                    p = panel["production"]
+                    fields = p.get("fields_kg_ha", {})
+                    v = next(iter(fields.values()), None)
+                    t = p.get("production_t")
+                    if isinstance(v, dict) and isinstance(t, dict):
+                        from crop_report_consistency import remove_superseded_yield_placeholders
+                        executive = remove_superseded_yield_placeholders(
+                            executive, replace_yield_results=True)
+                        inputs = panel_entry.get("forecast_inputs") or {}
+                        mask_source = str(inputs.get("crop_mask_source") or panel_entry.get("identification_source") or "N/D")
+                        mask_season = str(inputs.get("crop_mask_season") or "N/D")
+                        crop_area = float(inputs.get("crop_area_ha") or panel_entry.get("area_ha") or 0.0)
+                        if mask_source == "SAR_EXPERIMENTAL_ANUAL":
+                            area_basis = ("Ã¡rea da mÃ¡scara SAR experimental da safra " + mask_season +
+                                          " (" + format_ptbr(crop_area, 2) + " ha); persistÃªncia para a safra projetada Ã© hipÃ³tese")
+                        elif mask_source == "SAR_VALIDADO":
+                            area_basis = "Ã¡rea da mÃ¡scara SAR aceita para a cultura (" + format_ptbr(crop_area, 2) + " ha)"
+                        else:
+                            area_basis = "Ã¡rea da cultura N/D; base: " + mask_source
+                        executive += [
+                            "Produtividade estimada no momento dessa anÃ¡lise: ESTIMATIVA EXPERIMENTAL regional â€” "
+                            + format_ptbr(v["median"] / 1000, 2) + " t/ha (intervalo 90%: "
+                            + format_ptbr(v["p05"] / 1000, 2) + "â€“"
+                            + format_ptbr(v["p95"] / 1000, 2) + " t/ha)"
+                            + (("; equivalente a " + format_ptbr(v["median"] / 60, 2)
+                                + " sacas/ha (60 kg/saca; intervalo 90%: "
+                                + format_ptbr(v["p05"] / 60, 2) + "â€“"
+                                + format_ptbr(v["p95"] / 60, 2) + " sacas/ha)")
+                               if str(crop_name).strip().casefold() == "soja" else "")
+                            + (("; incerteza relativa (intervalo preditivo 90%, base mediana): -"
+                                + format_ptbr(100 * (v["median"] - v["p05"]) / v["median"], 1)
+                                + "% / +" + format_ptbr(100 * (v["p95"] - v["median"]) / v["median"], 1) + "%")
+                               if str(crop_name).strip().casefold() == "soja" and v["median"] > 0
+                               else ("; incerteza relativa: N/D (mediana igual a zero)"
+                                     if str(crop_name).strip().casefold() == "soja" else "")),
+                            "ProduÃ§Ã£o provÃ¡vel: CENÃRIO EXPERIMENTAL CONDICIONAL â€” "
+                            + format_ptbr(t["median"], 2) + " t (intervalo 90%: "
+                            + format_ptbr(t["p05"], 2) + "â€“"
+                            + format_ptbr(t["p95"], 2) + " t); Ã¡rea aplicada: " + area_basis,
+                            "Base de produtividade: painel histÃ³rico PAM + clima/balanÃ§o hÃ­drico. "
+                            + ("Vigor SAR atual nÃ£o foi incorporado: nÃ£o hÃ¡ mÃ¡scara semÃ¢ntica atual de "
+                               "cultura compatÃ­vel; veja o diagnÃ³stico estrutural SAR relativo em separado."
+                               if not (inputs.get("current_crop_specific_sar_vigor_used") or
+                                       inputs.get("experimental_current_sar_vigor_conditioned_yield")) else
+                               ("Vigor SAR datado incorporado condicionalmente sobre mÃ¡scara anual experimental; "
+                                "a permanÃªncia da cultura nÃ£o foi confirmada."
+                                if inputs.get("experimental_current_sar_vigor_conditioned_yield") else
+                                "Vigor SAR datado sobre mÃ¡scara de cultura foi incorporado conforme o contrato do modelo.")),
+                            "TransferÃªncia da mÃ¡scara/Ã¡rea retrospectiva para a safra projetada: "
+                            + str(inputs.get("area_transfer_uncertainty") or "nÃ£o aplicÃ¡vel")
+                            + "; incerteza de classificaÃ§Ã£o/transferÃªncia nÃ£o incluÃ­da no intervalo de produtividade."]
+                executive+=fc_lines
+                audit_text+=["","PREVISÃƒO DE SAFRA â€” AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
+            except Exception as exc:
+                executive+=["","PrevisÃ£o de safra: INDISPONÃVEL â€” "+type(exc).__name__+": "+str(exc)[:200]]
+            finally:
+                crop_executor.shutdown(wait=False, cancel_futures=False)
+            def present():
+                if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
+                    return
+                if hasattr(self,"crop_exec_var"):
+                    card=self._executive_excerpt("\n".join(executive),
+                        ("ÃREA TOTAL DA AOI:","Estado da classificaÃ§Ã£o SAR atual:","Tipo de cultivo:",
+                         "Produtividade estimada no momento dessa anÃ¡lise:","ProduÃ§Ã£o provÃ¡vel:"))
+                    from crop_vigor_dashboard_summary import crop_vigor_dashboard_lines
+                    card+="\n\nVIGOR SAR E EFEITO NA PREVISÃƒO\n"+"\n".join(
+                        crop_vigor_dashboard_lines(fc_audit,format_ptbr))
+                    self.crop_exec_var.set(card)
+                self._set(self.crop_res,"\n".join(executive))
+                self._set(self.crop_audit,"\n".join(audit_text))
+            self.after(0,present)
+        self.after(80,self._poll_crop_forecast_queue,query_id,analysis_id)
+        threading.Thread(target=worker,daemon=True).start()
+
+    def _poll_crop_forecast_queue(self,query_id,analysis_id):
+        if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
+            return
+        result=None
+        while True:
+            try:item=self._crop_forecast_queue.get_nowait()
+            except queue.Empty:break
+            if item[0]==query_id and item[1]==analysis_id:
+                result=item;break
+        if result is None:
+            if self.winfo_exists():self.after(100,self._poll_crop_forecast_queue,query_id,analysis_id)
+            return
+        result_query,result_analysis,base_report,audit_base,fc_lines,fc_audit=result
+        from crop_vigor_dashboard_summary import crop_vigor_dashboard_lines
+        self.project["crop_vigor_forecast_audit"]=fc_audit
+        self.project["executive_vigor_status"]="\n".join(crop_vigor_dashboard_lines(fc_audit,format_ptbr))
+        self._refresh_overall_executive_summary()
+        report=([base_report,""] if base_report else [])+["VIGOR SAR E PREVISÃƒO DE SAFRA â€” RESULTADO INDEPENDENTE DA CONSULTA CLIMÃTICA"]+fc_lines
+        audit_report=([audit_base,""] if audit_base else [])+["VIGOR SAR E PREVISÃƒO â€” AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
+        self._set(self.crop_res,"\n".join(report)); self._set(self.crop_audit,"\n".join(audit_report))
+        summary=self._executive_excerpt("\n".join(report),
+            ("ÃREA TOTAL DA AOI:","Estado da classificaÃ§Ã£o SAR atual:","Tipo de cultivo:","Produtividade estimada no momento dessa anÃ¡lise:"))
+        summary+="\n\nVIGOR SAR E EFEITO NA PREVISÃƒO\n"+self.project["executive_vigor_status"]
+        self.crop_exec_var.set(summary)
+
+    def _sources(self):
+        f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodolÃ³gica",style="H.TLabel").pack(anchor="w")
+        self.science_exec_box,self.science_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO â€” BASE CIENTÃFICA",
+            "Modelos e inventÃ¡rios: consulte o estado de disponibilidade e compatibilidade antes de interpretar resultados.")
+        self.science_exec_box.pack(fill="x",pady=(6,4))
+        ttk.Button(f,text="RESUMIR INVENTÃRIO (DAP + ÃREA BASAL)",command=self.summarize_inventory_ui).pack(anchor="w",pady=(6,2))
+        ttk.Button(f,text="AMPLIAR BIBLIOTECA â€” FONTES HIERARQUIZADAS",command=self.harvest_official_inventory_ui).pack(anchor="w",pady=2)
         ttk.Label(f,text="Consulta APIs do IFN/SFB, Sinaflor/IBAMA, REDAPE/Embrapa, repositÃ³rios institucionais OAI e Zenodo; baixa recursos pÃºblicos do REDAPE e Sinaflor e registra as demais rotas de acesso, inclusive universidades, PNLA, IBAMA, Ã³rgÃ£os estaduais e unidades de conservaÃ§Ã£o. InventÃ¡rios fitossociolÃ³gicos entram na mesma triagem estrutural e taxonÃ´mica.",wraplength=1000).pack(anchor="w",pady=(0,6))
         source_box=ttk.LabelFrame(f,text="MÃ©todos, fontes e limites de aplicaÃ§Ã£o",style="Exec.TLabelframe"); source_box.pack(fill="both",expand=True,pady=8)
         self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
@@ -1703,16 +3470,154 @@ class App(tk.Tk):
                 lines += ["","Arquivos e manifestos salvos em:",str(root)]
                 self._set(self.src,"\n".join(lines))
                 self.status.set("Coleta de catÃ¡logos concluÃ­da.")
-               YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Ô…•ÍÍ}¥¹‘•àõÉ½½Ğ¼ˆÀÁ}½¹Ñ•Í}¡¥•É…ÉÅÕ¥é…‘…Ìˆ¼‰…•ÍÍ½}™½¹Ñ•Í}¡¥•É…ÉÅÕ¥é…‘…Ì¹¡Ñµ°ˆ(€€€€€€€€€€€€€€€¥˜…•ÍÍ}¥¹‘•à¹•á¥ÍÑÌ ¤è(€€€€€€€€€€€€€€€€€€€İ•‰‰É½İÍ•È¹½Á•¸¡…•ÍÍ}¥¹‘•à¹É•Í½±Ù” ¤¹…Í}ÕÉ¤ ¤¤(€€€€€€€€€€€€€€€µ•ÍÍ…•‰½à¹Í¡½İ¥¹™¼ ‰	¥‰±¥½Ñ•„‘”¥¹Ù•¹Ó…É¥½Ìˆ±˜‰½±•Ñ„½¹±×µ‘„¸½¹ÍÕ±Ñ”½Ìµ…¹¥™•ÍÑ½Ì”…ÉÅÕ¥Ù½Ì•´éq¹íÉ½½Ñôˆ¤(€€€€€€€€€€€Í•±˜¹…™Ñ•È À±™¥¹¥Í ¤(€€€€€€€Ñ¡É•…‘¥¹œ¹Q¡É•…¡Ñ…É•Ğõ½±±•Ğ±‘…•µ½¸õQÉÕ”¤¹ÍÑ…ÉĞ ¤((€€€‘•˜ÍÕµµ…É¥é•}¥¹Ù•¹Ñ½Éå}Õ¤¡Í•±˜¤è(€€€€€€€ÍÉŒõ™¥±•‘¥…±½œ¹…Í­½Á•¹™¥±•¹…µ”¡Ñ¥Ñ±”ô‰M•±•¥½¹”MX¡…Éµ½¹¥é…‘¼‘”¥¹Ù•¹Ó…É¥¼ˆ±™¥±•ÑåÁ•Ìõl ‰MXˆ°ˆ¨¹ÍØˆ¤° ‰Q½‘½Ìˆ°ˆ¨¸¨ˆ¥t¤(€€€€€€€¥˜¹½ĞÍÉŒéÉ•ÑÕÉ¸(€€€€€€€ÑÉäè(€€€€€€€€€€€É•ÍÕ±ĞõÍÕµµ…É¥é•}¥¹Ù•¹Ñ½Éå}ÍØ¡ÍÉŒ¤(€€€€€€€€€€€‘•ÍĞõ™¥±•‘¥…±½œ¹…Í­Í…Ù•…Í™¥±•¹…µ”¡Ñ¥Ñ±”ô‰M…±Ù…ÈÉ•ÍÕµ¼•ÍÑÉÕÑÕÉ…°ˆ±‘•™…Õ±Ñ•áÑ•¹Í¥½¸ôˆ¹á±Íàˆ±™¥±•ÑåÁ•Ìõl ‰á•°ˆ°ˆ¨¹á±Íàˆ¥t¤(€€€€€€€€€€€¥˜¹½Ğ‘•ÍĞéÉ•ÑÕÉ¸(€€€€€€€€€€€İˆõ]½É­‰½½¬ ¤ìİÌõİˆ¹…Ñ¥Ù”ìİÌ¹Ñ¥Ñ±”ô‰A½È¥¹Ù•¹Ó…É¥¼ˆ(€€€€€€€€€€€ÍÕµµ…É¥•ÌõÉ•ÍÕ±Ñl‰¥¹Ù•¹Ñ½Éå}ÍÕµµ…Éä‰t(€€€€€€€€€€€¥˜¹½ĞÍÕµµ…É¥•ÌéÉ…¥Í”Y…±Õ•ÉÉ½È ‰9•¹¡Õµ„ƒ…ÉÙ½É”Ù¥Ù„½´@Û…±¥‘¼™½¤•¹½¹ÑÉ…‘„¸ˆ¤(€€€€€€€€€€€İÌ¹…ÁÁ•¹¡±¥ÍĞ¡ÍÕµµ…É¥•ÍlÁt¤¤(€€€€€€€€€€€™½ÈÉ½Ü¥¸ÍÕµµ…É¥•ÌéİÌ¹…ÁÁ•¹¡mÉ½Ü¹•Ğ¡¬¤™½È¬¥¸ÍÕµµ…É¥•ÍlÁut¤(€€€€€€€€€€€İÀõİˆ¹É•…Ñ•}Í¡••Ğ ‰A½ÈÁ…É•±„ˆ¤ìÁ±½ÑÌõÉ•ÍÕ±Ñl‰Á±½Ñ}ÍÕµµ…Éä‰t(€€€€€€€€€€€¥˜Á±½ÑÌè(€€€€€€€€€€€€€€€İÀ¹…ÁÁ•¹¡±¥ÍĞ¡Á±½ÑÍlÁt¤¤(€€€€€€€€€€€€€€€™½ÈÉ½Ü¥¸Á±½ÑÌéİÀ¹…ÁÁ•¹¡mÉ½Ü¹•Ğ¡¬¤™½È¬¥¸Á±½ÑÍlÁut¤(€€€€€€€€€€€İ´õİˆ¹É•…Ñ•}Í¡••Ğ ‰7¥Ñ½‘¼”±¥µ¥Ñ•Ìˆ¤(€€€€€€€€€€€İ´¹…ÁÁ•¹¡l‰%Ñ•´ˆ°‰•ÍÉ§Ÿ¼‰t¤ìİ´¹…ÁÁ•¹¡l‰7¥Ñ½‘¼ˆ±É•ÍÕ±Ñl‰µ•Ñ¡½‰ut¤(€€€€€€€€€€€™½È±¥µ¥Ñ…Ñ¥½¸¥¸É•ÍÕ±Ñl‰±¥µ¥Ñ…Ñ¥½¹Ì‰téİ´¹…ÁÁ•¹¡l‰1¥µ¥Ñ”ˆ±±¥µ¥Ñ…Ñ¥½¹t¤(€€€€€€€€€€€İˆ¹Í…Ù”¡‘•ÍĞ¤(€€€€€€€€€€€µ•ÍÍ…•‰½à¹Í¡½İ¥¹™¼ ‰%¹Ù•¹Ó…É¥¼ˆ±˜‰I•ÍÕµ¼Í…±Ù¼¸7¥ÑÉ¥…Ì‘”…µÁ¼Í•´Á…É•…µ•¹Ñ¼MHéq¹í‘•ÍÑôˆ¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”éµ•ÍÍ…•‰½à¹Í¡½İ•ÉÉ½È ‰%¹Ù•¹Ó…É¥¼ˆ±ÍÑÈ¡”¤¤(€€€‘•˜}‰¥¹‘}Ñ•áÑ}ÍÉ½±°¡Í•±˜±Ü¤è(€€€€€€€€ˆˆ‰5…­”‘¥Í…‰±•±½¹œµ™½É´É•Á½ÉÑÌÍÉ½±°‰äİ¡••°…Ìİ•±°…ÌÍÉ½±±‰…È¸ˆˆˆ(€€€€€€€‘•˜İ¡••°¡•Ù•¹Ğ¤è(€€€€€€€€€€€¥˜•Ñ…ÑÑÈ¡•Ù•¹Ğ°‰¹Õ´ˆ±9½¹”¤ôôĞèÍÑ•Àô´Ì(€€€€€€€€€€€•±¥˜•Ñ…ÑÑÈ¡•Ù•¹Ğ°‰¹Õ´ˆ±9½¹”¤ôôÔèÍÑ•ÀôÌ(€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€‘•±Ñ„õ¥¹Ğ¡•Ñ…ÑÑÈ¡•Ù•¹Ğ°‰‘•±Ñ„ˆ°À¤½È€À¤(€€€€€€€€€€€€€€€¥˜¹½Ğ‘•±Ñ„éÉ•ÑÕÉ¸€‰‰É•…¬ˆ(€€€€€€€€€€€€€€€ÍÑ•Àôµµ…à Ä±…‰Ì¡‘•±Ñ„¤¼¼ÄÈÀ¤¨ Ä¥˜‘•±Ñ„øÀ•±Í”€´Ä¤(€€€€€€€€€€€Ü¹åÙ¥•İ}ÍÉ½±°¡ÍÑ•À°‰Õ¹¥ÑÌˆ¤(€€€€€€€€€€€É•ÑÕÉ¸€‰‰É•…¬ˆ(€€€€€€€Ü¹‰¥¹ ˆñ5½ÕÍ•]¡••°øˆ±İ¡••°¤(€€€€€€€Ü¹‰¥¹ ˆñ	ÕÑÑ½¸´Ğøˆ±İ¡••°¤ìÜ¹‰¥¹ ˆñ	ÕÑÑ½¸´Ôøˆ±İ¡••°¤((€€€‘•˜}Í•Ğ¡Í•±˜±Ü±Ğ¤è(€€€€€€€€ˆˆ‰UÁ‘…Ñ”É•Á½ÉĞÑ•áĞİ¥Ñ¡½ÕĞµ½¹½Á½±¥é¥¹œQ¬İ¡¥±”±…É”…Õ‘¥ÑÌÉ•¹‘•È¸ˆˆˆ(€€€€€€€Ñ•áĞõÍÑÈ¡Ğ½È€ˆˆ¤(€€€€€€€•¹•É…Ñ¥½¸õ¥¹Ğ¡•Ñ…ÑÑÈ¡Ü°‰}•¹™½Éµ}É•¹‘•É}•¹•É…Ñ¥½¸ˆ°À¤¤¬Ä(€€€€€€€Ü¹}•¹™½Éµ}É•¹‘•É}•¹•É…Ñ¥½¸õ•¹•É…Ñ¥½¸(€€€€€€€Ü¹}•¹™½Éµ}Á•¹‘¥¹}Ñ•áĞõÑ•áĞ¥˜±•¸¡Ñ•áĞ¤øàÀÀÀÀ•±Í”9½¹”(€€€€€€€Ü¹½¹™¥œ¡ÍÑ…Ñ”ô‰¹½Éµ…°ˆ¤ìÜ¹‘•±•Ñ” ˆÄ¸Àˆ°‰•¹ˆ¤ìÜ¹½¹™¥œ¡ÍÑ…Ñ”ô‰‘¥Í…‰±•ˆ¤(€€€€€€€¥˜±•¸¡Ñ•áĞ¤ğôàÀÀÀÀè(€€€€€€€€€€€Ü¹½¹™¥œ¡ÍÑ…Ñ”ô‰¹½Éµ…°ˆ¤ìÜ¹¥¹Í•ÉĞ ˆÄ¸Àˆ±Ñ•áĞ¤ìÜ¹½¹™¥œ¡ÍÑ…Ñ”ô‰‘¥Í…‰±•ˆ¤(€€€€€€€€€€€ÑÉäéÜ¹åÙ¥•İ}µ½Ù•Ñ¼ À¸À¤(€€€€€€€€€€€•á•ÁĞÑ¬¹Q±ÉÉ½ÈéÁ…ÍÌ(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€€Œ¥Í…‰±•İ¥‘•ÑÌ…É”‰É¥•™±ä•¹…‰±•Á•È¡Õ¹¬Í¼­•å‰½…É¥¹ÁÕĞ(€€€€€€€€Œ…¹¹½Ğ…±Ñ•È…¸…Õ‘¥Ğİ¡¥±”å¥•±‘¥¹œÑ¼Q¬‰•Ñİ••¸¥¹Í•ÉÑ¥½¹Ì¸(€€€€€€€¡Õ¹­}Í¥é”ôÄØÀÀÀ(€€€€€€€‘•˜¥¹Í•ÉÑ}¡Õ¹¬¡½™™Í•ĞôÀ¤è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€¥˜¹½ĞÜ¹İ¥¹™½}•á¥ÍÑÌ ¤½ÈÜ¹}•¹™½Éµ}É•¹‘•É}•¹•É…Ñ¥½¸„õ•¹•É…Ñ¥½¸éÉ•ÑÕÉ¸(€€€€€€€€€€€€€€€•¹õµ¥¸¡±•¸¡Ñ•áĞ¤±½™™Í•Ğ­¡Õ¹­}Í¥é”¤(€€€€€€€€€€€€€€€Ü¹½¹™¥œ¡ÍÑ…Ñ”ô‰¹½Éµ…°ˆ¤ìÜ¹¥¹Í•ÉĞ ‰•¹ˆ±Ñ•áÑm½™™Í•Ğé•¹‘t¤ìÜ¹½¹™¥œ¡ÍÑ…Ñ”ô‰‘¥Í…‰±•ˆ¤(€€€€€€€€€€€€€€€¥˜•¹ñ±•¸¡Ñ•áĞ¤è(€€€€€€€€€€€€€€€€€€€Ü¹…™Ñ•È Ä±±…µ‰‘„¹•áÑ}½™™Í•Ğõ•¹é¥¹Í•ÉÑ}¡Õ¹¬¡¹•áÑ}½™™Í•Ğ¤¤(€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€Ü¹}•¹™½Éµ}Á•¹‘¥¹}Ñ•áĞõ9½¹”(€€€€€€€€€€€€€€€€€€€Ü¹åÙ¥•İ}µ½Ù•Ñ¼ À¸À¤(€€€€€€€€€€€•á•ÁĞÑ¬¹Q±ÉÉ½Èè(€€€€€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€Ü¹…™Ñ•É}¥‘±”¡¥¹Í•ÉÑ}¡Õ¹¬¤(€€€‘•˜}İÉ¥Ñ•}©Í½¹}‰…­É½Õ¹¡Í•±˜±‘…Ñ„±Á…Ñ ¤è(€€€€€€€€ˆˆ‰A•ÉÍ¥ÍĞÁ½Ñ•¹Ñ¥…±±ä±…É”…Õ‘¥ĞÍ¹…ÁÍ¡½ÑÌ½ÕÑÍ¥‘”Ñ¡”Q¬•Ù•¹Ğ±½½À¸ˆˆˆ(€€€€€€€Ñ…É•ĞõA…Ñ ¡Á…Ñ ¤(€€€€€€€‘•˜İÉ¥Ñ•}Í¹…ÁÍ¡½Ğ ¤è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€Ñ…É•Ğ¹Á…É•¹Ğ¹µ­‘¥È¡Á…É•¹ÑÌõQÉÕ”±•á¥ÍÑ}½¬õQÉÕ”¤(€€€€€€€€€€€€€€€Ñ…É•Ğ¹İÉ¥Ñ•}Ñ•áĞ¡©Í½¸¹‘ÕµÁÌ¡‘…Ñ„±•¹ÍÕÉ•}…Í¥¤õ…±Í”±¥¹‘•¹ĞôÈ±‘•™…Õ±ĞõÍÑÈ¤±•¹½‘¥¹œô‰ÕÑ˜´àˆ¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€€€€€±½œõA…Ñ ¹¡½µ” ¤¼ˆ¹•¹™½Éµ}Ù•É‘”ˆ¼‰•¹™½Éµ}‘¥…¹½ÍÑ¥¼¹±½œˆ(€€€€€€€€€€€€€€€€€€€±½œ¹Á…É•¹Ğ¹µ­‘¥È¡Á…É•¹ÑÌõQÉÕ”±•á¥ÍÑ}½¬õQÉÕ”¤(€€€€€€€€€€€€€€€€€€€İ¥Ñ ±½œ¹½Á•¸ ‰„ˆ±•¹½‘¥¹œô‰ÕÑ˜´àˆ¤…ÌÍÑÉ•…´è(€€€€€€€€€€€€€€€€€€€€€€€ÍÑÉ•…´¹İÉ¥Ñ” ‰q¹U%Q}]I%Q}%1€ˆ­ÍÑÈ¡Ñ…É•Ğ¤¬ˆè€ˆ­ÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÈĞÁt¤(€€€€€€€€€€€€€€€•á•ÁĞ=MÉÉ½Èè(€€€€€€€€€€€€€€€€€€€Á…ÍÌ(€€€€€€€Ñ¡É•…‘¥¹œ¹Q¡É•…¡Ñ…É•ĞõİÉ¥Ñ•}Í¹…ÁÍ¡½Ğ±¹…µ”ô‰¹™½ÉµÕ‘¥Ñ]É¥Ñ”ˆ±‘…•µ½¸õQÉÕ”¤¹ÍÑ…ÉĞ ¤(€€€‘•˜}½Áå}Ñ•áĞ¡Í•±˜±Ñ•áĞ±±…‰•°ô‰I•±…ÓÍÉ¥¼ˆ¤è(€€€€€€€Ù…±Õ”õÍÑÈ¡Ñ•áĞ½È€ˆˆ¤(€€€€€€€¥˜¹½ĞÙ…±Õ”¹ÍÑÉ¥À ¤è(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ¡±…‰•°¬ˆè…¥¹‘„»¼£„½¹Ñ—é‘¼Á…É„½Á¥…È¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€Í•±˜¹±¥Á‰½…É‘}±•…È ¤ìÍ•±˜¹±¥Á‰½…É‘}…ÁÁ•¹¡Ù…±Õ”¤ìÍ•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ¡±…‰•°¬ˆ½Á¥…‘¼Á…É„„ƒ…É•„‘”ÑÉ…¹Í™•Ë©¹¥„¸ˆ¤(€€€‘•˜}½Áå}É•Á½ÉĞ¡Í•±˜±İ¥‘•Ğ±±…‰•°ô‰I•±…ÓÍÉ¥¼ˆ¤è(€€€€€€€Á•¹‘¥¹œõ•Ñ…ÑÑÈ¡İ¥‘•Ğ°‰}•¹™½Éµ}Á•¹‘¥¹}Ñ•áĞˆ±9½¹”¤(€€€€€€€Í•±˜¹}½Áå}Ñ•áĞ¡Á•¹‘¥¹œ¥˜Á•¹‘¥¹œ¥Ì¹½Ğ9½¹”•±Í”İ¥‘•Ğ¹•Ğ ˆÄ¸Àˆ°‰•¹´ÅŒˆ¤±±…‰•°¤(€€€‘•˜}Á½ÁÕ±…Ñ•}…É‰½¹}‘…Í¡‰½…É¡Í•±˜±¹…Ñ¥Ù”¤è(€€€€€€€™É½´…É‰½¹}‘…Í¡‰½…É‘}Ñ…‰±”¥µÁ½ÉĞ…É‰½¹}‘…Í¡‰½…É‘}É½İÌ(€€€€€€€¥˜¹½Ğ¡…Í…ÑÑÈ¡Í•±˜°‰…É‰½¹}‘…Í¡‰½…É‘}Ñ…‰±”ˆ¤éÉ•ÑÕÉ¸(€€€€€€€Ñ…‰±”õÍ•±˜¹…É‰½¹}‘…Í¡‰½…É‘}Ñ…‰±”(€€€€€€€™½È¥Ñ•´¥¸Ñ…‰±”¹•Ñ}¡¥±‘É•¸ ˆˆ¤è(€€€€€€€€€€€Ñ…‰±”¹‘•±•Ñ”¡¥Ñ•´¤(€€€€€€€‘•˜¹Õµ‰•È¡Ù…±Õ”¤è(€€€€€€€€€€€É•ÑÕÉ¸™½Éµ…Ñ}ÁÑ‰È¡Ù…±Õ”°È¤¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”°¡¥¹Ğ±™±½…Ğ¤¤…¹Ù…±Õ”¥Ì¹½Ğ9½¹”•±Í”€‰8½ˆ(€€€€€€€™½ÈÉ½Ü¥¸…É‰½¹}‘…Í¡‰½…É‘}É½İÌ¡¹…Ñ¥Ù”½Èíô¤è(€€€€€€€€€€€Õ¹ŒõÉ½Ü¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñå}Ñ}¡„ˆ¤(€€€€€€€€€€€­¥¹õÍÑÈ¡É½İl‰Õ¹•ÉÑ…¥¹Ñå}­¥¹‰t¤(€€€€€€€€€€€¥˜Õ¹Œ¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€ÁÉ•™¥àô‰@•ÍÁ…¥…°‘•ÍÉ¥Ñ¥Ù¼è€ˆ¥˜€‰‘•ÍÉ¥Ñ¥Ù¼ˆ¥¸­¥¹¹…Í•™½± ¤•±Í”€‹
-Ä€ˆ(€€€€€€€€€€€€€€€©½¥¹•Èôˆğ€ˆ¥˜ÁÉ•™¥à¹•¹‘Íİ¥Ñ  ˆè€ˆ¤•±Í”€ˆğƒ
-Ä€ˆ(€€€€€€€€€€€€€€€Õ¹}Ñ•áĞô¡ÁÉ•™¥à­¹Õµ‰•È¡Õ¹Œ¤¬ˆÑ½¡„ˆ­©½¥¹•È­¹Õµ‰•È¡Õ¹Œ¨ĞĞ¼ÄÈ¤¬ˆÑ?Š
-	”½¡„ğ€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€¹Õµ‰•È¡É½Ü¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñå}Á•É•¹Ğˆ¤¤¬ˆ”ƒŠP€ˆ­­¥¹¤(€€€€€€€€€€€•±Í”éÕ¹}Ñ•áĞô‰%¹•ÉÑ•é„Ñ½Ñ…°è8½ƒŠP€ˆ­­¥¹(€€€€€€€€€€€¥˜É½Ü¹•Ğ ‰Í•¹Í¥Ñ¥Ù¥Ñå}Ñ}¡„ˆ¤¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€Í•¹ÌõÉ½İl‰Í•¹Í¥Ñ¥Ù¥Ñå}Ñ}¡„‰t(€€€€€€€€€€€€€€€Õ¹}Ñ•áĞ¬ô ‰q¹M9M%	%1%AI%0èƒ
-Ä€ˆ­¹Õµ‰•È¡Í•¹Ì¤¬ˆÑ½¡„ğƒ
-Ä€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€¹Õµ‰•È¡Í•¹Ì¨ĞĞ¼ÄÈ¤¬ˆÑ?Š
-	”½¡„ğ€ˆ­¹Õµ‰•È¡É½Ü¹•Ğ ‰Í•¹Í¥Ñ¥Ù¥Ñå}Á•É•¹Ğˆ¤¤¬ˆ”ƒŠP€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€ÍÑÈ¡É½Ü¹•Ğ ‰Í•¹Í¥Ñ¥Ù¥Ñå}­¥¹ˆ¤½È€‰»¼ƒ¤¥¹•ÉÑ•é„Ñ½Ñ…°ˆ¤¤(€€€€€€€€€€€‘•¹Í¥ÑäõÉ½Ü¹•Ğ ‰Ñ}¡„ˆ¤ìÍÑ½¬õÉ½Ü¹•Ğ ‰ÍÑ½­}ÑŒˆ¤(€€€€€€€€€€€‘•¹Í¥Ñå}Ñ•áĞô¡¹Õµ‰•È¡‘•¹Í¥Ñä¤¬ˆÑ½¡„ğ€ˆ­¹Õµ‰•È¡‘•¹Í¥Ñä¨ĞĞ¼ÄÈ¤¬ˆÑ?Š
-	”½¡„ˆ¥˜‘•¹Í¥Ñä¥Ì¹½Ğ9½¹”•±Í”€‰8½ˆ¤(€€€€€€€€€€€ÍÑ½­}Ñ•áĞô¡¹Õµ‰•È¡ÍÑ½¬¤¬ˆÑğ€ˆ­¹Õµ‰•È¡ÍÑ½¬¨ĞĞ¼ÄÈ¤¬ˆÑ?Š
-	”ˆ¥˜ÍÑ½¬¥Ì¹½Ğ9½¹”•±Í”€‰8½ˆ¤(€€€€€€€€€€€Ñ…‰±”¹¥¹Í•ÉĞ ˆˆ°‰•¹ˆ±Ù…±Õ•Ìô¡É½İl‰½µÁ…ÉÑµ•¹Ğ‰t±‘•¹Í¥Ñå}Ñ•áĞ°(€€€€€€€€€€€€€€€ÍÑ½­}Ñ•áĞ±Õ¹}Ñ•áĞ±¹Õµ‰•È¡É½Ü¹•Ğ ‰…É•…}¡„ˆ¤¤±É½İl‰ÍÑ…ÑÕÌ‰t¤¤(€€€‘•˜}É•™É•Í¡}½Ù•É…±±}•á•ÕÑ¥Ù•}ÍÕµµ…Éä¡Í•±˜¤è(€€€€€€€¥˜¹½Ğ¡…Í…ÑÑÈ¡Í•±˜°‰½Ù•É…±±}•á•}Ù…Èˆ¤éÉ•ÑÕÉ¸(€€€€€€€±…¹õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰±…¹‘}ÕÍ”ˆ¤½Èíôì¹…Ñ¥Ù”õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰¹…Ñ¥Ù•}…É‰½¸ˆ¤½Èíô(€€€€€€€…É•„õ¹…Ñ¥Ù”¹•Ğ ‰…É•…}…½¥}¡„ˆ¤½ÈÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…É•…}¡„ˆ¤(€€€€€€€±…¹‘}ÍÑ…ÑÕÌõÍÑÈ¡±…¹¹•Ğ ‰ÍÑ…ÑÕÌˆ¤½È€‰8½ˆ¤(€€€€€€€Í…Èõ±…¹¹•Ğ ‰É••¹Ñ}Í…É}½Ù•Èˆ¤½Èíô(€€€€€€€Í…É}ÍÑ…ÑÕÌõÍÑÈ¡Í…È¹•Ğ ‰ÍÑ…ÑÕÌˆ¤½ÈÍ…È¹•Ğ ‰É•…Í½¸ˆ¤½È€‰8½ƒŠP½¹ÍÕ±Ñ”…Õ‘¥Ñ½É¥„‘„½‰•ÉÑÕÉ„ˆ¤(€€€€€€€¡•¥¡ÑÌô¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í…É}É•ÍÕ±Ğˆ¤½Èíô¤¹•Ğ ‰¡•¥¡Ñ}ÁÉ½‘ÕÑÌˆ¤½Èmt(€€€€€€€¡•¥¡Ñ}ÍÑ…ÑÕÌô¡ÍÑÈ¡±•¸¡¡•¥¡ÑÌ¤¤¬ˆÁÉ½‘ÕÑ¼¡Ì¤ ½´Á¥á•±Ì¹¼Á…¥¹•°ˆ¥˜¡•¥¡ÑÌ•±Í”(€€€€€€€€€€€€€€€€€€€€€€€‰8½ƒŠPÙ•É¥™¥…ÈÍ”¡½ÕÙ”Á¥á•±Ì ±¥‘½Ìì™…±¡„Ó¥¹¥„»¼ƒ¤…ÕÏ©¹¥„‘”•¹…Ìˆ¤(€€€€€€€Ñ½Ñ…°õ¹…Ñ¥Ù”¹•Ğ ‰­¹½İ¹}Ñ½Ñ…±}ÑŒˆ¤(€€€€€€€…É‰½¸ô¡™½Éµ…Ñ}ÁÑ‰È¡Ñ½Ñ…°°È¤¬ˆÑ½¹¡•¥‘½Ìì€ˆ¬ ‰Á…É¥…°ˆ¥˜¹½Ğ¹…Ñ¥Ù”¹•Ğ ‰½µÁ±•Ñ”ˆ¤•±Í”€‰½µÁ±•Ñ¼ˆ¤(€€€€€€€€€€€€€€€¥˜Ñ½Ñ…°¥Ì¹½Ğ9½¹”•±Í”€‰8½ƒŠPÍ•´•ÍÑ¥µ…‘½ÈÅÕ…¹Ñ¥Ñ…Ñ¥Ù¼•±•ŸµÙ•°ˆ¤(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰…É‰½¹}ÍÑ½­}Ù…Èˆ¤è(€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡Ñ½Ñ…°°¡¥¹Ğ±™±½…Ğ¤¤è(€€€€€€€€€€€€€€€±…‰•°ô‰MQ=EUQ=Q0ˆ¥˜¹…Ñ¥Ù”¹•Ğ ‰½µÁ±•Ñ”ˆ¤•±Í”€‰M=5AI%0=9!%ƒŠP;<ƒ$<Q=Q0=5A1Q<ˆ(€€€€€€€€€€€€€€€Í•±˜¹…É‰½¹}ÍÑ½­}Ù…È¹Í•Ğ¡±…‰•°¬‰q¸ˆ­™½Éµ…Ñ}ÁÑ‰È¡Ñ½Ñ…°°È¤¬ˆÑ€ğ€€ˆ¬(€€€€€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡™±½…Ğ¡Ñ½Ñ…°¤¨ĞĞ¼ÄÈ°È¤¬ˆÑ?Š
-	”ˆ¤(€€€€€€€€€€€•±Í”éÍ•±˜¹…É‰½¹}ÍÑ½­}Ù…È¹Í•Ğ ‰MQ=EUI	=9<è8½ƒŠP¹•¹¡Õ´•ÍÑ¥µ…‘½ÈÅÕ…¹Ñ¥Ñ…Ñ¥Ù¼•±•ŸµÙ•°¸ˆ¤(€€€€€€€Ù¥½ÈõÍÑÈ¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰•á•ÕÑ¥Ù•}Ù¥½É}ÍÑ…ÑÕÌˆ¤½È€‰…»…±¥Í”‘”Ù¥½ÈMH•´ÁÉ½•ÍÍ…µ•¹Ñ¼ˆ¤(€€€€€€€Í•±˜¹½Ù•É…±±}•á•}Ù…È¹Í•Ğ ‰q¸ˆ¹©½¥¸¡l(€€€€€€€€€€€€‰=$è€ˆ¬¡™½Éµ…Ñ}ÁÑ‰È¡…É•„°È¤¬ˆ¡„ˆ¥˜…É•„¥Ì¹½Ğ9½¹”•±Í”€‰8½ˆ¤°(€€€€€€€€€€€€‰UÍ¼”½‰•ÉÑÕÉ„è€ˆ­±…¹‘}ÍÑ…ÑÕÌ°(€€€€€€€€€€€€‰5…Á„Ñ•·…Ñ¥¼±½…°è€ˆ­ÍÑÈ¡±…¹¹•Ğ ‰ÍÑ…ÑÕÏ[h‘éì¶»§q«^v) or "aguardando classes de uso/cobertura"),
+                access_index=root/"00_Fontes_hierarquizadas"/"acesso_fontes_hierarquizadas.html"
+                if access_index.exists():
+                    webbrowser.open(access_index.resolve().as_uri())
+                messagebox.showinfo("Biblioteca de inventÃ¡rios",f"Coleta concluÃ­da. Consulte os manifestos e arquivos em:\n{root}")
+            self.after(0,finish)
+        threading.Thread(target=collect,daemon=True).start()
+
+    def summarize_inventory_ui(self):
+        src=filedialog.askopenfilename(title="Selecione CSV harmonizado de inventÃ¡rio",filetypes=[("CSV","*.csv"),("Todos","*.*")])
+        if not src:return
+        try:
+            result=summarize_inventory_csv(src)
+            dest=filedialog.asksaveasfilename(title="Salvar resumo estrutural",defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
+            if not dest:return
+            wb=Workbook(); ws=wb.active; ws.title="Por inventÃ¡rio"
+            summaries=result["inventory_summary"]
+            if not summaries:raise ValueError("Nenhuma Ã¡rvore viva com DAP vÃ¡lido foi encontrada.")
+            ws.append(list(summaries[0]))
+            for row in summaries:ws.append([row.get(k) for k in summaries[0]])
+            wp=wb.create_sheet("Por parcela"); plots=result["plot_summary"]
+            if plots:
+                wp.append(list(plots[0]))
+                for row in plots:wp.append([row.get(k) for k in plots[0]])
+            wm=wb.create_sheet("MÃ©todo e limites")
+            wm.append(["Item","DescriÃ§Ã£o"]); wm.append(["MÃ©todo",result["method"]])
+            for limitation in result["limitations"]:wm.append(["Limite",limitation])
+            wb.save(dest)
+            messagebox.showinfo("InventÃ¡rio",f"Resumo salvo. MÃ©tricas de campo sem pareamento SAR:\n{dest}")
+        except Exception as e:messagebox.showerror("InventÃ¡rio",str(e))
+    def _bind_text_scroll(self,w):
+        """Make disabled long-form reports scroll by wheel as well as scrollbar."""
+        def wheel(event):
+            if getattr(event,"num",None)==4: step=-3
+            elif getattr(event,"num",None)==5: step=3
+            else:
+                delta=int(getattr(event,"delta",0) or 0)
+                if not delta:return "break"
+                step=-max(1,abs(delta)//120)*(1 if delta>0 else -1)
+            w.yview_scroll(step,"units")
+            return "break"
+        w.bind("<MouseWheel>",wheel)
+        w.bind("<Button-4>",wheel); w.bind("<Button-5>",wheel)
+
+    def _set(self,w,t):
+        """Update report text without monopolizing Tk while large audits render."""
+        text=str(t or "")
+        generation=int(getattr(w,"_enform_render_generation",0))+1
+        w._enform_render_generation=generation
+        w._enform_pending_text=text if len(text)>80000 else None
+        w.config(state="normal"); w.delete("1.0","end"); w.config(state="disabled")
+        if len(text)<=80000:
+            w.config(state="normal"); w.insert("1.0",text); w.config(state="disabled")
+            try:w.yview_moveto(0.0)
+            except tk.TclError:pass
+            return
+        # Disabled widgets are briefly enabled per chunk so keyboard input
+        # cannot alter an audit while yielding to Tk between insertions.
+        chunk_size=16000
+        def insert_chunk(offset=0):
+            try:
+                if not w.winfo_exists() or w._enform_render_generation!=generation:return
+                end=min(len(text),offset+chunk_size)
+                w.config(state="normal"); w.insert("end",text[offset:end]); w.config(state="disabled")
+                if end<len(text):
+                    w.after(1,lambda next_offset=end:insert_chunk(next_offset))
+                else:
+                    w._enform_pending_text=None
+                    w.yview_moveto(0.0)
+            except tk.TclError:
+                return
+        w.after_idle(insert_chunk)
+    def _write_json_background(self,data,path):
+        """Persist potentially large audit snapshots outside the Tk event loop."""
+        target=Path(path)
+        def write_snapshot():
+            try:
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_text(json.dumps(data,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+            except Exception as exc:
+                try:
+                    log=Path.home()/".enform_verde"/"enform_diagnostico.log"
+                    log.parent.mkdir(parents=True,exist_ok=True)
+                    with log.open("a",encoding="utf-8") as stream:
+                        stream.write("\nAUDIT_WRITE_FAILED "+str(target)+": "+type(exc).__name__+": "+str(exc)[:240])
+                except OSError:
+                    pass
+        threading.Thread(target=write_snapshot,name="EnformAuditWrite",daemon=True).start()
+    def _copy_text(self,text,label="RelatÃ³rio"):
+        value=str(text or "")
+        if not value.strip():
+            self.status.set(label+": ainda nÃ£o hÃ¡ conteÃºdo para copiar.")
+            return
+        self.clipboard_clear(); self.clipboard_append(value); self.update_idletasks()
+        self.status.set(label+" copiado para a Ã¡rea de transferÃªncia.")
+    def _copy_report(self,widget,label="RelatÃ³rio"):
+        pending=getattr(widget,"_enform_pending_text",None)
+        self._copy_text(pending if pending is not None else widget.get("1.0","end-1c"),label)
+    def _populate_carbon_dashboard(self,native):
+        from carbon_dashboard_table import carbon_dashboard_rows
+        if not hasattr(self,"carbon_dashboard_table"):return
+        table=self.carbon_dashboard_table
+        for item in table.get_children(""):
+            table.delete(item)
+        def number(value):
+            return format_ptbr(value,2) if isinstance(value,(int,float)) and value is not None else "N/D"
+        for row in carbon_dashboard_rows(native or {}):
+            unc=row.get("uncertainty_tc_ha")
+            kind=str(row["uncertainty_kind"])
+            if unc is not None:
+                prefix="DP espacial descritivo: " if "descritivo" in kind.casefold() else "Â± "
+                joiner=" | " if prefix.endswith(": ") else " | Â± "
+                unc_text=(prefix+number(unc)+" tC/ha"+joiner+number(unc*44/12)+" tCOâ‚‚e/ha | "+
+                          number(row.get("uncertainty_percent"))+"% â€” "+kind)
+            else:unc_text="Incerteza total: N/D â€” "+kind
+            if row.get("sensitivity_tc_ha") is not None:
+                sens=row["sensitivity_tc_ha"]
+                unc_text+=("\nSENSIBILIDADE PARCIAL: Â± "+number(sens)+" tC/ha | Â± "+
+                          number(sens*44/12)+" tCOâ‚‚e/ha | "+number(row.get("sensitivity_percent"))+"% â€” "+
+                          str(row.get("sensitivity_kind") or "nÃ£o Ã© incerteza total"))
+            density=row.get("tc_ha"); stock=row.get("stock_tc")
+            density_text=(number(density)+" tC/ha | "+number(density*44/12)+" tCOâ‚‚e/ha" if density is not None else "N/D")
+            stock_text=(number(stock)+" tC | "+number(stock*44/12)+" tCOâ‚‚e" if stock is not None else "N/D")
+            table.insert("","end",values=(row["compartment"],density_text,
+                stock_text,unc_text,number(row.get("area_ha")),row["status"]))
+    def _refresh_overall_executive_summary(self):
+        if not hasattr(self,"overall_exec_var"):return
+        land=self.project.get("land_use") or {}; native=self.project.get("native_carbon") or {}
+        area=native.get("area_aoi_ha") or self.project.get("area_ha")
+        land_status=str(land.get("status") or "N/D")
+        sar=land.get("recent_sar_cover") or {}
+        sar_status=str(sar.get("status") or sar.get("reason") or "N/D â€” consulte auditoria da cobertura")
+        heights=(self.project.get("sar_result") or {}).get("height_products") or []
+        height_status=(str(len(heights))+" produto(s) FH com pixels no painel" if heights else
+                       "N/D â€” verificar se houve pixels FH lidos; falha tÃ©cnica nÃ£o Ã© ausÃªncia de cenas")
+        total=native.get("known_total_tc")
+        carbon=(format_ptbr(total,2)+" tC conhecidos; "+("parcial" if not native.get("complete") else "completo")
+                if total is not None else "N/D â€” sem estimador quantitativo elegÃ­vel")
+        if hasattr(self,"carbon_stock_var"):
+            if isinstance(total,(int,float)):
+                label="ESTOQUE TOTAL" if native.get("complete") else "SOMA PARCIAL CONHECIDA â€” NÃƒO Ã‰ O TOTAL COMPLETO"
+                self.carbon_stock_var.set(label+"\n"+format_ptbr(total,2)+" tC  |  "+
+                    format_ptbr(float(total)*44/12,2)+" tCOâ‚‚e")
+            else:self.carbon_stock_var.set("ESTOQUE DE CARBONO: N/D â€” nenhum estimador quantitativo elegÃ­vel.")
+        vigor=str(self.project.get("executive_vigor_status") or "anÃ¡lise de vigor SAR em processamento")
+        self.overall_exec_var.set("\n".join([
+            "AOI: "+(format_ptbr(area,2)+" ha" if area is not None else "N/D"),
+            "Uso e cobertura: "+land_status,
+            "Mapa temÃ¡tico local: "+str(land.get("status") or "aguardando classes de uso/cobertura"),
             "SAR atual: "+sar_status,
             "Altura FH: "+height_status,
             "Carbono nativo: "+carbon,
@@ -1860,7 +3765,116 @@ class App(tk.Tk):
         m=metrics or geom_metrics(self.gdf); self.project["geometry_metrics"]=m
         area_txt=format_ptbr(m['area_ha'],2)+" ha"
         if hasattr(self,"property_exec_var"):
-            self.propertyYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ}•á•}Ù…È¹Í•Ğ ‰A•Ëµµ•ÑÉ¼…ÉÉ•…‘¼è€ˆ­ÍÑÈ¡ÍÉŒ¤¬‰q»É•„è€ˆ­…É•…}ÑáĞ¬(€€€€€€€€€€€€€€€€ˆ€¡AMèØäÌÌ¤¸ÍÑ…‘¼è•½µ•ÑÉ¥„Ù…±¥‘…‘„Á…É„…»…±¥Í”ìÕÍ¼½½‰•ÉÑÕÉ„…¥¹‘„»¼±…ÍÍ¥™¥…‘¼¸ˆ¤(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰ÍÁ…Ñ¥…±}•á•}Ù…Èˆ¤è(€€€€€€€€€€€Í•±˜¹ÍÁ…Ñ¥…±}•á•}Ù…È¹Í•Ğ ‹É•„‘„=$è€ˆ­…É•…}ÑáĞ¬‰q¹	¥½µ„”™¥Ñ½™¥Í¥½¹½µ¥„è…Õ…É‘…¹‘¼¥¹Ñ•ÉÍ—Ÿ¼½™¥¥…°%	¹q¸ˆ(€€€€€€€€€€€€€€€€‰Õ¹‘¼‘¼µ…Á„ƒ¤É•™•Ë©¹¥„Ù¥ÍÕ…°ì»¼‘•Ñ•Éµ¥¹„ÕÍ¼…ÑÕ…°¹•´•¹ÑÉ„¹¼…±Õ±¼¸ˆ¤(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰…½¥}…É•…}‘¥ÍÁ±…äˆ¤è(€€€€€€€€€€€Í•±˜¹…½¥}…É•…}‘¥ÍÁ±…ä¹Í•Ğ¡˜‰í™½Éµ…Ñ}ÁÑ‰È¡µl…É•…}¡„t°È¥ô¡„€¡AMèØäÌÌì‰…Í”‘½ÌÁ•É•¹ÑÕ…¥Ì¤ˆ¤(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰¥‰•}Á¡åÍ}‘¥ÍÁ±…äˆ¤è(€€€€€€€€€€€Í•±˜¹¥‰•}Á¡åÍ}‘¥ÍÁ±…ä¹Í•Ğ ‰Õ…É‘…¹‘¼µ…Á•…µ•¹Ñ¼‘„Ù••Ñ‡Ÿ¼¹…Ñ¥Ù„ìµ…Á„Á½Ñ•¹¥…°%	»¼½¹™¥Éµ„ÁÉ•Í•»„…ÑÕ…°¸ˆ¤(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹ÍÁ…Ñ¥…±}Ñ•áĞ±˜‰A•Ëµµ•ÑÉ¼èíÍÉõq»É•„‘”É•™•Ë©¹¥„€¡AMèØäÌÌ¤èí™½Éµ…Ñ}ÁÑ‰È¡µl…É•…}¡„t°È¥ô¡…q»É•„UQ4€¡…Á•¹…Ì‘¥…»ÍÍÑ¥¼¤èí™½Éµ…Ñ}ÁÑ‰È¡µl…É•…}ÕÑµ}¡„t°È¥ô¡„ƒŠPAMéíµlÕÑµ}•ÁÍœuõq¹•¹ÑÉ½¥‘”èí™½Éµ…Ñ}ÁÑ‰È¡µl•¹ÑÉ½¥ulÅt°Ø¥ôìí™½Éµ…Ñ}ÁÑ‰È¡µl•¹ÑÉ½¥ulÁt°Ø¥õq¹A•É•¹ÑÕ…¥Ì”•ÍÑ½ÅÕ•Ì‘„=$ÕÑ¥±¥é…´„ƒ…É•„•ÅÕ¥Ù…±•¹Ñ”AMèØäÌÌ¹q¹q¹A•Ëµµ•ÑÉ¼Û…±¥‘¼Á…É„É•½ÉÑ”•ÍÁ…¥…°¸ˆ¤(€€€€€€€€Œ1½…°=$ÁÉ•Ù¥•Ü½¹±äì±…ÍÍ¥™¥…Ñ¥½¸Á½±å½¹ÌÉ•Á±…”¥Ğ…™Ñ•ÈÑ¡”(€€€€€€€€Œ…¹…±åÍ¥Ì¸9¼½ÁÑ¥…°Í•¹”Í•…É ¥ÌÍÑ…ÉÑ•™É½´•½µ•ÑÉä±½…‘¥¹œ¸(€€€€€€€ÑÉäéÍ•±˜¹}‘É…İ}±…¹‘}ÕÍ•}µ…À¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰±…¹‘}ÕÍ”ˆ¤½Èíô¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒéÍ•±˜¹ÁÉ½©•Ñl‰µ…Á}ÁÉ•Ù¥•İ}•ÉÉ½È‰tõ˜‰íÑåÁ”¡•áŒ¤¹}}¹…µ•}}ôèí•áôˆ(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ¡˜‰A•Ëµµ•ÑÉ¼…ÉÉ•…‘¼èíÍÉôì‘¥…»ÍÍÑ¥¼%	•´Í•Õ¹‘¼Á±…¹¼¸ˆ¤ìÍ•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤(€€€€€€€Í•±˜¹}¥‰•}•¹•É…Ñ¥½¸¬ôÄì•¹•É…Ñ¥½¸õÍ•±˜¹}¥‰•}•¹•É…Ñ¥½¸ì•½µ•ÑÉäõÍ•±˜¹‘˜¹½Áä ¤ìÍ•±˜¹}¥‰•}Á•¹‘¥¹œõQÉÕ”(€€€€€€€‘•˜İ½É­•È ¤è(€€€€€€€€€€€ÑÉäèÍ•±˜¹}¥‰•}ÅÕ•Õ”¹ÁÕĞ ¡•¹•É…Ñ¥½¸°‰½¬ˆ±‘¥…¹½Í•}¥‰”¡•½µ•ÑÉä¤¤¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”èÍ•±˜¹}¥‰•}ÅÕ•Õ”¹ÁÕĞ ¡•¹•É…Ñ¥½¸°‰•ÉÉ½Èˆ±ÍÑÈ¡”¤¤¤(€€€€€€€Ñ¡É•…‘¥¹œ¹Q¡É•…¡Ñ…É•Ğõİ½É­•È±¹…µ”ô‰¹™½Éµ%	ˆ±‘…•µ½¸õQÉÕ”¤¹ÍÑ…ÉĞ ¤(€€€€€€€Í•±˜¹…™Ñ•È ÄÀÀ±Í•±˜¹}Á½±±}¥‰”¤(€€€‘•˜}Á½±±}¥‰”¡Í•±˜¤è(€€€€€€€ÑÉäé•¹•É…Ñ¥½¸±­¥¹±Ù…±Õ”õÍ•±˜¹}¥‰•}ÅÕ•Õ”¹•Ñ}¹½İ…¥Ğ ¤(€€€€€€€•á•ÁĞÅÕ•Õ”¹µÁÑäè(€€€€€€€€€€€¥˜Í•±˜¹İ¥¹™½}•á¥ÍÑÌ ¤éÍ•±˜¹…™Ñ•È ÄÈÀ±Í•±˜¹}Á½±±}¥‰”¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€¥˜•¹•É…Ñ¥½¸„õÍ•±˜¹}¥‰•}•¹•É…Ñ¥½¸éÉ•ÑÕÉ¸(€€€€€€€Í•±˜¹}¥‰•}Á•¹‘¥¹œõ…±Í”(€€€€€€€¥˜­¥¹„ô‰½¬ˆè(€€€€€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰¥‰•}‘¥…¹½Í¥Í}•ÉÉ½È‰tõÙ…±Õ”(€€€€€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰ÍÁ…Ñ¥…±}•á•}Ù…Èˆ¤è(€€€€€€€€€€€€€€€Í•±˜¹ÍÁ…Ñ¥…±}•á•}Ù…È¹Í•Ğ ‹É•„…ÉÉ•…‘„ì½¹ÍÕ±Ñ„%	™…±¡½Ô¹q¹	¥½µ„½™¥Ñ½™¥Í¥½¹½µ¥„è8½ƒŠP€ˆ­ÍÑÈ¡Ù…±Õ”¥lèÄÜÁt¤(€€€€€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰¥‰•}Á¡åÍ}‘¥ÍÁ±…äˆ¤è(€€€€€€€€€€€€€€€Í•±˜¹¥‰•}Á¡åÍ}‘¥ÍÁ±…ä¹Í•Ğ ‰;¼‘•Ñ•Éµ¥¹…‘„ƒŠP™…±¡„¹„½¹ÍÕ±Ñ„…¼µ…Á„½™¥¥…°%	è€ˆ­ÍÑÈ¡Ù…±Õ”¥lèÄØÁt¤(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰A•Ëµµ•ÑÉ¼…ÉÉ•…‘¼ì‘¥…»ÍÍÑ¥¼%	Á•¹‘•¹Ñ”¸ˆ¤(€€€€€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹ÍÁ…Ñ¥…±}Ñ•áĞ±Í•±˜¹ÍÁ…Ñ¥…±}Ñ•áĞ¹•Ğ ˆÄ¸Àˆ°‰•¹ˆ¤¹ÍÑÉ¥À ¤¬‰q¹q¹¥…»ÍÍÑ¥¼%	Á•¹‘•¹Ñ”è€ˆ­ÍÑÈ¡Ù…±Õ”¤¤(€€€€€€€€€€€¥˜Í•±˜¹}Á•¹‘¥¹}•á•ÕÑ”éÍ•±˜¹}Á•¹‘¥¹}•á•ÕÑ”õ…±Í”ìÍ•±˜¹…™Ñ•È À±Í•±˜¹•á•ÕÑ”¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€õÙ…±Õ”ìÍ•±˜¹ÁÉ½©•Ñl‰¥‰•}‘¥…¹½Í¥Ì‰tõ(€€€€€€€¥˜¹•Ğ ‰‰¥½µ…Ìˆ¤éÍ•±˜¹‰¥½µ”¹Í•Ğ¡‘l‰‰¥½µ…Ì‰ulÁulÁt¤(€€€€€€€ÁÉ¥µ…ÉäõÁÉ¥µ…Éå}¥‰•}Á¡åÍ¥½¹½µä¡¤(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰ÍÁ…Ñ¥…±}•á•}Ù…Èˆ¤è(€€€€€€€€€€€…É•…}Ñ•áĞõ™½Éµ…Ñ}ÁÑ‰È¡•½µ}µ•ÑÉ¥Ì¡Í•±˜¹‘˜¥l‰…É•…}¡„‰t°È¤¬ˆ¡„ˆ¥˜Í•±˜¹‘˜¥Ì¹½Ğ9½¹”•±Í”€‰8½ˆ(€€€€€€€€€€€‰¥½µ„ô¡¹•Ğ ‰‰¥½µ…Ìˆ¤½Èml‰;¼‘•Ñ•Éµ¥¹…‘¼‰ut¥lÁulÁt(€€€€€€€€€€€Í•±˜¹ÍÁ…Ñ¥…±}•á•}Ù…È¹Í•Ğ ‹É•„‘„=$è€ˆ­…É•…}Ñ•áĞ¬ˆğ	¥½µ„%	è€ˆ­ÍÑÈ¡‰¥½µ„¤¬‰q¸ˆ(€€€€€€€€€€€€€€€€‰¥Ñ½™¥Í¥½¹½µ¥„Á½Ñ•¹¥…°è€ˆ­ÍÑÈ¡ÁÉ¥µ…Éä½È€‰»¼‘•Ñ•Éµ¥¹…‘„ˆ¤¬(€€€€€€€€€€€€€€€€ˆìÉ•ÅÕ•È½¹™¥Éµ‡Ÿ¼¥¹‘•Á•¹‘•¹Ñ”‘”½‰•ÉÑÕÉ„¹…Ñ¥Ù„…ÑÕ…°¸ˆ¤(€€€€€€€¥˜ÁÉ¥µ…ÉäéÍ•±˜¹Á¡åÌ¹Í•Ğ¡ÁÉ¥µ…Éä¤(€€€€€€€•±¥˜¹•Ğ ‰Ù••Ñ……½}•ÉÉ½Èˆ¤éÍ•±˜¹Á¡åÌ¹Í•Ğ ‰;¼‘•Ñ•Éµ¥¹…‘„ƒŠP€ˆ­‘l‰Ù••Ñ……½}•ÉÉ½È‰ulèÄÈÁt¤(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰¥‰•}‰¥½µ•}‘¥ÍÁ±…äˆ¤è(€€€€€€€€€€€Í•±˜¹¥‰•}‰¥½µ•}‘¥ÍÁ±…ä¹Í•Ğ¡Í•±˜¹‰¥½µ”¹•Ğ ¤½È€‰;¼‘•Ñ•Éµ¥¹…‘¼ˆ¤(€€€€€€€€Œ%	‘•ÍÉ¥‰•ÌÁ½Ñ•¹Ñ¥…°Ù••Ñ…Ñ¥½¸°¹•Ù•ÈÕÉÉ•¹Ğ½Ù•È¸(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰¥‰•}Á¡åÍ}‘¥ÍÁ±…äˆ¤…¹¹½ĞÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰¹…Ñ¥Ù•}…É‰½¸ˆ¤è(€€€€€€€€€€€Á½Ñ•¹Ñ¥…°ôˆì€ˆ¹©½¥¸ (€€€€€€€€€€€€€€€ÍÑÈ¡à¹•Ğ ‰¹…µ”ˆ¤½È€‰»¼‘•Ñ•Éµ¥¹…‘„ˆ¤¬ˆƒŠP€ˆ¬(€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡™±½…Ğ¡à¹•Ğ ‰…É•…}¡„ˆ°À¤¤°È¤¬ˆ¡„ˆ(€€€€€€€€€€€€€€€™½Èà¥¸¹•Ğ ‰É•¥½•Í}™¥Ñ½•½±½¥…Ìˆ±mt¤¥˜à¹•Ğ ‰¹…µ”ˆ¤¤(€€€€€€€€€€€Í•±˜¹¥‰•}Á¡åÍ}‘¥ÍÁ±…ä¹Í•Ğ (€€€€€€€€€€€€€€€€‰½‰•ÉÑÕÉ„¹…Ñ¥Ù„QU0è…Õ…É‘…¹‘¼½¹™¥Éµ‡Ÿ¼Á½ÈMH¹q¸ˆ¬(€€€€€€€€€€€€€€€€ ‰¥Ñ½™¥Í¥½¹½µ¥„A=Q9%0%	€¡»¼½µÁÉ½Ù„ÁÉ•Í•»„…ÑÕ…°¤è€ˆ¬(€€€€€€€€€€€€€€€€Á½Ñ•¹Ñ¥…°¥˜Á½Ñ•¹Ñ¥…°•±Í”€‰¥Ñ½™¥Í¥½¹½µ¥„Á½Ñ•¹¥…°%	è»¼‘•Ñ•Éµ¥¹…‘„¸ˆ¤¤(€€€€€€€‰ÑáĞôˆì€ˆ¹©½¥¸¡˜‰í¹ôèí™½Éµ…Ñ}ÁÑ‰È¡¡„°È¥ô¡„€¡í™½Éµ…Ñ}ÁÑ‰È¡ÁĞ°È¥ô”¤ˆ™½È¸±¡„±ÁĞ¥¸¹•Ğ ‰‰¥½µ…Ìˆ±mt¤¤(€€€€€€€½‘•}ÑáĞô‰q¸ˆ¹©½¥¸¡˜ˆ€Í‘¥¼íà¹•Ğ ½‘”œ¤½È€8½ôƒŠPíál¹…µ”uôèí™½Éµ…Ñ}ÁÑ‰È¡ál…É•…}¡„t°È¥ô¡„€¡í™½Éµ…Ñ}ÁÑ‰È¡álÁ•É•¹Ğt°È¥ô”¤ˆ™½Èà¥¸¹•Ğ ‰É•¥½•Í}™¥Ñ½•½±½¥…Ìˆ±mt¤¤(€€€€€€€¥‰•}±¥¹•Ìõl‰	¥½µ„¡Ì¤%	è€ˆ¬¡‰ÑáĞ½È€‰»¼‘•Ñ•Éµ¥¹…‘¼ˆ¥t­¥‰•}…É•…}ÍÕµµ…Éå}±¥¹•Ì¡¤(€€€€€€€¥˜½‘•}ÑáĞé¥‰•}±¥¹•Ì¹…ÁÁ•¹ ‰Í‘¥¼¡Ì¤‘…ÌÉ•§Õ•Ì™¥Ñ½•½³Í¥…Ì€¡%	¤éq¸ˆ­½‘•}ÑáĞ¤(€€€€€€€ÕÉÉ•¹ĞõÍ•±˜¹ÍÁ…Ñ¥…±}Ñ•áĞ¹•Ğ ˆÄ¸Àˆ°‰•¹ˆ¤¹ÍÑÉ¥À ¤(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹ÍÁ…Ñ¥…±}Ñ•áĞ±ÕÉÉ•¹Ğ¬‰q¹q¸ˆ¬‰q¸ˆ¹©½¥¸¡¥‰•}±¥¹•Ì¤¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰A•Ëµµ•ÑÉ¼”‘¥…»ÍÍÑ¥¼%	½¹±×µ‘½Ì¸ˆ¥˜¹½Ğ¹•Ğ ‰Ù••Ñ……½}•ÉÉ½Èˆ¤•±Í”€‰	¥½µ„%	½¹±×µ‘¼ì™¥Ñ½™¥Í¥½¹½µ¥„»¼±…ÍÍ¥™¥…‘„ƒŠPµ½‘•±½ÌÅÕ”•á¥•´±…ÍÍ”%	™¥…´‰±½ÅÕ•…‘½Ìì…Á•¹…ÌÉ½Ñ…Ì¥¹‘•Á•¹‘•¹Ñ•Ì‘„±…ÍÍ”Á½‘•´ÁÉ½ÍÍ•Õ¥È¸ˆ¤(€€€€€€€¥˜Í•±˜¹}Á•¹‘¥¹}•á•ÕÑ”éÍ•±˜¹}Á•¹‘¥¹}•á•ÕÑ”õ…±Í”ìÍ•±˜¹…™Ñ•È À±Í•±˜¹•á•ÕÑ”¤(€€€‘•˜Á¥­}Í½¥°¡Í•±˜¤è(€€€€€€€Àõ™¥±•‘¥…±½œ¹…Í­½Á•¹™¥±•¹…µ”¡™¥±•ÑåÁ•Ìõl ‰•½Q%ˆ°ˆ¨¹Ñ¥˜€¨¹Ñ¥™˜ˆ¥t¤(€€€€€€€¥˜ÀéÍ•±˜¹Í½¥±}É…ÍÑ•ÈõÀìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰I…ÍÑ•È‘”=LÍ•±•¥½¹…‘¼¸ˆ¤(€€€‘•˜…ÕÑ½}Í½¥°¡Í•±˜¤è(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰M½±¼ˆ°‰…ÉÉ•Õ”½É•Í½±Ù„¼Á•Ëµµ•ÑÉ¼ÁÉ¥µ•¥É¼¸ˆ¤(€€€€€€€ÑÉäéÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰	…¥á…¹‘¼=Lµ‰É…Á„¸¸¸ˆ¤ìÍ•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤ìÍ•±˜¹Í½¥±}É…ÍÑ•ÈõÑÉå}‘½İ¹±½…‘}•µ‰É…Á…}Í½Œ¡Í•±˜¹‘˜¤ìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰=Lµ‰É…Á„½‰Ñ¥‘¼¸ˆ¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”éÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰=L…ÕÑ½·…Ñ¥¼¥¹‘¥ÍÁ½»µÙ•°¸ˆ¤ìµ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰M½±¼µ‰É…Á„ˆ±ÍÑÈ¡”¤¤(€€€‘•˜•á•ÕÑ”¡Í•±˜±•Ù•¹Ğõ9½¹”¤è(€€€€€€€¥˜Í•±˜¹}…¹…±åÍ¥Í}ÉÕ¹¹¥¹œè(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰»…±¥Í”«„•´•á•×Ÿ¼ì…Õ…É‘”¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€¥˜Í•±˜¹}Ù•Ñ½É}±½…‘}Á•¹‘¥¹œè(€€€€€€€€€€€Í•±˜¹}Á•¹‘¥¹}•á•ÕÑ”õQÉÕ”(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰ÉÅÕ¥Ù¼Ù•Ñ½É¥…°•´Ù…±¥‘‡Ÿ¼ì„…»…±¥Í”½µ—…Ë„…ÕÑ½µ…Ñ¥…µ•¹Ñ”…ÃÍÌ„½¹™¥Éµ‡Ÿ¼‘¼Á•Ëµµ•ÑÉ¼¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€¥˜Í•±˜¹}¥‰•}Á•¹‘¥¹œè(€€€€€€€€€€€Í•±˜¹}Á•¹‘¥¹}•á•ÕÑ”õQÉÕ”ìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰=$•ÍÓ„…ÉÉ•…‘„¸…»…±¥Í”½µ—…Ë„…ÍÍ¥´ÅÕ”¼‘¥…»ÍÍÑ¥¼Ñ•ÉÉ¥Ñ½É¥…°‘¼%	Ñ•Éµ¥¹…È¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€…ÈõÍ•±˜¹…È¹•Ğ ¤¹ÍÑÉ¥À ¤¹ÕÁÁ•È ¤ì¥ÈõÉ”¹ÍÕˆ¡È‰qˆ°ˆˆ±Í•±˜¹¥È¹•Ğ ¤¤(€€€€€€€¥˜…È…¹¥ÈéÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰%‘•¹Ñ¥™¥‡Ÿ¼ˆ°‰%¹™½Éµ”H½Ô%H°»¼…µ‰½Ì¸A…É„½ÕÑÉ¼Á•Ëµµ•ÑÉ¼°…ÉÉ•Õ”Õ´…ÉÅÕ¥Ù¼Ù•Ñ½É¥…°¸ˆ¤(€€€€€€€¥˜…È…¹€¡Í•±˜¹…Ñ¥Ù•}Í½ÕÉ”„ô‰Hˆ½ÈÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥„õ…È¤è(€€€€€€€€€€€Í•±˜¹}É•Í•Ñ}…¹…±åÍ¥Í}ÍÑ…Ñ” ¤ìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰½¹ÍÕ±Ñ…¹‘¼…ÕÑ½µ…Ñ¥…µ•¹Ñ”¼H¹¼M%KŠ˜ˆ¤ìÍ•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€Í•±˜¹‘˜õÉ•Í½±Ù•}…È¡…È¤ìÍ•±˜¹…Ñ¥Ù•}Í½ÕÉ”ô‰HˆìÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥õ…ÈìÍ•±˜¹¥È¹Í•Ğ ˆˆ¤ìÍ•±˜¹}Í¡½İ}•½´ ‰M%HƒŠP½¹ÍÕ±Ñ„…ÕÑ½·…Ñ¥„ˆ¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”è(€€€€€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰½¹ÍÕ±Ñ„…ÕÑ½·…Ñ¥„H½M%H»¼½¹±×µ‘„¸ˆ¤ìÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰M%Hˆ±ÍÑÈ¡”¤¤(€€€€€€€•±¥˜¥È…¹€¡Í•±˜¹…Ñ¥Ù•}Í½ÕÉ”„ô‰%Hˆ½ÈÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥„õ¥È¤è(€€€€€€€€€€€Í•±˜¹}É•Í•Ñ}…¹…±åÍ¥Í}ÍÑ…Ñ” ¤ìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰½¹ÍÕ±Ñ…¹‘¼…ÕÑ½µ…Ñ¥…µ•¹Ñ”%H½M9H”Á•Ëµµ•ÑÉ¼M%Š˜ˆ¤ìÍ•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€Í•±˜¹‘˜õÉ•Í½±Ù•}¥É}Í¥•˜¡¥È¤ìÍ•±˜¹…Ñ¥Ù•}Í½ÕÉ”ô‰%HˆìÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥õ¥ÈìÍ•±˜¹…È¹Í•Ğ ˆˆ¤ìÍ•±˜¹}Í¡½İ}•½´ ‰%H½M9HƒŠPM%…ÕÑ½·…Ñ¥¼ˆ¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”è(€€€€€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰½¹ÍÕ±Ñ„…ÕÑ½·…Ñ¥„%H½M9H½M%»¼½¹±×µ‘„¸ˆ¤ìÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰%H€¼M%ˆ±ÍÑÈ¡”¤¤(€€€€€€€¥˜Í•±˜¹}¥‰•}Á•¹‘¥¹œè(€€€€€€€€€€€Í•±˜¹}Á•¹‘¥¹}•á•ÕÑ”õQÉÕ”ìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰A•Ëµµ•ÑÉ¼É•Í½±Ù¥‘¼¸…»…±¥Í”½µ—…Ë„…ÃÍÌ¼‘¥…»ÍÍÑ¥¼Ñ•ÉÉ¥Ñ½É¥…°‘¼%	¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰A•Ëµµ•ÑÉ¼¹••ÍÏ…É¥¼ˆ°‰%¹™½Éµ”H°%H½Ô…ÉÉ•Õ”Õ´…ÉÅÕ¥Ù¼Ù•Ñ½É¥…°ì‘•Á½¥ÌÁÉ•ÍÍ¥½¹”aUQH;1%M¸ˆ¤(€€€€€€€€Œ±°Á¥á•°…ÅÕ¥Í¥Ñ¥½¸…¹µ½‘•°•á•ÕÑ¥½¸°¥¹±Õ‘¥¹œ±½…°MH™¥±•Ì°ÍÑ…åÌ½™˜Ñ¡”Q¬Ñ¡É•…¸(€€€€€€€€ŒM¹…ÁÍ¡½Ğ•Ù•ÉäQ¬Ù…É¥…‰±”½¸Ñ¡”U$Ñ¡É•…‰•™½É”ÍÑ…ÉÑ¥¹œÑ¡”İ½É­•È¸(€€€€€€€±…¹‘}½¹™¥œõÍ•±˜¹±…¹‘}ÕÍ•}½¹™¥œ(€€€€€€€Í…É}Á…Ñ¡Ìõ±¥ÍĞ¡Í•±˜¹Í…É}Á…Ñ¡Ì½Èmt¤(€ƒ[h‘éì¶»§q«^t     # Inventory evidence is immutable during a run and replaced atomically
+            self.property_exec_var.set("PerÃ­metro carregado: "+str(src)+"\nÃrea: "+area_txt+
+                " (EPSG:6933). Estado: geometria validada para anÃ¡lise; uso/cobertura ainda nÃ£o classificado.")
+        if hasattr(self,"spatial_exec_var"):
+            self.spatial_exec_var.set("Ãrea da AOI: "+area_txt+"\nBioma e fitofisionomia: aguardando interseÃ§Ã£o oficial IBGE.\n"
+                "Fundo do mapa Ã© referÃªncia visual; nÃ£o determina uso atual nem entra no cÃ¡lculo.")
+        if hasattr(self,"aoi_area_display"):
+            self.aoi_area_display.set(f"{format_ptbr(m['area_ha'],2)} ha (EPSG:6933; base dos percentuais)")
+        if hasattr(self,"ibge_phys_display"):
+            self.ibge_phys_display.set("Aguardando mapeamento da vegetaÃ§Ã£o nativa; mapa potencial IBGE nÃ£o confirma presenÃ§a atual.")
+        self._set(self.spatial_text,f"PerÃ­metro: {src}\nÃrea de referÃªncia (EPSG:6933): {format_ptbr(m['area_ha'],2)} ha\nÃrea UTM (apenas diagnÃ³stico): {format_ptbr(m['area_utm_ha'],2)} ha â€” EPSG:{m['utm_epsg']}\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nPercentuais e estoques da AOI utilizam a Ã¡rea equivalente EPSG:6933.\n\nPerÃ­metro vÃ¡lido para recorte espacial.")
+        # Local AOI preview only; classification polygons replace it after the
+        # analysis. No optical scene search is started from geometry loading.
+        try:self._draw_land_use_map(self.project.get("land_use") or {})
+        except Exception as exc:self.project["map_preview_error"]=f"{type(exc).__name__}: {exc}"
+        self.status.set(f"PerÃ­metro carregado: {src}; diagnÃ³stico IBGE em segundo plano."); self.update_idletasks()
+        self._ibge_generation+=1; generation=self._ibge_generation; geometry=self.gdf.copy(); self._ibge_pending=True
+        def worker():
+            try: self._ibge_queue.put((generation,"ok",diagnose_ibge(geometry)))
+            except Exception as e: self._ibge_queue.put((generation,"error",str(e)))
+        threading.Thread(target=worker,name="EnformIBGE",daemon=True).start()
+        self.after(100,self._poll_ibge)
+    def _poll_ibge(self):
+        try:generation,kind,value=self._ibge_queue.get_nowait()
+        except queue.Empty:
+            if self.winfo_exists():self.after(120,self._poll_ibge)
+            return
+        if generation!=self._ibge_generation:return
+        self._ibge_pending=False
+        if kind!="ok":
+            self.project["ibge_diagnosis_error"]=value
+            if hasattr(self,"spatial_exec_var"):
+                self.spatial_exec_var.set("Ãrea carregada; consulta IBGE falhou.\nBioma/fitofisionomia: N/D â€” "+str(value)[:170])
+            if hasattr(self,"ibge_phys_display"):
+                self.ibge_phys_display.set("NÃ£o determinada â€” falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
+            self.status.set("PerÃ­metro carregado; diagnÃ³stico IBGE pendente.")
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nDiagnÃ³stico IBGE pendente: "+str(value))
+            if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
+            return
+        d=value; self.project["ibge_diagnosis"]=d
+        if d.get("biomas"):self.biome.set(d["biomas"][0][0])
+        primary=primary_ibge_physiognomy(d)
+        if hasattr(self,"spatial_exec_var"):
+            area_text=format_ptbr(geom_metrics(self.gdf)["area_ha"],2)+" ha" if self.gdf is not None else "N/D"
+            bioma=(d.get("biomas") or [["NÃ£o determinado"]])[0][0]
+            self.spatial_exec_var.set("Ãrea da AOI: "+area_text+" | Bioma IBGE: "+str(bioma)+"\n"
+                "Fitofisionomia potencial: "+str(primary or "nÃ£o determinada")+
+                "; requer confirmaÃ§Ã£o independente de cobertura nativa atual.")
+        if primary:self.phys.set(primary)
+        elif d.get("vegetacao_error"):self.phys.set("NÃ£o determinada â€” "+d["vegetacao_error"][:120])
+        if hasattr(self,"ibge_biome_display"):
+            self.ibge_biome_display.set(self.biome.get() or "NÃ£o determinado")
+        # IBGE describes potential vegetation, never current cover.
+        if hasattr(self,"ibge_phys_display") and not self.project.get("native_carbon"):
+            potential="; ".join(
+                str(x.get("name") or "nÃ£o determinada")+" â€” "+
+                format_ptbr(float(x.get("area_ha",0)),2)+" ha"
+                for x in d.get("regioes_fitoecologicas",[]) if x.get("name"))
+            self.ibge_phys_display.set(
+                "Cobertura nativa ATUAL: aguardando confirmaÃ§Ã£o por SAR.\n"+
+                ("Fitofisionomia POTENCIAL IBGE (nÃ£o comprova presenÃ§a atual): "+
+                 potential if potential else "Fitofisionomia potencial IBGE: nÃ£o determinada."))
+        btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d.get("biomas",[]))
+        code_txt="\n".join(f"  cÃ³digo {x.get('code') or 'N/D'} â€” {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
+        ibge_lines=["Bioma(s) IBGE: "+(btxt or "nÃ£o determinado")]+ibge_area_summary_lines(d)
+        if code_txt:ibge_lines.append("CÃ³digo(s) das regiÃµes fitoecolÃ³gicas (IBGE):\n"+code_txt)
+        current=self.spatial_text.get("1.0","end").strip()
+        self._set(self.spatial_text,current+"\n\n"+"\n".join(ibge_lines))
+        self.status.set("PerÃ­metro e diagnÃ³stico IBGE concluÃ­dos." if not d.get("vegetacao_error") else "Bioma IBGE concluÃ­do; fitofisionomia nÃ£o classificada â€” modelos que exigem classe IBGE ficam bloqueados; apenas rotas independentes da classe podem prosseguir.")
+        if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
+    def pick_soil(self):
+        p=filedialog.askopenfilename(filetypes=[("GeoTIFF","*.tif *.tiff")])
+        if p:self.soil_raster=p; self.status.set("Raster de COS selecionado.")
+    def auto_soil(self):
+        if self.gdf is None:return messagebox.showwarning("Solo","Carregue/resolva o perÃ­metro primeiro.")
+        try:self.status.set("Baixando COS Embrapa..."); self.update_idletasks(); self.soil_raster=try_download_embrapa_soc(self.gdf); self.status.set("COS Embrapa obtido.")
+        except Exception as e:self.status.set("COS automÃ¡tico indisponÃ­vel."); messagebox.showwarning("Solo Embrapa",str(e))
+    def execute(self,event=None):
+        if self._analysis_running:
+            self.status.set("AnÃ¡lise jÃ¡ em execuÃ§Ã£o; aguarde.")
+            return
+        if self._vector_load_pending:
+            self._pending_execute=True
+            self.status.set("Arquivo vetorial em validaÃ§Ã£o; a anÃ¡lise comeÃ§arÃ¡ automaticamente apÃ³s a confirmaÃ§Ã£o do perÃ­metro.")
+            return
+        if self._ibge_pending:
+            self._pending_execute=True; self.status.set("A AOI estÃ¡ carregada. A anÃ¡lise comeÃ§arÃ¡ assim que o diagnÃ³stico territorial do IBGE terminar.")
+            return
+        car=self.car.get().strip().upper(); ccir=re.sub(r"\D","",self.ccir.get())
+        if car and ccir:return messagebox.showwarning("IdentificaÃ§Ã£o","Informe CAR ou CCIR, nÃ£o ambos. Para outro perÃ­metro, carregue um arquivo vetorial.")
+        if car and (self.active_source!="CAR" or self.active_input_id!=car):
+            self._reset_analysis_state(); self.status.set("Consultando automaticamente o CAR no SICARâ€¦"); self.update_idletasks()
+            try:
+                self.gdf=resolve_car(car); self.active_source="CAR"; self.active_input_id=car; self.ccir.set(""); self._show_geom("SICAR â€” consulta automÃ¡tica")
+            except Exception as e:
+                self.status.set("Consulta automÃ¡tica CAR/SICAR nÃ£o concluÃ­da."); return messagebox.showwarning("SICAR",str(e))
+        elif ccir and (self.active_source!="CCIR" or self.active_input_id!=ccir):
+            self._reset_analysis_state(); self.status.set("Consultando automaticamente CCIR/SNCR e perÃ­metro SIGEFâ€¦"); self.update_idletasks()
+            try:
+                self.gdf=resolve_ccir_sigef(ccir); self.active_source="CCIR"; self.active_input_id=ccir; self.car.set(""); self._show_geom("CCIR/SNCR â€” SIGEF automÃ¡tico")
+            except Exception as e:
+                self.status.set("Consulta automÃ¡tica CCIR/SNCR/SIGEF nÃ£o concluÃ­da."); return messagebox.showwarning("CCIR / SIGEF",str(e))
+        if self._ibge_pending:
+            self._pending_execute=True; self.status.set("PerÃ­metro resolvido. A anÃ¡lise comeÃ§arÃ¡ apÃ³s o diagnÃ³stico territorial do IBGE.")
+            return
+        if self.gdf is None:return messagebox.showwarning("PerÃ­metro necessÃ¡rio","Informe CAR, CCIR ou carregue um arquivo vetorial; depois pressione EXECUTAR ANÃLISE.")
+        # All pixel acquisition and model execution, including local SAR files, stays off the Tk thread.
+        # Snapshot every Tk variable on the GUI thread before starting the worker.
+        land_config=self.land_use_config
+        sar_paths=list(self.sar_paths or [])
+        # Inventory evidence is immutable during a run and replaced atomically
         # when users load another source. Keep references; copying the expanded
         # evidence base here duplicated many large Python records on the UI thread.
         inventory_evidence=self.inventory_evidence_data
@@ -1984,7 +3998,117 @@ class App(tk.Tk):
                         analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors,phase_durations)
                 except Exception as checkpoint_exc:
                     stage_errors.append({"stage":"analysis_checkpoint","status":"ERRO_TECNICO",
-                                         "error_typYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ”ˆéÑåÁ”¡¡•­Á½¥¹Ñ}•áŒ¤¹}}¹…µ•}|°‰É•…Í½¸ˆéÍÑÈ¡¡•­Á½¥¹Ñ}•áŒ¥lèÌÀÁuô¤(€€€€€€€€€€€€€€€Í•±˜¹}…¹…±åÍ¥Í}ÅÕ•Õ”¹ÁÕĞ ¡ÉÕ¹}¥°‰½¬ˆ±ì‰Í…ÈˆéÍ…É}Á…å±½…°‰Í½¥°ˆéíô°‰±…¹‘}ÕÍ”ˆé±…¹°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰¹…Ñ¥Ù•}…É‰½¸ˆé¹…Ñ¥Ù”°‰Á•‘½±½äˆéÁ•‘½±½ä°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰™•ÉÑ¥±¥Ñäˆé™•ÉÑ¥±¥Ñä°‰…½¥}¡…Í ˆé…½¥}¡…Í °(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆé…¹…±åÍ¥Í}ÉÕ¹}¥°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰ÍÑ…•}•ÉÉ½ÉÌˆéÍÑ…•}•ÉÉ½ÉÌ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰Á•É™½Éµ…¹”ˆéÁ¡…Í•}‘ÕÉ…Ñ¥½¹Ì°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰¡•­Á½¥¹Ñ}Á…Ñ ˆé¡•­Á½¥¹Ñ}Á…Ñ¡ô¤¤(€€€€€€€Ñ¡É•…‘¥¹œ¹Q¡É•…¡Ñ…É•Ğõİ½É­•È±¹…µ”ô‰¹™½Éµ¹…±åÍ¥Ìˆ±‘…•µ½¸õQÉÕ”¤¹ÍÑ…ÉĞ ¤(€€€€€€€Í•±˜¹…™Ñ•È ÄÈÀ±Í•±˜¹}Á½±±}…¹…±åÍ¥Ì¤((€€€‘•˜}Á½±±}…¹…±åÍ¥Ì¡Í•±˜¤è(€€€€€€€ÑÉäéÉÕ¹}¥±­¥¹±Á…å±½…õÍ•±˜¹}…¹…±åÍ¥Í}ÅÕ•Õ”¹•Ñ}¹½İ…¥Ğ ¤(€€€€€€€•á•ÁĞÅÕ•Õ”¹µÁÑäè(€€€€€€€€€€€¥˜Í•±˜¹}…¹…±åÍ¥Í}ÉÕ¹¹¥¹œéÍ•±˜¹…™Ñ•È ÄÈÀ±Í•±˜¹}Á½±±}…¹…±åÍ¥Ì¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€¥˜ÉÕ¹}¥„õÍ•±˜¹}…¹…±åÍ¥Í}•¹•É…Ñ¥½¸è(€€€€€€€€€€€¥˜Í•±˜¹}…¹…±åÍ¥Í}ÉÕ¹¹¥¹œéÍ•±˜¹…™Ñ•È ÄÈÀ±Í•±˜¹}Á½±±}…¹…±åÍ¥Ì¤(€€€€€€€€€€€É•ÑÕÉ¸(€€€€€€€Í•±˜¹}…¹…±åÍ¥Í}ÉÕ¹¹¥¹œõ…±Í”ìÍ•±˜¹Á¥Á•±¥¹•}‰Ñ¸¹ÍÑ…Ñ”¡lˆ…‘¥Í…‰±•‰t¤ìÍ•±˜¹±½‰…±}•á•ÕÑ•}‰Ñ¸¹ÍÑ…Ñ”¡lˆ…‘¥Í…‰±•‰t¤(€€€€€€€¥˜­¥¹ôô‰•ÉÉ½Èˆè(€€€€€€€€€€€±½œõA…Ñ ¹¡½µ” ¤¼ˆ¹•¹™½Éµ}Ù•É‘”ˆ¼‰•¹™½Éµ}‘¥…¹½ÍÑ¥¼¹±½œˆì±½œ¹Á…É•¹Ğ¹µ­‘¥È¡Á…É•¹ÑÌõQÉÕ”±•á¥ÍÑ}½¬õQÉÕ”¤ì±½œ¹İÉ¥Ñ•}Ñ•áĞ¡Á…å±½…±•¹½‘¥¹œô‰ÕÑ˜´àˆ¤(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰…±¡„½¹ÑÉ½±…‘„ƒŠPÁÉ½É…µ„Á•Éµ…¹•”É•ÍÁ½¹Í¥Ù¼¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İ•ÉÉ½È ‰»…±¥Í”ˆ°‰…±¡„½¹ÑÉ½±…‘„¸1½œÉ…Ù…‘¼•´éq¸ˆ­ÍÑÈ¡±½œ¤¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰I•ÍÕ±Ñ…‘½ÌÉ••‰¥‘½Ìì…ÁÉ•Í•¹Ñ…¹‘¼…Ì•Ñ…Á…Ì½¹±×µ‘…Ì”½Ì•ÉÉ½Ì•ÍÁ•µ™¥½Ì¸ˆ¤(€€€€€€€Í•±˜¹…™Ñ•È Ä±±…µ‰‘„É¥õÉÕ¹}¥±ÀõÁ…å±½…éÍ•±˜¹}•á•ÕÑ•}µ…¥¸¡ÁÉ•½µÁÕÑ•‘}Í…ÈõÀ¹•Ğ ‰Í…Èˆ¤±ÁÉ•½µÁÕÑ•‘}Í½¥°õÀ¹•Ğ ‰Í½¥°ˆ¤±ÁÉ•½µÁÕÑ•‘}±…¹õÀ¹•Ğ ‰±…¹‘}ÕÍ”ˆ¤±ÁÉ•½µÁÕÑ•‘}¹…Ñ¥Ù”õÀ¹•Ğ ‰¹…Ñ¥Ù•}…É‰½¸ˆ¤±ÁÉ•½µÁÕÑ•‘}Á•‘½±½äõÀ¹•Ğ ‰Á•‘½±½äˆ¤±ÁÉ•½µÁÕÑ•‘}™•ÉÑ¥±¥ÑäõÀ¹•Ğ ‰™•ÉÑ¥±¥Ñäˆ¤±•áÁ•Ñ•‘}…½¥}¡…Í õÀ¹•Ğ ‰…½¥}¡…Í ˆ¤±ÁÉ•½µÁÕÑ•‘}…¹…±åÍ¥Í}ÉÕ¹}¥õÀ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤±ÁÉ•½µÁÕÑ•‘}ÍÑ…•}•ÉÉ½ÉÌõÀ¹•Ğ ‰ÍÑ…•}•ÉÉ½ÉÌˆ¤±ÁÉ•½µÁÕÑ•‘}¡•­Á½¥¹Ñ}Á…Ñ õÀ¹•Ğ ‰¡•­Á½¥¹Ñ}Á…Ñ ˆ¤±ÁÉ•½µÁÕÑ•‘}Á•É™½Éµ…¹”õÀ¹•Ğ ‰Á•É™½Éµ…¹”ˆ¤¤¥˜É¥ôõÍ•±˜¹}…¹…±åÍ¥Í}•¹•É…Ñ¥½¸•±Í”9½¹”¤((€€€‘•˜}•á•ÕÑ•}µ…¥¸¡Í•±˜±•Ù•¹Ğõ9½¹”±ÁÉ•½µÁÕÑ•‘}Í…Èõ9½¹”±ÁÉ•½µÁÕÑ•‘}Í½¥°õ9½¹”±ÁÉ•½µÁÕÑ•‘}±…¹õ9½¹”±ÁÉ•½µÁÕÑ•‘}¹…Ñ¥Ù”õ9½¹”±ÁÉ•½µÁÕÑ•‘}Á•‘½±½äõ9½¹”±ÁÉ•½µÁÕÑ•‘}™•ÉÑ¥±¥Ñäõ9½¹”±•áÁ•Ñ•‘}…½¥}¡…Í õ9½¹”±ÁÉ•½µÁÕÑ•‘}…¹…±åÍ¥Í}ÉÕ¹}¥õ9½¹”±ÁÉ•½µÁÕÑ•‘}ÍÑ…•}•ÉÉ½ÉÌõ9½¹”±ÁÉ•½µÁÕÑ•‘}¡•­Á½¥¹Ñ}Á…Ñ õ9½¹”±ÁÉ•½µÁÕÑ•‘}Á•É™½Éµ…¹”õ9½¹”¤è(€€€€€€€€Œ…‘„•á•×Ÿ¼ÍÕ‰ÍÑ¥ÑÕ¤°¹Õ¹„…ÕµÕ±„°½ÌÉ•ÍÕ±Ñ…‘½Ì‘•É¥Ù…‘½Ì‘„•½µ•ÑÉ¥„½ÉÉ•¹Ñ”¸(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}ÉÕ¹}¥‰tõÍÑÈ¡ÁÉ•½µÁÕÑ•‘}…¹…±åÍ¥Í}ÉÕ¹}¥½ÈÕÕ¥¹ÕÕ¥Ğ ¤¹¡•álèÄÉt¹ÕÁÁ•È ¤¤(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}ÍÑ…ÉÑ•‘}ÕÑŒ‰tõ‘…Ñ•Ñ¥µ”¹¹½Ü¡Ñ¥µ•é½¹”¹ÕÑŒ¤¹¥Í½™½Éµ…Ğ¡Ñ¥µ•ÍÁ•Œô‰Í•½¹‘Ìˆ¤(€€€€€€€™½È¬¥¸€ ‰…¹…±åÍ¥Í}…½¥}¡…Í ˆ°‰…¹…±åÍ¥Í}…½¥}ÉÌˆ°‰Á¥Á•±¥¹•}…Õ‘¥Ğˆ°‰…¹…±åÍ¥Í}É½İÌˆ°‰…É•…}¡„ˆ°‰Ñ½Ñ…±}Ñ}¡„ˆ°‰Ñ½Ñ…±}Ñ¼É}¡„ˆ°‰±…ÍÑ}É•ÍÕ±Ğˆ°‰Ñ½Ñ…±}¥Í}Á…ÉÑ¥…°ˆ°‰Á…ÉÑ¥…±}…É‰½¹}Ñ½Ñ…±}Ñ}¡„ˆ°‰Á…ÉÑ¥…±}¥¹‘•Á•¹‘•¹Ñ}…É‰½¹}Ñ½Ñ…±}Ñ}¡„ˆ°‰Á…ÉÑ¥…±}Í½¥±}…¹…±åÍ¥Ìˆ°‰Á…ÉÑ¥…±}Í…É}…¹…±åÍ¥Ìˆ°‰¹…Ñ¥Ù•}…É‰½¸ˆ°‰Í…É}É•ÍÕ±Ğˆ°‰Í…É}İ…É¹¥¹œˆ°‰Ñ½Ñ…±}Õ¹•ÉÑ…¥¹Ñäˆ°‰µ…Á‰¥½µ…Í}é½¹…°ˆ°‰Í½¥±}Á•‘½±½äˆ°‰Í½¥±}™•ÉÑ¥±¥Ñäˆ°‰µ½‘•±•‘}™¥•±‘}ÁÉ•‘¥Ñ¥½¹Ìˆ°‰µ½‘•±•‘}™¥•±‘}™¥±•Ìˆ¤è(€€€€€€€€€€€Í•±˜¹ÁÉ½©•Ğ¹Á½À¡¬±9½¹”¤(€€€€€€€ÕÉÉ•¹Ñ}…ÈõÍ•±˜¹…È¹•Ğ ¤¹ÍÑÉ¥À ¤¹ÕÁÁ•È ¤(€€€€€€€ÕÉÉ•¹Ñ}¥ÈõÉ”¹ÍÕˆ¡È‰qˆ°ˆˆ±Í•±˜¹¥È¹•Ğ ¤¤(€€€€€€€¥˜ÕÉÉ•¹Ñ}…È…¹€¡Í•±˜¹…Ñ¥Ù•}Í½ÕÉ”„ô‰Hˆ½ÈÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥„õÕÉÉ•¹Ñ}…È¤è(€€€€€€€€€€€Í•±˜¹}É•Í•Ñ}…¹…±åÍ¥Í}ÍÑ…Ñ” ¤(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€Í•±˜¹‘˜õÉ•Í½±Ù•}…È¡ÕÉÉ•¹Ñ}…È¤ìÍ•±˜¹…Ñ¥Ù•}Í½ÕÉ”ô‰HˆìÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥õÕÉÉ•¹Ñ}…ÈìÍ•±˜¹}Í¡½İ}•½´ ‰M%Hˆ¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”éÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰A•Ëµµ•ÑÉ¼¹••ÍÏ…É¥¼ˆ±ÍÑÈ¡”¤¤(€€€€€€€•±¥˜ÕÉÉ•¹Ñ}¥È…¹€¡Í•±˜¹…Ñ¥Ù•}Í½ÕÉ”„ô‰%Hˆ½ÈÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥„õÕÉÉ•¹Ñ}¥È¤è(€€€€€€€€€€€Í•±˜¹}É•Í•Ñ}…¹…±åÍ¥Í}ÍÑ…Ñ” ¤(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€Í•±˜¹‘˜õÉ•Í½±Ù•}¥É}Í¥•˜¡ÕÉÉ•¹Ñ}¥È¤ìÍ•±˜¹…Ñ¥Ù•}Í½ÕÉ”ô‰%HˆìÍ•±˜¹…Ñ¥Ù•}¥¹ÁÕÑ}¥õÕÉÉ•¹Ñ}¥ÈìÍ•±˜¹}Í¡½İ}•½´ ‰%H€¼M%ˆ¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì”éÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰A•Ëµµ•ÑÉ¼¹••ÍÏ…É¥¼ˆ±ÍÑÈ¡”¤¤(€€€€€€€¥˜Í•±˜¹‘˜¥Ì9½¹”éÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰A•Ëµµ•ÑÉ¼¹••ÍÏ…É¥¼ˆ°‰%¹™½Éµ”H½%H½Ô…ÉÉ•Õ”¼…ÉÅÕ¥Ù¼Ù•Ñ½É¥…°‘„ÁÉ½ÁÉ¥•‘…‘”¸ˆ¤(€€€€€€€™É½´…¹…±åÍ¥Í}Á¥Á•±¥¹•}½¹ÑÉ…Ğ¥µÁ½ÉĞ•½µ•ÑÉå}¡…Í °Ù…±¥‘…Ñ•}É•ÍÕ±Ñ}™½É}ÁÕ‰±¥…Ñ¥½¸(€€€€€€€ÑÉäè(€€€€€€€€€€€ÉÕ¹}…½¥}¡…Í õ•½µ•ÑÉå}¡…Í ¡Í•±˜¹‘˜¤(€€€€€€€€€€€¥˜•áÁ•Ñ•‘}…½¥}¡…Í …¹•áÁ•Ñ•‘}…½¥}¡…Í „õÉÕ¹}…½¥}¡…Í è(€€€€€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰!M!}=%}%YI9QƒŠP¼ÁÉ½•ÍÍ…µ•¹Ñ¼•´Í•Õ¹‘¼Á±…¹¼Á•ÉÑ•¹”„½ÕÑÉ„•½µ•ÑÉ¥„¸ˆ¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰»…±¥Í”‰±½ÅÕ•…‘„Á½È¥‘•¹Ñ¥‘…‘”¥¹½¹Í¥ÍÑ•¹Ñ”‘„=$¸ˆ¤(€€€€€€€€€€€É•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İ•ÉÉ½È ‰»…±¥Í”ˆ±ÍÑÈ¡•áŒ¤¤(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}ÉÕ¹}¥‰tõÍÑÈ¡ÁÉ•½µÁÕÑ•‘}…¹…±åÍ¥Í}ÉÕ¹}¥½ÈÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤½ÈÕÕ¥¹ÕÕ¥Ğ ¤¹¡•álèÄÉt¹ÕÁÁ•È ¤¤(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}…½¥}¡…Í ‰tõÉÕ¹}…½¥}¡…Í (€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}…½¥}ÉÌ‰tõÍÑÈ¡Í•±˜¹‘˜¹ÉÌ¤(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}…ÁÁ}Ù•ÉÍ¥½¸‰tõAA}YIM%=8(€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡ÁÉ•½µÁÕÑ•‘}Á•É™½Éµ…¹”±‘¥Ğ¤è(€€€€€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}Á•É™½Éµ…¹”‰tõ‘¥Ğ¡ÁÉ•½µÁÕÑ•‘}Á•É™½Éµ…¹”¤(€€€€€€€€ŒQ¡”İ½É­•ÈÉ•ÍÕ±Ğ¥Ì…¸¥µµÕÑ…‰±”•¹Ù•±½Á”¸Y…±¥‘…Ñ”¥‘•¹Ñ¥Ñä…É½ÍÌ(€€€€€€€€Œ…±°ÑÉ…¹Í™•ÉÉ•ÍÑ…•Ì‰•™½É”…¹äÁ…¹•°½È•áÁ½ÉĞ…¸ÁÕ‰±¥Í ¥Ğ¸(€€€€€€€¥˜ÁÉ•½µÁÕÑ•‘}±…¹¥Ì¹½Ğ9½¹”½ÈÁÉ•½µÁÕÑ•‘}¹…Ñ¥Ù”¥Ì¹½Ğ9½¹”½ÈÁÉ•½µÁÕÑ•‘}Í…È¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€™É½´…¹…±åÍ¥Í}Á¥Á•±¥¹•}½¹ÑÉ…Ğ¥µÁ½ÉĞÙ…±¥‘…Ñ•}Á¥Á•±¥¹•}¡…¹‘½™˜(€€€€€€€€€€€€€€€ÑÉ…¹Í™•Èõíô(€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡ÁÉ•½µÁÕÑ•‘}±…¹±‘¥Ğ¤èÑÉ…¹Í™•Él‰±…¹‘}ÕÍ”‰tõÁÉ•½µÁÕÑ•‘}±…¹(€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡ÁÉ•½µÁÕÑ•‘}¹…Ñ¥Ù”±‘¥Ğ¤èÑÉ…¹Í™•Él‰¹…Ñ¥Ù•}…É‰½¸‰tõÁÉ•½µÁÕÑ•‘}¹…Ñ¥Ù”(€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡ÁÉ•½µÁÕÑ•‘}Í…È±‘¥Ğ¤èÑÉ…¹Í™•Él‰Í…É}‘…Í¡‰½…É‰tõÁÉ•½µÁÕÑ•‘}Í…È(€€€€€€€€€€€€€€€Ù…±¥‘…Ñ•}Á¥Á•±¥¹•}¡…¹‘½™˜¡Í•±˜¹ÁÉ½©•Ñl‰…¹…±åÍ¥Í}ÉÕ¹}¥‰t±ÉÕ¹}…½¥}¡…Í ±ÑÉ…¹Í™•È¤(€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰!…¹‘½™˜‰±½ÅÕ•…‘¼ƒŠPÉ•ÍÕ±Ñ…‘¼»¼Á•ÉÑ•¹”ƒ€•á•×Ÿ¼½=$…ÑÕ…°¸ˆ¤(€€€€€€€€€€€€€€€É•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İ•ÉÉ½È ‰»…±¥Í”ˆ±ÍÑÈ¡•áŒ¤¤(€€€€€€€ÑÉäè(€€€€€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰á•ÕÑ…¹‘¼•ÍÑ¥µ…Ñ¥Ù„É•µ½Ñ„¸¸¸ˆ¤ìÍ•±˜¹ÕÁ‘…Ñ•}¥‘±•Ñ…Í­Ì ¤(€€€€€€€€€€€…É•„õ•½µ}µ•ÑÉ¥Ì¡Í•±˜¹‘˜¥l‰…É•…}¡„‰t(€€€€€€€€€€€Í•±˜¹ÁÉ½©•Ğ¹Á½À ‰±…¹‘}ÕÍ”ˆ±9½¹”¤(€€€€€€€€€€€É•™•É•¹”õÍ•±˜¹¥‰•}Á¡åÍ¥½¹½µå}‘˜íÉ•™•É•¹•}™¥•±õÍ•±˜¹¥‰•}±…ÍÍ}™¥•±½È€‰±••¹‘…|Äˆ(€€€€€€€€€€€¥˜ÁÉ•½µÁÕÑ•‘}±…¹¥Ì9½¹”…¹É•™•É•¹”¥Ì9½¹”è(€€€€€€€€€€€€€€€ÑÉäéÉ•™•É•¹”±É•™•É•¹•}™¥•±õ±½…‘}¥‰•}±…¹‘}ÕÍ•}É•™•É•¹”¡Í•±˜¹‘˜¤(€€€€€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸éÁ…ÍÌ(€€€€€€€€€€€±…¹õÁÉ•½µÁÕÑ•‘}±…¹¥˜ÁÉ•½µÁÕÑ•‘}±…¹¥Ì¹½Ğ9½¹”•±Í”ÉÕ¹}±…¹‘}ÕÍ”¡Í•±˜¹‘˜±A…Ñ ¹¡½µ” ¤¼ˆ¹•¹™½Éµ}Ù•É‘”ˆ¼‰ÕÍ½}Í½±¼ˆ½ÕÕ¥¹ÕÕ¥Ğ ¤¹¡•álèÄÉt±Í•±˜¹±…¹‘}ÕÍ•}½¹™¥œ±¥‰”õÉ•™•É•¹”±¥‰•}™¥•±õÉ•™•É•¹•}™¥•±±Í…É}Á…Ñ¡Ìõ•Ñ…ÑÑÈ¡Í•±˜°Í…É}Á…Ñ¡Ìœ±9½¹”¤¤(€€€€€€€€€€€¥˜±…¹¹•Ğ ‰•ÉÉ½Èˆ¤éÉ…¥Í”Y…±Õ•ÉÉ½È¡±…¹‘l‰•ÉÉ½È‰t¤(€€€€€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰±…¹‘}ÕÍ”‰tõ±…¹(€€€€€€€€€€€¹…Ñ¥Ù”ô¡ÁÉ•½µÁÕÑ•‘}¹…Ñ¥Ù”¥˜ÁÉ•½µÁÕÑ•‘}¹…Ñ¥Ù”¥Ì¹½Ğ9½¹”(€€€€€€€€€€€€€€€€€€€•±Í”¹…Ñ¥Ù•}…É‰½¹}…¹…±åÍ¥Ì (€€€€€€€€€€€€€€€€€€€€€€€Í•±˜¹‘˜±±…¹±Í•±˜¹‰¥½µ”¹•Ğ ¤°(€€€€€€€€€€€€€€€€€€€€€€€Í…É}½ÁÑ¥½¹Ìõì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹”ˆéÍ•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}‘…Ñ„°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}µ…¹¥™•ÍĞˆéÍ•±˜¹¥¹Ù•¹Ñ½Éå}•Ù¥‘•¹•}µ…¹¥™•ÍĞ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}É•½É‘ÌˆéÍ•±˜¹‰¥½‘¥Ù•ÉÍ¥Ñå}¥¹Ù•¹Ñ½Éå}É•½É‘Ì°(€€€€€€€€€€€€€€€€€€€€€€€ô°(€€€€€€€€€€€€€€€€€€€€€€€Í…É}Á…Ñ¡ÌõÍ•±˜¹Í…É}Á…Ñ¡Ì¤¤(€€€€€€€€€€€€ŒQ¡”MH½µÁÕÑ…Ñ¥½¸¥ÌÁ•É™½Éµ•Á•È¹…Ñ¥Ù”ÍÑÉ…ÑÕ´¸AÉ•Í•ÉÙ”(€€€€€€€€€€€€ŒÑ¡…Ğ•á…ĞÉ•ÍÕ±Ğ¥¹ÍÑ•…½˜‘É½ÁÁ¥¹œ¥Ğ…ĞÑ¡”İ½É­•È½‘…Í¡‰½…É(€€€€€€€€€€€€Œ‰½Õ¹‘…Éä€¡Ñ¡”¡¥ÍÑ½É¥…°Á…å±½…ÕÍ•…¸•µÁÑä‘¥Ğ¡•É”¤¸(€€€€€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰Í…É}É•ÍÕ±Ğ‰tô¡ÁÉ•½µÁÕÑ•‘}Í…È¥˜¥Í¥¹ÍÑ…¹”¡ÁÉ•½µÁÕÑ•‘}Í…È±‘¥Ğ¤…¹ÁÉ•½µÁÕÑ•‘}Í…È(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€•±Í”}Í…É}‘…Í¡‰½…É‘}Á…å±½…¡¹…Ñ¥Ù”±±…¹¤¤(€€€€€€€€€€€¥˜ÁÉ•½µÁÕÑ•‘}Á•‘½±½ä¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€Á•‘½±½äõÁÉ•½µÁÕÑ•‘}Á•‘½±½ä(€€€€€€€€€€€€€€€™•ÉÑ¥±¥ÑäõÁÉ•½µÁÕÑ•‘}™•ÉÑ¥±¥Ñä(€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€™É½´Í½¥±}Á•‘½±½å}•µ‰É…Á„¥µÁ½ÉĞ…¹…±åé•}•µ‰É…Á…}Á•‘½±½ä(€€€€€€€€€€€€€€€Á•‘½±½ä±é½¹•Ìõ…¹…±åé•}•µ‰É…Á…}Á•‘½±½ä¡Í•±˜¹‘˜±İ¥Ñ¡}é½¹•ÌõQÉÕ”¤(€€€€€€€€€€€€€€€ÑÉäè(€€€€€€€€€€€€€€€€€€€™É½´Í½¥±}™•ÉÑ¥±¥Ñå}é½¹…°¥µÁ½ÉĞ…¹…±åé•}™•ÉÑ¥±¥Ñä(€€€€€€€€€€€€€€€€€€€™•ÉÑ¥±¥Ñäõ…¹…±åé•}™•ÉÑ¥±¥Ñä¡Í•±˜¹‘˜±Õ¹¥ÑÌõé½¹•Ì¤(€€€€€€€€€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€€€€€€€€€™•ÉÑ¥±¥Ñäõì‰ÍÑ…ÑÕÌˆè‰8½ˆ°‰É•…Í½¸ˆè‰…±¡„½¹ÑÉ½±…‘„è€ˆ­ÑåÁ”¡•áŒ¤¹}}¹…µ•}|°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰Õ¹¥ÑÌˆéíô°‰±…å•ÉÌˆémuô(€€€€€€€€€€ƒ[h‘éì¶»§q«^tself.project["soil_pedology"]=pedology
+                                         "error_type":type(checkpoint_exc).__name__,"reason":str(checkpoint_exc)[:300]})
+                self._analysis_queue.put((run_id,"ok",{"sar":sar_payload,"soil":{},"land_use":land,
+                                                      "native_carbon":native,"pedology":pedology,
+                                                      "fertility":fertility,"aoi_hash":aoi_hash,
+                                                      "analysis_run_id":analysis_run_id,
+                                                      "stage_errors":stage_errors,
+                                                      "performance":phase_durations,
+                                                      "checkpoint_path":checkpoint_path}))
+        threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
+        self.after(120,self._poll_analysis)
+
+    def _poll_analysis(self):
+        try:run_id,kind,payload=self._analysis_queue.get_nowait()
+        except queue.Empty:
+            if self._analysis_running:self.after(120,self._poll_analysis)
+            return
+        if run_id!=self._analysis_generation:
+            if self._analysis_running:self.after(120,self._poll_analysis)
+            return
+        self._analysis_running=False; self.pipeline_btn.state(["!disabled"]); self.global_execute_btn.state(["!disabled"])
+        if kind=="error":
+            log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
+            self.status.set("Falha controlada â€” programa permanece responsivo.")
+            return messagebox.showerror("AnÃ¡lise","Falha controlada. Log gravado em:\n"+str(log))
+        self.status.set("Resultados recebidos; apresentando as etapas concluÃ­das e os erros especÃ­ficos.")
+        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility"),expected_aoi_hash=p.get("aoi_hash"),precomputed_analysis_run_id=p.get("analysis_run_id"),precomputed_stage_errors=p.get("stage_errors"),precomputed_checkpoint_path=p.get("checkpoint_path"),precomputed_performance=p.get("performance")) if rid==self._analysis_generation else None)
+
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None,expected_aoi_hash=None,precomputed_analysis_run_id=None,precomputed_stage_errors=None,precomputed_checkpoint_path=None,precomputed_performance=None):
+        # Cada execuÃ§Ã£o substitui, nunca acumula, os resultados derivados da geometria corrente.
+        self.project["analysis_run_id"]=str(precomputed_analysis_run_id or uuid.uuid4().hex[:12].upper())
+        self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
+        for k in ("analysis_aoi_hash","analysis_aoi_crs","pipeline_audit","analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility","modeled_field_predictions","modeled_field_files"):
+            self.project.pop(k,None)
+        current_car=self.car.get().strip().upper()
+        current_ccir=re.sub(r"\D","",self.ccir.get())
+        if current_car and (self.active_source!="CAR" or self.active_input_id!=current_car):
+            self._reset_analysis_state()
+            try:
+                self.gdf=resolve_car(current_car); self.active_source="CAR"; self.active_input_id=current_car; self._show_geom("SICAR")
+            except Exception as e:return messagebox.showwarning("PerÃ­metro necessÃ¡rio",str(e))
+        elif current_ccir and (self.active_source!="CCIR" or self.active_input_id!=current_ccir):
+            self._reset_analysis_state()
+            try:
+                self.gdf=resolve_ccir_sigef(current_ccir); self.active_source="CCIR"; self.active_input_id=current_ccir; self._show_geom("CCIR / SIGEF")
+            except Exception as e:return messagebox.showwarning("PerÃ­metro necessÃ¡rio",str(e))
+        if self.gdf is None:return messagebox.showwarning("PerÃ­metro necessÃ¡rio","Informe CAR/CCIR ou carregue o arquivo vetorial da propriedade.")
+        from analysis_pipeline_contract import geometry_hash, validate_result_for_publication
+        try:
+            run_aoi_hash=geometry_hash(self.gdf)
+            if expected_aoi_hash and expected_aoi_hash!=run_aoi_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE â€” o processamento em segundo plano pertence a outra geometria.")
+        except Exception as exc:
+            self.status.set("AnÃ¡lise bloqueada por identidade inconsistente da AOI.")
+            return messagebox.showerror("AnÃ¡lise",str(exc))
+        self.project["analysis_run_id"]=str(precomputed_analysis_run_id or self.project.get("analysis_run_id") or uuid.uuid4().hex[:12].upper())
+        self.project["analysis_aoi_hash"]=run_aoi_hash
+        self.project["analysis_aoi_crs"]=str(self.gdf.crs)
+        self.project["analysis_app_version"]=APP_VERSION
+        if isinstance(precomputed_performance,dict):
+            self.project["analysis_performance"]=dict(precomputed_performance)
+        # The worker result is an immutable envelope. Validate identity across
+        # all transferred stages before any panel or export can publish it.
+        if precomputed_land is not None or precomputed_native is not None or precomputed_sar is not None:
+            try:
+                from analysis_pipeline_contract import validate_pipeline_handoff
+                transfer={}
+                if isinstance(precomputed_land,dict): transfer["land_use"]=precomputed_land
+                if isinstance(precomputed_native,dict): transfer["native_carbon"]=precomputed_native
+                if isinstance(precomputed_sar,dict): transfer["sar_dashboard"]=precomputed_sar
+                validate_pipeline_handoff(self.project["analysis_run_id"],run_aoi_hash,transfer)
+            except Exception as exc:
+                self.status.set("Handoff bloqueado â€” resultado nÃ£o pertence Ã  execuÃ§Ã£o/AOI atual.")
+                return messagebox.showerror("AnÃ¡lise",str(exc))
+        try:
+            self.status.set("Executando estimativa remota..."); self.update_idletasks()
+            area=geom_metrics(self.gdf)["area_ha"]
+            self.project.pop("land_use",None)
+            reference=self.ibge_physiognomy_gdf;reference_field=self.ibge_class_field or "legenda_1"
+            if precomputed_land is None and reference is None:
+                try:reference,reference_field=load_ibge_land_use_reference(self.gdf)
+                except Exception:pass
+            land=precomputed_land if precomputed_land is not None else run_land_use(self.gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],self.land_use_config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))
+            if land.get("error"):raise ValueError(land["error"])
+            self.project["land_use"]=land
+            native=(precomputed_native if precomputed_native is not None
+                    else native_carbon_analysis(
+                        self.gdf,land,self.biome.get(),
+                        sar_options={
+                            "inventory_evidence":self.inventory_evidence_data,
+                            "inventory_evidence_manifest":self.inventory_evidence_manifest,
+                            "biodiversity_inventory_records":self.biodiversity_inventory_records,
+                        },
+                        sar_paths=self.sar_paths))
+            # The SAR computation is performed per native stratum. Preserve
+            # that exact result instead of dropping it at the worker/dashboard
+            # boundary (the historical payload used an empty dict here).
+            self.project["sar_result"]=(precomputed_sar if isinstance(precomputed_sar,dict) and precomputed_sar
+                                         else _sar_dashboard_payload(native,land))
+            if precomputed_pedology is not None:
+                pedology=precomputed_pedology
+                fertility=precomputed_fertility
+            else:
+                from soil_pedology_embrapa import analyze_embrapa_pedology
+                pedology,zones=analyze_embrapa_pedology(self.gdf,with_zones=True)
+                try:
+                    from soil_fertility_zonal import analyze_fertility
+                    fertility=analyze_fertility(self.gdf,units=zones)
+                except Exception as exc:
+                    fertility={"status":"N/D","reason":"Falha controlada: "+type(exc).__name__,
+                               "units":{},"layers":[]}
+            self.project["soil_pedology"]=pedology
             self.project["soil_fertility"]=fertility or {"status":"N/D","reason":"sem consulta"}
             # A SAR transport failure is a reportable analysis state, not a
             # reason to discard independent soil/carbon diagnostics or leave
@@ -2106,10 +4230,84 @@ class App(tk.Tk):
             cert=(self.project.get("sar_result") or {}).get("height_absence_certificate") or {}
             lines.extend(["", "ALTURA DE DOSSEL SAR: N/D â€” nenhum pixel de altura chegou ao painel; "+
                           str(cert.get("status") or "ausÃªncia nÃ£o certificada; consultar auditoria SAR")+"."])
-      YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Ô€¥˜¹…Ñ¥Ù”¹•Ğ ‰¥™¹}‘…Ñ…‰…Í•}ÍÑ…ÑÕÌˆ¤è(€€€€€€€€€€€‘‰}ÍÑ…ÑÕÌõ¹…Ñ¥Ù•l‰¥™¹}‘…Ñ…‰…Í•}ÍÑ…ÑÕÌ‰t(€€€€€€€€€€€±¥¹•Ì¹•áÑ•¹¡lˆˆ°€‰IK)9%LMQIUQUI%L%8ƒŠPÍ•±—Ÿ¼Á½È±½…±¥é‡Ÿ¼°‰¥½µ„”™¥Ñ½™¥Í¥½¹½µ¥„%	ˆ°(€€€€€€€€€€€€€€€€‰ÍÑ…‘¼‘„‰…Í”è€ˆ­ÍÑÈ¡‘‰}ÍÑ…ÑÕÌ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤¤¬ˆìÉ•¥ÍÑÉ½Ìè€ˆ¬(€€€€€€€€€€€€€€€ÍÑÈ¡‘‰}ÍÑ…ÑÕÌ¹•Ğ ‰½‰Í•ÉÙ…Ñ¥½¹}É½İÌˆ°‰8½ˆ¤¤¬ˆìÕ¹¥‘…‘•Ì…µ½ÍÑÉ…¥Ìè€ˆ¬(€€€€€€€€€€€€€€€ÍÑÈ¡‘‰}ÍÑ…ÑÕÌ¹•Ğ ‰Í…µÁ±¥¹}Õ¹¥ÑÌˆ°‰8½ˆ¤¤¬ˆìÉÕé…µ•¹Ñ½Ìƒé¹¥½Ì±••¹‘…|Äè€ˆ¬(€€€€€€€€€€€€€€€ÍÑÈ¡‘‰}ÍÑ…ÑÕÌ¹•Ğ ‰¥‰•}Õ¹¥ÅÕ•}Õ¹¥Ñ}µ…Ñ¡•Ìˆ°‰8½ˆ¤¤°(€€€€€€€€€€€€€€€€‰=ÌÉ•¥ÍÑÉ½Ì…‰…¥á¼Ï¼É•™•Ë©¹¥…Ì•ÍÑÉÕÑÕÉ…¥Ì¸Í•±—Ÿ¼»¼½¹™¥Éµ„½‰•ÉÑÕÉ„…ÑÕ…°°»¼…Á±¥„™…Ñ½É•Ì‘”•áÁ…¹Ï¼”»¼•ÍÑ¥µ„Á½È¡•Ñ…É”¹•´…±ÑÕÉ„·¥‘¥„‘¼‘½ÍÍ•°¸‰t¤(€€€€€€€€€€€™½ÈÉ•™•É•¹”¥¸¹…Ñ¥Ù”¹•Ğ ‰¥™¹}ÍÑÉÕÑÕÉ…±}É•™•É•¹•Ìˆ±mt¤è(€€€€€€€€€€€€€€€Í•±•Ñ•õÉ•™•É•¹”¹•Ğ ‰Í•±•Ñ¥½¸ˆ¤½Èíô(€€€€€€€€€€€€€€€ÍÕµµ…ÉäõÍ•±•Ñ•¹•Ğ ‰É…İ}ÑÉ••}Í…µÁ±•}ÍÕµµ…Éäˆ¤½Èíô(€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€€ˆ­ÍÑÈ¡É•™•É•¹”¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤¤¬ˆƒŠPƒ…É•„Á½Ñ•¹¥…°%	€ˆ¬(€€€€€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡É•™•É•¹”¹•Ğ ‰Á½Ñ•¹Ñ¥…±}¥‰•}…É•…}¡„ˆ¤°È¤¬ˆ¡„ì•ÍÑ…‘¼€ˆ­ÍÑÈ¡Í•±•Ñ•¹•Ğ ‰ÍÑ…ÑÕÌˆ¤¤¬(€€€€€€€€€€€€€€€€€€€€ˆìUÌÍ•±•¥½¹…‘…Ì€ˆ­ÍÑÈ ¡Í•±•Ñ•¹•Ğ ‰Í•±•Ñ¥½¸ˆ¤½Èíô¤¹•Ğ ‰Í•±•Ñ•‘}Õ¹¥ÅÕ•}Õ¹¥ÑÌˆ°À¤¤¬(€€€€€€€€€€€€€€€€€€€€ˆìƒ…ÉÙ½É•Ì…µ½ÍÑÉ…‘…Ì€ˆ­ÍÑÈ¡ÍÕµµ…Éä¹•Ğ ‰ÑÉ••}É•½É‘}½Õ¹Ğˆ°À¤¤¬(€€€€€€€€€€€€€€€€€€€€ˆì@·¥‘¥¼‰ÉÕÑ¼€ˆ­™½Éµ…Ñ}ÁÑ‰È¡ÍÕµµ…Éä¹•Ğ ‰µ•…¹}‘‰¡}´ˆ¤°È¤¬ˆ´ì…±ÑÕÉ„¥¹‘¥Ù¥‘Õ…°·¥‘¥„€ˆ¬(€€€€€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡ÍÕµµ…Éä¹•Ğ ‰µ•…¹}¥¹‘¥Ù¥‘Õ…±}ÑÉ••}¡•¥¡Ñ}´ˆ¤°È¤¬ˆ´ìƒ…É•„‰…Í…°‰ÉÕÑ„…µ½ÍÑÉ…°€ˆ¬(€€€€€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡ÍÕµµ…Éä¹•Ğ ‰½‰Í•ÉÙ•‘}Í…µÁ±•}‰…Í…±}…É•…}´Èˆ¤°Ì¤¬ˆ·
-È¸ˆ¤(€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€€€Í½Á¼•½Ë…™¥¼è€ˆ­ÍÑÈ¡É•™•É•¹”¹•Ğ ‰…É•…}‰…Í¥Ìˆ¤¤¬ˆì€ˆ¬(€€€€€€€€€€€€€€€€€€€ÍÑÈ¡ÍÕµµ…Éä¹•Ğ ‰İ…É¹¥¹œˆ¤½ÈÍ•±•Ñ•¹•Ğ ‰É•…Í½¸ˆ¤½È€‰»¼ƒ¤·¥ÑÉ¥„Á½È¡•Ñ…É”ˆ¤¤(€€€€€€€™½ÈÍ•¹…É¥¼¥¸¹…Ñ¥Ù”¹•Ğ ‰½¹‘¥Ñ¥½¹…±}¥¹Ù•¹Ñ½Éå}Í•¹…É¥½Ìˆ±mt¤è(€€€€€€€€€€€±¥¹•Ì€¬ôlˆˆ°€‰;I%<=9%%=90I	=9<ƒŠP%9Y9SI%<½IK)9%I%=90€¡»¼ƒ¤½‰•ÉÑÕÉ„…ÑÕ…°½¹™¥Éµ…‘„¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€‰ÍÑ…‘¼è€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰ÍÑ…ÑÕÌˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€‹É•„µ‰…Í”è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡Í•¹…É¥¼¹•Ğ ‰…É•…}¡„ˆ°À¤°È¤¬ˆ¡„ƒŠP€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰…É•…}‰…Í¥Ìˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€‰¥Ñ½™¥Í¥½¹½µ¥„è€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤¤¬ˆì‘½·µ¹¥¼•½Ë…™¥¼è€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰•½É…Á¡¥}Ñ¥•Èˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€‰½¹Ñ””•Ù¥“©¹¥„è€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰Í½ÕÉ”ˆ¤¤¬ˆƒŠP€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰Í½ÕÉ•}ÕÉ°ˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€‰U¹¥‘…‘•Ì½Á…É•±…Ì€¡ÅÕ…¹‘¼‘•±…É…‘…ÌÁ•±„™½¹Ñ”¤è¸ôˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰¥¹Ù•¹Ñ½Éå}¹}Õ¹¥ÅÕ•}Í…µÁ±¥¹}Õ¹¥ÑÌˆ¤¤¬ˆì€ˆ­™½Éµ…Ñ}ÁÑ‰È¡Í•¹…É¥¼¹•Ğ ‰…‰}µ•…¹}µ}¡„ˆ¤°È¤¬ˆ5œ½¡„ì™…¥á„‘„™½¹Ñ”€ˆ­©Í½¸¹‘ÕµÁÌ¡Í•¹…É¥¼¹•Ğ ‰…‰}É…¹•}µ}¡„ˆ¤½ÈÍ•¹…É¥¼¹•Ğ ‰…‰}½‰Í•ÉÙ•‘}É…¹•}µ}¡„ˆ¤±•¹ÍÕÉ•}…Í¥¤õ…±Í”¤°(€€€€€€€€€€€€€€€€€€€€€ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰•ÍÑ¥µ…Ñ•}±…‰•°ˆ¤¤¬ˆƒŠP…É‰½¹¼½¹‘¥¥½¹…°è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡Í•¹…É¥¼¹•Ğ ‰…É‰½¹}µ•…¹}Ñ}¡„ˆ¤°È¤¬ˆÑ½¡„ìÑ½Ñ…°•»…É¥¼€ˆ­™½Éµ…Ñ}ÁÑ‰È¡Í•¹…É¥¼¹•Ğ ‰…É‰½¹}Ñ½Ñ…±}Ñ}Í•¹…É¥¼ˆ¤°È¤¬ˆÑ€ ˆ­™½Éµ…Ñ}ÁÑ‰È¡Í•¹…É¥¼¹•Ğ ‰…É‰½¹}Ñ½Ñ…±}Ñ¼É•}Í•¹…É¥¼ˆ¤°È¤¬ˆÑ?Š
-	”¤¸ˆ°(€€€€€€€€€€€€€€€€€€€€€€‰%¹•ÉÑ•é„è€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñäˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€‰QI%1!1U1<è€ˆ­©Í½¸¹‘ÕµÁÌ¡Í•¹…É¥¼¹•Ğ ‰…±Õ±…Ñ¥½¹}ÑÉ…”ˆ¤½Èíô±•¹ÍÕÉ•}…Í¥¤õ…±Í”±Í½ÉÑ}­•åÌõQÉÕ”¤°(€€€€€€€€€€€€€€€€€€€€€€‰…±¡…ÌMHÉ•¥ÍÑÉ…‘…Ì€¡»¼•ÅÕ¥Ù…±•´„…ÕÏ©¹¥„‘”•¹…Ì¤è€ˆ­©Í½¸¹‘ÕµÁÌ¡Í•¹…É¥¼¹•Ğ ‰Í…É}Ñ•¡¹¥…±}™…¥±ÕÉ•Ìˆ¤½Èmt±•¹ÍÕÉ•}…Í¥¤õ…±Í”¤°(€€€€€€€€€€€€€€€€€€€€€€‰½¹™¥…»„è€ˆ­ÍÑÈ¡Í•¹…É¥¼¹•Ğ ‰½¹™¥‘•¹”ˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€‰1¥µ¥Ñ‡ŸÕ•Ìè€ˆ¬ˆì€ˆ¹©½¥¸¡Í•¹…É¥¼¹•Ğ ‰±¥µ¥Ñ…Ñ¥½¹Ìˆ±mt¤¥t(€€€€€€€‘¥…œõ¹…Ñ¥Ù”¹•Ğ ‰¥¹Ù•¹Ñ½Éå}Í•¹…É¥½}‘¥…¹½ÍÑ¥Œˆ¤(€€€€€€€¥˜‘¥…œè(€€€€€€€€€€€±¥¹•Ì€¬ôlˆˆ°€‰;I%<%9Y9SI%<è€ˆ­ÍÑÈ¡‘¥…œ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤¤¬ˆƒŠP€ˆ­ÍÑÈ¡‘¥…œ¹•Ğ ‰É•…Í½¸ˆ¤¥t(€€€€€€€Í…É}…Õ‘¥Ñ}Á…Ñ õA…Ñ ¡±…¹‘l‰Ù•Ñ½É}Á…Ñ ‰t¤¹Á…É•¹Ğ¼‰…É‰½¹½}™½Éµ…½•Í}¹…Ñ¥Ù…Ì¹©Í½¸ˆ(€€€€€€€±¥¹•Ì¹•áÑ•¹¡lˆˆ°€‰AI=Y9')9%MH=5A1Q°1%MQL9LII=LQ1!=L€¡)M=8¤èˆ°(€€€€€€€€€€€€€€€€€€€€€ÍÑÈ¡Í…É}…Õ‘¥Ñ}Á…Ñ ¤°(€€€€€€€€€€€€€€€€€€€€€€‰I•ÍÕµ¼MHÁ½È•ÍÑÉ…Ñ¼…‰…¥á¼ì¼É•±…ÓÍÉ¥¼‘”Ñ•±„½µ¥Ñ”‰±½‰Ì½‘¥…»ÍÍÑ¥½Ì•áÑ•¹Í½ÌÁ…É„Á•Éµ…¹••ÈÉ•ÍÁ½¹Í¥Ù¼¸‰t¤(€€€€€€€™½ÈÍĞ¥¸¹…Ñ¥Ù•l‰ÍÑÉ…Ñ„‰tè(€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹¡ÍÑl‰±…ÍÍ}¹…µ”‰t¬ˆè€ˆ­™½Éµ…Ñ}ÁÑ‰È¡ÍÑl‰…É•…}¡„‰t°È¤¬ˆ¡„€ ˆ­™½Éµ…Ñ}ÁÑ‰È¡ÍÑl‰…É•…}ÁĞ‰t°È¤¬ˆ”‘„=$¤ƒŠP€ˆ­ÍÑl‰Í½ÕÉ”‰t¤(€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€%Q=%M%=9=5%ƒ EU0MA1%MQ%5Q%Yè€ˆ­ÍÑl‰Á¡åÍ¥½¹½µä‰t¬ˆƒŠP€ˆ­ÍÑl‰Á¡åÍ¥½¹½µå}É•Í½±ÕÑ¥½¸‰t¤(€€€€€€€€€€€Í…É}‘•Ñ…¥±ÌõÍĞ¹•Ğ ‰Í…É}‘•Ñ…¥±Ìˆ¤½Èíô(€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€I•ÍÕµ¼MH½…±ÑÕÉ„è€ˆ­©Í½¸¹‘ÕµÁÌ¡}Í…É}‘•Ñ…¥±Í}É•Á½ÉÑ}•á•ÉÁĞ¡Í…É}‘•Ñ…¥±Ì¤±•¹ÍÕÉ•}…Í¥¤õ…±Í”±‘•™…Õ±ĞõÍÑÈ¤¤(€€€€€€€€€€€€Œ¥ÍÁ±…ä…ÑÕ…°É…ÍÑ•È…ÅÕ¥Í¥Ñ¥½¸Í•Á…É…Ñ•±ä™É½´…Ñ…±½œ‘¥Í½Ù•Éä¸(€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡Í…É}‘•Ñ…¥±Ì±‘¥Ğ¤è(€€€€€€€€€€€€€€€¥¹Ù•¹Ñ½Éå}µÀõÍ…É}‘•Ñ…¥±Ì¹•Ğ ‰¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸ˆ¤(€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡¥¹Ù•¹Ñ½Éå}µÀ±‘¥Ğ¤è(€€€€€€€€€€€€€€€€€€€¥˜¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰=5AI=}aAI%59Q1}%9}ˆè(€€€€€€€€€€€€€€€€€€€€€€€±¥¹•Ì€¬ôl(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€=5AI<%9A99QƒŠPM$ƒ\¥¹Ù•¹Ó…É¥½Ì½µÁ…ÓµÙ•¥Ì€¡»¼Í½µ…È…¼•ÍÑ½ÅÕ”¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€€€M$è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡Í…É}‘•Ñ…¥±Ì¹•Ğ ‰…‰}µ}¡„ˆ¤°È¤¬ˆ5œ½¡„ì¥¹•ÉÑ•é„‘¼ÁÉ½‘ÕÑ¼è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡Í…É}‘•Ñ…¥±Ì¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñå}µ}¡„ˆ¤°È¤¬ˆ5œ½¡„¸ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€€€%8è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰…‰}µ•…¹}µ}¡„ˆ¤°È¤¬ˆ5œ½¡„ì·¥‘¥„‘”€ˆ­ÍÑÈ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰¥¹Ù•¹Ñ½Éå}¹}Õ¹¥ÅÕ•}Í…µÁ±¥¹}Õ¹¥ÑÌˆ¤¤¬ˆUÌ¥¹‘•Á•¹‘•¹Ñ•Ìì@…µ½ÍÑÉ…°€ˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰…‰}Í…µÁ±•}Í‘}µ}¡„ˆ¤°È¤¬ˆ5œ½¡„ì™…¥á„½‰Í•ÉÙ…‘„€ˆ­©Í½¸¹‘ÕµÁÌ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰…‰}½‰Í•ÉÙ•‘}É…¹•}µ}¡„ˆ¤±•¹ÍÕÉ•}…Í¥¤õ…±Í”¤¬ˆ¸ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€€€…É‰½¹¼%8½µÁ…É…Ñ¥Ù¼è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰…É‰½¹}µ•…¹}Ñ}¡„ˆ¤°È¤¬ˆÑ½¡„ì•ÍÑ½ÅÕ”½µÁ…É…Ñ¥Ù¼¹„ƒ…É•„‘¼•ÍÑÉ…Ñ¼è€ˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰…É‰½¹}Ñ½Ñ…±}Ñ}½µÁ…É¥Í½¸ˆ¤°È¤¬ˆÑ€ ˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰…É‰½¹}Ñ½Ñ…±}Ñ¼É•}½µÁ…É¥Í½¸ˆ¤°È¤¬ˆÑ?Š
-	”¤¸ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€€€	…Í”•áÁ…¹‘¥‘„±¥…‘„ƒÌUÌè€ˆ­ÍÑÈ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰¥¹Ù•¹Ñ½Éå}ÑÉ••}½‰Í•ÉÙ…Ñ¥½¹Í}¥¹}Í•±•Ñ•‘}Õ¹¥ÑÌˆ¤¤¬ˆ½‰Í•ÉÙ‡ŸÕ•Ì‘”ƒ…ÉÙ½É•Ì½™ÕÍÑ•ÌìÍ•±—Ÿ¼è€ˆ­ÍÑÈ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰…±Õ±…Ñ¥½¹}ÑÉ…”ˆ±íô¤¹•Ğ ‰Í•±•Ñ¥½¸ˆ¤¤¬ˆìµ•¹½È‘¥ÍÓ‰¹¥„€ˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰¹•…É•ÍÑ}Õ…}‘¥ÍÑ…¹•}­´ˆ¤°Ä¤¬ˆ­´¸ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€€€%¹•ÉÑ•é„%8è€ˆ­ÍÑÈ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñäˆ¤¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆ€€€ÍÑ…‘¼”±¥µ¥Ñ•Ìè€ˆ­ÍÑÈ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰½¹™¥‘•¹”ˆ¤¤¬ˆì€ˆ¬ˆì€ˆ¹©½¥¸¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰±¥µ¥Ñ…Ñ¥½¹Ìˆ¤½Èmt¤°(€€€€€€€€€€€€€€€€€€€€€€€t(€€€€€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€=5AI<A=H%9Y9SI%=Lè€ˆ­ÍÑÈ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤¤¬ˆƒŠP€ˆ­ÍÑÈ¡¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰É•…Í½¸ˆ¤½È€‰É•™•Ë©¹¥„½µÁ…ÓµÙ•°»¼‘¥ÍÁ½»µÙ•°ˆ¤¤(€€€€€€€€€€€€€€€€€€€™½ÈÉ•˜¥¸¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰¥¹Ù•¹Ñ½Éå}É•™•É•¹•Ìˆ±mt¤è(€€€€€€€€€€€€€€€€€€€€€€€¥˜É•˜¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰II9%}I}AU	1%ˆè(€€€€€€€€€€€€€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€€€I•™•Ë©¹¥„ÁÕ‰±¥…‘„¥¹‘•Á•¹‘•¹Ñ”€¡»¼Í½µ…‘„¤è€ˆ­ÍÑÈ¡É•˜¹•Ğ ‰¥¹ÍÑ¥ÑÕÑ¥½¸ˆ¤¤¬ˆì€ˆ­ÍÑÈ¡É•˜¹•Ğ ‰É•¥½¸ˆ¤¤¬ˆì·¥‘¥„€ˆ­™½Éµ…Ñ}ÁÑ‰È¡É•˜¹•Ğ ‰…‰}µ•…¹}µ}¡„ˆ¤°È¤¬ˆ5œ½¡„ì¸Á…É•±…Ìôˆ­ÍÑÈ¡É•˜¹•Ğ ‰¹}Á±½ÑÌˆ¤½È€‰8½ˆ¤¬ˆì¥¹•ÉÑ•é„ÁÕ‰±¥…‘„ôˆ¬¡ÍÑÈ¡É•˜¹•Ğ ‰¤äÕ}±½İ}µ}¡„ˆ¤¤¬‹ŠLˆ­ÍÑÈ¡É•˜¹•Ğ ‰¤äÕ}¡¥¡}µ}¡„ˆ¤¤¬ˆ5œ½¡„ˆ¥˜É•˜¹•Ğ ‰¤äÕ}±½İ}µ}¡„ˆ¤¥Ì¹½Ğ9½¹”…¹É•˜¹•Ğ ‰¤äÕ}¡¥¡}µ}¡„ˆ¤¥Ì¹½Ğ9½¹”•±Í”€‰8½ˆ¤¬ˆì€ˆ­ÍÑÈ¡É•˜¹•Ğ ‰¥Ñ…Ñ¥½¸ˆ¤¤¬ˆì€ˆ­ÍÑÈ¡É•˜¹•Ğ ‰ÍÑ…Ñ¥ÍÑ¥…±}ÕÍ”ˆ¤¤¤(€€€€€€€€€€€€€€€€€€€™½ÈÉ•˜¥¸¥¹Ù•¹Ñ½Éå}µÀ¹•Ğ ‰ÁÕ‰±¥Í¡•‘}ÍÑÉÕÑÕÉ…±}É•™•É•¹•Ìˆ±mt¤è(€€€€€€€€€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€€€	1%iMQIUQUI0AU	1%€¡»¼ƒ¤Á…É•±„¹•´Ù…±¥‘‡Ÿ¼MH¤è€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€ÍÑÈ¡É•˜¹•Ğ ‰¥¹ÍÑ¥ÑÕÑ¥½¸ˆ¤½ÈÉ•˜¹•Ğ ‰Í½ÕÉ•}¥ˆ¤¤¬ˆì€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€ÍÑÈ¡É•˜¹•Ğ ‰É•¥½¸ˆ¤½È€‰É•§¼8½ˆ¤¬ˆì€ˆ­ÍÑÈ¡É•˜¹•Ğ ‰µ•ÑÉ¥Œˆ¤¤¬ˆôˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€™½Éµ…Ñ}ÁÑ‰È¡É•˜¹•Ğ ‰•¹Ñ•Èˆ¤°È¤¬ˆ€ˆ­ÍÑÈ¡É•˜¹•Ğ ‰Õ¹¥Ğˆ¤½È€‰Õ¹¥‘…‘”8½ˆ¤¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆì•ÉÉ¼ÁÕ‰±¥…‘¼ôˆ¬ ‰M€ˆ­™½Éµ…Ñ}ÁÑ‰È¡É•˜¹•Ğ ‰Íˆ¤°È¤¥˜É•˜¹•Ğ ‰Íˆ¤¥Ì¹½Ğ9½¹”•±Í”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰M€ˆ­™½Éµ…Ñ}ÁÑ‰È¡É•˜¹•Ğ ‰Í”ˆ¤°È¤¥˜É•˜¹•Ğ ‰Í”ˆ¤¥Ì¹½Ğ9½¹”•±Í”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰%äÔ”€ˆ­™½Éµ…Ñ}ÁÑ‰È¡É•˜¹•Ğ ‰¤äÕ}±½Üˆ¤°È¤¬‹ŠLˆ­™½Éµ…Ñ}ÁÑ‰È¡É•˜¹•Ğ ‰¤äÕ}¡¥ ˆ¤°È¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜É•˜¹•Ğ ‰¤äÕ}±½Üˆ¤¥Ì¹½Ğ9½¹”…¹É•˜¹•Ğ ‰¤äÕ}¡¥ ˆ¤¥Ì¹½Ğ9½¹”•±Í”€‰8½ˆ¤¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆì¸Á…É•±…Ìôˆ­ÍÑÈ¡É•˜¹•Ğ ‰¹}Á±½ÑÌˆ¤½È€‰8½ˆ¤¬ˆì™½¹Ñ”ôˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€ÍÑÈ¡É•˜¹•Ğ ‰¥Ñ…Ñ¥½¸ˆ¤½È€‰8½ˆ¤¬ˆìÕÍ¼ôˆ­ÍÑÈ¡É•˜¹•Ğ ‰ÍÑ…Ñ¥ÍÑ¥…±}ÕÍ”ˆ¤½È€‰‰…±¥é„É•¥½¹…°ˆ¤¤(€€€€€€€€€€€€€€€Í…É}…Õ‘¥ĞõÍ…É}‘•Ñ…¥±Ì¹•Ğ ‰…Õ‘¥Ğˆ¤½Èíô(€€€€€€€€€€€€€€€™¡}µ½‘•°õÍ…É}…Õ‘¥Ğ¹•Ğ ‰¡•¥¡Ñ}ÍÑÉÕÑÕÉ•}µ½‘•°ˆ¤½ÈÍ…É}‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}ÍÑÉÕÑÕÉ•}µ½‘•°ˆ¤½Èíô(€€€€€€€€€€€€€€€¥˜ƒ[h‘éì¶»§q«^usinstance(fh_model,dict):
+        if native.get("ifn_database_status"):
+            db_status=native["ifn_database_status"]
+            lines.extend(["", "REFERÃŠNCIAS ESTRUTURAIS IFN â€” seleÃ§Ã£o por localizaÃ§Ã£o, bioma e fitofisionomia IBGE",
+                "Estado da base: "+str(db_status.get("status"))+"; registros: "+
+                str(db_status.get("observation_rows","N/D"))+"; unidades amostrais: "+
+                str(db_status.get("sampling_units","N/D"))+"; cruzamentos Ãºnicos legenda_1: "+
+                str(db_status.get("ibge_unique_unit_matches","N/D")),
+                "Os registros abaixo sÃ£o referÃªncias estruturais. A seleÃ§Ã£o nÃ£o confirma cobertura atual, nÃ£o aplica fatores de expansÃ£o e nÃ£o estima AGB por hectare nem altura mÃ©dia do dossel."])
+            for reference in native.get("ifn_structural_references",[]):
+                selected=reference.get("selection") or {}
+                summary=selected.get("raw_tree_sample_summary") or {}
+                lines.append("  "+str(reference.get("physiognomy"))+" â€” Ã¡rea potencial IBGE "+
+                    format_ptbr(reference.get("potential_ibge_area_ha"),2)+" ha; estado "+str(selected.get("status"))+
+                    "; UAs selecionadas "+str((selected.get("selection") or {}).get("selected_unique_units",0))+
+                    "; Ã¡rvores amostradas "+str(summary.get("tree_record_count",0))+
+                    "; DAP mÃ©dio bruto "+format_ptbr(summary.get("mean_dbh_cm"),2)+" cm; altura individual mÃ©dia "+
+                    format_ptbr(summary.get("mean_individual_tree_height_m"),2)+" m; Ã¡rea basal bruta amostral "+
+                    format_ptbr(summary.get("observed_sample_basal_area_m2"),3)+" mÂ².")
+                lines.append("    Escopo geogrÃ¡fico: "+str(reference.get("area_basis"))+"; "+
+                    str(summary.get("warning") or selected.get("reason") or "nÃ£o Ã© mÃ©trica por hectare"))
+        for scenario in native.get("conditional_inventory_scenarios",[]):
+            lines += ["", "CENÃRIO CONDICIONAL DE CARBONO â€” INVENTÃRIO/REFERÃŠNCIA REGIONAL (nÃ£o Ã© cobertura atual confirmada)",
+                      "Estado: "+str(scenario.get("status")),
+                      "Ãrea-base: "+format_ptbr(scenario.get("area_ha",0),2)+" ha â€” "+str(scenario.get("area_basis")),
+                      "Fitofisionomia: "+str(scenario.get("physiognomy"))+"; domÃ­nio geogrÃ¡fico: "+str(scenario.get("geographic_tier")),
+                      "Fonte e evidÃªncia: "+str(scenario.get("source"))+" â€” "+str(scenario.get("source_url")),
+                      "Unidades/parcelas (quando declaradas pela fonte): n="+str(scenario.get("inventory_n_unique_sampling_units"))+"; AGB "+format_ptbr(scenario.get("agb_mean_mg_ha"),2)+" Mg/ha; faixa da fonte "+json.dumps(scenario.get("agb_range_mg_ha") or scenario.get("agb_observed_range_mg_ha"),ensure_ascii=False),
+                      str(scenario.get("estimate_label"))+" â€” carbono condicional: "+format_ptbr(scenario.get("carbon_mean_tc_ha"),2)+" tC/ha; total cenÃ¡rio "+format_ptbr(scenario.get("carbon_total_tc_scenario"),2)+" tC ("+format_ptbr(scenario.get("carbon_total_tco2e_scenario"),2)+" tCOâ‚‚e).",
+                      "Incerteza: "+str(scenario.get("uncertainty")),
+                      "TRILHA DE CÃLCULO: "+json.dumps(scenario.get("calculation_trace") or {},ensure_ascii=False,sort_keys=True),
+                      "Falhas SAR registradas (nÃ£o equivalem a ausÃªncia de cenas): "+json.dumps(scenario.get("sar_technical_failures") or [],ensure_ascii=False),
+                      "ConfianÃ§a: "+str(scenario.get("confidence")),
+                      "LimitaÃ§Ãµes: "+"; ".join(scenario.get("limitations",[]))]
+        diag=native.get("inventory_scenario_diagnostic")
+        if diag:
+            lines += ["", "CENÃRIO DE INVENTÃRIO: "+str(diag.get("status"))+" â€” "+str(diag.get("reason"))]
+        sar_audit_path=Path(land["vector_path"]).parent/"carbono_formacoes_nativas.json"
+        lines.extend(["", "PROVENIÃŠNCIA SAR COMPLETA, LISTAS DE CENAS E ERROS DETALHADOS (JSON):",
+                      str(sar_audit_path),
+                      "Resumo SAR por estrato abaixo; o relatÃ³rio de tela omite blobs/diagnÃ³sticos extensos para permanecer responsivo."])
+        for st in native["strata"]:
+            lines.append(st["class_name"]+": "+format_ptbr(st["area_ha"],2)+" ha ("+format_ptbr(st["area_pct"],2)+"% da AOI) â€” "+st["source"])
+            lines.append("  FITOFISIONOMIA Ã€ QUAL SE APLICA A ESTIMATIVA: "+st["physiognomy"]+" â€” "+st["physiognomy_resolution"])
+            sar_details=st.get("sar_details") or {}
+            lines.append("  Resumo SAR/altura: "+json.dumps(_sar_details_report_excerpt(sar_details),ensure_ascii=False,default=str))
+            # Display actual raster acquisition separately from catalog discovery.
+            if isinstance(sar_details,dict):
+                inventory_cmp=sar_details.get("inventory_agb_comparison")
+                if isinstance(inventory_cmp,dict):
+                    if inventory_cmp.get("status")=="COMPARACAO_EXPERIMENTAL_IFN_AGB":
+                        lines += [
+                            "  COMPARAÃ‡ÃƒO INDEPENDENTE DE AGB â€” ESA CCI Ã— inventÃ¡rios compatÃ­veis (nÃ£o somar ao estoque)",
+                            "    ESA CCI: "+format_ptbr(sar_details.get("agb_mg_ha"),2)+" Mg AGB/ha; incerteza do produto: "+format_ptbr(sar_details.get("uncertainty_mg_ha"),2)+" Mg/ha.",
+                            "    IFN: "+format_ptbr(inventory_cmp.get("agb_mean_mg_ha"),2)+" Mg AGB/ha; mÃ©dia de "+str(inventory_cmp.get("inventory_n_unique_sampling_units"))+" UAs independentes; DP amostral "+format_ptbr(inventory_cmp.get("agb_sample_sd_mg_ha"),2)+" Mg/ha; faixa observada "+json.dumps(inventory_cmp.get("agb_observed_range_mg_ha"),ensure_ascii=False)+".",
+                            "    Carbono IFN comparativo: "+format_ptbr(inventory_cmp.get("carbon_mean_tc_ha"),2)+" tC/ha; estoque comparativo na Ã¡rea do estrato: "+format_ptbr(inventory_cmp.get("carbon_total_tc_comparison"),2)+" tC ("+format_ptbr(inventory_cmp.get("carbon_total_tco2e_comparison"),2)+" tCOâ‚‚e).",
+                            "    Base expandida ligada Ã s UAs: "+str(inventory_cmp.get("inventory_tree_observations_in_selected_units"))+" observaÃ§Ãµes de Ã¡rvores/fustes; seleÃ§Ã£o: "+str(inventory_cmp.get("calculation_trace",{}).get("selection"))+"; menor distÃ¢ncia "+format_ptbr(inventory_cmp.get("nearest_ua_distance_km"),1)+" km.",
+                            "    Incerteza IFN: "+str(inventory_cmp.get("uncertainty")),
+                            "    Estado e limites: "+str(inventory_cmp.get("confidence"))+"; "+"; ".join(inventory_cmp.get("limitations") or []),
+                        ]
+                    else:
+                        lines.append("  COMPARAÃ‡ÃƒO DE AGB POR INVENTÃRIOS: "+str(inventory_cmp.get("status"))+" â€” "+str(inventory_cmp.get("reason") or "referÃªncia compatÃ­vel nÃ£o disponÃ­vel"))
+                    for ref in inventory_cmp.get("inventory_references",[]):
+                        if ref.get("status")=="REFERENCIA_AGREGADA_PUBLICADA":
+                            lines.append("    ReferÃªncia publicada independente (nÃ£o somada): "+str(ref.get("institution"))+"; "+str(ref.get("region"))+"; AGB mÃ©dia "+format_ptbr(ref.get("agb_mean_mg_ha"),2)+" Mg/ha; n parcelas="+str(ref.get("n_plots") or "N/D")+"; incerteza publicada="+(str(ref.get("ci95_low_mg_ha"))+"â€“"+str(ref.get("ci95_high_mg_ha"))+" Mg/ha" if ref.get("ci95_low_mg_ha") is not None and ref.get("ci95_high_mg_ha") is not None else "N/D")+"; "+str(ref.get("citation"))+"; "+str(ref.get("statistical_use")))
+                    for ref in inventory_cmp.get("published_structural_references",[]):
+                        lines.append("    BALIZA ESTRUTURAL PUBLICADA (nÃ£o Ã© parcela nem validaÃ§Ã£o SAR): "+
+                            str(ref.get("institution") or ref.get("source_id"))+"; "+
+                            str(ref.get("region") or "regiÃ£o N/D")+"; "+str(ref.get("metric"))+"="+
+                            format_ptbr(ref.get("center"),2)+" "+str(ref.get("unit") or "unidade N/D")+
+                            "; erro publicado="+("SD "+format_ptbr(ref.get("sd"),2) if ref.get("sd") is not None else
+                                "SE "+format_ptbr(ref.get("se"),2) if ref.get("se") is not None else
+                                "IC95% "+format_ptbr(ref.get("ci95_low"),2)+"â€“"+format_ptbr(ref.get("ci95_high"),2)
+                                    if ref.get("ci95_low") is not None and ref.get("ci95_high") is not None else "N/D")+
+                            "; n parcelas="+str(ref.get("n_plots") or "N/D")+"; fonte="+
+                            str(ref.get("citation") or "N/D")+"; uso="+str(ref.get("statistical_use") or "baliza regional"))
+                sar_audit=sar_details.get("audit") or {}
+                fh_model=sar_audit.get("height_structure_model") or sar_details.get("height_structure_model") or {}
+                if isinstance(fh_model,dict):
                     lines.append("  ROTA FH Ã— INVENTÃRIO: "+str(fh_model.get("status") or "N/D")+
                         (" â€” "+str(fh_model.get("reason")) if fh_model.get("reason") else ""))
                 horizontal=sar_details.get("regional_inventory_structure_reference")
@@ -2202,8 +4400,123 @@ class App(tk.Tk):
             # Put each modelled value on the visible carbon dashboard as well as
             # the JSON/Excel evidence. This is a field-test prediction, never a
             # certified stock or a measured observation.
-            for predictionYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Ô¥¸ÁÉ•™¥•±¹•Ğ ‰ÁÉ•‘¥Ñ¥½¹Ìˆ°mt¤è(€€€€€€€€€€€€€€€½µÁ…ÉÑµ•¹ĞõÍÑÈ¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰½µÁ…ÉÑµ•¹Ğˆ¤½ÈÁÉ•‘¥Ñ¥½¸¹•Ğ ‰É½Àˆ¤½È€‰I•ÍÕ±Ñ…‘¼ˆ¤(€€€€€€€€€€€€€€€ÁÉ•‘¥Ñ¥½¹}¥õÍÑÈ¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÁÉ•‘¥Ñ¥½¹}¥ˆ¤½È€‰%8½ˆ¤(€€€€€€€€€€€€€€€¥˜ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÍÑ…ÑÕÌˆ¤€ôô€‰AI=)=}aAI%59Q1}AI}Y1%<ˆè(€€€€€€€€€€€€€€€€€€€¥˜ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰­¥¹ˆ¤€ôô€‰…É‰½¹½}¹…Ñ¥Ù¼ˆè(€€€€€€€€€€€€€€€€€€€€€€€Ù…±Õ”õÁÉ•‘¥Ñ¥½¸¹•Ğ ‰‘•¹Í¥Ñå}ÁÉ•‘¥Ñ•‘}Ñ}¡„ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€Õ¹¥ĞõÁÉ•‘¥Ñ¥½¸¹•Ğ ‰Õ¹¥Ğˆ¤½È€‰Ñ½¡„ˆ(€€€€€€€€€€€€€€€€€€€€€€€ÍÑ½¬õÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÍÑ½­}ÁÉ•‘¥Ñ•‘}Ñˆ¤(€€€€€€€€€€€€€€€€€€€€€€€•ÍÑ¥µ…Ñ”ô¡™½Éµ…Ñ}ÁÑ‰È¡Ù…±Õ”°Ì¤¬ˆ€ˆ­Õ¹¥Ğ¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”°¡¥¹Ğ±™±½…Ğ¤¤•±Í”€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡ÍÑ½¬°¡¥¹Ğ±™±½…Ğ¤¤è(€€€€€€€€€€€€€€€€€€€€€€€€€€€•ÍÑ¥µ…Ñ”€¬ô€ˆì•ÍÑ½ÅÕ”µ‰…Í”€ˆ­™½Éµ…Ñ}ÁÑ‰È¡ÍÑ½¬°È¤¬ˆÑ€ ˆ­™½Éµ…Ñ}ÁÑ‰È¡ÍÑ½¬¨ĞĞ¼ÄÈ°È¤¬ˆÑ?Š
-	”¤ˆ(€€€€€€€€€€€€€€€€€€€€€€€…É•…}‰…Í¥ÌõÁÉ•‘¥Ñ¥½¸¹•Ğ ‰…É•…}‰…Í¥Í}¡„ˆ¤(€€€€€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€€€€€Ù…±Õ”õÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÁÉ•‘¥Ñ•‘}Ñ}¡„ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€Õ¹¥ĞõÁÉ•‘¥Ñ¥½¸¹•Ğ ‰Õ¹¥Ğˆ¤½È€‰Ğ½¡„ˆ(€€€€€€€€€€€€€€€€€€€€€€€ÍÑ½¬õÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÁÉ•‘¥Ñ•‘}ÁÉ½‘ÕÑ¥½¹}Ğˆ¤(€€€€€€€€€€€€€€€€€€€€€€€•ÍÑ¥µ…Ñ”ô¡™½Éµ…Ñ}ÁÑ‰È¡Ù…±Õ”°Ì¤¬ˆ€ˆ­Õ¹¥Ğ¥˜¥Í¥¹ÍÑ…¹”¡Ù…±Õ”°¡¥¹Ğ±™±½…Ğ¤¤•±Í”€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡ÍÑ½¬°¡¥¹Ğ±™±½…Ğ¤¤è(€€€€€€€€€€€€€€€€€€€€€€€€€€€•ÍÑ¥µ…Ñ”€¬ô€ˆìÁÉ½‘×Ÿ¼µ‰…Í”€ˆ­™½Éµ…Ñ}ÁÑ‰È¡ÍÑ½¬°È¤¬ˆĞˆ(€€€€€€€€€€€€€€€€€€€€€€€…É•…}‰…Í¥ÌõÁÉ•‘¥Ñ¥½¸¹•Ğ ‰…É•…}‰…Í¥Í}¡„ˆ¤(€€€€€€€€€€€€€€€€€€€±¥¹”ô ˆ€AIY%O<aAI%59Q0AII'<45A<ƒŠP€ˆ­½µÁ…ÉÑµ•¹Ğ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€ˆè€ˆ­•ÍÑ¥µ…Ñ”¬ˆìƒ…É•„µ‰…Í”€ˆ­™½Éµ…Ñ}ÁÑ‰È¡…É•…}‰…Í¥Ì°È¤¬ˆ¡„ì€ˆ­ÁÉ•‘¥Ñ¥½¹}¥¤(€€€€€€€€€€€€€€€€€€€¥¹Ñ•ÉÙ…°ô¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰‘•¹Í¥Ñå}É…¹•}Ñ}¡„ˆ¤½È(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÁÉ•‘¥Ñ¥½¹}É…¹•}Ñ}¡„ˆ¤¤(€€€€€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡¥¹Ñ•ÉÙ…°°¡±¥ÍĞ±ÑÕÁ±”¤¤…¹±•¸¡¥¹Ñ•ÉÙ…°¤ôôÈè(€€€€€€€€€€€€€€€€€€€€€€€±¥¹”€¬ô€ˆì™…¥á„‘„™½¹Ñ”½µ½‘•±¼€ˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ñ•ÉÙ…±lÁt°Ì¤¬‹ŠLˆ­™½Éµ…Ñ}ÁÑ‰È¡¥¹Ñ•ÉÙ…±lÅt°Ì¤¬ˆ€ˆ­Õ¹¥Ğ(€€€€€€€€€€€€€€€€€€€±¥¹”€¬ô€ˆì¥¹•ÉÑ•é„è€ˆ­ÍÑÈ¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñå}­¥¹ˆ¤½È€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€±¥¹”€¬ô€ˆì·¥Ñ½‘¼è€ˆ­ÍÑÈ¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰µ½‘•°ˆ¤½È€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€±¥¹”€¬ô€ˆì™½¹Ñ”è€ˆ­ÍÑÈ¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰Í½ÕÉ”ˆ¤½È€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€±¥¹”€¬ô€ˆì¡…Í ‘”É…ÍÑÉ•¥¼è€ˆ­ÍÑÈ¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÑÉ…•}Í¡„ÈÔØˆ¤½È€‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹¡±¥¹”¤(€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€IMU1Q<AI5A<ƒŠP€ˆ­½µÁ…ÉÑµ•¹Ğ¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆè8½ì€ˆ­ÍÑÈ¡ÁÉ•‘¥Ñ¥½¸¹•Ğ ‰É•…Í½¸ˆ¤½È€‰µ½‘•±¼½µÁ…ÓµÙ•°¥¹‘¥ÍÁ½»µÙ•°ˆ¤¬(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ˆì€ˆ­ÁÉ•‘¥Ñ¥½¹}¥¤(€€€€€€€€€€€±¥¹•Ì¹…ÁÁ•¹ ˆ€™•É§Ÿ¼èÁÉ••¹¡•ÈÍ½µ•¹Ñ”µ•‘§ŸÕ•Ì¥¹‘•Á•¹‘•¹Ñ•Ì¹„Á±…¹¥±¡„MXìÁÉ•Ù¥ÏÕ•Ì”½‰Í•ÉÙ‡ŸÕ•ÌÁ•Éµ…¹••´Í•Á…É…‘…Ì¸ˆ¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒè(€€€€€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰µ½‘•±•‘}™¥•±‘}ÁÉ•‘¥Ñ¥½¹Ì‰tõì‰ÍÑ…ÑÕÌˆè‰8½ˆ°(€€€€€€€€€€€€€€€€‰É•…Í½¸ˆéÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÄØÁuô(€€€€€€€€€€€±¥¹•Ì¹•áÑ•¹¡lˆˆ°€‰5=1=LAIYI%%<45A<è8½ƒŠP€ˆ¬(€€€€€€€€€€€€€€€€€€€€€€€€€ÑåÁ”¡•áŒ¤¹}}¹…µ•}|¬ˆè€ˆ­ÍÑÈ¡•áŒ¥lèÄØÁut¤(€€€€€€€Ñ•áĞô‰q¸ˆ¹©½¥¸¡±¥¹•Ì¤(€€€€€€€Í•±˜¹ÁÉ½©•Ñl‰±…ÍÑ}É•ÍÕ±Ğ‰tõÑ•áĞ(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰…É‰½¹}•á•}Ù…Èˆ¤è(€€€€€€€€€€€Í•±˜¹…É‰½¹}•á•}Ù…È¹Í•Ğ¡Í•±˜¹}•á•ÕÑ¥Ù•}•á•ÉÁĞ¡Ñ•áĞ°(€€€€€€€€€€€€€€€€ ‹IQ=Q091%Mèˆ°‰YQ<9Q%Y5Aèˆ°(€€€€€€€€€€€€€€€€€‰=5AIQ%59Q=LI	=9<èˆ°‰ÍÑ½ÅÕ”Á…É¥…°½¹¡•¥‘¼èˆ°(€€€€€€€€€€€€€€€€€‰ÍÑ½ÅÕ”½¹¡•¥‘¼èˆ°‰%¹•ÉÑ•é„‘¼Ñ½Ñ…°èˆ¤¤¤(€€€€€€€Í•±˜¹}Í•Ğ¡Í•±˜¹É•Ì±Ñ•áĞ¤íÍ•±˜¹¹ˆ¹Í•±•Ğ¡Í•±˜¹Ñ…‰ÍlÍt¤(€€€€€€€Í•±˜¹}É•™É•Í¡}½Ù•É…±±}•á•ÕÑ¥Ù•}ÍÕµµ…Éä ¤(€€€€€€€¥˜¡…Í…ÑÑÈ¡Í•±˜°‰Í…É}•á•}Ù…Èˆ¤è(€€€€€€€€€€€Í…ÈõÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í…É}É•ÍÕ±Ğˆ¤½Èíô(€€€€€€€€€€€¡•¥¡ÑÌõÍ…È¹•Ğ ‰¡•¥¡Ñ}ÁÉ½‘ÕÑÌˆ¤½Èmt(€€€€€€€€€€€¡•¥¡Ñ}±¥¹”ô¡˜‰±ÑÕÉ„MH•¹ÑÉ•Õ”…¼Á…¥¹•°èí±•¸¡¡•¥¡ÑÌ¥ôÁÉ½‘ÕÑ¼¡Ì¤¸ˆ(€€€€€€€€€€€€€€€€€€€€€€€€¥˜¡•¥¡ÑÌ•±Í”€‰±ÑÕÉ„MH•¹ÑÉ•Õ”…¼Á…¥¹•°è8½¸ˆ¤(€€€€€€€€€€€Í•±˜¹Í…É}•á•}Ù…È¹Í•Ğ ‰AÉ½•ÍÍ…µ•¹Ñ¼½¹±×µ‘¼¸€ˆ­¡•¥¡Ñ}±¥¹”¬(€€€€€€€€€€€€€€€€ˆ°™½¹Ñ””…Á±¥‡Ÿ¼•ÍÓ¼‘¥ÍÉ¥µ¥¹…‘…Ì¹½Ì‘•Ñ…±¡•ÌÓ¥¹¥½Ì¸ˆ¤(€€€€€€€Í•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰…É‰½¹¼Á½È™½Éµ‡Ÿ¼¹…Ñ¥Ù„½¹±×µ‘¼ì±…Õ¹…Ì”½ÕÑÉ½ÌÕÍ½Ì¥¹‘¥…‘½ÌÍ•Á…É…‘…µ•¹Ñ”¸ˆ¤(€€€€€€€€ŒMÑ½É”Í•É¥…±¥é…‰±”±…ÍÌµ±•Ù•°É•ÍÕ±ÑÌ‰•Í¥‘”ÍÁ…Ñ¥…°ÁÉ½Ù•¹…¹”¸(€€€€€€€…Õ‘¥ĞõÍ…É}…Õ‘¥Ñ}Á…Ñ (€€€€€€€Í•±˜¹}İÉ¥Ñ•}©Í½¹}‰…­É½Õ¹¡¹…Ñ¥Ù”±…Õ‘¥Ğ¤(€€€€€€€Í…É}…Õ‘¥ĞõA…Ñ ¡±…¹‘l‰Ù•Ñ½É}Á…Ñ ‰t¤¹Á…É•¹Ğ¼‰ÁÉ½Ù•¹¥•¹¥…}Í…É}Á…¥¹•°¹©Í½¸ˆ(€€€€€€€Í•±˜¹}İÉ¥Ñ•}©Í½¹}‰…­É½Õ¹¡ì(€€€€€€€€€€€€‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆéÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤°(€€€€€€€€€€€€‰…½¥}¡…Í¡}Í¡„ÈÔØˆéÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}…½¥}¡…Í ˆ¤°(€€€€€€€€€€€€‰Í…É}‘…Í¡‰½…É‘}Á…å±½…ˆéÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í…É}É•ÍÕ±Ğˆ¤½Èíô°(€€€€€€€ô±Í…É}…Õ‘¥Ğ¤(€€€€€€€€ŒM•Á…É…Ñ”Á•‘½±½ä™É½´…É‰½¸ÍÑ½­Ì¥¸•áÁ½ÉÑ•…±Õ±…Ñ¥½¸•Ù¥‘•¹”¸(€€€€€€€Á•‘½}…Õ‘¥ĞõA…Ñ ¡±…¹‘l‰Ù•Ñ½É}Á…Ñ ‰t¤¹Á…É•¹Ğ¼‰Á•‘½±½¥…}•µ‰É…Á…}…Õ‘¥Ñ½É¥„¹©Í½¸ˆ(€€€€€€€Á•‘½}…Õ‘¥Ğ¹İÉ¥Ñ•}Ñ•áĞ¡©Í½¸¹‘ÕµÁÌ¡Á•‘½±½ä½Èíô±•¹ÍÕÉ•}…Í¥¤õ…±Í”±¥¹‘•¹ĞôÈ±‘•™…Õ±ĞõÍÑÈ¤±•¹½‘¥¹œô‰ÕÑ˜´àˆ¤(€€€€€€€™•ÉÑ}…Õ‘¥ĞõA…Ñ ¡±…¹‘l‰Ù•Ñ½É}Á…Ñ ‰t¤¹Á…É•¹Ğ¼‰™•ÉÑ¥±¥‘…‘•}•µ‰É…Á…}…Õ‘¥Ñ½É¥„¹©Í½¸ˆ(€€€€€€€™•ÉÑ}…Õ‘¥Ğ¹İÉ¥Ñ•}Ñ•áĞ¡©Í½¸¹‘ÕµÁÌ¡™•ÉÑ¥±¥Ñä½Èíô±•¹ÍÕÉ•}…Í¥¤õ…±Í”±¥¹‘•¹ĞôÈ±‘•™…Õ±ĞõÍÑÈ¤±•¹½‘¥¹œô‰ÕÑ˜´àˆ¤((€€€‘•˜•áÁ½ÉÑ}•á•°¡Í•±˜¤è(€€€€€€€‘¥…±½œõÑ¬¹Q½Á±•Ù•°¡Í•±˜¤ì‘¥…±½œ¹Ñ¥Ñ±” ‰Í½±¡•ÈÁ±…¹¥±¡„Á…É„•áÁ½ÉÑ‡Ÿ¼ˆ¤ì‘¥…±½œ¹ÑÉ…¹Í¥•¹Ğ¡Í•±˜¤ì‘¥…±½œ¹É…‰}Í•Ğ ¤(€€€€€€€ÑÑ¬¹1…‰•°¡‘¥…±½œ±Ñ•áĞô‰EÕ…°Á±…¹¥±¡„‘•Í•©„•áÁ½ÉÑ…Èüˆ±™½¹Ğô ‰M•½”U$ˆ°ÄÈ°‰‰½±ˆ¤±Á…‘‘¥¹œôÄÈ¤¹Á…¬¡™¥±°ô‰àˆ¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡‘¥…±½œ±Ñ•áĞô‰A±…¹¥±¡„‘”…É‰½¹¼¹…Ñ¥Ù¼ƒŠP•ÍÑ½ÅÕ•Ì°¥¹•ÉÑ•é…Ì”Ë…™¥½Ìˆ°(€€€€€€€€€€€€€€€€€€½µµ…¹õ±…µ‰‘„è¡‘¥…±½œ¹‘•ÍÑÉ½ä ¤±Í•±˜¹•áÁ½ÉÑ}…É‰½¹}•á•° ¤¤¤¹Á…¬¡™¥±°ô‰àˆ±Á…‘àôÄĞ±Á…‘äôØ¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡‘¥…±½œ±Ñ•áĞô‰A±…¹¥±¡„‘”µ½¹¥Ñ½É…µ•¹Ñ¼…Ëµ½±„ƒŠPÕÍ¼½½‰•ÉÑÕÉ„°Ù¥½È”Í…™É„ˆ°(€€€€€€€€€€€€€€€€€€½µµ…¹õ±…µ‰‘„è¡‘¥…±½œ¹‘•ÍÑÉ½ä ¤±Í•±˜¹•áÁ½ÉÑ}µ½¹¥Ñ½É¥¹}•á•° ¤¤¤¹Á…¬¡™¥±°ô‰àˆ±Á…‘àôÄĞ±Á…‘äôØ¤(€€€€€€€ÑÑ¬¹	ÕÑÑ½¸¡‘¥…±½œ±Ñ•áĞô‰…¹•±…Èˆ±½µµ…¹õ‘¥…±½œ¹‘•ÍÑÉ½ä¤¹Á…¬¡…¹¡½Èô‰”ˆ±Á…‘àôÄĞ±Á…‘äôÄÈ¤((€€€‘•˜•áÁ½ÉÑ}µ½¹¥Ñ½É¥¹}•á•°¡Í•±˜¤è(€€€€€€€™É½´…¹…±åÍ¥Í}Á¥Á•±¥¹•}½¹ÑÉ…Ğ¥µÁ½ÉĞ•½µ•ÑÉå}¡…Í (€€€€€€€ÑÉäè(€€€€€€€€€€€•áÁ•Ñ•‘}¡…Í õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}…½¥}¡…Í ˆ¤(€€€€€€€€€€€¥˜¹½Ğ•áÁ•Ñ•‘}¡…Í ½È•½µ•ÑÉå}¡…Í ¡Í•±˜¹‘˜¤„õ•áÁ•Ñ•‘}¡…Í è(€€€€€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰!M!}=%}%YI9QƒŠPÉ••á•ÕÑ”„…»…±¥Í”…¹Ñ•Ì‘”•áÁ½ÉÑ…È¸ˆ¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸…Ì•áŒéÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İ•ÉÉ½È ‰á•°‘”µ½¹¥Ñ½É…µ•¹Ñ¼ˆ±ÍÑÈ¡•áŒ¤¤(€€€€€€€±…¹õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰±…¹‘}ÕÍ”ˆ¤½Èíô(€€€€€€€¥˜¹½Ğ±…¹éÉ•ÑÕÉ¸µ•ÍÍ…•‰½à¹Í¡½İİ…É¹¥¹œ ‰á•°‘”µ½¹¥Ñ½É…µ•¹Ñ¼ˆ°‰á•ÕÑ”„…»…±¥Í”…Ëµ½±„…¹Ñ•Ì‘”•áÁ½ÉÑ…È¸ˆ¤(€€€€€€€Á…Ñ õ™¥±•‘¥…±½œ¹…Í­Í…Ù•…Í™¥±•¹…µ”¡Ñ¥Ñ±”ô‰M…±Ù…ÈÁ±…¹¥±¡„‘”µ½¹¥Ñ½É…µ•¹Ñ¼…Ëµ½±„ˆ±¥¹¥Ñ¥…±™¥±”ô‰5½¹¥Ñ½É…µ•¹Ñ½}É¥½±…}¹™½É´¹á±Íàˆ±‘•™…Õ±Ñ•áÑ•¹Í¥½¸ôˆ¹á±Íàˆ±™¥±•ÑåÁ•Ìõl ‰á•°ˆ°ˆ¨¹á±Íàˆ¥t¤(€€€€€€€¥˜¹½ĞÁ…Ñ éÉ•ÑÕÉ¸(€€€€€€€™É½´½Á•¹Áåá°¥µÁ½ÉĞ]½É­‰½½¬(€€€€€€€™É½´½Á•¹Áåá°¹ÍÑå±•Ì¥µÁ½ÉĞ½¹Ğ±A…ÑÑ•É¹¥±°±±¥¹µ•¹Ğ(€€€€€€€™É½´½Á•¹Áåá°¹¡…ÉĞ¥µÁ½ÉĞ	…É¡…ÉĞ±I•™•É•¹”(€€€€€€€İˆõ]½É­‰½½¬ ¤ìİÌõİˆ¹…Ñ¥Ù”ìİÌ¹Ñ¥Ñ±”ô‰A…¥¹•°á•ÕÑ¥Ù¼ˆìİÌ¹…ÁÁ•¹¡l‰5½¹¥Ñ½É…µ•¹Ñ¼…Ëµ½±„ƒŠP¹™½É´Y•É‘”‰t¤(€€€€€€€İÌ¹…ÁÁ•¹¡l‰AÉ½ÁÉ¥•‘…‘”ˆ±Í•±˜¹¹…µ”¹•Ğ ¥t¤ìİÌ¹…ÁÁ•¹¡l‰ÍÑ…‘¼‘„±…ÍÍ¥™¥‡Ÿ¼ˆ±±…¹¹•Ğ ‰ÍÑ…ÑÕÌˆ°‰8½ˆ¥t¤ìİÌ¹…ÁÁ•¹¡l‹É•„‘„=$€¡¡„¤ˆ±±…¹¹•Ğ ‰…É•…}…½¥}¡„ˆ¥t¤ìİÌ¹…ÁÁ•¹¡l‰Y¥½È”ÁÉ•Ù¥Ï¼‘”Í…™É„ˆ°‰½¹ÍÕ±Ñ”„…‰„Y¥½È”M…™É„ì•ÍÑ…‘½Ì8½µ…¹Ó©´¼µ½Ñ¥Ù¼”„™½¹Ñ”¸‰t¤(€€€€€€€±…ÍÍ•Ìõ±…¹¹•Ğ ‰±…ÍÍ•Ìˆ¤½ÈmtìİÌ¹…ÁÁ•¹¡mt¤ìİÌ¹…ÁÁ•¹¡l‰±…ÍÍ”‘”ÕÍ¼½½‰•ÉÑÕÉ„ˆ°‰=É¥•´ˆ°‹É•„€¡¡„¤ˆ°‹É•„€ ”¤ˆ°‰Q…á½¹½µ¥„€¼É•ÍÍ…±Ù„‰t¤(€€€€€€€ÍÑ…ÉĞõİÌ¹µ…á}É½Ü¬Ä(€€€€€€€™½ÈÉ½Ü¥¸±…ÍÍ•ÌéİÌ¹…ÁÁ•¹¡mÉ½Ü¹•Ğ ‰±…ÍÍ}¹…µ”ˆ¤±É½Ü¹•Ğ ‰Í½ÕÉ”ˆ¤±É½Ü¹•Ğ ‰…É•…}¡„ˆ¤±É½Ü¹•Ğ ‰…É•…}ÁĞˆ¤±É½Ü¹•Ğ ‰Ñ…á½¹½µäˆ¥t¤(€€€€€€€™½È•±°¥¸İÍlÅté•±°¹™½¹Ğõ½¹Ğ¡Í¥é”ôÄØ±‰½±õQÉÕ”±½±½Èô‰ˆ¤í•±°¹™¥±°õA…ÑÑ•É¹¥±° ‰Í½±¥ˆ±™½±½ÈôˆÁÍÉˆ¤(€€€€€€€™½È½°±İ¥‘Ñ ¥¸ì‰ˆèÌà°‰ˆèÌĞ°‰ˆèÄØ°‰ˆèÄØ°‰ˆèÜÙô¹¥Ñ•µÌ ¤éİÌ¹½±Õµ¹}‘¥µ•¹Í¥½¹Ím½±t¹İ¥‘Ñ õİ¥‘Ñ (€€€€€€€İÌ¹™É••é•}Á…¹•Ìô‰àˆìİÌ¹…ÕÑ½}™¥±Ñ•È¹É•˜õ˜‰ÜéíİÌ¹µ…á}É½İôˆ(€€€€€€€™½ÈÉ½Ü¥¸İÌ¹¥Ñ•É}É½İÌ ¤è(€€€€€€€€€€€™½È•±°¥¸É½Üé•±°¹…±¥¹µ•¹Ğõ±¥¹µ•¹Ğ¡Ù•ÉÑ¥…°ô‰Ñ½Àˆ±İÉ…Á}Ñ•áĞõQÉÕ”¤(€€€€€€€¡…ÉĞõ	…É¡…ÉĞ ¤í¡…ÉĞ¹Ñ¥Ñ±”ô‹É•„Á½È±…ÍÍ”‘”ÕÍ¼½½‰•ÉÑÕÉ„ˆí¡…ÉĞ¹å}…á¥Ì¹Ñ¥Ñ±”ô‹É•„€¡¡„¤ˆí¡…ÉĞ¹á}…á¥Ì¹Ñ¥Ñ±”ô‰±…ÍÍ”ˆ(€€€€€€€¥˜±…ÍÍ•Ìè(€€€€€€€€€€€¡…ÉĞ¹…‘‘}‘…Ñ„¡I•™•É•¹”¡İÌ±µ¥¹}½°ôÌ±µ¥¹}É½ÜôÜ±µ…á}É½ÜôÜ­±•¸¡±…ÍÍ•Ì¤¤±Ñ¥Ñ±•Í}™É½µ}‘…Ñ„õQÉÕ”¤(€€€€€€€€€€€¡…ÉĞ¹Í•Ñ}…Ñ•½É¥•Ì¡I•™•É•¹”¡İÌ±µ¥¹}½°ôÄ±µ¥¹}É½Üôà±µ…á}É½ÜôÜ­±•¸¡±…ÍÍ•Ì¤¤¤íİÌ¹…‘‘}¡…ÉĞ¡¡…ÉĞ°‰Èˆ¤(€€€€€€€…Õ‘¥Ğõİˆ¹É•…Ñ•}Í¡••Ğ ‰Y¥½È”M…™É„ˆ¤(€€€€€€€…Õ‘¥Ğ¹…ÁÁ•¹¡l‰I•±…ÓÍÉ¥¼•á•ÕÑ¥Ù¼‘”Ù¥½È”Í…™É„‰t¤(€€€€€€€™½È•±°¥¸…Õ‘¥ÑlÅté•±°¹™½¹Ğõ½¹Ğ¡Í¥é”ôÄØ±‰½±õQÉÕ”±½±½Èô‰ˆ¤í•±°¹™¥±°õA…ÑÑ•É¹¥±° ‰Í½±¥ˆ±™½±½ÈôˆÁÍÉˆ¤(€€€€€€€É•Á½ÉĞôˆˆ(€€€€€€€ÑÉäéÉ•Á½ÉĞõÍ•±˜¹É½Á}É•Ì¹•Ğ ˆÄ¸Àˆ°‰•¹´ÅŒˆ¤(€€€€€€€•á•ÁĞá•ÁÑ¥½¸éÁ…ÍÌ(€€€€€€€…Õ‘¥Ğ¹…ÁÁ•¹¡l‰MÑ…ÑÕÌˆ±Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰•á•ÕÑ¥Ù•}Ù¥½É}ÍÑ…ÑÕÌˆ°‰8½ƒŠP½¹ÍÕ³[h‘éì¶»§q«^te relatÃ³rio e auditoria")])
+            for prediction in prefield.get("predictions", []):
+                compartment=str(prediction.get("compartment") or prediction.get("crop") or "Resultado")
+                prediction_id=str(prediction.get("prediction_id") or "ID N/D")
+                if prediction.get("status") == "PROJECAO_EXPERIMENTAL_PARA_VALIDACAO":
+                    if prediction.get("kind") == "carbono_nativo":
+                        value=prediction.get("density_predicted_tc_ha")
+                        unit=prediction.get("unit") or "tC/ha"
+                        stock=prediction.get("stock_predicted_tC")
+                        estimate=(format_ptbr(value,3)+" "+unit if isinstance(value,(int,float)) else "N/D")
+                        if isinstance(stock,(int,float)):
+                            estimate += "; estoque-base "+format_ptbr(stock,2)+" tC ("+format_ptbr(stock*44/12,2)+" tCOâ‚‚e)"
+                        area_basis=prediction.get("area_basis_ha")
+                    else:
+                        value=prediction.get("predicted_t_ha")
+                        unit=prediction.get("unit") or "t/ha"
+                        stock=prediction.get("predicted_production_t")
+                        estimate=(format_ptbr(value,3)+" "+unit if isinstance(value,(int,float)) else "N/D")
+                        if isinstance(stock,(int,float)):
+                            estimate += "; produÃ§Ã£o-base "+format_ptbr(stock,2)+" t"
+                        area_basis=prediction.get("area_basis_ha")
+                    line=("  PREVISÃƒO EXPERIMENTAL PARA AFERIÃ‡ÃƒO EM CAMPO â€” "+compartment+
+                          ": "+estimate+"; Ã¡rea-base "+format_ptbr(area_basis,2)+" ha; "+prediction_id)
+                    interval=(prediction.get("density_range_tc_ha") or
+                              prediction.get("prediction_range_t_ha"))
+                    if isinstance(interval,(list,tuple)) and len(interval)==2:
+                        line += "; faixa da fonte/modelo "+format_ptbr(interval[0],3)+"â€“"+format_ptbr(interval[1],3)+" "+unit
+                    line += "; incerteza: "+str(prediction.get("uncertainty_kind") or "N/D")
+                    line += "; mÃ©todo: "+str(prediction.get("model") or "N/D")
+                    line += "; fonte: "+str(prediction.get("source") or "N/D")
+                    line += "; hash de rastreio: "+str(prediction.get("trace_sha256") or "N/D")
+                    lines.append(line)
+                else:
+                    lines.append("  RESULTADO PARA CAMPO â€” "+compartment+
+                                 ": N/D; "+str(prediction.get("reason") or "modelo compatÃ­vel indisponÃ­vel")+
+                                 "; "+prediction_id)
+            lines.append("  AferiÃ§Ã£o: preencher somente mediÃ§Ãµes independentes na planilha CSV; previsÃµes e observaÃ§Ãµes permanecem separadas.")
+        except Exception as exc:
+            self.project["modeled_field_predictions"]={"status":"N/D",
+                "reason":type(exc).__name__+": "+str(exc)[:160]}
+            lines.extend(["", "MODELOS PARA VERIFICAÃ‡ÃƒO EM CAMPO: N/D â€” "+
+                          type(exc).__name__+": "+str(exc)[:160]])
+        text="\n".join(lines)
+        self.project["last_result"]=text
+        if hasattr(self,"carbon_exec_var"):
+            self.carbon_exec_var.set(self._executive_excerpt(text,
+                ("ÃREA TOTAL ANALISADA:","VEGETAÃ‡ÃƒO NATIVA MAPEADA:",
+                 "COMPARTIMENTOS DE CARBONO:","Estoque parcial conhecido:",
+                 "Estoque conhecido:","Incerteza do total:")))
+        self._set(self.res,text);self.nb.select(self.tabs[3])
+        self._refresh_overall_executive_summary()
+        if hasattr(self,"sar_exec_var"):
+            sar=self.project.get("sar_result") or {}
+            heights=sar.get("height_products") or []
+            height_line=(f"Altura SAR entregue ao painel: {len(heights)} produto(s)."
+                         if heights else "Altura SAR entregue ao painel: N/D.")
+            self.sar_exec_var.set("Processamento concluÃ­do. "+height_line+
+                " AGB, fonte e aplicaÃ§Ã£o estÃ£o discriminadas nos detalhes tÃ©cnicos.")
+        self.status.set("Carbono por formaÃ§Ã£o nativa concluÃ­do; lacunas e outros usos indicados separadamente.")
+        # Store serializable class-level results beside spatial provenance.
+        audit=sar_audit_path
+        self._write_json_background(native,audit)
+        sar_audit=Path(land["vector_path"]).parent/"proveniencia_sar_painel.json"
+        self._write_json_background({
+            "analysis_run_id":self.project.get("analysis_run_id"),
+            "aoi_hash_sha256":self.project.get("analysis_aoi_hash"),
+            "sar_dashboard_payload":self.project.get("sar_result") or {},
+        },sar_audit)
+        # Separate pedology from carbon stocks in exported calculation evidence.
+        pedo_audit=Path(land["vector_path"]).parent/"pedologia_embrapa_auditoria.json"
+        pedo_audit.write_text(json.dumps(pedology or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        fert_audit=Path(land["vector_path"]).parent/"fertilidade_embrapa_auditoria.json"
+        fert_audit.write_text(json.dumps(fertility or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+
+    def export_excel(self):
+        dialog=tk.Toplevel(self); dialog.title("Escolher planilha para exportaÃ§Ã£o"); dialog.transient(self); dialog.grab_set()
+        ttk.Label(dialog,text="Qual planilha deseja exportar?",font=("Segoe UI",12,"bold"),padding=12).pack(fill="x")
+        ttk.Button(dialog,text="Planilha de carbono nativo â€” estoques, incertezas e grÃ¡ficos",
+                   command=lambda:(dialog.destroy(),self.export_carbon_excel())).pack(fill="x",padx=14,pady=6)
+        ttk.Button(dialog,text="Planilha de monitoramento agrÃ­cola â€” uso/cobertura, vigor e safra",
+                   command=lambda:(dialog.destroy(),self.export_monitoring_excel())).pack(fill="x",padx=14,pady=6)
+        ttk.Button(dialog,text="Cancelar",command=dialog.destroy).pack(anchor="e",padx=14,pady=12)
+
+    def export_monitoring_excel(self):
+        from analysis_pipeline_contract import geometry_hash
+        try:
+            expected_hash=self.project.get("analysis_aoi_hash")
+            if not expected_hash or geometry_hash(self.gdf)!=expected_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE â€” reexecute a anÃ¡lise antes de exportar.")
+        except Exception as exc:return messagebox.showerror("Excel de monitoramento",str(exc))
+        land=self.project.get("land_use") or {}
+        if not land:return messagebox.showwarning("Excel de monitoramento","Execute a anÃ¡lise agrÃ­cola antes de exportar.")
+        path=filedialog.asksaveasfilename(title="Salvar planilha de monitoramento agrÃ­cola",initialfile="Monitoramento_Agricola_Enform.xlsx",defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
+        if not path:return
+        from openpyxl import Workbook
+        from openpyxl.styles import Font,PatternFill,Alignment
+        from openpyxl.chart import BarChart,Reference
+        wb=Workbook(); ws=wb.active; ws.title="Painel Executivo"; ws.append(["Monitoramento agrÃ­cola â€” Enform Verde"])
+        ws.append(["Propriedade",self.name.get()]); ws.append(["Estado da classificaÃ§Ã£o",land.get("status","N/D")]); ws.append(["Ãrea da AOI (ha)",land.get("area_aoi_ha")]); ws.append(["Vigor e previsÃ£o de safra","Consulte a aba Vigor e Safra; estados N/D mantÃªm o motivo e a fonte."])
+        classes=land.get("classes") or []; ws.append([]); ws.append(["Classe de uso/cobertura","Origem","Ãrea (ha)","Ãrea (%)","Taxonomia / ressalva"])
+        start=ws.max_row+1
+        for row in classes:ws.append([row.get("class_name"),row.get("source"),row.get("area_ha"),row.get("area_pct"),row.get("taxonomy")])
+        for cell in ws[1]:cell.font=Font(size=16,bold=True,color="FFFFFF");cell.fill=PatternFill("solid",fgColor="0B3D2E")
+        for col,width in {"A":38,"B":34,"C":16,"D":16,"E":76}.items():ws.column_dimensions[col].width=width
+        ws.freeze_panes="A8"; ws.auto_filter.ref=f"A7:E{ws.max_row}"
+        for row in ws.iter_rows():
+            for cell in row:cell.alignment=Alignment(vertical="top",wrap_text=True)
+        chart=BarChart();chart.title="Ãrea por classe de uso/cobertura";chart.y_axis.title="Ãrea (ha)";chart.x_axis.title="Classe"
+        if classes:
+            chart.add_data(Reference(ws,min_col=3,min_row=7,max_row=7+len(classes)),titles_from_data=True)
+            chart.set_categories(Reference(ws,min_col=1,min_row=8,max_row=7+len(classes)));ws.add_chart(chart,"G2")
+        audit=wb.create_sheet("Vigor e Safra")
+        audit.append(["RelatÃ³rio executivo de vigor e safra"])
+        for cell in audit[1]:cell.font=Font(size=16,bold=True,color="FFFFFF");cell.fill=PatternFill("solid",fgColor="0B3D2E")
+        report=""
+        try:report=self.crop_res.get("1.0","end-1c")
+        except Exception:pass
+        audit.append(["Status",self.project.get("executive_vigor_status","N/D â€” consulte relatÃ³rio e auditoria")])
         audit.append(["RelatÃ³rio integral"])
         for line in (report or "N/D â€” nÃ£o hÃ¡ relatÃ³rio agrÃ­cola nesta execuÃ§Ã£o.").splitlines():audit.append([line])
         audit.column_dimensions["A"].width=110;audit.column_dimensions["B"].width=70
@@ -2313,10 +4626,112 @@ class App(tk.Tk):
             ws.cell(9,4).value=(ws.cell(9,3).value*44/12 if ws.cell(9,3).value is not None else None)
             ws.cell(9,8).value="Denominador: Ã¡rea nativa confirmada; lacunas nÃ£o sÃ£o zero."
             ws.cell(10,2).value="Carbono nas formaÃ§Ãµes nativas";ws.cell(10,3).value=None;ws.cell(10,4).value=None
-            ws.cell(10,8).value=(format_ptbr(native["known_total_tc"],2)+" tC; "+format_ptbr(native["knYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ½İ¹}Ñ½Ñ…±}Ñ¼È‰t°È¤¬ˆÑ?Š
-	”ì€ˆ¬ ‰Ñ½Ñ…°ˆ¥˜¹…Ñ¥Ù•l‰½µÁ±•Ñ”‰t•±Í”€‰Í½µ„Á…É¥…°ˆ¤¥˜¹…Ñ¥Ù”¹•Ğ ‰­¹½İ¹}Ñ½Ñ…±}ÑŒˆ¤¥Ì¹½Ğ9½¹”•±Í”€‰;<MQ%5<ˆ¤(€€€€€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰…É‰½¹¼Á½È½Éµ‡Ÿ¼ˆ¤íÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP…É‰½¹¼…Á•¹…Ì¹…Ì¥¹Ñ•ÉÍ—ŸÕ•Ì¹…Ñ¥Ù…Ìˆ¤(€€€€€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡l‰¥Ñ½™¥Í¥½¹½µ¥„ˆ°‹É•„¹…Ñ¥Ù„€¡¡„¤ˆ°ˆ”‘„=$ˆ°‰½µÁ…ÉÑ¥µ•¹Ñ¼ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰Ñ½¡„ˆ°‰Ñ?Š
-	”½¡„ˆ°‰ÍÑ½ÅÕ”Ñˆ°‰ÍÑ½ÅÕ”Ñ?Š
-	”ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰½¹Ñ”ˆ°‰1¥µ¥Ñ‡Ÿ¼€¼¥¹•ÉÑ•é„‰t°Ä¤éÍ ¹•±° Ì±¨± ¤¹Ù…±Õ”õ (€€€€€€€€€€€ÁÕĞ¡Í ±mmÍÑl‰Á¡åÍ¥½¹½µä‰t±ÍÑl‰…É•…}¡„‰t±ÍÑl‰…É•…}ÁĞ‰t±Él‰Á…É…µ•ÑÉ¼‰t°(€€€€€€€€€€€€€€€€€€€€È¹•Ğ ‰ÑŒˆ¤°(€€€€€€€€€€€€€€€€€€€€Él‰ÑŒ‰t¨ĞĞ¼ÄÈ¥˜È¹•Ğ ‰ÑŒˆ¤¥Ì¹½Ğ9½¹”•±Í”9½¹”°(€€€€€€€€€€€€€€€€€€€€È¹•Ğ ‰Ñ½Ñ…±}ÑŒˆ¤°(€€€€€€€€€€€€€€€€€€€€Él‰Ñ½Ñ…±}ÑŒ‰t¨ĞĞ¼ÄÈ¥˜È¹•Ğ ‰Ñ½Ñ…±}ÑŒˆ¤¥Ì¹½Ğ9½¹”•±Í”9½¹”°(€€€€€€€€€€€€€€€€€€€€È¹•Ğ ‰™½¹Ñ”ˆ¤±ÍÑl‰Á¡åÍ¥½¹½µå}É•Í½±ÕÑ¥½¸‰t¬(€€€€€€€€€€€€€€€€€€€€€ˆì±…ÍÍ”É•½¹¡•¥‘„è€ˆ­ÍÑl‰±…ÍÍ}¹…µ”‰t¬ˆì€ˆ­ÍÑÈ¡È¹•Ğ ‰½‰Ìˆ¤¥t(€€€€€€€€€€€€€€€€€€€€™½ÈÍĞ¥¸¹…Ñ¥Ù•l‰ÍÑÉ…Ñ„‰t™½ÈÈ¥¸ÍÑl‰½µÁ½¹•¹ÑÌ‰ut¤(€€€€€€€€€€€Í ¹½±Õµ¹}‘¥µ•¹Í¥½¹Íl‰$‰t¹İ¥‘Ñ ôĞÈ(€€€€€€€€€€€Í ¹½±Õµ¹}‘¥µ•¹Í¥½¹Íl‰(‰t¹İ¥‘Ñ ôäÈ(€€€€€€€€€€€Í ¹…ÕÑ½}™¥±Ñ•È¹É•˜õ˜‰Ìé)ìÌ­ÍÕ´¡±•¸¡ÍÑl½µÁ½¹•¹ÑÌt¤™½ÈÍĞ¥¸¹…Ñ¥Ù•lÍÑÉ…Ñ„t¥ôˆ(€€€€€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰M½±¼Á½È½Éµ‡Ÿ¼ˆ¤íÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠPÁ•É™¥Ì‘”Í½±¼¹…Ì¥¹Ñ•ÉÍ—ŸÕ•Ì¹…Ñ¥Ù…Ìˆ¤(€€€€€€€€€€€™É½´Í½¥±}¥¹Ñ•ÉÍ•Ñ¥½¹}É•Á½ÉĞ¥µÁ½ÉĞÍ½¥±}¥¹Ñ•ÉÍ•Ñ¥½¹}ÍÕµµ…Éä(€€€€€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡l‰¥Ñ½™¥Í¥½¹½µ¥„ˆ°‹É•„¹…Ñ¥Ù„€¡¡„¤ˆ°ˆ”‘„=$ˆ°‰AÉ½™Õ¹‘¥‘…‘”ˆ°‰Ñ½¡„ˆ°‰@•ÍÁ…¥…°ˆ°‰½¹Ñ”ˆ°‰UÍ¼¹¼Ñ½Ñ…°ˆ°‰7¥Ñ½‘¼ˆ°‹É•„µ…Á•…‘„€¡¡„¤ˆ°‰½‰•ÉÑÕÉ„‘¼µ…Á„€ ”¤ˆ°‰A¥á•±Ì‰t°Ä¤éÍ ¹•±° Ì±¨± ¤¹Ù…±Õ”õ (€€€€€€€€€€€‘•˜}Í½¥±}É½Ü¡ÍĞ±‘•ÁÑ ±ÁÉ½™¥±”¤è(€€€€€€€€€€€€€€€¥¹™¼õÍ½¥±}¥¹Ñ•ÉÍ•Ñ¥½¹}ÍÕµµ…Éä¡ÍĞ¹•Ğ ‰Í½¥±}ÁÉ½™¥±•Ìˆ¤¤(€€€€€€€€€€€€€€€ÕÍ”ô ‰M½µ…‘¼€¡ÏÌƒ…É•„µ…Á•…‘„¤ˆ¥˜ÁÉ½™¥±”¹•Ğ ‰Á…ÉÑ¥…±}½Ù•É…”ˆ¤•±Í”€‰M½µ…‘¼ˆ¤¥˜‘•ÁÑ ôôˆÃŠLÄÀÀ´ˆ•±Í”€‰%¹™½Éµ…Ñ¥Ù¼ì»¼Í½µ…‘¼¹½Ù…µ•¹Ñ”ˆ(€€€€€€€€€€€€€€€É•ÑÕÉ¸mÍÑl‰Á¡åÍ¥½¹½µä‰t±ÍÑl‰…É•…}¡„‰t±ÍÑl‰…É•…}ÁĞ‰t±‘•ÁÑ ±ÁÉ½™¥±”¹•Ğ ‰Ñ}¡„ˆ¤±ÁÉ½™¥±”¹•Ğ ‰ÍÁ…Ñ¥…±}Í‘}Ñ}¡„ˆ¤°‰µ‰É…Á„½AÉ½¹…M½±½Ìˆ±ÕÍ”±¥¹™½l‰µ•Ñ¡½‰t±¥¹™½l‰µ…ÁÁ•‘}…É•…}¡„‰t±¥¹™½l‰½Ù•É…•}ÁĞ‰t±¥¹™½l‰Á¥á•±Ì‰ut(€€€€€€€€€€€ÁÕĞ¡Í ±m}Í½¥±}É½Ü¡ÍĞ±‘•ÁÑ ±ÁÉ½™¥±”¤™½ÈÍĞ¥¸¹…Ñ¥Ù•l‰ÍÑÉ…Ñ„‰t™½È‘•ÁÑ ±ÁÉ½™¥±”¥¸€¡ÍĞ¹•Ğ ‰Í½¥±}ÁÉ½™¥±•Ìˆ¤½Èíô¤¹¥Ñ•µÌ ¤¥˜¥Í¥¹ÍÑ…¹”¡ÁÉ½™¥±”±‘¥Ğ¤…¹ÁÉ½™¥±”¹•Ğ ‰Ñ}¡„ˆ¤¥Ì¹½Ğ9½¹•t¤(€€€€€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰%¹•ÉÑ•é„=™¥¥…°‘¼M½±¼ˆ¤(€€€€€€€€€€€Í•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP±¥µ¥Ñ•Ìµ…É¥¹…¥Ì½™¥¥…¥ÌM=€¡»¼%äÔ”½¹©Õ¹Ñ¼¤ˆ¤(€€€€€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡l‰¥Ñ½™¥Í¥½¹½µ¥„ˆ°‰!½É¥é½¹Ñ”€¡´¤ˆ°‰1¥µ¥Ñ”¥¹™•É¥½È€¡Ñ½¡„¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰1¥µ¥Ñ”ÍÕÁ•É¥½È€¡Ñ½¡„¤ˆ°‰ÍÑ…‘¼‘½Ì±¥µ¥Ñ•Ìˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰¹Ù•±½Á”Í½µ…‘¼€ÃŠLÄÀÀ€¡Ñ½¡„¤ˆ°‰¹Ù•±½Á”•ÍÑ½ÅÕ”€¡Ñ¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰½¹Ñ”ˆ°‰%¹Ñ•ÉÁÉ•Ñ‡Ÿ¼‰t°Ä¤è(€€€€€€€€€€€€€€€Í ¹•±° Ì±¨± ¤¹Ù…±Õ”õ (€€€€€€€€€€€Í½¥±}Õ¹}É½İÌõmt(€€€€€€€€€€€™½ÈÍĞ¥¸¹…Ñ¥Ù•l‰ÍÑÉ…Ñ„‰tè(€€€€€€€€€€€€€€€Ñ½Àô¡ÍĞ¹•Ğ ‰Í½¥±}ÁÉ½™¥±•Ìˆ¤½Èíô¤¹•Ğ ˆÃŠLÄÀÀ´ˆ¤½Èíô(€€€€€€€€€€€€€€€½™™¥¥…°õÑ½À¹•Ğ ‰½™™¥¥…±}Õ¹•ÉÑ…¥¹Ñäˆ¤½Èíô(€€€€€€€€€€€€€€€¡½É¥é½¹Ìõ½™™¥¥…°¹•Ğ ‰µ…É¥¹…±}¡½É¥é½¹}‰½Õ¹‘Ìˆ¤½Èíô(€€€€€€€€€€€€€€€±½¡¤õ½™™¥¥…°¹•Ğ ‰ÍÕµ}‰½Õ¹‘Í}•¹Ù•±½Á•}Ñ}¡„ˆ¤½Èmt(€€€€€€€€€€€€€€€ÍÑ½¬õ½™™¥¥…°¹•Ğ ‰ÍÕµ}‰½Õ¹‘Í}•¹Ù•±½Á•}ÍÑ½­}Ñˆ¤½Èmt(€€€€€€€€€€€€€€€¥˜¹½Ğ¡½É¥é½¹Ìè(€€€€€€€€€€€€€€€€€€€Í½¥±}Õ¹}É½İÌ¹…ÁÁ•¹¡mÍÑl‰Á¡åÍ¥½¹½µä‰t°ˆÃŠLÄÀÀˆ±9½¹”±9½¹”°(€€€€€€€€€€€€€€€€€€€€€€€€‰8½ƒŠP€ˆ­ÍÑÈ¡½™™¥¥…°¹•Ğ ‰É•…Í½¸ˆ¤½È€‰É…ÍÑ•È‘”±¥µ¥Ñ”¥¹‘¥ÍÁ½»µÙ•°ˆ¥lèÄàÁt°(€€€€€€€€€€€€€€€€€€€€€€€9½¹”±9½¹”±9½¹”°‰@•ÍÁ…¥…°»¼ÍÕ‰ÍÑ¥ÑÕ¤¥¹•ÉÑ•é„½™¥¥…°‰t¤(€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€™½È‘•ÁÑ ±‰½Õ¹‘Ì¥¸¡½É¥é½¹Ì¹¥Ñ•µÌ ¤è(€€€€€€€€€€€€€€€€€€€€€€€Í½¥±}Õ¹}É½İÌ¹…ÁÁ•¹¡mÍÑl‰Á¡åÍ¥½¹½µä‰t±‘•ÁÑ °(€€€€€€€€€€€€€€€€€€€€€€€€€€€‰½Õ¹‘Ì¹•Ğ ‰±½İ•É}Ñ}¡„ˆ¤±‰½Õ¹‘Ì¹•Ğ ‰ÕÁÁ•É}Ñ}¡„ˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€½™™¥¥…°¹•Ğ ‰ÍÑ…ÑÕÌˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¡ÍÑÈ¡±½¡¤¤¥˜±½¡¤•±Í”9½¹”¤°¡ÍÑÈ¡ÍÑ½¬¤¥˜ÍÑ½¬•±Í”9½¹”¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€¡½™™¥¥…°¹•Ğ ‰ÁÉ½Ù•¹…¹”ˆ¤½Èíô¤¹•Ğ ‰Í½ÕÉ”ˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰¹Ù•±½Á”Í½µ…‘¼‘”±¥µ¥Ñ•Ìµ…É¥¹…¥Ìì;<ƒ¤%äÔ”½¹©Õ¹Ñ¼‰t¤(€€€€€€€€€€€ÁÕĞ¡Í ±Í½¥±}Õ¹}É½İÌ½Èml‰8½ˆ°ˆÃŠLÄÀÀˆ±9½¹”±9½¹”°‰8½ˆ±9½¹”±9½¹”±9½¹”°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰9•¹¡Õµ„ƒ…É•„¹…Ñ¥Ù„½´µ…Á„‘”Í½±¼‰ut¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰½µÁ…ÉÑ¥µ•¹Ñ½Ìˆ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP½µÁ…ÉÑ¥µ•¹Ñ½Ì‘”…É‰½¹¼ˆ¤(€€€€€€€ÁÕĞ¡Í ±ml‰I•ÍÕ±Ñ…‘¼ƒŠP€ˆ­È¹•Ğ ‰½É¥•´ˆ°‰8½ˆ¤±Él‰Á…É…µ•ÑÉ¼‰t±Él‰ÑŒ‰t±Él‰Ñ¼È‰t±Él‰ÍÑ…ÑÕÌ‰t±Él‰µ•Ñ½‘¼‰t±Él‰™½¹Ñ”‰t±Él‰½‰Ì‰ut™½ÈÈ¥¸…Ét¤(€€€€€€€™½ÈÍ¡••Ğ±Á…É…´¥¸l ‰	¥½µ…ÍÍ„¥É•„ˆ°‰	¥½µ…ÍÍ„‡¥É•„ˆ¤° ‰	¥½µ…ÍÍ„MÕ‰Ñ•ÉË‰¹•„ˆ°‰	¥½µ…ÍÍ„ÍÕ‰Ñ•ÉË‰¹•„ˆ¤° ‰9•É½µ…ÍÍ„ˆ°‰9•É½µ…ÍÍ„ˆ¤° ‰M•É…Á¥±¡•¥É„ˆ°‰M•É…Á¥±¡•¥É„ˆ¥tè(€€€€€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ¡Í¡••Ğ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP€ˆ­Í¡••Ğ¤(€€€€€€€€€€€ÉÈõÉ½İÍ}™½É}½µÁ…ÉÑµ•¹Ğ¡…È±Á…É…´¤(€€€€€€€€€€€‘…Ñ„õml‰I•ÍÕ±Ñ…‘¼ˆ±Él‰Á…É…µ•ÑÉ¼‰t±Él‰ÑŒ‰t±Él‰Ñ¼È‰t±Él‰ÍÑ…ÑÕÌ‰t±Él‰µ•Ñ½‘¼‰t±Él‰™½¹Ñ”‰t±Él‰½‰Ì‰ut™½ÈÈ¥¸ÉÉt(€€€€€€€€€€€¥˜¹½Ğ‘…Ñ„é‘…Ñ„õml‰I•ÍÕ±Ñ…‘¼ˆ±Á…É…´±9½¹”±9½¹”°‰;<1U1<ˆ°‹ŠPˆ°‹ŠPˆ°‰;¼¡½ÕÙ”‘…‘¼Û…±¥‘¼¹•ÍÑ„•á•×Ÿ¼ì¹•¹¡Õ´Ù…±½È™½¤¥¹Ù•¹Ñ…‘¼¸‰ut(€€€€€€€€€€€ÁÕĞ¡Í ±‘…Ñ„¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰Õ‘¥Ñ½É¥„É…Ù¥·¥ÑÉ¥„ˆ¤ìÍ•ÑÕÀ¡Í °‰M•É…Á¥±¡•¥É„ƒŠP½É¥•´°•ÅÕ‡Ÿ¼°¥¹•ÉÑ•é„”…Õ‘¥Ñ½É¥„ˆ¤(€€€€€€€±¥ÑÑ•É}…Õ‘¥Ñ}É½İÌõmt(€€€€€€€™½ÈÍĞ¥¸€¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰¹…Ñ¥Ù•}…É‰½¸ˆ¤½Èíô¤¹•Ğ ‰ÍÑÉ…Ñ„ˆ±mt¤è(€€€€€€€€€€€™½ÈŒ¥¸ÍĞ¹•Ğ ‰½µÁ½¹•¹ÑÌˆ±mt¤è(€€€€€€€€€€€€€€€¥˜Œ¹•Ğ ‰Á…É…µ•ÑÉ¼ˆ¤„ô‰M•É…Á¥±¡•¥É„ˆè½¹Ñ¥¹Õ”(€€€€€€€€€€€€€€€±¥ÑÑ•É}…Õ‘¥Ñ}É½İÌ¹…ÁÁ•¹¡mÍĞ¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤±ÍĞ¹•Ğ ‰…É•…}¡„ˆ¤°(€€€€€€€€€€€€€€€€€€€Œ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤½È€ ‰;I%<aAI%59Q0ˆ¥˜Œ¹•Ğ ‰½É¥¥¸ˆ¤ôô‰aAI%59Q1}%M%<ˆ•±Í”€‰8½ˆ¤°(€€€€€€€€€€€€€€€€€€€Œ¹•Ğ ‰ÑŒˆ¤±Œ¹•Ğ ‰Í½ÕÉ”ˆ¤±Œ¹•Ğ ‰Í½ÕÉ•}ÕÉ°ˆ¤±Œ¹•Ğ ‰µ•Ñ¡½ˆ¤°(€€€€€€€€€€€€€€€€€€€Œ¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñå}­¥¹ˆ¤±©Í½¸¹‘ÕµÁÌ¡Œ¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñäˆ¤½Èíô±•¹ÍÕÉ•}…Í¥¤õ…±Í”±Í½ÉÑ}­•åÌõQÉÕ”¤°(€€€€€€€€€€€€€€€€€€€©Í½¸¹‘ÕµÁÌ¡Œ¹•Ğ ‰…±Õ±…Ñ¥½¹}ÑÉ…”ˆ¤½Èíô±•¹ÍÕÉ•}…Í¥¤õ…±Í”±Í½ÉÑ}­•åÌõQÉÕ”¤°(€€€€€€€€€€€€€€€€€€€€ˆì€ˆ¹©½¥¸¡µ…À¡ÍÑÈ±Œ¹•Ğ ‰±¥µ¥Ñ…Ñ¥½¹Ìˆ¤½Èmt¤¤°(€€€€€€€€€€€€€€€€€€€€‰%8ÁÉ½™Õ¹‘¥‘…‘”»¼•ÅÕ¥Ù…±”„µ…ÍÍ„ì•ÍÑ½ÅÕ”‘”É•ÅÕ•È™É‡Ÿ¼µ•‘¥‘„¸‰t¤(€€€€€€€¥˜¹½Ğ±¥ÑÑ•É}…Õ‘¥Ñ}É½İÌè(€€€€€€€€€€€±¥ÑÑ•É}…Õ‘¥Ñ}É½İÌõml‰8½ˆ±9½¹”°‰8½ˆ±9½¹”°‰M½%8èÁÉ½™Õ¹‘¥‘…‘”…Á•¹…Ìˆ±9½¹”°(€€€€€€€€€€€€€€€€‰M•´½¹Ù•ÉÏ¼ì…Õ…É‘„Á…É•Ì‘”µ…ÍÍ„Í•„”ÁÉ½™Õ¹‘¥‘…‘”½µÁ…ÓµÙ•¥Ìˆ±9½¹”±9½¹”±9½¹”°(€€€€€€€€€€€€€€€€‰9•¹¡Õµ„…±¥‰É‡Ÿ¼É…Ù¥·¥ÑÉ¥„Á…É•…‘„Ù…±¥‘…‘„™½¤™½É¹•¥‘„Á…É„•ÍÑ„±…ÍÍ”½É•§¼¸ˆ°(€€€€€€€€€€€€€€€€‰;¼½¹Ù•ÉÑ•ÈÁÉ½™Õ¹‘¥‘…‘”•´µ…ÍÍ„½´½¹ÍÑ…¹Ñ”¹…¥½¹…°¸‰ut(€€€€€€€ÁÕĞ¡Í ±ml‰¥Ñ½™¥Í¥½¹½µ¥„ˆ°‹É•„¹…Ñ¥Ù„€¡¡„¤ˆ°‰M¥ÑÕ‡Ÿ¼ˆ°‰Ñ½¡„€¡™½É„‘¼Ñ½Ñ…°½¹¡•¥‘¼Í”•áÁ•É¥µ•¹Ñ…°¤ˆ°(€€€€€€€€€€€€€€€€€‰½¹Ñ”ˆ°‰UI0€¼™½¹Ñ•Ìˆ°‰7¥Ñ½‘¼ˆ°‰Q¥Á¼‘”¥¹•ÉÑ•é„ˆ°‰%¹•ÉÑ•é„”¥¹Ñ•ÉÁÉ•Ñ‡Ÿ¼ˆ°(€€€€€€€€€€€€€€€€€‰ÅÕ‡Ÿ¼”ÑÉ¥±¡„‘”…±Õ±¼ˆ°‰1¥µ¥Ñ•Ì€¼ÑÉ…¹Í™•Ë©¹¥„ˆ°‰I•É„‘”±•¥ÑÕÉ„‰t°©±¥ÑÑ•É}…Õ‘¥Ñ}É½İÍt¤(€€€€€€€Í ¹™É••é•}Á…¹•Ìô‰ĞˆìÍ ¹…ÕÑ½}™¥±Ñ•È¹É•˜õ˜‰Ìé1ìÌ­±•¸¡±¥ÑÑ•É}…Õ‘¥Ñ}É½İÌ¥ôˆ(€€€€€€€Í…É}É•ÍÕ±ĞõÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í…É}É•ÍÕ±Ğˆ¤½Èíô(€€€€€€€±…ÍÍ}±…å•ÉÌô¡Í…É}É•ÍÕ±Ğ¹•Ğ ‰™¥Ñ½™¥Í¥½¹½µ¥…}É…ÍÑ•É}ÍÑ…ÑÌˆ¤½Èíô¤(€€€€€€€±…ÍÍ}É½İÌô¡±…ÍÍ}±…å•ÉÌ¹•Ğ ‰ˆ¤½Èíô¤¹•Ğ ‰±…ÍÍ•Ìˆ±mt¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰Á½È¥Ñ½™¥Í¥½¹½µ¥„ˆ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠPMHÁ½È¥¹Ñ•ÉÍ—Ÿ¼%	ˆ¤(€€€€€€€±…ÍÍ}¡•…‘•ÉÌõl‰±…ÍÍ”%	ˆ°‹É•„€¡¡„¤ˆ°‹É•„€ ”¤ˆ°‰·¥‘¥„€¡5œ½¡„¤ˆ°‰Ñ½Ñ…°€¡5œ¤ˆ°‰A¥á•±ÌÛ…±¥‘½Ìˆ°‰%¹•ÉÑ•é„·¥‘¥„‘¼ÁÉ½‘ÕÑ¼ˆ°‰±ÑÕÉ„·¥‘¥„€¡´¤‰t(€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡±…ÍÍ}¡•…‘•ÉÌ°Ä¤èÍ ¹•±° Ì±¨± ¤¹Ù…±Õ”õ (€€€€€€€Õ¹}‰äõíà¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤éà™½Èà¥¸€¡±…ÍÍ}±…å•ÉÌ¹•Ğ ‰U9IQ%9Qdˆ¤½Èíô¤¹•Ğ ‰±…ÍÍ•Ìˆ±mt¥ô(€€€€€€€¡Ñ}‰äõíà¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤éà™½Èà¥¸€¡±…ÍÍ}±…å•ÉÌ¹•Ğ ‰!%!Pˆ¤½Èíô¤¹•Ğ ‰±…ÍÍ•Ìˆ±mt¥ô(€€€€€€€‘…Ñ„õmt(€€€€€€€™½ÈÈ¥¸±…ÍÍ}É½İÌè(€€€€€€€€€€€¹…µ”õÈ¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤(€€€€€€€€€€€‘…Ñ„¹…ÁÁ•¹¡m¹…µ”±È¹•Ğ ‰…É•…}¡„ˆ¤±È¹•Ğ ‰…É•…}Í¡…É•}ÁĞˆ¤±È¹•Ğ ‰…‰}µ•…¹}µ}¡„ˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€È¹•Ğ ‰…‰}Ñ½Ñ…±}µœˆ¤±È¹•Ğ ‰¸ˆ¤±Õ¹}‰ä¹•Ğ¡¹…µ”±íô¤¹•Ğ ‰µ•…¸ˆ¤±¡Ñ}‰ä¹•Ğ¡¹…µ”±íô¤¹•Ğ ‰µ•…¸ˆ¥t¤(€€€€€€€¥˜¹½Ğ‘…Ñ„é‘…Ñ„õml‰;<1U1<ƒŠP…µ…‘„%	‘”™¥Ñ½™¥Í¥½¹½µ¥…Ì…ÕÍ•¹Ñ”½ÔÍ•´É…ÍÑ•Èˆ±9½¹”±9½¹”±9½¹”±9½¹”±9½¹”±9½¹”±9½¹•ut(€€€€€€€ÁÕĞ¡Í ±‘…Ñ„¤(€€€€€€€Í¡l‰È‰tô‰%¹Ñ•ÉÍ—Ÿ¼•ÍÁ…¥…°=$ƒ\±…ÍÍ”%	ì•ÉÉ¼‘¼ÁÉ½‘ÕÑ¼”…±ÑÕÉ„Ï¼…µ…‘…ÌÍ•Á…É…‘…Ì¸Ñ½Ñ…°€ô·¥‘¥„5œ½¡„ƒ\ƒ…É•„‘„±…ÍÍ”¸ˆ(€€€€€€€Í ¹µ•É•}•±±Ì ‰Èé Èˆ¤(€€€€€€€Í¡l‰È‰t¹…±¥¹µ•¹Ğõ±¥¹µ•¹Ğ¡İÉ…Á}Ñ•áĞõQÉÕ”±Ù•ÉÑ¥…°ô‰•¹Ñ•Èˆ¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰½µÁ…É‡Ÿ¼%¹Ù•¹Ó…É¥½Ìˆ¤(€€€€€€€Í•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP½µÁ…É‡Ÿ¼M$”Ñ½‘…Ì…Ì™½¹Ñ•Ì‘”¥¹Ù•¹Ó…É¥¼•±•ŸµÙ•¥Ìˆ¤(€€€€€€€½µÁ…É¥Í½¹}É½İÌõmt(€€€€€€€™½ÈÍĞ¥¸€¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰¹…Ñ¥Ù•}…É‰½¸ˆ¤½Èíô¤¹•Ğ ‰ÍÑÉ…Ñ„ˆ±mt¤è(€€€€€€€€€€€‘•Ñ…¥±ÌõÍĞ¹•Ğ ‰Í…É}‘•Ñ…¥±Ìˆ¤½Èíô(€€€€€€€€€€€µÀõ‘•Ñ…¥±Ì¹•Ğ ‰¥¹Ù•¹Ñ½Éå}…‰}½µÁ…É¥Í½¸ˆ¤(€ƒ[h‘éì¶»§q«^t         if not cmp: continue
+            ws.cell(10,8).value=(format_ptbr(native["known_total_tc"],2)+" tC; "+format_ptbr(native["known_total_tco2"],2)+" tCOâ‚‚e; "+("total" if native["complete"] else "soma parcial") if native.get("known_total_tc") is not None else "NÃƒO ESTIMADO")
+            sh=wb.create_sheet("Carbono por FormaÃ§Ã£o");setup(sh,"Enform Verde â€” carbono apenas nas interseÃ§Ãµes nativas")
+            for j,h in enumerate(["Fitofisionomia","Ãrea nativa (ha)","% da AOI","Compartimento",
+                                   "tC/ha","tCOâ‚‚e/ha","Estoque tC","Estoque tCOâ‚‚e",
+                                   "Fonte","LimitaÃ§Ã£o / incerteza"],1):sh.cell(3,j,h).value=h
+            put(sh,[[st["physiognomy"],st["area_ha"],st["area_pct"],r["parametro"],
+                     r.get("tc"),
+                     r["tc"]*44/12 if r.get("tc") is not None else None,
+                     r.get("total_tc"),
+                     r["total_tc"]*44/12 if r.get("total_tc") is not None else None,
+                     r.get("fonte"),st["physiognomy_resolution"]+
+                     "; classe reconhecida: "+st["class_name"]+"; "+str(r.get("obs"))]
+                     for st in native["strata"] for r in st["components"]])
+            sh.column_dimensions["I"].width=42
+            sh.column_dimensions["J"].width=92
+            sh.auto_filter.ref=f"A3:J{3+sum(len(st['components']) for st in native['strata'])}"
+            sh=wb.create_sheet("Solo por FormaÃ§Ã£o");setup(sh,"Enform Verde â€” perfis de solo nas interseÃ§Ãµes nativas")
+            from soil_intersection_report import soil_intersection_summary
+            for j,h in enumerate(["Fitofisionomia","Ãrea nativa (ha)","% da AOI","Profundidade","tC/ha","DP espacial","Fonte","Uso no total","MÃ©todo","Ãrea mapeada (ha)","Cobertura do mapa (%)","Pixels"],1):sh.cell(3,j,h).value=h
+            def _soil_row(st,depth,profile):
+                info=soil_intersection_summary(st.get("soil_profiles"))
+                use=("Somado (sÃ³ Ã¡rea mapeada)" if profile.get("partial_coverage") else "Somado") if depth=="0â€“100 cm" else "Informativo; nÃ£o somado novamente"
+                return [st["physiognomy"],st["area_ha"],st["area_pct"],depth,profile.get("tc_ha"),profile.get("spatial_sd_tc_ha"),"Embrapa/PronaSolos",use,info["method"],info["mapped_area_ha"],info["coverage_pct"],info["pixels"]]
+            put(sh,[_soil_row(st,depth,profile) for st in native["strata"] for depth,profile in (st.get("soil_profiles") or {}).items() if isinstance(profile,dict) and profile.get("tc_ha") is not None])
+            sh=wb.create_sheet("Incerteza Oficial do Solo")
+            setup(sh,"Enform Verde â€” limites marginais oficiais SOC (nÃ£o IC95% conjunto)")
+            for j,h in enumerate(["Fitofisionomia","Horizonte (cm)","Limite inferior (tC/ha)",
+                                   "Limite superior (tC/ha)","Estado dos limites",
+                                   "Envelope somado 0â€“100 (tC/ha)","Envelope estoque (tC)",
+                                   "Fonte","InterpretaÃ§Ã£o"],1):
+                sh.cell(3,j,h).value=h
+            soil_unc_rows=[]
+            for st in native["strata"]:
+                top=(st.get("soil_profiles") or {}).get("0â€“100 cm") or {}
+                official=top.get("official_uncertainty") or {}
+                horizons=official.get("marginal_horizon_bounds") or {}
+                lohi=official.get("sum_bounds_envelope_tc_ha") or []
+                stock=official.get("sum_bounds_envelope_stock_tC") or []
+                if not horizons:
+                    soil_unc_rows.append([st["physiognomy"],"0â€“100",None,None,
+                        "N/D â€” "+str(official.get("reason") or "raster de limite indisponÃ­vel")[:180],
+                        None,None,None,"DP espacial nÃ£o substitui incerteza oficial"])
+                else:
+                    for depth,bounds in horizons.items():
+                        soil_unc_rows.append([st["physiognomy"],depth,
+                            bounds.get("lower_tc_ha"),bounds.get("upper_tc_ha"),
+                            official.get("status"),
+                            (str(lohi) if lohi else None),(str(stock) if stock else None),
+                            (official.get("provenance") or {}).get("source"),
+                            "Envelope somado de limites marginais; NÃƒO Ã© IC95% conjunto"])
+            put(sh,soil_unc_rows or [["N/D","0â€“100",None,None,"N/D",None,None,None,
+                                       "Nenhuma Ã¡rea nativa com mapa de solo"]])
+        sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde â€” Compartimentos de carbono")
+        put(sh,[["Resultado â€” "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
+        for sheet,param in [("Biomassa AÃ©rea","Biomassa aÃ©rea"),("Biomassa SubterrÃ¢nea","Biomassa subterrÃ¢nea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
+            sh=wb.create_sheet(sheet); setup(sh,"Enform Verde â€” "+sheet)
+            rr=rows_for_compartment(ar,param)
+            data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
+            if not data:data=[["Resultado",param,None,None,"NÃƒO CALCULADO","â€”","â€”","NÃ£o houve dado vÃ¡lido nesta execuÃ§Ã£o; nenhum valor foi inventado."]]
+            put(sh,data)
+        sh=wb.create_sheet("Auditoria GravimÃ©trica"); setup(sh,"Serapilheira â€” origem, equaÃ§Ã£o, incerteza e auditoria")
+        litter_audit_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            for c in st.get("components",[]):
+                if c.get("parametro")!="Serapilheira": continue
+                litter_audit_rows.append([st.get("physiognomy"),st.get("area_ha"),
+                    c.get("status") or ("CENÃRIO EXPERIMENTAL" if c.get("origin")=="EXPERIMENTAL_FISICO" else "N/D"),
+                    c.get("tc"),c.get("source"),c.get("source_url"),c.get("method"),
+                    c.get("uncertainty_kind"),json.dumps(c.get("uncertainty") or {},ensure_ascii=False,sort_keys=True),
+                    json.dumps(c.get("calculation_trace") or {},ensure_ascii=False,sort_keys=True),
+                    "; ".join(map(str,c.get("limitations") or [])),
+                    "IFN profundidade nÃ£o equivale a massa; estoque de C requer fraÃ§Ã£o medida."])
+        if not litter_audit_rows:
+            litter_audit_rows=[["N/D",None,"N/D",None,"SFB/IFN: profundidade apenas",None,
+                "Sem conversÃ£o; aguarda pares de massa seca e profundidade compatÃ­veis",None,None,None,
+                "Nenhuma calibraÃ§Ã£o gravimÃ©trica pareada validada foi fornecida para esta classe/regiÃ£o.",
+                "NÃ£o converter profundidade em massa com constante nacional."]]
+        put(sh,[["Fitofisionomia","Ãrea nativa (ha)","SituaÃ§Ã£o","tC/ha (fora do total conhecido se experimental)",
+                 "Fonte","URL / fontes","MÃ©todo","Tipo de incerteza","Incerteza e interpretaÃ§Ã£o",
+                 "EquaÃ§Ã£o e trilha de cÃ¡lculo","Limites / transferÃªncia","Regra de leitura"],*litter_audit_rows])
+        sh.freeze_panes="A4"; sh.auto_filter.ref=f"A3:L{3+len(litter_audit_rows)}"
+        sar_result=self.project.get("sar_result") or {}
+        class_layers=(sar_result.get("fitofisionomia_raster_stats") or {})
+        class_rows=(class_layers.get("AGB") or {}).get("classes",[])
+        sh=wb.create_sheet("AGB por Fitofisionomia"); setup(sh,"Enform Verde â€” AGB SAR por interseÃ§Ã£o IBGE")
+        class_headers=["Classe IBGE","Ãrea (ha)","Ãrea (%)","AGB mÃ©dia (Mg/ha)","AGB total (Mg)","Pixels vÃ¡lidos","Incerteza mÃ©dia do produto","Altura mÃ©dia (m)"]
+        for j,h in enumerate(class_headers,1): sh.cell(3,j,h).value=h
+        unc_by={x.get("physiognomy"):x for x in (class_layers.get("UNCERTAINTY") or {}).get("classes",[])}
+        hgt_by={x.get("physiognomy"):x for x in (class_layers.get("HEIGHT") or {}).get("classes",[])}
+        data=[]
+        for cr in class_rows:
+            name=cr.get("physiognomy")
+            data.append([name,cr.get("area_ha"),cr.get("area_share_pct"),cr.get("agb_mean_mg_ha"),
+                         cr.get("agb_total_mg"),cr.get("n"),unc_by.get(name,{}).get("mean"),hgt_by.get(name,{}).get("mean")])
+        if not data:data=[["NÃƒO CALCULADO â€” camada IBGE de fitofisionomias ausente ou sem raster AGB",None,None,None,None,None,None,None]]
+        put(sh,data)
+        sh["A2"]="InterseÃ§Ã£o espacial AOI Ã— classe IBGE; erro do produto e altura sÃ£o camadas separadas. AGB total = mÃ©dia Mg/ha Ã— Ã¡rea da classe."
+        sh.merge_cells("A2:H2")
+        sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        sh=wb.create_sheet("ComparaÃ§Ã£o AGB InventÃ¡rios")
+        setup(sh,"Enform Verde â€” comparaÃ§Ã£o ESA CCI e todas as fontes de inventÃ¡rio elegÃ­veis")
+        comparison_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            details=st.get("sar_details") or {}
+            cmp=details.get("inventory_agb_comparison")
+            if not cmp: continue
             references=cmp.get("inventory_references") or [cmp]
             for ref in references:
                 comparison_rows.append([st.get("physiognomy"),st.get("area_ha"),details.get("product"),
@@ -2420,9 +4835,108 @@ class App(tk.Tk):
             c=sh.cell(3,j,h);c.font=Font(bold=True,color=white);c.fill=PatternFill("solid",fgColor=orange)
             c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
         sh.merge_cells("A1:G1");sh["A2"]="Resumo descritivo IFN/DAP10 por proximidade, bioma e legenda_1 IBGE; UAs do mesmo programa nacional nÃ£o sÃ£o inventÃ¡rios independentes. Outras fontes primÃ¡rias e agregadas reconhecidas devem ser harmonizadas e acrescentadas com unidade amostral e incerteza prÃ³prias."
-        sh.merge_cells("A2:G2");sh["A2"].alignment=Alignment(wrap_text=TruYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ”±Ù•ÉÑ¥…°ô‰•¹Ñ•Èˆ¤(€€€€€€€™½È½°±İ¥‘Ñ ¥¸é¥À ‰	ˆ±lÈà°ÌÈ°ÄÈ°Äà°ÄÈ°ÌÔ°àÁt¤éÍ ¹½±Õµ¹}‘¥µ•¹Í¥½¹Ím½±t¹İ¥‘Ñ õİ¥‘Ñ (€€€€€€€ÁÕĞ¡Í ±‰¥½‘¥Ù•ÉÍ¥Ñå}É½İÌ¤íÍ ¹…ÕÑ½}™¥±Ñ•È¹É•˜õ˜‰ÌéìÌ­±•¸¡‰¥½‘¥Ù•ÉÍ¥Ñå}É½İÌ¥ôˆ(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰…É‰½¹¼‘¼M½±¼ˆ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP…É‰½¹¼½ÉŸ‰¹¥¼‘¼Í½±¼ˆ¤(€€€€€€€Í½¥±}É½İÌõmÈ™½ÈÈ¥¸…È¥˜Él‰Á…É…µ•ÑÉ¼‰t¹ÍÑ…ÉÑÍİ¥Ñ  ‰M½±¼€ˆ¥t(€€€€€€€Í½¥±}‘…Ñ„õml‰5A59Q<ƒŠPAÉ½¹…M½±½Ìˆ±Él‰Á…É…µ•ÑÉ¼‰t±Él‰ÑŒ‰t±Él‰Ñ¼È‰t±Él‰ÍÑ…ÑÕÌ‰t±Él‰µ•Ñ½‘¼‰t±Él‰™½¹Ñ”‰t±Él‰½‰Ì‰t¬ˆğ€ˆ­È¹•Ğ ‰•ÉÉ½}µ•ÑÉ¥„ˆ°ˆˆ¥t™½ÈÈ¥¸Í½¥±}É½İÍt(€€€€€€€¥˜¹½ĞÍ½¥±}‘…Ñ„èÍ½¥±}‘…Ñ„õml‰5A59Q<ˆ°‰…É‰½¹¼‘¼Í½±¼ˆ±9½¹”±9½¹”°‰;<1U1<ˆ°‰AÉ½¹…M½±½Ì€äÀ´ˆ°‰µ‰É…Á„M½±½Ì½AÉ½¹…M½±½Ìˆ°‰M•´Ù…±½É•ÌÛ…±¥‘½Ì¹•ÍÑ„•á•×Ÿ¼¸‰ut(€€€€€€€ÁÕĞ¡Í ±Í½¥±}‘…Ñ„¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰¥…»ÍÍÑ¥¼%	ˆ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP¥…»ÍÍÑ¥¼Ñ•ÉÉ¥Ñ½É¥…°%	ˆ¤(€€€€€€€‘¥…œõÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰¥‰•}‘¥…¹½Í¥Ìˆ±íô¤(€€€€€€€¥‘…Ñ„õmt(€€€€€€€™½È¸±¡„±ÁĞ¥¸‘¥…œ¹•Ğ ‰‰¥½µ…Ìˆ±mt¤è¥‘…Ñ„¹…ÁÁ•¹¡l‰	¥½µ„ˆ±¸±9½¹”±9½¹”°‰%	½™¥¥…°ˆ°‰¥¹Ñ•ÉÍ—Ÿ¼•ÍÁ…¥…°ˆ°‰%	ƒŠP	¥½µ…Ì€ÈÀÈÔˆ±˜‰í™½Éµ…Ñ}ÁÑ‰È¡¡„°È¥ô¡„ğí™½Éµ…Ñ}ÁÑ‰È¡ÁĞ°È¥ô”‘„ƒ…É•„‰t¤(€€€€€€€™½ÈÉÀ¥¸‘¥…œ¹•Ğ ‰Ù••Ñ……¼ˆ±mt¤è(€€€€€€€€€€€™½È¸±¡„±ÁĞ¥¸ÉÀ¹•Ğ ‰±…ÍÍ•Ìˆ±mt¤è¥‘…Ñ„¹…ÁÁ•¹¡l‰Y••Ñ‡Ÿ¼€ˆ­ÉÀ¹•Ğ ‰…µÁ¼ˆ°ˆˆ¤±¸±9½¹”±9½¹”°‰%	½™¥¥…°€ÈÀÈØˆ°‰¥¹Ñ•ÉÍ—Ÿ¼•ÍÁ…¥…°ˆ°‰%	ƒŠPY••Ñ‡Ÿ¼€ÈÀÈØˆ±˜‰í™½Éµ…Ñ}ÁÑ‰È¡¡„°È¥ô¡„ğí™½Éµ…Ñ}ÁÑ‰È¡ÁĞ°È¥ô”‘„ƒ…É•„‰t¤(€€€€€€€¥˜¹½Ğ¥‘…Ñ„é¥‘…Ñ„õml‰¥…»ÍÍÑ¥¼ˆ°‰%	ˆ±9½¹”±9½¹”°‰;<%MA=;5Y0ˆ°‹ŠPˆ°‰%	ˆ°‰½¹ÍÕ±Ñ„½¥¹Ñ•ÉÍ—Ÿ¼»¼™½¤½¹±×µ‘„¹•ÍÑ„•á•×Ÿ¼¸‰ut(€€€€€€€ÁÕĞ¡Í ±¥‘…Ñ„¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰M•¹Í½É•ÌMHˆ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠPM•¹Í½É•ÌMHˆ¤(€€€€€€€ÁÕĞ¡Í ±ml‰M•¹Í½Èˆ°‰M	¥½µ…ÍÌƒŠP‰…¹‘„@ˆ±9½¹”±9½¹”°‰AÉ•™•É•¹¥…°ˆ°‰A½±MH½A½±%¹MH½Q½µ½MHˆ°‰Mˆ°‰AÉ¥µ•¥É¼MH½É‰¥Ñ…°•´‰…¹‘„@ìÕÍ…ÈÍ½µ•¹Ñ”ÅÕ…¹‘¼ÁÉ½‘ÕÑ¼•™•Ñ¥Ù…µ•¹Ñ”ÁÉ½•ÍÍ…‘¼¸‰t°(€€€€€€€€€€€€€€€l‰M•¹Í½Èˆ°‰1=L½A1MH€¼1=L´Èˆ±9½¹”±9½¹”°‰!¥ÍÓÍÉ¥¼½½µÁ±•µ•¹Ñ…Èˆ°‰‰…¹‘„0ˆ°‰)aˆ°‰O¥É¥•Ì¡¥ÍÓÍÉ¥…ÌÁ…É„…ÑÉ¥‰ÕÑ½Ì•ÍÑÉÕÑÕÉ…¥Ì¸‰t°(€€€€€€€€€€€€€€€l‰M•¹Í½Èˆ°‰Q•ÉÉ…MHµ`€¼Q…¹4µ`€¼=M5<µM­å5•ˆ±9½¹”±9½¹”°‰½µÁ±•µ•¹Ñ…Èˆ°‰‰…¹‘„`ˆ°‰=Á•É…‘½É•Ìˆ°‰Q•áÑÕÉ„”•ÍÑÉÕÑÕÉ„‘¼‘½ÍÍ•°ì»¼ƒ¤‰…¹‘„‘¼Í…Ó¥±¥Ñ”	¥½µ…ÍÌ¸‰ut¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰!…¹‘½™˜MHˆ¤(€€€€€€€Í•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠPÁ¥á•±ÌMH•¹ÑÉ•Õ•Ì…¼É•±…ÓÍÉ¥¼”ƒ€•áÁ½ÉÑ‡Ÿ¼ˆ¤(€€€€€€€Í…É}É•ÍÕ±ĞõÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í…É}É•ÍÕ±Ğˆ¤½Èíô(€€€€€€€¡…¹‘½™™}É½İÌõml‰á•×Ÿ¼½=$ˆ±Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤±9½¹”±9½¹”°(€€€€€€€€€€€€€€€€€€€€€€€‰•ÍÑ…‘¼MHˆ±Í…É}É•ÍÕ±Ğ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤°‰½É¥•´ˆ°‰½É”ƒŠH‘…Í¡‰½…ÉƒŠH•áÁ½ÉÑ‡Ÿ¼‰t°(€€€€€€€€€€€€€€€€€€€€€l‰!…Í =$ˆ±Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰…¹…±åÍ¥Í}…½¥}¡…Í ˆ¤±9½¹”±9½¹”°(€€€€€€€€€€€€€€€€€€€€€€€‰ÁÉ½‘ÕÑ½Ì‘”…±ÑÕÉ„ˆ±±•¸¡Í…É}É•ÍÕ±Ğ¹•Ğ ‰¡•¥¡Ñ}ÁÉ½‘ÕÑÌˆ¤½Èmt¤°(€€€€€€€€€€€€€€€€€€€€€€€‰ÍÑ…ÑÕÌˆ°‰»¼½¹™Õ¹‘¥È…±ÑÕÉ„½´‰ut(€€€€€€€™½È ¥¸Í…É}É•ÍÕ±Ğ¹•Ğ ‰¡•¥¡Ñ}ÁÉ½‘ÕÑÌˆ¤½Èmtè(€€€€€€€€€€€¡…¹‘½™™}É½İÌ¹…ÁÁ•¹¡l‰±ÑÕÉ„MHˆ± ¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤± ¹•Ğ ‰¡•¥¡Ñ}É½ÕÑ•}ÍÑ…ÑÕÌˆ¤°(€€€€€€€€€€€€€€€ ¹•Ğ ‰¡•¥¡Ñ}µ•…¹}´ˆ¤°‰´ì¸Á¥á•±ÌÛ…±¥‘½Ìôˆ­ÍÑÈ¡ ¹•Ğ ‰¡•¥¡Ñ}¹}Ù…±¥‘}Á¥á•±Ìˆ¤¤°(€€€€€€€€€€€€€€€ ¹•Ğ ‰¡•¥¡Ñ}Í‘}´ˆ¤± ¹•Ğ ‰Í½ÕÉ”ˆ¤±©Í½¸¹‘ÕµÁÌ¡í¬é ¹•Ğ¡¬¤™½È¬¥¸(€€€€€€€€€€€€€€€€€€€€ ‰¡•¥¡Ñ}µ•ÑÉ¥Œˆ°‰¡•¥¡Ñ}•ÉÉ½É}­¥¹ˆ°‰ÁÉ½‘ÕĞˆ°‰Í•¹Í½Èˆ°‰‰…¹ˆ°‰Í•¹•}¥‘Ìˆ°(€€€€€€€€€€€€€€€€€€€€€‰Á…Ñ¡Ìˆ°‰¡•¥¡Ñ}Á¥á•±}‘¥ÍÑÉ¥‰ÕÑ¥½¸ˆ¥ô±•¹ÍÕÉ•}…Í¥¤õ…±Í”±‘•™…Õ±ĞõÍÑÈ¥t¤(€€€€€€€¥˜¹½ĞÍ…É}É•ÍÕ±Ğ¹•Ğ ‰¡•¥¡Ñ}ÁÉ½‘ÕÑÌˆ¤è(€€€€€€€€€€€¡…¹‘½™™}É½İÌ¹…ÁÁ•¹¡l‰±ÑÕÉ„MHˆ°‰8½ˆ°¡Í…É}É•ÍÕ±Ğ¹•Ğ ‰¡•¥¡Ñ}…‰Í•¹•}•ÉÑ¥™¥…Ñ”ˆ¤½Èíô¤¹•Ğ ‰ÍÑ…ÑÕÌˆ¤°(€€€€€€€€€€€€€€€9½¹”°‰8½ˆ±9½¹”°‰Í•´Á¥á•±Ì¹Õ·¥É¥½Ì‘”…±ÑÕÉ„¹¼Á…å±½…ˆ±©Í½¸¹‘ÕµÁÌ¡ì(€€€€€€€€€€€€€€€€€€€€‰É•…Í½¸ˆè¡Í…É}É•ÍÕ±Ğ¹•Ğ ‰¡•¥¡Ñ}…‰Í•¹•}•ÉÑ¥™¥…Ñ”ˆ¤½Èíô¤¹•Ğ ‰É•…Í½¸ˆ¤°(€€€€€€€€€€€€€€€€€€€€‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆéÍ…É}É•ÍÕ±Ğ¹•Ğ ‰…¹…±åÍ¥Í}ÉÕ¹}¥ˆ¤°(€€€€€€€€€€€€€€€€€€€€‰…½¥}¡…Í¡}Í¡„ÈÔØˆéÍ…É}É•ÍÕ±Ğ¹•Ğ ‰…½¥}¡…Í¡}Í¡„ÈÔØˆ¥ô±•¹ÍÕÉ•}…Í¥¤õ…±Í”¥t¤(€€€€€€€ÁÕĞ¡Í ±¡…¹‘½™™}É½İÌ¤(€€€€€€€Í¡l‰È‰tô‰Y…±½É•Ì°½¹Ñ…•´‘”Á¥á•±Ì°™½¹Ñ”°•¹„°‘¥ÍÑÉ¥‰Õ§Ÿ¼”¥‘•¹Ñ¥‘…‘”‘„µ•Íµ„•á•×Ÿ¼¸M•ÍÁ…¥…°»¼ƒ¤•ÉÉ¼‘”µ•¹ÍÕÉ‡Ÿ¼¹•´%äÔ”¸ˆ(€€€€€€€Í ¹µ•É•}•±±Ì ‰Èé Èˆ¤íÍ¡l‰È‰t¹…±¥¹µ•¹Ğõ±¥¹µ•¹Ğ¡İÉ…Á}Ñ•áĞõQÉÕ”±Ù•ÉÑ¥…°ô‰•¹Ñ•Èˆ¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰5½‘•±½Ì”Eˆ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP5½‘•±½Ì°E”¥¹•ÉÑ•é„ˆ¤(€€€€€€€ÁÕĞ¡Í ±ml‰Eˆ°‰5•¹ÍÕÉ‡Ÿ¼MHˆ±9½¹”±9½¹”°‰IIˆ°‰½¹ÑÉ½±”µ•Ñ½‘½³Í¥¼ˆ°‰¹™½É´ˆ°‰;¼‘•±…É…Èµ•¹ÍÕÉ‡Ÿ¼MHÍ•´ÁÉ½‘ÕÑ¼•™•Ñ¥Ù…µ•¹Ñ”ÁÉ½•ÍÍ…‘¼¸‰t°(€€€€€€€€€€€€€€€l‰5½‘•±¼ˆ°‰½¹Ù•ÉÏ¼ŠI?Š
-	”ˆ±9½¹”±9½¹”°‰Á±¥…‘¼ˆ°‰Ñƒ\€ĞĞ¼ÄÈˆ°‰•ÍÑ•ÅÕ¥½µ•ÑÉ¥„ˆ°‰Q½‘…Ì…Ì•ÍÑ¥µ…Ñ¥Ù…Ì‘”…É‰½¹¼Ï¼•á¥‰¥‘…Ì•´Ñ½¡„”Ñ?Š
-	”½¡„¸‰t°(€€€€€€€€€€€€€€€l‰5½‘•±¼ˆ°‰	¥‰±¥½Ñ•„‰É…Í¥±•¥É„ˆ±9½¹”±9½¹”°‰AÉ¥½É¥Ó…É¥„ˆ°‰Í•±—Ÿ¼Á½È‘½·µ¹¥¼ˆ°‰%8½M€¬µ‰É…Á„ˆ°‰	¥½µ„°™¥Ñ½™¥Í¥½¹½µ¥„”‘½·µ¹¥¼‘”…±¥‰É‡Ÿ¼‘•Ù•´Í•È½µÁ…ÓµÙ•¥Ì¸‰ut¤(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰	¥‰±¥½É…™¥„ˆ¤ìÍ•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP	¥‰±¥½É…™¥„”ÁÉ½Ù•¹§©¹¥„ˆ¤(€€€€€€€ÁÕĞ¡Í ±ml‰½¹Ñ”ˆ°‰M	¥½µ…ÍÌˆ±9½¹”±9½¹”°‰=™¥¥…°ˆ°‰@µ‰…¹MHˆ°‰Mˆ°‰5¥ÍÏ¼½É‰¥Ñ…°Á…É„‰¥½µ…ÍÍ„™±½É•ÍÑ…°¸‰t°(€€€€€€€€€€€€€€€l‰½¹Ñ”ˆ°‰%8€¼A…¥¹•°‘”	¥½µ…ÍÍ„”…É‰½¹¼ˆ±9½¹”±9½¹”°‰AÉ¥½É¥Ó…É¥„ˆ°‰¥¹Ù•¹Ó…É¥¼½•ÅÕ‡ŸÕ•Ìˆ°‰Mˆ°‰	…Í”‰É…Í¥±•¥É„Á…É„Í•±—Ÿ¼”Ù…±¥‘‡Ÿ¼¸‰t°(€€€€€€€€€€€€€€€l‰½¹Ñ”ˆ°‰µ‰É…Á„ˆ±9½¹”±9½¹”°‰AÉ¥½É¥Ó…É¥„ˆ°‰ÁÉ½Ñ½½±½Ì½•ÅÕ‡ŸÕ•Ì½=Lˆ°‰µ‰É…Á„ˆ°‰½¹Ñ•Ì‰É…Í¥±•¥É…ÌÁÉ¥½É¥é…‘…Ì¹¼µ½Ñ½È¸‰ut¤(€€€€€€€Á•‘¼õÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í½¥±}Á•‘½±½äˆ¤½Èíô(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰±…ÍÍ¥™¥‡Ÿ¼‘”M½±½Ìˆ¤(€€€€€€€Í•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP±…ÍÍ•ÌÁ•‘½³Í¥…Ìµ‰É…Á„€¡»¼ƒ¤•ÍÑ½ÅÕ”‘”…É‰½¹¼¤ˆ¤(€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡l‰U¹¥‘…‘”‘”µ…Á•…µ•¹Ñ¼ˆ°‰Oµµ‰½±¼ˆ°‹É•„€¡¡„¤ˆ°ˆ”‘„=$ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰½µÁ½¹•¹Ñ•Ì€¡Í•´Á•É•¹ÑÕ…°ÁËÍÁÉ¥¼¤ˆ°‰=É¥•´€¼•Í…±„ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰%¹•ÉÑ•é„ˆ°‰1¥µ¥Ñ‡ŸÕ•Ì‰t°Ä¤éÍ ¹•±° Ì±¨± ¤¹Ù…±Õ”õ (€€€€€€€Á•‘½}É½İÌõmmÈ¹•Ğ ‰µ…ÁÁ¥¹}Õ¹¥Ğˆ¤±È¹•Ğ ‰Íåµ‰½°ˆ¤±È¹•Ğ ‰…É•…}¡„ˆ¤°(€€€€€€€€€€€€€€€€€€€È¹•Ğ ‰…É•…}ÁÑ}…½¤ˆ¤°ˆì€ˆ¹©½¥¸¡È¹•Ğ ‰½µÁ½¹•¹ÑÌˆ¤½Èmt¤°(€€€€€€€€€€€€€€€€€€€€‰µ‰É…Á„M½±½ÌƒŠP€ÄèÔ¸ÀÀÀ¸ÀÀÀˆ±9½¹”°(€€€€€€€€€€€€€€€€€€€€‰;¼ƒ¤„ƒ…É•„¥¹‘¥Ù¥‘Õ…°‘”…‘„½µÁ½¹•¹Ñ”ìÙ•É¥™¥…È±¥•»„½µ•É¥…°‰t(€€€€€€€€€€€€€€€€€€™½ÈÈ¥¸Á•‘¼¹•Ğ ‰Í½¥±}µ…ÁÁ¥¹}Õ¹¥ÑÌˆ¤½Èmut(€€€€€€€ÁÕĞ¡Í ±Á•‘½}É½İÌ½Èml‰8½ˆ±9½¹”±9½¹”±9½¹”±9½¹”±Á•‘¼¹•Ğ ‰Í½ÕÉ”ˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€9½¹”±Á•‘¼¹•Ğ ‰É•…Í½¸ˆ¤½È€‰…ÉÑ½É…™¥„»¼É•ÕÁ•É…‘„‰ut¤(€€€€€€€™•ÉÑ¥±¥ÑäõÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í½¥±}™•ÉÑ¥±¥Ñäˆ¤½Èíô(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰•ÉÑ¥±¥‘…‘”‘¼M½±¼ˆ¤(€€€€€€€Í•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠP•ÍÑ¥µ…Ñ¥Ù…Ì…ÉÑ½Ë…™¥…Ìµ‰É…Á„€äÀ´€¡»¼Ï¼…»…±¥Í•Ì‘”±…‰½É…ÓÍÉ¥¼¤ˆ¤(€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡l‰U¹¥‘…‘”…ÉÑ½Ë…™¥„ˆ°‰ÑÉ¥‰ÕÑ¼ˆ°‰AÉ½™Õ¹‘¥‘…‘”´ˆ°‰7¥‘¥„ÁÉ•‘¥Ñ„ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰U¹¥‘…‘”ˆ°‰@•ÍÁ…¥…°€¡»¼%äÔ”¤ˆ°‰A¥á•±Ìˆ°‹É•„µ…Á•…‘„¡„ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰½‰•ÉÑÕÉ„€”ˆ°‰ÉÉ¼ÁÉ•‘¥Ñ¥Ù¼ˆ°‰½‰•ÉÑÕÉ„]Lˆ°‰M!ÈÔØÉ…ÍÑ•È‰t°Ä¤è(€€€€€€€€€€€Í ¹•±° Ì±¨± ¤¹Ù…±Õ”õ (€€€€€€€É½İÍ}™•ÉĞõmt(€€€€€€€™½ÈÕ¹¥Ñ}¹…µ”±µ•…ÍÕÉ•µ•¹ÑÌ¥¸€¡™•ÉÑ¥±¥Ñä¹•Ğ ‰Õ¹¥ÑÌˆ¤½Èíô¤¹¥Ñ•µÌ ¤è(€€€€€€€€€€€™½Èµ•…ÍÕÉ”¥¸µ•…ÍÕÉ•µ•¹ÑÌè(€€€€€€€€€€€€€€€¥˜µ•…ÍÕÉ”¹•Ğ ‰µ•…¸ˆ¤¥Ì¹½Ğ9½¹”è(€€€€€€€€€€€€€€€€€€€É½İÍ}™•ÉĞ¹…ÁÁ•¹¡mÕ¹¥Ñ}¹…µ”±µ•…ÍÕÉ”¹•Ğ ‰±…‰•°ˆ¤±µ•…ÍÕÉ”¹•Ğ ‰‘•ÁÑ¡}´ˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€µ•…ÍÕÉ”¹•Ğ ‰µ•…¸ˆ¤±µ•…ÍÕÉ”¹•Ğ ‰Õ¹¥Ğˆ¤±µ•…ÍÕÉ”¹•Ğ ‰ÍÁ…Ñ¥…±}Íˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€µ•…ÍÕÉ”¹•Ğ ‰Ù…±¥‘}Á¥á•±Ìˆ¤±µ•…ÍÕÉ”¹•Ğ ‰µ…ÁÁ•‘}…É•…}¡„ˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€µ•…ÍÕÉ”¹•Ğ ‰½Ù•É…•}ÁĞˆ¤±µ•…ÍÕÉ”¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñäˆ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€µ•…ÍÕÉ”¹•Ğ ‰İÍ}½Ù•É…•}¥ˆ¤±µ•…ÍÕÉ”¹•Ğ ‰É…ÍÑ•É}Í¡„ÈÔØˆ¥t¤(€€€€€€€ÁÕĞ¡Í ±É½İÍ}™•ÉĞ½Èml‰8½ˆ±™•ÉÑ¥±¥Ñä¹•Ğ ‰É•…Í½¸ˆ¤½È€‰Í•´Á¥á•±Ì¹Õ·¥É¥½Ì½™¥¥…¥Ìˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€9½¹”±9½¹”±9½¹”±9½¹”±9½¹”±9½¹”±9½¹”°‰8½ˆ±9½¹”±9½¹•ut¤(€€€€€€€µ½‘•±}µ…¹¥™•ÍĞõÍ•±˜¹ÁÉ½©•Ğ¹•Ğ ‰µ½‘•±•‘}™¥•±‘}ÁÉ•‘¥Ñ¥½¹Ìˆ¤½Èíô(€€€€€€€Í õİˆ¹É•…Ñ•}Í¡••Ğ ‰5½‘•±¼A…É„…µÁ¼ˆ¤(€€€€€€€Í•ÑÕÀ¡Í °‰¹™½É´Y•É‘”ƒŠPÉ•ÍÕ±Ñ…‘½Ì•áÁ•É¥µ•¹Ñ…¥Ì°;<µ•‘§ŸÕ•Ì‘”…µÁ¼ˆ¤(€€€€€€€Í ¹½±Õµ¹}‘¥µ•¹Í¥½¹Íl‰$‰t¹İ¥‘Ñ ôĞà(€€€€€€€Í ¹½±Õµ¹}‘¥µ•¹Í¥½¹Íl‰(‰t¹İ¥‘Ñ ôàÀ(€€€€€€€Í ¹½±Õµ¹}‘¥µ•¹Í¥½¹Íl‰,‰t¹İ¥‘Ñ ôÌĞ(€€€€€€€Í ¹É½İ}‘¥µ•¹Í¥½¹ÍlÍt¹¡•¥¡ĞôÔà(€€€€€€€Í ¹™É••é•}Á…¹•Ìô‰Ğˆ(€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡l‰%ÁÉ•Ù¥Ï¼ˆ°‰¥Ñ½™¥Í¥½¹½µ¥„ˆ°‰½µÁ…ÉÑ¥µ•¹Ñ¼½Õ±ÑÕÉ„ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰MÑ…ÑÕÌˆ°‰ÍÑ¥µ…Ñ¥Ù„€¡Ñ½¡„½ÔĞ½¡„¤ˆ°‹É•„€¡¡„¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰…¥á„½¹‘¥¥½¹…°ˆ°‰Q¥Á¼‘”¥¹•ÉÑ•é„ˆ°‰=É¥•´ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰AÉ½Ñ½½±¼‘”…µÁ¼ˆ°‰Y…±½Èµ•‘¥‘¼•´…µÁ¼€¡4	I9<¤‰t°Ä¤è(€€€€€€€€€€€•±°õÍ ¹•±° Ì±¨± ¤(€€€€€€€€€€€•±°¹™½¹Ğõ½¹Ğ¡‰½±õQÉÕ”±½±½Èõİ¡¥Ñ”¤(€€€€€€€€€€€•±°¹™¥±°õA…ÑÑ•É¹¥±° ‰Í½±¥ˆ±™½±½Èõ½É…¹”¤(€€€€€€€€€€€•±°¹…±¥¹µ•¹Ğõ±¥¹µ•¹Ğ¡¡½É¥é½¹Ñ…°ô‰•¹Ñ•Èˆ±Ù•ÉÑ¥…°ô‰•¹Ñ•Èˆ±İÉ…Á}Ñ•áĞõQÉÕ”¤(€€€€€€€€€€€•±°¹‰½É‘•Èõ	½É‘•È¡Ñ½ÀõÑ¡¥¸±‰½ÑÑ½´õÑ¡¥¸±±•™ĞõÑ¡¥¸±É¥¡ĞõÑ¡¥¸¤(€€€€€€€µ½‘•±}É½İÌõmt(€€€€€€€™½ÈÁÉ•‘¥Ñ¥½¸¥¸µ½‘•±}µ…¹¥™•ÍĞ¹•Ğ ‰ÁÉ•‘¥Ñ¥½¹Ìˆ¤½Èmtè(€€€€€€€€€€€µ½‘•±}É½İÌ¹…ÁÁ•¹¡mÁÉ•‘¥Ñ¥½¸¹•Ğ ‰ÁÉ•‘¥Ó[h‘éì¶»§q«^uon_id"),
+        sh.merge_cells("A2:G2");sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        for col,width in zip("ABCDEFG",[28,32,12,18,12,35,80]):sh.column_dimensions[col].width=width
+        put(sh,biodiversity_rows);sh.auto_filter.ref=f"A3:G{3+len(biodiversity_rows)}"
+        sh=wb.create_sheet("Carbono do Solo"); setup(sh,"Enform Verde â€” Carbono orgÃ¢nico do solo")
+        soil_rows=[r for r in ar if r["parametro"].startswith("Solo ")]
+        soil_data=[["MAPEAMENTO â€” PronaSolos",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]+" | "+r.get("erro_metrica","")] for r in soil_rows]
+        if not soil_data: soil_data=[["MAPEAMENTO","Carbono do solo",None,None,"NÃƒO CALCULADO","PronaSolos 90 m","Embrapa Solos/PronaSolos","Sem valores vÃ¡lidos nesta execuÃ§Ã£o."]]
+        put(sh,soil_data)
+        sh=wb.create_sheet("DiagnÃ³stico IBGE"); setup(sh,"Enform Verde â€” DiagnÃ³stico territorial IBGE")
+        diag=self.project.get("ibge_diagnosis",{})
+        idata=[]
+        for n,ha,pct in diag.get("biomas",[]): idata.append(["Bioma",n,None,None,"IBGE oficial","interseÃ§Ã£o espacial","IBGE â€” Biomas 2025",f"{format_ptbr(ha,2)} ha | {format_ptbr(pct,2)}% da Ã¡rea"])
+        for grp in diag.get("vegetacao",[]):
+            for n,ha,pct in grp.get("classes",[]): idata.append(["VegetaÃ§Ã£o "+grp.get("campo",""),n,None,None,"IBGE oficial 2026","interseÃ§Ã£o espacial","IBGE â€” VegetaÃ§Ã£o 2026",f"{format_ptbr(ha,2)} ha | {format_ptbr(pct,2)}% da Ã¡rea"])
+        if not idata:idata=[["DiagnÃ³stico","IBGE",None,None,"NÃƒO DISPONÃVEL","â€”","IBGE","A consulta/interseÃ§Ã£o nÃ£o foi concluÃ­da nesta execuÃ§Ã£o."]]
+        put(sh,idata)
+        sh=wb.create_sheet("Sensores SAR"); setup(sh,"Enform Verde â€” Sensores SAR")
+        put(sh,[["Sensor","ESA Biomass â€” banda P",None,None,"Preferencial","PolSAR/PolInSAR/TomoSAR","ESA","Primeiro SAR orbital em banda P; usar somente quando produto efetivamente processado."],
+                ["Sensor","ALOS/PALSAR / ALOS-2",None,None,"HistÃ³rico/complementar","banda L","JAXA","SÃ©ries histÃ³ricas para atributos estruturais."],
+                ["Sensor","TerraSAR-X / TanDEM-X / COSMO-SkyMed",None,None,"Complementar","banda X","Operadores","Textura e estrutura do dossel; nÃ£o Ã© banda do satÃ©lite Biomass."]])
+        sh=wb.create_sheet("Handoff SAR")
+        setup(sh,"Enform Verde â€” pixels SAR entregues ao relatÃ³rio e Ã  exportaÃ§Ã£o")
+        sar_result=self.project.get("sar_result") or {}
+        handoff_rows=[["ExecuÃ§Ã£o/AOI",self.project.get("analysis_run_id"),None,None,
+                       "estado SAR",sar_result.get("status"),"origem","core â†’ dashboard â†’ exportaÃ§Ã£o"],
+                      ["Hash AOI",self.project.get("analysis_aoi_hash"),None,None,
+                       "produtos de altura",len(sar_result.get("height_products") or []),
+                       "status","nÃ£o confundir altura com AGB"]]
+        for h in sar_result.get("height_products") or []:
+            handoff_rows.append(["Altura SAR",h.get("physiognomy"),h.get("height_route_status"),
+                h.get("height_mean_m"),"m; n pixels vÃ¡lidos="+str(h.get("height_n_valid_pixels")),
+                h.get("height_sd_m"),h.get("source"),json.dumps({k:h.get(k) for k in
+                    ("height_metric","height_error_kind","product","sensor","band","scene_ids",
+                     "paths","height_pixel_distribution")},ensure_ascii=False,default=str)])
+        if not sar_result.get("height_products"):
+            handoff_rows.append(["Altura SAR","N/D",(sar_result.get("height_absence_certificate") or {}).get("status"),
+                None,"N/D",None,"sem pixels numÃ©ricos de altura no payload",json.dumps({
+                    "reason":(sar_result.get("height_absence_certificate") or {}).get("reason"),
+                    "analysis_run_id":sar_result.get("analysis_run_id"),
+                    "aoi_hash_sha256":sar_result.get("aoi_hash_sha256")},ensure_ascii=False)])
+        put(sh,handoff_rows)
+        sh["A2"]="Valores, contagem de pixels, fonte, cena, distribuiÃ§Ã£o e identidade da mesma execuÃ§Ã£o. SD espacial nÃ£o Ã© erro de mensuraÃ§Ã£o nem IC95%."
+        sh.merge_cells("A2:H2");sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        sh=wb.create_sheet("Modelos e QA"); setup(sh,"Enform Verde â€” Modelos, QA e incerteza")
+        put(sh,[["QA","MensuraÃ§Ã£o SAR",None,None,"REGRA","controle metodolÃ³gico","Enform","NÃ£o declarar mensuraÃ§Ã£o SAR sem produto efetivamente processado."],
+                ["Modelo","ConversÃ£o Câ†’COâ‚‚e",None,None,"Aplicado","tC Ã— 44/12","estequiometria","Todas as estimativas de carbono sÃ£o exibidas em tC/ha e tCOâ‚‚e/ha."],
+                ["Modelo","Biblioteca brasileira",None,None,"PrioritÃ¡ria","seleÃ§Ã£o por domÃ­nio","IFN/SFB + Embrapa","Bioma, fitofisionomia e domÃ­nio de calibraÃ§Ã£o devem ser compatÃ­veis."]])
+        sh=wb.create_sheet("Bibliografia"); setup(sh,"Enform Verde â€” Bibliografia e proveniÃªncia")
+        put(sh,[["Fonte","ESA Biomass",None,None,"Oficial","P-band SAR","ESA","MissÃ£o orbital para biomassa florestal."],
+                ["Fonte","IFN / Painel de Biomassa e Carbono",None,None,"PrioritÃ¡ria","inventÃ¡rio/equaÃ§Ãµes","SFB","Base brasileira para seleÃ§Ã£o e validaÃ§Ã£o."],
+                ["Fonte","Embrapa",None,None,"PrioritÃ¡ria","protocolos/equaÃ§Ãµes/COS","Embrapa","Fontes brasileiras priorizadas no motor."]])
+        pedo=self.project.get("soil_pedology") or {}
+        sh=wb.create_sheet("ClassificaÃ§Ã£o de Solos")
+        setup(sh,"Enform Verde â€” classes pedolÃ³gicas Embrapa (nÃ£o Ã© estoque de carbono)")
+        for j,h in enumerate(["Unidade de mapeamento","SÃ­mbolo","Ãrea (ha)","% da AOI",
+                              "Componentes (sem percentual prÃ³prio)","Origem / escala",
+                              "Incerteza","LimitaÃ§Ãµes"],1):sh.cell(3,j,h).value=h
+        pedo_rows=[[r.get("mapping_unit"),r.get("symbol"),r.get("area_ha"),
+                    r.get("area_pct_aoi"),"; ".join(r.get("components") or []),
+                    "Embrapa Solos â€” 1:5.000.000",None,
+                    "NÃ£o Ã© a Ã¡rea individual de cada componente; verificar licenÃ§a comercial"]
+                   for r in pedo.get("soil_mapping_units") or []]
+        put(sh,pedo_rows or [["N/D",None,None,None,None,pedo.get("source"),
+                             None,pedo.get("reason") or "Cartografia nÃ£o recuperada"]])
+        fertility=self.project.get("soil_fertility") or {}
+        sh=wb.create_sheet("Fertilidade do Solo")
+        setup(sh,"Enform Verde â€” estimativas cartogrÃ¡ficas Embrapa 90 m (nÃ£o sÃ£o anÃ¡lises de laboratÃ³rio)")
+        for j,h in enumerate(["Unidade cartogrÃ¡fica","Atributo","Profundidade cm","MÃ©dia predita",
+                              "Unidade","DP espacial (nÃ£o IC95%)","Pixels","Ãrea mapeada ha",
+                              "Cobertura %","Erro preditivo","Cobertura WCS","SHA256 raster"],1):
+            sh.cell(3,j,h).value=h
+        rows_fert=[]
+        for unit_name,measurements in (fertility.get("units") or {}).items():
+            for measure in measurements:
+                if measure.get("mean") is not None:
+                    rows_fert.append([unit_name,measure.get("label"),measure.get("depth_cm"),
+                                     measure.get("mean"),measure.get("unit"),measure.get("spatial_sd"),
+                                     measure.get("valid_pixels"),measure.get("mapped_area_ha"),
+                                     measure.get("coverage_pct"),measure.get("uncertainty"),
+                                     measure.get("wcs_coverage_id"),measure.get("raster_sha256")])
+        put(sh,rows_fert or [["N/D",fertility.get("reason") or "sem pixels numÃ©ricos oficiais",
+                             None,None,None,None,None,None,None,"N/D",None,None]])
+        model_manifest=self.project.get("modeled_field_predictions") or {}
+        sh=wb.create_sheet("Modelo Para Campo")
+        setup(sh,"Enform Verde â€” resultados experimentais, NÃƒO mediÃ§Ãµes de campo")
+        sh.column_dimensions["I"].width=48
+        sh.column_dimensions["J"].width=80
+        sh.column_dimensions["K"].width=34
+        sh.row_dimensions[3].height=58
+        sh.freeze_panes="D4"
+        for j,h in enumerate(["ID previsÃ£o","Fitofisionomia","Compartimento/cultura",
+                              "Status","Estimativa (tC/ha ou t/ha)","Ãrea (ha)",
+                              "Faixa condicional","Tipo de incerteza","Origem",
+                              "Protocolo de campo","Valor medido em campo (EM BRANCO)"],1):
+            cell=sh.cell(3,j,h)
+            cell.font=Font(bold=True,color=white)
+            cell.fill=PatternFill("solid",fgColor=orange)
+            cell.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+            cell.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+        model_rows=[]
+        for prediction in model_manifest.get("predictions") or []:
+            model_rows.append([prediction.get("prediction_id"),
                 prediction.get("physiognomy"),prediction.get("compartment"),
                 prediction.get("status"),
                 prediction.get("density_predicted_tc_ha",
@@ -2548,8 +5062,114 @@ class App(tk.Tk):
                 chart.cell(row,1,label)
                 chart.cell(row,2,100*mean_stems/total_stems if total_stems else 0)
                 chart.cell(row,3,100*mean_basal/total_basal if total_basal else 0)
-            dbhYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ}É•™ÌõmÉ•˜™½ÈÉ•˜¥¸‘‰¡}½¹ÑÉ¥‰ÕÑ¥¹}É•™Ì¥˜É•˜¹•Ğ ‰Í½ÕÉ•}ÕÉ±Ìˆ¥t(€€€€€€€€€€€‘‰¡}Í½ÕÉ•Ìõ¥¹Ù•¹Ñ½Éå}Í½ÕÉ•}±…‰•±Ì¡‘‰¡}É•™Ì¤(€€€€€€€€€€€¡…ÉÑl‰Ì‰tô‰7¥‘¥…ÌÁ½È@Á½¹‘•É…‘…ÌÁ•±„ƒ…É•„‘½Ì•ÍÑÉ…Ñ½Ì¹…Ñ¥Ù½ÌìÕÉÙ…Ìµ½ÍÑÉ…´™É•Å×©¹¥„É•±…Ñ¥Ù„‘”¥¹‘¥Ûµ‘Õ½Ì”Á…ÉÑ¥¥Á‡Ÿ¼‘„ƒ…É•„‰…Í…°¸½¹Ñ•Ì€¡¥¹ÍÑ¥ÑÕ§Ÿ¼ƒŠPUI0¤è€ˆ¬ ˆì€ˆ¹©½¥¸¡‘‰¡}Í½ÕÉ•Ì¤½È€‰8½ˆ¤(€€€€€€€€€€€±Œõ1¥¹•¡…ÉĞ ¤í±Œ¹Ñ¥Ñ±”ô‰¥ÍÑÉ¥‰Õ§Ÿ¼‘¥…·¥ÑÉ¥„·¥‘¥„”ƒ…É•„‰…Í…°ˆí±Œ¹å}…á¥Ì¹Ñ¥Ñ±”ô‰A…ÉÑ¥¥Á‡Ÿ¼·¥‘¥„€ ”¤ˆí±Œ¹á}…á¥Ì¹Ñ¥Ñ±”ô‰@ˆ(€€€€€€€€€€€±Œ¹…‘‘}‘…Ñ„¡I•™•É•¹”¡¡…ÉĞ±µ¥¹}½°ôÈ±µ…á}½°ôÌ±µ¥¹}É½ÜôĞÄ±µ…á}É½ÜôĞÜ¤±Ñ¥Ñ±•Í}™É½µ}‘…Ñ„õQÉÕ”¤(€€€€€€€€€€€±Œ¹Í•Ñ}…Ñ•½É¥•Ì¡I•™•É•¹”¡¡…ÉĞ±µ¥¹}½°ôÄ±µ¥¹}É½ÜôĞÈ±µ…á}É½ÜôĞÜ¤¤í±Œ¹¡•¥¡Ğôàí±Œ¹İ¥‘Ñ ôÄØí¡…ÉĞ¹…‘‘}¡…ÉĞ¡±Œ°‰ÄÈˆ¤(€€€€€€€•±Í”è(€€€€€€€€€€€¡…ÉÑl‰Ô‰tô‰8½ƒŠPÍ•´¥¹Ù•¹Ó…É¥¼½µÁ…ÓµÙ•°”…ÉÉ•…‘¼Á…É„½Ì•ÍÑÉ…Ñ½Ì¹…Ñ¥Ù½Ì½¹™¥Éµ…‘½Ì¸ˆ(€€€€€€€€€€€€Œ-••ÀÑ¡”µ¥ÍÍ¥¹œµ¥¹Ù•¹Ñ½Éä¹½Ñ”¥¹Í¥‘”Ñ¡”±•™Ğ¡…ÉĞÁ…¹•°ì(€€€€€€€€€€€€Œ½±Õµ¹Ìé‰•±½¹œÑ¼Ñ¡”¡•¥¡ĞÁ…¹•°…¹¥ÑÌ½İ¸8½¹½Ñ”¸(€€€€€€€€€€€¡…ÉĞ¹µ•É•}•±±Ì ‰ÔéÔˆ¤(€€€€€€€€€€€¡…ÉÑl‰Ô‰t¹…±¥¹µ•¹Ğõ±¥¹µ•¹Ğ¡İÉ…Á}Ñ•áĞõQÉÕ”±Ù•ÉÑ¥…°ô‰•¹Ñ•Èˆ¤(€€€€€€€€€€€¡…ÉĞ¹É½İ}‘¥µ•¹Í¥½¹ÍlÕt¹¡•¥¡ĞôÌÈ(€€€€€€€€€€€¡…ÉÑl‰Ì‰tô‰½¹Ñ”½•Í½Á¼è8½ì»¼ÍÕ‰ÍÑ¥ÑÕ¥ÈÁ½È·¥‘¥„‘”½ÕÑÉ„™¥Ñ½™¥Í¥½¹½µ¥„½ÔÉ•§¼Í•´¥‘•¹Ñ¥™¥‡Ÿ¼¸ˆ((€€€€€€€¡…ÉÑl‰È‰tô‰±ÑÕÉ„è‘¥ÍÑÉ¥‰Õ§Ÿ¼½‰Í•ÉÙ…‘„Á½ÈÁ¥á•±ÌMHìÍ”…ÕÏ©¹¥„•ÉÑ¥™¥…‘„°É•™•Ë©¹¥„‘”…±ÑÕÉ…Ì‘”ƒ…ÉÙ½É•Ì¥¹Ù•¹Ñ…É¥…‘…Ì¸ˆ(€€€€€€€¡…ÉÑl‰È‰t¹™½¹Ğõ½¹Ğ¡‰½±õQÉÕ”±½±½ÈõÉ••¸¤í¡…ÉÑl‰Ğ‰tô‰…¥á„‘”…±ÑÕÉ„€¡´¤ˆí¡…ÉÑl‰Ğ‰tô‰É•Å×©¹¥„€ ”¤ˆ(€€€€€€€Í…É}‰¥¹ÌõíôíÍ…É}Á¥á•±}Ñ½Ñ…°ôÀíÍÑÉ…Ñ…}İ¥Ñ¡}¡•¥¡ĞôÀ(€€€€€€€™½ÈÍĞ¥¸¹…Ñ¥Ù•}ÍÑÉ…Ñ„è(€€€€€€€€€€€¡•¥¡Ñ}‘•Ñ…¥±Ìõ}Ù•É¥™¥•‘}Í…É}¡•¥¡Ñ}‘•Ñ…¥±Ì¡ÍĞ¹•Ğ ‰Í…É}‘•Ñ…¥±Ìˆ¤½Èíô¤(€€€€€€€€€€€¥¹™¼õ¡•¥¡Ñ}‘•Ñ…¥±Ì¹•Ğ ‰¡•¥¡Ñ}Á¥á•±}‘¥ÍÑÉ¥‰ÕÑ¥½¸ˆ¤½Èíô(€€€€€€€€€€€¥˜¥¹™¼¹•Ğ ‰ÍÑ…ÑÕÌˆ¤„ô‰MI}A%a1M}!%MQ=I55ˆé½¹Ñ¥¹Õ”(€€€€€€€€€€€ÍÑÉ…Ñ…}İ¥Ñ¡}¡•¥¡Ğ¬ôÄ(€€€€€€€€€€€™½Èˆ¥¸¥¹™¼¹•Ğ ‰‰¥¹Ìˆ¤½Èmtè(€€€€€€€€€€€€€€€­•äõˆ¹•Ğ ‰±…‰•°ˆ¤íÍ…É}‰¥¹Ím­•åtõÍ…É}‰¥¹Ì¹•Ğ¡­•ä°À¤­¥¹Ğ¡ˆ¹•Ğ ‰Á¥á•±}½Õ¹Ğˆ¤½È€À¤(€€€€€€€€€€€€€€€Í…É}Á¥á•±}Ñ½Ñ…°¬õ¥¹Ğ¡ˆ¹•Ğ ‰Á¥á•±}½Õ¹Ğˆ¤½È€À¤(€€€€€€€¡•¥¡Ñ}Í½ÕÉ”ôˆˆ(€€€€€€€¥˜Í…É}Á¥á•±}Ñ½Ñ…°è(€€€€€€€€€€€±…‰•±Ìõl ˆÃŠLÔ´ˆ°À¤°€ ˆ×ŠLÄÀ´ˆ°Ä¤°€ ˆÄÃŠLÄÔ´ˆ°È¤°€ ˆÄ×ŠLÈÀ´ˆ°Ì¤°(€€€€€€€€€€€€€€€€ ˆÈÃŠLÈÔ´ˆ°Ğ¤°€ ˆÈ×ŠLÌÀ´ˆ°Ô¤°€ ˆÌÃŠLÌÔ´ˆ°Ø¤°€ ˆÌ×ŠLĞÀ´ˆ°Ü¤°(€€€€€€€€€€€€€€€€ ˆĞÃŠLĞÔ´ˆ°à¤°€ ˆĞ×ŠLÔÀ´ˆ°ä¤°€ ˆÔÃŠLÔÔ´ˆ°ÄÀ¤°€ ˆÔ×ŠLØÀ´ˆ°ÄÄ¤°€ ‹Š&”ØÀ´ˆ°ÄÈ¥t(€€€€€€€€€€€™½ÈÉ½Ü°¡±…‰•°±|¤¥¸•¹Õµ•É…Ñ”¡±…‰•±Ì°Ô¤è(€€€€€€€€€€€€€€€¡…ÉĞ¹•±°¡É½Ü°Ğ±±…‰•°¤í¡…ÉĞ¹•±°¡É½Ü°Ô°ÄÀÀ©Í…É}‰¥¹Ì¹•Ğ¡±…‰•°°À¤½Í…É}Á¥á•±}Ñ½Ñ…°¤(€€€€€€€€€€€¡•¥¡Ñ}Í½ÕÉ”ô ‰A¥á•±ÌMHÛ…±¥‘½Ì±¥‘½Ì•´€ˆ­ÍÑÈ¡ÍÑÉ…Ñ…}İ¥Ñ¡}¡•¥¡Ğ¤¬ˆ•ÍÑÉ…Ñ¼¡Ì¤¹…Ñ¥Ù¼¡Ì¤ì¸ôˆ¬(€€€€€€€€€€€€€€€ÍÑÈ¡Í…É}Á¥á•±}Ñ½Ñ…°¤¬ˆÁ¥á•±Ì¸½¹Ñ”è€ˆ¬ˆì€ˆ¹©½¥¸¡Í½ÉÑ•¡íÍÑÈ¡}Ù•É¥™¥•‘}Í…É}¡•¥¡Ñ}‘•Ñ…¥±Ì¡ÍĞ¹•Ğ ‰Í…É}‘•Ñ…¥±Ìˆ¤½Èíô¤¹•Ğ ‰Í½ÕÉ”ˆ¤½È}Ù•É¥™¥•‘}Í…É}¡•¥¡Ñ}‘•Ñ…¥±Ì¡ÍĞ¹•Ğ ‰Í…É}‘•Ñ…¥±Ìˆ¤½Èíô¤¹•Ğ ‰ÁÉ½‘ÕĞˆ¤½È€‰ÁÉ½‘ÕÑ¼MHˆ€¤™½ÈÍĞ¥¸¹…Ñ¥Ù•}ÍÑÉ…Ñ„¥˜}Ù•É¥™¥•‘}Í…É}¡•¥¡Ñ}‘•Ñ…¥±Ì¡ÍĞ¹•Ğ ‰Í…É}‘•Ñ…¥±Ìˆ¤½Èíô¤¹•Ğ ‰¡•¥¡Ñ}Á¥á•±}‘¥ÍÑÉ¥‰ÕÑ¥½¸ˆ¥ô¤¤¤(€€€€€€€€€€€¡…ÉÑl‰Ì‰tõ¡•¥¡Ñ}Í½ÕÉ”¬ˆ¸A¥á•±ÌÍ•´‘…‘¼»¼™½É…´ÁÉ••¹¡¥‘½Ì¸ˆ(€€€€€€€•±Í”è(€€€€€€€€€€€•ÉĞô¡¡…ÉÑ}¹…Ñ¥Ù”¹•Ğ ‰¡•¥¡Ñ}…‰Í•¹•}•ÉÑ¥™¥…Ñ”ˆ¤½È(€€€€€€€€€€€€€€€€€€¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰Í…É}É•ÍÕ±Ğˆ¤½Èíô¤¹•Ğ ‰¡•¥¡Ñ}…‰Í•¹•}•ÉÑ¥™¥…Ñ”ˆ¤¤(€€€€€€€€€€€™É½´Í…É}¡•¥¡Ñ}…‰Í•¹”¥µÁ½ÉĞÉ•¥½¹…±}¡•¥¡Ñ}™…±±‰…­}‘•¥Í¥½¸(€€€€€€€€€€€…±±½İ}É•¥½¸±…‰Í•¹•}É•…Í½¸õÉ•¥½¹…±}¡•¥¡Ñ}™…±±‰…­}‘•¥Í¥½¸¡•ÉĞ¤(€€€€€€€€€€€É•¥½¹…°õmt(€€€€€€€€€€€¥˜…±±½İ}É•¥½¸è(€€€€€€€€€€€€€€€É•¥½¹…±}Á…¥ÉÌõl¡É•˜±É•˜¹•Ğ ‰¥¹Ù•¹Ñ½Éå}ÑÉ••}¡•¥¡Ñ}‘¥ÍÑÉ¥‰ÕÑ¥½¸ˆ¤½Èíô¤™½ÈÉ•˜¥¸‰¥½}É•™Ì(€€€€€€€€€€€€€€€€€€€¥˜É•˜¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰II9%}%Q=MM=%=1=%}I%=90ˆ…¹É•˜¹•Ğ ‰Í½ÕÉ•}ÕÉ±Ìˆ¤…¹É•˜¹•Ğ ‰¥¹ÍÑ¥ÑÕÑ¥½¹Ìˆ¥t(€€€€€€€€€€€€€€€É•¥½¹…±}Á…¥ÉÌõl¡É•˜±‘¥ÍĞ¤™½ÈÉ•˜±‘¥ÍĞ¥¸É•¥½¹…±}Á…¥ÉÌ(€€€€€€€€€€€€€€€€€€€¥˜‘¥ÍĞ¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰II9%}1QUI}%9Y9QI%=}I%=90ˆ…¹™±½…Ğ¡‘¥ÍĞ¹•Ğ ‰¹}Á±½ÑÌˆ¤½È€À¤øÁt(€€€€€€€€€€€€€€€É•¥½¹…±}É•™ÌõmÉ•˜™½ÈÉ•˜±|¥¸É•¥½¹…±}Á…¥ÉÍt(€€€€€€€€€€€€€€€É•¥½¹…°õm‘¥ÍĞ™½È|±‘¥ÍĞ¥¸É•¥½¹…±}Á…¥ÉÍt(€€€€€€€€€€€¥˜…±±½İ}É•¥½¸…¹É•¥½¹…°è(€€€€€€€€€€€€€€€Á±½Ñ}İ•¥¡ÑÌõm™±½…Ğ¡à¹•Ğ ‰¹}Á±½ÑÌˆ¤½È€À¤™½Èà¥¸É•¥½¹…±t(€€€€€€€€€€€€€€€İ•¥¡Ñ}ÍÕ´õÍÕ´¡Á±½Ñ}İ•¥¡ÑÌ¤(€€€€€€€€€€€€€€€™½ÈÉ½Ü°¡¤±±…‰•°¤¥¸•¹Õµ•É…Ñ”¡•¹Õµ•É…Ñ”¡lˆÃŠLÔ´ˆ°ˆ×ŠLÄÀ´ˆ°ˆÄÃŠLÄÔ´ˆ°ˆÄ×ŠLÈÀ´ˆ°ˆÈÃŠLÈÔ´ˆ°ˆÈ×ŠLÌÀ´ˆ°ˆÌÃŠLÌÔ´ˆ°ˆÌ×ŠLĞÀ´ˆ°ˆĞÃŠLĞÔ´ˆ°ˆĞ×ŠLÔÀ´ˆ°ˆÔÃŠLÔÔ´ˆ°ˆÔ×ŠLØÀ´ˆ°‹Š&”ØÀ´‰t¤°Ô¤è(€€€€€€€€€€€€€€€€€€€Ù…±Õ”õÍÕ´¡Ü©™±½…Ğ¡ál‰‰¥¹Ì‰um¥ul‰µ•…¹}™É•ÅÕ•¹å}ÁĞ‰t¤™½Èà±Ü¥¸é¥À¡É•¥½¹…°±Á±½Ñ}İ•¥¡ÑÌ¤¤½İ•¥¡Ñ}ÍÕ´(€€€€€€€€€€€€€€€€€€€¡…ÉĞ¹•±°¡É½Ü°Ğ±±…‰•°¤í¡…ÉĞ¹•±°¡É½Ü°Ô±Ù…±Õ”¤(€€€€€€€€€€€€€€€Í½ÕÉ•Ìõ¥¹Ù•¹Ñ½Éå}Í½ÕÉ•}±…‰•±Ì¡É•¥½¹…±}É•™Ì¤(€€€€€€€€€€€€€€€¡•¥¡Ñ}Í½ÕÉ”ô‰…±±‰…¬É•¥½¹…°…ÕÑ½É¥é…‘¼Á½È…ÕÏ©¹¥„MH•ÉÑ¥™¥…‘„¸7¥‘¥…Ì‘”…±ÑÕÉ…Ìµ•‘¥‘…Ì•´¥¹Ù•¹Ó…É¥½Ì½µÁ…ÓµÙ•¥Ì€ ˆ­ÍÑÈ¡ÍÕ´¡Á±½Ñ}İ•¥¡ÑÌ¤¤¬ˆÁ…É•±…Ì¤¸½¹Ñ•Ì€¡¥¹ÍÑ¥ÑÕ§Ÿ¼ƒŠPUI0¤è€ˆ¬ˆì€ˆ¹©½¥¸¡Í½ÕÉ•Ì¤(€€€€€€€€€€€€€€€¡…ÉÑl‰Ì‰tõ¡•¥¡Ñ}Í½ÕÉ”¬ˆ¸±ÑÕÉ„‘”ƒ…ÉÙ½É•Ì¥¹Ù•¹Ñ…É¥…‘…Ì°»¼…±ÑÕÉ„‘¼‘½ÍÍ•°MH¹•´µ•‘§Ÿ¼‘„ÁÉ½ÁÉ¥•‘…‘”¸ˆ(€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€¥˜…±±½İ}É•¥½¸…¹¹½ĞÉ•¥½¹…°è(€€€€€€€€€€€€€€€€€€€…‰Í•¹•}É•…Í½¸ô‰M5}%9Y9QI%=}=5AQ%Y1}=5}=9Q}%9Q%%Y0ˆ(€€€€€€€€€€€€€€€¡…ÉÑl‰Ô‰tô‰8½ƒŠP€ˆ­…‰Í•¹•}É•…Í½¸¬ˆì·¥‘¥…ÌÉ•¥½¹…¥ÌÍ•´™½¹Ñ”É…ÍÑÉ—…Ù•°½Ô™…±¡…ÌÓ¥¹¥…Ì»¼ÍÕ‰ÍÑ¥ÑÕ•´„½‰Í•ÉÙ‡Ÿ¼MH¸ˆ(€€€€€€€€€€€€€€€€Œ-••ÀÑ¡”¹¼µ‘…Ñ„¹½Ñ”İ¥Ñ¡¥¸Ñ¡”¡•¥¡ĞÁ…¹•°ì•áÑ•¹‘¥¹œ(€€€€€€€€€€€€€€€€ŒÑ¡É½Õ ½±Õµ¸½Ù•ÉİÉ½Ñ”Ñ¡”Q½À´ÄÀÍÁ•¥•ÌÑ…‰±”¸(€€€€€€€€€€€€€€€¡…ÉĞ¹µ•É•}•±±Ì ‰ÔéÔˆ¤(€€€€€€€€€€€€€€€¡…ÉÑl‰Ì‰tô‰M•´…±ÑÕÉ„MHÛ…±¥‘„ì½¹Ñ¥¹Ÿ©¹¥„µ¥É½ÉÉ•¥½¹…°½É•¥½¹…°‰±½ÅÕ•…‘„…Ó¤½µÁÉ½Ù…È…ÕÏ©¹¥„‘”½‰•ÉÑÕÉ„¸ˆ(€€€€€€€¥˜Í…É}Á¥á•±}Ñ½Ñ…°½È€¡…±±½İ}É•¥½¸…¹É•¥½¹…°¤è(€€€€€€€€€€€¡Œõ1¥¹•¡…ÉĞ ¤í¡Œ¹Ñ¥Ñ±”ô‰¥ÍÑÉ¥‰Õ§Ÿ¼‘”…±ÑÕÉ„ˆí¡Œ¹å}…á¥Ì¹Ñ¥Ñ±”ô‰É•Å×©¹¥„€ ”¤ˆí¡Œ¹á}…á¥Ì¹Ñ¥Ñ±”ô‰±ÑÕÉ„ˆ(€€€€€€€€€€€¡Œ¹…‘‘}‘…Ñ„¡I•™•É•¹”¡¡…ÉĞ±µ¥¹}½°ôÔ±µ¥¹}É½ÜôĞ±µ…á}É½ÜôÄÜ¤±Ñ¥Ñ±•Í}™É½µ}‘…Ñ„õQÉÕ”¤(€€€€€€€€€€€¡Œ¹Í•Ñ}…Ñ•½É¥•Ì¡I•™•É•¹”¡¡…ÉĞ±µ¥¹}½°ôĞ±µ¥¹}É½ÜôÔ±µ…á}É½ÜôÄÜ¤¤í¡Œ¹¡•¥¡Ğôàí¡Œ¹İ¥‘Ñ ôÄØí¡…ÉĞ¹…‘‘}¡…ÉĞ¡¡Œ°‰ ÄÈˆ¤((€€€€€€€¡…ÉÑl‰È‰tô‰1¥ÍÑ„ÅÕ…±¥Ñ…Ñ¥Ù„ƒŠP•ÍÃ¥¥•Ì‘”½½ÉË©¹¥„µ…¥ÌÁÉ½Û…Ù•°€ ÄÀµ…¥½É•Ì‘½µ¥»‰¹¥…ÌÁ½Èƒ…É•„‰…Í…°¤¸ˆ(€€€€€€€¡…ÉÑl‰È‰t¹™½¹Ğõ½¹Ğ¡‰½±õQÉÕ”±½±½ÈõÉ••¸¤(€€€€€€€™½È½°±±…‰•°¥¸•¹Õµ•É…Ñ”  ‰9½µ”ÙÕ±…Èˆ°‰9½µ”¥•¹Óµ™¥¼ˆ°‹É•„‰…Í…°·¥‘¥„€¡·
-È½¡„¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰½µ¥»‰¹¥„É•±…Ñ¥Ù„€ ”¤ˆ°‰É•Å×©¹¥„¹…ÌÁ…É•±…Ì€ ”¤ˆ¤°Ü¤è(€€€€€€€€€€€¡…ÉĞ¹•±° Ğ±½°±±…‰•°¤(€€€€€€€ÍÁ•¥•Í}Ù…±Õ•Ìõíô(€€€€€€€™½ÈÉ•˜¥¸‰¥½}É•™Ìè(€€€€€€€€€€€¥˜É•˜¹•Ğ ‰ÍÑ…ÑÕÌˆ¤„ô‰II9%}%Q=MM=%=1=%}I%=90ˆé½¹Ñ¥¹Õ”(€€€€€€€€€€€İ•¥¡Ğõ™±½…Ğ¡É•˜¹•Ğ ‰¥¹Ù•¹Ñ½Éå}¹}Á±½ÑÌˆ¤½È€À¤(€€€€€€€€€€€™½È¥Ñ•´¥¸É•˜¹•Ğ ‰Ñ½ÀÄÁ}‰å}‘½µ¥¹…¹”ˆ¤½Èmtè(€€€€€€€€€€€€€€€Í¥•¹Ñ¥™¥ŒõÍÑÈ¡¥Ñ•´¹•Ğ ‰Í¥•¹Ñ¥™¥}¹…µ”ˆ¤½È€ˆˆ¤¹ÍÑÉ¥À ¤(€€€€€€€€€€€€€€€ÁÕ‰±¥Í¡•õÍÑÈ¡¥Ñ•´¹•Ğ ‰¹…µ•}…Í}ÁÕ‰±¥Í¡•ˆ¤½È¥Ñ•´¹•Ğ ‰ÍÁ•¥•Ìˆ¤½È€ˆˆ¤¹ÍÑÉ¥À ¤(€€€€€€€€€€€€€€€Ñ…á½¸ô¡Í¥•¹Ñ¥™¥Œ¥˜Í¥•¹Ñ¥™¥Œ…¹¹½ĞÍ¥•¹Ñ¥™¥Œ¹ÍÑ…ÉÑÍİ¥Ñ  ‰8½ˆ¤(€€€€€€€€€€€€€€€€€€€€€€•±Í”ÍÑÈ¡É•˜¹•Ğ ‰¥¹ÍÑ¥ÑÕÑ¥½¹Ìˆ¤½È€‰™½¹Ñ”ˆ¤¬‰ğˆ­ÁÕ‰±¥Í¡•¤(€€€€€€€€€€€€€€€¥˜¹½ĞÑ…á½¸½Èİ•¥¡ĞğôÀé½¹Ñ¥¹Õ”(€€€€€€€€€€€€€€€É•½ÉõÍÁ•¥•Í}Ù…±Õ•Ì¹Í•Ñ‘•™…Õ±Ğ¡Ñ…á½¸±ì‰İ•¥¡ĞˆèÀ¸À°‰‰„ˆèÀ¸À°‰É•°ˆèÀ¸À°‰™É•ÄˆèÀ¸À°(€€€€€€€€€€€€€€€€€€€€‰½µµ½¸ˆéÍÑÈ¡¥Ñ•´¹•Ğ ‰½µµ½¹}¹…µ”ˆ¤½È€‰8½ˆ¤°(€€€€€€€€€€€€€€€€€€€€‰Í¥•¹Ñ¥™¥ŒˆéÍ¥•¹Ñ¥™¥Œ½È€‰8½ƒŠP™½¹Ñ”Í•´¹½µ”¥•¹Óµ™¥¼•áÁ³µ¥Ñ¼ˆ°(€€€€€€€€€€€€€€€€€€€€‰ÁÕ‰±¥Í¡•ˆéÁÕ‰±¥Í¡•‘ô¤(€€€€€€€€€€€€€€€É•½É‘l‰İ•¥¡Ğ‰t¬õİ•¥¡Ğ(€€€€€€€€€€€€€€€É•½É‘l‰‰„‰t¬õ™±½…Ğ¡¥Ñ•´¹•Ğ ‰µ•…¹}‰…Í…±}…É•…}´É}¡„ˆ¤½È€À¤©İ•¥¡Ğ(€€€€€€€€€€€€€€€É•½É‘l‰É•°‰t¬õ™±½…Ğ¡¥Ñ•´¹•Ğ ‰É•±…Ñ¥Ù•}‘½µ¥¹…¹•}ÁĞˆ¤½È€À¤©İ•¥¡Ğ(€€€€€€€€€€€€€€€É•½É‘l‰™É•Ä‰t¬õ™±½…Ğ¡¥Ñ•´¹•Ğ ‰™É•ÅÕ•¹å}ÁĞˆ¤½È€À¤©İ•¥¡Ğ(€€€€€€€ÍÁ•¥•Í}É…¹¬õÍ½ÉÑ•  ¡Ñ…á½¸±í¬è¡Ùm­t½Ùl‰İ•¥¡Ğ‰t¥˜¬¥¸ì‰‰„ˆ°‰É•°ˆ°‰™É•Ä‰ô•±Í”Ùm­t¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€™½È¬¥¸Ø¥˜¬„ô‰İ•¥¡Ğ‰ô¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€™½ÈÑ…á½¸±Ø¥¸ÍÁ•¥•Í}Ù…±Õ•Ì¹¥Ñ•µÌ ¤¥˜Ùl‰İ•¥¡Ğ‰tøÀ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€­•äõ±…µ‰‘„àè µálÅul‰‰„‰t±álÁt¤¥lèÄÁt(€€€€€€€¥˜ÍÁ•¥•Í}É…¹¬è(€€€€€€€€€€€™½ÈÉ½Ü°¡}Ñ…á½¸±¥Ñ•´¤¥¸•¹Õµ•É…Ñ”¡ÍÁ•¥•Í}É…¹¬°Ô¤è(€€€€€€€€€€€€€€€¡…ÉĞ¹•±°¡É½Ü°Ü±¥Ñ•µl‰½µµ½¸‰t¤í¡…ÉĞ¹•±°¡É½Ü°à±¥Ñ•µl‰Í¥•¹Ñ¥™¥Œ‰t¤(€€€€€€€€€€€€€€€¡…ÉĞ¹•±°¡É½Ü°ä±¥Ñ•µl‰‰„‰t¤í¡…ÉĞ¹•±°¡É½Ü°ÄÀ±¥Ñ•µl‰É•°‰t¤í¡…ÉĞ¹•±°¡É½Ü°ÄÄ±¥Ñ•µl‰™É•Ä‰t¤(€€€€€€€€€€€ÍÁ•¥•Í}É•™ÌõmÉ•˜™½ÈÉ•˜¥¸‰¥½}É•™Ì¥˜É•˜¹•Ğ ‰ÍÑ…ÑÕÌˆ¤ôô‰II9%}%Q=MM=%=1=%}I%=90ˆ…¹É•˜¹•Ğ ‰Í½ÕÉ•}ÕÉ±Ìˆ¥t(€€€€€€€€€€€ÍÁ•¥•Í}Í½ÕÉ•Ìõ¥¹Ù•¹Ñ½Éå}Í½ÕÉ•}±…‰•±Ì¡ÍÁ•¥•Í}É•™Ì¤(€€€€€€€€€€€Í½Á•ÌõÍ½ÉÑ•¡íÍÑÈ¡É•˜¹•Ğ ‰•½É…Á¡¥}Í½Á”ˆ¤½È€‰I%=90ˆ¤™½ÈÉ•˜¥¸ÍÁ•¥•Í}É•™Íô¤(€€€€€€€€€€€Á¡åÌõÍ½ÉÑ•¡íÍÑÈ¡É•˜¹•Ğ ‰Á¡åÍ¥½¹½µäˆ¤½È€‰8½ˆ¤™½ÈÉ•˜¥¸ÍÁ•¥•Í}É•™Íô¤(€€€€€€€€€€€¡…ÉĞ¹µ•É•}•±±Ì ‰Ìé,Ìˆ¤(€€€€€€€€€€€¡…ÉÑl‰Ì‰tô‰I•™•Ë©¹¥„è€ˆ¬ˆ°€ˆ¹©½¥¸¡Á¡åÌ¤¬ˆì•Í½Á¼€ˆ¬ˆ°€ˆ¹©½¥¸¡Í½Á•Ì¤¬ˆ¸½¹Ñ•Ì€¡¥¹ÍÑ¥ÑÕ§Ÿ¼ƒŠPUI0¤ë[h‘éì¶»§q«^t"+("; ".join(species_sources) or "N/D")
+            dbh_refs=[ref for ref in dbh_contributing_refs if ref.get("source_urls")]
+            dbh_sources=inventory_source_labels(dbh_refs)
+            chart["A3"]="MÃ©dias por DAP ponderadas pela Ã¡rea dos estratos nativos; curvas mostram frequÃªncia relativa de indivÃ­duos e participaÃ§Ã£o da Ã¡rea basal. Fontes (instituiÃ§Ã£o â€” URL): "+("; ".join(dbh_sources) or "N/D")
+            lc=LineChart();lc.title="DistribuiÃ§Ã£o diamÃ©trica mÃ©dia e Ã¡rea basal";lc.y_axis.title="ParticipaÃ§Ã£o mÃ©dia (%)";lc.x_axis.title="DAP"
+            lc.add_data(Reference(chart,min_col=2,max_col=3,min_row=41,max_row=47),titles_from_data=True)
+            lc.set_categories(Reference(chart,min_col=1,min_row=42,max_row=47));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
+        else:
+            chart["A5"]="N/D â€” sem inventÃ¡rio compatÃ­vel e carregado para os estratos nativos confirmados."
+            # Keep the missing-inventory note inside the left chart panel;
+            # columns D:F belong to the height panel and its own N/D note.
+            chart.merge_cells("A5:C5")
+            chart["A5"].alignment=Alignment(wrap_text=True,vertical="center")
+            chart.row_dimensions[5].height=32
+            chart["A3"]="Fonte/escopo: N/D; nÃ£o substituir por mÃ©dia de outra fitofisionomia ou regiÃ£o sem identificaÃ§Ã£o."
+
+        chart["D2"]="Altura: distribuiÃ§Ã£o observada por pixels SAR; se ausÃªncia certificada, referÃªncia de alturas de Ã¡rvores inventariadas."
+        chart["D2"].font=Font(bold=True,color=green);chart["D4"]="Faixa de altura (m)";chart["E4"]="FrequÃªncia (%)"
+        sar_bins={};sar_pixel_total=0;strata_with_height=0
+        for st in native_strata:
+            height_details=_verified_sar_height_details(st.get("sar_details") or {})
+            info=height_details.get("height_pixel_distribution") or {}
+            if info.get("status")!="SAR_PIXELS_HISTOGRAMMED":continue
+            strata_with_height+=1
+            for b in info.get("bins") or []:
+                key=b.get("label");sar_bins[key]=sar_bins.get(key,0)+int(b.get("pixel_count") or 0)
+                sar_pixel_total+=int(b.get("pixel_count") or 0)
+        height_source=""
+        if sar_pixel_total:
+            labels=[("0â€“5 m",0), ("5â€“10 m",1), ("10â€“15 m",2), ("15â€“20 m",3),
+                ("20â€“25 m",4), ("25â€“30 m",5), ("30â€“35 m",6), ("35â€“40 m",7),
+                ("40â€“45 m",8), ("45â€“50 m",9), ("50â€“55 m",10), ("55â€“60 m",11), ("â‰¥60 m",12)]
+            for row,(label,_) in enumerate(labels,5):
+                chart.cell(row,4,label);chart.cell(row,5,100*sar_bins.get(label,0)/sar_pixel_total)
+            height_source=("Pixels SAR vÃ¡lidos lidos em "+str(strata_with_height)+" estrato(s) nativo(s); n="+
+                str(sar_pixel_total)+" pixels. Fonte: "+"; ".join(sorted({str(_verified_sar_height_details(st.get("sar_details") or {}).get("source") or _verified_sar_height_details(st.get("sar_details") or {}).get("product") or "produto SAR" ) for st in native_strata if _verified_sar_height_details(st.get("sar_details") or {}).get("height_pixel_distribution")})))
+            chart["D3"]=height_source+". Pixels sem dado nÃ£o foram preenchidos."
+        else:
+            cert=(chart_native.get("height_absence_certificate") or
+                  (self.project.get("sar_result") or {}).get("height_absence_certificate"))
+            from sar_height_absence import regional_height_fallback_decision
+            allow_region,absence_reason=regional_height_fallback_decision(cert)
+            regional=[]
+            if allow_region:
+                regional_pairs=[(ref,ref.get("inventory_tree_height_distribution") or {}) for ref in bio_refs
+                    if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls") and ref.get("institutions")]
+                regional_pairs=[(ref,dist) for ref,dist in regional_pairs
+                    if dist.get("status")=="REFERENCIA_ALTURA_INVENTARIO_REGIONAL" and float(dist.get("n_plots") or 0)>0]
+                regional_refs=[ref for ref,_ in regional_pairs]
+                regional=[dist for _,dist in regional_pairs]
+            if allow_region and regional:
+                plot_weights=[float(x.get("n_plots") or 0) for x in regional]
+                weight_sum=sum(plot_weights)
+                for row,(i,label) in enumerate(enumerate(["0â€“5 m","5â€“10 m","10â€“15 m","15â€“20 m","20â€“25 m","25â€“30 m","30â€“35 m","35â€“40 m","40â€“45 m","45â€“50 m","50â€“55 m","55â€“60 m","â‰¥60 m"]),5):
+                    value=sum(w*float(x["bins"][i]["mean_frequency_pct"]) for x,w in zip(regional,plot_weights))/weight_sum
+                    chart.cell(row,4,label);chart.cell(row,5,value)
+                sources=inventory_source_labels(regional_refs)
+                height_source="Fallback regional autorizado por ausÃªncia SAR certificada. MÃ©dias de alturas medidas em inventÃ¡rios compatÃ­veis ("+str(sum(plot_weights))+" parcelas). Fontes (instituiÃ§Ã£o â€” URL): "+"; ".join(sources)
+                chart["D3"]=height_source+". Altura de Ã¡rvores inventariadas, nÃ£o altura do dossel SAR nem mediÃ§Ã£o da propriedade."
+            else:
+                if allow_region and not regional:
+                    absence_reason="SEM_INVENTARIO_COMPATIVEL_COM_FONTE_IDENTIFICAVEL"
+                chart["D5"]="N/D â€” "+absence_reason+"; mÃ©dias regionais sem fonte rastreÃ¡vel ou falhas tÃ©cnicas nÃ£o substituem a observaÃ§Ã£o SAR."
+                # Keep the no-data note within the height panel; extending
+                # through column G overwrote the Top-10 species table.
+                chart.merge_cells("D5:F5")
+                chart["D3"]="Sem altura SAR vÃ¡lida; contingÃªncia microrregional/regional bloqueada atÃ© comprovar ausÃªncia de cobertura."
+        if sar_pixel_total or (allow_region and regional):
+            hc=LineChart();hc.title="DistribuiÃ§Ã£o de altura";hc.y_axis.title="FrequÃªncia (%)";hc.x_axis.title="Altura"
+            hc.add_data(Reference(chart,min_col=5,min_row=4,max_row=17),titles_from_data=True)
+            hc.set_categories(Reference(chart,min_col=4,min_row=5,max_row=17));hc.height=8;hc.width=16;chart.add_chart(hc,"H12")
+
+        chart["G2"]="Lista qualitativa â€” espÃ©cies de ocorrÃªncia mais provÃ¡vel (10 maiores dominÃ¢ncias por Ã¡rea basal)."
+        chart["G2"].font=Font(bold=True,color=green)
+        for col,label in enumerate(("Nome vulgar","Nome cientÃ­fico","Ãrea basal mÃ©dia (mÂ²/ha)",
+                                    "DominÃ¢ncia relativa (%)","FrequÃªncia nas parcelas (%)"),7):
+            chart.cell(4,col,label)
+        species_values={}
+        for ref in bio_refs:
+            if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":continue
+            weight=float(ref.get("inventory_n_plots") or 0)
+            for item in ref.get("top10_by_dominance") or []:
+                scientific=str(item.get("scientific_name") or "").strip()
+                published=str(item.get("name_as_published") or item.get("species") or "").strip()
+                taxon=(scientific if scientific and not scientific.startswith("N/D")
+                       else str(ref.get("institutions") or "fonte")+"|"+published)
+                if not taxon or weight<=0:continue
+                record=species_values.setdefault(taxon,{"weight":0.0,"ba":0.0,"rel":0.0,"freq":0.0,
+                    "common":str(item.get("common_name") or "N/D"),
+                    "scientific":scientific or "N/D â€” fonte sem nome cientÃ­fico explÃ­cito",
+                    "published":published})
+                record["weight"]+=weight
+                record["ba"]+=float(item.get("mean_basal_area_m2_ha") or 0)*weight
+                record["rel"]+=float(item.get("relative_dominance_pct") or 0)*weight
+                record["freq"]+=float(item.get("frequency_pct") or 0)*weight
+        species_rank=sorted(((taxon,{k:(v[k]/v["weight"] if k in {"ba","rel","freq"} else v[k])
+                                      for k in v if k!="weight"})
+                             for taxon,v in species_values.items() if v["weight"]>0),
+                            key=lambda x:(-x[1]["ba"],x[0]))[:10]
+        if species_rank:
+            for row,(_taxon,item) in enumerate(species_rank,5):
+                chart.cell(row,7,item["common"]);chart.cell(row,8,item["scientific"])
+                chart.cell(row,9,item["ba"]);chart.cell(row,10,item["rel"]);chart.cell(row,11,item["freq"])
+            species_refs=[ref for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls")]
+            species_sources=inventory_source_labels(species_refs)
+            scopes=sorted({str(ref.get("geographic_scope") or "REGIONAL") for ref in species_refs})
+            phys=sorted({str(ref.get("physiognomy") or "N/D") for ref in species_refs})
+            chart.merge_cells("G3:K3")
+            chart["G3"]="ReferÃªncia: "+", ".join(phys)+"; escopo "+", ".join(scopes)+". Fontes (instituiÃ§Ã£o â€” URL): "+("; ".join(species_sources) or "N/D")
             bc=BarChart();bc.type="bar";bc.style=10;bc.title="DominÃ¢ncia mÃ©dia das espÃ©cies";bc.x_axis.title="Ãrea basal mÃ©dia (mÂ²/ha)";bc.y_axis.title="Nome vulgar"
             bc.add_data(Reference(chart,min_col=9,min_row=4,max_row=4+len(species_rank)),titles_from_data=True)
             bc.set_categories(Reference(chart,min_col=7,min_row=5,max_row=4+len(species_rank)));bc.height=8;bc.width=16;chart.add_chart(bc,"A29")
@@ -2672,10 +5292,147 @@ class App(tk.Tk):
             ["CENÃRIOS","ESTOQUE MÃNIMO â€” fontes quantificadas",None,
              envelope["minimum_known_tco2e_ha"],envelope["minimum_known_tc"],
              envelope["minimum_known_tco2e"],"ENVELOPE / N/D",None,None,
-             "Limites somente quando todas as fontes quantificadas fornecem faixa defensÃ¡vYªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíëM5N‹Z–‹­¦ëeŠw¬Õ•°¸‰t°(€€€€€€€€€€€l‰;I%=Lˆ°‰MQ=EU5%LAI=[Y0ƒŠPÍ½µ„½¹¡•¥‘„ˆ±9½¹”°(€€€€€€€€€€€€•¹Ù•±½Á•l‰•¹ÑÉ…±}­¹½İ¹}Ñ¼É•}¡„‰t±•¹Ù•±½Á•l‰­¹½İ¹}Ñ½Ñ…±}ÑŒ‰t°(€€€€€€€€€€€€•¹Ù•±½Á•l‰•¹ÑÉ…±}­¹½İ¹}Ñ¼É”‰t°‰AI%0ˆ¥˜¹½Ğ‘¸¹•Ğ ‰½µÁ±•Ñ”ˆ¤•±Í”€‰MQ%5Q%Y9QI0ˆ±9½¹”°(€€€€€€€€€€€€€‰8½ƒŠP¥¹•ÉÑ•é„½¹©Õ¹Ñ„»¼‘•µ½¹ÍÑÉ…‘„ˆ°€‰M½µ„½¹¡•¥‘„¸;¼ÁÉ•ÍÍÕÃÕ”•ÍÑ½ÅÕ”¹Õ±¼¹½Ì½µÁ…ÉÑ¥µ•¹Ñ½Ì8½¸‰t°(€€€€€€€€€€€l‰;I%=Lˆ°‰MQ=EU7a%5<ƒŠP™½¹Ñ•ÌÅÕ…¹Ñ¥™¥…‘…Ìˆ±9½¹”°(€€€€€€€€€€€€•¹Ù•±½Á•l‰µ…á¥µÕµ}­¹½İ¹}Ñ¼É•}¡„‰t±•¹Ù•±½Á•l‰µ…á¥µÕµ}­¹½İ¹}ÑŒ‰t°(€€€€€€€€€€€€•¹Ù•±½Á•l‰µ…á¥µÕµ}­¹½İ¹}Ñ¼É”‰t°‰9Y1=A€¼8½ˆ±9½¹”±9½¹”°(€€€€€€€€€€€€€‰;¼ƒ¤%äÔ”½¹©Õ¹Ñ¼ì‘•ÍÙ¥½Ì‘„™½¹Ñ”•ÍÁ•±¡…‘½Ì•´Ñ½É¹¼‘„•ÍÑ¥µ…Ñ¥Ù„•¹ÑÉ…°¸‰t°(€€€€€€€t¤(€€€€€€€Í•¹…É¥¼õİˆ¹É•…Ñ•}Í¡••Ğ ‰•»…É¥½Ì”%¹•ÉÑ•é…Ìˆ¤(€€€€€€€Í•ÑÕÀ¡Í•¹…É¥¼°‰¹™½É´Y•É‘”ƒŠP•»…É¥½ÌÁ½È•ÍÑÉ…Ñ¼”½µÁ…ÉÑ¥µ•¹Ñ¼ˆ¤(€€€€€€€™½È¨± ¥¸•¹Õµ•É…Ñ”¡l‰¥Ñ½™¥Í¥½¹½µ¥„ˆ°‰½µÁ…ÉÑ¥µ•¹Ñ¼ˆ°‹É•„€¡¡„¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰7µ¹¥µ¼€¡Ñ?Š
-	”¤ˆ°‰5…¥ÌÁÉ½Û…Ù•°€¡Ñ?Š
-	”¤ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰7…á¥µ¼€¡Ñ?Š
-	”¤ˆ°‰MÑ…ÑÕÌˆ°‰Q¥Á¼‘”¥¹•ÉÑ•é„‰t°Ä¤è(€€€€€€€€€€€Í•¹…É¥¼¹•±° Ì±¨± ¤¹Ù…±Õ”õ (€€€€€€€Í•¹…É¥½}É½İÌõl(€€€€€€€€€€€mÁ…ÉÑl‰Á¡åÍ¥½¹½µä‰t±Á…ÉÑl‰½µÁ…ÉÑµ•¹Ğ‰t±Á…ÉÑl‰…É•…}¡„‰t°(€€€€€€€€€€€€Á…ÉÑl‰±½İ}ÑŒ‰t¨ĞĞ¼ÄÈ¥˜Á…ÉÑl‰±½İ}ÑŒ‰t¥Ì¹½Ğ9½¹”•±Í”9½¹”°(€€€€€€€€€€€€Á…ÉÑl‰•¹ÑÉ…±}ÑŒ‰t¨ĞĞ¼ÄÈ°(€€€€€€€€€€€€Á…ÉÑl‰¡¥¡}ÑŒ‰t¨ĞĞ¼ÄÈ¥˜Á…ÉÑl‰¡¥¡}ÑŒ‰t¥Ì¹½Ğ9½¹”•±Í”9½¹”°(€€€€€€€€€€€€Á…ÉÑl‰ÍÑ…ÑÕÌ‰t±ÍÑÈ¡Á…ÉĞ¹•Ğ ‰Õ¹•ÉÑ…¥¹Ñå}­¥¹ˆ¤½È€‰8½ˆ¥t(€€€€€€€€€€€™½ÈÁ…ÉĞ¥¸•¹Ù•±½Á•l‰É½İÌ‰ut(€€€€€€€¥˜¹½ĞÍ•¹…É¥½}É½İÌè(€€€€€€€€€€€Í•¹…É¥½}É½İÌõml‰8½ˆ°‰M•´•ÍÑ½ÅÕ”ÅÕ…¹Ñ¥™¥…‘¼ˆ±9½¹”±9½¹”±9½¹”±9½¹”°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€‰8½ˆ°‰;¼¥¹Ù•¹Ñ…È±¥µ¥Ñ•Ì‰ut(€€€€€€€ÁÕĞ¡Í•¹…É¥¼±Í•¹…É¥½}É½İÌ¤(€€€€€€€Í•¹…É¥½l‰È‰tô‰•»…É¥½Ì…É¥Ñ·¥Ñ¥½ÌÍ¥·¥ÑÉ¥½Ì‘”±¥µ¥Ñ•Ì‘”™½¹Ñ”ì»¼•ÅÕ¥Ù…±•´„¥¹Ñ•ÉÙ…±¼•ÍÑ…ÓµÍÑ¥¼½¹©Õ¹Ñ¼‘”½¹™¥…»„¸ˆ(€€€€€€€Í•¹…É¥¼¹µ•É•}•±±Ì ‰Èé Èˆ¤(€€€€€€€Í•¹…É¥½l‰È‰t¹…±¥¹µ•¹Ğõ±¥¹µ•¹Ğ¡İÉ…Á}Ñ•áĞõQÉÕ”¤(€€€€€€€Í•¹…É¥¼¹…ÕÑ½}™¥±Ñ•È¹É•˜õ˜‰Ìé!ìÌ­±•¸¡Í•¹…É¥½}É½İÌ¥ôˆ(€€€€€€€€Œ¥ÍÁ±…äÑ¡”Ñ¡É•”…É‰½¸µÍÑ½¬Í•¹…É¥½Ì…ĞÑ¡”Q=@½˜Ñ¡”(€€€€€€€€Œ•á•ÕÑ¥Ù”Í¡••Ğ°¥µµ•‘¥…Ñ•±ä…™Ñ•È=$…É•„ìÑ¡•äµÕÍĞ¹½Ğ‰”¡¥‘‘•¸(€€€€€€€€Œ‰•±½ÜÁ½Ñ•¹Ñ¥…±±ä‘½é•¹Ì½˜™•ÉÑ¥±¥Ñä…¹±…¹µ½Ù•ÈÉ½İÌ¸(€€€€€€€‘…Í õ‘…Í¡lèÅt­‘…Í¡l´Ìét­‘…Í¡lÄè´Ít(€€€€€€€ÁÕĞ¡‘…Í¡‰½…É±‘…Í ¤(€€€€€€€‘…Í¡‰½…É¹…ÕÑ½}™¥±Ñ•È¹É•˜õ˜‰Ìé!ìÌ­±•¸¡‘…Í ¥ôˆ(€€€€€€€‘…Í¡‰½…É¹™É••é•}Á…¹•Ìô‰àˆ(€€€€€€€‘…Í¡‰½…É¹Í¡••Ñ}Ù¥•Ü¹é½½µM…±”ôàÔ(€€€€€€€™½ÈÍ•¹…É¥½}É½Ü¥¸€ Ô°Ø°Ü¤è(€€€€€€€€€€€™½È•±°¥¸‘…Í¡‰½…É‘mÍ•¹…É¥½}É½İtè(€€€€€€€€€€€€€€€•±°¹™½¹Ğõ½¹Ğ¡‰½±õQÉÕ”±½±½ÈõÉ••¸¤((€€€€€€€€Œ	É…é¥±¥…¸¹Õµ‰•È™½Éµ…ÑÑ¥¹œ…¹É•…‘…‰±”‘¥µ•¹Í¥½¹Ì½¸10İ½É­Í¡••ÑÌ¸(€€€€€€€€Œ]É…ÁÁ•±½¹œÑ•áĞ¥ÌÍ¥é•‰ä¥ÑÌ‘¥ÍÁ±…å•±¥¹”½Õ¹Ğ°¹½Ğ±¥ÁÁ•(€€€€€€€€Œ¥¹Ñ¼„™¥á•µ¡•¥¡ĞÉ½Ü¸á•°½±Õµ¸±•ÑÑ•ÉÌµ…ä•áÑ•¹‰•å½¹ ¸(€€€€€€€™É½´½Á•¹Áåá°¹ÕÑ¥±Ì¥µÁ½ÉĞ•Ñ}½±Õµ¹}±•ÑÑ•È(€€€€€€€¥µÁ½ÉĞµ…Ñ …Ì}µ…Ñ (€€€€€€€™½ÈÍ¡••Ğ¥¸İˆ¹İ½É­Í¡••ÑÌè(€€€€€€€€€€€Í¡••Ğ¹Í¡••Ñ}Ù¥•Ü¹Í¡½İÉ¥‘1¥¹•Ìõ…±Í”(€€€€€€€€€€€½±}İ¥‘Ñ¡Ìõíô(€€€€€€€€€€€™½ÈÉ•½É¥¸Í¡••Ğ¹¥Ñ•É}É½İÌ ¤è(€€€€€€€€€€€€€€€™½È•±°¥¸É•½Éè(€€€€€€€€€€€€€€€€€€€¥˜•±°¹Ù…±Õ”¥Ì9½¹”é½¹Ñ¥¹Õ”(€€€€€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡•±°¹Ù…±Õ”°¡¥¹Ğ±™±½…Ğ¤¤…¹¹½Ğ¥Í¥¹ÍÑ…¹”¡•±°¹Ù…±Õ”±‰½½°¤è(€€€€€€€€€€€€€€€€€€€€€€€•±°¹¹Õµ‰•É}™½Éµ…ĞôœŒ°ŒŒÀ¸ÀÀœ(€€€€€€€€€€€€€€€€€€€€€€€¹••‘•õµ…à ÄĞ±±•¸¡˜‰í•±°¹Ù…±Õ”è°¸É™ôˆ¤¬Ì¤(€€€€€€€€€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€€€€€€€€€½¹Ñ•¹ĞõÍÑÈ¡•±°¹Ù…±Õ”¤(€€€€€€€€€€€€€€€€€€€€€€€¹••‘•õµ¥¸ ÄÀĞ±µ…à ÄÌ±µ¥¸ ØÈ±±•¸¡½¹Ñ•¹Ğ¤¬Ì¤¤¤(€€€€€€€€€€€€€€€€€€€½±}İ¥‘Ñ¡Ím•±°¹½±Õµ¹tõµ…à¡½±}İ¥‘Ñ¡Ì¹•Ğ¡•±°¹½±Õµ¸°ÄÌ¤±¹••‘•¤(€€€€€€€€€€€™½È½°±İ¥‘Ñ ¥¸½±}İ¥‘Ñ¡Ì¹¥Ñ•µÌ ¤è(€€€€€€€€€€€€€€€±•ÑÑ•Èõ•Ñ}½±Õµ¹}±•ÑÑ•È¡½°¤(€€€€€€€€€€€€€€€¥˜½°øà…¹Í¡••Ğ¹Ñ¥Ñ±”¥¸€ ‰•ÉÑ¥±¥‘…‘”‘¼M½±¼ˆ°‰5½‘•±¼A…É„…µÁ¼ˆ¤è(€€€€€€€€€€€€€€€€€€€İ¥‘Ñ õµ…à¡İ¥‘Ñ °ÈĞ¤(€€€€€€€€€€€€€€€Í¡••Ğ¹½±Õµ¹}‘¥µ•¹Í¥½¹Ím±•ÑÑ•Ét¹İ¥‘Ñ õµ¥¸ ÄÀØ±µ…à ÄĞ±İ¥‘Ñ ¬È¤¤(€€€€€€€€€€€™½ÈÉ•½É¥¸Í¡••Ğ¹¥Ñ•É}É½İÌ ¤è(€€€€€€€€€€€€€€€¥˜É•½É‘lÁt¹É½ÜğôÌé½¹Ñ¥¹Õ”(€€€€€€€€€€€€€€€µ…á}±¥¹•ÌôÄ(€€€€€€€€€€€€€€€™½È•±°¥¸É•½Éè(€€€€€€€€€€€€€€€€€€€¥˜•±°¹Ù…±Õ”¥Ì9½¹”é½¹Ñ¥¹Õ”(€€€€€€€€€€€€€€€€€€€İ¥‘Ñ õÍ¡••Ğ¹½±Õµ¹}‘¥µ•¹Í¥½¹Ím•Ñ}½±Õµ¹}±•ÑÑ•È¡•±°¹½±Õµ¸¥t¹İ¥‘Ñ ½È€Äà(€€€€€€€€€€€€€€€€€€€‰½‘äõÍÑÈ¡•±°¹Ù…±Õ”¤(€€€€€€€€€€€€€€€€€€€¥˜¥Í¥¹ÍÑ…¹”¡•±°¹Ù…±Õ”°¡¥¹Ğ±™±½…Ğ¤¤…¹¹½Ğ¥Í¥¹ÍÑ…¹”¡•±°¹Ù…±Õ”±‰½½°¤è(€€€€€€€€€€€€€€€€€€€€€€€‰½‘äõ˜‰í•±°¹Ù…±Õ”è°¸É™ôˆ(€€€€€€€€€€€€€€€€€€€±¥¹•ÌõÍÕ´¡µ…à Ä±}µ…Ñ ¹•¥°¡±•¸¡Á¥•”¤½µ…à à±¥¹Ğ¡İ¥‘Ñ ¤´Ğ¤¤¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€™½ÈÁ¥•”¥¸‰½‘ä¹ÍÁ±¥Ğ ‰q¸ˆ¤¤(€€€€€€€€€€€€€€€€€€€µ…á}±¥¹•Ìõµ…à¡µ…á}±¥¹•Ì±±¥¹•Ì¤(€€€€€€€€€€€€€€€€€€€•±°¹…±¥¹µ•¹Ğõ±¥¹µ•¹Ğ¡Ù•ÉÑ¥…°ô‰Ñ½Àˆ±İÉ…Á}Ñ•áĞõQÉÕ”¤(€€€€€€€€€€€€€€€Í¡••Ğ¹É½İ}‘¥µ•¹Í¥½¹ÍmÉ•½É‘lÁt¹É½İt¹¡•¥¡Ğõµ¥¸ ĞÀÔ±µ…à ÌÀ°ÄØ©µ…á}±¥¹•Ì¬ÄÀ¤¤(€€€€€€€€€€€Í¡••Ğ¹Í¡••Ñ}ÁÉ½Á•ÉÑ¥•Ì¹Á…•M•ÑUÁAÈ¹™¥ÑQ½A…”õQÉÕ”(€€€€€€€€€€€Í¡••Ğ¹Á…•}Í•ÑÕÀ¹™¥ÑQ½]¥‘Ñ ôÄ(€€€€€€€€€€€Í¡••Ğ¹Í¡••Ñ}Ù¥•Ü¹é½½µM…±”ôàÔ(€€€€€€€İˆ¹Í…Ù”¡À¤ìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰á•°•áÁ½ÉÑ…‘¼½´ÍÕ•ÍÍ¼¸ˆ¤((€€€‘•˜Í…Ù•}É•Á½ÉĞ¡Í•±˜¤è(€€€€€€€ÑáĞõÍÑÈ¡Í•±˜¹ÁÉ½©•Ğ¹•Ğ ‰±…ÍÑ}É•ÍÕ±Ğˆ¤½ÈÍ•±˜¹É•Ì¹•Ğ ˆÄ¸Àˆ°‰•¹ˆ¤¤¹ÍÑÉ¥À ¤(€€€€€€€¥˜¹½ĞÑáĞéÉ•ÑÕÉ¸(€€€€€€€Àõ™¥±•‘¥…±½œ¹…Í­Í…Ù•…Í™¥±•¹…µ”¡‘•™…Õ±Ñ•áÑ•¹Í¥½¸ôˆ¹ÑáĞˆ±™¥±•ÑåÁ•Ìõl ‰I•±…ÓÍÉ¥¼QaPˆ°ˆ¨¹ÑáĞˆ¥t¤(€€€€€€€¥˜ÀéA…Ñ ¡À¤¹İÉ¥Ñ•}Ñ•áĞ¡ÑáĞ¬‰q¹q¹=9QMq¸ˆ­Í•±˜¹ÍÉŒ¹•Ğ ˆÄ¸Àˆ°‰•¹ˆ¤±•¹½‘¥¹œô‰ÕÑ˜´àˆ¤ìÍ•±˜¹ÍÑ…ÑÕÌ¹Í•Ğ ‰I•±…ÓÍÉ¥¼Í…±Ù¼¸ˆ¤()‘•˜µ½‘Õ±•}¡•¬ ¤è(€€€€ˆˆ‰=™™±¥¹”¡•¬°ÉÕ¸½¸Ñ¡”=5A%1aè¹•Üµ½‘Õ±•Ì…É”Á…­…•…¹(€€€Ñ¡•¥È‰Õ¹‘±•‘…Ñ„É•Í½±Ù”Õ¹‘•ÈÍåÌ¹}5%AML¸]É¥Ñ•Ì„)M=8ÍÕµµ…Éä¸ˆˆˆ(€€€½ÕĞõì‰Ù•ÉÍ¥½¸ˆéAA}YIM%=9ô(€€€¥µÁ½ÉĞ¹ÕµÁä…Ì¹À°É…ÍÑ•É¥¼°•½Á…¹‘…Ì…ÌÁ(€€€™É½´É…ÍÑ•É¥¼¹ÑÉ…¹Í™½É´¥µÁ½ÉĞ™É½µ}½É¥¥¸(€€€™É½´Í¡…Á•±ä¹•½µ•ÑÉä¥µÁ½ÉĞA½¥¹Ğ°‰½à(€€€¥µÁ½ÉĞÁÉ½¹…Í½±½Í}İÌ°Í½¥±}¥¹Ñ•ÉÍ•Ñ¥½¹}É•Á½ÉĞ°É½Á}µ½‘•±}ÁÉ¥½É¥Ñä°É½Á}Ù¥½È(€€€¥µÁ½ÉĞÉ½Á}±¥µ…Ñ•}™…Ù½É…‰¥±¥Ñä°É½Á}™½É•…ÍÑ}Á¥Á•±¥¹”(€€€™É½´Í½¥±}ÁÉ½¹…Í½±½Í}é½¹…°¥µÁ½ÉĞµ…ÁÁ•‘}Í½¥±|Á|ÄÀÁ}½¹}Á½±å½¸(€€€™É½´É½Á}å¥•±‘}Í•¹…É¥¼¥µÁ½ÉĞ±½…‘}µ¥É½É•¥½¹}å¥•±‘Ì°µ¥É½É•¥½¹}½˜(€€€™É½´¥¹Ù•¹Ñ½Éå}µ¥É½‘…Ñ…}±¥‰É…Éä¥µÁ½ÉĞ€¡=%%1}°½™™¥¥…±}¥¹Ù•¹Ñ½Éå}‘…Ñ…‰…Í•}ÍÑ…ÑÕÌ°(€€€€€€€Í•±•Ñ}½™™¥¥…±}¥¹Ù•¹Ñ½Éå}Õ¹¥ÑÌ¤(€€€¥˜¹½Ğ=%%1}¹¥Í}™¥±” ¤è(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰	…¹¼%8•áÑ•É¹¼»¼•¹½¹ÑÉ…‘¼•´‘…Ñ„½¹…Ñ¥½¹…±}¥¹Ù•¹Ñ½Éå}µ¥É½‘…Ñ…}ØÄ¹ÍÅ±¥Ñ”…¼±…‘¼‘¼…Á±¥…Ñ¥Ù¼ˆ¤(€€€¥™¹}ÍÑ…ÑÕÌõ½™™¥¥…±}¥¹Ù•¹Ñ½Éå}‘…Ñ…‰…Í•}ÍÑ…ÑÕÌ ¤(€€€¥˜€¡¹½Ğ¥™¹}ÍÑ…ÑÕÌ¹•Ğ ‰½Á•É…Ñ¥½¹…±}™½É}ÑÉ••}Í•±•Ñ¥½¸ˆ¤(€€€€€€€€€€€½È¥™¹}ÍÑ…ÑÕÌ¹•Ğ ‰½‰Í•ÉÙ…Ñ¥½¹}É½İÌˆ¤„ôàĞÄÌàÜ(€€€€€€€€€€€½È¥™¹}ÍÑ…ÑÕÌ¹•Ğ ‰Í…µÁ±¥¹}Õ¹¥ÑÌˆ¤„ôàäÔÄ(€€€€€€€€€€€½È¥™¹}ÍÑ…ÑÕÌ¹•Ğ ‰¥‰•}Õ¹¥ÅÕ•}Õ¹¥Ñ}µ…Ñ¡•Ìˆ¤„ôàäÔÄ¤è(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰	…¹¼%8½ÔÉÕé…µ•¹Ñ¼%	±••¹‘…|Ä»¼…Ñ•¹‘”…¼½¹ÑÉ…Ñ¼‘”Í•±—Ÿ¼è€ˆ­©Í½¸¹‘ÕµÁÌ¡¥™¹}ÍÑ…ÑÕÌ±•¹ÍÕÉ•}…Í¥¤õ…±Í”¤¤(€€€¥µÁ½ÉĞÍÅ±¥Ñ”Ì…Ì}ÍÅ±¥Ñ”Ì(€€€İ¥Ñ }ÍÅ±¥Ñ”Ì¹½¹¹•Ğ¡˜‰™¥±”éí=%%1}¹É•Í½±Ù” ¥ôıµ½‘”õÉ¼ˆ±ÕÉ¤õQÉÕ”¤…Ì}½¹¸è(€€€€€€€}Õ¹¥Ğõ}½¹¸¹•á•ÕÑ” ˆˆ‰M1PÌ¹‰¥½µ”±Ì¹Õ…}•¹Ñ•É}±½¸±Ì¹Õ…}•¹Ñ•É}±…Ğ°(€€€€€€€€€€€€€€€à¹¥‰•}±••¹‘…|Ä±Ì¹Õ˜±Ì¹Õ…}¥I=4¥™¹}Í…µÁ±¥¹}Õ¹¥Ñ}ÍÕµµ…ÉäÌ(€€€€€€€€€€€)=%8¥™¹}Í…µÁ±¥¹}Õ¹¥Ñ}¥‰•}É½ÍÍİ…±¬à=8à¹Õ…}¥õÌ¹Õ…}¥9à¹Õ˜õÌ¹Õ˜(€€€€€€€€€€€]!Ià¹µ…Ñ¡}ÍÑ…ÑÕÌô5Q!}U9%=}A=9Q=}%9QI%=Hœ9Ì¹‰¥½µ”%L9=P9U10(€€€€€€€€€€€€€9Ì¹Õ…}•¹Ñ•É}±½¸%L9=P9U109Ì¹Õ…}•¹Ñ•É}±…Ğ%L9=P9U10(€€€€€€€€€€€€€9à¹¥‰•}±••¹‘…|Ä%L9=P9U10=IH	dÌ¹Õ˜±Ì¹Õ…}¥1%5%P€Äˆˆˆ¤¹™•Ñ¡½¹” ¤(€€€¥˜¹½Ğ}Õ¹¥Ğè(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰	…¹¼%8Í•´Õ¹¥‘…‘”…‘•ÅÕ…‘„Á…É„Ñ•ÍÑ”‘”Í•±—Ÿ¼ˆ¤(€€€}Í•±•Ñ•õÍ•±•Ñ}½™™¥¥…±}¥¹Ù•¹Ñ½Éå}Õ¹¥ÑÌ¡‰¥½µ”õ}Õ¹¥ÑlÁt±Á¡åÍ¥½¹½µäõ}Õ¹¥ÑlÍt°(€€€€€€€±½¹¥ÑÕ‘”õ}Õ¹¥ÑlÅt±±…Ñ¥ÑÕ‘”õ}Õ¹¥ÑlÉt±µ…á}‘¥ÍÑ…¹•}­´ôÄ±µ…á}Õ¹¥ÑÌôÔ±¥¹±Õ‘•}ÑÉ••Ìõ…±Í”¤(€€€¥˜€¡}Í•±•Ñ•¹•Ğ ‰ÍÑ…ÑÕÌˆ¤„ô‰M1=}%9}A=I}1=1%i=}	%=5}%Q=%M%=9=5%ˆ(€€€€€€€€€€€½È¹½Ğ}Í•±•Ñ•¹•Ğ ‰Õ¹¥ÑÌˆ¤½È}Í•±•Ñ•‘l‰Õ¹¥ÑÌ‰ulÁt¹•Ğ ‰Õ…}¥ˆ¤„õ}Õ¹¥ÑlÕt(€€€€€€€€€€€½È}Í•±•Ñ•‘l‰Õ¹¥ÑÌ‰ulÁt¹•Ğ ‰Õ˜ˆ¤„õ}Õ¹¥ÑlÑt¤è(€€€€€€€É…¥Í”IÕ¹Ñ¥µ•ÉÉ½È ‰½¹ÍÕ±Ñ„•µÁ…½Ñ…‘„»¼Í•±•¥½¹½Ô„U%8½¥¹¥‘•¹Ñ”•´±½…±¥é‡Ÿ¼°‰¥½µ„”±••¹‘…|Äˆ¤(€€€½ÕÑl‰¥™¹}µ¥É½‘…Ñ„‰tõì‰‘…Ñ…‰…Í”ˆè‰•áÑ•É¹…±}Í¥‘•…É}É•…‘}½¹±äˆ°‰½‰Í•ÉÙ…Ñ¥½¹}É½İÌˆé¥™¹}ÍÑ…ÑÕÍl‰½‰Í•ÉÙ…Ñ¥½¹}É½İÌ‰t°(€€€€€€€€‰Í…µÁ±¥¹}Õ¹¥ÑÌˆé¥™¹}ÍÑ…ÑÕÍl‰Í…µÁ±¥¹}Õ¹¥ÑÌ‰t°‰Í½ÕÉ•}İ½É­‰½½­Ìˆé¥™¹}ÍÑ…ÑÕÍl‰Í½ÕÉ•}İ½É­‰½½­Ì‰t°(€€€€€€€€‰¥‰•}Õ¹¥ÅÕ•}Õ¹¥Ñ}µ…Ñ¡•Ìˆé¥™¹}ÍÑ…ÑÕÍl‰¥‰•}Õ¹¥ÅÕ•}Õ¹¥Ñ}µ…Ñ¡•Ì‰t°(€€€€€€€€‰Í•±•Ñ¥½¹}‰å}±½…Ñ¥½¹}‰¥½µ•}…¹‘}±••¹‘…|Äˆè‰½¬ˆ°(€€€€€€€€‰Í•±•Ñ•‘}É•™•É•¹•}ÕÍ•}½¹±äˆéQÉÕ”°‰…‰}Á•É}¡…}½É}…¹½Áå}¡•¥¡Ñ}•ÍÑ¥µ…Ñ½Èˆé…±Í•ô(€€€ÑµÀõA…Ñ ¡Ñ•µÁ™¥±”¹µ­‘Ñ•µÀ¡ÁÉ•™¥àô‰•¹™½Éµ}µ½‘¡•­|ˆ¤¤ìÁàõÁÉ½¹…Í½±½Í}İÌ¹A%a1}ìÁ…Ñ¡Ìõíô(€€€™½È±¥¥¸É…¹” È°Ü¤è(€€€€€€€˜õÑµÀ½˜‰¡í±¥‘ô¹Ñ¥˜ˆ(€€€€€€€İ¥Ñ É…ÍÑ•É¥¼¹½Á•¸¡˜°‰Üˆ±‘É¥Ù•Èô‰Q¥™˜ˆ±¡•¥¡ĞôÄÀ±İ¥‘Ñ ôÄÀ±½Õ¹ĞôÄ±‘ÑåÁ”ô‰™±½…ĞÌÈˆ±ÉÌô‰AMèĞÌÈØˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€ÑÉ…¹Í™½É´õ™É½µ}½É¥¥¸ ´ÔÔ¸À°´Ì¸À±Áà±Áà¤±¹½‘…Ñ„ô´ääää¤…Ìè(€€€€€€€€€€€¹İÉ¥Ñ”¡¹À¹™Õ±°  ÄÀ°ÄÀ¤±™±½…Ğ¡±¥¤±‘ÑåÁ”ô‰™±½…ĞÌÈˆ¤°Ä¤(€€€€€€€Á…Ñ¡Ím±¥‘tõ˜(€€€Í½¥°õµ…ÁÁ•‘}Í½¥±|Á|ÄÀÁ}½¹}Á½±å½¸¡Á¹•½…Ñ…É…µ”¡•½µ•ÑÉäõm‰½à ´ÔÔ­Áà°´Ì´ä©Áà°´ÔÔ¬ä©Áà°´ÌµÁà¥t±ÉÏ[h‘éì¶»§q«^u4326),paths)
+             "Limites somente quando todas as fontes quantificadas fornecem faixa defensÃ¡vel."],
+            ["CENÃRIOS","ESTOQUE MAIS PROVÃVEL â€” soma conhecida",None,
+             envelope["central_known_tco2e_ha"],envelope["known_total_tc"],
+             envelope["central_known_tco2e"],"PARCIAL" if not dn.get("complete") else "ESTIMATIVA CENTRAL",None,
+             "N/D â€” incerteza conjunta nÃ£o demonstrada", "Soma conhecida. NÃ£o pressupÃµe estoque nulo nos compartimentos N/D."],
+            ["CENÃRIOS","ESTOQUE MÃXIMO â€” fontes quantificadas",None,
+             envelope["maximum_known_tco2e_ha"],envelope["maximum_known_tc"],
+             envelope["maximum_known_tco2e"],"ENVELOPE / N/D",None,None,
+             "NÃ£o Ã© IC95% conjunto; desvios da fonte espelhados em torno da estimativa central."],
+        ])
+        scenario=wb.create_sheet("CenÃ¡rios e Incertezas")
+        setup(scenario,"Enform Verde â€” CenÃ¡rios por estrato e compartimento")
+        for j,h in enumerate(["Fitofisionomia","Compartimento","Ãrea (ha)",
+                              "MÃ­nimo (tCOâ‚‚e)","Mais provÃ¡vel (tCOâ‚‚e)",
+                              "MÃ¡ximo (tCOâ‚‚e)","Status","Tipo de incerteza"],1):
+            scenario.cell(3,j,h).value=h
+        scenario_rows=[
+            [part["physiognomy"],part["compartment"],part["area_ha"],
+             part["low_tc"]*44/12 if part["low_tc"] is not None else None,
+             part["central_tc"]*44/12,
+             part["high_tc"]*44/12 if part["high_tc"] is not None else None,
+             part["status"],str(part.get("uncertainty_kind") or "N/D")]
+            for part in envelope["rows"]]
+        if not scenario_rows:
+            scenario_rows=[["N/D","Sem estoque quantificado",None,None,None,None,
+                            "N/D","NÃ£o inventar limites"]]
+        put(scenario,scenario_rows)
+        scenario["A2"]="CenÃ¡rios aritmÃ©ticos simÃ©tricos de limites de fonte; nÃ£o equivalem a intervalo estatÃ­stico conjunto de confianÃ§a."
+        scenario.merge_cells("A2:H2")
+        scenario["A2"].alignment=Alignment(wrap_text=True)
+        scenario.auto_filter.ref=f"A3:H{3+len(scenario_rows)}"
+        # Display the three carbon-stock scenarios at the TOP of the
+        # executive sheet, immediately after AOI area; they must not be hidden
+        # below potentially dozens of fertility and land-cover rows.
+        dash=dash[:1]+dash[-3:]+dash[1:-3]
+        put(dashboard,dash)
+        dashboard.auto_filter.ref=f"A3:H{3+len(dash)}"
+        dashboard.freeze_panes="C8"
+        dashboard.sheet_view.zoomScale=85
+        for scenario_row in (5,6,7):
+            for cell in dashboard[scenario_row]:
+                cell.font=Font(bold=True,color=green)
+
+        # Brazilian number formatting and readable dimensions on ALL worksheets.
+        # Wrapped long text is sized by its displayed line count, not clipped
+        # into a fixed-height row. Excel column letters may extend beyond H.
+        from openpyxl.utils import get_column_letter
+        import math as _math
+        for sheet in wb.worksheets:
+            sheet.sheet_view.showGridLines=False
+            col_widths={}
+            for record in sheet.iter_rows():
+                for cell in record:
+                    if cell.value is None:continue
+                    if isinstance(cell.value,(int,float)) and not isinstance(cell.value,bool):
+                        cell.number_format='#,##0.00'
+                        needed=max(14,len(f"{cell.value:,.2f}")+3)
+                    else:
+                        content=str(cell.value)
+                        needed=min(104,max(13,min(62,len(content)+3)))
+                    col_widths[cell.column]=max(col_widths.get(cell.column,13),needed)
+            for col,width in col_widths.items():
+                letter=get_column_letter(col)
+                if col>8 and sheet.title in ("Fertilidade do Solo","Modelo Para Campo"):
+                    width=max(width,24)
+                sheet.column_dimensions[letter].width=min(106,max(14,width+2))
+            for record in sheet.iter_rows():
+                if record[0].row<=3:continue
+                max_lines=1
+                for cell in record:
+                    if cell.value is None:continue
+                    width=sheet.column_dimensions[get_column_letter(cell.column)].width or 18
+                    body=str(cell.value)
+                    if isinstance(cell.value,(int,float)) and not isinstance(cell.value,bool):
+                        body=f"{cell.value:,.2f}"
+                    lines=sum(max(1,_math.ceil(len(piece)/max(8,int(width)-4)))
+                              for piece in body.split("\n"))
+                    max_lines=max(max_lines,lines)
+                    cell.alignment=Alignment(vertical="top",wrap_text=True)
+                sheet.row_dimensions[record[0].row].height=min(405,max(30,16*max_lines+10))
+            sheet.sheet_properties.pageSetUpPr.fitToPage=True
+            sheet.page_setup.fitToWidth=1
+            sheet.sheet_view.zoomScale=85
+        wb.save(p); self.status.set("Excel exportado com sucesso.")
+
+    def save_report(self):
+        txt=str(self.project.get("last_result") or self.res.get("1.0","end")).strip()
+        if not txt:return
+        p=filedialog.asksaveasfilename(defaultextension=".txt",filetypes=[("RelatÃ³rio TXT","*.txt")])
+        if p:Path(p).write_text(txt+"\n\nFONTES\n"+self.src.get("1.0","end"),encoding="utf-8"); self.status.set("RelatÃ³rio salvo.")
+
+def module_check():
+    """Offline check, run on the COMPILED EXE: new modules are packaged and
+    their bundled data resolve under sys._MEIPASS. Writes a JSON summary."""
+    out={"version":APP_VERSION}
+    import numpy as np, rasterio, geopandas as gpd
+    from rasterio.transform import from_origin
+    from shapely.geometry import Point, box
+    import pronasolos_wcs, soil_intersection_report, crop_model_priority, crop_vigor
+    import crop_climate_favorability, crop_forecast_pipeline
+    from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
+    from crop_yield_scenario import load_microregion_yields, microregion_of
+    from inventory_microdata_library import (OFFICIAL_DB, official_inventory_database_status,
+        select_official_inventory_units)
+    if not OFFICIAL_DB.is_file():
+        raise RuntimeError("Banco IFN externo nÃ£o encontrado em data/national_inventory_microdata_v1.sqlite ao lado do aplicativo")
+    ifn_status=official_inventory_database_status()
+    if (not ifn_status.get("operational_for_tree_selection")
+            or ifn_status.get("observation_rows")!=841387
+            or ifn_status.get("sampling_units")!=8951
+            or ifn_status.get("ibge_unique_unit_matches")!=8951):
+        raise RuntimeError("Banco IFN ou cruzamento IBGE legenda_1 nÃ£o atende ao contrato de seleÃ§Ã£o: "+json.dumps(ifn_status,ensure_ascii=False))
+    import sqlite3 as _sqlite3
+    with _sqlite3.connect(f"file:{OFFICIAL_DB.resolve()}?mode=ro",uri=True) as _conn:
+        _unit=_conn.execute("""SELECT s.biome,s.ua_center_lon,s.ua_center_lat,
+                x.ibge_legenda_1,s.uf,s.ua_id FROM ifn_sampling_unit_summary s
+            JOIN ifn_sampling_unit_ibge_crosswalk x ON x.ua_id=s.ua_id AND x.uf=s.uf
+            WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND s.biome IS NOT NULL
+              AND s.ua_center_lon IS NOT NULL AND s.ua_center_lat IS NOT NULL
+              AND x.ibge_legenda_1 IS NOT NULL ORDER BY s.uf,s.ua_id LIMIT 1""").fetchone()
+    if not _unit:
+        raise RuntimeError("Banco IFN sem unidade adequada para teste de seleÃ§Ã£o")
+    _selected=select_official_inventory_units(biome=_unit[0],physiognomy=_unit[3],
+        longitude=_unit[1],latitude=_unit[2],max_distance_km=1,max_units=5,include_trees=False)
+    if (_selected.get("status")!="SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA"
+            or not _selected.get("units") or _selected["units"][0].get("ua_id")!=_unit[5]
+            or _selected["units"][0].get("uf")!=_unit[4]):
+        raise RuntimeError("Consulta empacotada nÃ£o selecionou a UA IFN coincidente em localizaÃ§Ã£o, bioma e legenda_1")
+    out["ifn_microdata"]={"database":"external_sidecar_read_only","observation_rows":ifn_status["observation_rows"],
+        "sampling_units":ifn_status["sampling_units"],"source_workbooks":ifn_status["source_workbooks"],
+        "ibge_unique_unit_matches":ifn_status["ibge_unique_unit_matches"],
+        "selection_by_location_biome_and_legenda_1":"ok",
+        "selected_reference_use_only":True,"agb_per_ha_or_canopy_height_estimator":False}
+    tmp=Path(tempfile.mkdtemp(prefix="enform_modcheck_")); px=pronasolos_wcs.PIXEL_DEG; paths={}
+    for lid in range(2,7):
+        f=tmp/f"h{lid}.tif"
+        with rasterio.open(f,"w",driver="GTiff",height=10,width=10,count=1,dtype="float32",crs="EPSG:4326",
+                           transform=from_origin(-55.0,-3.0,px,px),nodata=-9999) as d:
+            d.write(np.full((10,10),float(lid),dtype="float32"),1)
+        paths[lid]=f
+    soil=mapped_soil_0_100_on_polygon(gpd.GeoDataFrame(geometry=[box(-55+px,-3-9*px,-55+9*px,-3-px)],crs=4326),paths)
     if abs(soil["0â€“100 cm"]["tc_ha"]-20.0)>1e-6:raise RuntimeError("interseÃ§Ã£o exata EPSG:4326 incorreta")
     out["soil_exact_intersection"]="ok"
     # The compiled EXE must include the pre-field modeling engine and stamped SHA.
