@@ -1,0 +1,121 @@
+name: Sync full Word specification from reviewed checkpoint
+on:
+  push:
+    branches:
+      - feature/agricultural-identification-native-carbon
+      - patches-3.26.6
+    paths:
+      - docs/spec_updates/2026-11-15_v88_83_carbon_pools_uncertainty_performance.md
+      - docs/spec_updates/2026-11-18_v88_153_h100_inventory_height_calibration.md
+      - docs/spec_updates/2026-11-18_v88_156_inventory_date_normalization.md
+      - docs/spec_updates/V88.176_MAPA_VETORIAL_CI_EVIDENCIAS_RELEASE.md
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: enform-word-spec-sync
+  cancel-in-progress: false
+jobs:
+  update-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Append V88.156 inventory date normalization and release blocker preserving full Word history
+        run: |
+          if python - <<'PY'
+          from zipfile import ZipFile
+          with ZipFile('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx') as z:
+              xml=z.read('word/document.xml').decode('utf-8')
+          raise SystemExit(0 if 'V88.156' in xml else 1)
+          PY
+          then
+            python - <<'PY'
+          import os
+          import tempfile
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          path = Path('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx')
+          sha = os.environ['GITHUB_SHA']
+          with ZipFile(path) as source:
+              entries = [(item, source.read(item.filename)) for item in source.infolist()]
+          document = next(data for item, data in entries if item.filename == 'word/document.xml')
+          xml = document.decode('utf-8')
+          if 'WORKTREE-' in xml:
+              import re
+              xml, count = re.subn(r'WORKTREE-[A-Za-z0-9_-]+', sha, xml)
+              if count != 1:
+                  raise SystemExit(f'Expected one temporary SHA marker, found {count}')
+              fd, temporary = tempfile.mkstemp(suffix='.docx', dir=path.parent)
+              os.close(fd)
+              try:
+                  with ZipFile(temporary, 'w') as target:
+                      for item, data in entries:
+                          target.writestr(item, xml.encode('utf-8') if item.filename == 'word/document.xml' else data)
+                  Path(temporary).replace(path)
+              finally:
+                  Path(temporary).unlink(missing_ok=True)
+          print('V88.156 already present; finalized its SHA metadata.')
+          PY
+          else
+            python tools/update_spec_docx.py \
+              --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+              --entry docs/spec_updates/2026-11-18_v88_156_inventory_date_normalization.md \
+              --baseline "Enform Verde 3.26.71-PRECAMPO-EXPERIMENTAL (V88.156 IFN date normalization and AGB release blocker)" \
+              --head-sha "${{ github.sha }}" \
+              --code-sha "$(git log -1 --format=%H -- desktop_app.py)" \
+              --date "18 de novembro de 2026" \
+              --footer-label "V88.156 · experimental 3.26.71 · datas IFN normalizadas; modelo AGB pendente" \
+              --footer-date "18/11/2026"
+          fi
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+      - name: Verify DOCX archive and current checkpoint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          p=Path('docs/ESPECIFICACAO_TECNICA_COMPLETA.docx')
+          with ZipFile(p) as z:
+              assert z.testzip() is None
+              xml=z.read('word/document.xml').decode()
+              assert len(xml) > 10000
+              assert 'V88.156' in xml and '3.26.71-PRECAMPO-EXPERIMENTAL' in xml
+          print('Word specification updated with V88.156 checkpoint and archive validated')
+          PY
+      - name: Append V88.176 map and release evidence to full Word specification
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/V88.176_MAPA_VETORIAL_CI_EVIDENCIAS_RELEASE.md \
+            --baseline "Enform Verde 3.26.84-PRECAMPO-EXPERIMENTAL; tested source SHA 297e944338a12983d604bf35d2fe45a9a911c790" \
+            --head-sha "${{ github.sha }}" \
+            --code-sha "$(git log -1 --format=%H -- tests/test_sentinel2_scene_failover_contract.py)" \
+            --date "21 de novembro de 2026" \
+            --footer-label "V88.176 · mapa temático vetorial e evidências do pacote" \
+            --footer-date "21/11/2026" \
+            --cover-state "BUILD WINDOWS, EXE LIMPO, FH→DASHBOARD E SAR SINOP/TAPAJÓS PASSARAM; CAMPO PENDENTE" \
+            --cover-version "V88.176 | 3.26.84-PRECAMPO-EXPERIMENTAL"
+          cp docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_176.docx
+          python - <<'PY'
+          from zipfile import ZipFile
+          path='docs/ESPECIFICACAO_TECNICA_COMPLETA.docx'
+          with ZipFile(path) as z:
+              assert z.testzip() is None
+              xml=z.read('word/document.xml').decode('utf-8')
+              assert 'V88.176' in xml and '3.26.84-PRECAMPO-EXPERIMENTAL' in xml
+          PY
+      - name: Commit DOCX to the same feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_176.docx
+          git diff --cached --quiet || git commit -m "docs: synchronize Word with V88.156 inventory date normalization and release blocker"
+          git push origin HEAD:${{ github.ref_name }}

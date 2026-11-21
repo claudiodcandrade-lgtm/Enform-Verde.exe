@@ -1,0 +1,79 @@
+{
+  "report_type": "observational_screening_only_not_independent_validation",
+  "created_date": "2026-11-01",
+  "source_workflow_run_id": 41335365122,
+  "source_commit_sha": "98e22081d01f32e491338b948fb5ade10850f036",
+  "source_artifact_id": 13094877154,
+  "source_artifact_zip_sha256": "750817ec8d0fd61eb29aec61828e79f4089a470b54e0090da2dc9554ed44effb",
+  "source_catalog": "https://dados.florestal.gov.br/dataset/ifn-serapilheira-por-uf_disp-set2025",
+  "source_license": "Creative Commons Atribuição, per official SFB resource pages",
+  "source_retification_date": "2025-10-24",
+  "measurement": "serapilheira depth in centimeters at five points per physical sampling unit; not dry mass or carbon stock",
+  "method": "CSV cp1252; semicolon delimiter; filter bioma=Pantanal; group by (uf,ua); count each physical UA once; verify Ponto 1..5, within-UA coordinate consistency and source SHA256",
+  "sources": [
+    {
+      "state": "Mato Grosso",
+      "resource_id": "d4088c92-e04c-4d86-965e-664d669acc73",
+      "sha256": "dc88e80c5f9d1f8be05eb25afdb277d8f76759f4c960ac0f95e4fb1773945aa1",
+      "all_biome_rows": 4900,
+      "pantanal_rows": 25,
+      "pantanal_unique_ua": 5,
+      "pantanal_ua_by_land_code": {
+        "14": 1,
+        "31": 1,
+        "45": 3
+      },
+      "pantanal_depth_zero_rows": 19,
+      "pantanal_depth_positive_rows": 6
+    },
+    {
+      "state": "Mato Grosso do Sul",
+      "resource_id": "066c5f30-5669-4a4f-8a6d-2f6b9f85b120",
+      "sha256": "02b08e2a5a8b42e6ebb487e6a33ab0f508cd78feb1e1808135919fde4ce0b403",
+      "all_biome_rows": 2680,
+      "pantanal_rows": 35,
+      "pantanal_unique_ua": 7,
+      "pantanal_ua_by_land_code": {
+        "14": 1,
+        "45": 6
+      },
+      "pantanal_depth_zero_rows": 25,
+      "pantanal_depth_positive_rows": 10
+    }
+  ],
+  "pantanal_total": {
+    "depth_rows": 60,
+    "unique_physical_ua": 12,
+    "points_per_ua": 5,
+    "all_ua_have_unique_points_1_to_5": true,
+    "all_ua_have_consistent_nonmissing_centroid_coordinates": true,
+    "field_collection_year": "2018",
+    "ua_by_provisional_land_code": {
+      "14": 2,
+      "31": 1,
+      "45": 9
+    },
+    "depth_zero_rows": 44,
+    "depth_positive_rows": 16
+  },
+  "interpretation": {
+    "provisional_natural_nonforest_code_31_ua": 1,
+    "anthropic_code_45_ua": 9,
+    "land_code_dictionary_version_compatibility_verified": false,
+    "coordinates_are_conglomerate_centers_not_verified_subplot_locations": true,
+    "coordinate_positional_accuracy_verified": false,
+    "ibge_fitophysiognomy_verified": false,
+    "microregional_transfer_error_quantified": false,
+    "design_based_variance_estimated": false,
+    "dry_mass_measured": false,
+    "carbon_fraction_measured": false,
+    "carbon_stock_tC_ha": null,
+    "carbon_stock_ready": false,
+    "confidence_interval_95": null,
+    "sar_pair_eligible": false,
+    "scientific_validation": false,
+    "provisional_natural_savanna_or_forest_code_14_ua": 2,
+    "code_14_is_not_verified_as_forest_or_ibge_fitophysiognomy": true
+  },
+  "warning": "Real licensed litter depth observations are not 60 independent sampling units, and are not carbon stocks. Native-code screening is provisional; coordinates alone do not establish pixel-plot correspondence or positional accuracy. Do not promote to release evidence."
+}

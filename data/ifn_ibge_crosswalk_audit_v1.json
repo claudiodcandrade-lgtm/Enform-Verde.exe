@@ -1,0 +1,11 @@
+{
+  "sampling_units": 8951,
+  "vegetation_sha256": "bcacc74011c86ba11ef4f4826bed38836340191208c9e98e821d52f0d68a5fb7",
+  "status_counts": {
+    "MATCH_UNICO_PONTO_INTERIOR": 8951
+  },
+  "eligible_unique_matches": 8951,
+  "interpretation": "IBGE potential phytoregion assigned at IFN sampling-unit center; not per-tree location or current cover.",
+  "database_sha256": "9ffeb84e582d2fa2c5c892bd798346f227adc2080d7976a75cea71238ba75389",
+  "database_size_bytes": 488456192
+}

@@ -1,0 +1,6 @@
+# REVISÃO V81 — Sincronização Word corrigida e rastreabilidade nacional (04/11/2026)
+- A execução 41947631500 gerou o DOCX, mas falhou na asserção de texto por exigir “REVISÃO v80” enquanto o título documental gravado era “REVISÃO V80”. Verificação corrigida para a grafia exata “REVISÃO V81” presente neste checkpoint.
+- Código funcional de referência: a5f9767027dd6e4e33d8fcea5808e9dd1d89956c. Auditoria de área, porcentagens, fonte, SHA WGS84 da AOI, EPSG:6933, estado dos pixels SAR, erros/limitações, ausência de incerteza quando não estimada e competência para os seis biomas brasileiros.
+- Distinção obrigatória entre observação SAR real, triagem heurística SAR, classificação SAR validada, MapBiomas histórico e IBGE fitofisionômico. Incertezas não calibradas = N/D; dados não disponíveis não equivalem a zero.
+- Requisito de release: testes completos e Windows EXE/PyInstaller do SHA exato do código, incluindo todos os módulos dinâmicos, compatibilidade de carregamento do KML Fazenda Maria Eduarda e registro claro de bloqueios de dados. Jamais tratar o gate científico independente reprovado como homologação aprovada.
+- A sincronização documental por bot produz um SHA adicional que representa documentação, não uma recompilação automaticamente revalidada do binário anterior.

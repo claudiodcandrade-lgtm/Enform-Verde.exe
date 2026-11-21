@@ -1,0 +1,38 @@
+name: Sync V88.171 Word specification
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply V88.171 checkpoint to Word specification
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/V88.171_VECTOR_UPLOAD_EXECUTE_RACE.md \
+            --baseline e64582777a407dbdd2bf723aa2d026bb47f513bc \
+            --head-sha "$GITHUB_SHA" \
+            --code-sha "$GITHUB_SHA" \
+            --date 2026-11-19 \
+            --footer-label V88.171 \
+            --footer-date 19/11/2026 \
+            --cover-state "UPLOAD KML/VETOR E EXECUÇÃO ENFILEIRADOS; BUILD EM VALIDAÇÃO" \
+            --cover-version "V88.171 | 3.26.81-PRECAMPO-EXPERIMENTAL"
+          cp docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_171.docx
+          python -c "from zipfile import ZipFile; p='docs/ESPECIFICACAO_TECNICA_COMPLETA.docx'; z=ZipFile(p); assert z.testzip() is None"
+      - name: Commit synchronized Word file
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_171.docx
+          git commit -m "Sync V88.171 Word specification" || exit 0
+          git push origin HEAD:patches-3.26.6

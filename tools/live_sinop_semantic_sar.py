@@ -1,0 +1,324 @@
+#!/usr/bin/env python3
+"""Experimental real-SAR semantic polygons for a fixed test box near Sinop.
+
+This is explicitly NOT the Fazenda Maria Eduarda KML and does not prove
+contemporaneous 2026/27 conditions. Uses the last complete Oct-Sep season.
+"""
+import json
+import os
+import sys
+import traceback
+from datetime import date, datetime, timezone
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+
+OUT=Path("sinop_sar_semantic_experimental")
+OUT.mkdir(exist_ok=True)
+
+
+def build_report_header(sample_box_area_ha, started_at=None):
+    """Name the fixed sample scope so its areas cannot be read as farm totals."""
+    return {
+        "status": "STARTED",
+        "scope": "fixed 0.03-degree test box near Sinop centroid; NOT original KML",
+        "sample_box_area_ha": float(sample_box_area_ha),
+        "reference_farm_area_ha_not_processed": 1459.91,
+        "data_origin": "Sentinel-1 RTC VV/VH observed SAR pixels",
+        "claim": "experimental model inference from last complete agricultural year",
+        "field_validated": False,
+        "current_sowing_season_2026_27_verified": False,
+        "mapbiomas_or_ibge_used_as_current_labels": False,
+        "started_at_utc": started_at or datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def summarize_sample_box(sample_box_area_ha, class_areas_ha):
+    """Summarize only the fixed test box; never label it as farm-area totals."""
+    class_areas = {str(name): float(area) for name, area in class_areas_ha.items()}
+    classified = float(sum(class_areas.values()))
+    return {
+        "sample_box_polygon_area_by_class_ha": class_areas,
+        "sample_box_polygon_area_ha": classified,
+        "sample_box_unclassified_area_ha": max(
+            0.0, float(sample_box_area_ha) - classified),
+    }
+
+
+def summarize_crop_forecast(crop_audit, lines, *, as_of, current_mask=False):
+    """Report vigor use only from the yield model's own audit contract."""
+    crop_entries = (crop_audit or {}).get("crops") or {}
+    crop_summary = {}
+    for crop, entry in crop_entries.items():
+        vigor_audit = (entry.get("vigor_model_audit") or
+                       (entry.get("forecast_inputs") or {}).get("vigor_model_audit") or {})
+        crop_summary[crop] = {
+            "forecast_status": entry.get("forecast_status"),
+            "forecast_render_status": entry.get("forecast_render_status"),
+            "forecast_render_reason": entry.get("forecast_render_reason"),
+            "forecast_inputs": entry.get("forecast_inputs"),
+            "vigor_model_audit": vigor_audit,
+            "crop_specific_vigor": entry.get("crop_specific_vigor"),
+            "vigor_observation": entry.get("vigor"),
+            "vigor_usable_for_municipal_yield": entry.get("vigor_usable_for_municipal_yield"),
+            "transfer_uncertainty": entry.get("transfer_uncertainty"),
+        }
+    used_crops = [crop for crop, row in crop_summary.items()
+                  if (row.get("vigor_model_audit") or {}).get("used_in_yield_distribution") is True]
+    render_errors = [crop for crop, row in crop_summary.items()
+                     if row.get("forecast_render_status") == "ERRO_FORMATACAO"]
+    status = ("VIGOR_CONFIRMADO_NA_DISTRIBUICAO" if used_crops else
+              "ERRO_FORMATACAO_PREVISAO" if render_errors else
+              "PREVISAO_EXECUTADA_SEM_VIGOR_CONFIRMADO")
+    return {
+        "status": status,
+        "as_of": as_of.isoformat(),
+        "mask_is_current_semantic_classification": bool(current_mask),
+        "current_sar_candidate_vigor": (crop_audit or {}).get("current_sar_candidate_vigor"),
+        "crops": crop_summary,
+        "lines": lines,
+        "interpretation": (
+            "Vigor só é considerado integrado quando vigor_model_audit.used_in_yield_distribution=true. "
+            "Máscara anual 2025/2026 é condicional e não confirma cultura atual."
+        ),
+    }
+
+
+def summarize_height_inventory_route(stratum):
+    """Keep measured height provenance separate from the selected AGB source."""
+    details=stratum.get("sar_details") or {}
+    height=details.get("sar_height") or {}
+    audit=details.get("audit") or {}
+    comparison=details.get("inventory_agb_comparison") or {}
+    return {
+        "class_name":stratum.get("class_name"),
+        "height_mean_m":height.get("height_mean_m"),
+        "height_n_valid_pixels":height.get("height_n_valid_pixels"),
+        "height_metric":height.get("height_metric"),
+        "height_route_status":height.get("height_route_status"),
+        "height_product":height.get("product"),
+        "height_source":height.get("source"),
+        "height_paths":height.get("paths"),
+        "agb_product":details.get("product"),"agb_source":details.get("source"),
+        "agb_data_origin":details.get("data_origin"),
+        "fh_download_audit":{k:(audit.get("biomass_height") or {}).get(k)
+            for k in ("available","fh_items","pixel_read_complete","valid_pixel_count",
+                      "technical_error_count","reason")},
+        "height_structure_model":details.get("height_structure_model"),
+        "inventory_agb_comparison":comparison,
+        "inventory_sources_searched":comparison.get("inventory_sources_searched",[]),
+        "registered_published_inventory_sources":comparison.get("registered_published_inventory_sources",[]),
+        "matched_published_inventory_sources":comparison.get("matched_published_inventory_sources",[]),
+        "official_agb_product_comparison":details.get("official_agb_product_comparison"),
+        "agb_selection_reason":details.get("agb_selection_reason"),
+    }
+
+
+def _load_aoi(path, label):
+    import geopandas as gpd
+    from shapely.geometry import box
+    if path is None:
+        if label != "Sinop":
+            raise ValueError("AOI_PATH_REQUIRED_FOR_" + label.upper())
+        return gpd.GeoDataFrame(geometry=[box(-55.205498,-11.887667,
+                                               -55.175498,-11.857667)],crs="EPSG:4326")
+    path=Path(path)
+    if path.suffix.casefold()==".kmz":
+        import zipfile
+        with zipfile.ZipFile(path) as archive:
+            member=next((n for n in archive.namelist() if n.casefold().endswith(".kml")),None)
+            if member is None:raise ValueError("KMZ_SEM_KML")
+            local=OUT/(label.lower()+"_input.kml")
+            local.write_bytes(archive.read(member))
+            path=local
+    frame=gpd.read_file(path)
+    if frame.empty or frame.crs is None:
+        raise ValueError("AOI_VAZIA_OU_CRS_AUSENTE_"+label.upper())
+    return frame
+
+
+def _run_full_handoff(label, aoi):
+    import hashlib
+    import uuid
+    from analysis_pipeline_contract import geometry_hash
+    from desktop_app import native_carbon_analysis, _native_carbon_failure_result, _sar_dashboard_payload
+    from land_use_sar import run_land_use, report_lines
+    area_ha=float(aoi.to_crs(6933).geometry.area.sum()/1e4)
+    run_id=uuid.uuid4().hex[:12].upper()
+    aoi_hash=geometry_hash(aoi)
+    out=OUT/label.lower()
+    out.mkdir(parents=True,exist_ok=True)
+    report={"label":label,"area_aoi_ha":area_ha,"analysis_run_id":run_id,
+            "aoi_hash_sha256":aoi_hash,"field_validated":False,
+            "data_origin":"Sentinel-1 RTC VV/VH pixels and ENFORM_SAR_BRASIL_RF_V2",
+            "scope":"AOI de teste integral fornecida ao runner; resultados experimentais, sem validação local"}
+    land=run_land_use(aoi,out/"land_use",ibge=None)
+    land["analysis_run_id"]=run_id
+    land["aoi_hash_sha256"]=aoi_hash
+    report["land_use"]={k:land.get(k) for k in
+        ("status","current_sar_crop_identification","sar_model_config","sar_selection",
+         "area_aoi_ha","classes","warnings","sar_classifier_lemplus")}
+    lemplus_audit=land.get("sar_classifier_lemplus") or {}
+    annual_applied=bool(lemplus_audit.get("result_applied_to_annual_map"))
+    current_applied=bool(lemplus_audit.get("result_applied_to_current_aoi"))
+    if not (annual_applied or current_applied):
+        raise RuntimeError(label+": CLASSIFICADOR_SAR_NAO_PRODUZIU_MAPA_ANUAL_NEM_ATUAL: "+
+                           str(lemplus_audit.get("reason")))
+    report["sar_temporal_handoff"]={
+        "annual_map_applied":annual_applied,
+        "annual_season":lemplus_audit.get("season"),
+        "annual_scope":lemplus_audit.get("temporal_scope"),
+        "current_semantic_result_applied":current_applied,
+        "current_semantic_status":land.get("current_semantic_classification_status"),
+        "alternative_radar_status":(land.get("alternative_radar_screen") or {}).get("status"),
+        "alternative_radar_trigger":(land.get("alternative_radar_screen") or {}).get("trigger_reason")}
+    classes=land.get("classes") or []
+    semantic=[r for r in classes if str(r.get("source") or "").startswith(
+        ("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO"))]
+    if not semantic:
+        raise RuntimeError(label+": MASCARA_SEMANTICA_NAO_CHEGOU_AO_RESUMO_DE_USO_DO_SOLO")
+    class_area=sum(float(r.get("area_ha") or 0.0) for r in classes)
+    if abs(class_area-area_ha)>max(0.02,area_ha*1e-6):
+        raise RuntimeError(label+": FECHAMENTO_DE_AREA_DIVERGENTE")
+    native_semantic=[r for r in semantic if r.get("native_status") is True]
+    if not native_semantic:
+        raise RuntimeError(label+": MASCARA_NATIVA_SAR_NAO_CHEGOU_AO_PONTO_DE_ENTRADA_DO_CARBONO")
+    try:
+        native=native_carbon_analysis(
+            aoi,land,"Amazônia",
+            sar_options={"offline_token":os.environ.get("ESA_MAAP_OFFLINE_TOKEN","")})
+    except Exception as exc:
+        native=_native_carbon_failure_result(aoi,exc)
+        report["carbon_stage_exception"]=type(exc).__name__+": "+str(exc)[:300]
+    native["analysis_run_id"]=run_id
+    native["aoi_hash_sha256"]=aoi_hash
+    strata=native.get("strata") or []
+    native_names={str(r.get("class_name")) for r in native_semantic}
+    received={str(r.get("class_name")) for r in strata}
+    if not received.intersection(native_names):
+        raise RuntimeError(label+": ESTRATOS_NATIVOS_SAR_NAO_CHEGARAM_AO_MODULO_DE_CARBONO")
+    dashboard=_sar_dashboard_payload(native,land)
+    # A live acceptance must verify FH pixels survive native carbon -> dashboard.
+    fh_native=[]
+    for stratum in strata:
+        details=stratum.get("sar_details") or {}
+        height=details.get("sar_height") or {}
+        product=str(height.get("product") or "")
+        try: pixel_count=int(height.get("height_n_valid_pixels") or 0)
+        except (TypeError,ValueError): pixel_count=0
+        if product.startswith("FP_FH__") and pixel_count>0:
+            fh_native.append({"physiognomy":stratum.get("physiognomy") or stratum.get("class_name"),
+                              "product":product,"source":height.get("source"),
+                              "height_n_valid_pixels":pixel_count,
+                              "height_mean_m":height.get("height_mean_m"),
+                              "agb_data_origin":details.get("data_origin"),
+                              "agb_source":details.get("source")})
+    fh_dashboard=dashboard.get("height_products") or []
+    if label=="Sinop_amostra_003graus" and not fh_native:
+        raise RuntimeError(label+": FH_REAL_LIDO_NAO_CHEGOU_AO_CARBONO_NATIVO")
+    for source_row in fh_native:
+        target=next((row for row in fh_dashboard
+                     if row.get("product")==source_row["product"]
+                     and row.get("physiognomy")==source_row["physiognomy"]),None)
+        if not target:
+            raise RuntimeError(label+": FH_REAL_DESCARTADO_ANTES_DO_DASHBOARD: "+source_row["product"])
+        if (int(target.get("height_n_valid_pixels") or 0)!=source_row["height_n_valid_pixels"]
+                or target.get("source")!=source_row["source"]
+                or target.get("agb_data_origin")!=source_row["agb_data_origin"]):
+            raise RuntimeError(label+": PROVENIENCIA_FH_O_ROTA_AGB_DIVERGENTE_NO_DASHBOARD")
+    semantic_payload=dashboard.get("semantic_land_use") or {}
+    if not semantic_payload.get("classes"):
+        raise RuntimeError(label+": MASCARAS_SEMANTICAS_AUSENTES_NO_PAYLOAD_DO_DASHBOARD")
+    if dashboard.get("analysis_run_id")!=run_id or dashboard.get("aoi_hash_sha256")!=aoi_hash:
+        raise RuntimeError(label+": IDENTIDADE_DA_AOI_OU_EXECUCAO_PERDIDA_NO_DASHBOARD")
+    dashboard_classes=semantic_payload["classes"]
+    if {(r.get("class_name"),r.get("source")) for r in dashboard_classes} != {
+        (r.get("class_name"),r.get("source")) for r in semantic}:
+        raise RuntimeError(label+": CLASSES_SAR_DIVERGEM_ENTRE_CORE_E_DASHBOARD")
+    report["carbon"]={
+        "status":native.get("status"),"native_area_ha":native.get("native_area_ha"),
+        "known_total_tc":native.get("known_total_tc"),
+        "known_total_tco2":native.get("known_total_tco2"),
+        "complete":native.get("complete"),"strata_count":len(strata),
+        "strata_class_names":sorted(received),
+        "component_statuses":[{"class_name":st.get("class_name"),
+            "components":[{"parametro":c.get("parametro"),"tc":c.get("tc"),
+                "origem":c.get("origem"),"fonte":c.get("fonte"),
+                "uncertainty":c.get("uncertainty"),"obs":c.get("obs")}
+                for c in st.get("components",[])]} for st in strata],
+        "uncertainty_note":native.get("uncertainty_note"),
+        "height_inventory_routes":[summarize_height_inventory_route(st) for st in strata],
+        "exception":report.get("carbon_stage_exception")}
+    report["dashboard"]={
+        "status":dashboard.get("status"),
+        "semantic_status":semantic_payload.get("status"),
+        "class_count":semantic_payload.get("class_count"),
+        "class_area_ha":semantic_payload.get("area_ha"),
+        "analysis_run_id":dashboard.get("analysis_run_id"),
+        "aoi_hash_sha256":dashboard.get("aoi_hash_sha256"),
+        "fh_height_products":fh_dashboard,
+        "fh_live_native_to_dashboard":"PASSED" if fh_native else "NOT_EXERCISED",
+        "fh_native_carbon_routes":fh_native}
+    # Exercise the first real-data hop into the agricultural dashboard as
+    # part of the same AOI run. A prior-season semantic crop mask may support
+    # only a conditional scenario; current SAR vigor must still be dated and
+    # explicitly audited by the yield model before the report says it was used.
+    if label == "Sinop_amostra_003graus":
+        from crop_monitoring_forecast import monitoring_forecast
+        try:
+            crop_lines, crop_audit = monitoring_forecast(aoi, land, as_of=date.today())
+            report["crop_forecast"] = summarize_crop_forecast(
+                crop_audit, crop_lines, as_of=date.today(), current_mask=current_applied)
+        except Exception as exc:
+            report["crop_forecast"] = {
+                "status":"ERRO_EXECUCAO_PREVISAO",
+                "as_of":date.today().isoformat(),
+                "error_type":type(exc).__name__,
+                "reason":str(exc)[:500],
+                "vigor_confirmed_in_yield_distribution":False}
+        (out/"crop_forecast_handoff.json").write_text(
+            json.dumps(report["crop_forecast"], ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8")
+    report["execution_status"]="SAR_TO_LAND_USE_TO_CARBON_TO_DASHBOARD_HANDOFF_PASSED"
+    if label == "Sinop_amostra_003graus":
+        report["execution_status"] += "_AND_CROP_FORECAST_EXECUTED"
+    (out/"land_use_report.txt").write_text("\n".join(report_lines(land)),encoding="utf-8")
+    (out/"carbon_handoff.json").write_text(json.dumps(report["carbon"],ensure_ascii=False,
+        indent=2,default=str),encoding="utf-8")
+    (out/"dashboard_payload.json").write_text(json.dumps(dashboard,ensure_ascii=False,
+        indent=2,default=str),encoding="utf-8")
+    (out/"end_to_end_report.json").write_text(json.dumps(report,ensure_ascii=False,
+        indent=2,default=str),encoding="utf-8")
+    return report
+
+
+def run():
+    reports=[]
+    try:
+        sinop=_load_aoi(None,"Sinop")
+        reports.append(_run_full_handoff("Sinop_amostra_003graus",sinop))
+        tapajos_path=next((p for p in sys.argv[1:] if p.lower().endswith((".kml",".kmz"))),None)
+        if not tapajos_path:
+            raise ValueError("TAPAJOS_ACCEPTANCE_KML_OR_KMZ_REQUIRED")
+        tapajos=_load_aoi(tapajos_path,"Tapajos")
+        reports.append(_run_full_handoff("Tapajos",tapajos))
+        aggregate={"status":"BOTH_AOIS_END_TO_END_HANDOFF_PASSED","aois":reports,
+                   "farm_kml_included":False,
+                   "limitations":["Sinop uses fixed public sample box, not Fazenda Maria Eduarda KML.",
+                                  "Both semantic masks remain experimental until local field validation."]}
+        (OUT/"end_to_end_acceptance.json").write_text(
+            json.dumps(aggregate,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        print(json.dumps(aggregate,ensure_ascii=False,default=str))
+        return 0
+    except Exception as exc:
+        failure={"status":"END_TO_END_HANDOFF_FAILED","failure_type":type(exc).__name__,
+                 "failure_reason":str(exc).split("?")[0][:500],"completed_aois":reports}
+        (OUT/"end_to_end_acceptance.json").write_text(
+            json.dumps(failure,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        print(json.dumps(failure,ensure_ascii=False,default=str))
+        return 1
+
+
+if __name__=="__main__":
+    sys.exit(run())

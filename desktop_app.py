@@ -1,9 +1,12 @@
-import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid
+import sys, json, math, tempfile, re, zipfile, threading, queue, traceback, base64, io, os, requests, uuid, time
+import tls_setup  # V87.39: one TLS trust store for requests AND GDAL (Windows store + certifi + OS)
+tls_setup.configure()
 from datetime import datetime, timezone
 from pathlib import Path
+from decimal import Decimal, ROUND_HALF_UP
 import tkinter as tk
 import webbrowser
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox, simpledialog
 import numpy as np
 import pandas as pd
 from openpyxl import Workbook
@@ -12,19 +15,116 @@ from PIL import Image, ImageTk
 from sar_pipeline import discover_sar, process_real_sar, automatic_pipeline, MODEL_REGISTRY, model_registry_rows, scientific_calibration_report, cdse_access_token
 from lband_preprocess import preprocess_lband
 from inventory_structure import summarize_inventory_csv
+from official_inventory_harvest import harvest_redape, harvest_sinaflor, PNLA_PORTAL, INSTITUTIONAL_PORTALS, SOURCE_HIERARCHY
+from gravimetric_stock import litter_stock_from_quadrats, litter_depth_mass_calibration, necromass_line_intersect_stock, carbon_stock_from_mass
+from carbon_compartments import tapajos_litter_stock_component, santo_ambrosio_litter_stock_component, pantanal_nhecolandia_litter_carbon_component, tapajos_necromass_components, ifn_necromass_component, infer_uf_from_aoi, rows_for_compartment, component_has_confidence_interval
+from mapbiomas_zonal import mapbiomas_class_percentages
+from land_use_sar import run_land_use, report_lines as land_use_report_lines
+from native_carbon import summarize_native_carbon, estimate_native_components
 
-APP_VERSION="3.24.21-PROFESSIONAL"
+def _require_visible_optical_image(image,provider):
+    """Reject blank/black imagery before caching or declaring the map loaded."""
+    if image is None or not hasattr(image,"convert"):
+        raise RuntimeError(str(provider)+" retornou imagem óptica inválida")
+    pixels=np.asarray(image.convert("RGB"),dtype=np.uint8)
+    if pixels.ndim!=3 or pixels.shape[2]!=3 or pixels.shape[0]<2 or pixels.shape[1]<2:
+        raise RuntimeError(str(provider)+" retornou imagem óptica sem dimensões válidas")
+    # Orange AOI styling must not make an otherwise black raster pass.
+    overlay=(pixels[:,:,0]>150)&(pixels[:,:,1]>65)&(pixels[:,:,1]<190)&(pixels[:,:,2]<110)
+    optical_pixels=pixels[~overlay]
+    if optical_pixels.size<3*max(16,int(pixels.shape[0]*pixels.shape[1]*0.05)):
+        raise RuntimeError(str(provider)+" retornou somente o contorno AOI, sem pixels ópticos verificáveis")
+    luminance=optical_pixels.astype(np.float32).mean(axis=1)
+    p99=float(np.percentile(luminance,99))
+    spread=float(np.std(luminance))
+    visible_fraction=float(np.mean(luminance>8.0))
+    if p99<20.0 or spread<5.0 or visible_fraction<0.15:
+        raise RuntimeError(str(provider)+" retornou imagem óptica preta/em branco; fallback ativado")
+    return image
+
+
+def _sanitize_optical_diagnostic_text(value):
+    """Remove remote URLs and credential-like query values before clipboard export."""
+    text=str(value or "")
+    text=re.sub(r"https?://[^\s]+","[URL_REDACTED]",text)
+    text=re.sub(r"(?i)(sig|token|client_secret|password)=([^&\s]+)",r"\1=[REDACTED]",text)
+    return text[:1200]
+
+
+def _sar_details_report_excerpt(details):
+    """Keep on-screen SAR text compact; preserve full provenance in JSON."""
+    if not isinstance(details,dict):
+        return {"status":"N/D","reason":"proveniência SAR não disponível"}
+    audit=details.get("audit") if isinstance(details.get("audit"),dict) else {}
+    def certificate(value):
+        if not isinstance(value,dict):return None
+        fields=("route","catalog_search_complete","pagination_complete","pixel_read_complete",
+                "candidate_scene_count","technical_error_count","coverage_absence_confirmed")
+        return {"status":value.get("status"),"global_search_complete":value.get("global_search_complete"),
+                "pagination_complete":value.get("pagination_complete"),"pixel_read_complete":value.get("pixel_read_complete"),
+                "routes":[{key:route.get(key) for key in fields if key in route}
+                    for route in value.get("routes",[]) if isinstance(route,dict)]}
+    comparison=details.get("inventory_agb_comparison")
+    if isinstance(comparison,dict):
+        comparison={key:comparison.get(key) for key in ("status","reason","n_ua_compativeis",
+            "inventory_n_unique_sampling_units","published_aggregate_count","published_structural_reference_count",
+            "matched_published_inventory_sources","base_ifn_expandida_usada","not_added_to_stock_total",
+            "usable_inventory_sources_consulted") if key in comparison}
+    else:
+        comparison=None
+    fallback=audit.get("inventory_fallback_gate")
+    fallback={key:fallback.get(key) for key in ("eligible","reason") if key in fallback} if isinstance(fallback,dict) else None
+    priority=audit.get("priority_height_route_gate")
+    priority={key:priority.get(key) for key in ("status","reason","cci_candidate_available","cci_promoted") if key in priority} if isinstance(priority,dict) else None
+    return {"status":details.get("status"),"data_origin":details.get("data_origin"),
+        "source":details.get("source"),"agb_mg_ha":details.get("agb_mg_ha"),
+        "uncertainty_mg_ha":details.get("uncertainty_mg_ha"),"height_route_status":details.get("height_route_status"),
+        "height_mean_m":details.get("height_mean_m"),"height_sd_m":details.get("height_sd_m"),
+        "height_n_valid_pixels":details.get("height_n_valid_pixels"),
+        "height_absence_certificate":certificate(details.get("height_absence_certificate")),
+        "priority_height_route_gate":priority,"inventory_agb_comparison":comparison,
+        "height_structure_model":({key:(details.get("height_structure_model") or {}).get(key)
+            for key in ("status","reason","model_id","height_mean_m","basal_area_m2_ha",
+                "inventory_source","not_used_as_agb_predictor","not_added_to_stock_total")
+            if key in (details.get("height_structure_model") or {})}
+            if isinstance(details.get("height_structure_model"),dict) else None),
+        "regional_inventory_structure_reference":details.get("regional_inventory_structure_reference"),
+        "inventory_fallback_gate":fallback}
+
+
+APP_VERSION="3.26.85-PRECAMPO-EXPERIMENTAL"
 ORANGE="#EF9B06"; FOREST="#0B3D2E"; GREEN="#155D43"; PALE="#F4F6F5"; TEXT="#34413E"
 
 # Fontes implementadas no motor. Valores-proxy são sempre rotulados como MODELADOS.
 SOURCES={
  "protocol":"Higa et al. (2014), Embrapa Florestas, Documentos 266",
- "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100/200 cm + diagnóstico de incerteza",
- "deadwood":"Freitas et al. (2021), Embrapa Amazônia Ocidental — necromassa lenhosa",
- "litter":"Embrapa Amazônia Oriental — estudos de serapilheira; proxy só para triagem",
+ "soil":"PronaSolos/Embrapa Solos, estoque de carbono orgânico 90 m, perfis 0–30/60/100 cm + diagnóstico de incerteza",
+ "deadwood":"SFB/IFN — médias de inventário por estrato; raízes finas mortas no Tapajós: NASA LBA-ECO / ORNL DAAC 1116",
+ "litter":"Nunes (2015) + Nascimento et al. (2024) — Pantanal/Nhecolândia com IC95% amostral; também Tapajós e Santo Ambrósio geocercados",
 }
 ROOT_RATIO=0.26; ROOT_LOW=0.18; ROOT_HIGH=0.30
 CARBON_FRACTION=0.47
+
+def _xy_coords(coords):
+    """Return 2D map coordinates from KML rings, ignoring optional altitude."""
+    return [(float(coord[0]),float(coord[1])) for coord in coords]
+
+def format_ptbr(value,decimals=2):
+    """Format a numeric result for Brazilian readers with half-up rounding."""
+    if value is None:return "N/D"
+    places=int(decimals)
+    rounded=Decimal(str(value)).quantize(Decimal(1).scaleb(-places),rounding=ROUND_HALF_UP)
+    raw=f"{rounded:,.{places}f}"
+    return raw.replace(",","\x00").replace(".",",").replace("\x00",".")
+
+def format_result_json(value):
+    """Render diagnostic numeric values using pt-BR separators without changing stored data."""
+    if isinstance(value,bool) or value is None:return value
+    if isinstance(value,(int,float,Decimal)):
+        return format_ptbr(value,0 if isinstance(value,int) else 6)
+    if isinstance(value,dict):return {str(k):format_result_json(v) for k,v in value.items()}
+    if isinstance(value,(list,tuple)):return [format_result_json(v) for v in value]
+    return value
 
 def app_resource(name):
     base=Path(getattr(sys,"_MEIPASS",Path(sys.executable).parent)) if getattr(sys,"frozen",False) else Path(__file__).parent
@@ -33,132 +133,6 @@ def app_resource(name):
     # onedir builds may keep data beside the executable rather than inside _internal
     q=Path(sys.executable).parent/name if getattr(sys,"frozen",False) else p
     return q
-
-OFFLINE_BRAZIL_BOUNDS=(-75.0,-35.0,-33.0,6.0)  # west,south,east,north
-_OFFLINE_IBGE_CACHE=None
-def _offline_ibge_layers():
-    global _OFFLINE_IBGE_CACHE
-    if _OFFLINE_IBGE_CACHE is not None:return _OFFLINE_IBGE_CACHE
-    p=app_resource("offline_ibge_map.json.gz")
-    if not p.exists():_OFFLINE_IBGE_CACHE={}; return _OFFLINE_IBGE_CACHE
-    try:
-        import gzip
-        with gzip.open(p,"rt",encoding="utf-8") as fh:_OFFLINE_IBGE_CACHE=json.load(fh)
-    except Exception:_OFFLINE_IBGE_CACHE={}
-    return _OFFLINE_IBGE_CACHE
-
-def _feature_intersects_bbox(feat,bx):
-    b=feat.get("bbox")
-    if not b:return True
-    return not (b[2]<bx[0] or b[0]>bx[2] or b[3]<bx[1] or b[1]>bx[3])
-
-def _geom_lines(geom):
-    typ=(geom or {}).get("type"); c=(geom or {}).get("coordinates") or []
-    if typ=="LineString":yield c
-    elif typ=="MultiLineString":
-        for ln in c:yield ln
-    elif typ=="Polygon":
-        if c:yield c[0]
-    elif typ=="MultiPolygon":
-        for poly in c:
-            if poly:yield poly[0]
-    elif typ=="Point":
-        yield [c]
-
-def _draw_offline_ibge(d,bx,ow,oh):
-    layers=_offline_ibge_layers()
-    span=max(bx[2]-bx[0],bx[3]-bx[1])
-    def px(lon,lat):
-        return ((float(lon)-bx[0])/max(bx[2]-bx[0],1e-12)*ow,
-                (bx[3]-float(lat))/max(bx[3]-bx[1],1e-12)*oh)
-    def draw_lines(layer,fill,width=1):
-        for feat in layers.get(layer,[]):
-            if not _feature_intersects_bbox(feat,bx):continue
-            for line in _geom_lines(feat.get("geometry")):
-                pts=[px(c[0],c[1]) for c in line if len(c)>=2]
-                if len(pts)>=2:d.line(pts,fill=fill,width=width,joint="curve")
-    # administrative context
-    draw_lines("ufs",(54,75,61,235),max(2,round(ow/700)))
-    for feat in layers.get("ufs",[]):
-        if not _feature_intersects_bbox(feat,bx):continue
-        props=feat.get("properties") or {}; c=props.get("label")
-        if not c:continue
-        x,y=px(c[0],c[1]); label=props.get("sigla") or props.get("name")
-        if label and 6<x<ow-6 and 6<y<oh-6:
-            d.text((x,y),str(label),anchor="mm",fill=(48,66,53,255),stroke_width=2,stroke_fill=(248,247,239,240))
-    if span<=14.0:draw_lines("municipios",(139,151,137,190),max(1,round(ow/1600)))
-    # infrastructure from official IBGE BC250
-    draw_lines("rodovias",(191,91,43,225),max(1,round(ow/900)))
-    draw_lines("ferrovias",(91,79,71,235),max(1,round(ow/900)))
-    if span<=18.0:draw_lines("hidrovias",(35,126,176,235),max(1,round(ow/1100)))
-    if span<=12.0:draw_lines("drenagem",(80,157,190,190),1)
-    # point infrastructure/localities
-    for layer,fill,radius,maxspan in [
-        ("aeroportos",(185,75,43,245),3,18.0),
-        ("portos",(191,119,38,245),3,18.0),
-        ("localidades",(62,82,68,240),2,7.0)]:
-        if span>maxspan:continue
-        for feat in layers.get(layer,[]):
-            if not _feature_intersects_bbox(feat,bx):continue
-            g=feat.get("geometry") or {}
-            if g.get("type")!="Point":continue
-            c=g.get("coordinates") or []
-            if len(c)<2:continue
-            x,y=px(c[0],c[1]); d.ellipse((x-radius,y-radius,x+radius,y+radius),fill=fill,outline=(0,0,0,180))
-            name=(feat.get("properties") or {}).get("name")
-            if name and span<=3.5:d.text((x+4,y-3),str(name)[:34],fill=(255,255,255,235),stroke_width=2,stroke_fill=(0,0,0,170))
-    # municipal labels only when zoomed sufficiently
-    if span<=3.0:
-        for feat in layers.get("municipios",[]):
-            if not _feature_intersects_bbox(feat,bx):continue
-            props=feat.get("properties") or {}
-            c=props.get("label")
-            if not c:continue
-            x,y=px(c[0],c[1])
-            if 4<x<ow-4 and 4<y<oh-4:d.text((x,y),str(props.get("name") or "")[:30],anchor="mm",fill=(45,61,50,245),stroke_width=2,stroke_fill=(248,247,239,240))
-    # compact orientation legend
-    legend="IBGE 2025: UF | municípios | rodovias | ferrovias | hidrovias | hidrografia | aeroportos/portos | localidades"
-    d.rectangle((6,oh-42,min(ow-6,720),oh-8),fill=(250,249,242,235),outline=(93,111,97,220))
-    d.text((12,oh-25),legend,anchor="lm",fill=(42,60,48,255))
-
-def offline_brazil_preview(gdf,extent_factor=1.36,out_size=(1000,600)):
-    """Rasterize IBGE municipal/admin/infrastructure layers locally, with no network or imagery dependency."""
-    g=gdf.to_crs(4326).copy(); minx,miny,maxx,maxy=map(float,g.total_bounds)
-    dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8); f=max(0.30,min(8.0,float(extent_factor)))
-    cx=(minx+maxx)/2; cy=(miny+maxy)/2
-    bx=[cx-dx*f/2,cy-dy*f/2,cx+dx*f/2,cy+dy*f/2]
-    W,S,E,N=OFFLINE_BRAZIL_BOUNDS
-    bx=[max(W,bx[0]),max(S,bx[1]),min(E,bx[2]),min(N,bx[3])]
-    if bx[0]>=bx[2] or bx[1]>=bx[3]:raise ValueError("AOI fora da cobertura do mapa IBGE offline do Brasil")
-    layers=_offline_ibge_layers()
-    if len(layers.get("municipios",[]))<5000:
-        raise FileNotFoundError("Camada de municípios IBGE offline ausente ou incompleta.")
-    ow,oh=map(int,out_size)
-    midlat=(bx[1]+bx[3])/2; coslat=max(0.25,math.cos(math.radians(midlat)))
-    target=max(ow,1)/max(oh,1); xspan=(bx[2]-bx[0])*coslat; yspan=bx[3]-bx[1]
-    if xspan/yspan<target:
-        new_lon_span=yspan*target/coslat
-        bx[0]=max(W,cx-new_lon_span/2); bx[2]=min(E,cx+new_lon_span/2)
-    else:
-        new_lat_span=xspan/target
-        bx[1]=max(S,cy-new_lat_span/2); bx[3]=min(N,cy+new_lat_span/2)
-    crop=Image.new("RGB",(ow,oh),(238,241,232))
-    from PIL import ImageDraw
-    d=ImageDraw.Draw(crop,"RGBA")
-    _draw_offline_ibge(d,bx,ow,oh)
-    for geom in g.geometry:
-        geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
-        for poly in geoms:
-            pts=[]
-            for coord in poly.exterior.coords:
-                lon,lat=float(coord[0]),float(coord[1])
-                x=(lon-bx[0])/max(bx[2]-bx[0],1e-12)*ow
-                y=(bx[3]-lat)/max(bx[3]-bx[1],1e-12)*oh
-                pts.append((x,y))
-            if len(pts)>=4:
-                d.polygon(pts,fill=(255,138,0,42),outline=(255,138,0,255))
-                d.line(pts,width=max(3,round(ow/400)),fill=(255,138,0,255),joint="curve")
-    return crop,bx
 
 def agb_mexiana(dbh_cm):
     return 0.1184*np.power(np.asarray(dbh_cm,dtype=float),2.53)
@@ -216,9 +190,13 @@ def geom_metrics(gdf):
     g=gdf.to_crs(4326); union=g.geometry.union_all()
     c=union.centroid; lon,lat=float(c.x),float(c.y)
     zone=max(1,min(60,int((lon+180)//6)+1)); epsg=(32700 if lat<0 else 32600)+zone
-    gm=gdf.to_crs(epsg); area=float(gm.geometry.area.sum()/10000)
+    gm=gdf.to_crs(epsg)
+    area_utm=float(gm.geometry.union_all().area/10000)
+    area_equal=float(gdf.to_crs("EPSG:6933").geometry.union_all().area/10000)
     b=union.bounds
-    return {"area_ha":area,"centroid":[lon,lat],"bbox":[float(x) for x in b],"utm_epsg":epsg}
+    return {"area_ha":area_equal,"area_utm_ha":area_utm,
+            "area_crs":"EPSG:6933","centroid":[lon,lat],
+            "bbox":[float(x) for x in b],"utm_epsg":epsg}
 
 def _sicar_session():
     import requests, ssl
@@ -260,14 +238,18 @@ def resolve_car(car):
             if not r.ok:continue
             js=r.json(); feats=js.get("features") or []
             if not feats:continue
-            exact=[x for x in feats if str((x.get("properties") or {}).get("cod_imovel","")).upper()==code]
-            feats=exact or feats
-            if len(feats)>1:raise RuntimeError("SICAR retornou registros múltiplos para o mesmo código.")
-            props=feats[0].get("properties") or {}
-            if not feats[0].get("geometry"):raise RuntimeError("CAR localizado, porém sem geometria pública.")
-            tmp=Path(tempfile.gettempdir())/"enform_car_sicar.geojson"
-            tmp.write_text(json.dumps({"type":"FeatureCollection","features":feats}),encoding="utf-8")
-            gdf=gpd.read_file(tmp); gdf=gdf.set_crs(4326) if gdf.crs is None else gdf.to_crs(4326)
+            exact=[x for x in feats if str((x.get("properties") or {}).get("cod_imovel","")).strip().upper()==code]
+            if not exact:
+                # A WFS response may ignore the CQL filter. Never accept an
+                # unrelated property as the requested CAR polygon.
+                attempts.append(f"{version}:no_exact_cod_imovel")
+                continue
+            if len(exact)>1:raise RuntimeError("SICAR retornou registros múltiplos para o mesmo código.")
+            props=exact[0].get("properties") or {}
+            if not exact[0].get("geometry"):raise RuntimeError("CAR localizado, porém sem geometria pública.")
+            # In-memory construction avoids a shared temporary GeoJSON path:
+            # concurrent queries must never overwrite each other's geometry.
+            gdf=gpd.GeoDataFrame.from_features(exact,crs="EPSG:4326")
             gdf.attrs.update({"sicar_cod_imovel":props.get("cod_imovel",code),"sicar_status":props.get("status_imovel") or props.get("condicao"),
               "sicar_area_declarada_ha":props.get("area"),"sicar_municipio":props.get("municipio"),"sicar_lookup":url+" WFS "+version})
             return gdf
@@ -319,19 +301,9 @@ def _ibge_cache():
     root.mkdir(parents=True,exist_ok=True); return root
 
 def _download_zip(url,folder,tag):
-    """Cache the official ZIP without extracting the national dataset into RAM/disk."""
-    import requests
-    folder.mkdir(parents=True,exist_ok=True)
-    zpath=folder/(tag+".zip")
-    if zpath.exists() and zpath.stat().st_size>1024*1024:return zpath
-    tmp=zpath.with_suffix(".part")
-    with requests.get(url,stream=True,timeout=(15,300),headers={"User-Agent":f"Enform-Verde/{APP_VERSION}"}) as r:
-        r.raise_for_status()
-        with open(tmp,"wb") as out:
-            for chunk in r.iter_content(4*1024*1024):
-                if chunk:out.write(chunk)
-    tmp.replace(zpath)
-    return zpath
+    """Official IBGE ZIP cache with atomic integrity check and transient retries."""
+    from tools.ibge_official_zip import download_ibge_zip
+    return download_ibge_zip(url, folder, tag, APP_VERSION)
 
 def _read_zip_bbox(zpath,bbox4326,preferred=("area",)):
     """Read only polygons intersecting the property bbox directly from ZIP (GDAL /vsizip)."""
@@ -368,29 +340,40 @@ def _field(cols,candidates):
 
 def _shares(project,theme,fields):
     import geopandas as gpd
-    p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
+    p=project.to_crs("EPSG:6933"); t=theme.to_crs("EPSG:6933")  # equal-area for Brazil
     try:
         import shapely
         p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
         t["geometry"]=t.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
     except Exception: pass
     inter=gpd.overlay(t,p[["geometry"]],how="intersection",keep_geom_type=False)
+    # Reject overlapping IBGE polygons rather than double count native hectares.
+    # The test is performed after clipping every feature to the AOI.
     inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
     if inter.empty:return []
+    union_area=float(inter.geometry.union_all().area)
+    summed_area=float(inter.geometry.area.sum())
+    if summed_area-union_area > max(1.0,union_area*1e-8):
+        raise ValueError("Sobreposição entre polígonos IBGE: área ambígua; classificação bloqueada.")
     inter["_ha"]=inter.geometry.area/10000
     total=float(inter["_ha"].sum())
     if total<=0:return []
     out=[]
+    aoi_area=float(p.geometry.union_all().area/10000)
+    covered=min(total,aoi_area)
+    missing=max(0.0,aoi_area-covered)
     for field in fields:
         if field and field in inter.columns:
             g=inter.groupby(field,dropna=False)["_ha"].sum().sort_values(ascending=False)
-            out.append((field,[(str(k),float(v),float(v/total*100)) for k,v in g.items() if v>0]))
+            classes=[(str(k) if pd.notna(k) else "Não classificado",float(v),float(v/aoi_area*100)) for k,v in g.items() if v>0]
+            if missing>max(0.01,aoi_area*1e-8):classes.append(("Sem cobertura IBGE",missing,float(missing/aoi_area*100)))
+            out.append((field,classes))
     return out
 
 def _shares_with_code(project,theme,name_field,code_field):
     """Area-weighted IBGE region names retaining their official phytoregion code."""
     import geopandas as gpd
-    p=project.to_crs("EPSG:5880"); t=theme.to_crs("EPSG:5880")
+    p=project.to_crs("EPSG:6933"); t=theme.to_crs("EPSG:6933")  # equal-area for Brazil
     try:
         import shapely
         p["geometry"]=p.geometry.map(lambda g:shapely.make_valid(g) if g is not None and not g.is_valid else g)
@@ -398,15 +381,30 @@ def _shares_with_code(project,theme,name_field,code_field):
     except Exception: pass
     columns=["geometry",name_field]+([code_field] if code_field else [])
     inter=gpd.overlay(t[columns],p[["geometry"]],how="intersection",keep_geom_type=False)
+    # Reject overlapping IBGE polygons rather than double count native hectares.
+    # The test is performed after clipping every feature to the AOI.
     inter=inter[inter.geometry.notna() & ~inter.geometry.is_empty].copy()
     if inter.empty:return []
+    union_area=float(inter.geometry.union_all().area)
+    summed_area=float(inter.geometry.area.sum())
+    if summed_area-union_area > max(1.0,union_area*1e-8):
+        raise ValueError("Sobreposição entre polígonos IBGE: área ambígua; classificação bloqueada.")
     inter["_ha"]=inter.geometry.area/10000; total=float(inter["_ha"].sum())
     if total<=0:return []
     keys=[name_field]+([code_field] if code_field else [])
     out=inter.groupby(keys,dropna=False)["_ha"].sum().sort_values(ascending=False)
-    return [{"name":str(key[0] if isinstance(key,tuple) else key),
+    aoi_area=float(p.geometry.union_all().area/10000.0)
+    if aoi_area<=0:raise ValueError("AOI sem área mensurável para região fitoecológica.")
+    records=[{"name":str(key[0] if isinstance(key,tuple) else key),
              "code":(str(key[1]) if code_field and isinstance(key,tuple) and key[1] is not None else None),
-             "area_ha":float(area),"percent":float(area/total*100)} for key,area in out.items() if area>0]
+             "area_ha":float(area),"percent":float(area/aoi_area*100)}
+             for key,area in out.items() if area>0]
+    # Percentages describe the whole AOI, including any unmapped remainder.
+    missing=max(0.0,aoi_area-union_area/10000.0)
+    if missing>max(0.01,aoi_area*1e-8):
+        records.append({"name":"Sem cobertura IBGE","code":None,"area_ha":missing,
+                        "percent":missing/aoi_area*100})
+    return records
 
 def primary_ibge_physiognomy(diagnosis):
     """Return the dominant current IBGE phytogeographic region (legend_1).
@@ -420,6 +418,430 @@ def primary_ibge_physiognomy(diagnosis):
             classes=group.get("classes") or []
             if classes:return str(classes[0][0])
     return ""
+
+def ibge_area_summary_lines(diagnosis):
+    """Readable IBGE coverage summary with correct area/percentage ordering."""
+    groups={str(x.get("campo","")).casefold():x.get("classes") or []
+            for x in (diagnosis or {}).get("vegetacao",[])}
+    lines=[]
+    labels=(("legenda_1","Região fitoecológica POTENCIAL IBGE (não comprova cobertura atual)"),
+            ("legenda_2","Cobertura vegetal cartográfica IBGE (legenda_2; referência, não comprova cobertura atual)"))
+    for field,label in labels:
+        rows=groups.get(field) or []
+        if not rows:
+            continue
+        lines.append(label+":")
+        for row in rows:
+            if len(row)<3:
+                continue
+            name,area_ha,percent=row[:3]
+            try:
+                lines.append(f"  {name} — {format_ptbr(float(area_ha),2)} ha "
+                             f"({format_ptbr(float(percent),2)}% da AOI)")
+            except (TypeError,ValueError):
+                continue
+    if not any(line.startswith("Região fitoecológica POTENCIAL") for line in lines):
+        error=(diagnosis or {}).get("vegetacao_error")
+        lines.append("Região fitoecológica POTENCIAL IBGE (legenda_1, não cobertura atual): "
+                     +("não disponível — "+str(error) if error else "sem classe intersectada"))
+    return lines
+
+def load_ibge_land_use_reference(project):
+    """Use the official cached/bbox IBGE polygons for the fallback partition."""
+    root=_ibge_cache()/"vegetacao_2026"
+    archive=_download_zip(IBGE_VEGE_2026_URL,root,"vege_area_2026")
+    layer=_read_zip_bbox(archive,tuple(project.to_crs("EPSG:4326").total_bounds),("vege_area","area","brasil"))
+    field=_field(layer.columns,["legenda_1"])
+    if not field:raise ValueError("Camada oficial IBGE sem legenda_1.")
+    return layer,field
+
+def _verified_sar_height_details(details):
+    """Return only the independently measured canopy-height product record."""
+    if not isinstance(details,dict):return {}
+    nested=details.get("sar_height")
+    if isinstance(nested,dict):return nested
+    # Legacy records can supply height metadata at the top level, but an AGB
+    # product's identity/path must never be mislabeled as a height product.
+    if details.get("height_metric") and "cci" not in str(details.get("product") or "").casefold():
+        return details
+    return {}
+
+
+def _sar_dashboard_payload(native, land=None):
+    """Preserve carbon SAR details and annual semantic masks at dashboard level."""
+    strata=[]
+    height_products=[]
+    for item in (native or {}).get("strata",[]) or []:
+        details=item.get("sar_details") or {}
+        audit=item.get("sar_audit") or {}
+        if details or audit:
+            # Keep CCI/AGB and canopy-height source records distinct.
+            height_details=_verified_sar_height_details(details)
+            row={"physiognomy":item.get("physiognomy") or item.get("class_name"),
+                           "class_name":item.get("class_name"),"area_ha":item.get("area_ha"),
+                           "source":item.get("source"),"status":details.get("status"),
+                           "data_origin":details.get("data_origin"),"provider":details.get("source"),
+                           "stats":details.get("stats") or [],"agb_mg_ha":details.get("agb_mg_ha"),
+                           "height_mean_m":height_details.get("height_mean_m"),
+                           "height_n_valid_pixels":height_details.get("height_n_valid_pixels"),
+                           "audit":audit,"details":details}
+            strata.append(row)
+            try:height_pixel_count=int(height_details.get("height_n_valid_pixels") or 0)
+            except (TypeError,ValueError):height_pixel_count=0
+            try:height_mean=float(height_details.get("height_mean_m"))
+            except (TypeError,ValueError):height_mean=float("nan")
+            if height_pixel_count > 0 and math.isfinite(height_mean) and height_mean > 0:
+                height_products.append({"physiognomy":row["physiognomy"],
+                    "height_mean_m":height_mean,
+                    "height_sd_m":height_details.get("height_sd_m"),
+                    "height_n_valid_pixels":height_pixel_count,
+                    "height_metric":height_details.get("height_metric"),
+                    "height_error_kind":height_details.get("height_error_kind"),
+                    "height_route_status":height_details.get("height_route_status"),
+                    "product":height_details.get("product"),"sensor":height_details.get("sensor"),
+                    "band":height_details.get("band"),"source":height_details.get("source"),
+                    "scene_ids":height_details.get("scene_ids"),"paths":height_details.get("paths"),
+                    "height_pixel_distribution":height_details.get("height_pixel_distribution"),
+                    "agb_product":details.get("product"),"agb_source":details.get("source"),
+                    "agb_data_origin":details.get("data_origin")})
+    land=land or {}
+    cover=land.get("recent_sar_cover") or {}
+    # A route may legitimately return None when no valid height pixels were
+    # available. Preserve the route audit instead of crashing the handoff.
+    pixels_processed=any(row.get("stats") or int(row.get("height_n_valid_pixels") or 0)>0
+                         or row.get("agb_mg_ha") is not None for row in strata)
+    pixels_processed=pixels_processed or cover.get("pixel_state")=="PROCESSADO"
+    status=("SAR_PROCESSADO" if pixels_processed
+            else cover.get("status") or land.get("status") or "SAR_N/D")
+    semantic_sources=("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO")
+    semantic_classes=[]
+    for row in land.get("classes") or []:
+        source=str(row.get("source") or "")
+        if source.startswith(semantic_sources):
+            semantic_classes.append({
+                "class_name":row.get("class_name"),"area_ha":row.get("area_ha"),
+                "area_pct":row.get("area_pct"),"source":source,
+                "taxonomy":row.get("taxonomy"),"native_status":row.get("native_status"),
+                "land_use_group":row.get("land_use_group")})
+    validation=land.get("validation") or {}
+    lemplus=land.get("sar_classifier_lemplus") or {}
+    semantic_status=(land.get("current_sar_crop_identification")
+                     or ("CLASSIFICACAO_SAR_PRESENTE" if semantic_classes else
+                         "N/D_SEM_MASCARA_SEMANTICA_SAR"))
+    return {"status":status,"strata":strata,"height_products":height_products,
+            "recent_sar_cover":cover,
+            "land_use_status":land.get("status"),
+            "land_use_reason":land.get("reason"),
+            "semantic_land_use":{
+                "status":semantic_status,"classes":semantic_classes,
+                "model_id":validation.get("model_id") or lemplus.get("model_id"),
+                "model_sha256":validation.get("model_sha256") or lemplus.get("model_sha256"),
+                "observed_season":validation.get("observed_season") or lemplus.get("season"),
+                "local_validation_status":validation.get("local_validation_status") or "NAO_REALIZADA",
+                "validation_scope":validation.get("validation_scope") or lemplus.get("domain"),
+                "class_count":len(semantic_classes),
+                "area_ha":sum(float(r.get("area_ha") or 0.0) for r in semantic_classes)},
+            "analysis_run_id":land.get("analysis_run_id") or (native or {}).get("analysis_run_id"),
+            "aoi_hash_sha256":land.get("aoi_hash_sha256") or (native or {}).get("aoi_hash_sha256"),
+            "fitofisionomia_raster_stats":{
+                row["physiognomy"]:row["stats"] for row in strata if row.get("stats")},
+            "height_absence_certificate":(native or {}).get("height_absence_certificate"),
+            "source":"máscaras SAR e parcelas nativas preservadas do core para painel e auditoria"}
+
+
+def _native_carbon_failure_result(aoi, exc):
+    """Represent unavailable carbon without erasing successful SAR/land-use stages."""
+    area=float(geom_metrics(aoi).get("area_ha") or 0.0)
+    reason=type(exc).__name__+": "+str(exc)[:300]
+    return {
+        "status":"ERRO_TECNICO_CARBONO","reason":reason,
+        "area_aoi_ha":area,"native_area_ha":0.0,
+        "unknown_cover_area_ha":area,"excluded_other_uses_ha":0.0,
+        "unmapped_aoi_area_ha":area,"cover_completeness":"NOT_VERIFIED",
+        "method":"Carbono não estimado por falha técnica; cobertura nativa não confirmada; sem imputação.",
+        "known_total_tc":None,"complete":False,
+        "uncertainty_note":"N/D — carbono não estimado por falha técnica: "+reason,
+        "components":[],"strata":[],
+    }
+
+
+def _write_analysis_stage_checkpoint(run_id,aoi_hash,land,native,pedology,fertility,sar,stage_errors,performance=None):
+    """Persist an AOI-linked stage summary without storing geometry or credentials."""
+    root=Path.home()/".enform_verde"/"analysis_runs"
+    root.mkdir(parents=True,exist_ok=True)
+    path=root/(str(run_id)+".json")
+    classes=[]
+    for row in (land or {}).get("classes") or []:
+        if isinstance(row,dict):
+            classes.append({k:row.get(k) for k in ("class_name","area_ha","area_pct","source","native_status")})
+    strata=[]
+    for row in (native or {}).get("strata") or []:
+        if isinstance(row,dict):
+            strata.append({k:row.get(k) for k in ("class_name","physiognomy","area_ha","area_pct","source","sar_details","components")})
+    payload={
+        "analysis_run_id":str(run_id),"aoi_hash_sha256":str(aoi_hash),
+        "created_utc":datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "status":"PARCIAL_COM_ERRO_TECNICO" if stage_errors else "CONCLUIDA_COM_ESTADOS_DECLARADOS",
+        "sar":sar or {},
+        "land_use":{"status":(land or {}).get("status"),"reason":(land or {}).get("reason"),
+                    "area_aoi_ha":(land or {}).get("area_aoi_ha"),"classes":classes},
+        "native_carbon":{"status":(native or {}).get("status"),"reason":(native or {}).get("reason"),
+                         "area_aoi_ha":(native or {}).get("area_aoi_ha"),
+                         "native_area_ha":(native or {}).get("native_area_ha"),
+                         "known_total_tc":(native or {}).get("known_total_tc"),"strata":strata},
+        "pedology":{"status":(pedology or {}).get("status"),"reason":(pedology or {}).get("reason")},
+        "fertility":{"status":(fertility or {}).get("status"),"reason":(fertility or {}).get("reason")},
+        "performance":performance or {},
+        "stage_errors":stage_errors,
+    }
+    with path.open("w",encoding="utf-8") as stream:
+        json.dump(payload,stream,ensure_ascii=False,indent=2,default=str)
+    return str(path)
+
+
+def _analyze_soil_stages(aoi):
+    """Run independent pedology/fertility work and retain stage-specific failures."""
+    errors=[]; timings={}
+    started=time.perf_counter()
+    try:
+        from soil_pedology_embrapa import analyze_embrapa_pedology
+        pedology,zones=analyze_embrapa_pedology(aoi,with_zones=True)
+    except Exception as exc:
+        pedology={"status":"ERRO_TECNICO_SOLO","reason":type(exc).__name__+": "+str(exc)[:240]}
+        zones=[]
+        errors.append({"stage":"pedology","status":"ERRO_TECNICO",
+                       "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+    timings["pedology_seconds"]=round(time.perf_counter()-started,3)
+    if str(pedology.get("status"," ")).startswith("ERRO"):
+        fertility={"status":"N/D","reason":"PronaSolos zonal não executado porque a etapa pedológica falhou.",
+                   "units":{},"layers":[]}
+        timings["fertility_seconds"]=0.0
+    else:
+        started=time.perf_counter()
+        try:
+            from soil_fertility_zonal import analyze_fertility
+            fertility=analyze_fertility(aoi,units=zones)
+        except Exception as exc:
+            fertility={"status":"ERRO_TECNICO_FERTILIDADE","reason":type(exc).__name__+": "+str(exc)[:240],
+                       "units":{},"layers":[]}
+            errors.append({"stage":"fertility","status":"ERRO_TECNICO",
+                           "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+        timings["fertility_seconds"]=round(time.perf_counter()-started,3)
+    return pedology,fertility,errors,timings
+
+
+def native_carbon_analysis(aoi,land,biome,sar_options=None,sar_paths=None):
+    import geopandas as gpd
+    classes=gpd.read_file(land["vector_path"])
+    options=dict(sar_options or {})
+    # Optional externally licensed, class-specific inventory observations.
+    # Never forward a data manifest as a SAR model parameter.
+    inventory_evidence=options.pop("inventory_evidence",None)
+    inventory_manifest=options.pop("inventory_evidence_manifest",None)
+    biodiversity_inventory_records=options.pop("biodiversity_inventory_records",None)
+    catalog_cache={}
+    soil_source_cache={}
+    # Shared only across strata in this single property analysis. CCI discovery
+    # is tile-based, so reuse its year/host result while recalculating zonal
+    # statistics against each exact native-stratum geometry.
+    pipeline_route_cache={}
+    def sar_estimator(frame,b,p):
+        if sar_paths:return process_real_sar(frame,sar_paths,b,p)
+        # Search official BIOMASS collections once against the full AOI, then
+        # reuse the discovered products while reading each native stratum's
+        # own pixel window. This avoids repeated catalog round trips per class.
+        if "biomass_catalog" not in catalog_cache:
+            try:
+                from sar_pipeline import biomass_l2b_search
+                found=biomass_l2b_search(aoi,limit=100,return_audit=True)
+                if isinstance(found,tuple) and len(found)==2:
+                    catalog_cache["biomass_catalog"]=(found[0],found[1])
+                else:
+                    catalog_cache["biomass_catalog"]=(found,{
+                        "queries":[],"errors":["AUDIT_METADATA_UNAVAILABLE"],
+                        "height_queries_complete":False})
+            except Exception as exc:
+                catalog_cache["biomass_catalog"]=([],{
+                    "queries":[],"errors":[type(exc).__name__],
+                    "height_queries_complete":False,
+                    "technical_error":type(exc).__name__+": "+str(exc)[:180]})
+        items,audit=catalog_cache["biomass_catalog"]
+        estimate=automatic_pipeline(frame,b,p,biomass_catalog_items=items,
+                                    biomass_search_audit=audit,
+                                    pipeline_route_cache=pipeline_route_cache,**options)
+        # Fitossociological reference from nearby IFN sampling units is kept
+        # independent of the carbon model and remains available when FH ×
+        # inventory structure, rather than CCI, is the selected AGB route.
+        try:
+            from inventory_microdata_library import select_official_inventory_units
+            centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
+            biodiversity=select_official_inventory_units(
+                biome=b,physiognomy=p,longitude=float(centroid.x),latitude=float(centroid.y),
+                max_distance_km=250.0,max_units=100,include_trees=False)
+            summary=biodiversity.get("raw_tree_sample_summary") or {}
+            selected_units=biodiversity.get("units") or []
+            estimate["regional_inventory_structure_reference"]={
+                "status":biodiversity.get("status","N/D"),
+                "selection":biodiversity.get("selection") or {},
+                "units":[{"ua_id":u.get("ua_id"),"uf":u.get("uf"),
+                    "distance_km":u.get("distance_km"),
+                    "campaign":u.get("campaign"),"source":u.get("source") or u.get("crosswalk_source"),
+                    "crosswalk_method":u.get("match_status")}
+                    for u in selected_units],
+                "raw_tree_sample_summary":summary,
+                "interpretation":biodiversity.get("interpretation"),
+                "model_predictor_eligible":False,
+                "eligibility_reason":"Os campos disponíveis são agregados de árvores amostradas, sem expansão por área/desenho amostral harmonizado nem pareamento pixel-parcela; portanto não substituem G (m²/ha) compatível para a equação FH×AGB.",
+                "not_added_to_stock_total":True}
+            estimate["inventory_biodiversity_reference"]=(
+                biodiversity.get("biodiversity_reference") or
+                {"status":"N/D","reason":biodiversity.get("reason") or biodiversity.get("status")})
+        except Exception as exc:
+            estimate["regional_inventory_structure_reference"]={
+                "status":"ERRO_TECNICO_CONSULTA_IFN","reason":type(exc).__name__,
+                "model_predictor_eligible":False,"not_added_to_stock_total":True}
+            estimate["inventory_biodiversity_reference"]={
+                "status":"N/D","reason":"CONSULTA_FITOSSOCIOLOGICA_IFN_FALHOU",
+                "diagnostic":type(exc).__name__}
+        # Expose both microdata comparisons and published horizontal/AGB
+        # aggregates for every primary method. Aggregates are regional
+        # benchmarks, never synthetic plots or additions to the stock total.
+        if isinstance(estimate,dict):
+            try:
+                from inventory_agb_comparison import estimate_inventory_agb_comparison
+                centroid=frame.to_crs("EPSG:4326").geometry.union_all().centroid
+                area=float(frame.to_crs("EPSG:6933").geometry.area.sum())/10000.0
+                estimate["inventory_agb_comparison"]=estimate_inventory_agb_comparison(
+                    biome=b,physiognomy=p,area_ha=area,
+                    centroid_lon=float(centroid.x),centroid_lat=float(centroid.y))
+            except Exception as exc:
+                estimate["inventory_agb_comparison"]={
+                    "status":"N/D","reason":"CONSULTA_INVENTARIOS_MULTIFONTE_NAO_CONCLUIDA",
+                    "diagnostic":type(exc).__name__}
+        return estimate
+    def estimator(frame,phys):
+        if "prepared" not in soil_source_cache:
+            soil_source_cache["prepared"]=_prepare_pronasolos_sources(aoi)
+        def soil_estimator(stratum):
+            return pronasolos_soc_profiles(stratum,prepared=soil_source_cache["prepared"])
+        return estimate_native_components(frame,phys,biome,sar_estimator,soil_estimator,
+                                          property_aoi=aoi,inventory_evidence=inventory_evidence)
+    result=summarize_native_carbon(aoi,classes,estimator,(land.get("validation") or {}).get("class_metadata"))
+    annual_scope=(land.get("annual_sar_classification") or {})
+    result["land_cover_period"]=(
+        "safra anual "+str(annual_scope.get("season"))+
+        " — máscara experimental; não representa cobertura atual"
+        if annual_scope.get("applied") else
+        "classificação semântica SAR atual" if land.get("current_semantic_classification_status")=="CLASSIFICADO_POR_SAR_ATUAL"
+        else "cobertura nativa atual não confirmada por classificador semântico SAR")
+    native_strata=[st for st in result.get("strata",[]) if float(st.get("area_ha") or 0)>0]
+    # Query the bundled IFN tree microdata only as an auditable structural
+    # reference. These records are selected by location, SFB biome and exact
+    # IBGE Vegetação legenda_1. They are never converted into per-hectare AGB
+    # or canopy height here: the IFN rows do not supply the AOI's sampling
+    # expansion weights or a locally validated allometric transfer model.
+    result["ifn_structural_references"]=[]
+    try:
+        from inventory_microdata_library import (official_inventory_database_status,
+            select_official_inventory_units)
+        centroid=aoi.to_crs("EPSG:4326").geometry.union_all().centroid
+        db_status=official_inventory_database_status()
+        result["ifn_database_status"]=db_status
+        if db_status.get("operational_for_tree_selection"):
+            for potential in land.get("potential_physiognomy_intersections") or []:
+                phys=str(potential.get("name") or "").strip()
+                area=float(potential.get("area_ha") or 0)
+                if not phys or phys=="Sem cobertura IBGE" or area<=0:
+                    continue
+                selected=select_official_inventory_units(
+                    biome=biome,physiognomy=phys,longitude=centroid.x,
+                    latitude=centroid.y,max_distance_km=250,max_units=5,include_trees=False)
+                result["ifn_structural_references"].append({
+                    "physiognomy":phys,"potential_ibge_area_ha":area,
+                    "area_basis":"potencial IBGE legenda_1; não confirma cobertura nativa atual",
+                    "selection":selected,
+                    "use_status":"REFERENCIA_ESTRUTURAL_SEM_EXPANSAO_POR_HECTARE_NEM_EQUACAO_AGB_VALIDADA"})
+    except Exception as exc:
+        result["ifn_database_status"]={"status":"ERRO_CONSULTA_IFN",
+            "reason":type(exc).__name__+": "+str(exc)[:250],
+            "operational_for_tree_selection":False}
+    height_certs=[(st.get("sar_details") or {}).get("height_absence_certificate") for st in native_strata]
+    height_certs=[c for c in height_certs if isinstance(c,dict)]
+    if height_certs and all(c==height_certs[0] for c in height_certs):
+        result["height_absence_certificate"]=height_certs[0]
+    if not biodiversity_inventory_records:
+        # The inventory selector already queried the bundled IFN for each
+        # native stratum. Do not contradict those real results merely because
+        # the optional regional CSV was not supplied by the operator.
+        embedded=[(st.get("sar_details") or {}).get("inventory_biodiversity_reference")
+                  for st in native_strata]
+        embedded=[x for x in embedded if isinstance(x,dict)]
+        result["biodiversity_references"]=(embedded or
+            [{"status":"N/D","reason":"NENHUMA_FONTE_FITOSSOCIOLOGICA_UTILIZAVEL_CARREGADA"}])
+    elif not native_strata:
+        result["biodiversity_references"]=[{"status":"N/D","reason":"NENHUM_ESTRATO_NATIVO_ATUAL_CONFIRMADO_POR_SAR"}]
+    else:
+        try:
+            from crop_yield_scenario import microregion_of
+            micro=microregion_of(aoi)["dominant"]
+            from biodiversity_inventory import summarize_top10_species
+            result["biodiversity_references"]=[summarize_top10_species(
+                biodiversity_inventory_records,biome=biome,
+                physiognomy=st.get("physiognomy") or st.get("class_name"),
+                microregion=micro.get("name") or micro.get("code")) for st in native_strata]
+        except Exception as exc:
+            result["biodiversity_references"]=[{"status":"N/D","reason":"CONSULTA_MICRORREGIONAL_FALHOU_"+
+                type(exc).__name__+": "+str(exc)[:180]}]
+    # Separate inventory contingency. The wrapper first tries the
+    # open IFN plot data for the matching physiognomy/region, then the existing
+    # published regional hierarchy. Exhausted-route technical failures stay
+    # visible; they are not relabelled as no-scene/no-pixel evidence.
+    # A SAR-native stratum with N/D components is still not a carbon result.
+    # Run the strictly gated inventory route whenever no carbon stock
+    # was quantified; checking only for an empty stratum list skipped the
+    # fallback whenever the classifier had drawn a polygon but estimation
+    # failed downstream.
+    if result.get('known_total_tc') is None:
+        from ifn_carbon_fallback import estimate_inventory_carbon_scenario
+        scenarios=[]
+        potential_rows=[]
+        for potential in land.get('potential_physiognomy_intersections') or []:
+            physiognomy=str(potential.get('name') or '')
+            if not physiognomy or physiognomy == 'Sem cobertura IBGE':
+                continue
+            potential_rows.append((potential,physiognomy))
+        # Reuse SAR evidence already collected in this analysis; conditional inventory never reruns SAR.
+        fallback_sar_result=next(((st.get('sar_details') or {}) for st in native_strata
+                                  if isinstance(st.get('sar_details'),dict)),{})
+        fallback_sar_result=dict(fallback_sar_result)
+        fallback_sar_result.setdefault('status','SAR_RESULTADO_NAO_PROPAGADO')
+        for potential,physiognomy in potential_rows:
+            try:
+                scenario=estimate_inventory_carbon_scenario(
+                    biome=biome,physiognomy=physiognomy,
+                    area_ha=float(potential.get('area_ha') or 0),
+                    sar_result=fallback_sar_result,aoi=aoi,
+                    centroid_lon=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.x),
+                    centroid_lat=float(aoi.to_crs('EPSG:4326').geometry.union_all().centroid.y))
+                scenario['sar_status']=fallback_sar_result.get('status')
+                scenario['sar_reason']=fallback_sar_result.get('reason')
+                if scenario.get('status')=='CENARIO_CONDICIONAL_INVENTARIO_SEM_AGB_ALTURA_SAR':
+                    scenarios.append(scenario)
+            except Exception as exc:
+                result['inventory_scenario_diagnostic']={
+                    'status':'ERRO_TECNICO_SEM_FALLBACK',
+                    'reason':type(exc).__name__+': '+str(exc)[:300],
+                    'physiognomy':physiognomy}
+        if scenarios:
+            result['conditional_inventory_scenarios']=scenarios
+        elif not result.get('inventory_scenario_diagnostic'):
+            result['inventory_scenario_diagnostic']={
+                'status':'N/D',
+                'reason':'Nenhum cenário elegível: SAR com pixels, falha técnica pendente ou inventário compatível indisponível.'}
+    if inventory_manifest is not None:
+        # File hash proves input identity, not scientific validity.
+        result["external_inventory_manifest"]=inventory_manifest
+    return result
 
 def diagnose_ibge(project):
     """IBGE diagnosis with bbox-only reads; national 355 MB vegetation ZIP is never expanded/read wholesale."""
@@ -464,92 +886,183 @@ def zonal_soil(gdf,raster_path):
     if len(vals)==0: raise ValueError("O raster de solo não possui pixels válidos na área.")
     return float(np.mean(vals)),float(np.std(vals)),len(vals)
 
-def pronasolos_soc_profiles(gdf,max_points=36):
-    """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha), cumulative profiles.
-    Uses only the verified official MapServer. Each depth is queried independently."""
+def _attach_embrapa_official_soc_bounds(gdf, stock_result, stock_paths):
+    """Attach official marginal prediction bounds without erasing valid SOC."""
+    top = stock_result.get("0–100 cm") or {}
+    if top.get("tc_ha") is None:
+        return stock_result
+    try:
+        from soil_soc_official_uncertainty import fetch_official_bounds
+        from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
+        bounds = fetch_official_bounds(gdf.to_crs(4326).geometry.union_all())
+        measured = mapped_soil_0_100_on_polygon(
+            gdf, stock_paths, official_bound_paths=bounds["paths"],
+            official_provenance=bounds["provenance"])
+        verified = measured.get("0–100 cm") or {}
+        if verified.get("tc_ha") is None or abs(verified["tc_ha"]-top["tc_ha"])>1e-5:
+            raise ValueError("Estoque divergiu ao validar os limites oficiais")
+        status = verified.get("official_uncertainty") or {}
+        if status.get("status") != "ENVELOPE_MARGINAL_OFICIAL":
+            raise ValueError(status.get("reason") or "Limites oficiais incompletos")
+    except Exception as exc:
+        status = {"status":"N/D",
+                  "reason":type(exc).__name__+": "+str(exc).split("https://")[0][:180],
+                  "predictive_uncertainty_quantified":False}
+    top["official_uncertainty"] = status
+    top["predictive_uncertainty_quantified"] = bool(
+        status.get("predictive_uncertainty_quantified"))
+    stock_result.setdefault("_diagnostic",{})["official_uncertainty"] = status
+    return stock_result
+
+
+def _prepare_pronasolos_sources(gdf):
+    """Acquire soil rasters/bounds once for the whole AOI, then reuse locally.
+
+    The previous per-stratum calls caused each SAR class to request the same
+    five WCS horizons and prediction-bound capabilities again. Preparation is
+    AOI-scoped; all later carbon values still use exact stratum×pixel overlays.
+    """
+    from soil_pronasolos_zonal import verified_local_horizons
+    prepared={"paths":None,"provenance":None,"official_paths":None,
+              "official_provenance":None,"local_audit":None,"wcs_audit":None,
+              "official_audit":None}
+    try:
+        prepared["paths"]=verified_local_horizons()
+    except Exception as exc:
+        prepared["local_audit"]={"status":"LOCAL_SOIL_CACHE_ERROR",
+                                  "reason":type(exc).__name__+": "+str(exc)[:240]}
+    if prepared["paths"] is None:
+        try:
+            from pronasolos_wcs import fetch_horizons
+            acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
+            prepared["paths"]=acquired["paths"]
+            prepared["provenance"]=acquired["provenance"]
+        except Exception as exc:
+            prepared["wcs_audit"]={"target_status":"WCS_INDISPONIVEL",
+                "reason":type(exc).__name__+": "+str(exc)[:300]}
+    try:
+        from soil_soc_official_uncertainty import fetch_official_bounds
+        bounds=fetch_official_bounds(gdf.to_crs(4326).geometry.union_all())
+        prepared["official_paths"]=bounds["paths"]
+        prepared["official_provenance"]=bounds["provenance"]
+    except Exception as exc:
+        prepared["official_audit"]={"status":"N/D",
+            "reason":type(exc).__name__+": "+str(exc).split("https://")[0][:240],
+            "predictive_uncertainty_quantified":False}
+    return prepared
+
+
+def pronasolos_soc_profiles(gdf,max_points=36,prepared=None):
+    """PronaSolos/Embrapa Solos 90 m SOC stocks (Mg C/ha).
+    Exact polygon × raw-raster intersection is preferred. Identify-point
+    sampling is a last resort and only accepted as a complete, single-service
+    sample over the whole AOI × physiognomy stratum."""
+    from soil_pronasolos_zonal import verified_local_horizons, mapped_soil_0_100_on_polygon
+    local_audit=None;wcs_audit=None
+    if prepared is not None:
+        local_paths=prepared.get("paths")
+        local_audit=prepared.get("local_audit")
+        wcs_audit=prepared.get("wcs_audit")
+        if local_paths:
+            source_label=("Embrapa Solos/PronaSolos 90 m v2021 — cache local verificado"
+                          if prepared.get("provenance") is None else
+                          "Embrapa Solos/PronaSolos 90 m v2021 — WCS baixado uma vez para a AOI")
+            result=mapped_soil_0_100_on_polygon(gdf,local_paths,source_label=source_label,
+                official_bound_paths=prepared.get("official_paths"),
+                official_provenance=prepared.get("official_provenance"))
+            result.setdefault("_diagnostic",{})["wcs_provenance"]=prepared.get("provenance")
+            if prepared.get("official_audit"):
+                result.setdefault("_diagnostic",{})["official_uncertainty"]=prepared["official_audit"]
+                if result.get("0–100 cm"):
+                    result["0–100 cm"]["official_uncertainty"]=prepared["official_audit"]
+            if result.get("0–100 cm",{}).get("tc_ha") is not None:
+                return result
+            if local_paths and prepared.get("provenance") is None:
+                local_audit=result.get("_diagnostic")
+            else:
+                wcs_audit=result.get("_diagnostic")
+    else:
+        local_paths=verified_local_horizons()
+        if local_paths:
+            local_result=mapped_soil_0_100_on_polygon(gdf,local_paths)
+            if local_result.get("0–100 cm",{}).get("tc_ha") is not None:
+                return _attach_embrapa_official_soc_bounds(gdf,local_result,local_paths)
+            local_audit=local_result.get("_diagnostic")
+        try:
+            from pronasolos_wcs import fetch_horizons
+            acquired=fetch_horizons(gdf.to_crs(4326).geometry.union_all())
+            wcs_result=mapped_soil_0_100_on_polygon(
+                gdf,acquired["paths"],
+                source_label="Embrapa Solos/PronaSolos 90 m v2021 — rasters brutos via WCS GeoInfo")
+            wcs_result.setdefault("_diagnostic",{})["wcs_provenance"]=acquired["provenance"]
+            if wcs_result.get("0–100 cm",{}).get("tc_ha") is not None:
+                return _attach_embrapa_official_soc_bounds(gdf,wcs_result,acquired["paths"])
+            wcs_audit=wcs_result.get("_diagnostic")
+        except Exception as exc:
+            wcs_audit={"target_status":"WCS_INDISPONIVEL","reason":type(exc).__name__+": "+str(exc)[:300]}
     import requests
-    from shapely.geometry import Point
     gg=gdf.to_crs(3857); geom=gg.geometry.union_all()
     minx,miny,maxx,maxy=geom.bounds
-    # systematic polygon sampling plus representative point; avoid dependence on bbox corners
-    n=max(4,int(math.ceil(math.sqrt(max_points))))
-    xs=np.linspace(minx,maxx,n); ys=np.linspace(miny,maxy,n)
-    pts=[Point(float(x),float(y)) for y in ys for x in xs if geom.covers(Point(float(x),float(y)))]
-    rp=geom.representative_point()
-    pts=[rp]+pts
-    # de-duplicate and cap
-    uniq=[]; seen=set()
-    for p in pts:
-        k=(round(p.x,2),round(p.y,2))
-        if k not in seen: seen.add(k); uniq.append(p)
-    pts=uniq[:max_points]
-    service="https://geoportal.sgb.gov.br/server/rest/services/pronasolos/estoque_carbono_90m/MapServer/identify"
-    layer_ids=[2,3,4,5,6,7]
-    names=["0–5","5–15","15–30","30–60","60–100","100–200"]
-    vals={k:[] for k in layer_ids}; errors={k:[] for k in layer_ids}
-    sess=requests.Session()
-    extent=f"{minx},{miny},{maxx},{maxy}"
-    def numeric_value(item):
-        at=item.get("attributes") or {}
-        candidates=[item.get("value")]
-        # ArcGIS raster identify varies by server/version/language.
-        for key,val in at.items():
-            kl=str(key).lower()
-            if ("pixel" in kl and "value" in kl) or "stretched" in kl or kl in ("value","valor","pixel_value"):
-                candidates.append(val)
-        for raw in candidates:
-            if raw is None: continue
+    from pronasolos_identify import SERVICE_CANDIDATES, build_identify_params, extract_paired_horizons
+    layer_ids=[2,3,4,5,6]
+    from pronasolos_identify import sample_points_in_stratum
+    points=sample_points_in_stratum(geom,max_points)
+    if not points:
+        return {"_diagnostic":{"target_status":"SEM_PONTOS_AMOSTRAIS","target_0_100_available":False,
+                "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit}}
+    session=requests.Session()
+    attempts=[]
+    observations=None
+    selected_service=None
+    # Do not mix products in a profile OR within the same stratum. A service
+    # must return all five horizons at every reproducible area-uniform point.
+    for endpoint in SERVICE_CANDIDATES:
+        current=[]
+        errors=[]
+        for point in points:
+            params=build_identify_params(point.x,point.y,(minx,miny,maxx,maxy),layer_ids)
             try:
-                txt=str(raw).strip().replace(" ","").replace(",",".")
-                v=float(txt)
-                if np.isfinite(v) and 0 <= v < 2000: return v
-            except Exception: pass
-        return None
-    for p in pts:
-        # Query each layer independently: one missing/deep layer can never invalidate 0-30.
-        for lid in layer_ids:
-            params={"f":"json","geometry":f"{p.x},{p.y}","geometryType":"esriGeometryPoint","sr":"3857",
-                    "layers":f"all:{lid}","tolerance":"5","mapExtent":extent,
-                    "imageDisplay":"1600,1600,96","returnGeometry":"false"}
-            try:
-                r=sess.get(service,params=params,timeout=(5,20)); r.raise_for_status(); js=r.json()
-                if js.get("error"): raise RuntimeError(str(js["error"]))
-                found=False
-                for item in js.get("results",[]):
-                    if int(item.get("layerId",-1))!=lid: continue
-                    v=numeric_value(item)
-                    if v is not None: vals[lid].append(v); found=True; break
-                if not found: errors[lid].append("sem valor numérico")
-            except Exception as e: errors[lid].append(str(e)[:160])
-    targets={"0–30 cm":3,"0–60 cm":4,"0–100 cm":5,"0–200 cm":6}; out={}
-    for label,count in targets.items():
-        need=layer_ids[:count]
-        if any(not vals[k] for k in need): continue
-        # Use depth means independently; this avoids pairing samples incorrectly when one depth has a local NoData.
-        means=[float(np.mean(vals[k])) for k in need]
-        stock=float(sum(means))
-        # Conservative descriptive spatial propagation; NOT prediction uncertainty/CI95.
-        sds=[float(np.std(vals[k],ddof=1)) if len(vals[k])>1 else 0.0 for k in need]
-        spatial_sd=float(math.sqrt(sum(x*x for x in sds)))
-        out[label]={"tc_ha":stock,"spatial_sd_tc_ha":spatial_sd,
-          "n_samples":min(len(vals[k]) for k in need),"layers":names[:count],
-          "layer_means_tc_ha":dict(zip(names[:count],means)),
-          "source":"PronaSolos/Embrapa Solos — estoque de carbono orgânico 90 m",
-          "uncertainty_kind":"DP espacial propagado das amostras do mapa; não é IC95% nem erro de predição"}
-    if "0–30 cm" not in out:
-        detail=[]
-        for i,k in enumerate(layer_ids[:3]):
-            detail.append(f"{names[i]} cm: n={len(vals[k])}; "+(("; ".join(errors[k][:2])) if errors[k] else "sem retorno"))
-        raise RuntimeError("PronaSolos oficial consultado, mas 0–30 cm não pôde ser composto. "+" | ".join(detail))
-    out["_diagnostic"]={"samples_requested":len(pts),"valid_by_layer":{names[i]:len(vals[k]) for i,k in enumerate(layer_ids)},
-                        "service":service}
+                response=session.get(endpoint,params=params,timeout=(5,12))
+                response.raise_for_status()
+                current.append(extract_paired_horizons(response.json(),layer_ids))
+            except Exception as exc:
+                current.append({})
+                errors.append(type(exc).__name__+": "+str(exc)[:160])
+        valid=sum(all(layer in profile for layer in (2,3,4,5,6)) for profile in current)
+        attempts.append({"service":endpoint,"complete_points":valid,
+                         "requested_points":len(points),"errors":errors[:3]})
+        if valid==len(points):
+            observations=current
+            selected_service=endpoint
+            break
+    if observations is None:
+        return {"_diagnostic":{"target_status":"SERVICO_SEM_AMOSTRA_COMPLETA",
+                "reason":"Nenhum serviço retornou os cinco horizontes em todos os pontos amostrais; estoque 0–100 cm mantido como N/D. "+ " | ".join(error for attempt in attempts for error in attempt["errors"])[:300],
+                "services_checked":attempts,"samples_requested":len(points),
+                "query_points_inside_stratum":len(points),"target_0_100_available":False,
+                "no_partial_sample_extrapolation":True,
+                "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit}}
+    from soil_profile_stats import summarize_paired_soil_profiles
+    out=summarize_paired_soil_profiles(observations)
+    out["_diagnostic"]={"samples_requested":len(points),
+        "valid_by_layer":{"0–5":len(points),"5–15":len(points),"15–30":len(points),
+                          "30–60":len(points),"60–100":len(points)},
+        "service":selected_service,"services_checked":attempts,
+        "selected_points_by_service":{endpoint:(len(points) if endpoint==selected_service else 0) for endpoint in SERVICE_CANDIDATES},
+        "no_cross_service_horizon_combination":True,"single_service_for_entire_stratum":True,
+        "query_points_inside_stratum":len(points),"target_depth_cm":100,
+        "target_0_100_available":"0–100 cm" in out,
+        "local_raster_audit":local_audit,"wcs_raster_audit":wcs_audit,
+        "method":"identify_point_sampling_fallback",
+        "target_status":"AMOSTRA_COMPLETA_SERVICO_UNICO",
+        "spatial_sampling_note":"Amostra espacial reprodutível dentro do polígono; sem intervalo preditivo nem erro do mapa."}
     return out
-
 
 def self_test():
     assert abs(float(agb_mexiana(10))-0.1184*10**2.53)<1e-8
     assert ROOT_LOW<ROOT_RATIO<ROOT_HIGH
     assert abs(CARBON_FRACTION-0.47)<1e-9
+    assert format_ptbr(12345.678,2)=="12.345,68" and format_ptbr(1234567.8,2)=="1.234.567,80" and format_ptbr(12.5,0)=="13" and format_ptbr(-1234.5,1)=="-1.234,5" and format_result_json({"a":12345.25})=={"a":"12.345,250000"}
     if sys.stdout is not None:print("ENFORM_VERDE_SELF_TEST_OK")
 
 def acceptance_test(kmz_path):
@@ -565,16 +1078,53 @@ def acceptance_test(kmz_path):
     pixel_count+=sum(int(s.get("n",0)) for s in result.get("stats",[]))
     if pixel_count<=0:raise RuntimeError("Nenhum pixel SAR foi processado dentro da AOI Tapajós.")
     agb=result.get("agb_mg_ha")
+    lit=result.get("literature_reference") or {}
+    published=(audit.get("published_inventory_evidence") or {})
+    references=list(published.get("agb_references") or [])
+    from inventory_agb_comparison import tapajos_acceptance_inventory_references
+    reference_gate=tapajos_acceptance_inventory_references(agb,pixel_count,published)
+    summary={"status":result.get("status"),"area_ha":metrics["area_ha"],"pixel_count":pixel_count,
+             "data_origin":result.get("data_origin"),"priority_height_route_status":result.get("priority_height_route_status"),
+             "priority_height_route_gate":audit.get("priority_height_route_gate"),
+             "agb_status":"ESTIMATIVA_QUANTITATIVA_DISPONIVEL" if agb is not None else "N_D_SEM_MODELO_AGB_APLICAVEL",
+             "inventory_evidence_status":published.get("status"),
+             "inventory_evidence_diagnostic":published.get("diagnostic"),
+             "inventory_reference_count":len(references),
+             "inventory_evidence_sources":list(published.get("sources") or []),
+             "inventory_reference_eligible":reference_gate["inventory_reference_eligible"],
+             "eligible_inventory_reference_count":len(reference_gate["eligible_inventory_references"]),
+             "acceptance_status":reference_gate["acceptance_status"],
+             "agb_quantitative_estimate_available":reference_gate["agb_quantitative_estimate_available"],
+             "inventory_references":[{"source_id":r.get("source_id"),"institution":r.get("institution"),
+                 "region":r.get("region"),"agb_mean_mg_ha":r.get("agb_mean_mg_ha"),
+                 "sd_mg_ha":r.get("sd_mg_ha"),"ci95_low_mg_ha":r.get("ci95_low_mg_ha"),
+                 "ci95_high_mg_ha":r.get("ci95_high_mg_ha"),
+                 "physiognomy_match_level":r.get("physiognomy_match_level"),
+                 "reference_only":True,"not_added_to_stock_total":True} for r in references],
+             "fh_zonal_read_audit":(audit.get("biomass_height") or {}).get("zonal_read_audit"),
+             "fh_zonal_read_errors":(audit.get("biomass_height") or {}).get("zonal_read_errors"),
+             "gtdx_reason":(audit.get("gtdx_height") or {}).get("reason"),
+             "scene_count":len(audit.get("alos_palsar_public",{}).get("scene_ids",[]))+len(audit.get("sentinel1_public",{}).get("scene_ids",[])),
+             "fallback_agb_mg_ha":lit.get("agb_mg_ha")}
+    acceptance_path=Path(tempfile.gettempdir())/"enform_verde_acceptance_result.json"
+    acceptance_path.write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
     if agb is None:
-        lit=result.get("literature_reference") or {}
         if not lit.get("available") or not lit.get("sar_processed"):
-            raise RuntimeError("Pixels SAR foram processados, mas a referência regional Tapajós não foi selecionada corretamente.")
+            # Parent/subformation aggregates may accompany an FH result as
+            # separately labeled benchmarks. They never become an AGB estimate
+            # or bypass the no-SAR inventory-fallback gate.
+            if reference_gate["inventory_reference_eligible"]:
+                acceptance_path.write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
+                return summary
+            if result.get("priority_height_route_status")=="ERRO_TECNICO_ROTA_PRIORITARIA":
+                diagnostic=acceptance_path.read_text(encoding="utf-8",errors="replace")
+                raise RuntimeError("ERRO_TECNICO_ROTA_PRIORITARIA no FH/GTDX; contingência de inventário bloqueada corretamente. Diagnóstico: "+diagnostic[:12000])
+            diagnostic=acceptance_path.read_text(encoding="utf-8",errors="replace")
+            if str(published.get("status") or "").startswith("ERRO_TECNICO"):
+                raise RuntimeError("ERRO_TECNICO_LEITURA_REGISTRO_INVENTARIOS: "+diagnostic[:12000])
+            raise RuntimeError("Pixels SAR foram processados, mas nenhuma estimativa AGB prioritária ou referência de inventário elegível foi produzida. Diagnóstico: "+diagnostic[:12000])
     elif not str(result.get("data_origin","")).startswith("SAR"):
         raise RuntimeError("Origem AGB incompatível: resultado numérico sem proveniência SAR.")
-    summary={"status":result.get("status"),"area_ha":metrics["area_ha"],"pixel_count":pixel_count,
-             "data_origin":result.get("data_origin"),"scene_count":len(audit.get("alos_palsar_public",{}).get("scene_ids",[]))+len(audit.get("sentinel1_public",{}).get("scene_ids",[])),
-             "fallback_agb_mg_ha":(result.get("literature_reference") or {}).get("agb_mg_ha")}
-    (Path(tempfile.gettempdir())/"enform_verde_acceptance_result.json").write_text(json.dumps(summary,ensure_ascii=True),encoding="utf-8")
     return summary
 
 def ui_smoke_test():
@@ -583,12 +1133,27 @@ def ui_smoke_test():
 def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
     """Recent low-cloud Sentinel-2 L2A RGB preview and AOI pixel coordinates; no user API key."""
     import rasterio
-    from rasterio.warp import transform_bounds, transform
+    from rasterio.warp import transform_bounds, transform, transform_geom
     from rasterio.windows import from_bounds
+    from rasterio.features import geometry_mask
     g=gdf.to_crs(4326).copy(); geom=g.geometry.union_all().__geo_interface__
     body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":30,
           "sortby":[{"field":"properties.datetime","direction":"desc"}]}
-    rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",json=body,timeout=(10,60)); rr.raise_for_status()
+    # Retry transient STAC gateway outages, keeping identical AOI/search terms.
+    import time
+    for attempt in range(2):
+        try:
+            rr=requests.post("https://planetarycomputer.microsoft.com/api/stac/v1/search",
+                             json=body,timeout=(5,8))
+            rr.raise_for_status()
+            break
+        except requests.exceptions.RequestException as exc:
+            code=getattr(getattr(exc,'response',None),'status_code',None)
+            retryable=(code in (429,500,502,503,504) or isinstance(
+                exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError)))
+            if not retryable or attempt==1:
+                raise
+            time.sleep(2*(attempt+1))
     items=rr.json().get("features",[]); cand=[]
     for it in items:
         visual=(it.get("assets") or {}).get("visual")
@@ -611,7 +1176,8 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
             if attempt<2:
                 import time; time.sleep(1.2*(attempt+1))
     if not href:raise RuntimeError("Falha temporária ao assinar ativo Sentinel-2 após 3 tentativas: "+str(sign_error))
-    with rasterio.Env(GDAL_HTTP_MULTIRANGE="YES",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"):
+    import tls_setup
+    with rasterio.Env(**tls_setup.gdal_env(),GDAL_HTTP_MULTIRANGE="SERIAL",GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="NO",CPL_VSIL_CURL_USE_HEAD="NO",GDAL_HTTP_VERSION="1.1"):
         with rasterio.open(href) as src:
             b=list(map(float,g.total_bounds)); bx=transform_bounds("EPSG:4326",src.crs,*b,densify_pts=21)
             dx=max(bx[2]-bx[0],1.0); dy=max(bx[3]-bx[1],1.0)
@@ -622,6 +1188,15 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
             arr=src.read(indexes=[1,2,3],window=win,out_shape=(3,out_h,out_w),
                          resampling=rasterio.enums.Resampling.bilinear,boundless=True,fill_value=0)
             rgb=np.moveaxis(arr,0,2)
+            valid=np.isfinite(rgb).all(axis=2)&(rgb>0).any(axis=2)
+            target_transform=src.window_transform(win)*rasterio.Affine.scale(
+                float(win.width)/out_w,float(win.height)/out_h)
+            aoi_geometry=transform_geom("EPSG:4326",src.crs,geom)
+            aoi_mask=geometry_mask([aoi_geometry],out_shape=(out_h,out_w),
+                                   transform=target_transform,invert=True)
+            aoi_coverage=float((valid&aoi_mask).sum()/max(1,int(aoi_mask.sum())))
+            if aoi_coverage<0.95:
+                raise RuntimeError("Sentinel-2 Planetary Computer não cobre 95% dos pixels da AOI")
             if rgb.dtype!=np.uint8:
                 valid=rgb[np.isfinite(rgb)&(rgb>0)]
                 hi=float(np.percentile(valid,99)) if valid.size else 1.0
@@ -638,13 +1213,518 @@ def sentinel2_preview(gdf,out_h=700,extent_factor=1.36):
                         pts.extend([float(col)*out_w/max(float(win.width),1.0),float(row)*out_h/max(float(win.height),1.0)])
                     if len(pts)>=6:polygons.append(pts)
     return {"image":view,"polygons":polygons,"scene_id":it.get("id"),"datetime":dt,"cloud_cover":cloud,
-            "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual"}
+            "provider":"Sentinel-2 L2A / Microsoft Planetary Computer","asset":"visual",
+            "aoi_coverage_fraction":aoi_coverage}
+
+
+
+def _fetch_stac_features_paged(url,body,*,timeout=(8,45),max_pages=20):
+    """Fetch paged STAC results so a first-page limit cannot hide AOI scenes."""
+    response=requests.post(url,json=body,timeout=timeout)
+    response.raise_for_status();payload=response.json()
+    features=list(payload.get("features") or []);pages=1
+    while pages<max_pages:
+        link=next((x for x in payload.get("links",[]) if x.get("rel")=="next" and x.get("href")),None)
+        if not link:break
+        if str(link.get("method","GET")).upper()=="POST":
+            response=requests.post(link["href"],json=link.get("body") or body,
+                                   headers=link.get("headers") or {},timeout=timeout)
+        else:
+            response=requests.get(link["href"],timeout=timeout)
+        response.raise_for_status();payload=response.json()
+        page=payload.get("features") or []
+        if not page:break
+        features.extend(page);pages+=1
+    return features
+
+
+OPTICAL_COG_TILE_SIZE=512
+OPTICAL_MAX_SCENE_CANDIDATES=3
+
+def _iter_optical_quadrants(width,height,tile_size=OPTICAL_COG_TILE_SIZE):
+    """Yield bounded pixel windows so preview reads never scale with AOI size."""
+    width=int(width);height=int(height);tile_size=int(tile_size)
+    if width<=0 or height<=0 or tile_size<=0:raise ValueError("Dimensões ópticas inválidas")
+    for y in range(0,height,tile_size):
+        for x in range(0,width,tile_size):
+            yield x,y,min(tile_size,width-x),min(tile_size,height-y)
+
+
+def _read_optical_cog_quadrants(src,target_transform,target_crs,width,height,*,categorical=False):
+    """Read a remote COG by bounded quadrants and reproject into one preview."""
+    import rasterio
+    from rasterio.enums import Resampling
+    from rasterio.transform import array_bounds
+    from rasterio.warp import transform_bounds,reproject
+    from rasterio.windows import from_bounds,Window
+    if not src.crs:raise RuntimeError("COG óptico sem CRS")
+    dtype=np.uint8 if categorical else np.float32
+    nodata=0 if categorical else np.nan
+    output=np.full((int(height),int(width)),nodata,dtype=dtype)
+    method=Resampling.nearest if categorical else Resampling.bilinear
+    for xoff,yoff,tile_w,tile_h in _iter_optical_quadrants(width,height):
+        tile_transform=target_transform*rasterio.Affine.translation(xoff,yoff)
+        tile_bounds=array_bounds(tile_h,tile_w,tile_transform)
+        src_bounds=transform_bounds(target_crs,src.crs,*tile_bounds,densify_pts=11)
+        win=from_bounds(*src_bounds,transform=src.transform).round_offsets().round_lengths()
+        try:win=win.intersection(Window(0,0,src.width,src.height))
+        except rasterio.errors.WindowError:continue
+        if win.width<1 or win.height<1:continue
+        raw=src.read(1,window=win,out_shape=(tile_h,tile_w),masked=True,resampling=method)
+        if categorical:
+            data=raw.filled(0).astype(np.uint8,copy=False)
+        else:
+            # Convert masked integer sources before filling NaN; filling an
+            # integer MaskedArray with NaN raises on some rasterio builds.
+            data=np.ma.filled(raw.astype(np.float32),np.nan).astype(np.float32,copy=False)
+        scaled=src.window_transform(win)*rasterio.Affine.scale(
+            float(win.width)/tile_w,float(win.height)/tile_h)
+        target=output[yoff:yoff+tile_h,xoff:xoff+tile_w]
+        reproject(data,target,src_transform=scaled,src_crs=src.crs,src_nodata=nodata,
+                  dst_transform=tile_transform,dst_crs=target_crs,dst_nodata=nodata,
+                  resampling=method)
+    return output
+
+
+def sentinel2_earthsearch_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """Real Sentinel-2 RGB COG pixels, scene fallback and pixel-aligned AOI overlay.
+
+    Search results are only candidates: an actual three-band raster read with
+    nonblank pixels is required before declaring any image loaded.
+    """
+    import time
+    import rasterio
+    from rasterio.warp import transform_bounds, transform, transform_geom, reproject, Resampling
+    from rasterio.features import geometry_mask
+    from rasterio.windows import from_bounds, Window
+    g=gdf.to_crs(4326).copy()
+    geom=g.geometry.union_all().__geo_interface__
+    body={"collections":["sentinel-2-l2a"],"intersects":geom,"limit":60,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    errors=[]
+    items=[]
+    for attempt in range(3):
+        try:
+            items=_fetch_stac_features_paged("https://earth-search.aws.element84.com/v1/search",
+                                              body,timeout=(8,35),max_pages=20)
+            break
+        except requests.exceptions.RequestException as exc:
+            if attempt==2:raise RuntimeError("Earth Search STAC indisponível: "+type(exc).__name__) from None
+            time.sleep(1.2*(attempt+1))
+    choices=[]
+    for item in items:
+        assets=item.get("assets") or {}
+        if not all((assets.get(k) or {}).get("href") for k in ("red","green","blue")):continue
+        props=item.get("properties") or {}
+        dt=str(props.get("datetime") or "")
+        try:cloud=float(props.get("eo:cloud_cover",100.0))
+        except (ValueError,TypeError):cloud=100.0
+        choices.append((cloud,dt,item,assets))
+    if not choices:raise RuntimeError("Catálogo Earth Search sem cenas L2A RGB na AOI")
+    # Prefer recent clear scenes, but NEVER fail just because the first COG
+    # is inaccessible or its viewport contains no actual data.
+    clear=sorted((x for x in choices if x[0]<=20),key=lambda x:x[1],reverse=True)
+    other=sorted((x for x in choices if x[0]>20),key=lambda x:(x[0],x[1]))
+    # Bound remote traffic and fallback latency. A long catalog of inaccessible
+    # COGs must never delay the next provider or leave Tk appearing frozen.
+    pool=(clear+other)[:OPTICAL_MAX_SCENE_CANDIDATES]
+    bounds=tuple(map(float,g.total_bounds))
+    out_width=max(320,min(1024,int(out_w)))
+    out_height=max(240,min(768,int(out_h)))
+    # Keyless Sentinel-2 transport on Windows: avoid multipart byte ranges
+    # and HEAD negotiation rejected by some TLS-inspecting proxies.
+    base_env={"GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR","GDAL_HTTP_TIMEOUT":"18",
+         "GDAL_HTTP_MAX_RETRY":"1",**tls_setup.gdal_env()}
+    # Repeat each scene with independent GDAL transports before abandoning its
+    # pixels; this specifically handles WinHTTP/TLS proxies that reject one
+    # Range/HEAD combination for every candidate scene.
+    expanded_pool=[]
+    for index,candidate in enumerate(pool):
+        c,dt,item,assets=candidate
+        # Exercise all Windows transport modes on the best candidate. Later
+        # scenes are single-pass failover, preventing retry multiplication.
+        expanded_pool.extend((c,dt,item,assets,strategy)
+                             for strategy in (range(3) if index==0 else (0,)))
+    for cloud,dt,item,assets,strategy in expanded_pool:
+        try:
+            env=dict(base_env)
+            env.update({"GDAL_HTTP_MULTIRANGE":"YES"})
+            if strategy==1:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","CPL_VSIL_CURL_USE_HEAD":"NO",
+                            "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO","GDAL_HTTP_VERSION":"1.1"})
+            elif strategy==2:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MULTIPLEX":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
+            with rasterio.Env(**env):
+                with rasterio.open(assets["red"]["href"]) as red_src:
+                    crs=red_src.crs
+                    if not crs:raise RuntimeError("red band sem CRS")
+                    minx,miny,maxx,maxy=transform_bounds("EPSG:4326",crs,*bounds,densify_pts=21)
+                    dx=max(maxx-minx,1.0);dy=max(maxy-miny,1.0)
+                    factor=max(0.30,min(8.0,float(extent_factor)))
+                    cx=(minx+maxx)/2;cy=(miny+maxy)/2
+                    viewport=(cx-dx*factor/2,cy-dy*factor/2,cx+dx*factor/2,cy+dy*factor/2)
+                    window=from_bounds(*viewport,transform=red_src.transform).round_offsets().round_lengths()
+                    window=window.intersection(Window(0,0,red_src.width,red_src.height))
+                    if window.width<2 or window.height<2:raise RuntimeError("red band não cobre a AOI")
+                    tr=red_src.window_transform(window)
+                    target_transform=tr*rasterio.Affine.scale(
+                        float(window.width)/out_width,float(window.height)/out_height)
+                    rgb=[]
+                    for band in ("red","green","blue"):
+                        with rasterio.open(assets[band]["href"]) as src:
+                            rgb.append(_read_optical_cog_quadrants(
+                                src,target_transform,crs,out_width,out_height,categorical=False))
+                    stack=np.stack(rgb,axis=2)
+                    valid=np.isfinite(stack).all(axis=2)&(stack>0).any(axis=2)
+                    if valid.sum()<max(80,stack.shape[0]*stack.shape[1]//200):
+                        raise RuntimeError("cena sem pixels RGB válidos suficientes")
+                    target_transform=tr*__import__("rasterio").Affine.scale(
+                        float(window.width)/out_width,float(window.height)/out_height)
+                    aoi_geom=transform_geom("EPSG:4326",crs,geom)
+                    aoi_mask=geometry_mask([aoi_geom],out_shape=(out_height,out_width),
+                                           transform=target_transform,invert=True)
+                    aoi_pixel_count=max(1,int(aoi_mask.sum()))
+                    aoi_coverage=float((valid&aoi_mask).sum()/aoi_pixel_count)
+                    if aoi_coverage<0.95:
+                        raise RuntimeError("cena não cobre 95% dos pixels da AOI")
+                    pixels=stack[valid]
+                    hi=float(np.percentile(pixels,99))
+                    if hi<=0 or not np.isfinite(hi):raise RuntimeError("radiometria RGB inválida")
+                    final=np.clip(np.nan_to_num(stack,nan=0.0)/hi*255,0,255).astype(np.uint8)
+                    image=Image.fromarray(final,"RGB")
+                    polygons=[]
+                    for shape0 in g.geometry:
+                        polys=list(shape0.geoms) if shape0.geom_type=="MultiPolygon" else ([shape0] if shape0.geom_type=="Polygon" else [])
+                        for poly in polys:
+                            coordinates=list(poly.exterior.coords)
+                            xx,yy=transform("EPSG:4326",crs,[v[0] for v in coordinates],[v[1] for v in coordinates])
+                            pts=[]
+                            for px,py in zip(xx,yy):
+                                col,row=(~tr)*(px,py)
+                                pts.extend([float(col)*out_width/window.width,float(row)*out_height/window.height])
+                            if len(pts)>=6:polygons.append(pts)
+                    # RGB and polygon must be scaled by the same factor.
+                    fx=float(out_w)/out_width;fy=float(out_h)/out_height
+                    scaled_polygons=[[p*(fx if k%2==0 else fy) for k,p in enumerate(poly)] for poly in polygons]
+                    return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
+                            "polygons":scaled_polygons,"scene_id":item.get("id"),
+                            "datetime":dt,"cloud_cover":cloud,
+                            "provider":"Sentinel-2 L2A / Earth Search AWS public COGs",
+                            "attempted_scenes":len({e.split(":",1)[0] for e in errors})+1,
+                            "transport_attempts_for_scene":strategy+1,
+                            "transport_strategy":("DEFAULT_MULTIRANGE" if strategy==0 else
+                                                  "SERIAL_HTTP11" if strategy==1 else "SERIAL_NO_MULTIPLEX_HTTP11"),
+                            "aoi_coverage_fraction":aoi_coverage}
+        except (UnicodeError,OSError,RuntimeError,ValueError,rasterio.errors.RasterioError) as exc:
+            errors.append(str(item.get("id",""))+": "+type(exc).__name__+": "+str(exc)[:100])
+    raise RuntimeError("Nenhuma das "+str(len(pool))+" cenas Sentinel-2 forneceu RGB real após leitura por quadrantes. "+
+                       "Erros: "+"; ".join(errors)[:480])
+
+
+def cbers4a_wfi_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """True-color CBERS-4A/WFI background from official INPE surface-reflectance COGs.
+
+    The map is visual context only. RGB comes from BAND15/BAND14/BAND13 and
+    CMASK=127 is treated as clear; cloud/no-data pixels are left for a newer
+    intersecting scene to fill. We never substitute the IBGE cartographic raster.
+    """
+    import rasterio
+    from rasterio.warp import reproject, Resampling, transform_bounds
+    from rasterio.transform import from_bounds
+    from rasterio.windows import from_bounds as window_from_bounds, Window
+    from rasterio.features import geometry_mask
+    from datetime import datetime, timezone
+    g=gdf.to_crs(4326).copy()
+    minx,miny,maxx,maxy=map(float,g.total_bounds)
+    dx=max(maxx-minx,1e-8);dy=max(maxy-miny,1e-8)
+    cx=(minx+maxx)/2;cy=(miny+maxy)/2
+    factor=max(0.30,min(8.0,float(extent_factor)))
+    west,east=cx-dx*factor/2,cx+dx*factor/2
+    south,north=cy-dy*factor/2,cy+dy*factor/2
+    ratio=max(1.0,float(out_w))/max(1.0,float(out_h)); coslat=max(.25,math.cos(math.radians(cy)))
+    if (east-west)*coslat/(north-south)<ratio:
+        span=(north-south)*ratio/coslat;west,east=cx-span/2,cx+span/2
+    else:
+        span=(east-west)*coslat/ratio;south,north=cy-span/2,cy+span/2
+    width=max(320,min(1024,int(out_w)));height=max(240,min(768,int(out_h)))
+    target_transform=from_bounds(west,south,east,north,width,height)
+    aoi_mask=geometry_mask(list(g.geometry),out_shape=(height,width),transform=target_transform,invert=True)
+    aoi_pixels=max(1,int(aoi_mask.sum()))
+    geom=g.geometry.union_all().__geo_interface__
+    body={"collections":["CB4A-WFI-L4-SR-1"],"intersects":geom,"limit":60,
+          "sortby":[{"field":"properties.datetime","direction":"desc"}]}
+    import time
+    response=None;search_error=None
+    for attempt in range(4):
+        try:
+            items=_fetch_stac_features_paged("https://data.inpe.br/bdc/stac/v1/search",
+                                             body,timeout=(8,45),max_pages=20)
+            break
+        except requests.exceptions.RequestException as exc:
+            search_error=exc
+            status=getattr(getattr(exc,"response",None),"status_code",None)
+            retryable=(status in (429,500,502,503,504) or isinstance(
+                exc,(requests.exceptions.Timeout,requests.exceptions.ConnectionError)))
+            if not retryable or attempt>=3:raise RuntimeError(
+                "Busca STAC CBERS-4A/WFI indisponível após tentativas: "+type(exc).__name__) from None
+            time.sleep(1.5*(attempt+1))
+    if not items:raise RuntimeError("Catálogo INPE não retornou cenas CBERS-4A/WFI para a AOI")
+    # Sort by acquisition date; newest clear pixels win. Older archived scenes
+    # may fill geographic gaps, and the date range is reported to the user.
+    scenes=[]
+    for item in items:
+        props=item.get("properties") or {};stamp=str(props.get("datetime") or "")
+        try:
+            dt=datetime.fromisoformat(stamp.replace("Z","+00:00"))
+            scenes.append((dt,item))
+        except (ValueError,OverflowError):continue
+    if not scenes:raise RuntimeError("Catálogo INPE não forneceu datas de aquisição CBERS-4A/WFI válidas")
+    scenes.sort(key=lambda pair:pair[0],reverse=True)
+    rgb_clear=np.full((height,width,3),np.nan,dtype=np.float32)
+    rgb_observed=np.full((height,width,3),np.nan,dtype=np.float32)
+    source_dates=[];scene_ids=[];errors=[]
+
+    def read_cog_window(href,categorical=False):
+        """Read only bounded 512px quadrants from a remote COG."""
+        with rasterio.open(href) as src:
+            return _read_optical_cog_quadrants(
+                src,target_transform,"EPSG:4326",width,height,categorical=categorical)
+
+    attempts_by_scene={}
+    successful_scene_ids=set()
+    transport_counts={"DEFAULT_MULTIRANGE":0,"SERIAL_HTTP11":0,"SERIAL_NO_MULTIPLEX_HTTP11":0}
+    # Three recent candidates are enough for a visual mosaic; trying a whole
+    # catalog can stall the GUI for minutes when an endpoint is unhealthy.
+    expanded_scenes=[]
+    for index,(dt,item) in enumerate(scenes[:OPTICAL_MAX_SCENE_CANDIDATES]):
+        expanded_scenes.extend((dt,item,strategy)
+                               for strategy in (range(3) if index==0 else (0,)))
+    for dt,item,transport_strategy in expanded_scenes:
+        scene_id=str(item.get("id",""))
+        if scene_id in successful_scene_ids:continue
+        attempts_by_scene[scene_id]=attempts_by_scene.get(scene_id,0)+1
+        transport_counts[("DEFAULT_MULTIRANGE","SERIAL_HTTP11","SERIAL_NO_MULTIPLEX_HTTP11")[transport_strategy]]+=1
+        assets=item.get("assets") or {}
+        keys=("BAND15","BAND14","BAND13")
+        if not all((assets.get(k) or {}).get("href") for k in keys) or not (assets.get("CMASK") or {}).get("href"):
+            errors.append(str(item.get("id",""))+" sem RGB/CMASK");continue
+        scene=np.full((height,width,3),np.nan,dtype=np.float32)
+        try:
+            env={"GDAL_HTTP_TIMEOUT":"18","GDAL_HTTP_MAX_RETRY":"1",
+                 "GDAL_HTTP_MULTIRANGE":"YES",
+                 "GDAL_DISABLE_READDIR_ON_OPEN":"EMPTY_DIR",**tls_setup.gdal_env()}
+            if transport_strategy==1:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MERGE_CONSECUTIVE_RANGES":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
+            elif transport_strategy==2:
+                env.update({"GDAL_HTTP_MULTIRANGE":"SERIAL","GDAL_HTTP_MULTIPLEX":"NO",
+                            "CPL_VSIL_CURL_USE_HEAD":"NO","GDAL_HTTP_VERSION":"1.1"})
+            with rasterio.Env(**env):
+                mask=read_cog_window(assets["CMASK"]["href"],categorical=True)
+                # Current INPE catalogue collection defines CMASK: 127 clear,
+                # 255 cloud, 0 no data. Pixels outside clear are never blended.
+                clear=mask==127
+                for band_idx,key in enumerate(keys):
+                    band=read_cog_window(assets[key]["href"])
+                    scene[:,:,band_idx]=band
+            observed=np.isfinite(scene).all(axis=2) & (scene>0).any(axis=2) & (mask!=0)
+            valid=clear & observed
+            take_observed=observed & ~np.isfinite(rgb_observed).all(axis=2)
+            take_clear=valid & ~np.isfinite(rgb_clear).all(axis=2)
+            if take_observed.any():rgb_observed[take_observed]=scene[take_observed]
+            if take_clear.any():rgb_clear[take_clear]=scene[take_clear]
+            if take_observed.any() or take_clear.any():
+                scene_ids.append(scene_id);successful_scene_ids.add(scene_id);source_dates.append(dt.date().isoformat())
+            covered=int((np.isfinite(rgb_clear).all(axis=2)&aoi_mask).sum())
+            observed_covered=int((np.isfinite(rgb_observed).all(axis=2)&aoi_mask).sum())
+            if covered/aoi_pixels>=0.98 or observed_covered/aoi_pixels>=0.98:break
+        except Exception as exc:
+            try: detail=str(exc)
+            except Exception: detail="mensagem da exceção não decodificável"
+            errors.append(scene_id+" transporte="+str(transport_strategy+1)+": "+type(exc).__name__+": "+detail.encode("utf-8","replace").decode("utf-8")[:90])
+    rgb=rgb_clear.copy()
+    holes=~np.isfinite(rgb).all(axis=2)
+    observed=np.isfinite(rgb_observed).all(axis=2)&(rgb_observed>0).any(axis=2)
+    # Background imagery may include clouds if no clear pixel exists; keep it
+    # explicitly labelled instead of silently showing an unrelated cartographic map.
+    cloud_fallback_used=bool((holes&observed).any())
+    rgb[holes&observed]=rgb_observed[holes&observed]
+    valid=np.isfinite(rgb).all(axis=2)&(rgb>0).any(axis=2)
+    if valid.sum()<max(80,height*width//200):
+        raise RuntimeError("CBERS-4A/WFI sem pixels reais RGB suficientes na AOI. "+"; ".join(errors[:3]))
+    aoi_coverage=float((valid&aoi_mask).sum()/aoi_pixels)
+    if aoi_coverage<0.95:
+        raise RuntimeError("CBERS-4A/WFI não cobre 95% dos pixels da AOI; cobertura="+
+                           format(aoi_coverage,".3f")+". "+"; ".join(errors[:3]))
+    hi=float(np.percentile(rgb[valid],99))
+    if not np.isfinite(hi) or hi<=0:raise RuntimeError("Reflectância CBERS-4A inválida")
+    image=Image.fromarray(np.clip(np.nan_to_num(rgb,nan=0.0)/hi*255,0,255).astype(np.uint8),"RGB")
+    from PIL import ImageDraw
+    draw=ImageDraw.Draw(image,"RGBA")
+    for shape in g.geometry:
+        geoms=list(shape.geoms) if shape.geom_type=="MultiPolygon" else ([shape] if shape.geom_type=="Polygon" else [])
+        for poly in geoms:
+            pts=[((x-west)/(east-west)*width,(north-y)/(north-south)*height)
+                 for x,y in _xy_coords(poly.exterior.coords)]
+            if len(pts)>=4:draw.polygon(pts,fill=(255,138,0,32),outline=(255,138,0,255));draw.line(pts,width=3,fill=(255,138,0,255))
+    return {"image":image.resize((int(out_w),int(out_h)),Image.Resampling.LANCZOS),
+            "datetime":max(source_dates),"date_range":[min(source_dates),max(source_dates)],"scene_ids":scene_ids,
+            "provider":"CBERS-4A/WFI L4-SR / INPE STAC (COG, composição RGB de pixels claros)",
+            "resolution_m":55,"pixel_count":int(valid.sum()),"aoi_coverage_fraction":aoi_coverage,
+            "transport_attempt_count":sum(attempts_by_scene.values()),
+            "transport_strategy_counts":transport_counts,
+            "cloud_pixels_included":cloud_fallback_used,"polygons":[]}
+
+
+def _satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h):
+    """Stable per-AOI/viewport cache; never depends on the process CWD."""
+    import hashlib
+    geom=gdf.to_crs(4326).geometry.union_all()
+    token=hashlib.sha256(geom.wkb+f"|{float(extent_factor):.4f}|{int(out_w)}x{int(out_h)}".encode("ascii")).hexdigest()
+    root=Path(os.environ.get("LOCALAPPDATA",Path.home()))/"EnformVerde"/"SatelliteCache"
+    return root/(token+".png"),root/(token+".json")
+
+
+def _store_satellite_preview_cache(gdf,extent_factor,out_w,out_h,image,polygons,provider,credit):
+    try:
+        image_path,meta_path=_satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h)
+        image_path.parent.mkdir(parents=True,exist_ok=True)
+        image_tmp=image_path.with_suffix(".tmp.png");meta_tmp=meta_path.with_suffix(".tmp")
+        image.save(image_tmp,format="PNG")
+        meta={"provider":str(provider),"credit":str(credit),"stored_utc":datetime.now(timezone.utc).isoformat(),
+              "polygons":polygons,"width":int(out_w),"height":int(out_h)}
+        meta_tmp.write_text(json.dumps(meta,ensure_ascii=False),encoding="utf-8")
+        image_tmp.replace(image_path);meta_tmp.replace(meta_path)
+    except Exception:
+        # Cache is only a resilience aid; a write failure cannot block display.
+        return
+
+
+def _read_satellite_preview_cache(gdf,extent_factor,out_w,out_h):
+    try:
+        image_path,meta_path=_satellite_preview_cache_paths(gdf,extent_factor,out_w,out_h)
+        meta=json.loads(meta_path.read_text(encoding="utf-8"))
+        with Image.open(image_path) as cached:image=cached.convert("RGB").copy()
+        return image,meta
+    except Exception:
+        return None
+
+
+def nasa_gibs_preview(gdf,out_w=1000,out_h=560,extent_factor=1.36):
+    """Keyless public NASA GIBS VIIRS true-color preview; visual context only."""
+    from datetime import timedelta
+    from PIL import ImageDraw
+    g=gdf.to_crs(4326).copy()
+    minx,miny,maxx,maxy=map(float,g.total_bounds)
+    dx=max(maxx-minx,1e-8); dy=max(maxy-miny,1e-8)
+    cx=(minx+maxx)/2; cy=(miny+maxy)/2
+    factor=max(0.30,min(8.0,float(extent_factor)))
+    west,east=cx-dx*factor/2,cx+dx*factor/2
+    south,north=cy-dy*factor/2,cy+dy*factor/2
+    # Keep the requested image proportions while accounting for longitude scale.
+    ratio=max(0.1,float(out_w))/max(1.0,float(out_h))
+    coslat=max(0.25,math.cos(math.radians(cy)))
+    lon_span=max(east-west,1e-8); lat_span=max(north-south,1e-8)
+    if lon_span*coslat/lat_span < ratio:
+        lon_span=lat_span*ratio/coslat
+        west,east=cx-lon_span/2,cx+lon_span/2
+    else:
+        lat_span=lon_span*coslat/ratio
+        south,north=cy-lat_span/2,cy+lat_span/2
+    width=max(320,min(1600,int(out_w))); height=max(240,min(1200,int(out_h)))
+    endpoint="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
+    today=datetime.now(timezone.utc).date()
+    errors=[]
+    for days_back in range(1,8):
+        day=(today-timedelta(days=days_back)).isoformat()
+        params={"SERVICE":"WMS","VERSION":"1.1.1","REQUEST":"GetMap",
+                "LAYERS":"VIIRS_SNPP_CorrectedReflectance_TrueColor","STYLES":"",
+                "FORMAT":"image/jpeg","TRANSPARENT":"FALSE","SRS":"EPSG:4326",
+                "BBOX":f"{west:.8f},{south:.8f},{east:.8f},{north:.8f}",
+                "WIDTH":str(width),"HEIGHT":str(height),"TIME":day}
+        try:
+            rr=requests.get(endpoint,params=params,timeout=(8,30))
+            rr.raise_for_status()
+            if "image" not in (rr.headers.get("Content-Type") or "").lower():
+                raise RuntimeError("NASA GIBS não retornou imagem")
+            im=Image.open(io.BytesIO(rr.content)).convert("RGB")
+            d=ImageDraw.Draw(im,"RGBA"); iw,ih=im.size
+            def px(lon,lat):
+                return ((float(lon)-west)/max(east-west,1e-12)*iw,
+                        (north-float(lat))/max(north-south,1e-12)*ih)
+            for geom in g.geometry:
+                geoms=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in geoms:
+                    pts=[px(lon,lat) for lon,lat in _xy_coords(poly.exterior.coords)]
+                    if len(pts)>=4:
+                        d.polygon(pts,fill=(255,138,0,32),outline=(255,138,0,255))
+                        d.line(pts,width=max(2,round(iw/500)),fill=(255,138,0,255),joint="curve")
+            return {"image":im.resize((int(out_w),int(out_h),),Image.Resampling.LANCZOS),
+                    "datetime":day,"provider":"NASA GIBS / VIIRS SNPP true color"}
+        except Exception as exc:
+            errors.append(f"{day}: {type(exc).__name__}: {exc}")
+    raise RuntimeError("NASA GIBS sem imagem disponível nos últimos 7 dias: "+" | ".join(errors[-2:]))
+
+class CarbonTableGrid:
+    """Compact, scrollable executive table with a visible border around every cell."""
+    def __init__(self,parent,headings,widths):
+        self._headings=list(headings); self._widths=list(widths); self._rows=[]; self._next_id=0
+        self.canvas=tk.Canvas(parent,height=250,background="#FFFFFF",highlightthickness=1,
+                              highlightbackground="#AAB8B2")
+        self.xscroll=ttk.Scrollbar(parent,orient="horizontal",command=self.canvas.xview)
+        self.yscroll=ttk.Scrollbar(parent,orient="vertical",command=self.canvas.yview)
+        self.canvas.configure(xscrollcommand=self.xscroll.set,yscrollcommand=self.yscroll.set)
+        self.canvas.grid(row=0,column=0,sticky="nsew"); self.yscroll.grid(row=0,column=1,sticky="ns")
+        self.xscroll.grid(row=1,column=0,sticky="ew")
+        parent.rowconfigure(0,weight=1); parent.columnconfigure(0,weight=1)
+        self.body=tk.Frame(self.canvas,background="#AAB8B2")
+        self.window=self.canvas.create_window((0,0),window=self.body,anchor="nw")
+        self.body.bind("<Configure>",lambda _event:self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self._render()
+
+    def get_children(self,_item=""):
+        return tuple(iid for iid,_values in self._rows)
+
+    def delete(self,iid):
+        self._rows=[row for row in self._rows if row[0]!=iid]
+        self._render()
+
+    def insert(self,_parent,_index,values):
+        iid=self._next_id; self._next_id+=1; self._rows.append((iid,tuple(values)))
+        self._render(); return iid
+
+    def _render(self):
+        for child in self.body.winfo_children():child.destroy()
+        for col,(heading,width) in enumerate(zip(self._headings,self._widths)):
+            self.body.grid_columnconfigure(col,minsize=width,weight=0)
+            tk.Label(self.body,text=heading,width=max(12,width//8),wraplength=width-12,
+                justify="center",anchor="center",font=("Segoe UI",9,"bold"),
+                fg="#FFFFFF",bg="#0B3D2E",relief="solid",borderwidth=1,
+                padx=5,pady=7).grid(row=0,column=col,sticky="nsew")
+        for row_index,(_iid,values) in enumerate(self._rows,1):
+            fill="#FFFFFF" if row_index%2 else "#F4F6F5"
+            for col,(value,width) in enumerate(zip(values,self._widths)):
+                tk.Label(self.body,text=str(value),width=max(12,width//8),wraplength=width-12,
+                    justify="left",anchor="w",font=("Segoe UI",9),fg="#34413E",bg=fill,
+                    relief="solid",borderwidth=1,padx=6,pady=7).grid(row=row_index,column=col,sticky="nsew")
+        self.body.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title("Enform Verde"); screen_w=self.winfo_screenwidth(); screen_h=self.winfo_screenheight(); win_w=max(1100,min(1713,screen_w-48)); win_h=max(620,min(918,screen_h-88)); self.geometry(f"{win_w}x{win_h}"); self.minsize(min(1024,win_w),min(600,win_h))
-        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue()
+        self.inv=None; self.gdf=None; self.soil_raster=None; self.project={"version":APP_VERSION}; self.active_source=None; self.active_input_id=None; self._analysis_running=False; self._analysis_generation=0; self._analysis_queue=queue.Queue(); self._ibge_queue=queue.Queue(); self._ibge_generation=0; self._ibge_pending=False; self._pending_execute=False; self._vector_load_pending=False; self._map_generation=0; self._map_refresh_job=None; self._map_queue=queue.Queue(); self._optical_worker_running=False; self._optical_refresh_pending=None; self._vector_load_generation=0; self._vector_load_queue=queue.Queue(); self._inventory_load_generations={"evidence":0,"biodiversity":0}; self._inventory_load_queues={"evidence":queue.Queue(),"biodiversity":queue.Queue()}; self._weather_query_generation=0; self._crop_forecast_queue=queue.Queue(); self._crop_monitoring_base_report=""
+        # Seed the user's confirmed token issuance date (08/11/2026) only
+        # when no newer issuance/renewal record exists.
+        try:
+            from esa_maap_token_renewal import initialize_current_token_date
+            initialize_current_token_date()
+        except (OSError,ValueError):
+            pass  # Filesystem failures must never prevent the GUI opening.
         self._style(); self._ui(); self.bind("<Return>",self.execute)
+        self.after(1600,self._check_maap_token_renewal)
     def _style(self):
         s=ttk.Style(self)
         try:s.theme_use("vista")
@@ -652,6 +1732,8 @@ class App(tk.Tk):
         s.configure(".",font=("Segoe UI",10),foreground=TEXT)
         s.configure("Title.TLabel",font=("Segoe UI",20,"bold"),foreground=ORANGE)
         s.configure("H.TLabel",font=("Segoe UI",12,"bold"),foreground=FOREST)
+        s.configure("Exec.TLabelframe",padding=8)
+        s.configure("Exec.TLabelframe.Label",font=("Segoe UI",10,"bold"),foreground=FOREST)
         s.configure("Run.TButton",font=("Segoe UI",10,"bold"),padding=10)
         s.configure("TButton",padding=7)
     def _ui(self):
@@ -693,7 +1775,7 @@ class App(tk.Tk):
 
         self.nb=ttk.Notebook(main); self.nb.pack(fill="both",expand=True)
         self.tabs=[]
-        for n in ["Propriedade (CAR)","Mapas e limites","Carregar produtos SAR / AGB","Carbono Total","Base Científica e Modelos"]:
+        for n in ["Propriedade (CAR)","Mapas e limites","Carregar produtos SAR / AGB","Carbono — formações nativas","Base Científica e Modelos","Monitoramento — áreas cultivadas"]:
             f=ttk.Frame(self.nb,padding=14); self.nb.add(f,text=n); self.tabs.append(f)
 
         nav_items=[
@@ -701,7 +1783,7 @@ class App(tk.Tk):
           ("◈   Fitofisionomia (IBGE)",1),("◆   Carregar produtos\n     SAR / AGB",2),
           ("◉   Biomassa Aérea (AGB)",3),("♨   Carbono no Solo",3),
           ("●   Carbono Total",3),("▤   Resultados e Relatório",3),
-          ("⚙   Configurações",2),("▥   Base Científica e\n     Modelos",4),("ⓘ   Sobre",4)]
+          ("🌱   Monitoramento de\n     áreas cultivadas",5),("⚙   Configurações",2),("▥   Base Científica e\n     Modelos",4),("ⓘ   Sobre",4)]
         self.nav_buttons=[]
         for label,idx in nav_items:
             btn=tk.Button(nav,text=label,anchor="w",justify="left",relief="flat",bd=0,
@@ -718,13 +1800,40 @@ class App(tk.Tk):
                     btn.configure(bg="#F6F8F8",fg="#233B49",font=("Segoe UI",10))
         self.nb.bind("<<NotebookTabChanged>>",mark_tab)
 
-        self._project(); self._spatial(); self._remote(); self._results(); self._sources()
+        self._project(); self._spatial(); self._remote(); self._results(); self._sources(); self._cultivated_results()
         mark_tab()
         footer=ttk.Frame(root,padding=(14,4)); footer.pack(fill="x",side="bottom")
         ttk.Label(footer,text="v"+APP_VERSION).pack(side="left")
         self.status=tk.StringVar(value="Pronto. Informe o CAR ou carregue o vetor da propriedade.")
         ttk.Label(footer,textvariable=self.status,anchor="center").pack(side="left",fill="x",expand=True)
         ttk.Label(footer,text="Sistema de Estimativa de Estoques de Carbono em Vegetação Nativa").pack(side="right")
+
+    def _executive_card(self,parent,title,initial,*,wraplength=1040):
+        """Create the same clearly bordered executive-summary box in each tab."""
+        box=ttk.LabelFrame(parent,text=title,style="Exec.TLabelframe",padding=(10,7))
+        value=tk.StringVar(value=initial)
+        label=ttk.Label(box,textvariable=value,justify="left",anchor="w",wraplength=wraplength,
+                        foreground=TEXT)
+        label.pack(fill="x",expand=True)
+        def resize(event):
+            label.configure(wraplength=max(320,event.width-28))
+        box.bind("<Configure>",resize)
+        return box,value
+
+    @staticmethod
+    def _executive_excerpt(report,labels,*,limit=5):
+        """Pick decision lines for the framed card; leave full report below."""
+        lines=[line.strip() for line in str(report or "").splitlines() if line.strip()]
+        selected=[]
+        for label in labels:
+            line=next((x for x in lines if x.casefold().startswith(label.casefold())),None)
+            if line and line not in selected:
+                selected.append(line)
+            if len(selected)>=limit:
+                break
+        # If a report's preferred headings change, still show its opening
+        # result lines instead of leaving the executive card blank.
+        return "\n".join(selected or lines[:limit]) if lines else "Dados executivos ainda indisponíveis; consulte a auditoria para o motivo."
 
     def _project(self):
         f=self.tabs[0]; ttk.Label(f,text="Abrir análise",style="H.TLabel").grid(row=0,column=0,columnspan=4,sticky="w")
@@ -739,6 +1848,10 @@ class App(tk.Tk):
         ttk.Label(f,text="KML • KMZ • SHP • GeoJSON • GPKG",foreground="#666").grid(row=5,column=2,sticky="w")
         self.vector_status=tk.StringVar(value="Nenhum arquivo vetorial carregado.")
         ttk.Label(f,textvariable=self.vector_status,foreground="#155D43",wraplength=900).grid(row=6,column=1,columnspan=3,sticky="w",padx=10,pady=(2,8))
+        self.property_exec_box,self.property_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — PROPRIEDADE",
+            "Perímetro: aguardando arquivo, CAR ou CCIR. A análise começa após validar a geometria.")
+        self.property_exec_box.grid(row=7,column=0,columnspan=4,sticky="ew",pady=(12,4))
         f.columnconfigure(1,weight=1)
 
     def _spatial(self):
@@ -755,53 +1868,78 @@ class App(tk.Tk):
         f.bind("<Configure>",sync_scroll); tab_canvas.bind("<Configure>",sync_scroll)
 
         ttk.Label(f,text="Perímetro, diagnóstico e solo",style="H.TLabel").pack(anchor="w")
+        self.spatial_exec_box,self.spatial_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — ÁREA E REFERÊNCIAS",
+            "Área, bioma e referências IBGE serão resumidos após carregar o perímetro.")
+        self.spatial_exec_box.pack(fill="x",pady=(6,4))
         row=ttk.Frame(f); row.pack(fill="x",pady=8)
-        ttk.Button(row,text="Buscar COS 0–30 cm — Embrapa",command=self.auto_soil).pack(side="left")
+        ttk.Button(row,text="Baixar raster COS 0–30 cm (auxiliar)",command=self.auto_soil).pack(side="left")
         ttk.Button(row,text="Carregar GeoTIFF de COS",command=self.pick_soil).pack(side="left",padx=8)
-        ttk.Button(row,text="VISUALIZAR SATÉLITE + POLÍGONO",command=self.show_google_map,style="Run.TButton").pack(side="left",padx=8)
+        ttk.Label(row,text="Mapa temático local de uso/cobertura após a análise",foreground="#155D43").pack(side="left",padx=8)
         ttk.Button(row,text="−",width=3,command=self.map_zoom_out).pack(side="left",padx=(12,2))
         ttk.Button(row,text="+",width=3,command=self.map_zoom_in).pack(side="left",padx=2)
         ttk.Button(row,text="AJUSTAR AOI",command=self.map_zoom_fit).pack(side="left",padx=(2,8))
         ttk.Label(row,text="Zoom: botões ± ou roda do mouse",foreground="#666").pack(side="left",padx=(6,0))
-        keyrow=ttk.Frame(f); keyrow.pack(fill="x",pady=(0,6))
-        ttk.Label(keyrow,text="Chave Google Maps Static API:").pack(side="left")
-        self.google_maps_key=tk.StringVar(value=os.environ.get("GOOGLE_MAPS_API_KEY",""))
-        ttk.Entry(keyrow,textvariable=self.google_maps_key,show="•",width=48).pack(side="left",padx=8)
-        ttk.Label(keyrow,text="Fundo padrão: mapa IBGE 2025/BC250 offline; imagens online são opcionais.",foreground="#666").pack(side="left")
 
         ibgebox=ttk.LabelFrame(f,text="Classificação oficial IBGE",padding=(10,7)); ibgebox.pack(fill="x",pady=(0,6))
         self.ibge_biome_display=tk.StringVar(value="Aguardando perímetro.")
-        self.ibge_phys_display=tk.StringVar(value="Aguardando classificação legenda_1.")
+        self.ibge_phys_display=tk.StringVar(value="Aguardando mapeamento da vegetação nativa e interseção IBGE.")
         self.aoi_area_display=tk.StringVar(value="Aguardando perímetro.")
-        ttk.Label(ibgebox,text="Bioma IBGE:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
+        ttk.Label(ibgebox,text="Bioma:",font=("Segoe UI",9,"bold")).grid(row=0,column=0,sticky="nw")
         ttk.Label(ibgebox,textvariable=self.ibge_biome_display,wraplength=840).grid(row=0,column=1,sticky="w",padx=(8,0))
-        ttk.Label(ibgebox,text="Fitofisionomia IBGE (legenda_1):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
-        ttk.Label(ibgebox,textvariable=self.ibge_phys_display,wraplength=840,foreground="#155D43").grid(row=1,column=1,sticky="w",padx=(8,0),pady=(4,0))
+        ttk.Label(ibgebox,text="Fitofisionomias (SAR atual / potencial IBGE):",font=("Segoe UI",9,"bold")).grid(row=1,column=0,sticky="nw",pady=(4,0))
+        # Multiline read-only text: complete class names stay visible at any window width.
+        phys_frame=ttk.Frame(ibgebox)
+        phys_frame.grid(row=1,column=1,sticky="ew",padx=(8,0),pady=(4,0))
+        self.ibge_phys_text=tk.Text(phys_frame,height=4,width=45,wrap="word",font=("Segoe UI",9),
+                                   foreground="#155D43",background="#F4F6F5",relief="flat",
+                                   borderwidth=0,highlightthickness=0,state="disabled")
+        phys_scroll=ttk.Scrollbar(phys_frame,orient="vertical",command=self.ibge_phys_text.yview)
+        self.ibge_phys_text.configure(yscrollcommand=phys_scroll.set)
+        self.ibge_phys_text.pack(side="left",fill="both",expand=True)
+        phys_scroll.pack(side="right",fill="y")
+        phys_frame.columnconfigure(0,weight=1)
+        def refresh_ibge_phys(*_):
+            self.ibge_phys_text.configure(state="normal")
+            self.ibge_phys_text.delete("1.0","end")
+            self.ibge_phys_text.insert("1.0",self.ibge_phys_display.get())
+            self.ibge_phys_text.configure(state="disabled")
+        self.ibge_phys_display.trace_add("write",refresh_ibge_phys)
+        refresh_ibge_phys()
         ttk.Label(ibgebox,text="Área do polígono:",font=("Segoe UI",9,"bold")).grid(row=2,column=0,sticky="nw",pady=(4,0))
         ttk.Label(ibgebox,textvariable=self.aoi_area_display,foreground="#155D43").grid(row=2,column=1,sticky="w",padx=(8,0),pady=(4,0))
         ibgebox.columnconfigure(1,weight=1)
 
         map_frame=ttk.Frame(f); map_frame.pack(fill="both",expand=True,pady=(2,6))
-        self.map_canvas=tk.Canvas(map_frame,height=420,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
+        self.map_status=tk.StringVar(value="Aguardando classificação temática de uso/cobertura.")
+        ttk.Label(map_frame,textvariable=self.map_status,anchor="w",foreground="#52645E").grid(row=0,column=0,sticky="ew",pady=(0,4))
+        ttk.Label(map_frame,text="Legenda com classes, área, percentual e origem",foreground="#52645E").grid(row=0,column=1,sticky="e",padx=(8,0),pady=(0,4))
+        self.map_canvas=tk.Canvas(map_frame,height=560,bg="#DDE4E1",highlightthickness=1,highlightbackground="#B8C5C0",
                                   xscrollincrement=20,yscrollincrement=20)
         self.map_hscroll=ttk.Scrollbar(map_frame,orient="horizontal",command=self.map_canvas.xview)
         self.map_vscroll=ttk.Scrollbar(map_frame,orient="vertical",command=self.map_canvas.yview)
         self.map_canvas.configure(xscrollcommand=self.map_hscroll.set,yscrollcommand=self.map_vscroll.set)
-        self.map_canvas.grid(row=0,column=0,sticky="nsew"); self.map_vscroll.grid(row=0,column=1,sticky="ns"); self.map_hscroll.grid(row=1,column=0,sticky="ew")
-        map_frame.rowconfigure(0,weight=1); map_frame.columnconfigure(0,weight=1)
-        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._map_extent_factor=1.36; self._map_provider="OFFLINE_IBGE"
+        self.map_canvas.grid(row=1,column=0,sticky="nsew"); self.map_vscroll.grid(row=1,column=1,sticky="ns"); self.map_hscroll.grid(row=2,column=0,sticky="ew")
+        map_frame.rowconfigure(1,weight=1); map_frame.columnconfigure(0,weight=1)
+        self._map_redraw_job=None; self._satellite_map_visible=False; self._last_map_size=None; self._last_canvas_size=None; self._map_extent_factor=1.36; self._map_provider="SATELLITE_PENDING"; self._optical_attempts_by_generation={}
         self.map_canvas.bind("<Configure>",self._on_map_resize)
         self.map_canvas.bind("<MouseWheel>",self._on_map_wheel)
         self.map_canvas.bind("<Button-4>",lambda e:self.map_zoom_in())
         self.map_canvas.bind("<Button-5>",lambda e:self.map_zoom_out())
         self.map_canvas.bind("<Double-Button-1>",lambda e:self.map_zoom_fit())
-        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
+        self.map_canvas.create_text(20,20,anchor="nw",text="Carregue um perímetro para ver o mapa temático após a análise.",fill="#455")
         self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
 
-        spatial_box=ttk.Frame(f); spatial_box.pack(fill="x",pady=4)
-        self.spatial_text=tk.Text(spatial_box,height=7,wrap="word",yscrollcommand=lambda *a:spatial_scroll.set(*a))
+        spatial_box=ttk.LabelFrame(f,text="Detalhes do perímetro e diagnóstico",style="Exec.TLabelframe"); spatial_box.pack(fill="x",pady=4)
+        self.spatial_text=tk.Text(spatial_box,height=7,wrap="none",
+            yscrollcommand=lambda *a:spatial_scroll.set(*a),
+            xscrollcommand=lambda *a:spatial_hscroll.set(*a))
         spatial_scroll=ttk.Scrollbar(spatial_box,orient="vertical",command=self.spatial_text.yview)
-        self.spatial_text.pack(side="left",fill="both",expand=True); spatial_scroll.pack(side="right",fill="y")
+        spatial_hscroll=ttk.Scrollbar(spatial_box,orient="horizontal",command=self.spatial_text.xview)
+        spatial_box.rowconfigure(0,weight=1); spatial_box.columnconfigure(0,weight=1)
+        self.spatial_text.grid(row=0,column=0,sticky="nsew")
+        spatial_scroll.grid(row=0,column=1,sticky="ns")
+        spatial_hscroll.grid(row=1,column=0,sticky="ew")
         self._bind_text_scroll(self.spatial_text)
         self._set(self.spatial_text,"Nenhum perímetro carregado. Use CAR, CCIR/SIGEF ou arquivo vetorial na tela de abertura.")
 
@@ -813,10 +1951,7 @@ class App(tk.Tk):
 
     def _apply_map_zoom(self):
         if self.gdf is None:return
-        if getattr(self,"_map_provider","").startswith("OFFLINE"):
-            self._draw_offline_brazil_basemap("Mapa cartográfico IBGE 2025/BC250 — offline")
-        else:
-            self.show_google_map(refresh=True,prefer_public=True)
+        self._draw_land_use_map(self.project.get("land_use") or {})
 
     def map_zoom_in(self):
         if self.gdf is None:return
@@ -833,21 +1968,116 @@ class App(tk.Tk):
         self._map_extent_factor=1.36
         self._apply_map_zoom()
 
+    def _save_optical_diagnostic(self,generation,provider,failures):
+        """Persist source-by-source outcomes; redact remote URLs and secrets."""
+        try:
+            if generation!=self._map_generation:return
+            root=Path.home()/".enform_verde"
+            root.mkdir(parents=True,exist_ok=True)
+            rows=[]
+            for entry in failures:
+                message=re.sub(r"https?://[^\s]+","[URL_REDACTED]",str(entry))
+                message=re.sub(r"(?i)(sig|token|client_secret|password)=([^&\s]+)",
+                               r"\1=[REDACTED]",message)
+                rows.append(message[:350])
+            area=geom_metrics(self.gdf)["area_ha"] if self.gdf is not None else None
+            data={"diagnostic_version":1,"app_version":APP_VERSION,
+                  "area_ha":area,"provider_displayed":str(provider),
+                  "attempt_errors":rows,
+                  "note":"Display backdrop only; no use in SAR classifier or carbon."}
+            dest=root/"ultimo_diagnostico_imagem_otica.json"
+            tmp=dest.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding="utf-8")
+            tmp.replace(dest)
+        except Exception:
+            pass  # Never lose the image because the diagnostic could not be written.
+
+    def _scroll_spatial_widget_into_view(self,widget,*,margin=12):
+        """Bring a nested map canvas into the scrollable page's viewport.
+
+        The live canvas smoke had to scroll the page manually before the map
+        was visible. The application must do that itself when the user asks
+        to open satellite imagery; loading pixels below the fold is not a
+        visible map result.
+        """
+        parent=getattr(widget,"master",None)
+        while parent is not None:
+            if isinstance(parent,tk.Canvas) and parent is not widget:
+                try:
+                    region=parent.bbox("all")
+                    if not region:return
+                    # The former desktop smoke could shrink the canvas, but
+                    # the normal app left its 560px design height unchanged.
+                    # Fit it to the visible page before computing the raster
+                    # dimensions so the full image is on screen after scroll.
+                    available_h=max(180,int(parent.winfo_height())-2*int(margin))
+                    current_h=max(1,int(widget.winfo_height()))
+                    if current_h>available_h:
+                        widget.configure(height=available_h)
+                        parent.update_idletasks()
+                        region=parent.bbox("all") or region
+                    top,bottom=int(region[1]),int(region[3])
+                    total=max(1,bottom-top)
+                    viewport_top=float(parent.canvasy(0))
+                    viewport_bottom=float(parent.canvasy(max(1,parent.winfo_height())))
+                    widget_top=float(parent.canvasy(widget.winfo_rooty()-parent.winfo_rooty()))
+                    widget_bottom=widget_top+max(1,int(widget.winfo_height()))
+                    if widget_top<viewport_top+margin or widget_bottom>viewport_bottom-margin:
+                        desired=max(top,widget_top-margin)
+                        max_top=max(top,bottom-max(1,int(parent.winfo_height())))
+                        desired=min(desired,max_top)
+                        parent.yview_moveto(max(0.0,min(1.0,(desired-top)/total)))
+                        parent.update_idletasks()
+                except (tk.TclError,ValueError,TypeError):
+                    pass
+                return
+            parent=getattr(parent,"master",None)
+
     def show_google_map(self,refresh=False,prefer_public=False):
-        """Satellite visualization: Google when keyed, then Sentinel-2, then Esri, then offline vector."""
+        """Visual-only CBERS-4A/WFI primary backdrop; Sentinel-2 fallback; never an analytical input."""
         if self.gdf is None:return messagebox.showwarning("Mapa","Carregue/resolva o polígono primeiro.")
+        if self._optical_worker_running:
+            self._optical_refresh_pending=(bool(refresh),bool(prefer_public))
+            self.map_status.set("Imagem em carregamento; o novo enquadramento será processado em seguida.")
+            return
+        self._scroll_spatial_widget_into_view(self.map_canvas)
+        self.update_idletasks()
+        if not getattr(self,"_satellite_map_visible",False):
+            self._draw_aoi_outline("Carregando imagem óptica real — exibindo o perímetro temporariamente")
         self._map_generation+=1; generation=self._map_generation
         g=self.gdf.to_crs(4326).copy()
         viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
         display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
-        w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
+        # Keep a bounded display raster; remote providers are read in <=512px
+        # quadrants, so very large canvas sizes cannot trigger giant COG reads.
+        w=max(500,min(1600,round(viewport_w*display_scale)))
+        h=max(280,min(1200,round(viewport_h*display_scale)))
         ratio=w/max(h,1)
         if ratio>=1:
             req_w=1200; req_h=max(320,min(1200,round(1200/ratio)))
         else:
             req_h=1200; req_w=max(320,min(1200,round(1200*ratio)))
         key=self.google_maps_key.get().strip(); extent_factor=max(0.30,min(8.0,float(self._map_extent_factor)))
-        if not refresh:self.status.set("Carregando imagem de satélite e perímetro...")
+        cached_preview=_read_satellite_preview_cache(g,extent_factor,w,h)
+        cached_optical=None
+        if cached_preview:
+            cached_image,cached_meta=cached_preview
+            cached_provider=str(cached_meta.get("provider") or "")
+            if "CBERS" in cached_provider.upper() or "SENTINEL-2" in cached_provider.upper():
+                try:
+                    _require_visible_optical_image(cached_image,"cache "+cached_provider)
+                    cached_optical=(cached_image,cached_meta,cached_provider)
+                    credit="Imagem óptica em cache • fonte original: "+cached_provider
+                    self._finish_satellite_map(generation,cached_image,cached_meta.get("polygons") or [],
+                                               "CACHE ÓPTICO • "+cached_provider,None,credit,None)
+                    self.map_status.set("Exibindo imagem óptica em cache enquanto atualiza CBERS-4A e Sentinel-2…")
+                except Exception:
+                    # A cache entry from an earlier build must never resurrect
+                    # a blank canvas or prevent the live provider failover.
+                    for bad_path in _satellite_preview_cache_paths(g,extent_factor,w,h):
+                        try:bad_path.unlink(missing_ok=True)
+                        except OSError:pass
+        if not refresh:self.map_status.set("Carregando CBERS-4A/WFI; Sentinel-2 será tentado em seguida.")
         self.update_idletasks()
 
         def rings():
@@ -866,7 +2096,14 @@ class App(tk.Tk):
 
         def google_image(rs):
             if not key:return None
-            params=[("size",f"{min(req_w,640)}x{min(req_h,640)}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
+            target_ratio=w/max(h,1)
+            if target_ratio >= 1:
+                api_w=640
+                api_h=max(1,round(api_w/target_ratio))
+            else:
+                api_h=640
+                api_w=max(1,round(api_h*target_ratio))
+            params=[("size",f"{api_w}x{api_h}"),("scale","2"),("maptype","satellite"),("format","png"),("key",key)]
             for coords in rs:
                 pts="|".join(f"{lat:.6f},{lon:.6f}" for lon,lat in coords)
                 params.append(("path","color:0xff8a00ff|weight:4|fillcolor:0xff8a0033|"+pts))
@@ -905,36 +2142,83 @@ class App(tk.Tk):
             if not rs:
                 self._map_queue.put((generation,None,[],"Mapa",None,None,"geometria sem polígono utilizável"))
                 return
-            if key and not prefer_public:
-                try:
-                    view=google_image(rs)
-                    self._map_queue.put((generation,view,[],"Google Maps Static API",None,"Google",None))
-                    return
-                except Exception as e:errors.append("Google: "+str(e))
             try:
-                p=sentinel2_preview(g,extent_factor=extent_factor)
-                copyright=f"Sentinel-2 L2A • {(p.get('datetime') or '')[:10]} • nuvens da cena {float(p.get('cloud_cover',0)):.1f}%"
+                p=cbers4a_wfi_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","CBERS-4A/WFI"))
+                dr=p.get("date_range") or [p.get("datetime") or "",p.get("datetime") or ""]
+                cloud_note=" • nuvens em lacunas" if p.get("cloud_pixels_included") else " • pixels claros"
+                copyright=f"CBERS-4A/WFI • INPE • 55 m • {dr[0]}–{dr[1]}{cloud_note}"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],[],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,p["image"],[],p["provider"],None,copyright,None))
+                return
+            except Exception as e:errors.append("CBERS-4A/WFI INPE: "+str(e))
+            try:
+                p=sentinel2_earthsearch_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","Sentinel-2 Earth Search"))
+                copyright=f"Sentinel-2 L2A • Earth Search/AWS • {(p.get('datetime') or '')[:10]} • nuvens {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
                 self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
-            except Exception as e:errors.append("Sentinel-2: "+str(e))
+            except Exception as e:errors.append("Sentinel-2 Earth Search/AWS: "+str(e))
             try:
-                view=esri_export(rs,"World_Imagery","Esri World Imagery")
-                self._map_queue.put((generation,view,[],"Esri World Imagery",None,"Esri / World Imagery",None))
+                p=sentinel2_preview(g,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","Sentinel-2 MPC"))
+                copyright=f"Sentinel-2 L2A • Planetary Computer • {(p.get('datetime') or '')[:10]} • nuvens da cena {format_ptbr(float(p.get('cloud_cover',0)),1)}%"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p["polygons"],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,p["image"],p["polygons"],p["provider"],None,copyright,None))
                 return
-            except Exception as e:errors.append("Esri Imagery: "+str(e))
+            except Exception as e:errors.append("Sentinel-2 Planetary Computer: "+str(e))
+            if cached_optical:
+                image,meta,original=cached_optical
+                credit="Imagem óptica em cache • fonte original: "+original
+                self._save_optical_diagnostic(generation,"CACHE_OPTICAL",errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,image,meta.get("polygons") or [],
+                                     "CACHE ÓPTICO • "+original,None,credit,None))
+                return
+            # Independent, keyless global optical fallback. VIIRS is lower
+            # resolution than CBERS/Sentinel-2 and is strictly visual context;
+            # it never feeds classification, vigor, or carbon calculations.
             try:
-                view=esri_export(rs,"World_Street_Map","Esri World Street Map")
-                self._map_queue.put((generation,view,[],"Esri World Street Map",None,"Esri / World Street Map",None))
+                p=nasa_gibs_preview(g,out_w=w,out_h=h,extent_factor=extent_factor)
+                _require_visible_optical_image(p.get("image"),p.get("provider","NASA GIBS"))
+                copyright=f"NASA GIBS • VIIRS SNPP • imagem de {p.get('datetime','')} • contexto visual"
+                _store_satellite_preview_cache(g,extent_factor,w,h,p["image"],p.get("polygons") or [],p["provider"],copyright)
+                self._save_optical_diagnostic(generation,p["provider"],errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,p["image"],p.get("polygons") or [],p["provider"],None,copyright,None))
                 return
-            except Exception as e:errors.append("Esri Street: "+str(e))
+            except Exception as e:errors.append("NASA GIBS VIIRS: "+str(e))
+            # Last online optical context fallback: actual aerial/satellite imagery
+            # mosaic. Acquisition date/sensor cannot be inferred from this API.
+            # Do not use it for classifying SAR land cover or deriving carbon.
             try:
-                view,_=offline_brazil_preview(g,extent_factor,(w,h))
-                self._map_queue.put((generation,view,[],"IBGE offline",None,"IBGE 2025/BC250 — estados, municípios, hidrografia e infraestrutura; rasterização local",None))
+                im=esri_export(rs,service="World_Imagery")
+                _require_visible_optical_image(im,"Esri World Imagery")
+                copyright="Esri World Imagery • mosaico óptico de referência • data e sensor N/D"
+                _store_satellite_preview_cache(g,extent_factor,w,h,im,[],"ESRI_WORLD_IMAGERY",copyright)
+                self._save_optical_diagnostic(generation,"ESRI_WORLD_IMAGERY",errors)
+                self._optical_attempts_by_generation[generation]=list(errors)
+                self._map_queue.put((generation,im,[],"ESRI_WORLD_IMAGERY",None,copyright,None))
                 return
-            except Exception as e:errors.append("Mapa IBGE offline: "+str(e))
-            self._map_queue.put((generation,None,[],"Google/Sentinel-2/Esri/IBGE",None,None," | ".join(errors)))
+            except Exception as e:errors.append("Esri World Imagery: "+type(e).__name__+": "+str(e)[:180])
+            # A fitofisionomia IBGE remains an analytical vector input. It is
+            # never reported as an optical image or accepted as map delivery.
+            self._save_optical_diagnostic(generation,"NO_OPTICAL_IMAGE",errors)
+            self._optical_attempts_by_generation[generation]=list(errors)
+            self._map_queue.put((generation,None,[],"NO_OPTICAL_IMAGE",None,None," | ".join(errors)))
 
-        threading.Thread(target=worker,name="EnformMap",daemon=True).start()
+        self._optical_worker_running=True
+        try:threading.Thread(target=worker,name="EnformMap",daemon=True).start()
+        except Exception:
+            self._optical_worker_running=False
+            raise
         self.after(80,self._poll_map_queue)
 
     def _poll_map_queue(self):
@@ -943,16 +2227,45 @@ class App(tk.Tk):
             if self.winfo_exists():self.after(100,self._poll_map_queue)
             return
         generation,view,polygons,provider,zoom,copyright,error=item
+        self._optical_worker_running=False
+        if generation!=self._map_generation:
+            # Discard the obsolete result and launch only the latest queued view.
+            self._start_pending_optical_refresh()
+            return
         self._finish_satellite_map(generation,view,polygons,provider,zoom,copyright,error)
+
+        self._start_pending_optical_refresh()
+
+    def _start_pending_optical_refresh(self):
+        """Coalesce zoom/refresh requests while remote imagery is loading."""
+        pending=self._optical_refresh_pending
+        self._optical_refresh_pending=None
+        if pending and self.gdf is not None:
+            refresh,prefer_public=pending
+            self.after(0,lambda r=refresh,p=prefer_public:self.show_google_map(refresh=r,prefer_public=p))
 
     def _finish_satellite_map(self,generation,view,polygons,provider,zoom,copyright,error):
         if generation!=self._map_generation or self.gdf is None:return
+        if not error:
+            try:
+                _require_visible_optical_image(view,provider)
+            except Exception as exc:
+                error="imagem rejeitada pelo controle de pixels visíveis: "+str(exc)[:180]
         if error:
-            self._satellite_map_visible=False
-            if not self._draw_offline_brazil_basemap("Mapa cartográfico IBGE — offline"):
-                self._draw_aoi_outline("Perímetro carregado — visualização vetorial")
-            self.status.set("Fontes online indisponíveis; fundo nacional offline mantido.")
-            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nMapa base indisponível: "+error)
+            # Keep the last accepted optical image when a refresh fails.
+            if not getattr(self,'_satellite_map_visible',False):
+                self._draw_aoi_outline("Imagem óptica não carregada — apenas perímetro da AOI")
+            kept=getattr(self,'_satellite_map_visible',False)
+            self._map_provider="NO_OPTICAL_IMAGE" if not kept else getattr(self,"_map_provider","OPTICAL_CACHE")
+            self.map_status.set("FALHA AO ABRIR IMAGEM ÓPTICA: "+str(error)[:220]+
+                ("; última imagem óptica válida mantida." if kept else "; nenhum fundo óptico foi carregado.")+" A análise segue independente do fundo.")
+            attempts=self._optical_attempts_by_generation.pop(generation,[])
+            detail=("\nFalhas por provedor:\n• "+"\n• ".join(attempts)) if attempts else ""
+            self.project["optical_diagnostic"]={"status":"NO_OPTICAL_IMAGE","error":str(error),
+                "provider_failures":attempts,"aoi_area_ha":self.project.get("area_ha")}
+            self._refresh_overall_executive_summary()
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+
+                "\n\nIMAGEM ÓPTICA NÃO CARREGADA — diagnóstico para esta AOI:\n"+str(error)+detail)
             return
         self._satellite_map_visible=True; self._last_map_size=(view.width,view.height)
         self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all"); self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
@@ -962,19 +2275,45 @@ class App(tk.Tk):
         self.map_canvas.xview_moveto(max(0.0,min(1.0,(view.width-max(1,self.map_canvas.winfo_width()))/(2*max(1,view.width)))))
         self.map_canvas.yview_moveto(max(0.0,min(1.0,(view.height-max(1,self.map_canvas.winfo_height()))/(2*max(1,view.height)))))
         self._map_provider=str(provider or "ONLINE")
-        self.status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {1.36/max(self._map_extent_factor,1e-9):.2f}×. Uso exclusivo para visualização.")
+        self.map_status.set(f"{provider} carregado com o perímetro. Zoom cartográfico {format_ptbr(1.36/max(self._map_extent_factor,1e-9),2)}×. Uso exclusivo para visualização; não alimenta cálculos.")
+        attempts=self._optical_attempts_by_generation.pop(generation,[])
+        self.project["optical_diagnostic"]={"status":"OPTICAL_IMAGE_LOADED","provider":str(provider),
+            "provider_failures":attempts,"aoi_area_ha":self.project.get("area_ha")}
+        self._refresh_overall_executive_summary()
+        if attempts:
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+
+                "\n\nDiagnóstico do fundo óptico — fonte exibida: "+str(provider)+
+                "\nFontes prioritárias que falharam antes dela:\n• "+"\n• ".join(attempts))
+
+    def copy_optical_diagnostic(self):
+        """Copy the current AOI's optical outcome without remote signed URLs."""
+        diagnostic=self.project.get("optical_diagnostic") or {}
+        if not diagnostic:
+            messagebox.showinfo("Diagnóstico óptico","A busca de imagem desta AOI ainda não terminou.")
+            return
+        payload={
+            "app_version":APP_VERSION,
+            "status":_sanitize_optical_diagnostic_text(diagnostic.get("status")),
+            "provider":_sanitize_optical_diagnostic_text(diagnostic.get("provider") or self._map_provider),
+            "area_ha":diagnostic.get("aoi_area_ha"),
+            "error":_sanitize_optical_diagnostic_text(diagnostic.get("error")),
+            "provider_failures":[_sanitize_optical_diagnostic_text(x) for x in diagnostic.get("provider_failures",[])],
+            "map_status":_sanitize_optical_diagnostic_text(self.map_status.get()),
+        }
+        report=json.dumps(payload,ensure_ascii=False,indent=2)
+        self.clipboard_clear(); self.clipboard_append(report); self.update_idletasks()
+        self.status.set("Diagnóstico óptico desta AOI copiado. Ele não contém URLs assinadas nem credenciais.")
 
     def _on_map_resize(self,event=None):
-        """Keep AOI and satellite base fitted after a real canvas resize."""
+        """Redraw the local thematic map after a canvas resize."""
         if self.gdf is None:return
         size=(max(300,self.map_canvas.winfo_width()),max(220,self.map_canvas.winfo_height()))
-        if size==self._last_map_size:return
-        if self._satellite_map_visible:
-            if self._map_refresh_job is not None:
-                try:self.after_cancel(self._map_refresh_job)
-                except Exception:pass
-            self._map_refresh_job=self.after(450,self._refresh_satellite_after_resize)
-            return
+        # Compare canvas to canvas, not the differently-sized image request.
+        # Otherwise a scrollbar/Configure cycle can perpetually restart the worker.
+        if size==self._last_canvas_size:return
+        self._last_canvas_size=size
+        # Tk emits several Configure events when a large scrollable page first
+        # lays out. Do not invalidate/restart a remote scene search for each.
         if self._map_redraw_job is not None:
             try:self.after_cancel(self._map_redraw_job)
             except Exception:pass
@@ -987,31 +2326,82 @@ class App(tk.Tk):
 
     def _redraw_map_after_resize(self):
         self._map_redraw_job=None
-        if self.gdf is not None and not self._satellite_map_visible:
-            self._draw_aoi_outline("AOI — visualização vetorial; base satélite indisponível")
+        if self.gdf is None:return
+        self._draw_land_use_map(self.project.get("land_use") or {})
 
-    def _draw_offline_brazil_basemap(self,label="Mapa cartográfico IBGE — offline"):
-        if self.gdf is None:return False
+    def _draw_land_use_map(self,land=None):
+        """Render class polygons locally; never initiate optical/network reads."""
+        if self.gdf is None:return
+        land=land or {}; vector_path=land.get("vector_path")
+        if not vector_path or not Path(vector_path).is_file():
+            self._draw_aoi_outline("Perímetro da AOI — aguardando classes de uso/cobertura")
+            if hasattr(self,"map_status"):
+                self.map_status.set("Mapa temático indisponível até concluir a classificação. O perímetro está visível.")
+            return
         try:
-            viewport_w=max(500,self.map_canvas.winfo_width()); viewport_h=max(280,self.map_canvas.winfo_height())
-            display_scale=max(1.0,min(4.0,1.36/max(float(self._map_extent_factor),0.30)))
-            w=max(500,round(viewport_w*display_scale)); h=max(280,round(viewport_h*display_scale))
-            view,_=offline_brazil_preview(self.gdf,self._map_extent_factor,(w,h))
-            self._satellite_map_visible=True; self._last_map_size=(w,h); self._map_provider="OFFLINE_IBGE"
-            self.google_map_photo=ImageTk.PhotoImage(view); self.map_canvas.delete("all")
-            self.map_canvas.create_image(0,0,image=self.google_map_photo,anchor="nw")
-            self.map_canvas.create_rectangle(0,h-24,w,h,fill="white",outline="")
-            self.map_canvas.create_text(w-8,h-12,anchor="e",text="IBGE 2025/BC250 — mapa vetorial rasterizado localmente",fill="#333",font=("Segoe UI",8))
-            self.map_canvas.create_text(10,10,anchor="nw",text=label,fill="white",font=("Segoe UI",9,"bold"))
-            self.map_canvas.configure(scrollregion=(0,0,w,h))
-            return True
-        except Exception:
-            return False
+            import geopandas as gpd
+            from pyproj import CRS
+            if getattr(self,"_land_use_map_cache_key",None)!=str(vector_path):
+                self._land_use_map_cache=gpd.read_file(vector_path)
+                self._land_use_map_cache_key=str(vector_path)
+            frame=self._land_use_map_cache.copy()
+            if frame.empty or "class_name" not in frame.columns:
+                raise ValueError("Arquivo de interseção sem classes temáticas")
+            frame=frame.to_crs(4326)
+            union=self.gdf.to_crs(4326).geometry.union_all(); center=union.centroid
+            local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
+            frame=frame.to_crs(local); bounds=frame.total_bounds
+            minx,miny,maxx,maxy=map(float,bounds)
+            w=max(300,self.map_canvas.winfo_width()); h=max(220,self.map_canvas.winfo_height()); pad=24
+            legend_w=min(300,max(180,int(w*0.38))); map_w=max(220,w-legend_w-16)
+            dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6)
+            scale=min((map_w-2*pad)/dx,(h-2*pad)/dy)/max(0.30,min(8.0,float(self._map_extent_factor)))
+            ox=(map_w-dx*scale)/2; oy=(h-dy*scale)/2
+            colors=["#2E8B57","#D6A21D","#8E6BBE","#5B9BD5","#C96B3B","#9BCB77","#B8B8B8","#4C788E"]
+            names=list(dict.fromkeys(str(x) for x in frame["class_name"].fillna("Não classificado")))
+            palette={name:colors[i%len(colors)] for i,name in enumerate(names)}
+            stats={}
+            for record in land.get("classes",[]):
+                if not isinstance(record,dict):continue
+                key=str(record.get("class_name") or "Não classificado")
+                item=stats.setdefault(key,{"area_ha":0.0,"area_pct":0.0,"sources":set()})
+                item["area_ha"]+=float(record.get("area_ha") or 0)
+                item["area_pct"]+=float(record.get("area_pct") or 0)
+                if record.get("source"):item["sources"].add(str(record["source"]))
+            self.map_canvas.delete("all"); self.map_canvas.configure(bg="#F4F6F5"); self._satellite_map_visible=False
+            def xy(x,y):return ox+(float(x)-minx)*scale,h-(oy+(float(y)-miny)*scale)
+            for row in frame.itertuples():
+                label=str(getattr(row,"class_name","Não classificado")); geom=row.geometry
+                polys=list(geom.geoms) if geom.geom_type=="MultiPolygon" else ([geom] if geom.geom_type=="Polygon" else [])
+                for poly in polys:
+                    coords=list(poly.simplify(max(dx,dy)/1800,preserve_topology=True).exterior.coords)
+                    pts=[]
+                    for x,y in coords:pts.extend(xy(x,y))
+                    if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill=palette.get(label,"#B8B8B8"),outline="#FFFFFF",width=1)
+            self.map_canvas.create_text(12,12,anchor="nw",text="USO E COBERTURA — classificação da análise",fill="#24382D",font=("Segoe UI",10,"bold"))
+            legend_x=map_w+12
+            self.map_canvas.create_rectangle(legend_x-5,24,w-8,42+len(names)*32,fill="#FFFFFF",outline="#708078")
+            legend_y=34
+            for name in names:
+                item=stats.get(name,{})
+                area=float(item.get("area_ha") or 0); pct=float(item.get("area_pct") or 0)
+                source=", ".join(sorted(item.get("sources") or [])) or str(land.get("status") or "origem não informada")
+                self.map_canvas.create_rectangle(legend_x,legend_y,legend_x+12,legend_y+12,fill=palette[name],outline="")
+                self.map_canvas.create_text(legend_x+18,legend_y,anchor="nw",width=max(120,w-legend_x-35),
+                    text=f"{name}: {area:.2f} ha ({pct:.1f}%)\n{source[:54]}",fill="#24382D",font=("Segoe UI",8))
+                legend_y+=32
+            status=str(land.get("status") or "estado N/D")
+            self.map_status.set("Mapa temático local: "+status+". Classes e origem seguem a legenda; categorias experimentais não indicam validação de campo.")
+            self.map_canvas.configure(scrollregion=self.map_canvas.bbox("all"))
+        except Exception as exc:
+            self._draw_aoi_outline("Perímetro da AOI — falha ao desenhar classes")
+            self.map_status.set("Falha técnica no mapa temático: "+type(exc).__name__+"; perímetro preservado.")
 
     def _draw_aoi_outline(self,label="Pré-visualização da AOI"):
         """Render the AOI in a local metric projection and fit it to the live canvas."""
         if self.gdf is None:return
         self._satellite_map_visible=False
+        self.map_canvas.configure(bg="#EAF0EC")
         g=self.gdf.to_crs(4326); union=g.geometry.union_all(); center=union.centroid
         from pyproj import CRS
         local=CRS.from_proj4(f"+proj=aeqd +lat_0={float(center.y)} +lon_0={float(center.x)} +datum=WGS84 +units=m +no_defs")
@@ -1020,7 +2410,7 @@ class App(tk.Tk):
         dx=max(maxx-minx,1e-6); dy=max(maxy-miny,1e-6); scale=min((w-2*pad)/dx,(h-2*pad)/dy)
         draw_w=dx*scale; draw_h=dy*scale; ox=(w-draw_w)/2; oy=(h-draw_h)/2
         self._last_map_size=(w,h); self.map_canvas.delete("all"); self.map_canvas.configure(bg="#EAF0EC")
-        # Offline map frame: always available and intentionally independent of tile/network services.
+        # Local AOI outline is immediate and independent of remote imagery.
         for frac in (0.25,0.5,0.75):
             gx=pad+(w-2*pad)*frac; gy=pad+(h-2*pad)*frac
             self.map_canvas.create_line(gx,pad,gx,h-pad,fill="#C9D4CF",dash=(2,4))
@@ -1035,17 +2425,83 @@ class App(tk.Tk):
                 for coord in poly.exterior.coords:pts.extend(xy(coord[0],coord[1]))
                 if len(pts)>=6:self.map_canvas.create_polygon(*pts,fill="#F8B44C",stipple="gray50",outline="#E87500",width=3)
         self.map_canvas.create_text(12,12,anchor="nw",text=label,fill="#24382D",font=("Segoe UI",10,"bold"))
+        self._map_provider="LOCAL_VECTOR_ONLY"
+        if hasattr(self,"map_status"):
+            self.map_status.set("Perímetro visível; mapa temático aparecerá quando a classificação terminar.")
         # Scale bar is calculated from the local projection; the AOI is never stretched to the panel.
         bar_m=max(1.0,draw_w*0.18/1000)*1000; bar_px=bar_m*scale; bx=max(18,w-pad-bar_px); by=h-24
         self.map_canvas.create_line(bx,by,bx+bar_px,by,fill="#24382D",width=3)
         self.map_canvas.create_line(bx,by-5,bx,by+4,fill="#24382D",width=2); self.map_canvas.create_line(bx+bar_px,by-5,bx+bar_px,by+4,fill="#24382D",width=2)
         self.map_canvas.create_text(bx+bar_px/2,by-7,text=f"{bar_m/1000:g} km",anchor="s",fill="#24382D",font=("Segoe UI",8,"bold"))
         b4326=g.total_bounds
-        bbox_txt=f"{b4326[0]:.5f}, {b4326[1]:.5f}  →  {b4326[2]:.5f}, {b4326[3]:.5f}"
+        bbox_txt=f"{format_ptbr(b4326[0],5)}; {format_ptbr(b4326[1],5)}  →  {format_ptbr(b4326[2],5)}; {format_ptbr(b4326[3],5)}"
         self.map_canvas.create_text(12,h-12,anchor="sw",text=bbox_txt,fill="#4A5B54",font=("Segoe UI",8))
+
+    def _maap_renewal_message(self):
+        from esa_maap_token_renewal import renewal_status
+        info=renewal_status()
+        if info["state"]=="EXPIRED":
+            return "ESA MAAP: prazo de 90 dias encerrado em "+info["expires_on"]+" — renovar o token."
+        if info["state"]=="EXPIRING_SOON":
+            return ("ESA MAAP: vencimento estimado em "+str(info["days_remaining"])+
+                    " dia(s) ("+info["expires_on"]+").")
+        if info["state"]=="VALID_ESTIMATED":
+            return ("ESA MAAP: vencimento estimado em "+str(info["days_remaining"])+
+                    " dias ("+info["expires_on"]+").")
+        return "ESA MAAP: data de emissão não cadastrada; validade desconhecida."
+
+    def _refresh_maap_renewal_label(self):
+        if hasattr(self,"maap_renewal_message"):
+            self.maap_renewal_message.set(self._maap_renewal_message())
+
+    def _open_maap_renewal(self):
+        from esa_maap_token_renewal import MAAP_TOKEN_PORTAL
+        if not webbrowser.open(MAAP_TOKEN_PORTAL):
+            messagebox.showinfo("Renovação ESA MAAP",
+                "Abra a página oficial para gerar novo token:\n"+MAAP_TOKEN_PORTAL)
+
+    def _focus_new_maap_token(self):
+        if hasattr(self,"maap_token_input"):
+            self.esa_token.set("")
+            self.maap_token_input.focus_set()
+            messagebox.showinfo("Novo token ESA MAAP",
+                "Cole o token renovado no campo protegido ESA MAAP.\n"
+                "O token substituído será descartado da interface. "
+                "Em seguida registre a data real de emissão no portal.")
+
+    def _record_maap_token_issue_date(self):
+        from datetime import date
+        from esa_maap_token_renewal import save_renewal_date
+        value=simpledialog.askstring("Data de emissão do ESA MAAP",
+            "Informe a data em que o token foi GERADO no portal ESA (AAAA-MM-DD).\n"
+            "Não use a data em que um token antigo foi inserido no programa.\n"
+            "O token em si não será salvo.",initialvalue=date.today().isoformat(),parent=self)
+        if value is None:return
+        try:
+            info=save_renewal_date(value.strip())
+        except (ValueError,OSError) as exc:
+            return messagebox.showerror("Data inválida",str(exc))
+        self._refresh_maap_renewal_label()
+        messagebox.showinfo("Prazo registrado",
+            "Data anotada: "+info["issued_on"]+"; vencimento estimado: "+
+            info["expires_on"]+".\nSomente a data foi armazenada. Cole o novo token no campo ESA MAAP.")
+
+    def _check_maap_token_renewal(self):
+        from esa_maap_token_renewal import renewal_status
+        self._refresh_maap_renewal_label()
+        info=renewal_status()
+        if info["state"] not in ("EXPIRED","EXPIRING_SOON"):return
+        if messagebox.askyesno("Renovação ESA MAAP",
+            self._maap_renewal_message()+
+            "\n\nDeseja abrir agora a página oficial para gerar novo token?"):
+            self._open_maap_renewal()
 
     def _remote(self):
         f=self.tabs[2]
+        self.sar_exec_box,self.sar_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — SAR / AGB",
+            "Estado: aguardando análise. O quadro distinguirá pixels lidos, produto aplicado e limitações.")
+        self.sar_exec_box.pack(fill="x",pady=(0,8))
         steps=ttk.Frame(f); steps.pack(fill="x",pady=(0,10))
         for j,t in enumerate(["1. Dados e Catálogos","2. Download e Pré-processamento","3. Modelagem e AGB","4. Resultados SAR"]):
             lab=tk.Label(steps,text=t,bg=("#08733F" if j==0 else "#EEF2F3"),fg=("white" if j==0 else "#233B49"),font=("Segoe UI",10,"bold"),padx=14,pady=9,bd=1,relief="solid")
@@ -1059,8 +2515,19 @@ class App(tk.Tk):
         ttk.Label(edl,text="Senha:").grid(row=0,column=2,sticky="w"); ttk.Entry(edl,textvariable=self.edl_password,show="•",width=28).grid(row=0,column=3,sticky="w",padx=5)
         ttk.Label(edl,text="Não é armazenada. O programa também tenta EARTHDATA_* e _netrc/.netrc automaticamente.",foreground="#666").grid(row=1,column=0,columnspan=4,sticky="w",pady=(4,0))
         ttk.Label(edl,text="ESA MAAP Long Lasting Token (90 dias):").grid(row=2,column=0,sticky="w",pady=(5,0))
-        ttk.Entry(edl,textvariable=self.esa_token,show="•",width=58).grid(row=2,column=1,columnspan=3,sticky="ew",padx=(5,5),pady=(5,0))
+        self.maap_token_input=ttk.Entry(edl,textvariable=self.esa_token,show="•",width=58)
+        self.maap_token_input.grid(row=2,column=1,columnspan=3,sticky="ew",padx=(5,5),pady=(5,0))
         ttk.Label(edl,text="Opcional; usado somente para baixar produtos BIOMASS protegidos e nunca gravado pelo programa.",foreground="#666").grid(row=3,column=0,columnspan=4,sticky="w",pady=(3,0))
+        self.maap_renewal_message=tk.StringVar(value=self._maap_renewal_message())
+        ttk.Label(edl,textvariable=self.maap_renewal_message,foreground="#9A4B16",
+                  wraplength=720).grid(row=4,column=0,columnspan=4,sticky="w",pady=(6,2))
+        renewal_row=ttk.Frame(edl); renewal_row.grid(row=5,column=0,columnspan=4,sticky="w",pady=(2,4))
+        ttk.Button(renewal_row,text="RENOVAR TOKEN NO PORTAL ESA",
+                   command=self._open_maap_renewal).pack(side="left")
+        ttk.Button(renewal_row,text="SUBSTITUIR TOKEN",
+                   command=self._focus_new_maap_token).pack(side="left",padx=8)
+        ttk.Button(renewal_row,text="REGISTRAR DATA DE EMISSÃO / RENOVAÇÃO",
+                   command=self._record_maap_token_issue_date).pack(side="left",padx=8)
         providers=ttk.LabelFrame(f,text="Fontes SAR automáticas — prioridade máxima",padding=12); providers.pack(fill="x",pady=(4,10))
         ttk.Label(providers,text="ESA BIOMASS — banda P",font=("Segoe UI",10,"bold")).grid(row=0,column=0,sticky="w")
         ttk.Label(providers,text="PRIORIDADE 1 — consulta automática das coleções BIOMASS L1/L2 e FP_AGB_L2B; processamento do produto disponível mais adequado.").grid(row=0,column=1,sticky="w",padx=8)
@@ -1078,13 +2545,163 @@ class App(tk.Tk):
         self.pipeline_btn=ttk.Button(row,text="EXECUTAR ANÁLISE SAR",command=self.execute,style="Run.TButton"); self.pipeline_btn.pack(side="left")
         ttk.Button(row,text="DESCOBRIR COBERTURA SAR",command=self.discover_sar_ui).pack(side="left",padx=8)
         ttk.Button(row,text="CARREGAR PRODUTOS SAR / AGB",command=self.pick_sar).pack(side="left")
-        self.sar_paths=[]; self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
-        remote_box=ttk.Frame(f); remote_box.pack(fill="both",expand=True,pady=8)
+        ttk.Button(row,text="CAMADA IBGE FITOFISIONOMIAS",command=self.pick_ibge_physiognomy).pack(side="left",padx=8)
+        landrow=ttk.Frame(f); landrow.pack(fill="x",pady=4)
+        ttk.Button(landrow,text="CONFIGURAR CLASSIFICAÇÃO SAR DE USO",command=self.pick_land_use_config).pack(side="left")
+        ttk.Button(landrow,text="IDENTIFICAR USO DO SOLO",command=self.classify_land_use_ui).pack(side="left",padx=8)
+        self.land_use_config=None; self._land_use_running=False
+        self.land_use_state=tk.StringVar(value="Identificadores SAR instalados: busca automática; alternativa MapBiomas para cobertura atual e IBGE para fitofisionomia.")
+        ttk.Label(landrow,textvariable=self.land_use_state,wraplength=500).pack(side="left",padx=8)
+        native_row=ttk.Frame(f);native_row.pack(fill="x",pady=(2,6))
+        self.inventory_evidence_data=None; self.inventory_evidence_manifest=None
+        ttk.Button(native_row,text="CARREGAR EVIDÊNCIAS DE INVENTÁRIO (JSON)",
+                   command=self.pick_inventory_evidence).pack(side="left")
+        self.inventory_evidence_state=tk.StringVar(
+            value="Opcional: referências licenciadas compatíveis com fitofisionomia; uso experimental, não homologado.")
+        ttk.Label(native_row,textvariable=self.inventory_evidence_state,
+                  wraplength=680).pack(side="left",padx=8)
+        self.biodiversity_inventory_records=None
+        biodiversity_row=ttk.Frame(f);biodiversity_row.pack(fill="x",pady=(0,6))
+        ttk.Button(biodiversity_row,text="CARREGAR INVENTÁRIO FITOSSOCIOLÓGICO CSV",
+                   command=self.pick_biodiversity_inventory).pack(side="left")
+        self.biodiversity_inventory_state=tk.StringVar(
+            value="Resumo regional de espécies e distribuição diamétrica; não representa medição da propriedade.")
+        ttk.Label(biodiversity_row,textvariable=self.biodiversity_inventory_state,
+                  wraplength=800).pack(side="left",padx=8)
+        self.sar_paths=[]; self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
+        self.sensor=tk.StringVar(value="Automático — SAR primeiro: P → L → X → C → CCI; literatura/modelagem somente após falha documentada")
+        remote_box=ttk.LabelFrame(f,text="Detalhes técnicos e proveniência SAR / AGB",style="Exec.TLabelframe"); remote_box.pack(fill="both",expand=True,pady=8)
         self.remote_text=tk.Text(remote_box,height=18,wrap="word",yscrollcommand=lambda *a:remote_scroll.set(*a))
         remote_scroll=ttk.Scrollbar(remote_box,orient="vertical",command=self.remote_text.yview)
         self.remote_text.pack(side="left",fill="both",expand=True); remote_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.remote_text)
         self._set(self.remote_text,"A análise é automática e SAR-FIRST. Rotas públicas são tentadas sem credenciais; Earthdata Login é opcional para liberar NISAR/ASF protegido.\n\nHierarquia obrigatória:\n1. ESA BIOMASS FP_AGB_L2B (P-band, AGB + incerteza);\n2. modelos SAR L/X executáveis compatíveis com fitofisionomia e atributos disponíveis;\n3. ESA CCI Biomass L+C como série histórica;\n4. literatura somente como aferição/fallback quando nenhum produto SAR quantitativo puder ser processado.\n\nRegra: SAR é SEMPRE tentado primeiro. Se for impossível processá-lo, a trilha registra o motivo e só então usa literatura/modelagem compatível, identificada como secundária e com incerteza explícita.")
+
+    def pick_inventory_evidence(self):
+        filename=filedialog.askopenfilename(
+            title="Inventários para estimativas experimentais de carbono",
+            filetypes=[("Manifesto JSON","*.json")])
+        if not filename:
+            return
+        self._inventory_load_generations["evidence"]+=1
+        generation=self._inventory_load_generations["evidence"]
+        self.inventory_evidence_state.set("Lendo e validando manifesto em segundo plano; os registros já aceitos seguem preservados.")
+        self.status.set("Lendo evidências de inventário fora da interface…")
+        def load():
+            try:
+                from native_evidence_manifest import load_native_inventory_manifest
+                result=(True,load_native_inventory_manifest(filename))
+            except Exception as exc:result=(False,f"{type(exc).__name__}: {exc}")
+            self._inventory_load_queues["evidence"].put((generation,*result))
+        threading.Thread(target=load,name="EnformInventoryManifest",daemon=True).start()
+        self.after(100,self._poll_inventory_upload,"evidence",generation,filename)
+
+    def pick_biodiversity_inventory(self):
+        filename=filedialog.askopenfilename(title="Inventário fitossociológico georreferenciado",
+            filetypes=[("CSV de árvores","*.csv"),("Todos","*.*")])
+        if not filename:return
+        self._inventory_load_generations["biodiversity"]+=1
+        generation=self._inventory_load_generations["biodiversity"]
+        self.biodiversity_inventory_state.set("Lendo arquivo em segundo plano; registros já aceitos seguem preservados.")
+        self.status.set("Lendo inventário fitossociológico fora da interface…")
+        def load():
+            try:
+                from biodiversity_inventory import load_biodiversity_inventory_csv
+                result=(True,load_biodiversity_inventory_csv(filename))
+            except Exception as exc:result=(False,f"{type(exc).__name__}: {exc}")
+            self._inventory_load_queues["biodiversity"].put((generation,*result))
+        threading.Thread(target=load,name="EnformBiodiversityInventory",daemon=True).start()
+        self.after(100,self._poll_inventory_upload,"biodiversity",generation,filename)
+
+    def _poll_inventory_upload(self,kind,generation,filename):
+        current=self._inventory_load_generations.get(kind)
+        if generation!=current:return
+        pending=None; q=self._inventory_load_queues[kind]
+        while True:
+            try:item=q.get_nowait()
+            except queue.Empty:break
+            if item[0]==generation:pending=item;break
+        if pending is None:
+            if self.winfo_exists():self.after(100,self._poll_inventory_upload,kind,generation,filename)
+            return
+        _,ok,payload=pending
+        if not ok:
+            label=(self.inventory_evidence_state if kind=="evidence" else self.biodiversity_inventory_state)
+            label.set("Arquivo novo recusado; base anteriormente aceita preservada. "+str(payload)[:240])
+            self.status.set("Falha técnica ao ler o inventário; registros anteriores foram mantidos.")
+            messagebox.showwarning("Inventário não carregado",str(payload))
+            return
+        if kind=="evidence":
+            package=payload
+            self.inventory_evidence_data=package["records"]
+            self.inventory_evidence_manifest={"filename":package["filename"],"sha256":package["sha256"],
+                "evidence_status":package["evidence_status"],"n_records":len(package["records"])}
+            self.inventory_evidence_state.set(str(len(package["records"]))+" registros — "+package["filename"]+
+                " — estimativas secundárias experimentais; validação independente pendente.")
+            message=f"Inventário anexado: {len(package['records'])} registros. Uso secundário experimental; compatibilidade e incerteza avaliadas por estrato."
+        else:
+            rows=payload; self.biodiversity_inventory_records=rows
+            self.biodiversity_inventory_state.set(str(len(rows))+" árvores licenciadas — "+Path(filename).name+
+                "; será filtrado por bioma, fitofisionomia e microrregião.")
+            message=f"Inventário fitossociológico carregado: {len(rows)} árvores. Referência regional, não medição da propriedade."
+        if hasattr(self,"science_exec_var"):self.science_exec_var.set(message)
+        self.status.set("Inventário lido e validado; fontes e registros preservados para análise.")
+
+    def pick_land_use_config(self):
+        p=filedialog.askopenfilename(title="Contrato de atributos e referências SAR",filetypes=[("Configuração JSON","*.json")])
+        if p:
+            self.land_use_config=p
+            self.land_use_state.set("Configuração carregada: "+Path(p).name+"; elegibilidade será validada na execução.")
+
+    def classify_land_use_ui(self):
+        if self.gdf is None:return messagebox.showwarning("Uso do solo","Carregue o perímetro primeiro.")
+        if self._land_use_running or self._analysis_running:return
+        self._land_use_running=True
+        generation=self._analysis_generation
+        frame=self.gdf; config=self.land_use_config
+        ibge=self.ibge_physiognomy_gdf
+        field=self.ibge_class_field or "legenda_1"
+        output=Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12]
+        result_queue=queue.Queue()
+        self.land_use_state.set("Classificando e verificando confiança em segundo plano…")
+        def worker():
+            try:
+                reference=ibge;reference_field=field
+                if reference is None:
+                    try:reference,reference_field=load_ibge_land_use_reference(frame)
+                    except Exception:pass
+                result_queue.put((True,run_land_use(frame,output,config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))))
+            except Exception as exc:result_queue.put((False,str(exc)))
+        def poll():
+            try:ok,result=result_queue.get_nowait()
+            except queue.Empty:
+                self.after(150,poll); return
+            self._land_use_running=False
+            if generation!=self._analysis_generation:return
+            if not ok:
+                self.land_use_state.set("Classificação não concluída: "+result); return
+            for key in ("native_carbon","analysis_rows","total_tc_ha","total_tco2_ha","sar_result","total_uncertainty"):
+                self.project.pop(key,None)
+            self.project["land_use"]=result
+            if hasattr(self,"carbon_exec_var"):
+                self.carbon_exec_var.set("Uso/cobertura recebido: "+str(result.get("status","N/D"))+".\n"
+                    "O cálculo de carbono ainda exige a etapa de compartimentos; veja áreas, fontes e limitações no relatório detalhado.")
+            if hasattr(self,"sar_exec_var"):
+                self.sar_exec_var.set("Classificação concluída: "+str(result.get("status","N/D"))+".\n"
+                    "Consulte os detalhes para separar mapa anual, leitura SAR atual, candidatos e contingências.")
+            if not self.project.get("analysis_rows"):self.project["area_ha"]=result["area_aoi_ha"]
+            text="\n".join(land_use_report_lines(result,lambda v:format_ptbr(v,2)))
+            self.project["last_result"]=text
+            self._set(self.res,text);self.nb.select(self.tabs[3])
+            self.land_use_state.set(
+                result["status"]+" — "+(
+                    "Identificador SAR executado: "+Path(result["sar_model_config"]).name
+                    if result.get("sar_model_config") else
+                    "sem identificador SAR validado; fonte cartográfica explicitada"
+                )+"; áreas e auditoria disponíveis."
+            )
+        threading.Thread(target=worker,name="EnformLandUse",daemon=True).start()
+        self.after(150,poll)
 
     def _test_cdse(self):
         try:
@@ -1104,8 +2721,19 @@ class App(tk.Tk):
             cov=discover_sar(self.gdf); self.project["sar_catalog"]=cov
             txt=["REGISTROS RETORNADOS PELOS CATÁLOGOS SAR","(descoberta ≠ download ≠ processamento ≠ uso na estimativa)"]
             for x in cov:txt.append(f"{x['provider']} — {x['dataset']} ({x['band']}): {x['count']} registro(s) retornado(s)"+((" — "+x["error"]) if x.get("error") else ""))
+            for x in cov:
+                latest=x.get("latest_acquisition")
+                if latest:
+                    txt.append(f"  Aquisição mais recente no catálogo: {latest.get('acquisition_brasilia')} (Brasília) | UTC {latest.get('acquisition_utc')} | cena {latest.get('id')}")
+                else:
+                    txt.append("  Sem data/hora de aquisição verificável no retorno do catálogo.")
             txt += ["","Para uso quantitativo, o produto ainda precisa ser elegível, baixado, pré-processado e associado a modelo/produto AGB compatível."]
-            self._set(self.remote_text,"\n".join(txt)); self.status.set("Descoberta SAR concluída.")
+            self._set(self.remote_text,"\n".join(txt))
+            if hasattr(self,"sar_exec_var"):
+                scene_count=sum(int(x.get("count") or 0) for x in cov if not x.get("error"))
+                self.sar_exec_var.set(f"Catálogos consultados: {len(cov)} | Registros retornados: {scene_count}.\n"
+                    "Catálogo não significa pixel lido ou produto aplicado. Veja abaixo datas, tentativas e diagnósticos.")
+            self.status.set("Descoberta SAR concluída.")
         except Exception as e:self.status.set("Falha na descoberta SAR."); messagebox.showerror("SAR",str(e))
 
     def pick_sar(self):
@@ -1113,32 +2741,714 @@ class App(tk.Tk):
         if not ps:return
         self.sar_paths=list(ps); self.project["sar_paths"]=list(ps)
         self._set(self.remote_text,"Produtos selecionados:\n"+"\n".join(self.sar_paths)+"\n\nClique em EXECUTAR ANÁLISE.")
+        if hasattr(self,"sar_exec_var"):
+            self.sar_exec_var.set(f"Produtos locais selecionados: {len(ps)}.\nAinda não processados; execute a análise para verificar leitura, pixels válidos e aplicação no modelo.")
         self.status.set(f"{len(ps)} produto(s) SAR selecionado(s).")
 
+    def pick_ibge_physiognomy(self):
+        p=filedialog.askopenfilename(title="Selecione a camada vetorial oficial de fitofisionomias do IBGE",
+            filetypes=[("Vetores","*.gpkg *.shp *.geojson *.json *.zip"),("Todos","*.*")])
+        if not p:return
+        try:
+            layer=read_vector(p)
+            names=list(layer.columns)
+            normalized={re.sub(r"[^a-z0-9]","",str(x).casefold()):x for x in names if str(x)!="geometry"}
+            preferred=("legenda1","fitofisionomia","fisionomia","legenda","vegetacao","classe","descricao","nome")
+            field=next((normalized[k] for k in preferred if k in normalized),None)
+            if field is None:
+                candidates=[x for x in names if str(x)!="geometry" and layer[x].notna().any()]
+                if len(candidates)==1:field=candidates[0]
+            if field is None:
+                raise ValueError("Não identifiquei automaticamente o campo da classe IBGE. Campos disponíveis: "+", ".join(str(x) for x in names))
+            self.ibge_physiognomy_gdf=layer; self.ibge_class_field=field
+            self.project["ibge_physiognomy_vector"]=p; self.project["ibge_physiognomy_class_field"]=str(field)
+            self.status.set("Camada de fitofisionomias IBGE carregada; classe: "+str(field))
+            self._set(self.remote_text,"Camada de fitofisionomias selecionada: "+Path(p).name+"\\nCampo de classe: "+str(field)+"\\nAs estatísticas SAR serão calculadas em cada interseção AOI × classe IBGE.")
+        except Exception as e:
+            self.ibge_physiognomy_gdf=None; self.ibge_class_field=None
+            self.status.set("Camada de fitofisionomias IBGE não carregada.")
+            messagebox.showerror("Fitofisionomias IBGE",str(e))
+
+    def _scrollable_tab_content(self,tab):
+        """Provide page-level vertical scrolling for long result tabs."""
+        canvas=tk.Canvas(tab,bg="#F4F6F5",highlightthickness=0)
+        scrollbar=ttk.Scrollbar(tab,orient="vertical",command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side="left",fill="both",expand=True)
+        scrollbar.pack(side="right",fill="y")
+        content=ttk.Frame(canvas,padding=(8,4,12,12))
+        window=canvas.create_window((0,0),window=content,anchor="nw")
+        def update_region(_event=None):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        def resize_content(event):
+            canvas.itemconfigure(window,width=max(1,event.width))
+            update_region()
+        content.bind("<Configure>",update_region)
+        canvas.bind("<Configure>",resize_content)
+        return content
+
     def _results(self):
-        f=self.tabs[3]; ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
-        result_box=ttk.Frame(f); result_box.pack(fill="both",expand=True,pady=8)
+        f=self._scrollable_tab_content(self.tabs[3]); ttk.Label(f,text="Balanço de compartimentos",style="H.TLabel").pack(anchor="w")
+        self.overall_exec_box,self.overall_exec_var=self._executive_card(
+            f,"PAINEL EXECUTIVO — RESULTADO GERAL",
+            "Aguardando análise. Os estados de cobertura, SAR, FH, carbono, vigor e suas limitações serão resumidos aqui.")
+        self.overall_exec_box.pack(fill="x",pady=(6,4))
+        ttk.Button(f,text="COPIAR PAINEL EXECUTIVO",command=lambda:self._copy_text(self.overall_exec_var.get(),"Painel executivo")).pack(anchor="e")
+        self.carbon_exec_box,self.carbon_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — CARBONO NATIVO",
+            "Estoque, cobertura, compartimentos ausentes e incerteza serão resumidos após a análise.")
+        self.carbon_exec_box.pack(fill="x",pady=(6,2))
+        self.carbon_stock_box=ttk.LabelFrame(f,text="ESTOQUE DE CARBONO — DESTAQUE EXECUTIVO",style="Exec.TLabelframe",padding=(12,8))
+        self.carbon_stock_box.pack(fill="x",pady=(3,5))
+        self.carbon_stock_var=tk.StringVar(value="Aguardando análise de carbono.")
+        ttk.Label(self.carbon_stock_box,textvariable=self.carbon_stock_var,justify="left",
+                  foreground="#0B3D2E",font=("Segoe UI",14,"bold")).pack(anchor="w")
+        carbon_table_box=ttk.LabelFrame(f,text="ESTOQUE POR COMPARTIMENTO E INCERTEZA",style="Exec.TLabelframe")
+        carbon_table_box.pack(fill="x",pady=(4,6))
+        self.carbon_dashboard_table=CarbonTableGrid(
+            carbon_table_box,
+            ["Compartimento","Densidade","Estoque conhecido","Incerteza mensurável / variabilidade","Área quantificada","Estado"],
+            [150,155,165,390,125,195])
+        ttk.Label(carbon_table_box,text="Densidade e estoque usam somente a área quantificada. Incerteza mensurável: tC/ha, tCO₂e/ha e %; N/D não significa zero. Desvio espacial e sensibilidade parcial são identificados como tais.",wraplength=1200).grid(row=2,column=0,columnspan=2,sticky="w",padx=6,pady=(4,5))
+        self._populate_carbon_dashboard({})
+        result_box=ttk.LabelFrame(f,text="Relatório detalhado e auditoria",style="Exec.TLabelframe"); result_box.pack(fill="both",expand=True,pady=8)
+        ttk.Button(result_box,text="COPIAR RELATÓRIO DE CARBONO",command=lambda:self._copy_report(self.res,"Relatório de carbono")).pack(anchor="e",padx=6,pady=4)
         self.res=tk.Text(result_box,height=23,wrap="word",yscrollcommand=lambda *a:result_scroll.set(*a))
         result_scroll=ttk.Scrollbar(result_box,orient="vertical",command=self.res.yview)
         self.res.pack(side="left",fill="both",expand=True); result_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.res)
         self._set(self.res,"Clique em EXECUTAR ANÁLISE quando houver dados suficientes.")
+    def _cultivated_results(self):
+        """Separate concise executive results from traceable technical audit."""
+        f=self._scrollable_tab_content(self.tabs[5])
+        ttk.Label(f,text="Monitoramento de áreas cultivadas",style="H.TLabel").pack(anchor="w")
+        ttk.Label(f,text="Detecção de áreas cultivadas primeiro; identificação da cultura somente quando a evidência e a validação permitirem.",
+                  wraplength=1000).pack(anchor="w",pady=(4,8))
+        ttk.Button(f,text="ATUALIZAR PAINEL METEOROLÓGICO — CLIMA DINÂMICO NASA POWER / CPTEC",command=self.query_crop_weather).pack(anchor="w",pady=(0,8))
+        self.crop_exec_box,self.crop_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — AGRICULTURA, VIGOR E SAFRA",
+            "Aguardando análise. Classes atuais, cenário de safra, fontes e incerteza aparecerão resumidos aqui.")
+        self.crop_exec_box.pack(fill="x",pady=(0,8))
+        views=ttk.Notebook(f);views.pack(fill="both",expand=True)
+        exec_frame=ttk.Frame(views);audit_frame=ttk.Frame(views)
+        views.add(exec_frame,text="Painel executivo")
+        views.add(audit_frame,text="Auditoria técnica")
+        exec_box=ttk.LabelFrame(exec_frame,text="Resumo e indicadores executivos",style="Exec.TLabelframe");exec_box.pack(fill="both",expand=True)
+        audit_box=ttk.LabelFrame(audit_frame,text="Rastreabilidade, fontes e diagnósticos",style="Exec.TLabelframe");audit_box.pack(fill="both",expand=True)
+        ttk.Button(exec_box,text="COPIAR RESUMO EXECUTIVO AGRÍCOLA",command=lambda:self._copy_report(self.crop_res,"Resumo agrícola")).pack(anchor="e",padx=6,pady=4)
+        ttk.Button(audit_box,text="COPIAR AUDITORIA TÉCNICA",command=lambda:self._copy_report(self.crop_audit,"Auditoria técnica")).pack(anchor="e",padx=6,pady=4)
+        self.crop_res=tk.Text(exec_box,height=20,wrap="word",yscrollcommand=lambda *a:exec_scroll.set(*a))
+        exec_scroll=ttk.Scrollbar(exec_box,orient="vertical",command=self.crop_res.yview)
+        self.crop_res.pack(side="left",fill="both",expand=True);exec_scroll.pack(side="right",fill="y")
+        self.crop_audit=tk.Text(audit_box,height=20,wrap="word",yscrollcommand=lambda *a:audit_scroll.set(*a))
+        audit_scroll=ttk.Scrollbar(audit_box,orient="vertical",command=self.crop_audit.yview)
+        self.crop_audit.pack(side="left",fill="both",expand=True);audit_scroll.pack(side="right",fill="y")
+        self._bind_text_scroll(self.crop_res);self._bind_text_scroll(self.crop_audit)
+        self._set(self.crop_res,"PAINEL EXECUTIVO — PREVISÃO DE SAFRAS\n\n"
+                  "Idade provável da lavoura: INDISPONÍVEL — requer evidência fenológica SAR validada.\n"
+                  "Estado fitossanitário aparente: INDISPONÍVEL — opções: Bom, Médio ou Ruim; requer modelo e evidência validados. Não é diagnóstico de doença ou praga.\n"
+                  "Previsão de safra: após a análise — modelo calibrado no histórico PAM (soja e milho; experimental, validado fora da amostra), com vigor automático Sentinel-1 quando houver mapa de referência.\n\n"
+                  "Execute a análise para consultar cobertura, cultura e disponibilidade dos dados.")
+        self._set(self.crop_audit,"A trilha de auditoria da análise será apresentada aqui.")
+
+    def _present_cultivated_monitoring(self,land):
+        """Present concise results and keep full evidence in a separate audit view."""
+        self._draw_land_use_map(land)
+        from agricultural_native_policy import has_cultivated_area
+        self._weather_query_generation+=1
+        self._last_land=land
+        classes=land.get("classes",[])
+        non_native=[item for item in classes if item.get("native_status") is False and
+                    not str(item.get("source") or "").startswith("SAR_EXPERIMENTAL_MODELO") and
+                    float(item.get("area_ha") or 0)>0]
+        native=[item for item in classes if item.get("native_status") is True and float(item.get("area_ha") or 0)>0]
+        classified_ha=sum(float(item.get("area_ha") or 0) for item in classes)
+        aoi_ha=float(self.project.get("area_ha") or 0)
+        complete_coverage=aoi_ha>0 and abs(classified_ha-aoi_ha)<=max(0.05,0.001*aoi_ha)
+        native_occurrence=land.get("native_occurrence") if isinstance(land.get("native_occurrence"),dict) else {}
+        native_area=(float(native_occurrence["area_ha"]) if native_occurrence.get("status")=="detected_by_validated_SAR" and native_occurrence.get("area_ha") is not None else None)
+        native_summary=("Vegetação nativa detectada por SAR validado: "+format_ptbr(native_area,2)+
+                        " ha; sem confirmação de campo." if native_area is not None and native_area>0 else
+                        "Ocorrência de vegetação nativa: N/D — ausência de máscara semântica SAR validada não significa 0 ha.")
+        if not has_cultivated_area(classes) and complete_coverage and land.get("status")=="SAR_ELEGIVEL":
+            self._crop_monitoring_base_report="sem cultivos detectados\n"+native_summary
+            audit_dir=Path(land.get("vector_path") or (Path.home()/".enform_verde"/"auditorias" )).parent
+            land_audit=audit_dir/"uso_solo_auditoria.json"
+            self._write_json_background(land,land_audit)
+            self._crop_monitoring_audit_base=("Nenhuma classe de cultivo foi encontrada na área totalmente coberta pela classificação.\n"+
+                native_summary+"\n\nAuditoria integral em JSON, gravada em segundo plano:\n"+str(land_audit))
+            if hasattr(self,"crop_exec_var"):
+                self.crop_exec_var.set("Cobertura SAR: classificação elegível em toda a AOI.\n"
+                    "Cultivos identificados: nenhum.\n"+native_summary)
+            self._set(self.crop_res,self._crop_monitoring_base_report)
+            self._set(self.crop_audit,self._crop_monitoring_audit_base)
+            generation=self._weather_query_generation
+            analysis_id=self.project.get("analysis_run_id")
+            def start_weather_if_current():
+                if (generation==self._weather_query_generation
+                    and analysis_id==self.project.get("analysis_run_id")
+                    and self.gdf is not None):
+                    self.query_crop_weather()
+            self.after(100,start_weather_if_current)
+            return
+        from crop_report_consistency import current_crop_area_by_semantic_sar
+        crop_ha,generic_cultivated_ha=current_crop_area_by_semantic_sar(land)
+        semantic_area_supported=crop_ha is not None
+        measured_crop_ha=crop_ha or 0.0
+        measured_generic_ha=generic_cultivated_ha or 0.0
+        other_non_native_ha=sum(float(x.get("area_ha") or 0) for x in non_native)-measured_crop_ha-measured_generic_ha
+        executive=["PAINEL EXECUTIVO — MONITORAMENTO AGRÍCOLA",
+                   "Estado da classificação SAR atual: "+str(land.get("status","N/D"))+
+                   " — MapBiomas não determina classes, áreas, vigor ou safra atuais.",
+                   "ÁREA TOTAL DA AOI: "+format_ptbr(aoi_ha,2)+" ha (100%)",
+                   "Área com classes semânticas SAR atuais: "+(format_ptbr(classified_ha,2)+" ha" if semantic_area_supported else "N/D — classificador SAR atual indisponível"),
+                   "RESUMO EXCLUSIVO DE COBERTURA (os grupos não se sobrepõem):",
+                   "  Vegetação nativa: "+(format_ptbr(native_area,2)+" ha ("+format_ptbr(100*native_area/aoi_ha if aoi_ha else 0,2)+"%)" if native_area is not None else "N/D — não converter ausência de máscara em 0 ha"),
+                   "  Lavouras identificadas por classificador SAR atual validado: "+(format_ptbr(crop_ha,2)+" ha" if semantic_area_supported else "N/D — classificação atual indisponível; não equivale a 0 ha"),
+                   "  Áreas agrícolas sem identificação de cultura: "+(format_ptbr(generic_cultivated_ha,2)+" ha" if semantic_area_supported else "N/D — classificação atual indisponível"),
+                   "  Outros usos não nativos: "+(format_ptbr(max(0,other_non_native_ha),2)+" ha" if land.get("status")=="SAR_ELEGIVEL" else "N/D — classe semântica SAR não validada"),
+                   "ATENÇÃO: área da AOI NÃO é integralmente floresta nem integralmente lavoura.",
+                   "DISTRIBUIÇÃO ESPACIAL DAS CLASSES INTERSECTADAS NA AOI — ha e % (origem/status em cada linha):"]
+        contingency=land.get("agriculture_historical_contingency") or {}
+        if contingency.get("status")=="FALLBACK_HISTORICO_MAPBIOMAS_PAM":
+            executive.extend(["", "CONTINGÊNCIA AGRÍCOLA HISTÓRICA — usada após esgotar as rotas SAR configuradas",
+                "MapBiomas Collection "+str(contingency.get("mapbiomas_collection"))+", ano "+str(contingency.get("mapbiomas_year"))+
+                "; área mapeada "+format_ptbr(contingency.get("mapped_area_ha"),2)+" ha. Isto é referência anual histórica, não cobertura atual observada.",
+                "Microrregião PAM: "+str((contingency.get("pam_microregion") or {}).get("name","N/D"))+"; PAM não identifica cultura no polígono."])
+            for item in contingency.get("classes") or []:
+                row=("  "+str(item.get("label"))+": "+format_ptbr(item.get("area_ha"),2)+" ha — classe histórica MapBiomas")
+                if item.get("pam_median_kg_ha") is not None:
+                    row+="; PAM mediana "+format_ptbr(item["pam_median_kg_ha"]/1000,2)+" t/ha (2015–2024); produção condicional "+format_ptbr(item.get("conditional_reference_production_t"),2)+" t"
+                    bounds=item.get("conditional_reference_production_p05_p95_t") or []
+                    if len(bounds)==2:row+="; envelope histórico P05–P95 "+format_ptbr(bounds[0],2)+"–"+format_ptbr(bounds[1],2)+" t"
+                    row+=" — estimativa com incerteza não mensurada"
+                else:
+                    row+="; PAM: "+str(item.get("pam_status","sem série compatível"))
+                executive.append(row)
+            executive.append(str(contingency.get("uncertainty") or "Incerteza de área MapBiomas e transferência não mensuradas."))
+        elif contingency.get("status") not in (None,"BLOQUEADO_ATE_ESGOTAR_SAR"):
+            why=str(contingency.get("reason") or contingency.get("status"))
+            if contingency.get("stage"):why="etapa="+str(contingency["stage"])+"; "+why
+            if contingency.get("detail"):why+="; detalhe="+str(contingency["detail"])
+            executive.extend(["", "CONTINGÊNCIA MAPBIOMAS + PAM indisponível: "+why])
+        from crop_report_consistency import executive_cover_distribution_lines
+        executive.extend(executive_cover_distribution_lines(land,aoi_ha,format_ptbr))
+        from crop_report_consistency import experimental_seasonal_sar_classes
+        seasonal_sar=experimental_seasonal_sar_classes(land)
+        seasonal_audit=land.get("sar_classifier_lemplus") or {}
+        executive.append("CLASSIFICADOR SAZONAL SENTINEL-1 LEM+: "+
+                         str(seasonal_audit.get("status","N/D"))+
+                         "; tentativa na AOI integral="+
+                         ("SIM" if seasonal_audit.get("model_call_attempted") else "NÃO")+
+                         "; resultado aplicado="+
+                         ("SIM" if seasonal_audit.get("result_applied_to_current_aoi") else "NÃO"))
+        seasonal_reason=(seasonal_audit.get("reason") or
+                         (seasonal_audit.get("acquisition_diagnostic") or {}).get("reason"))
+        if seasonal_reason:
+            executive.append("  Diagnóstico LEM+: "+str(seasonal_reason)[:220])
+        seasonal_acquisition=seasonal_audit.get("acquisition_diagnostic") or {}
+        if seasonal_acquisition.get("missing_months"):
+            executive.append("  Meses sem pares VV/VH: "+
+                             ", ".join(map(str,seasonal_acquisition["missing_months"])))
+        if seasonal_sar:
+            executive.extend(["", "CLASSIFICAÇÃO SAR EXPERIMENTAL — SAFRA COMPLETA OBSERVADA (não representa cobertura atual)",
+                "Safra: "+str(seasonal_sar.get("season") or "N/D")+
+                "; Sentinel-1: "+str(seasonal_sar.get("scenes_used") or "N/D")+" cenas; "+
+                str(seasonal_sar.get("pixels") or "N/D")+" pixels classificados.",
+                "Este resultado de pixels reais é sazonal e experimental; não equivale ao monitoramento atual nem a validação de campo."])
+            for item in seasonal_sar["classes"]:
+                executive.append("  "+item["class_name"]+": "+format_ptbr(item["area_ha"],2)+
+                                 " ha — estimativa com incerteza não mensurada")
+            executive.append("Modelo: "+str(seasonal_sar.get("model_id") or "N/D")+
+                             "; SHA-256: "+str(seasonal_sar.get("model_sha256") or "N/D"))
+            oa=seasonal_sar.get("landcover_overall_accuracy")
+            ci=seasonal_sar.get("landcover_overall_accuracy_wilson95")
+            crop_oa=seasonal_sar.get("crop_overall_accuracy")
+            if isinstance(oa,(int,float)):
+                accuracy_line="Acurácia global de uso/cobertura no holdout espacial do treinamento: "+format_ptbr(100*oa,1)+"%"
+                if isinstance(ci,(list,tuple)) and len(ci)==2:
+                    accuracy_line+=" (IC95% Wilson "+format_ptbr(100*float(ci[0]),1)+"–"+format_ptbr(100*float(ci[1]),1)+"%)"
+                if isinstance(crop_oa,(int,float)):
+                    accuracy_line+="; acurácia da identificação agrícola no treinamento: "+format_ptbr(100*crop_oa,1)+"%"
+                executive.append(accuracy_line)
+            executive.append("Acurácias e IC95% do modelo referem-se à avaliação espacial de treinamento, não à incerteza de área desta AOI.")
+        executive.append(native_summary)
+        national=land.get("national_audit") or {}
+        if national:
+            executive.append("AUDITORIA NACIONAL — "+str(national.get("current_sar_classification"))+
+                             "; incerteza de área de máscara: N/D quando não validada")
+            executive.append("Geometria SHA256 e fórmulas disponíveis no JSON de auditoria.")
+        orbital=land.get("recent_sar_cover") or {}
+        executive.append("TRIAGEM ORBITAL SAR ATUAL — "+str(orbital.get("status","N/D")))
+        if orbital.get("status")=="SAR_REAL_EXPERIMENTAL_CANDIDATES":
+            executive.append("Cenas VV/VH realmente lidas: "+str(orbital.get("scene_count"))+
+                             "; aquisição mais recente UTC: "+str(orbital.get("latest_acquisition_utc")))
+            for name,ha in (orbital.get("areas_ha") or {}).items():
+                executive.append("  "+name+": "+format_ptbr(ha,2)+" ha — sem acurácia calibrada")
+            executive.append("Mapa de radar atual: "+str(orbital.get("raster_path")))
+            executive.append("ATENÇÃO: candidatos SAR não são áreas de soja/nativa confirmadas; não somar ao mapa anual.")
+        else:
+            executive.append("SAR atual N/D — "+str(orbital.get("reason","cenas/pixels indisponíveis"))[:190])
+        executive.extend(["", "HISTÓRICO DE USO AGRÍCOLA — 150 DIAS",
+            "Série experimental de candidatos a área cultivada baseada em Sentinel-1 VV/VH; não confirma cultura nem substitui validação de campo."])
+        history=orbital.get("history_by_date") if isinstance(orbital.get("history_by_date"),list) else []
+        if orbital.get("status")=="SAR_REAL_EXPERIMENTAL_CANDIDATES" and history:
+            from datetime import datetime, timezone, timedelta
+            utc_minus_3=timezone(timedelta(hours=-3))
+            for point in history:
+                instant=point.get("as_of_utc")
+                if instant:
+                    try:date_label=datetime.fromisoformat(str(instant).replace("Z","+00:00")).astimezone(utc_minus_3).strftime("%d/%m/%Y %H:%M BRT")
+                    except (ValueError,TypeError):date_label=str(instant)
+                else:date_label="Data N/D"
+                if point.get("status")=="CANDIDATOS_EXPERIMENTAIS":
+                    executive.append("  "+date_label+": "+
+                        format_ptbr(point.get("cultivated_candidate_area_ha"),2)+
+                        " ha de candidato agrícola no recorte temporal até a data; " +
+                        str(point.get("scene_count"))+" cenas / "+
+                        format_ptbr(point.get("span_days"),1)+" dias; cultura N/D; incerteza não quantificada.")
+                else:
+                    executive.append("  "+date_label+": sem área candidata calculável — "+
+                        str(point.get("reason") or point.get("status") or "série insuficiente")[:180])
+            executive.append("Área candidata por data: classificação experimental em janela móvel de até 150 dias; classes não são hectares agrícolas confirmados e os pontos não constituem observações de campo independentes.")
+        else:
+            executive.append("N/D — não houve série de cenas SAR compatível e legível para calcular candidatos experimentais por data.")
+        # A mostly urban classification in an operator-supplied agricultural AOI
+        # is a QA anomaly, not permission to erase real class-24 pixels or
+        # relabel them as crops from the filename or historical location.
+        urban_ha=sum(float(item.get("area_ha") or 0) for item in classes
+                     if str(item.get("class_name") or "") == "Infraestrutura Urbana")
+        if aoi_ha>0 and urban_ha/aoi_ha>=0.5:
+            executive.append(
+                "ALERTA DE CONSISTÊNCIA CARTOGRÁFICA: "+
+                format_ptbr(urban_ha,2)+" ha ("+
+                format_ptbr(100*urban_ha/aoi_ha,2)+
+                "%) classificados como Infraestrutura Urbana no MapBiomas anual. "+
+                "Verificar posicionamento/CRS do KMZ, mapa TIFF, classe 24, ano da imagem e "+
+                "interseção de pixels antes de atribuir uso agrícola; nenhuma classe foi alterada automaticamente.")
+        second_detections=land.get("second_crop_detection") if isinstance(land.get("second_crop_detection"),list) else []
+        for detection in second_detections:
+            try:
+                detection_area=float(detection.get("overlap_area_ha") or 0)
+            except (TypeError,ValueError):
+                detection_area=0
+            if detection_area>0:
+                executive.append("Detecção complementar experimental de "+str(detection.get("crop"))+
+                                 ": "+format_ptbr(detection_area,2)+" ha de sobreposição (safra 2; não somar à área total da propriedade).")
+        age_assessment=land.get("probable_crop_age") if isinstance(land.get("probable_crop_age"),dict) else {}
+        age_value=age_assessment.get("months") if (age_assessment.get("status")=="validated" and
+                   age_assessment.get("freshness_status")=="cenas_recentes_identificadas") else None
+        try:
+            age_value=float(age_value)
+            age_text=(format_ptbr(age_value,1)+" meses" if age_value>=0 else
+                      "INDISPONÍVEL — sem estimativa fenológica SAR validada")
+        except (TypeError,ValueError):
+            age_text="INDISPONÍVEL — sem estimativa fenológica SAR validada"
+        health=land.get("apparent_phytosanitary_state") if isinstance(land.get("apparent_phytosanitary_state"),dict) else {}
+        health_value=str(health.get("category","")).strip().casefold()
+        health_options={"bom":"Bom","médio":"Médio","medio":"Médio","ruim":"Ruim"}
+        health_text=(health_options[health_value] if (health.get("status")=="validated" and
+                     health.get("freshness_status")=="cenas_recentes_identificadas" and health_value in health_options) else
+                     "INDISPONÍVEL — opções: Bom, Médio ou Ruim")
+        forecast=land.get("yield_forecast") if isinstance(land.get("yield_forecast"),dict) else {}
+        interval=forecast.get("prediction_interval_t_ha") if isinstance(forecast.get("prediction_interval_t_ha"),dict) else {}
+        unit_conversion_audit=None
+        productivity_text="BLOQUEADA — modelo/validação científica insuficientes"
+        production_text="INDISPONÍVEL — área da cultura no polígono não quantificada"
+        from experimental_audit import eligible_experimental_yield, audit_yield_forecast
+        yield_is_experimental=eligible_experimental_yield(forecast)
+        if forecast.get("status")=="previsao_validada" or yield_is_experimental:
+            try:
+                value=float(forecast["yield_t_ha"]); low=float(interval["lower"]); high=float(interval["upper"])
+                if value>=0 and 0<=low<=value<=high:
+                    from agricultural_yield_units import probable_productivity, probable_production
+                    crop_name=forecast.get("crop", "")
+                    product=probable_productivity(value,crop_name)
+                    unit_conversion_audit=product["conversion"]
+                    low_unit=probable_productivity(low,crop_name)
+                    high_unit=probable_productivity(high,crop_name)
+                    basis=" (sacas de 60 kg)" if product["unit"]=="sacas/ha" else ""
+                    productivity_text=(format_ptbr(product["value"],2)+" "+product["unit"]+basis+
+                        " ("+format_ptbr(low_unit["value"],2)+"–"+format_ptbr(high_unit["value"],2)+" "+product["unit"]+")")
+                    crop_area=forecast.get("crop_area_ha")
+                    if crop_area is not None and float(crop_area)>0:
+                        total=probable_production(value,crop_area,crop_name)
+                        lower_total=probable_production(low,crop_area,crop_name)["value_t"]
+                        upper_total=probable_production(high,crop_area,crop_name)["value_t"]
+                        production_text=(format_ptbr(total["value_t"],2)+" t no polígono ("+
+                            format_ptbr(lower_total,2)+"–"+format_ptbr(upper_total,2)+" t), área da cultura: "+
+                            format_ptbr(crop_area,2)+" ha")
+                        if total["sacks"] is not None:
+                            production_text+="; equivalente a "+format_ptbr(total["sacks"],2)+" sacas de 60 kg"
+            except (KeyError,TypeError,ValueError):
+                productivity_text="BLOQUEADA — intervalo preditivo ausente ou inválido"
+        if yield_is_experimental:
+            productivity_text="ESTIMATIVA EXPERIMENTAL (não homologada) — "+productivity_text
+            if not production_text.startswith("INDISPONÍVEL"):
+                production_text="ESTIMATIVA EXPERIMENTAL (não homologada) — "+production_text
+        crop_labels=sorted({str(k) for k in ((land.get("yield_forecast") or {}).get("crop"),)
+                            if k and str(k).strip()})
+        crop_labels += sorted({str(item.get("class_name")).replace("Lavoura de ","") for item in classes
+                               if str(item.get("class_name") or "").startswith("Lavoura de ")})
+        crop_labels=list(dict.fromkeys(crop_labels))
+        executive.extend(["","PAINEL EXECUTIVO — PREVISÃO DE SAFRAS",
+                          "Tipo de cultivo: "+("; ".join(crop_labels) if crop_labels else "N/D — cultura não identificada"),
+                          "Idade provável da lavoura: "+age_text,
+                          "Estado fitossanitário aparente: "+health_text,
+                          "Produtividade estimada no momento dessa análise: "+productivity_text,
+                          "Produção provável: "+production_text,
+                          "Estado aparente é um sinal remoto inespecífico; não é diagnóstico de doença ou praga.",
+                          "Carbono nativo: calculado separadamente na aba de formações nativas."])
+        audit=["AUDITORIA TÉCNICA — USO DO SOLO, CULTURAS E FONTES",
+               "ID da execução: "+str(self.project.get("analysis_run_id") or "N/D"),
+               "Estado da etapa no pipeline: "+str(((self.project.get("pipeline_audit") or {}).get("stages") or {}).get("land_use",{}).get("status",land.get("status","N/D"))),
+               "Método: "+str(land.get("method","não informado")),
+               "Prioridade de fontes: "+str(land.get("priority","não informada")),
+               "Incerteza da área/classificação: "+str(land.get("area_uncertainty") or "incerteza não mensurável — classificação/área"),
+               "Fonte MapBiomas: "+str(land.get("mapbiomas_source","não disponível")),
+               "Avisos:"]+[str(x) for x in land.get("warnings",[]) or ["nenhum"]]
+        audit_dir=Path(land.get("vector_path") or (Path.home()/".enform_verde"/"auditorias" )).parent
+        land_audit=audit_dir/"uso_solo_auditoria.json"
+        self._write_json_background(land,land_audit)
+        audit.extend(["","Snapshot integral do módulo de uso do solo (JSON):",str(land_audit)])
+        audit.extend(["","Classes, fontes e metadados:"])
+        audit.extend(["", "Proveniência dos indicadores executivos:",
+                      json.dumps({"agriculture_historical_contingency":contingency,
+                                  "probable_crop_age":age_assessment,
+                                  "apparent_phytosanitary_state":health,
+                                  "yield_forecast":forecast,
+                                  "experimental_seasonal_sar_classification":seasonal_sar,
+                                  "yield_calculation_trace":audit_yield_forecast(forecast,analysis_id=self.project.get("analysis_run_id")),
+                                  "yield_unit_conversion":unit_conversion_audit},ensure_ascii=False,indent=2,default=str)])
+        # Keep acquisition and processing evidence alongside the executive
+        # crop panel. Previously the summary showed a SAR failure, while this
+        # audit tab could omit the provider, scene date and read diagnostics.
+        sar_audit_fields=("recent_sar_cover","sentinel1_inpe","sar_processing_diagnostics",
+                          "sar_provider_results","sar_selection","sar_classifier_lemplus")
+        sar_audit={key:land[key] for key in sar_audit_fields if key in land}
+        audit.extend(["", "AQUISIÇÃO E PROCESSAMENTO SAR — PROVENIÊNCIA RECEBIDA DO CORE:",
+                      json.dumps(sar_audit,ensure_ascii=False,indent=2,default=str)
+                      if sar_audit else "N/D — o core não forneceu metadados SAR para a auditoria."])
+        for item in classes:
+            audit.append(json.dumps(item,ensure_ascii=False,sort_keys=True,default=str))
+        validation=land.get("validation")
+        audit.extend(["","Validação e métricas:",json.dumps(validation,ensure_ascii=False,indent=2,default=str) if validation else "Nenhuma inferência SAR validada foi usada."])
+        audit.extend(["","Distribuições originais das fontes:",json.dumps(land.get("original_source_distributions",[]),ensure_ascii=False,indent=2,default=str)])
+        self._crop_monitoring_base_report="\n".join(executive)
+        self._crop_monitoring_audit_base="\n".join(audit)
+        if hasattr(self,"crop_exec_var"):
+            self.crop_exec_var.set(self._executive_excerpt(self._crop_monitoring_base_report,
+                ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:"))+
+                "\n\nVigor SAR: análise iniciada em segundo plano; o resultado e o motivo de indisponibilidade serão mostrados sem aguardar a meteorologia.")
+        self._set(self.crop_res,self._crop_monitoring_base_report)
+        self._set(self.crop_audit,self._crop_monitoring_audit_base)
+        generation=self._weather_query_generation
+        analysis_id=self.project.get("analysis_run_id")
+        def start_weather_if_current():
+            if (generation==self._weather_query_generation
+                and analysis_id==self.project.get("analysis_run_id")
+                and self.gdf is not None):
+                self.query_crop_weather()
+        self.after(100,start_weather_if_current)
+
+    def query_crop_weather(self):
+        """Retrieve actual weather asynchronously; executive summary and audit remain separate."""
+        if self.gdf is None:
+            return messagebox.showwarning("Clima","Carregue primeiro o perímetro da área.")
+        try:
+            geo=self.gdf.to_crs("EPSG:4326")
+            point=geo.geometry.union_all().centroid if hasattr(geo.geometry,"union_all") else geo.unary_union.centroid
+            lat,lon=float(point.y),float(point.x)
+        except Exception as exc:
+            return messagebox.showwarning("Clima","Não foi possível determinar o centroide: "+str(exc))
+        self._weather_query_generation+=1
+        query_id=self._weather_query_generation
+        analysis_id=self.project.get("analysis_run_id")
+        base_report=getattr(self,"_crop_monitoring_base_report","")
+        audit_base=getattr(self,"_crop_monitoring_audit_base","")
+        self._set(self.crop_res,(base_report+"\n\n" if base_report else "")+
+                  "Consultando meteorologia em segundo plano…\n"
+                  "NASA POWER: histórico recente em grade, não medição local.\n"
+                  "CPTEC/INPE: previsão futura.")
+        self._set(self.crop_audit,(audit_base+"\n\n" if audit_base else "")+
+                  "Consulta meteorológica pendente; resultados detalhados aparecerão aqui.")
+        def worker():
+            # Start crop vigor/yield processing before climate display lookups.
+            # The forecast has its own NASA POWER/FAO inputs and must not wait
+            # for the separate executive weather feeds below.
+            from concurrent.futures import ThreadPoolExecutor
+            crop_executor=ThreadPoolExecutor(max_workers=1,thread_name_prefix="crop-vigor-yield")
+            crop_gdf=self.gdf.copy()
+            crop_land=dict(getattr(self,"_last_land",None) or {})
+            def calculate_crop_forecast():
+                from crop_monitoring_forecast import monitoring_forecast
+                return monitoring_forecast(crop_gdf,crop_land)
+            crop_future=crop_executor.submit(calculate_crop_forecast)
+            def present_crop_forecast(completed):
+                try:fc_lines,fc_audit=completed.result()
+                except Exception as exc:
+                    fc_lines=["ANÁLISE DE VIGOR / SAFRA: INDISPONÍVEL — "+type(exc).__name__+": "+str(exc)[:220]
+                    ]; fc_audit={"status":"ERRO_TECNICO","reason":type(exc).__name__+": "+str(exc)[:300]}
+                # Worker threads only publish data. Tk widgets are updated by
+                # the GUI-thread poller scheduled below.
+                self._crop_forecast_queue.put((query_id,analysis_id,base_report,
+                                               audit_base,fc_lines,fc_audit))
+            crop_future.add_done_callback(present_crop_forecast)
+            from inmet_weather_client import weather_executive_lines
+            power_summary=None
+            forecast_summary=None
+            details=["CLIMA DINÂMICO — PROPRIEDADE / MONITORAMENTO AGRÍCOLA",
+                     f"Centroide WGS84: {lat:.5f}, {lon:.5f}"]
+            try:
+                from agricultural_weather import fetch_daily_weather,summarize_weather
+                weather=fetch_daily_weather(lat,lon,days=90)
+                summary=summarize_weather(weather)
+                power_summary=summary
+                details.extend(["","NASA POWER — DADOS DIÁRIOS DA GRADE",
+                                "Fonte: "+weather["source_url"],
+                                "Período: "+weather["start"]+" a "+weather["end"],
+                                "Consulta UTC: "+weather["retrieved_utc"],
+                                "Dias com temperatura: "+str(summary["temperature_days"]),
+                                "Temperatura média (°C): "+str(summary["mean_temperature_c"]),
+                                "Precipitação acumulada (mm): "+str(summary["rain_mm"]),
+                                "Graus-dia base 10 °C (°C dia): "+str(summary["gdd_c_day"]),
+                                "GDD descritivo; não parametrizado por cultura ou cultivar."])
+            except Exception as exc:
+                details.append("NASA POWER: INDISPONÍVEL — "+str(exc))
+            try:
+                from cptec_forecast_client import forecast_by_coordinates
+                forecast=forecast_by_coordinates(lat,lon)
+                forecast_summary=forecast
+                details.extend(["","CPTEC/INPE — PREVISÃO POR COORDENADAS",
+                                "Fonte: "+forecast["source_url"],
+                                "Consulta UTC: "+forecast["retrieved_utc"],
+                                "Períodos retornados: "+str(len(forecast["periods"]))])
+                for period in forecast["periods"][:7]:
+                    details.append("  "+str(period))
+            except Exception as exc:
+                details.append("CPTEC/INPE: INDISPONÍVEL — "+str(exc))
+            details.extend(["","INMET: o endpoint público testado não retornou observações acessíveis para a estação mais próxima.",
+                            "BDMEP histórico: não consultado automaticamente; exportação pública exige solicitação.",
+                            "Fenologia, vigor, estresse fitossanitário e produtividade não são inferidos só da meteorologia.",
+                            "NASA POWER e CPTEC representam produtos distintos; não se calcula média ponderada sem datas e variáveis comparáveis e pesos validados.",
+                            "Estimativas de carbono nativo permanecem independentes."])
+            dashboard=weather_executive_lines(
+                {"status":"indisponivel","reason":"histórico local de estação não disponível; painel usa NASA POWER em grade e CPTEC/INPE para previsão"},
+                power_summary,forecast_summary,format_ptbr)
+            executive=([base_report,""] if base_report else [])+dashboard
+            audit_text=([audit_base,""] if audit_base else [])+details
+            fc_audit={}
+            # Consolidated crop identification + automatic Sentinel-1 vigor +
+            # calibrated yield forecast (experimental), computed in parallel
+            # with the independent NASA POWER/CPTEC dashboard requests.
+            try:
+                fc_lines,fc_audit=crop_future.result()
+                # Do not keep a stale "BLOQUEADA" headline after the calibrated
+                # experimental panel has returned a numeric result. Carbon
+                # presentation and native-stock routines are untouched.
+                panel_results = [(crop_name, item) for crop_name, item in fc_audit.get("crops", {}).items()
+                                 if isinstance(item, dict) and item.get("forecast_model") == "panel"
+                                 and isinstance(item.get("forecast"), dict)
+                                 and "production" in item["forecast"]]
+                if len(panel_results) == 1:
+                    crop_name, panel_entry = panel_results[0]
+                    panel = panel_entry["forecast"]
+                    p = panel["production"]
+                    fields = p.get("fields_kg_ha", {})
+                    v = next(iter(fields.values()), None)
+                    t = p.get("production_t")
+                    if isinstance(v, dict) and isinstance(t, dict):
+                        from crop_report_consistency import remove_superseded_yield_placeholders
+                        executive = remove_superseded_yield_placeholders(
+                            executive, replace_yield_results=True)
+                        inputs = panel_entry.get("forecast_inputs") or {}
+                        mask_source = str(inputs.get("crop_mask_source") or panel_entry.get("identification_source") or "N/D")
+                        mask_season = str(inputs.get("crop_mask_season") or "N/D")
+                        crop_area = float(inputs.get("crop_area_ha") or panel_entry.get("area_ha") or 0.0)
+                        if mask_source == "SAR_EXPERIMENTAL_ANUAL":
+                            area_basis = ("área da máscara SAR experimental da safra " + mask_season +
+                                          " (" + format_ptbr(crop_area, 2) + " ha); persistência para a safra projetada é hipótese")
+                        elif mask_source == "SAR_VALIDADO":
+                            area_basis = "área da máscara SAR aceita para a cultura (" + format_ptbr(crop_area, 2) + " ha)"
+                        else:
+                            area_basis = "área da cultura N/D; base: " + mask_source
+                        executive += [
+                            "Produtividade estimada no momento dessa análise: ESTIMATIVA EXPERIMENTAL regional — "
+                            + format_ptbr(v["median"] / 1000, 2) + " t/ha (intervalo 90%: "
+                            + format_ptbr(v["p05"] / 1000, 2) + "–"
+                            + format_ptbr(v["p95"] / 1000, 2) + " t/ha)"
+                            + (("; equivalente a " + format_ptbr(v["median"] / 60, 2)
+                                + " sacas/ha (60 kg/saca; intervalo 90%: "
+                                + format_ptbr(v["p05"] / 60, 2) + "–"
+                                + format_ptbr(v["p95"] / 60, 2) + " sacas/ha)")
+                               if str(crop_name).strip().casefold() == "soja" else "")
+                            + (("; incerteza relativa (intervalo preditivo 90%, base mediana): -"
+                                + format_ptbr(100 * (v["median"] - v["p05"]) / v["median"], 1)
+                                + "% / +" + format_ptbr(100 * (v["p95"] - v["median"]) / v["median"], 1) + "%")
+                               if str(crop_name).strip().casefold() == "soja" and v["median"] > 0
+                               else ("; incerteza relativa: N/D (mediana igual a zero)"
+                                     if str(crop_name).strip().casefold() == "soja" else "")),
+                            "Produção provável: CENÁRIO EXPERIMENTAL CONDICIONAL — "
+                            + format_ptbr(t["median"], 2) + " t (intervalo 90%: "
+                            + format_ptbr(t["p05"], 2) + "–"
+                            + format_ptbr(t["p95"], 2) + " t); área aplicada: " + area_basis,
+                            "Base de produtividade: painel histórico PAM + clima/balanço hídrico. "
+                            + ("Vigor SAR atual não foi incorporado: não há máscara semântica atual de "
+                               "cultura compatível; veja o diagnóstico estrutural SAR relativo em separado."
+                               if not (inputs.get("current_crop_specific_sar_vigor_used") or
+                                       inputs.get("experimental_current_sar_vigor_conditioned_yield")) else
+                               ("Vigor SAR datado incorporado condicionalmente sobre máscara anual experimental; "
+                                "a permanência da cultura não foi confirmada."
+                                if inputs.get("experimental_current_sar_vigor_conditioned_yield") else
+                                "Vigor SAR datado sobre máscara de cultura foi incorporado conforme o contrato do modelo.")),
+                            "Transferência da máscara/área retrospectiva para a safra projetada: "
+                            + str(inputs.get("area_transfer_uncertainty") or "não aplicável")
+                            + "; incerteza de classificação/transferência não incluída no intervalo de produtividade."]
+                executive+=fc_lines
+                audit_text+=["","PREVISÃO DE SAFRA — AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
+            except Exception as exc:
+                executive+=["","Previsão de safra: INDISPONÍVEL — "+type(exc).__name__+": "+str(exc)[:200]]
+            finally:
+                crop_executor.shutdown(wait=False, cancel_futures=False)
+            def present():
+                if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
+                    return
+                if hasattr(self,"crop_exec_var"):
+                    card=self._executive_excerpt("\n".join(executive),
+                        ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:",
+                         "Produtividade estimada no momento dessa análise:","Produção provável:"))
+                    from crop_vigor_dashboard_summary import crop_vigor_dashboard_lines
+                    card+="\n\nVIGOR SAR E EFEITO NA PREVISÃO\n"+"\n".join(
+                        crop_vigor_dashboard_lines(fc_audit,format_ptbr))
+                    self.crop_exec_var.set(card)
+                self._set(self.crop_res,"\n".join(executive))
+                self._set(self.crop_audit,"\n".join(audit_text))
+            self.after(0,present)
+        self.after(80,self._poll_crop_forecast_queue,query_id,analysis_id)
+        threading.Thread(target=worker,daemon=True).start()
+
+    def _poll_crop_forecast_queue(self,query_id,analysis_id):
+        if query_id!=self._weather_query_generation or analysis_id!=self.project.get("analysis_run_id"):
+            return
+        result=None
+        while True:
+            try:item=self._crop_forecast_queue.get_nowait()
+            except queue.Empty:break
+            if item[0]==query_id and item[1]==analysis_id:
+                result=item;break
+        if result is None:
+            if self.winfo_exists():self.after(100,self._poll_crop_forecast_queue,query_id,analysis_id)
+            return
+        result_query,result_analysis,base_report,audit_base,fc_lines,fc_audit=result
+        from crop_vigor_dashboard_summary import crop_vigor_dashboard_lines
+        self.project["crop_vigor_forecast_audit"]=fc_audit
+        self.project["executive_vigor_status"]="\n".join(crop_vigor_dashboard_lines(fc_audit,format_ptbr))
+        self._refresh_overall_executive_summary()
+        report=([base_report,""] if base_report else [])+["VIGOR SAR E PREVISÃO DE SAFRA — RESULTADO INDEPENDENTE DA CONSULTA CLIMÁTICA"]+fc_lines
+        audit_report=([audit_base,""] if audit_base else [])+["VIGOR SAR E PREVISÃO — AUDITORIA",json.dumps(fc_audit,ensure_ascii=False,indent=2,default=str)]
+        self._set(self.crop_res,"\n".join(report)); self._set(self.crop_audit,"\n".join(audit_report))
+        summary=self._executive_excerpt("\n".join(report),
+            ("ÁREA TOTAL DA AOI:","Estado da classificação SAR atual:","Tipo de cultivo:","Produtividade estimada no momento dessa análise:"))
+        summary+="\n\nVIGOR SAR E EFEITO NA PREVISÃO\n"+self.project["executive_vigor_status"]
+        self.crop_exec_var.set(summary)
+
     def _sources(self):
         f=self.tabs[4]; ttk.Label(f,text="Rastreabilidade metodológica",style="H.TLabel").pack(anchor="w")
+        self.science_exec_box,self.science_exec_var=self._executive_card(
+            f,"QUADRO EXECUTIVO — BASE CIENTÍFICA",
+            "Modelos e inventários: consulte o estado de disponibilidade e compatibilidade antes de interpretar resultados.")
+        self.science_exec_box.pack(fill="x",pady=(6,4))
         ttk.Button(f,text="RESUMIR INVENTÁRIO (DAP + ÁREA BASAL)",command=self.summarize_inventory_ui).pack(anchor="w",pady=(6,2))
-        ttk.Label(f,text="Gera estatísticas de campo por inventário/parcela; não cria pares SAR nem calibra AGB.",wraplength=900).pack(anchor="w",pady=(0,6))
-        source_box=ttk.Frame(f); source_box.pack(fill="both",expand=True,pady=8)
+        ttk.Button(f,text="AMPLIAR BIBLIOTECA — FONTES HIERARQUIZADAS",command=self.harvest_official_inventory_ui).pack(anchor="w",pady=2)
+        ttk.Label(f,text="Consulta APIs do IFN/SFB, Sinaflor/IBAMA, REDAPE/Embrapa, repositórios institucionais OAI e Zenodo; baixa recursos públicos do REDAPE e Sinaflor e registra as demais rotas de acesso, inclusive universidades, PNLA, IBAMA, órgãos estaduais e unidades de conservação. Inventários fitossociológicos entram na mesma triagem estrutural e taxonômica.",wraplength=1000).pack(anchor="w",pady=(0,6))
+        source_box=ttk.LabelFrame(f,text="Métodos, fontes e limites de aplicação",style="Exec.TLabelframe"); source_box.pack(fill="both",expand=True,pady=8)
         self.src=tk.Text(source_box,height=24,wrap="word",yscrollcommand=lambda *a:source_scroll.set(*a))
         source_scroll=ttk.Scrollbar(source_box,orient="vertical",command=self.src.yview)
         self.src.pack(side="left",fill="both",expand=True); source_scroll.pack(side="right",fill="y")
         self._bind_text_scroll(self.src)
         txt=("REGRAS DO MOTOR\n• MEDIDO: derivado diretamente do inventário/raster fornecido.\n• MODELADO: proxy/equação publicada, identificado com fonte e domínio.\n• NÃO ESTIMADO: quando não existe suporte defensável.\n\n"
-             f"BGB: relação raiz/parte aérea {ROOT_RATIO:.2f}, faixa {ROOT_LOW:.2f}–{ROOT_HIGH:.2f}; {SOURCES['protocol']}.\n"
+             "Raízes vivas: floresta de terras altas usa equação Cairns et al. (1997), BGB=exp(-1,0587+0,8836 ln AGB), quando aplicável; erro residual e transferência não quantificados. Não usar razão fixa global nem aplicar essa equação a savanas/campos/várzeas.\n"
              f"Conversão biomassa→C: 0,47; {SOURCES['protocol']}.\n"
              f"Solo: {SOURCES['soil']}. O produto PronaSolos utilizado tem resolução nativa de 90 m; o programa preserva essa resolução e não faz falso downscaling.\n"
-             f"Necromassa: {SOURCES['deadwood']}; proxy de triagem recebe incerteza elevada e nunca é rotulado como medido.\n"
-             "Serrapilheira: proxy só é ativado para Amazônia quando há AGB e é explicitamente rotulado; para MRV recomenda-se amostragem local.")
+             "Necromassa acima e abaixo do solo: não aplicar alometria. Madeira caída pode mostrar a média direta SFB/IFN por bioma×UF quando disponível, mas a tabela ainda não tem coordenadas nem classe IBGE; fica fora do total da AOI até validação por fitofisionomia. Necromassa subterrânea exige massa seca de raízes mortas por área e profundidade, com parcelas independentes; ORNL DAAC 1116 é evidência limitada a raízes finas (<2 mm), não ao estoque subterrâneo total.\n"
+             "Serrapilheira: Tapajós usa referência de massa seca do estoque no piso florestal, independente da AGB/SAR e restrita à fitofisionomia/localidade compatíveis. Fora desse domínio, só estoque gravimétrico ou calibração massa–profundidade local; queda anual e profundidade isolada não são estoque.")
+        doc=app_resource("docs/CLASSIFICACAO_SAR_USO_SOLO.md")
+        if doc.exists():txt+="\n\n"+doc.read_text(encoding="utf-8")
+        # International theses and institutions are valid methodological sources.
+        # Bibliography is not a trained SAR classifier and cannot bypass the
+        # independent Brazilian per-class validation contract.
+        try:
+            from agricultural_external_models import CANDIDATES
+            txt+="\n\nMODELOS AGRÍCOLAS INTERNACIONAIS E TESES — FONTES CANDIDATAS, NÃO HOMOLOGADAS"
+            for candidate in CANDIDATES:
+                txt+=("\n• "+candidate["id"]+" | "+candidate["institution"]+" | "
+                      +", ".join(candidate["crops"])+" | "+candidate["url"])
+            txt+="\nOs métodos internacionais podem ser utilizados com compatibilidade de sensores, domínio e validação brasileira espacial/temporal independente; sem estes requisitos, não declarar cultura específica."
+        except Exception as exc:
+            txt+="\nCatálogo externo de modelos indisponível: "+str(exc)
         self._set(self.src,txt)
+        if hasattr(self,"science_exec_var"):
+            self.science_exec_var.set("Hierarquia: inventário compatível por fitofisionomia e região; dados primários e parcelas abertas têm prioridade.\n"
+                "Cada estimativa deve informar fonte, domínio, método e incerteza; consulte os detalhes e limites abaixo.")
+
+    def harvest_official_inventory_ui(self):
+        base=filedialog.askdirectory(title="Escolha a pasta da biblioteca ampliada de inventários")
+        if not base:return
+        root=Path(base)/"Enform_Verde_Biblioteca_Inventarios"
+        self.status.set("Consultando catálogos institucionais e fontes oficiais hierarquizadas…")
+        self._set(self.src,"Coleta em andamento. Esta janela continuará responsiva.\n\nOrdem aplicada: (1) parcelas abertas de instituições reconhecidas na mesma fitofisionomia e microrregião; (2) parcelas compatíveis na região, depois estatísticas publicadas por instituições reconhecidas; (3) inventário anexado a processo ambiental somente se o próprio documento tiver aceite expresso verificável; (4) bases oficiais administrativas para localizar estudos, sem contar autorizações como inventários; (5) fontes sem API ficam disponíveis como links de consulta. Fitossociologia pode apoiar área basal, DAP, distribuição diamétrica e espécies dominantes. Descoberta de metadados não equivale a inventário validado.")
+        def collect():
+            results={}
+            errors={}
+            try:
+                from inventory_source_access import collect_hierarchical_sources
+                results["FONTES_HIERARQUIZADAS"]=collect_hierarchical_sources(
+                    root/"00_Fontes_hierarquizadas",max_oai_pages=30)
+            except Exception as exc:
+                errors["FONTES_HIERARQUIZADAS"]=f"{type(exc).__name__}: {exc}"
+            for name,fn,folder in (("REDAPE",harvest_redape,"01_REDAPE_Embrapa"),("SINAFLO",harvest_sinaflor,"02_SINAFLO_IBAMA")):
+                try:results[name]=fn(root/folder)
+                except Exception as exc:errors[name]=f"{type(exc).__name__}: {exc}"
+            def finish():
+                lines=["BIBLIOTECA DE INVENTÁRIOS — COLETA DE FONTES OFICIAIS",""]
+                for name,manifest in results.items():
+                    if name=="FONTES_HIERARQUIZADAS":
+                        runs=manifest.get("runs",[])
+                        machine=sum(int(x.get("records",0)) for x in runs)
+                        ok=sum(1 for x in runs if x.get("status")=="OK")
+                        lines += [f"Busca hierarquizada: {machine} registros de metadados encontrados em {ok}/{len(runs)} rotas automatizadas.",
+                                  "  Tiers: 1) parcelas/dados abertos de instituições reconhecidas; 2) estatísticas institucionais publicadas; 3) inventário anexo com aceite expresso; 4) bases oficiais administrativas para localizar estudos; 5) portais sem API confirmada.",
+                                  "  Arquivo de rotas: "+str(root/"00_Fontes_hierarquizadas"/"fontes_hierarquizadas.csv"),
+                                  "  Manifesto: "+str(root/"00_Fontes_hierarquizadas"/"manifest_fontes_hierarquizadas.json"),
+                                  "  Catálogo SQLite local: "+str(root/"00_Fontes_hierarquizadas"/"catalogo_inventarios_fontes_hierarquizadas.sqlite"),
+                                  "  Metadados encontrados continuam inelegíveis até auditoria do arquivo e da compatibilidade ecológica."]
+                        for run in runs:
+                            if run.get("status")!="OK": lines.append(f"  {run.get('source_id')}: {run.get('status')} — {run.get('error','rota/endpoint não confirmado')}")
+                        continue
+                    items=manifest.get("resources",[])
+                    downloaded=sum(1 for x in items if x.get("download_status")=="baixado")
+                    lines += [f"{name}: {len(items)} recursos catalogados; {downloaded} baixados."]
+                    tiers={}
+                    for item in items:
+                        tier=item.get("evidence_tier","registro_para_triagem")
+                        tiers[tier]=tiers.get(tier,0)+1
+                    lines += [f"  Triagem: {tiers}"]
+                for name,error in errors.items():lines += [f"{name}: falha na coleta — {error}"]
+                lines += ["","HIERARQUIA DE USO"]
+                lines += [f"{x['rank']}. {x['label']}: {x['description']}" for x in SOURCE_HIERARCHY]
+                lines += ["","Nenhum arquivo foi automaticamente promovido a calibração ou cálculo. Confira parcela/unidade amostral, georreferenciamento, data, fitofisionomia, método, licença e incerteza."]
+                lines += ["Inventários privados de licenciamento exigem acesso autorizado e margem de erro publicada; sem isso ficam fora dos cálculos."]
+                lines += ["","Repositórios institucionais para triagem complementar:"]
+                lines += [f"{x['institution']}: {x['url']} — {x['method']}" for x in INSTITUTIONAL_PORTALS]
+                lines += ["","Arquivos e manifestos salvos em:",str(root)]
+                self._set(self.src,"\n".join(lines))
+                self.status.set("Coleta de catálogos concluída.")
+                access_index=root/"00_Fontes_hierarquizadas"/"acesso_fontes_hierarquizadas.html"
+                if access_index.exists():
+                    webbrowser.open(access_index.resolve().as_uri())
+                messagebox.showinfo("Biblioteca de inventários",f"Coleta concluída. Consulte os manifestos e arquivos em:\n{root}")
+            self.after(0,finish)
+        threading.Thread(target=collect,daemon=True).start()
 
     def summarize_inventory_ui(self):
         src=filedialog.askopenfilename(title="Selecione CSV harmonizado de inventário",filetypes=[("CSV","*.csv"),("Todos","*.*")])
@@ -1177,13 +3487,136 @@ class App(tk.Tk):
         w.bind("<Button-4>",wheel); w.bind("<Button-5>",wheel)
 
     def _set(self,w,t):
-        w.config(state="normal"); w.delete("1.0","end"); w.insert("1.0",t); w.config(state="disabled")
-        try:w.yview_moveto(0.0)
-        except tk.TclError:pass
+        """Update report text without monopolizing Tk while large audits render."""
+        text=str(t or "")
+        generation=int(getattr(w,"_enform_render_generation",0))+1
+        w._enform_render_generation=generation
+        w._enform_pending_text=text if len(text)>80000 else None
+        w.config(state="normal"); w.delete("1.0","end"); w.config(state="disabled")
+        if len(text)<=80000:
+            w.config(state="normal"); w.insert("1.0",text); w.config(state="disabled")
+            try:w.yview_moveto(0.0)
+            except tk.TclError:pass
+            return
+        # Disabled widgets are briefly enabled per chunk so keyboard input
+        # cannot alter an audit while yielding to Tk between insertions.
+        chunk_size=16000
+        def insert_chunk(offset=0):
+            try:
+                if not w.winfo_exists() or w._enform_render_generation!=generation:return
+                end=min(len(text),offset+chunk_size)
+                w.config(state="normal"); w.insert("end",text[offset:end]); w.config(state="disabled")
+                if end<len(text):
+                    w.after(1,lambda next_offset=end:insert_chunk(next_offset))
+                else:
+                    w._enform_pending_text=None
+                    w.yview_moveto(0.0)
+            except tk.TclError:
+                return
+        w.after_idle(insert_chunk)
+    def _write_json_background(self,data,path):
+        """Persist potentially large audit snapshots outside the Tk event loop."""
+        target=Path(path)
+        def write_snapshot():
+            try:
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_text(json.dumps(data,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+            except Exception as exc:
+                try:
+                    log=Path.home()/".enform_verde"/"enform_diagnostico.log"
+                    log.parent.mkdir(parents=True,exist_ok=True)
+                    with log.open("a",encoding="utf-8") as stream:
+                        stream.write("\nAUDIT_WRITE_FAILED "+str(target)+": "+type(exc).__name__+": "+str(exc)[:240])
+                except OSError:
+                    pass
+        threading.Thread(target=write_snapshot,name="EnformAuditWrite",daemon=True).start()
+    def _copy_text(self,text,label="Relatório"):
+        value=str(text or "")
+        if not value.strip():
+            self.status.set(label+": ainda não há conteúdo para copiar.")
+            return
+        self.clipboard_clear(); self.clipboard_append(value); self.update_idletasks()
+        self.status.set(label+" copiado para a área de transferência.")
+    def _copy_report(self,widget,label="Relatório"):
+        pending=getattr(widget,"_enform_pending_text",None)
+        self._copy_text(pending if pending is not None else widget.get("1.0","end-1c"),label)
+    def _populate_carbon_dashboard(self,native):
+        from carbon_dashboard_table import carbon_dashboard_rows
+        if not hasattr(self,"carbon_dashboard_table"):return
+        table=self.carbon_dashboard_table
+        for item in table.get_children(""):
+            table.delete(item)
+        def number(value):
+            return format_ptbr(value,2) if isinstance(value,(int,float)) and value is not None else "N/D"
+        for row in carbon_dashboard_rows(native or {}):
+            unc=row.get("uncertainty_tc_ha")
+            kind=str(row["uncertainty_kind"])
+            if unc is not None:
+                prefix="DP espacial descritivo: " if "descritivo" in kind.casefold() else "± "
+                joiner=" | " if prefix.endswith(": ") else " | ± "
+                unc_text=(prefix+number(unc)+" tC/ha"+joiner+number(unc*44/12)+" tCO₂e/ha | "+
+                          number(row.get("uncertainty_percent"))+"% — "+kind)
+            else:unc_text="Incerteza total: N/D — "+kind
+            if row.get("sensitivity_tc_ha") is not None:
+                sens=row["sensitivity_tc_ha"]
+                unc_text+=("\nSENSIBILIDADE PARCIAL: ± "+number(sens)+" tC/ha | ± "+
+                          number(sens*44/12)+" tCO₂e/ha | "+number(row.get("sensitivity_percent"))+"% — "+
+                          str(row.get("sensitivity_kind") or "não é incerteza total"))
+            density=row.get("tc_ha"); stock=row.get("stock_tc")
+            density_text=(number(density)+" tC/ha | "+number(density*44/12)+" tCO₂e/ha" if density is not None else "N/D")
+            stock_text=(number(stock)+" tC | "+number(stock*44/12)+" tCO₂e" if stock is not None else "N/D")
+            table.insert("","end",values=(row["compartment"],density_text,
+                stock_text,unc_text,number(row.get("area_ha")),row["status"]))
+    def _refresh_overall_executive_summary(self):
+        if not hasattr(self,"overall_exec_var"):return
+        land=self.project.get("land_use") or {}; native=self.project.get("native_carbon") or {}
+        area=native.get("area_aoi_ha") or self.project.get("area_ha")
+        land_status=str(land.get("status") or "N/D")
+        sar=land.get("recent_sar_cover") or {}
+        sar_status=str(sar.get("status") or sar.get("reason") or "N/D — consulte auditoria da cobertura")
+        heights=(self.project.get("sar_result") or {}).get("height_products") or []
+        height_status=(str(len(heights))+" produto(s) FH com pixels no painel" if heights else
+                       "N/D — verificar se houve pixels FH lidos; falha técnica não é ausência de cenas")
+        total=native.get("known_total_tc")
+        carbon=(format_ptbr(total,2)+" tC conhecidos; "+("parcial" if not native.get("complete") else "completo")
+                if total is not None else "N/D — sem estimador quantitativo elegível")
+        if hasattr(self,"carbon_stock_var"):
+            if isinstance(total,(int,float)):
+                label="ESTOQUE TOTAL" if native.get("complete") else "SOMA PARCIAL CONHECIDA — NÃO É O TOTAL COMPLETO"
+                self.carbon_stock_var.set(label+"\n"+format_ptbr(total,2)+" tC  |  "+
+                    format_ptbr(float(total)*44/12,2)+" tCO₂e")
+            else:self.carbon_stock_var.set("ESTOQUE DE CARBONO: N/D — nenhum estimador quantitativo elegível.")
+        vigor=str(self.project.get("executive_vigor_status") or "análise de vigor SAR em processamento")
+        self.overall_exec_var.set("\n".join([
+            "AOI: "+(format_ptbr(area,2)+" ha" if area is not None else "N/D"),
+            "Uso e cobertura: "+land_status,
+            "Mapa temático local: "+str(land.get("status") or "aguardando classes de uso/cobertura"),
+            "SAR atual: "+sar_status,
+            "Altura FH: "+height_status,
+            "Carbono nativo: "+carbon,
+            "Vigor / previsão agrícola: "+vigor,
+            "Limite: resultados experimentais; ver relatório detalhado e auditoria para fontes, incerteza e erros por etapa."]))
     def _reset_analysis_state(self,keep_geometry=False):
         """Invalida integralmente qualquer resultado derivado da consulta anterior."""
         self._analysis_generation+=1
-        self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False
+        self._weather_query_generation+=1
+        self._crop_monitoring_base_report=""
+        self._crop_monitoring_audit_base=""
+        for name,message in (
+            ("property_exec_var","Perímetro: aguardando arquivo, CAR ou CCIR."),
+            ("spatial_exec_var","Área, bioma e referências IBGE serão resumidos após carregar o perímetro."),
+            ("sar_exec_var","Estado: aguardando análise SAR/AGB."),
+            ("carbon_exec_var","Estoque, cobertura, compartimentos e incerteza serão resumidos após a análise."),
+            ("crop_exec_var","Aguardando análise agrícola e meteorológica."),
+        ):
+            var=getattr(self,name,None)
+            if var is not None:var.set(message)
+        if hasattr(self,"crop_res"):
+            self._set(self.crop_res,"Aguardando nova análise.")
+        if hasattr(self,"crop_audit"):
+            self._set(self.crop_audit,"A auditoria anterior foi descartada. Aguardando nova análise.")
+        self._ibge_generation+=1; self._ibge_pending=False; self._pending_execute=False; self._vector_load_pending=False
+        self._vector_load_generation+=1
         old_vector=self.project.get("vector")
         self.project={"version":APP_VERSION}
         if old_vector and keep_geometry:self.project["vector"]=old_vector
@@ -1192,20 +3625,26 @@ class App(tk.Tk):
             if hasattr(self,"aoi_area_display"):self.aoi_area_display.set("Aguardando perímetro.")
         self._map_generation+=1
         self._satellite_map_visible=False
+        if hasattr(self,"map_status"):
+            self.map_status.set("Aguardando classificação de uso/cobertura para a nova AOI.")
         if getattr(self,"_map_refresh_job",None) is not None:
             try:self.after_cancel(self._map_refresh_job)
             except Exception:pass
             self._map_refresh_job=None
         if hasattr(self,"map_canvas"):
             self.map_canvas.delete("all")
-            self.map_canvas.create_text(20,20,anchor="nw",text="Carregue CAR, CCIR ou vetor e visualize o satélite com o polígono.",fill="#455")
+            self.map_canvas.create_text(20,20,anchor="nw",text="Carregue um perímetro para ver o mapa temático após a análise.",fill="#455")
+        if keep_geometry and self.gdf is not None:
+            self._draw_land_use_map({})
         self.soil_raster=None
         self.sar_paths=[]
+        self.land_use_config=None
+        if hasattr(self,"land_use_state"):self.land_use_state.set("Sem modelo SAR validado. Fallback: IBGE → MapBiomas.")
         self.inv=None
         self.active_source=None
         self.active_input_id=None
         self.biome.set(""); self.phys.set("")
-        for widget_name in ("remote_text","res"):
+        for widget_name in ("remote_text","res","crop_res"):
             w=getattr(self,widget_name,None)
             if w is not None:self._set(w,"")
         if hasattr(self,"spatial_text"):self._set(self.spatial_text,"Nova entrada recebida. Resultados anteriores foram descartados.")
@@ -1244,33 +3683,75 @@ class App(tk.Tk):
         p=filedialog.askopenfilename(title="Selecionar limite da propriedade",filetypes=[("Vetores","*.kml *.kmz *.geojson *.json *.shp *.gpkg"),("Todos","*.*")])
         if not p:return
         self._reset_analysis_state()
-        self.vector_status.set(f"Selecionado: {Path(p).name} — validando arquivo…"); self.status.set("Validando arquivo vetorial..."); self.update_idletasks()
-        try:
-            self.gdf=read_vector(p); self.project["vector"]=p; self.active_source="VECTOR"; self.active_input_id=str(Path(p).resolve()); self.car.set(""); self.ccir.set("")
-            self.vector_status.set(f"Upload concluído ✓  {Path(p).name}  |  {len(self.gdf)} feição(ões) vetorial(is) carregada(s).")
-            self.nb.select(self.tabs[1]); self.update_idletasks()
-            self._show_geom(Path(p).name); self.vector_status.set(f"Upload concluído ✓  {Path(p).name}  |  {len(self.gdf)} feição(ões) carregada(s).")
-        except Exception as e:
-            self.gdf=None; self.vector_status.set(f"Upload não concluído — {Path(p).name}: {e}"); self.status.set("Falha ao carregar vetor."); messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {Path(p).name}\n\nMotivo: {e}")
-    def _schedule_offline_map_fit(self,label):
-        """Guarantee a usable map without network: draw now, then redraw after Tk settles."""
+        self._vector_load_generation+=1; generation=self._vector_load_generation
+        self._vector_load_pending=True
+        filename=Path(p).name
+        self.vector_status.set(f"Selecionado: {filename} — validando em segundo plano…")
+        self.status.set("Lendo e validando o arquivo vetorial em segundo plano…"); self.update_idletasks()
+        def worker():
+            try:
+                frame=read_vector(p)
+                metrics=geom_metrics(frame)
+                self._vector_load_queue.put((generation,"ok",(frame,metrics)))
+            except Exception as exc:
+                self._vector_load_queue.put((generation,"error",f"{type(exc).__name__}: {exc}"))
+        def poll():
+            try:result_generation,kind,value=self._vector_load_queue.get_nowait()
+            except queue.Empty:
+                if generation==self._vector_load_generation and self.winfo_exists():self.after(120,poll)
+                return
+            if result_generation!=generation:
+                # A later upload owns this queued result. Let its poller consume
+                # it; an older poll must not pair it with a previous file path.
+                if result_generation==self._vector_load_generation:
+                    self._vector_load_queue.put((result_generation,kind,value))
+                return
+            if generation!=self._vector_load_generation:return
+            if kind!="ok":
+                self._vector_load_pending=False; self._pending_execute=False
+                self.vector_status.set(f"Upload não concluído — {filename}: {value}")
+                self.status.set("Falha ao carregar vetor.")
+                messagebox.showerror("Vetor não carregado",f"O arquivo não foi carregado; nenhuma análise foi iniciada.\n\nArquivo: {filename}\n\nMotivo: {value}")
+                return
+            # The analysis state was already cleared before starting the worker.
+            # Clearing it here would also discard an Execute request queued while
+            # the vector was being validated.
+            self._vector_load_pending=False
+            self.gdf,metrics=value; self.project["vector"]=p; self.active_source="VECTOR"
+            self.active_input_id=str(Path(p).resolve()); self.car.set(""); self.ccir.set("")
+            self.vector_status.set(f"Upload concluído ✓  {filename}  |  {len(self.gdf)} feição(ões) vetorial(is) carregada(s).")
+            self.nb.select(self.tabs[1]); self._show_geom(filename,metrics=metrics)
+            self.vector_status.set(f"Upload concluído ✓  {filename}  |  {len(self.gdf)} feição(ões) vetorial(is) carregada(s).")
+        threading.Thread(target=worker,name="EnformVectorLoad",daemon=True).start()
+        self.after(120,poll)
+    def _schedule_optical_map_fit(self,label):
+        """Load CBERS-4A/Sentinel-2 imagery; keep the AOI outline on failure."""
+        self._map_extent_factor=1.36
         self._satellite_map_visible=False
-        if not self._draw_offline_brazil_basemap(label):
-            self._draw_aoi_outline(label)
-        gen=self._map_generation
-        def redraw():
-            if self.gdf is None or gen!=self._map_generation:return
-            if not self._draw_offline_brazil_basemap(label):
-                self._draw_aoi_outline(label)
-        self.after_idle(redraw)
-        self.after(180,redraw)
-        self.after(420,redraw)
+        self._draw_aoi_outline(label + " — carregando camada online")
+        self._map_provider="ONLINE_PENDING"
+        # Network requests run in a worker; the outline is the only local fallback.
+        self.show_google_map(refresh=False,prefer_public=False)
+        # The AOI outline has already been rendered; do not schedule an undefined callback.
 
-    def _show_geom(self,src):
-        m=geom_metrics(self.gdf); self.project["geometry_metrics"]=m
-        if hasattr(self,"aoi_area_display"):self.aoi_area_display.set(f"{m['area_ha']:,.2f} ha")
-        self._set(self.spatial_text,f"Perímetro: {src}\nÁrea geométrica: {m['area_ha']:,.2f} ha\nCentroide: {m['centroid'][1]:.6f}, {m['centroid'][0]:.6f}\nCRS métrico de cálculo: EPSG:{m['utm_epsg']}\n\nPerímetro válido para recorte espacial.")
-        self._schedule_offline_map_fit(f"Perímetro carregado: {src} — mapa vetorial offline")
+    def _show_geom(self,src,metrics=None):
+        m=metrics or geom_metrics(self.gdf); self.project["geometry_metrics"]=m
+        area_txt=format_ptbr(m['area_ha'],2)+" ha"
+        if hasattr(self,"property_exec_var"):
+            self.property_exec_var.set("Perímetro carregado: "+str(src)+"\nÁrea: "+area_txt+
+                " (EPSG:6933). Estado: geometria validada para análise; uso/cobertura ainda não classificado.")
+        if hasattr(self,"spatial_exec_var"):
+            self.spatial_exec_var.set("Área da AOI: "+area_txt+"\nBioma e fitofisionomia: aguardando interseção oficial IBGE.\n"
+                "Fundo do mapa é referência visual; não determina uso atual nem entra no cálculo.")
+        if hasattr(self,"aoi_area_display"):
+            self.aoi_area_display.set(f"{format_ptbr(m['area_ha'],2)} ha (EPSG:6933; base dos percentuais)")
+        if hasattr(self,"ibge_phys_display"):
+            self.ibge_phys_display.set("Aguardando mapeamento da vegetação nativa; mapa potencial IBGE não confirma presença atual.")
+        self._set(self.spatial_text,f"Perímetro: {src}\nÁrea de referência (EPSG:6933): {format_ptbr(m['area_ha'],2)} ha\nÁrea UTM (apenas diagnóstico): {format_ptbr(m['area_utm_ha'],2)} ha — EPSG:{m['utm_epsg']}\nCentroide: {format_ptbr(m['centroid'][1],6)}; {format_ptbr(m['centroid'][0],6)}\nPercentuais e estoques da AOI utilizam a área equivalente EPSG:6933.\n\nPerímetro válido para recorte espacial.")
+        # Local AOI preview only; classification polygons replace it after the
+        # analysis. No optical scene search is started from geometry loading.
+        try:self._draw_land_use_map(self.project.get("land_use") or {})
+        except Exception as exc:self.project["map_preview_error"]=f"{type(exc).__name__}: {exc}"
         self.status.set(f"Perímetro carregado: {src}; diagnóstico IBGE em segundo plano."); self.update_idletasks()
         self._ibge_generation+=1; generation=self._ibge_generation; geometry=self.gdf.copy(); self._ibge_pending=True
         def worker():
@@ -1287,29 +3768,43 @@ class App(tk.Tk):
         self._ibge_pending=False
         if kind!="ok":
             self.project["ibge_diagnosis_error"]=value
-            if hasattr(self,"ibge_phys_display"):self.ibge_phys_display.set("Não determinada — falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
+            if hasattr(self,"spatial_exec_var"):
+                self.spatial_exec_var.set("Área carregada; consulta IBGE falhou.\nBioma/fitofisionomia: N/D — "+str(value)[:170])
+            if hasattr(self,"ibge_phys_display"):
+                self.ibge_phys_display.set("Não determinada — falha na consulta ao mapa oficial IBGE: "+str(value)[:160])
             self.status.set("Perímetro carregado; diagnóstico IBGE pendente.")
-            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nDiagnóstico IBGE pendente: "+value)
+            self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nDiagnóstico IBGE pendente: "+str(value))
             if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
             return
         d=value; self.project["ibge_diagnosis"]=d
-        if d["biomas"]:self.biome.set(d["biomas"][0][0])
+        if d.get("biomas"):self.biome.set(d["biomas"][0][0])
         primary=primary_ibge_physiognomy(d)
+        if hasattr(self,"spatial_exec_var"):
+            area_text=format_ptbr(geom_metrics(self.gdf)["area_ha"],2)+" ha" if self.gdf is not None else "N/D"
+            bioma=(d.get("biomas") or [["Não determinado"]])[0][0]
+            self.spatial_exec_var.set("Área da AOI: "+area_text+" | Bioma IBGE: "+str(bioma)+"\n"
+                "Fitofisionomia potencial: "+str(primary or "não determinada")+
+                "; requer confirmação independente de cobertura nativa atual.")
         if primary:self.phys.set(primary)
         elif d.get("vegetacao_error"):self.phys.set("Não determinada — "+d["vegetacao_error"][:120])
         if hasattr(self,"ibge_biome_display"):
             self.ibge_biome_display.set(self.biome.get() or "Não determinado")
-        if hasattr(self,"ibge_phys_display"):
-            code=None
-            regs=d.get("regioes_fitoecologicas") or []
-            if regs and primary and regs[0].get("name")==primary:code=regs[0].get("code")
-            shown=self.phys.get() or "Não determinada"
-            self.ibge_phys_display.set(shown+(f"  |  código IBGE: {code}" if code else ""))
-        btxt="; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in d["biomas"])
-        vtxt=" | ".join(x["campo"]+": "+"; ".join(f"{n}: {pct:.1f}% ({ha:,.1f} ha)" for n,ha,pct in x["classes"][:8]) for x in d["vegetacao"]) or ("PENDENTE: "+d.get("vegetacao_error","sem classe"))
-        code_txt="; ".join(f"{x['code'] or 'código N/D'} — {x['name']}: {x['percent']:.1f}% ({x['area_ha']:,.1f} ha)" for x in d.get("regioes_fitoecologicas",[])[:8])
-        if code_txt:vtxt="Região fitoecológica (IBGE legenda_1): "+code_txt+" | "+vtxt
-        self._set(self.spatial_text,self.spatial_text.get("1.0","end").strip()+"\n\nIBGE — Bioma(s): "+btxt+"\nIBGE 2026 — Vegetação: "+vtxt)
+        # IBGE describes potential vegetation, never current cover.
+        if hasattr(self,"ibge_phys_display") and not self.project.get("native_carbon"):
+            potential="; ".join(
+                str(x.get("name") or "não determinada")+" — "+
+                format_ptbr(float(x.get("area_ha",0)),2)+" ha"
+                for x in d.get("regioes_fitoecologicas",[]) if x.get("name"))
+            self.ibge_phys_display.set(
+                "Cobertura nativa ATUAL: aguardando confirmação por SAR.\n"+
+                ("Fitofisionomia POTENCIAL IBGE (não comprova presença atual): "+
+                 potential if potential else "Fitofisionomia potencial IBGE: não determinada."))
+        btxt="; ".join(f"{n}: {format_ptbr(ha,2)} ha ({format_ptbr(pct,2)}%)" for n,ha,pct in d.get("biomas",[]))
+        code_txt="\n".join(f"  código {x.get('code') or 'N/D'} — {x['name']}: {format_ptbr(x['area_ha'],2)} ha ({format_ptbr(x['percent'],2)}%)" for x in d.get("regioes_fitoecologicas",[]))
+        ibge_lines=["Bioma(s) IBGE: "+(btxt or "não determinado")]+ibge_area_summary_lines(d)
+        if code_txt:ibge_lines.append("Código(s) das regiões fitoecológicas (IBGE):\n"+code_txt)
+        current=self.spatial_text.get("1.0","end").strip()
+        self._set(self.spatial_text,current+"\n\n"+"\n".join(ibge_lines))
         self.status.set("Perímetro e diagnóstico IBGE concluídos." if not d.get("vegetacao_error") else "Bioma IBGE concluído; fitofisionomia não classificada — modelos que exigem classe IBGE ficam bloqueados; apenas rotas independentes da classe podem prosseguir.")
         if self._pending_execute:self._pending_execute=False; self.after(0,self.execute)
     def pick_soil(self):
@@ -1322,6 +3817,10 @@ class App(tk.Tk):
     def execute(self,event=None):
         if self._analysis_running:
             self.status.set("Análise já em execução; aguarde.")
+            return
+        if self._vector_load_pending:
+            self._pending_execute=True
+            self.status.set("Arquivo vetorial em validação; a análise começará automaticamente após a confirmação do perímetro.")
             return
         if self._ibge_pending:
             self._pending_execute=True; self.status.set("A AOI está carregada. A análise começará assim que o diagnóstico territorial do IBGE terminar.")
@@ -1344,21 +3843,142 @@ class App(tk.Tk):
             self._pending_execute=True; self.status.set("Perímetro resolvido. A análise começará após o diagnóstico territorial do IBGE.")
             return
         if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR, CCIR ou carregue um arquivo vetorial; depois pressione EXECUTAR ANÁLISE.")
-        if self.sar_paths:return self._execute_main(event)
+        # All pixel acquisition and model execution, including local SAR files, stays off the Tk thread.
         # Snapshot every Tk variable on the GUI thread before starting the worker.
-        gdf=self.gdf.copy(); biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
+        land_config=self.land_use_config
+        sar_paths=list(self.sar_paths or [])
+        # Inventory evidence is immutable during a run and replaced atomically
+        # when users load another source. Keep references; copying the expanded
+        # evidence base here duplicated many large Python records on the UI thread.
+        inventory_evidence=self.inventory_evidence_data
+        biodiversity_inventory_records=self.biodiversity_inventory_records
+        inventory_manifest=(dict(self.inventory_evidence_manifest)
+                            if self.inventory_evidence_manifest is not None else None)
+        # This national reference layer is read-only in the analysis pipeline.
+        # A deep GeoDataFrame copy can dominate startup time and memory.
+        land_ibge=self.ibge_physiognomy_gdf
+        land_field=self.ibge_class_field or "legenda_1"
+        # The AOI object is immutable while this worker owns the snapshot; a new
+        # upload replaces self.gdf, so a full geometry copy is unnecessary.
+        gdf=self.gdf; biome=self.biome.get(); phys=self.phys.get(); token=self.esa_token.get().strip()
+        try:
+            from analysis_pipeline_contract import geometry_hash
+            aoi_hash=geometry_hash(gdf)
+        except Exception as exc:
+            self.status.set("Falha ao identificar a geometria da AOI.")
+            return messagebox.showerror("Análise", "Não foi possível gerar o hash da AOI; análise bloqueada: "+type(exc).__name__)
         edl_token=self.edl_token.get().strip(); edl_user=self.edl_user.get().strip(); edl_password=self.edl_password.get(); cdse_token=self.cdse_token.get().strip()
         cdse_client_id=self.cdse_client_id.get().strip(); cdse_client_secret=self.cdse_client_secret.get().strip()
         self._analysis_generation+=1; run_id=self._analysis_generation
         self._analysis_running=True; self.pipeline_btn.state(["disabled"]); self.global_execute_btn.state(["disabled"])
         self.status.set("Consultando e processando SAR em segundo plano…")
+        analysis_run_id=uuid.uuid4().hex[:12].upper()
         def worker():
+            land=None; native=None; pedology=None; fertility=None; sar_payload=None
+            checkpoint_path=None; stage_errors=[]
+            worker_started=time.perf_counter(); phase_durations={}; soil_result={}; soil_thread=None; soil_thread_started=False
+            def validate_worker_handoff(land_result,native_result,sar_result):
+                from analysis_pipeline_contract import validate_pipeline_handoff
+                try:
+                    validate_pipeline_handoff(analysis_run_id,aoi_hash,
+                        {"land_use":land_result,"native_carbon":native_result,
+                         "sar_dashboard":sar_result})
+                    return True
+                except Exception as exc:
+                    self._analysis_queue.put((run_id,"error",
+                        "HANDOFF_VALIDATION_FAILED — "+type(exc).__name__+": "+str(exc)))
+                    return False
             try:
-                sar=automatic_pipeline(gdf,biome,phys,token,edl_user=edl_user,edl_password=edl_password,edl_token=edl_token,cdse_token=cdse_token,cdse_client_id=cdse_client_id,cdse_client_secret=cdse_client_secret)
-                try: soil_profiles=pronasolos_soc_profiles(gdf)
-                except Exception as e: soil_profiles={"error":str(e)}
-                self._analysis_queue.put((run_id,"ok",{"sar":sar,"soil":soil_profiles}))
-            except Exception:self._analysis_queue.put((run_id,"error",traceback.format_exc()))
+                # Soil zoning depends only on the AOI. Run it beside land-use
+                # and SAR/carbon work, keeping the same inputs and calculations.
+                soil_started=time.perf_counter()
+                soil_thread=threading.Thread(
+                    target=lambda: soil_result.setdefault("value",_analyze_soil_stages(gdf)),
+                    name="EnformSoilStages",daemon=True)
+                soil_thread.start()
+                soil_thread_started=True
+                reference=land_ibge;reference_field=land_field
+                if reference is None:
+                    try:reference,reference_field=load_ibge_land_use_reference(gdf)
+                    except Exception:pass
+                land_started=time.perf_counter()
+                land=run_land_use(gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],land_config,ibge=reference,ibge_field=reference_field,sar_paths=sar_paths)
+                phase_durations["land_use_seconds"]=round(time.perf_counter()-land_started,3)
+                land["analysis_run_id"]=analysis_run_id
+                land["aoi_hash_sha256"]=aoi_hash
+                options={"offline_token":token,"edl_user":edl_user,"edl_password":edl_password,"edl_token":edl_token,
+                         "cdse_token":cdse_token,"cdse_client_id":cdse_client_id,"cdse_client_secret":cdse_client_secret,
+                         "inventory_evidence":inventory_evidence,
+                         "biodiversity_inventory_records":biodiversity_inventory_records,
+                         "inventory_evidence_manifest":inventory_manifest}
+                native_started=time.perf_counter()
+                try:
+                    native=native_carbon_analysis(gdf,land,biome,options,sar_paths=sar_paths)
+                except Exception as exc:
+                    native=_native_carbon_failure_result(gdf,exc)
+                    stage_errors.append({"stage":"native_carbon","status":"ERRO_TECNICO",
+                                         "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                phase_durations["native_carbon_seconds"]=round(time.perf_counter()-native_started,3)
+                native["analysis_run_id"]=analysis_run_id
+                native["aoi_hash_sha256"]=aoi_hash
+                soil_thread.join()
+                pedology,fertility,soil_errors,soil_timings=soil_result["value"]
+                phase_durations.update(soil_timings)
+                phase_durations["soil_pipeline_wall_seconds"]=round(time.perf_counter()-soil_started,3)
+                stage_errors.extend(soil_errors)
+                phase_durations["worker_wall_seconds"]=round(time.perf_counter()-worker_started,3)
+                phase_durations["execution_mode"]="solo_pedologia_em_paralelo_com_uso_da_terra_e_carbono"
+                sar_payload=_sar_dashboard_payload(native,land)
+                if not validate_worker_handoff(land,native,sar_payload):return
+                try:
+                    checkpoint_path=_write_analysis_stage_checkpoint(
+                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors,phase_durations)
+                except Exception as exc:
+                    stage_errors.append({"stage":"analysis_checkpoint","status":"ERRO_TECNICO",
+                                         "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                self._analysis_queue.put((run_id,"ok",{"sar":sar_payload,"soil":{},"land_use":land,
+                                                      "native_carbon":native,"pedology":pedology,
+                                                      "fertility":fertility,"aoi_hash":aoi_hash,
+                                                      "analysis_run_id":analysis_run_id,
+                                                      "stage_errors":stage_errors,
+                                                      "performance":phase_durations,
+                                                      "checkpoint_path":checkpoint_path}))
+            except Exception as exc:
+                if soil_thread is not None and soil_thread_started:
+                    soil_thread.join()
+                    if "value" in soil_result:
+                        pedology,fertility,soil_errors,soil_timings=soil_result["value"]
+                        phase_durations.update(soil_timings)
+                        stage_errors.extend(soil_errors)
+                    phase_durations["worker_wall_seconds"]=round(time.perf_counter()-worker_started,3)
+                    phase_durations["execution_mode"]="solo_pedologia_em_paralelo_com_uso_da_terra_e_carbono"
+                if not isinstance(land,dict):
+                    self._analysis_queue.put((run_id,"error",traceback.format_exc()))
+                    return
+                stage_errors.append({"stage":"post_land_use","status":"ERRO_TECNICO",
+                                     "error_type":type(exc).__name__,"reason":str(exc)[:300]})
+                if not isinstance(native,dict):
+                    native=_native_carbon_failure_result(gdf,exc)
+                if not isinstance(pedology,dict):
+                    pedology={"status":"N/D","reason":"Etapa não concluída após falha técnica: "+type(exc).__name__}
+                if not isinstance(fertility,dict):
+                    fertility={"status":"N/D","reason":"Etapa não concluída após falha técnica: "+type(exc).__name__,
+                               "units":{},"layers":[]}
+                sar_payload=_sar_dashboard_payload(native,land)
+                if not validate_worker_handoff(land,native,sar_payload):return
+                try:
+                    checkpoint_path=_write_analysis_stage_checkpoint(
+                        analysis_run_id,aoi_hash,land,native,pedology,fertility,sar_payload,stage_errors,phase_durations)
+                except Exception as checkpoint_exc:
+                    stage_errors.append({"stage":"analysis_checkpoint","status":"ERRO_TECNICO",
+                                         "error_type":type(checkpoint_exc).__name__,"reason":str(checkpoint_exc)[:300]})
+                self._analysis_queue.put((run_id,"ok",{"sar":sar_payload,"soil":{},"land_use":land,
+                                                      "native_carbon":native,"pedology":pedology,
+                                                      "fertility":fertility,"aoi_hash":aoi_hash,
+                                                      "analysis_run_id":analysis_run_id,
+                                                      "stage_errors":stage_errors,
+                                                      "performance":phase_durations,
+                                                      "checkpoint_path":checkpoint_path}))
         threading.Thread(target=worker,name="EnformAnalysis",daemon=True).start()
         self.after(120,self._poll_analysis)
 
@@ -1375,14 +3995,14 @@ class App(tk.Tk):
             log=Path.home()/".enform_verde"/"enform_diagnostico.log"; log.parent.mkdir(parents=True,exist_ok=True); log.write_text(payload,encoding="utf-8")
             self.status.set("Falha controlada — programa permanece responsivo.")
             return messagebox.showerror("Análise","Falha controlada. Log gravado em:\n"+str(log))
-        self.status.set("SAR consultado; calculando carbono…")
-        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil")) if rid==self._analysis_generation else None)
+        self.status.set("Resultados recebidos; apresentando as etapas concluídas e os erros específicos.")
+        self.after(1,lambda rid=run_id,p=payload:self._execute_main(precomputed_sar=p.get("sar"),precomputed_soil=p.get("soil"),precomputed_land=p.get("land_use"),precomputed_native=p.get("native_carbon"),precomputed_pedology=p.get("pedology"),precomputed_fertility=p.get("fertility"),expected_aoi_hash=p.get("aoi_hash"),precomputed_analysis_run_id=p.get("analysis_run_id"),precomputed_stage_errors=p.get("stage_errors"),precomputed_checkpoint_path=p.get("checkpoint_path"),precomputed_performance=p.get("performance")) if rid==self._analysis_generation else None)
 
-    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None):
+    def _execute_main(self,event=None,precomputed_sar=None,precomputed_soil=None,precomputed_land=None,precomputed_native=None,precomputed_pedology=None,precomputed_fertility=None,expected_aoi_hash=None,precomputed_analysis_run_id=None,precomputed_stage_errors=None,precomputed_checkpoint_path=None,precomputed_performance=None):
         # Cada execução substitui, nunca acumula, os resultados derivados da geometria corrente.
-        self.project["analysis_run_id"]=uuid.uuid4().hex[:12].upper()
+        self.project["analysis_run_id"]=str(precomputed_analysis_run_id or uuid.uuid4().hex[:12].upper())
         self.project["analysis_started_utc"]=datetime.now(timezone.utc).isoformat(timespec="seconds")
-        for k in ("analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result"):
+        for k in ("analysis_aoi_hash","analysis_aoi_crs","pipeline_audit","analysis_rows","area_ha","total_tc_ha","total_tco2_ha","last_result","total_is_partial","partial_carbon_total_tc_ha","partial_independent_carbon_total_tc_ha","partial_soil_analysis","partial_sar_analysis","native_carbon","sar_result","sar_warning","total_uncertainty","mapbiomas_zonal","soil_pedology","soil_fertility","modeled_field_predictions","modeled_field_files"):
             self.project.pop(k,None)
         current_car=self.car.get().strip().upper()
         current_ccir=re.sub(r"\D","",self.ccir.get())
@@ -1397,186 +4017,497 @@ class App(tk.Tk):
                 self.gdf=resolve_ccir_sigef(current_ccir); self.active_source="CCIR"; self.active_input_id=current_ccir; self._show_geom("CCIR / SIGEF")
             except Exception as e:return messagebox.showwarning("Perímetro necessário",str(e))
         if self.gdf is None:return messagebox.showwarning("Perímetro necessário","Informe CAR/CCIR ou carregue o arquivo vetorial da propriedade.")
+        from analysis_pipeline_contract import geometry_hash, validate_result_for_publication
+        try:
+            run_aoi_hash=geometry_hash(self.gdf)
+            if expected_aoi_hash and expected_aoi_hash!=run_aoi_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE — o processamento em segundo plano pertence a outra geometria.")
+        except Exception as exc:
+            self.status.set("Análise bloqueada por identidade inconsistente da AOI.")
+            return messagebox.showerror("Análise",str(exc))
+        self.project["analysis_run_id"]=str(precomputed_analysis_run_id or self.project.get("analysis_run_id") or uuid.uuid4().hex[:12].upper())
+        self.project["analysis_aoi_hash"]=run_aoi_hash
+        self.project["analysis_aoi_crs"]=str(self.gdf.crs)
+        self.project["analysis_app_version"]=APP_VERSION
+        if isinstance(precomputed_performance,dict):
+            self.project["analysis_performance"]=dict(precomputed_performance)
+        # The worker result is an immutable envelope. Validate identity across
+        # all transferred stages before any panel or export can publish it.
+        if precomputed_land is not None or precomputed_native is not None or precomputed_sar is not None:
+            try:
+                from analysis_pipeline_contract import validate_pipeline_handoff
+                transfer={}
+                if isinstance(precomputed_land,dict): transfer["land_use"]=precomputed_land
+                if isinstance(precomputed_native,dict): transfer["native_carbon"]=precomputed_native
+                if isinstance(precomputed_sar,dict): transfer["sar_dashboard"]=precomputed_sar
+                validate_pipeline_handoff(self.project["analysis_run_id"],run_aoi_hash,transfer)
+            except Exception as exc:
+                self.status.set("Handoff bloqueado — resultado não pertence à execução/AOI atual.")
+                return messagebox.showerror("Análise",str(exc))
         try:
             self.status.set("Executando estimativa remota..."); self.update_idletasks()
             area=geom_metrics(self.gdf)["area_ha"]
-            if precomputed_sar is not None:
-                sar=precomputed_sar
-            elif self.sar_paths:
-                sar=process_real_sar(self.gdf,self.sar_paths,self.biome.get(),self.phys.get())
+            self.project.pop("land_use",None)
+            reference=self.ibge_physiognomy_gdf;reference_field=self.ibge_class_field or "legenda_1"
+            if precomputed_land is None and reference is None:
+                try:reference,reference_field=load_ibge_land_use_reference(self.gdf)
+                except Exception:pass
+            land=precomputed_land if precomputed_land is not None else run_land_use(self.gdf,Path.home()/".enform_verde"/"uso_solo"/uuid.uuid4().hex[:12],self.land_use_config,ibge=reference,ibge_field=reference_field,sar_paths=getattr(self,'sar_paths',None))
+            if land.get("error"):raise ValueError(land["error"])
+            self.project["land_use"]=land
+            native=(precomputed_native if precomputed_native is not None
+                    else native_carbon_analysis(
+                        self.gdf,land,self.biome.get(),
+                        sar_options={
+                            "inventory_evidence":self.inventory_evidence_data,
+                            "inventory_evidence_manifest":self.inventory_evidence_manifest,
+                            "biodiversity_inventory_records":self.biodiversity_inventory_records,
+                        },
+                        sar_paths=self.sar_paths))
+            # The SAR computation is performed per native stratum. Preserve
+            # that exact result instead of dropping it at the worker/dashboard
+            # boundary (the historical payload used an empty dict here).
+            self.project["sar_result"]=(precomputed_sar if isinstance(precomputed_sar,dict) and precomputed_sar
+                                         else _sar_dashboard_payload(native,land))
+            if precomputed_pedology is not None:
+                pedology=precomputed_pedology
+                fertility=precomputed_fertility
             else:
-                raise RuntimeError("Pipeline automático sem resultado do worker.")
-            self.project["sar_result"]=sar
-            # Contract: a numerical AGB is a SAR result only when provenance explicitly says SAR.
-            if sar.get("agb_mg_ha") is not None and not str(sar.get("data_origin","")).startswith("SAR"):
-                self.project["reference_result"]=sar
-                raise RuntimeError("Contrato de proveniência violado: AGB numérica sem origem SAR. O valor foi bloqueado para impedir rotulagem incorreta.")
-            if sar.get("agb_mg_ha") is None:
-                msg=sar.get("message") or sar.get("reason") or "AGB não pôde ser estimada."
-                lit=sar.get("literature_reference") or {}
-                if lit.get("available"):
-                    # Always deliver an analysis, but never relabel literature as SAR.
-                    sar=dict(lit); sar["data_origin"]=lit.get("data_origin") or ("LITERATURA_MICRORREGIONAL" if lit.get("data_origin")=="LITERATURA_MICRORREGIONAL" else "LITERATURA_SECUNDARIA")
-                    if sar["data_origin"]=="MODELAGEM_LITERATURA_HIERARQUICA":
-                        sar["status"]=("FALLBACK MODELADO HIERÁRQUICO — SAR PROCESSADO, SEM MODELO AGB" if lit.get("sar_processed") else "FALLBACK MODELADO HIERÁRQUICO — SAR NÃO PROCESSADO")
-                    else:
-                        sar["status"]=("FALLBACK MICRORREGIONAL — SAR PROCESSADO, SEM MODELO AGB" if lit.get("sar_processed") else "FALLBACK DE REFERÊNCIA — SAR NÃO PROCESSADO")
-                    sar["source"]=lit.get("source","biblioteca científica interna"); sar["sar_diagnostic"]=msg
-                    sar["uncertainty_mg_ha"]=float(lit.get("uncertainty_mg_ha",float(lit.get("agb_mg_ha",0))*float(lit.get("uncertainty_pct",30))/100))
-                    sar["uncertainty_kind"]=lit.get("uncertainty_kind", "amplitude bibliográfica; não IC95%")
-                    sar["audit"]=((self.project.get("sar_result") or {}).get("audit") or {})
-                    sar["sar_validation_metrics"]={"RMSE":"N/D","MAE":"N/D","viés":"N/D","R²":"N/D","motivo":"não há predições AGB SAR pareadas com parcelas independentes compatíveis"}
-                    self.project["sar_result"]=sar
-                    self.project["sar_warning"]=msg
-                else:
-                    # Report actual SAR operations while withholding unsupported AGB/carbon numbers.
-                    audit=sar.get("audit") or {}; lines=["RELATÓRIO SAR — DADOS PROCESSADOS; AGB NÃO ESTIMADA",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Área da AOI: {area:,.2f} ha",f"Bioma: {self.biome.get() or 'não determinado'} | Fitofisionomia: {self.phys.get() or 'não determinada'}","", "Motivo: "+str(msg), "", "O SAR foi processado, mas o catálogo não contém equação validada compatível com os preditores e o domínio desta AOI. Não se publica AGB nem carbono sem suporte defensável.","", "PRODUTOS E PIXELS PROCESSADOS:"]
-                    processed=audit.get("processed_without_agb") or []
-                    for item in processed:
-                        lines.append(f"• {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
-                        for z in item.get("stats") or []: lines.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
-                        if item.get("scene_ids"): lines.append("  Cenas: "+", ".join(map(str,item["scene_ids"])))
-                    for z in sar.get("stats") or []: lines.append("• raster processado: "+json.dumps(z,ensure_ascii=False,sort_keys=True))
-                    for w in audit.get("warnings") or []: lines.append("Aviso: "+str(w))
-                    lines += ["", "Métricas de validação AGB: RMSE, MAE, viés e R² não são aplicáveis sem modelo treinado/validado compatível. Incerteza da AGB: não estimável.", "Estado: PROCESSAMENTO SAR REAL CONCLUÍDO; ESTIMATIVA AGB PENDENTE DE MODELO/PARCELAS COMPATÍVEIS."]
-                    report="\n".join(lines); self.project["partial_sar_analysis"]={"area_ha":area,"sar_result":sar,"report":report}; self.project["area_ha"]=area; self.project["last_result"]=report
-                    self._set(self.remote_text,"SAR processado na AOI. AGB não estimada por falta de modelo validado compatível; consulte a trilha, os pixels processados e o motivo no relatório.")
-                    self._set(self.res,report); self.nb.select(self.tabs[3]); self.status.set("Processamento SAR concluído; AGB não estimada sem calibração compatível."); return
-            agb=float(sar["agb_mg_ha"]); sar_unc=float(sar.get("uncertainty_mg_ha") or 0.0)
-            unc_kind=str(sar.get("uncertainty_kind") or "incerteza do produto/modelo")
-            unc_mult=1.0 if ("amplitude bibliográfica" in unc_kind or "intervalo preditivo aproximado" in unc_kind) else 1.96
-            explicit_range=sar.get("agb_range_mg_ha")
-            if isinstance(explicit_range,(list,tuple)) and len(explicit_range)==2:
-                agb_lo,agb_hi=map(float,explicit_range)
-            else:agb_lo=max(0.0,agb-unc_mult*sar_unc); agb_hi=agb+unc_mult*sar_unc
-            agc=agb*CARBON_FRACTION
-            agc_lo=agb_lo*CARBON_FRACTION; agc_hi=agb_hi*CARBON_FRACTION
-            soil_profiles=precomputed_soil if isinstance(precomputed_soil,dict) else {}
-            soil_error=soil_profiles.get("error") if soil_profiles else "PronaSolos não retornou perfil."
-            parts=[
-              ("Biomassa aérea",agc,sar.get("status","SAR PROCESSADO"),f"AGB={agb:,.1f} Mg/ha; incerteza={sar_unc:,.1f} Mg/ha; carbono={CARBON_FRACTION:.2f}; faixa C={agc_lo:,.2f}–{agc_hi:,.2f} tC/ha","produto SAR ou referência secundária, conforme origem",sar.get("source",sar.get("status","produto processado")))]
-            regional_components=sar.get("regional_components") or {}
-            for cname,component in regional_components.items():
-                dry=float(component["mean_dry_mg_ha"]); bounds=list(map(float,component["range_dry_mg_ha"]))
-                note=(f"biomassa seca={dry:,.2f} Mg/ha; faixa descritiva={bounds[0]:,.2f}–{bounds[1]:,.2f} Mg/ha; "
-                      f"fração C operacional={CARBON_FRACTION:.2f}; a faixa não é IC95% nem erro SAR. "+str(component.get("method","")))
-                parts.append((cname,dry*CARBON_FRACTION,"REFERÊNCIA MICRORREGIONAL",note,
-                              "estoque de referência publicado; não é predição SAR nem medição da AOI",component.get("source","literatura científica regional")))
-            p030=soil_profiles.get("0–30 cm") if soil_profiles else None
-            if p030:
-                parts.append(("Solo 0–30 cm",p030["tc_ha"],"MAPEAMENTO DIGITAL",f'{p030["n_samples"]} amostras do mapa 90 m; DP espacial {p030["spatial_sd_tc_ha"]:,.2f} tC/ha',"PronaSolos 90 m: soma 0–5 + 5–15 + 15–30 cm","Embrapa Solos/PronaSolos"))
-            total=sum(x[1] for x in parts); co2=total*44/12
-            # Deeper SOC profiles are reported independently and are NOT summed again into Carbono Total.
-            for depth in ("0–60 cm","0–100 cm","0–200 cm"):
-                p=soil_profiles.get(depth) if soil_profiles else None
-                if p:parts.append((f"Solo {depth}",p["tc_ha"],"MAPEAMENTO DIGITAL",f'{p["n_samples"]} amostras do mapa 90 m; DP espacial {p["spatial_sd_tc_ha"]:,.2f} tC/ha; não somado novamente ao Carbono Total',f"PronaSolos 90 m: soma das camadas até {depth.split('–')[1]}","Embrapa Solos/PronaSolos"))
-            if soil_error:self.project["soil_warning"]=soil_error
-            # Statistical/uncertainty metadata. Never label a descriptive range as a confidence interval.
-            agb_abs=(sar_unc*CARBON_FRACTION) if sar_unc else None
-            agb_pct=(sar_unc/agb*100) if agb and sar_unc else None
-            agb_metric=sar.get("uncertainty_kind","incerteza do produto/modelo")
-            rows=[]
-            for name,val,status,note,method,source in parts:
-                origem=((str(sar.get("data_origin") or "NÃO CLASSIFICADO") if name=="Biomassa aérea" else ("MAPEAMENTO" if name.startswith("Solo ") else ("LITERATURA_MICRORREGIONAL" if name in regional_components else "MODELADO"))))
-                if name=="Biomassa aérea":
-                    ea,ep,metric,level=agb_abs,agb_pct,agb_metric,(("envelope descritivo; sem cobertura probabilística declarada" if "envelope descritivo" in agb_metric else ("faixa bibliográfica; não IC95%" if "bibliográfica" in agb_metric else "1σ/DP ou métrica do produto/modelo")) if sar_unc else "N/D")
-                elif name in regional_components:
-                    c=regional_components[name]; bounds=list(map(float,c["range_dry_mg_ha"]))
-                    ea=max(float(c["mean_dry_mg_ha"])-bounds[0],bounds[1]-float(c["mean_dry_mg_ha"]))*CARBON_FRACTION
-                    ep=(ea/val*100 if val else None)
-                    metric="envelope descritivo da fonte × fração C operacional; não é IC95%, erro preditivo ou erro SAR"
-                    level="dispersão/faixa de estudos locais; sem cobertura probabilística declarada"
-                elif name=="Biomassa subterrânea":
-                    ea=None; ep=None; metric="N/D — sem dados compatíveis"; level="não estimado"
-                elif name.startswith("Solo "):
-                    depth=name.replace("Solo ",""); sp=soil_profiles.get(depth,{})
-                    sd=float(sp.get("spatial_sd_tc_ha",0.0)); ea=sd; ep=(sd/val*100 if val else None)
-                    metric=f"DP espacial={sd:,.2f} tC/ha ({ep:.1f}% da média)" if ep is not None else "DP espacial N/D"
-                    level="variabilidade espacial do mapa; não IC95% nem erro de predição"
-                else:
-                    ea=None; ep=None; metric="proxy bibliográfico/modelado sem distribuição de erro validada"; level="erro estatístico N/D"
-                rows.append({"parametro":name,"tc":val,"tco2":val*44/12,"origem":origem,"status":status,"metodo":method,"fonte":source,"obs":note,
-                             "erro_abs_tc":ea,"erro_pct":ep,"erro_metrica":metric,"nivel_confianca":level})
-            # Propagate only quantified independent 1-sigma components; report coverage of uncertainty.
-            q=[r for r in rows if r.get("erro_abs_tc") is not None and r.get("origem") not in ("LITERATURA_MICRORREGIONAL","LITERATURA_SECUNDARIA","MODELAGEM_LITERATURA_HIERARQUICA")]
-            total_sigma=math.sqrt(sum(r["erro_abs_tc"]**2 for r in q)) if q else None
-            total_err_pct=(total_sigma/total*100) if total_sigma is not None and total else None
-            self.project["total_uncertainty"]={"sigma_tc_ha":total_sigma,"pct":total_err_pct,"quantified_components":len(q),"total_components":len(rows),
-                "note":"propagação RSS dos componentes quantificados; não inclui componentes com erro estatístico N/D"}
-            self.project["analysis_rows"]=rows
-            self.project["area_ha"]=area; self.project["total_tc_ha"]=total; self.project["total_tco2_ha"]=co2
-            audit=sar.get("audit") or {}
-            diag=[]
-            if audit:
-                diag=["","TRILHA SAR:"]
-                bb=audit.get("biomass_l2b") or {}; diag.append("BIOMASS P L2B catalogado: %s | operacional=%s | IOC=%s" % (bb.get("count",0),bb.get("operational_count",0),bb.get("ioc_count",0)))
-                cc=audit.get("cci") or {}; diag.append(f"CCI AGB: {cc.get('downloaded',0)} arquivo(s) baixado(s)" if isinstance(cc,dict) else "CCI AGB: não disponível")
-                ad=audit.get("asf_download") or {}
-                if ad: diag.append(f"ASF/NISAR/ALOS: cena={ad.get('scene')} | pré-processamento={ad.get('preprocess')} | candidatos={ad.get('candidate_count')}")
-                matrix=audit.get("national_route_matrix") or {}
-                if matrix:
-                    diag.append("COBERTURA PREDITIVA NACIONAL: "+str(matrix.get("local_numeric_state")))
-                    diag.append("Escopo implementado: "+", ".join(matrix.get("supported_scope") or []))
-                    diag.append("Política: "+str(matrix.get("policy")))
-                    ifn=matrix.get("ifn_sfb_reference") or {}
-                    if ifn:
-                        diag.append("IFN/SFB: referência nacional/estadual para aferição e alometria; não é raster local da AOI. Fonte: "+str(ifn.get("url")))
-                for item in audit.get("processed_without_agb",[]):
-                    diag.append(f"Pixel SAR PROCESSADO sem equação AGB compatível: {item.get('source','SAR')} | {item.get('provider','provedor não informado')}")
-                    for z in item.get("stats",[]): diag.append("  "+json.dumps(z,ensure_ascii=False,sort_keys=True))
-                blocker=audit.get("agb_blocker") or sar.get("agb_blocker") or {}
-                if blocker:
-                    diag.append("BLOQUEIO AGB-SAR: "+str(blocker.get("primary_blocker")))
-                    cm=blocker.get("closest_model") or {}
-                    if cm:
-                        diag.append("  modelo mais próximo: "+str(cm.get("model_id"))+" | sensor="+str(cm.get("sensor")))
-                        avail=cm.get("available_predictors") or []
-                        miss=cm.get("missing_predictors") or []
-                        diag.append("  preditores disponíveis: "+(", ".join(avail) if avail else "nenhum dos exigidos"))
-                        diag.append("  preditores faltantes: "+(", ".join(miss) if miss else "nenhum"))
-                        diag.append("  restrição: "+str(cm.get("constraints")))
-                ldiag=audit.get("lband_dualpol_diagnostic") or {}
-                if ldiag:
-                    diag += [
-                        "DIAGNÓSTICO L-BAND DUAL-POL:",
-                        f"  papel={ldiag.get('role')} | saturação={ldiag.get('saturation_risk')} | AGB quantitativa permitida={ldiag.get('quantitative_agb_from_dualpol_permitted')}",
-                        f"  HH={float(ldiag.get('hh_gamma0_db',float('nan'))):.2f} dB | HV={float(ldiag.get('hv_gamma0_db',float('nan'))):.2f} dB | HH-HV={float(ldiag.get('hh_minus_hv_db',float('nan'))):.2f} dB | HV/HH={float(ldiag.get('hv_over_hh_linear',float('nan'))):.3f} | RFDI={float(ldiag.get('rfdi',float('nan'))):.3f}",
-                        "  decisão: "+str(ldiag.get("reason")),
-                    ]
-                    for ref in ldiag.get("references",[]):
-                        diag.append("  referência: "+str(ref.get("source"))+" | DOI "+str(ref.get("doi"))+" | "+str(ref.get("note")))
-                for w in audit.get("warnings",[]): diag.append("Aviso: "+str(w))
-            if sar.get("height_mean_m") is not None:
-                hi=sar.get("height_interpretation") or {}
-                diag += ["", "ALTURA ESTRUTURAL SAR:",
-                         f"média zonal={float(sar['height_mean_m']):.2f} m | DP espacial={float(sar.get('height_sd_m') or 0):.2f} m | pixels válidos={sar.get('height_n_valid_pixels','N/D')}",
-                         "observável: "+str(hi.get("observable","camada de altura; sem semântica conhecida")),
-                         "interpretação: "+str(hi.get("meaning","não é estimativa de AGB")),
-                         "A altura SAR não determina sozinha DAP médio, densidade de fustes, área basal ou AGB; combinar com inventário/alometria compatíveis e validação espacial independente."]
-            if sar.get("data_origin") in ("LITERATURA_MICRORREGIONAL","MODELAGEM_LITERATURA_HIERARQUICA"):
-                diag += ["", "MÉTRICAS DE VALIDAÇÃO SAR: RMSE=N/D; MAE=N/D; viés=N/D; R²=N/D — faltam pares independentes parcela–pixel SAR.",
-                         "A estimativa regional é um resumo publicado e não gera raster/mapa AGB pixel a pixel.",
-                         "Incerteza: "+str(sar.get("uncertainty_kind")),
-                         "Suporte: "+str(sar.get("n_plots"))+" parcelas resumidas em "+str(sar.get("n_independent_sites"))+" sítios; distância ao km 83 = "+f"{float(sar.get('distance_from_km83_km',float('nan'))):.2f} km."]
-            lines=([f"SAR PROCESSADO — AGB NÃO DERIVADA DO SAR: {self.project.get('sar_warning')}",""] if self.project.get("sar_warning") else [])+[f"ENFORM VERDE {APP_VERSION}",f"ID da execução: {self.project.get('analysis_run_id','N/D')} | início UTC: {self.project.get('analysis_started_utc','N/D')}",f"Projeto: {self.name.get()}",f"Sensor/produto: {self.sensor.get()}",f"Bioma IBGE: {self.biome.get()} | Fitofisionomia IBGE (legenda_1): {self.phys.get()}",f"Área analisada: {area:,.2f} ha",""]+diag
-            for r in rows:
-                err=(f"±{r['erro_abs_tc']:.2f} tC/ha ({r['erro_pct']:.1f}%)" if r.get('erro_pct') is not None else "N/D")
-                lines += [f"{r['parametro']}",f"  {r['tc']:,.2f} tC/ha  |  {r['tco2']:,.2f} tCO₂e/ha",f"  ORIGEM DO DADO: {r['origem']}",f"  Erro/incerteza: {err}",f"  Nível estatístico: {r['nivel_confianca']}",f"  Métrica: {r['erro_metrica']}",f"  Método/produto: {r['metodo']}",f"  Fonte: {r['fonte']}",f"  {r['status']} — {r['obs']}",""]
-            if not p030: lines += ["Solo 0–30 cm","  NÃO CALCULADO — PronaSolos não retornou as três camadas necessárias nesta execução.","  Diagnóstico: "+str(soil_error),""]
-            missing=[]
-            if "Biomassa subterrânea" not in regional_components: missing.append("biomassa subterrânea")
-            if not any(n.startswith("Necromassa") for n in regional_components): missing.append("necromassa")
-            if not any(n.startswith("Serapilheira") for n in regional_components): missing.append("serapilheira")
-            lines += ["COMPARTIMENTOS NÃO SOMADOS", ("Nenhum compartimento adicional elegível ficou sem estimativa nesta execução." if not missing else "; ".join(missing)+": não estimada por falta de dados/modelos regionais compatíveis."),
-                      *( ["Referências microrregionais são benchmarks secundários; não equivalem a medição da AOI nem a modelos alométricos/SAR calibrados."] if regional_components else [] ), "",
-                      "TOTAL DOS COMPARTIMENTOS DISPONÍVEIS",f"  {total:,.2f} tC/ha  |  {co2:,.2f} tCO₂e/ha",f"  Total na área: {total*area:,.0f} tC  |  {co2*area:,.0f} tCO₂e","",
-                      "QUALIDADE: resultado de triagem/planejamento remoto. O relatório distingue SAR efetivamente processado de referência bibliográfica secundária e não substitui inventário de campo."]
-            self._set(self.remote_text,f"Biomassa aérea: {agc:,.2f} tC/ha | {agc*44/12:,.2f} tCO₂e/ha\nFaixa de referência: {agc_lo:,.2f}–{agc_hi:,.2f} tC/ha | {agc_lo*44/12:,.2f}–{agc_hi*44/12:,.2f} tCO₂e/ha")
-            self._set(self.res,"\n".join(lines)); self.project["last_result"]="\n".join(lines); self.nb.select(self.tabs[3]); self.status.set("Estimativa remota concluída.")
+                from soil_pedology_embrapa import analyze_embrapa_pedology
+                pedology,zones=analyze_embrapa_pedology(self.gdf,with_zones=True)
+                try:
+                    from soil_fertility_zonal import analyze_fertility
+                    fertility=analyze_fertility(self.gdf,units=zones)
+                except Exception as exc:
+                    fertility={"status":"N/D","reason":"Falha controlada: "+type(exc).__name__,
+                               "units":{},"layers":[]}
+            self.project["soil_pedology"]=pedology
+            self.project["soil_fertility"]=fertility or {"status":"N/D","reason":"sem consulta"}
+            # A SAR transport failure is a reportable analysis state, not a
+            # reason to discard independent soil/carbon diagnostics or leave
+            # the dashboard blank. The failed stage remains explicitly failed
+            # and its classes stay N/D; internal exceptions and stale AOIs
+            # remain hard blockers.
+            validate_result_for_publication(run_aoi_hash,self.gdf,land,
+                required_keys=("vector_path",),allow_declared_error_status=True)
+            validate_result_for_publication(run_aoi_hash,self.gdf,native,
+                required_keys=("area_aoi_ha","strata","components"),
+                allow_declared_error_status=True)
+            land_status=str(land.get("status") or "N/D").upper()
+            recent_sar=land.get("recent_sar_cover") or {}
+            land_failed=land_status.startswith(("ERRO","FAILED","FAILURE"))
+            native_status=str(native.get("status") or "N/D").upper()
+            native_failed=native_status.startswith(("ERRO","FAILED","FAILURE"))
+            partial=land_failed or native_failed or bool(precomputed_stage_errors)
+            self.project["pipeline_audit"]={
+                "analysis_run_id":self.project["analysis_run_id"],
+                "aoi_hash":run_aoi_hash,
+                "checkpoint_path":precomputed_checkpoint_path,
+                "performance":dict(precomputed_performance or {}),
+                "stage_errors":list(precomputed_stage_errors or []),
+                "overall_status":"PARCIAL_COM_ERRO_TECNICO" if partial else "CONCLUIDA_COM_ESTADOS_DECLARADOS",
+                "stages":{
+                    "land_use":{"status":"ERRO_TECNICO" if land_failed else land_status,
+                                 "reason":recent_sar.get("reason") or land.get("reason"),
+                                 "vector_path":land.get("vector_path")},
+                    "native_carbon":{"status":"ERRO_TECNICO" if native_failed else
+                                               "CONCLUIDA" if native.get("complete") else "PARCIAL",
+                                     "native_area_ha":native.get("native_area_ha"),
+                                     "unknown_cover_area_ha":native.get("unknown_cover_area_ha")},
+                    "pedology":{"status":(pedology or {}).get("status","N/D")},
+                    "fertility":{"status":(fertility or {}).get("status","N/D")},
+                },
+            }
+            self._present_native_carbon(native,land,pedology=pedology,fertility=fertility)
+            self._present_cultivated_monitoring(land)
+            if partial:
+                reason=(recent_sar.get("reason") or land.get("reason") or
+                        native.get("reason") or "falha técnica registrada na auditoria da etapa")
+                self.status.set("Análise parcial — etapas concluídas preservadas; falha registrada por módulo. "+str(reason)[:180])
+            else:
+                self.status.set("Análise concluída com estados e lacunas declarados; consulte a trilha de auditoria.")
+            return
         except Exception as e:self.status.set("Falha."); messagebox.showerror("Análise",str(e))
 
+    def _present_native_carbon(self,native,land,pedology=None,fertility=None):
+        self.project["native_carbon"]=native
+        self._populate_carbon_dashboard(native)
+        self.project["area_ha"]=native["area_aoi_ha"]
+        if hasattr(self,"aoi_area_display"):
+            self.aoi_area_display.set(f"{format_ptbr(native['area_aoi_ha'],2)} ha (EPSG:6933; base dos percentuais)")
+        if hasattr(self,"ibge_biome_display"):
+            self.ibge_biome_display.set(self.biome.get() or "Não determinado")
+        if hasattr(self,"ibge_phys_display"):
+            from property_physiognomy_display import format_property_physiognomies
+            native_text=format_property_physiognomies(native,format_ptbr)
+            if not native.get("native_area_ha",0):
+                d=self.project.get("ibge_diagnosis") or {}
+                potential="; ".join(
+                    str(x.get("name") or "N/D")+" — "+
+                    format_ptbr(float(x.get("area_ha",0)),2)+" ha"
+                    for x in d.get("regioes_fitoecologicas",[]) if x.get("name"))
+                if potential:
+                    native_text += ("\nPOTENCIAL IBGE (não confirmado como nativo atual): "+
+                                    potential)
+            self.ibge_phys_display.set(native_text)
+        known=native.get("known_total_tc")
+        area=native["native_area_ha"]
+        self.project["total_tc_ha"]=(known/area if known is not None and area else None)
+        self.project["total_tco2_ha"]=(self.project["total_tc_ha"]*44/12 if self.project["total_tc_ha"] is not None else None)
+        self.project["total_tc"]=known
+        self.project["total_tco2e"]=(known*44/12 if known is not None else None)
+        self.project["total_is_partial"]=not native["complete"]
+        rows=[]
+        for item in native["components"]:
+            density=item["tc_on_all_native_area"]
+            rows.append({"parametro":item["parametro"],"tc":density,"tco2":density*44/12 if density is not None else None,
+                         "origem":"NATIVA_ESTRATIFICADA","status":"QUANTIFICADO" if density is not None else "PARCIAL / NÃO ESTIMADO",
+                         "metodo":"soma (estoque/ha × área da interseção) por fitofisionomia nativa",
+                         "fonte":"fontes individuais por estrato no relatório e auditoria",
+                         "obs":f"Área nativa quantificada: {format_ptbr(item['quantified_area_ha'],2)} ha; sem dado: {format_ptbr(item['missing_native_area_ha'],2)} ha. Total conhecido: "+(format_ptbr(item['known_total_tc'],2)+" tC" if item['known_total_tc'] is not None else "N/D"),
+                         "erro_abs_tc":None,"erro_pct":None,"erro_metrica":"Incertezas individuais por estrato; total não quantificado",
+                         "nivel_confianca":"sem IC total; não tratar falta de dado como zero"})
+        self.project["analysis_rows"]=rows
+        lines=[f"ENFORM VERDE {APP_VERSION} — CARBONO SOMENTE EM FORMAÇÕES NATIVAS",
+               "Área do polígono: "+format_ptbr(native["area_aoi_ha"],2)+" ha",
+               "Formações nativas MAPEADAS: "+
+                   (format_ptbr(area,2)+" ha (área cartográfica, sem confirmação de campo)" if area>0 or native["unknown_cover_area_ha"]<=0
+                    else "N/D — não há área nativa atual confirmada"),
+               "Outros usos (somente ocorrência, sem carbono): "+
+                   (format_ptbr(native["excluded_other_uses_ha"],2)+" ha" if native["excluded_other_uses_ha"]>0 or native["unknown_cover_area_ha"]<=0
+                    else "N/D — uso não nativo não confirmado"),
+               "Cobertura não confirmada (sem carbono): "+format_ptbr(native["unknown_cover_area_ha"],2)+" ha",
+               "Área sem classe cartográfica de referência: "+format_ptbr(native.get("unmapped_aoi_area_ha",0),2)+" ha",
+               "Completude do MAPA de cobertura: "+native.get("cover_completeness","NÃO VERIFICADA")+
+                   " — não indica completude dos compartimentos de carbono; o estoque segue PARCIAL enquanto houver compartimentos N/D.",
+               native["method"],""]
+        from executive_carbon_report import executive_carbon_lines
+        from soil_pedology_embrapa import pedology_report_lines
+        from soil_fertility_zonal import fertility_report_lines
+        lines = (executive_carbon_lines(native,format_ptbr) +
+                 pedology_report_lines(pedology or {},format_ptbr) +
+                 fertility_report_lines(fertility or {},format_ptbr) + lines)
+        height_rows=(self.project.get("sar_result") or {}).get("height_products") or []
+        if height_rows:
+            lines.extend(["", "ALTURA DE DOSSEL SAR — pixels realmente lidos e entregues ao painel"])
+            for h in height_rows:
+                lines.append("  "+str(h.get("physiognomy") or "Estrato N/D")+": "+
+                    format_ptbr(h.get("height_mean_m"),2)+" m; n="+
+                    str(h.get("height_n_valid_pixels"))+" pixels válidos; métrica "+
+                    str(h.get("height_metric") or "conforme produto")+
+                    "; produto "+str(h.get("product") or "N/D")+"; fonte "+
+                    str(h.get("source") or "N/D")+
+                    "; SD espacial="+format_ptbr(h.get("height_sd_m"),2)+
+                    " m (não é erro de mensuração).")
+        else:
+            cert=(self.project.get("sar_result") or {}).get("height_absence_certificate") or {}
+            lines.extend(["", "ALTURA DE DOSSEL SAR: N/D — nenhum pixel de altura chegou ao painel; "+
+                          str(cert.get("status") or "ausência não certificada; consultar auditoria SAR")+"."])
+        if native.get("ifn_database_status"):
+            db_status=native["ifn_database_status"]
+            lines.extend(["", "REFERÊNCIAS ESTRUTURAIS IFN — seleção por localização, bioma e fitofisionomia IBGE",
+                "Estado da base: "+str(db_status.get("status"))+"; registros: "+
+                str(db_status.get("observation_rows","N/D"))+"; unidades amostrais: "+
+                str(db_status.get("sampling_units","N/D"))+"; cruzamentos únicos legenda_1: "+
+                str(db_status.get("ibge_unique_unit_matches","N/D")),
+                "Os registros abaixo são referências estruturais. A seleção não confirma cobertura atual, não aplica fatores de expansão e não estima AGB por hectare nem altura média do dossel."])
+            for reference in native.get("ifn_structural_references",[]):
+                selected=reference.get("selection") or {}
+                summary=selected.get("raw_tree_sample_summary") or {}
+                lines.append("  "+str(reference.get("physiognomy"))+" — área potencial IBGE "+
+                    format_ptbr(reference.get("potential_ibge_area_ha"),2)+" ha; estado "+str(selected.get("status"))+
+                    "; UAs selecionadas "+str((selected.get("selection") or {}).get("selected_unique_units",0))+
+                    "; árvores amostradas "+str(summary.get("tree_record_count",0))+
+                    "; DAP médio bruto "+format_ptbr(summary.get("mean_dbh_cm"),2)+" cm; altura individual média "+
+                    format_ptbr(summary.get("mean_individual_tree_height_m"),2)+" m; área basal bruta amostral "+
+                    format_ptbr(summary.get("observed_sample_basal_area_m2"),3)+" m².")
+                lines.append("    Escopo geográfico: "+str(reference.get("area_basis"))+"; "+
+                    str(summary.get("warning") or selected.get("reason") or "não é métrica por hectare"))
+        for scenario in native.get("conditional_inventory_scenarios",[]):
+            lines += ["", "CENÁRIO CONDICIONAL DE CARBONO — INVENTÁRIO/REFERÊNCIA REGIONAL (não é cobertura atual confirmada)",
+                      "Estado: "+str(scenario.get("status")),
+                      "Área-base: "+format_ptbr(scenario.get("area_ha",0),2)+" ha — "+str(scenario.get("area_basis")),
+                      "Fitofisionomia: "+str(scenario.get("physiognomy"))+"; domínio geográfico: "+str(scenario.get("geographic_tier")),
+                      "Fonte e evidência: "+str(scenario.get("source"))+" — "+str(scenario.get("source_url")),
+                      "Unidades/parcelas (quando declaradas pela fonte): n="+str(scenario.get("inventory_n_unique_sampling_units"))+"; AGB "+format_ptbr(scenario.get("agb_mean_mg_ha"),2)+" Mg/ha; faixa da fonte "+json.dumps(scenario.get("agb_range_mg_ha") or scenario.get("agb_observed_range_mg_ha"),ensure_ascii=False),
+                      str(scenario.get("estimate_label"))+" — carbono condicional: "+format_ptbr(scenario.get("carbon_mean_tc_ha"),2)+" tC/ha; total cenário "+format_ptbr(scenario.get("carbon_total_tc_scenario"),2)+" tC ("+format_ptbr(scenario.get("carbon_total_tco2e_scenario"),2)+" tCO₂e).",
+                      "Incerteza: "+str(scenario.get("uncertainty")),
+                      "TRILHA DE CÁLCULO: "+json.dumps(scenario.get("calculation_trace") or {},ensure_ascii=False,sort_keys=True),
+                      "Falhas SAR registradas (não equivalem a ausência de cenas): "+json.dumps(scenario.get("sar_technical_failures") or [],ensure_ascii=False),
+                      "Confiança: "+str(scenario.get("confidence")),
+                      "Limitações: "+"; ".join(scenario.get("limitations",[]))]
+        diag=native.get("inventory_scenario_diagnostic")
+        if diag:
+            lines += ["", "CENÁRIO DE INVENTÁRIO: "+str(diag.get("status"))+" — "+str(diag.get("reason"))]
+        sar_audit_path=Path(land["vector_path"]).parent/"carbono_formacoes_nativas.json"
+        lines.extend(["", "PROVENIÊNCIA SAR COMPLETA, LISTAS DE CENAS E ERROS DETALHADOS (JSON):",
+                      str(sar_audit_path),
+                      "Resumo SAR por estrato abaixo; o relatório de tela omite blobs/diagnósticos extensos para permanecer responsivo."])
+        for st in native["strata"]:
+            lines.append(st["class_name"]+": "+format_ptbr(st["area_ha"],2)+" ha ("+format_ptbr(st["area_pct"],2)+"% da AOI) — "+st["source"])
+            lines.append("  FITOFISIONOMIA À QUAL SE APLICA A ESTIMATIVA: "+st["physiognomy"]+" — "+st["physiognomy_resolution"])
+            sar_details=st.get("sar_details") or {}
+            lines.append("  Resumo SAR/altura: "+json.dumps(_sar_details_report_excerpt(sar_details),ensure_ascii=False,default=str))
+            # Display actual raster acquisition separately from catalog discovery.
+            if isinstance(sar_details,dict):
+                inventory_cmp=sar_details.get("inventory_agb_comparison")
+                if isinstance(inventory_cmp,dict):
+                    if inventory_cmp.get("status")=="COMPARACAO_EXPERIMENTAL_IFN_AGB":
+                        lines += [
+                            "  COMPARAÇÃO INDEPENDENTE DE AGB — ESA CCI × inventários compatíveis (não somar ao estoque)",
+                            "    ESA CCI: "+format_ptbr(sar_details.get("agb_mg_ha"),2)+" Mg AGB/ha; incerteza do produto: "+format_ptbr(sar_details.get("uncertainty_mg_ha"),2)+" Mg/ha.",
+                            "    IFN: "+format_ptbr(inventory_cmp.get("agb_mean_mg_ha"),2)+" Mg AGB/ha; média de "+str(inventory_cmp.get("inventory_n_unique_sampling_units"))+" UAs independentes; DP amostral "+format_ptbr(inventory_cmp.get("agb_sample_sd_mg_ha"),2)+" Mg/ha; faixa observada "+json.dumps(inventory_cmp.get("agb_observed_range_mg_ha"),ensure_ascii=False)+".",
+                            "    Carbono IFN comparativo: "+format_ptbr(inventory_cmp.get("carbon_mean_tc_ha"),2)+" tC/ha; estoque comparativo na área do estrato: "+format_ptbr(inventory_cmp.get("carbon_total_tc_comparison"),2)+" tC ("+format_ptbr(inventory_cmp.get("carbon_total_tco2e_comparison"),2)+" tCO₂e).",
+                            "    Base expandida ligada às UAs: "+str(inventory_cmp.get("inventory_tree_observations_in_selected_units"))+" observações de árvores/fustes; seleção: "+str(inventory_cmp.get("calculation_trace",{}).get("selection"))+"; menor distância "+format_ptbr(inventory_cmp.get("nearest_ua_distance_km"),1)+" km.",
+                            "    Incerteza IFN: "+str(inventory_cmp.get("uncertainty")),
+                            "    Estado e limites: "+str(inventory_cmp.get("confidence"))+"; "+"; ".join(inventory_cmp.get("limitations") or []),
+                        ]
+                    else:
+                        lines.append("  COMPARAÇÃO DE AGB POR INVENTÁRIOS: "+str(inventory_cmp.get("status"))+" — "+str(inventory_cmp.get("reason") or "referência compatível não disponível"))
+                    for ref in inventory_cmp.get("inventory_references",[]):
+                        if ref.get("status")=="REFERENCIA_AGREGADA_PUBLICADA":
+                            lines.append("    Referência publicada independente (não somada): "+str(ref.get("institution"))+"; "+str(ref.get("region"))+"; AGB média "+format_ptbr(ref.get("agb_mean_mg_ha"),2)+" Mg/ha; n parcelas="+str(ref.get("n_plots") or "N/D")+"; incerteza publicada="+(str(ref.get("ci95_low_mg_ha"))+"–"+str(ref.get("ci95_high_mg_ha"))+" Mg/ha" if ref.get("ci95_low_mg_ha") is not None and ref.get("ci95_high_mg_ha") is not None else "N/D")+"; "+str(ref.get("citation"))+"; "+str(ref.get("statistical_use")))
+                    for ref in inventory_cmp.get("published_structural_references",[]):
+                        lines.append("    BALIZA ESTRUTURAL PUBLICADA (não é parcela nem validação SAR): "+
+                            str(ref.get("institution") or ref.get("source_id"))+"; "+
+                            str(ref.get("region") or "região N/D")+"; "+str(ref.get("metric"))+"="+
+                            format_ptbr(ref.get("center"),2)+" "+str(ref.get("unit") or "unidade N/D")+
+                            "; erro publicado="+("SD "+format_ptbr(ref.get("sd"),2) if ref.get("sd") is not None else
+                                "SE "+format_ptbr(ref.get("se"),2) if ref.get("se") is not None else
+                                "IC95% "+format_ptbr(ref.get("ci95_low"),2)+"–"+format_ptbr(ref.get("ci95_high"),2)
+                                    if ref.get("ci95_low") is not None and ref.get("ci95_high") is not None else "N/D")+
+                            "; n parcelas="+str(ref.get("n_plots") or "N/D")+"; fonte="+
+                            str(ref.get("citation") or "N/D")+"; uso="+str(ref.get("statistical_use") or "baliza regional"))
+                sar_audit=sar_details.get("audit") or {}
+                fh_model=sar_audit.get("height_structure_model") or sar_details.get("height_structure_model") or {}
+                if isinstance(fh_model,dict):
+                    lines.append("  ROTA FH × INVENTÁRIO: "+str(fh_model.get("status") or "N/D")+
+                        (" — "+str(fh_model.get("reason")) if fh_model.get("reason") else ""))
+                horizontal=sar_details.get("regional_inventory_structure_reference")
+                if isinstance(horizontal,dict):
+                    raw=horizontal.get("raw_tree_sample_summary") or {}
+                    lines.append("  INVENTÁRIO HORIZONTAL REGIONAL: "+str(horizontal.get("status"))+
+                        "; UAs compatíveis selecionadas="+str(len(horizontal.get("units") or []))+
+                        "; DAP médio bruto="+format_ptbr(raw.get("mean_dbh_cm"),2)+" cm; altura individual média="+
+                        format_ptbr(raw.get("mean_individual_tree_height_m"),2)+" m; área basal observada bruta="+
+                        format_ptbr(raw.get("observed_sample_basal_area_m2"),2)+" m² de amostra (não por ha).")
+                    lines.append("    Elegível como preditor da equação FH–AGB: NÃO — "+str(horizontal.get("eligibility_reason") or "não há expansão amostral harmonizada e pareamento para calibração."))
+                cci_audit=sar_audit.get("cci") or {}
+                cci_inventory=(cci_audit.get("inventory_use_contract") or {})
+                if cci_inventory:
+                    lines.append("  ESA CCI + INVENTÁRIOS: rota secundária independente; fontes regionais compatíveis são listadas para comparação. Calibração numérica CCI–inventário aplicada: NÃO — "+str(cci_inventory.get("reason") or "não há pares parcela–pixel compatíveis suficientes."))
+                if cci_audit.get("saturation_risk_note"):
+                    lines.append("  LIMITAÇÃO ESA CCI: "+str(cci_audit["saturation_risk_note"]))
+                biodiversity=sar_details.get("inventory_biodiversity_reference")
+                if isinstance(biodiversity,dict):
+                    if biodiversity.get("status")=="INDICADOR_FITOSSOCIOLOGICO_IFN":
+                        lines.append("  REFERÊNCIA FITOSSOCIOLÓGICA IFN — frequência entre unidades amostrais compatíveis (não é índice completo de biodiversidade): "+
+                            str(biodiversity.get("n_unique_sampling_units"))+" UAs; "+str(biodiversity.get("unique_taxa_observed"))+" táxons registrados.")
+                        for sp in biodiversity.get("top_10_species_by_sampling_unit_frequency",[]):
+                            lines.append("    "+str(sp.get("rank"))+". "+str(sp.get("species"))+": presença em "+
+                                str(sp.get("sampling_units_present"))+"/"+str(biodiversity.get("n_unique_sampling_units"))+" UAs ("+
+                                format_ptbr(sp.get("frequency_pct"),1)+"%); "+str(sp.get("tree_records"))+" registros de árvores.")
+                    else:
+                        lines.append("  REFERÊNCIA FITOSSOCIOLÓGICA IFN: N/D — "+str(biodiversity.get("reason") or "sem UAs elegíveis suficientes")+".")
+                actual_stats=sar_details.get("stats") or []
+                for scene in actual_stats:
+                    if not isinstance(scene,dict):
+                        continue
+                    lines.append("  CENA PROCESSADA: "+str(scene.get("path") or scene.get("scene") or "arquivo não identificado"))
+                    from sar_acquisition_time import acquisition_display, annotate_acquisition
+                    scene=annotate_acquisition(scene)
+                    acquisition=acquisition_display(scene)
+                    lines.append("    Horário de aquisição (UTC -3): "+acquisition["brasilia"])
+                    lines.append("    Horário de aquisição (UTC): "+acquisition["utc"])
+                    if acquisition.get("reference_period"):lines.append("    Período de referência do produto: "+acquisition["reference_period"])
+                    if acquisition.get("explanation"):lines.append("    Observação temporal: "+acquisition["explanation"])
+            for row in st["components"]:
+                from experimental_audit import audit_carbon_component
+                calc_trace=audit_carbon_component(row,area_ha=st["area_ha"],formation=st["physiognomy"],analysis_id=self.project.get("analysis_run_id"))
+                lines.append("    RASTRO DO CÁLCULO EXPERIMENTAL (não homologado): "+json.dumps(calc_trace,ensure_ascii=False,sort_keys=True,default=str))
+                if row["parametro"]=="Necromassa subterrânea":lines.append("  Necromassa subterrânea — raízes mortas")
+                value=(format_ptbr(row["tc"],2)+" tC/ha; "+format_ptbr(row["tc"]*44/12,2)+" tCO₂e/ha; "+format_ptbr(row["total_tc"],2)+" tC; "+format_ptbr(row["total_tc"]*44/12,2)+" tCO₂e na interseção") if row["total_tc"] is not None and row.get("tc") is not None else "NÃO ESTIMADO / EXCLUÍDO DO TOTAL"
+                lines += ["  "+row["parametro"]+": "+value,"    Fonte: "+str(row.get("fonte")),"    Método: "+str(row.get("metodo")),"    Erro/incerteza e limitação: "+str(row.get("obs")),"    Nível estatístico: conforme fonte por estrato; não há IC do total","    Intervalos/erro informados: "+json.dumps({k:row[k] for k in ("range_tc_ha","range_dry_mg_ha","agb_uncertainty_mg_ha","agb_range_mg_ha","spatial_sd_tc_ha","root_prediction_interval_tc_ha","root_uncertainty_status","root_uncertainty_source") if row.get(k) is not None},ensure_ascii=False)]
+            from soil_intersection_report import soil_intersection_lines
+            lines += soil_intersection_lines(st.get("soil_profiles"),format_ptbr)
+            for depth,profile in (st.get("soil_profiles") or {}).items():
+                if depth!="0–100 cm" and isinstance(profile,dict) and profile.get("tc_ha") is not None:
+                    lines.append("  Solo "+depth+": "+format_ptbr(profile["tc_ha"],2)+" tC/ha nesta formação; perfil informativo, não somado novamente ao total.")
+        lines += ["",("TOTAL" if native["complete"] else "SOMA PARCIAL CONHECIDA")+" NAS INTERSEÇÕES NATIVAS: "+(format_ptbr(known,2)+" tC" if known is not None else "NÃO ESTIMADO"),"ESTOQUE EQUIVALENTE NAS INTERSEÇÕES NATIVAS: "+(format_ptbr(known*44/12,2)+" tCO₂e" if known is not None else "NÃO ESTIMADO"),"Densidades na área nativa: "+(format_ptbr(known/area,2)+" tC/ha; "+format_ptbr((known/area)*44/12,2)+" tCO₂e/ha" if known is not None and area else "NÃO ESTIMADO"),native["uncertainty_note"],""]
+        joint=native.get("total_uncertainty")
+        if joint:
+            # This is only reached with externally supplied complete covariance.
+            # Never present a clipped normal interval as empirically calibrated.
+            lo,hi=joint["ci95_tC"]
+            lo_co2,hi_co2=joint["ci95_tCO2e"]
+            lines.extend([
+                "IC95% NORMAL APROXIMADO DO TOTAL (NÃO VALIDADO INDEPENDENTEMENTE): "
+                    +format_ptbr(lo,2)+"–"+format_ptbr(hi,2)+" tC; "
+                    +format_ptbr(lo_co2,2)+"–"+format_ptbr(hi_co2,2)+" tCO₂e.",
+                "Erro-padrão condicionado à matriz de covariância fornecida: "
+                    +format_ptbr(joint["se_tC"],2)+" tC. Não inclui erros sem modelagem documentada."
+            ])
+        lines+=land_use_report_lines(land,lambda v:format_ptbr(v,2))
+        # Explicit PRE-FIELD outputs: actual estimates, not made-up observations.
+        try:
+            from modeled_field_validation import (build_pre_field_manifest,
+                                                  write_pre_field_evidence)
+            try:
+                from enform_build_source import SOURCE_SHA
+            except ImportError:
+                SOURCE_SHA=None
+            prefield=build_pre_field_manifest(
+                native, analysis_id=self.project["analysis_run_id"], land=land,
+                source_sha=SOURCE_SHA or self.project.get("source_code_sha"))
+            evidence_dir=Path(land["vector_path"]).parent
+            evidence_files=write_pre_field_evidence(evidence_dir,prefield)
+            self.project["modeled_field_predictions"]=prefield
+            self.project["modeled_field_files"]=evidence_files
+            lines.extend(["", "RESULTADOS MODELADOS — TESTES DE CAMPO PENDENTES",
+                "Estimativas numéricas modeladas: "+str(prefield["predictions_with_numeric_model"])+
+                "; resultados N/D: "+str(prefield["predictions_without_model"])+".",
+                "Manifesto pré-campo: "+str(evidence_files["predictions_json"]),
+                "Planilha em branco para medições independentes: "+
+                str(evidence_files["field_template_csv"]),
+                "As faixas dos modelos não são IC95% de campo. Nenhuma medição observada foi criada."])
+            # Put each modelled value on the visible carbon dashboard as well as
+            # the JSON/Excel evidence. This is a field-test prediction, never a
+            # certified stock or a measured observation.
+            for prediction in prefield.get("predictions", []):
+                compartment=str(prediction.get("compartment") or prediction.get("crop") or "Resultado")
+                prediction_id=str(prediction.get("prediction_id") or "ID N/D")
+                if prediction.get("status") == "PROJECAO_EXPERIMENTAL_PARA_VALIDACAO":
+                    if prediction.get("kind") == "carbono_nativo":
+                        value=prediction.get("density_predicted_tc_ha")
+                        unit=prediction.get("unit") or "tC/ha"
+                        stock=prediction.get("stock_predicted_tC")
+                        estimate=(format_ptbr(value,3)+" "+unit if isinstance(value,(int,float)) else "N/D")
+                        if isinstance(stock,(int,float)):
+                            estimate += "; estoque-base "+format_ptbr(stock,2)+" tC ("+format_ptbr(stock*44/12,2)+" tCO₂e)"
+                        area_basis=prediction.get("area_basis_ha")
+                    else:
+                        value=prediction.get("predicted_t_ha")
+                        unit=prediction.get("unit") or "t/ha"
+                        stock=prediction.get("predicted_production_t")
+                        estimate=(format_ptbr(value,3)+" "+unit if isinstance(value,(int,float)) else "N/D")
+                        if isinstance(stock,(int,float)):
+                            estimate += "; produção-base "+format_ptbr(stock,2)+" t"
+                        area_basis=prediction.get("area_basis_ha")
+                    line=("  PREVISÃO EXPERIMENTAL PARA AFERIÇÃO EM CAMPO — "+compartment+
+                          ": "+estimate+"; área-base "+format_ptbr(area_basis,2)+" ha; "+prediction_id)
+                    interval=(prediction.get("density_range_tc_ha") or
+                              prediction.get("prediction_range_t_ha"))
+                    if isinstance(interval,(list,tuple)) and len(interval)==2:
+                        line += "; faixa da fonte/modelo "+format_ptbr(interval[0],3)+"–"+format_ptbr(interval[1],3)+" "+unit
+                    line += "; incerteza: "+str(prediction.get("uncertainty_kind") or "N/D")
+                    line += "; método: "+str(prediction.get("model") or "N/D")
+                    line += "; fonte: "+str(prediction.get("source") or "N/D")
+                    line += "; hash de rastreio: "+str(prediction.get("trace_sha256") or "N/D")
+                    lines.append(line)
+                else:
+                    lines.append("  RESULTADO PARA CAMPO — "+compartment+
+                                 ": N/D; "+str(prediction.get("reason") or "modelo compatível indisponível")+
+                                 "; "+prediction_id)
+            lines.append("  Aferição: preencher somente medições independentes na planilha CSV; previsões e observações permanecem separadas.")
+        except Exception as exc:
+            self.project["modeled_field_predictions"]={"status":"N/D",
+                "reason":type(exc).__name__+": "+str(exc)[:160]}
+            lines.extend(["", "MODELOS PARA VERIFICAÇÃO EM CAMPO: N/D — "+
+                          type(exc).__name__+": "+str(exc)[:160]])
+        text="\n".join(lines)
+        self.project["last_result"]=text
+        if hasattr(self,"carbon_exec_var"):
+            self.carbon_exec_var.set(self._executive_excerpt(text,
+                ("ÁREA TOTAL ANALISADA:","VEGETAÇÃO NATIVA MAPEADA:",
+                 "COMPARTIMENTOS DE CARBONO:","Estoque parcial conhecido:",
+                 "Estoque conhecido:","Incerteza do total:")))
+        self._set(self.res,text);self.nb.select(self.tabs[3])
+        self._refresh_overall_executive_summary()
+        if hasattr(self,"sar_exec_var"):
+            sar=self.project.get("sar_result") or {}
+            heights=sar.get("height_products") or []
+            height_line=(f"Altura SAR entregue ao painel: {len(heights)} produto(s)."
+                         if heights else "Altura SAR entregue ao painel: N/D.")
+            self.sar_exec_var.set("Processamento concluído. "+height_line+
+                " AGB, fonte e aplicação estão discriminadas nos detalhes técnicos.")
+        self.status.set("Carbono por formação nativa concluído; lacunas e outros usos indicados separadamente.")
+        # Store serializable class-level results beside spatial provenance.
+        audit=sar_audit_path
+        self._write_json_background(native,audit)
+        sar_audit=Path(land["vector_path"]).parent/"proveniencia_sar_painel.json"
+        self._write_json_background({
+            "analysis_run_id":self.project.get("analysis_run_id"),
+            "aoi_hash_sha256":self.project.get("analysis_aoi_hash"),
+            "sar_dashboard_payload":self.project.get("sar_result") or {},
+        },sar_audit)
+        # Separate pedology from carbon stocks in exported calculation evidence.
+        pedo_audit=Path(land["vector_path"]).parent/"pedologia_embrapa_auditoria.json"
+        pedo_audit.write_text(json.dumps(pedology or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+        fert_audit=Path(land["vector_path"]).parent/"fertilidade_embrapa_auditoria.json"
+        fert_audit.write_text(json.dumps(fertility or {},ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+
     def export_excel(self):
-        if not self.project.get("analysis_rows"):
+        dialog=tk.Toplevel(self); dialog.title("Escolher planilha para exportação"); dialog.transient(self); dialog.grab_set()
+        ttk.Label(dialog,text="Qual planilha deseja exportar?",font=("Segoe UI",12,"bold"),padding=12).pack(fill="x")
+        ttk.Button(dialog,text="Planilha de carbono nativo — estoques, incertezas e gráficos",
+                   command=lambda:(dialog.destroy(),self.export_carbon_excel())).pack(fill="x",padx=14,pady=6)
+        ttk.Button(dialog,text="Planilha de monitoramento agrícola — uso/cobertura, vigor e safra",
+                   command=lambda:(dialog.destroy(),self.export_monitoring_excel())).pack(fill="x",padx=14,pady=6)
+        ttk.Button(dialog,text="Cancelar",command=dialog.destroy).pack(anchor="e",padx=14,pady=12)
+
+    def export_monitoring_excel(self):
+        from analysis_pipeline_contract import geometry_hash
+        try:
+            expected_hash=self.project.get("analysis_aoi_hash")
+            if not expected_hash or geometry_hash(self.gdf)!=expected_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE — reexecute a análise antes de exportar.")
+        except Exception as exc:return messagebox.showerror("Excel de monitoramento",str(exc))
+        land=self.project.get("land_use") or {}
+        if not land:return messagebox.showwarning("Excel de monitoramento","Execute a análise agrícola antes de exportar.")
+        path=filedialog.asksaveasfilename(title="Salvar planilha de monitoramento agrícola",initialfile="Monitoramento_Agricola_Enform.xlsx",defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
+        if not path:return
+        from openpyxl import Workbook
+        from openpyxl.styles import Font,PatternFill,Alignment
+        from openpyxl.chart import BarChart,Reference
+        wb=Workbook(); ws=wb.active; ws.title="Painel Executivo"; ws.append(["Monitoramento agrícola — Enform Verde"])
+        ws.append(["Propriedade",self.name.get()]); ws.append(["Estado da classificação",land.get("status","N/D")]); ws.append(["Área da AOI (ha)",land.get("area_aoi_ha")]); ws.append(["Vigor e previsão de safra","Consulte a aba Vigor e Safra; estados N/D mantêm o motivo e a fonte."])
+        classes=land.get("classes") or []; ws.append([]); ws.append(["Classe de uso/cobertura","Origem","Área (ha)","Área (%)","Taxonomia / ressalva"])
+        start=ws.max_row+1
+        for row in classes:ws.append([row.get("class_name"),row.get("source"),row.get("area_ha"),row.get("area_pct"),row.get("taxonomy")])
+        for cell in ws[1]:cell.font=Font(size=16,bold=True,color="FFFFFF");cell.fill=PatternFill("solid",fgColor="0B3D2E")
+        for col,width in {"A":38,"B":34,"C":16,"D":16,"E":76}.items():ws.column_dimensions[col].width=width
+        ws.freeze_panes="A8"; ws.auto_filter.ref=f"A7:E{ws.max_row}"
+        for row in ws.iter_rows():
+            for cell in row:cell.alignment=Alignment(vertical="top",wrap_text=True)
+        chart=BarChart();chart.title="Área por classe de uso/cobertura";chart.y_axis.title="Área (ha)";chart.x_axis.title="Classe"
+        if classes:
+            chart.add_data(Reference(ws,min_col=3,min_row=7,max_row=7+len(classes)),titles_from_data=True)
+            chart.set_categories(Reference(ws,min_col=1,min_row=8,max_row=7+len(classes)));ws.add_chart(chart,"G2")
+        audit=wb.create_sheet("Vigor e Safra")
+        audit.append(["Relatório executivo de vigor e safra"])
+        for cell in audit[1]:cell.font=Font(size=16,bold=True,color="FFFFFF");cell.fill=PatternFill("solid",fgColor="0B3D2E")
+        report=""
+        try:report=self.crop_res.get("1.0","end-1c")
+        except Exception:pass
+        audit.append(["Status",self.project.get("executive_vigor_status","N/D — consulte relatório e auditoria")])
+        audit.append(["Relatório integral"])
+        for line in (report or "N/D — não há relatório agrícola nesta execução.").splitlines():audit.append([line])
+        audit.column_dimensions["A"].width=110;audit.column_dimensions["B"].width=70
+        for row in audit.iter_rows():
+            for cell in row:cell.alignment=Alignment(vertical="top",wrap_text=True)
+        try:wb.save(path)
+        except Exception as exc:return messagebox.showerror("Excel de monitoramento",str(exc))
+        messagebox.showinfo("Excel de monitoramento","Planilha de monitoramento agrícola exportada com classes, áreas, origens e relatório de vigor/safra.\n"+str(path))
+
+    def export_carbon_excel(self):
+        from analysis_pipeline_contract import geometry_hash
+        try:
+            expected_hash=self.project.get("analysis_aoi_hash")
+            if not expected_hash or geometry_hash(self.gdf)!=expected_hash:
+                raise ValueError("HASH_AOI_DIVERGENTE — reexecute a análise para esta geometria antes de exportar.")
+        except Exception as exc:
+            return messagebox.showerror("Excel",str(exc))
+        if not self.project.get("analysis_rows") and not self.project.get("land_use"):
             return messagebox.showwarning("Excel","Execute a análise antes de exportar.")
         p=filedialog.asksaveasfilename(defaultextension=".xlsx",filetypes=[("Excel","*.xlsx")])
         if not p:return
@@ -1596,25 +4527,290 @@ class App(tk.Tk):
                 sh.row_dimensions[i].height=32
                 for j,v in enumerate(row,1):
                     c=sh.cell(i,j,v); c.fill=PatternFill("solid",fgColor=(white if i%2==0 else pale)); c.border=Border(top=thin,bottom=thin,left=thin,right=thin); c.alignment=Alignment(vertical="center",wrap_text=True)
-                    if j in (3,4) and isinstance(v,(int,float)): c.number_format='#,##0.00'
+                    if isinstance(v,(int,float)) and not isinstance(v,bool):
+                        c.number_format='[$-416]#.##0' if float(v).is_integer() else '[$-416]#.##0,00'
                 sh.cell(i,2).font=Font(bold=True,color=green)
-        area=self.project["area_ha"]; total=self.project["total_tc_ha"]; totalco2=self.project["total_tco2_ha"]; ar=self.project["analysis_rows"]
+        area=self.project.get("area_ha"); total=self.project.get("total_tc_ha"); totalco2=self.project.get("total_tco2_ha"); ar=self.project.get("analysis_rows",[]); is_partial=bool(self.project.get("total_is_partial")) or not bool(ar)
         ws=wb.active; ws.title="Resumo Executivo"; setup(ws,"Enform Verde — Resumo Executivo")
         put(ws,[["Entrada","Projeto",None,None,"Informado","cadastro",None,self.name.get()],
                 ["Diagnóstico IBGE","Bioma dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Biomas 2025",self.biome.get()],
                 ["Diagnóstico IBGE","Fitofisionomia/região fitoecológica dominante",None,None,"Calculado espacialmente","interseção de polígonos","IBGE — Vegetação 2026",self.phys.get()],
-                ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{area:,.2f} ha"],
+                ["Entrada","Área analisada",None,None,"Calculado","geometria","CAR/vetor",f"{format_ptbr(area,2)} ha"],
                 ["Entrada","Sensor/produto selecionado",None,None,"Informado","SAR/multissensor","ESA/fornecedor",self.sensor.get()],
-                ["Resultado","Carbono total por hectare",total,totalco2,"CONSOLIDADO","soma dos compartimentos","Enform","somente compartimentos disponíveis"],
-                ["Resultado","Carbono total da propriedade",None,None,"CONSOLIDADO","total/ha × área","Enform",f"{total*area:,.0f} tC | {totalco2*area:,.0f} tCO₂e"]])
+                ["Resultado","Soma parcial por hectare" if is_partial else "Carbono total por hectare",total,totalco2,"PARCIAL" if is_partial else "CONSOLIDADO","soma dos compartimentos elegíveis","Enform","inclui somente compartimentos calculados e elegíveis"],
+                ["Resultado","Soma parcial da propriedade" if is_partial else "Carbono total da propriedade",None,None,"PARCIAL" if is_partial else "CONSOLIDADO","tC/ha × área","Enform",f"{format_ptbr(self.project.get('total_tc'),2)} tC | {format_ptbr(self.project.get('total_tco2e'),2)} tCO₂e; não extrapolar da área nativa para toda a AOI"]])
+        # Carbon totals are stored as tonnes over the actually quantified native
+        # intersections. Never multiply a native-area density by the entire AOI,
+        # and never disguise missing pools as zeros or a complete total.
+        sh_total=wb.create_sheet("Totais tCO2e")
+        setup(sh_total,"Enform Verde — estoques quantificados (tCO₂e)")
+        for j,h in enumerate(["Compartimento","Área quantificada (ha)",
+                              "Densidade sobre área nativa (tC/ha)",
+                              "Densidade sobre área nativa (tCO₂e/ha)",
+                              "Estoque quantificado (tC)",
+                              "Estoque quantificado (tCO₂e)",
+                              "Situação","Nota de auditoria"],1):
+            sh_total.cell(3,j,h).value=h
+        source_native=self.project.get("native_carbon") or {}
+        native_area=float(source_native.get("native_area_ha") or 0)
+        rows_total=[]
+        for component in source_native.get("components") or []:
+            stock=component.get("known_total_tc")
+            stock=float(stock) if stock is not None else None
+            quantified=float(component.get("quantified_area_ha") or 0)
+            rows_total.append([
+                component.get("parametro"),quantified,
+                stock/native_area if stock is not None and native_area>0 else None,
+                (stock/native_area)*(44/12) if stock is not None and native_area>0 else None,
+                stock,stock*(44/12) if stock is not None else None,
+                "PARCIAL" if float(component.get("missing_native_area_ha") or 0)>0 else (
+                    "QUANTIFICADO" if stock is not None else "N/D"),
+                "Densidade distribuída sobre a área nativa total; parcelas não quantificadas não valem zero."])
+        known=source_native.get("known_total_tc")
+        known=float(known) if known is not None else None
+        rows_total.append([
+            "TOTAL CONHECIDO (não extrapolado)",native_area,
+            known/native_area if known is not None and native_area>0 else None,
+            (known/native_area)*(44/12) if known is not None and native_area>0 else None,
+            known,known*(44/12) if known is not None else None,
+            "PARCIAL — faltam compartimentos" if source_native and not source_native.get("complete") else (
+                "CONSOLIDADO" if source_native and known is not None else "N/D"),
+            "Soma apenas dos estoques elegíveis calculados. tCO₂e = tC × 44/12; não implica validação em campo."])
+        put(sh_total,rows_total)
+        sh_total.column_dimensions["A"].width=40
+        sh_total.column_dimensions["B"].width=23
+        sh_total.column_dimensions["C"].width=34
+        sh_total.column_dimensions["D"].width=35
+        sh_total.column_dimensions["E"].width=29
+        sh_total.column_dimensions["F"].width=31
+        sh_total.column_dimensions["G"].width=34
+        sh_total.column_dimensions["H"].width=95
+        sh_total.freeze_panes="C4"
+        sh_total.auto_filter.ref=f"A3:H{3+len(rows_total)}"
+        if not ar:
+            for row_number,label in [(9,"Carbono por hectare"),(10,"Carbono da propriedade")]:
+                ws.cell(row_number,2).value=label
+                ws.cell(row_number,3).value=None;ws.cell(row_number,4).value=None
+                ws.cell(row_number,5).value="NÃO CALCULADO"
+                ws.cell(row_number,8).value="Execução de uso do solo sem estimativa de carbono."
+        native=self.project.get("native_carbon")
+        if native:
+            ws.cell(9,2).value="Carbono/ha nativo — soma conhecida";ws.cell(9,3).value=(native["known_total_tc"]/native["native_area_ha"] if native.get("known_total_tc") is not None and native["native_area_ha"] else None)
+            ws.cell(9,4).value=(ws.cell(9,3).value*44/12 if ws.cell(9,3).value is not None else None)
+            ws.cell(9,8).value="Denominador: área nativa confirmada; lacunas não são zero."
+            ws.cell(10,2).value="Carbono nas formações nativas";ws.cell(10,3).value=None;ws.cell(10,4).value=None
+            ws.cell(10,8).value=(format_ptbr(native["known_total_tc"],2)+" tC; "+format_ptbr(native["known_total_tco2"],2)+" tCO₂e; "+("total" if native["complete"] else "soma parcial") if native.get("known_total_tc") is not None else "NÃO ESTIMADO")
+            sh=wb.create_sheet("Carbono por Formação");setup(sh,"Enform Verde — carbono apenas nas interseções nativas")
+            for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Compartimento",
+                                   "tC/ha","tCO₂e/ha","Estoque tC","Estoque tCO₂e",
+                                   "Fonte","Limitação / incerteza"],1):sh.cell(3,j,h).value=h
+            put(sh,[[st["physiognomy"],st["area_ha"],st["area_pct"],r["parametro"],
+                     r.get("tc"),
+                     r["tc"]*44/12 if r.get("tc") is not None else None,
+                     r.get("total_tc"),
+                     r["total_tc"]*44/12 if r.get("total_tc") is not None else None,
+                     r.get("fonte"),st["physiognomy_resolution"]+
+                     "; classe reconhecida: "+st["class_name"]+"; "+str(r.get("obs"))]
+                     for st in native["strata"] for r in st["components"]])
+            sh.column_dimensions["I"].width=42
+            sh.column_dimensions["J"].width=92
+            sh.auto_filter.ref=f"A3:J{3+sum(len(st['components']) for st in native['strata'])}"
+            sh=wb.create_sheet("Solo por Formação");setup(sh,"Enform Verde — perfis de solo nas interseções nativas")
+            from soil_intersection_report import soil_intersection_summary
+            for j,h in enumerate(["Fitofisionomia","Área nativa (ha)","% da AOI","Profundidade","tC/ha","DP espacial","Fonte","Uso no total","Método","Área mapeada (ha)","Cobertura do mapa (%)","Pixels"],1):sh.cell(3,j,h).value=h
+            def _soil_row(st,depth,profile):
+                info=soil_intersection_summary(st.get("soil_profiles"))
+                use=("Somado (só área mapeada)" if profile.get("partial_coverage") else "Somado") if depth=="0–100 cm" else "Informativo; não somado novamente"
+                return [st["physiognomy"],st["area_ha"],st["area_pct"],depth,profile.get("tc_ha"),profile.get("spatial_sd_tc_ha"),"Embrapa/PronaSolos",use,info["method"],info["mapped_area_ha"],info["coverage_pct"],info["pixels"]]
+            put(sh,[_soil_row(st,depth,profile) for st in native["strata"] for depth,profile in (st.get("soil_profiles") or {}).items() if isinstance(profile,dict) and profile.get("tc_ha") is not None])
+            sh=wb.create_sheet("Incerteza Oficial do Solo")
+            setup(sh,"Enform Verde — limites marginais oficiais SOC (não IC95% conjunto)")
+            for j,h in enumerate(["Fitofisionomia","Horizonte (cm)","Limite inferior (tC/ha)",
+                                   "Limite superior (tC/ha)","Estado dos limites",
+                                   "Envelope somado 0–100 (tC/ha)","Envelope estoque (tC)",
+                                   "Fonte","Interpretação"],1):
+                sh.cell(3,j,h).value=h
+            soil_unc_rows=[]
+            for st in native["strata"]:
+                top=(st.get("soil_profiles") or {}).get("0–100 cm") or {}
+                official=top.get("official_uncertainty") or {}
+                horizons=official.get("marginal_horizon_bounds") or {}
+                lohi=official.get("sum_bounds_envelope_tc_ha") or []
+                stock=official.get("sum_bounds_envelope_stock_tC") or []
+                if not horizons:
+                    soil_unc_rows.append([st["physiognomy"],"0–100",None,None,
+                        "N/D — "+str(official.get("reason") or "raster de limite indisponível")[:180],
+                        None,None,None,"DP espacial não substitui incerteza oficial"])
+                else:
+                    for depth,bounds in horizons.items():
+                        soil_unc_rows.append([st["physiognomy"],depth,
+                            bounds.get("lower_tc_ha"),bounds.get("upper_tc_ha"),
+                            official.get("status"),
+                            (str(lohi) if lohi else None),(str(stock) if stock else None),
+                            (official.get("provenance") or {}).get("source"),
+                            "Envelope somado de limites marginais; NÃO é IC95% conjunto"])
+            put(sh,soil_unc_rows or [["N/D","0–100",None,None,"N/D",None,None,None,
+                                       "Nenhuma área nativa com mapa de solo"]])
         sh=wb.create_sheet("Compartimentos"); setup(sh,"Enform Verde — Compartimentos de carbono")
         put(sh,[["Resultado — "+r.get("origem","N/D"),r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in ar])
         for sheet,param in [("Biomassa Aérea","Biomassa aérea"),("Biomassa Subterrânea","Biomassa subterrânea"),("Necromassa","Necromassa"),("Serapilheira","Serapilheira")]:
             sh=wb.create_sheet(sheet); setup(sh,"Enform Verde — "+sheet)
-            rr=[r for r in ar if r["parametro"]==param]
+            rr=rows_for_compartment(ar,param)
             data=[["Resultado",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]] for r in rr]
             if not data:data=[["Resultado",param,None,None,"NÃO CALCULADO","—","—","Não houve dado válido nesta execução; nenhum valor foi inventado."]]
             put(sh,data)
+        sh=wb.create_sheet("Auditoria Gravimétrica"); setup(sh,"Serapilheira — origem, equação, incerteza e auditoria")
+        litter_audit_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            for c in st.get("components",[]):
+                if c.get("parametro")!="Serapilheira": continue
+                litter_audit_rows.append([st.get("physiognomy"),st.get("area_ha"),
+                    c.get("status") or ("CENÁRIO EXPERIMENTAL" if c.get("origin")=="EXPERIMENTAL_FISICO" else "N/D"),
+                    c.get("tc"),c.get("source"),c.get("source_url"),c.get("method"),
+                    c.get("uncertainty_kind"),json.dumps(c.get("uncertainty") or {},ensure_ascii=False,sort_keys=True),
+                    json.dumps(c.get("calculation_trace") or {},ensure_ascii=False,sort_keys=True),
+                    "; ".join(map(str,c.get("limitations") or [])),
+                    "IFN profundidade não equivale a massa; estoque de C requer fração medida."])
+        if not litter_audit_rows:
+            litter_audit_rows=[["N/D",None,"N/D",None,"SFB/IFN: profundidade apenas",None,
+                "Sem conversão; aguarda pares de massa seca e profundidade compatíveis",None,None,None,
+                "Nenhuma calibração gravimétrica pareada validada foi fornecida para esta classe/região.",
+                "Não converter profundidade em massa com constante nacional."]]
+        put(sh,[["Fitofisionomia","Área nativa (ha)","Situação","tC/ha (fora do total conhecido se experimental)",
+                 "Fonte","URL / fontes","Método","Tipo de incerteza","Incerteza e interpretação",
+                 "Equação e trilha de cálculo","Limites / transferência","Regra de leitura"],*litter_audit_rows])
+        sh.freeze_panes="A4"; sh.auto_filter.ref=f"A3:L{3+len(litter_audit_rows)}"
+        sar_result=self.project.get("sar_result") or {}
+        class_layers=(sar_result.get("fitofisionomia_raster_stats") or {})
+        class_rows=(class_layers.get("AGB") or {}).get("classes",[])
+        sh=wb.create_sheet("AGB por Fitofisionomia"); setup(sh,"Enform Verde — AGB SAR por interseção IBGE")
+        class_headers=["Classe IBGE","Área (ha)","Área (%)","AGB média (Mg/ha)","AGB total (Mg)","Pixels válidos","Incerteza média do produto","Altura média (m)"]
+        for j,h in enumerate(class_headers,1): sh.cell(3,j,h).value=h
+        unc_by={x.get("physiognomy"):x for x in (class_layers.get("UNCERTAINTY") or {}).get("classes",[])}
+        hgt_by={x.get("physiognomy"):x for x in (class_layers.get("HEIGHT") or {}).get("classes",[])}
+        data=[]
+        for cr in class_rows:
+            name=cr.get("physiognomy")
+            data.append([name,cr.get("area_ha"),cr.get("area_share_pct"),cr.get("agb_mean_mg_ha"),
+                         cr.get("agb_total_mg"),cr.get("n"),unc_by.get(name,{}).get("mean"),hgt_by.get(name,{}).get("mean")])
+        if not data:data=[["NÃO CALCULADO — camada IBGE de fitofisionomias ausente ou sem raster AGB",None,None,None,None,None,None,None]]
+        put(sh,data)
+        sh["A2"]="Interseção espacial AOI × classe IBGE; erro do produto e altura são camadas separadas. AGB total = média Mg/ha × área da classe."
+        sh.merge_cells("A2:H2")
+        sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        sh=wb.create_sheet("Comparação AGB Inventários")
+        setup(sh,"Enform Verde — comparação ESA CCI e todas as fontes de inventário elegíveis")
+        comparison_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            details=st.get("sar_details") or {}
+            cmp=details.get("inventory_agb_comparison")
+            if not cmp: continue
+            references=cmp.get("inventory_references") or [cmp]
+            for ref in references:
+                comparison_rows.append([st.get("physiognomy"),st.get("area_ha"),details.get("product"),
+                    details.get("agb_mg_ha"),details.get("uncertainty_mg_ha"),
+                    ref.get("institution") or ref.get("source") or ref.get("status"),
+                    ref.get("agb_mean_mg_ha"),ref.get("agb_sample_sd_mg_ha") or ref.get("sd_mg_ha"),
+                    (json.dumps(ref.get("agb_observed_range_mg_ha"),ensure_ascii=False)
+                     if ref.get("agb_observed_range_mg_ha") else ""),
+                    (ref.get("inventory_n_unique_sampling_units") or ref.get("n_plots")),
+                    ref.get("nearest_ua_distance_km"),ref.get("carbon_total_tc_comparison"),
+                    ref.get("carbon_total_tco2e_comparison"),
+                    ref.get("uncertainty") or
+                    (("IC95% publicado: "+str(ref.get("ci95_low_mg_ha"))+"–"+str(ref.get("ci95_high_mg_ha"))+" Mg AGB/ha. ")
+                     if ref.get("ci95_low_mg_ha") is not None and ref.get("ci95_high_mg_ha") is not None else "IC95% não informado; ")
+                    +str(ref.get("statistical_use") or ref.get("reason") or ""),
+                    json.dumps(ref.get("selected_units") or [],ensure_ascii=False),
+                    "; ".join(ref.get("limitations") or []) or str(ref.get("region") or ref.get("url") or "")])
+        if not comparison_rows:
+            comparison_rows=[["N/D",None,"Rota FH + inventário estrutural prioritária ou CCI sem referência elegível",
+                None,None,"N/D",None,None,None,None,None,None,None,
+                "Comparação CCI × inventários só é apresentada se o resultado quantitativo primário vier do CCI e houver fonte harmonizada compatível.",None,
+                "Comparação não integra nem altera o estoque oficial da análise."]]
+        sh.unmerge_cells("A1:H1")
+        sh.merge_cells("A1:P1")
+        comp_headers=["Fitofisionomia","Área ha","Produto primário","AGB ESA Mg/ha","DP produto Mg/ha",
+            "Inventário / instituição","AGB média Mg/ha","DP publicado/amostral Mg/ha","Faixa observada",
+            "n parcelas/UAs","Distância mínima km","tC comparativo","tCO₂e comparativo",
+            "Incerteza / interpretação","Unidades selecionadas","Limitações / região / URL"]
+        for j,h in enumerate(comp_headers,1):
+            c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
+            c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+            c.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+        sh.row_dimensions[3].height=52
+        for col,w in zip("ABCDEFGHIJKLMNOP",[25,14,24,18,19,30,22,22,24,12,17,20,22,65,65,65]):
+            sh.column_dimensions[col].width=w
+        put(sh,comparison_rows)
+        sh.auto_filter.ref=f"A3:P{3+len(comparison_rows)}"
+        sh["A2"]="Todas as fontes numéricas harmonizadas e compatíveis são consultadas; IFN é uma delas. Cada fonte é apresentada separadamente; valores comparativos não são somados ao estoque. DP entre UAs não equivale a IC95%; estudos sem incerteza publicada mantêm essa lacuna explícita. Metadados de catálogo sem AGB harmonizada não são estimativas."
+        sh.merge_cells("A2:P2"); sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        sh=wb.create_sheet("Referências Estruturais")
+        setup(sh,"Enform Verde — referências horizontais de inventários por fitofisionomia")
+        structural_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            details=st.get("sar_details") or {}
+            cmp=details.get("inventory_agb_comparison") or {}
+            refs=cmp.get("published_structural_references") or []
+            if not refs:
+                structural_rows.append([st.get("physiognomy"),"N/D",None,None,None,None,None,None,
+                    "Sem agregado estrutural de correspondência exata no registro local; consultar auditoria/fonte.",
+                    cmp.get("reason") or cmp.get("status") or "N/D"])
+                continue
+            for ref in refs:
+                if ref.get("sd") is not None: uncertainty="SD publicado: "+str(ref.get("sd"))
+                elif ref.get("se") is not None: uncertainty="SE publicado: "+str(ref.get("se"))
+                elif ref.get("ci95_low") is not None and ref.get("ci95_high") is not None:
+                    uncertainty="IC95% publicado: "+str(ref.get("ci95_low"))+"–"+str(ref.get("ci95_high"))
+                elif ref.get("iqr_low") is not None and ref.get("iqr_high") is not None:
+                    uncertainty="IQR publicado: "+str(ref.get("iqr_low"))+"–"+str(ref.get("iqr_high"))
+                else: uncertainty="N/D na publicação; não estimar erro a partir da média"
+                structural_rows.append([st.get("physiognomy"),ref.get("institution") or ref.get("source_id"),
+                    ref.get("region"),ref.get("metric"),ref.get("center"),ref.get("unit"),
+                    ref.get("center_type"),ref.get("n_plots") or "N/D",uncertainty,
+                    str(ref.get("citation") or "N/D")+" | "+str(ref.get("url") or "")+
+                    " | "+str(ref.get("statistical_use") or "Baliza regional/fitofisionômica")])
+        struct_headers=["Fitofisionomia IBGE","Instituição/fonte","Região","Métrica horizontal",
+            "Valor central","Unidade","Tipo de centro","n parcelas","Incerteza publicada",
+            "Citação, URL e interpretação"]
+        for j,h in enumerate(struct_headers,1):
+            c=sh.cell(3,j,h); c.font=Font(bold=True,color=white); c.fill=PatternFill("solid",fgColor=orange)
+            c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+            c.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+        sh.merge_cells("A1:J1"); sh["A2"]=(
+            "Agregados de área basal, densidade e outras métricas horizontais são balizas regionais quando não há parcelas abertas. "
+            "Cada estudo fica separado. Não são parcelas sintéticas, pares FH–campo, validação SAR nem valores somados ao estoque. "
+            "A métrica e o limiar de inclusão da fonte limitam a interpretação.")
+        sh.merge_cells("A2:J2"); sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        for col,width in zip("ABCDEFGHIJ",[27,32,28,22,16,16,17,13,38,80]):
+            sh.column_dimensions[col].width=width
+        put(sh,structural_rows); sh.auto_filter.ref=f"A3:J{3+len(structural_rows)}"
+        sh=wb.create_sheet("Fitossociologia IFN")
+        setup(sh,"Enform Verde — espécies frequentes em unidades IFN compatíveis")
+        biodiversity_rows=[]
+        for st in (self.project.get("native_carbon") or {}).get("strata",[]):
+            audit=(st.get("sar_details") or {}).get("inventory_biodiversity_reference") or {}
+            if audit.get("status")!="INDICADOR_FITOSSOCIOLOGICO_IFN":
+                biodiversity_rows.append([st.get("physiognomy"),audit.get("status","N/D"),None,None,None,None,
+                    audit.get("reason") or "Sem referência IFN compatível nesta execução."])
+                continue
+            for species in audit.get("top_10_species_by_sampling_unit_frequency",[]):
+                biodiversity_rows.append([st.get("physiognomy"),audit.get("status"),
+                    audit.get("n_unique_sampling_units"),audit.get("unique_taxa_observed"),
+                    species.get("rank"),species.get("species"),
+                    f"Presença em {species.get('sampling_units_present')}/{audit.get('n_unique_sampling_units')} UAs "
+                    f"({format_ptbr(species.get('frequency_pct'),1)}%); {species.get('tree_records')} registros de árvores. "
+                    "Frequência entre UAs; não é abundância relativa nem índice completo de biodiversidade."])
+        if not biodiversity_rows:
+            biodiversity_rows=[["N/D","N/D",None,None,None,None,
+                "Nenhuma referência fitossociológica IFN compatível foi retornada nesta execução."]]
+        headers=["Fitofisionomia IBGE","Estado","n UAs","Táxons distintos","Posição","Espécie","Frequência e interpretação"]
+        for j,h in enumerate(headers,1):
+            c=sh.cell(3,j,h);c.font=Font(bold=True,color=white);c.fill=PatternFill("solid",fgColor=orange)
+            c.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+        sh.merge_cells("A1:G1");sh["A2"]="Resumo descritivo IFN/DAP10 por proximidade, bioma e legenda_1 IBGE; UAs do mesmo programa nacional não são inventários independentes. Outras fontes primárias e agregadas reconhecidas devem ser harmonizadas e acrescentadas com unidade amostral e incerteza próprias."
+        sh.merge_cells("A2:G2");sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
+        for col,width in zip("ABCDEFG",[28,32,12,18,12,35,80]):sh.column_dimensions[col].width=width
+        put(sh,biodiversity_rows);sh.auto_filter.ref=f"A3:G{3+len(biodiversity_rows)}"
         sh=wb.create_sheet("Carbono do Solo"); setup(sh,"Enform Verde — Carbono orgânico do solo")
         soil_rows=[r for r in ar if r["parametro"].startswith("Solo ")]
         soil_data=[["MAPEAMENTO — PronaSolos",r["parametro"],r["tc"],r["tco2"],r["status"],r["metodo"],r["fonte"],r["obs"]+" | "+r.get("erro_metrica","")] for r in soil_rows]
@@ -1623,15 +4819,38 @@ class App(tk.Tk):
         sh=wb.create_sheet("Diagnóstico IBGE"); setup(sh,"Enform Verde — Diagnóstico territorial IBGE")
         diag=self.project.get("ibge_diagnosis",{})
         idata=[]
-        for n,ha,pct in diag.get("biomas",[]): idata.append(["Bioma",n,None,None,"IBGE oficial","interseção espacial","IBGE — Biomas 2025",f"{ha:,.2f} ha | {pct:.2f}% da área"])
+        for n,ha,pct in diag.get("biomas",[]): idata.append(["Bioma",n,None,None,"IBGE oficial","interseção espacial","IBGE — Biomas 2025",f"{format_ptbr(ha,2)} ha | {format_ptbr(pct,2)}% da área"])
         for grp in diag.get("vegetacao",[]):
-            for n,ha,pct in grp.get("classes",[]): idata.append(["Vegetação "+grp.get("campo",""),n,None,None,"IBGE oficial 2026","interseção espacial","IBGE — Vegetação 2026",f"{ha:,.2f} ha | {pct:.2f}% da área"])
+            for n,ha,pct in grp.get("classes",[]): idata.append(["Vegetação "+grp.get("campo",""),n,None,None,"IBGE oficial 2026","interseção espacial","IBGE — Vegetação 2026",f"{format_ptbr(ha,2)} ha | {format_ptbr(pct,2)}% da área"])
         if not idata:idata=[["Diagnóstico","IBGE",None,None,"NÃO DISPONÍVEL","—","IBGE","A consulta/interseção não foi concluída nesta execução."]]
         put(sh,idata)
         sh=wb.create_sheet("Sensores SAR"); setup(sh,"Enform Verde — Sensores SAR")
         put(sh,[["Sensor","ESA Biomass — banda P",None,None,"Preferencial","PolSAR/PolInSAR/TomoSAR","ESA","Primeiro SAR orbital em banda P; usar somente quando produto efetivamente processado."],
                 ["Sensor","ALOS/PALSAR / ALOS-2",None,None,"Histórico/complementar","banda L","JAXA","Séries históricas para atributos estruturais."],
                 ["Sensor","TerraSAR-X / TanDEM-X / COSMO-SkyMed",None,None,"Complementar","banda X","Operadores","Textura e estrutura do dossel; não é banda do satélite Biomass."]])
+        sh=wb.create_sheet("Handoff SAR")
+        setup(sh,"Enform Verde — pixels SAR entregues ao relatório e à exportação")
+        sar_result=self.project.get("sar_result") or {}
+        handoff_rows=[["Execução/AOI",self.project.get("analysis_run_id"),None,None,
+                       "estado SAR",sar_result.get("status"),"origem","core → dashboard → exportação"],
+                      ["Hash AOI",self.project.get("analysis_aoi_hash"),None,None,
+                       "produtos de altura",len(sar_result.get("height_products") or []),
+                       "status","não confundir altura com AGB"]]
+        for h in sar_result.get("height_products") or []:
+            handoff_rows.append(["Altura SAR",h.get("physiognomy"),h.get("height_route_status"),
+                h.get("height_mean_m"),"m; n pixels válidos="+str(h.get("height_n_valid_pixels")),
+                h.get("height_sd_m"),h.get("source"),json.dumps({k:h.get(k) for k in
+                    ("height_metric","height_error_kind","product","sensor","band","scene_ids",
+                     "paths","height_pixel_distribution")},ensure_ascii=False,default=str)])
+        if not sar_result.get("height_products"):
+            handoff_rows.append(["Altura SAR","N/D",(sar_result.get("height_absence_certificate") or {}).get("status"),
+                None,"N/D",None,"sem pixels numéricos de altura no payload",json.dumps({
+                    "reason":(sar_result.get("height_absence_certificate") or {}).get("reason"),
+                    "analysis_run_id":sar_result.get("analysis_run_id"),
+                    "aoi_hash_sha256":sar_result.get("aoi_hash_sha256")},ensure_ascii=False)])
+        put(sh,handoff_rows)
+        sh["A2"]="Valores, contagem de pixels, fonte, cena, distribuição e identidade da mesma execução. SD espacial não é erro de mensuração nem IC95%."
+        sh.merge_cells("A2:H2");sh["A2"].alignment=Alignment(wrap_text=True,vertical="center")
         sh=wb.create_sheet("Modelos e QA"); setup(sh,"Enform Verde — Modelos, QA e incerteza")
         put(sh,[["QA","Mensuração SAR",None,None,"REGRA","controle metodológico","Enform","Não declarar mensuração SAR sem produto efetivamente processado."],
                 ["Modelo","Conversão C→CO₂e",None,None,"Aplicado","tC × 44/12","estequiometria","Todas as estimativas de carbono são exibidas em tC/ha e tCO₂e/ha."],
@@ -1640,16 +4859,732 @@ class App(tk.Tk):
         put(sh,[["Fonte","ESA Biomass",None,None,"Oficial","P-band SAR","ESA","Missão orbital para biomassa florestal."],
                 ["Fonte","IFN / Painel de Biomassa e Carbono",None,None,"Prioritária","inventário/equações","SFB","Base brasileira para seleção e validação."],
                 ["Fonte","Embrapa",None,None,"Prioritária","protocolos/equações/COS","Embrapa","Fontes brasileiras priorizadas no motor."]])
+        pedo=self.project.get("soil_pedology") or {}
+        sh=wb.create_sheet("Classificação de Solos")
+        setup(sh,"Enform Verde — classes pedológicas Embrapa (não é estoque de carbono)")
+        for j,h in enumerate(["Unidade de mapeamento","Símbolo","Área (ha)","% da AOI",
+                              "Componentes (sem percentual próprio)","Origem / escala",
+                              "Incerteza","Limitações"],1):sh.cell(3,j,h).value=h
+        pedo_rows=[[r.get("mapping_unit"),r.get("symbol"),r.get("area_ha"),
+                    r.get("area_pct_aoi"),"; ".join(r.get("components") or []),
+                    "Embrapa Solos — 1:5.000.000",None,
+                    "Não é a área individual de cada componente; verificar licença comercial"]
+                   for r in pedo.get("soil_mapping_units") or []]
+        put(sh,pedo_rows or [["N/D",None,None,None,None,pedo.get("source"),
+                             None,pedo.get("reason") or "Cartografia não recuperada"]])
+        fertility=self.project.get("soil_fertility") or {}
+        sh=wb.create_sheet("Fertilidade do Solo")
+        setup(sh,"Enform Verde — estimativas cartográficas Embrapa 90 m (não são análises de laboratório)")
+        for j,h in enumerate(["Unidade cartográfica","Atributo","Profundidade cm","Média predita",
+                              "Unidade","DP espacial (não IC95%)","Pixels","Área mapeada ha",
+                              "Cobertura %","Erro preditivo","Cobertura WCS","SHA256 raster"],1):
+            sh.cell(3,j,h).value=h
+        rows_fert=[]
+        for unit_name,measurements in (fertility.get("units") or {}).items():
+            for measure in measurements:
+                if measure.get("mean") is not None:
+                    rows_fert.append([unit_name,measure.get("label"),measure.get("depth_cm"),
+                                     measure.get("mean"),measure.get("unit"),measure.get("spatial_sd"),
+                                     measure.get("valid_pixels"),measure.get("mapped_area_ha"),
+                                     measure.get("coverage_pct"),measure.get("uncertainty"),
+                                     measure.get("wcs_coverage_id"),measure.get("raster_sha256")])
+        put(sh,rows_fert or [["N/D",fertility.get("reason") or "sem pixels numéricos oficiais",
+                             None,None,None,None,None,None,None,"N/D",None,None]])
+        model_manifest=self.project.get("modeled_field_predictions") or {}
+        sh=wb.create_sheet("Modelo Para Campo")
+        setup(sh,"Enform Verde — resultados experimentais, NÃO medições de campo")
+        sh.column_dimensions["I"].width=48
+        sh.column_dimensions["J"].width=80
+        sh.column_dimensions["K"].width=34
+        sh.row_dimensions[3].height=58
+        sh.freeze_panes="D4"
+        for j,h in enumerate(["ID previsão","Fitofisionomia","Compartimento/cultura",
+                              "Status","Estimativa (tC/ha ou t/ha)","Área (ha)",
+                              "Faixa condicional","Tipo de incerteza","Origem",
+                              "Protocolo de campo","Valor medido em campo (EM BRANCO)"],1):
+            cell=sh.cell(3,j,h)
+            cell.font=Font(bold=True,color=white)
+            cell.fill=PatternFill("solid",fgColor=orange)
+            cell.alignment=Alignment(horizontal="center",vertical="center",wrap_text=True)
+            cell.border=Border(top=thin,bottom=thin,left=thin,right=thin)
+        model_rows=[]
+        for prediction in model_manifest.get("predictions") or []:
+            model_rows.append([prediction.get("prediction_id"),
+                prediction.get("physiognomy"),prediction.get("compartment"),
+                prediction.get("status"),
+                prediction.get("density_predicted_tc_ha",
+                               prediction.get("predicted_t_ha")),
+                prediction.get("area_basis_ha"),
+                str(prediction.get("density_range_tc_ha") or
+                    prediction.get("prediction_range_t_ha") or "N/D"),
+                prediction.get("uncertainty_kind"),prediction.get("source"),
+                prediction.get("field_protocol"),None])
+        put(sh,model_rows or [["N/D",None,None,"SEM RESULTADOS MODELADOS",None,None,
+                              "N/D","N/D","N/D","Executar análise",None]])
+        sh.auto_filter.ref=f"A3:K{max(4,3+len(model_rows))}"
+        # Field observations must be inserted by the operator after real sampling.
+        for row_i in range(4,4+max(1,len(model_rows))):
+            sh.cell(row_i,11).value=None
+        land=self.project.get("land_use")
+        if land:
+            sh=wb.create_sheet("Uso do Solo"); setup(sh,"Enform Verde — classes de uso e cobertura")
+            for j,h in enumerate(["Classe","Área (ha)","Área (%)","Origem","Legenda","Confiança","Método de área","Arquivo vetorial"],1):sh.cell(3,j,h).value=h
+            put(sh,[[r["class_name"],r["area_ha"],r["area_pct"],r["source"],r["taxonomy"],
+                     "Validação no JSON; confiança cartográfica não inferida" if not r["source"].startswith("SAR_VALIDADO") else "IC95% da precisão por classe no JSON",
+                     land["method"],land["vector_path"]] for r in land["classes"]])
+            sh=wb.create_sheet("Validação Uso SAR");setup(sh,"Enform Verde — confiança independente obrigatória")
+            val=land.get("validation") or {}
+            for j,h in enumerate(["Nível","Classe","n independente","Acertos","Precisão","Limite inferior IC95%","Elegível","Observação"],1):sh.cell(3,j,h).value=h
+            data=[]
+            for level,report in [("detalhado",val),("grupo",val.get("parent_validation",{}))]:
+                for label,gate in report.get("gates",{}).items():
+                    data.append([level,label,gate["n_independent"],gate["correct"],gate["precision"],gate["precision_wilson95_lower"],str(gate["eligible"]),report.get("uncertainty")])
+            put(sh,data or [["Sem validação",None,None,None,None,None,"NÃO","; ".join(land.get("warnings",[]))]])
+        catalog=self.project.get("sar_catalog") or []
+        if catalog:
+            sh=wb.create_sheet("Aquisições SAR")
+            for col,value in enumerate(["Catálogo","Produto","Cena","Aquisição Brasília (UTC−3)","Aquisição UTC","Situação","Observação"],1):
+                sh.cell(1,col,value)
+            line=2
+            for source in catalog:
+                for scene in source.get("items",[]):
+                    values=[source.get("provider"),source.get("dataset"),scene.get("id"),
+                            scene.get("acquisition_brasilia"),scene.get("acquisition_utc"),
+                            scene.get("acquisition_status"),
+                            "Descoberta no catálogo; não comprova que a cena tenha sido processada"]
+                    for col,value in enumerate(values,1):
+                        sh.cell(line,col,value)
+                    line+=1
+            sh.freeze_panes="A2"
+            sh.column_dimensions["A"].width=25
+            sh.column_dimensions["B"].width=25
+            sh.column_dimensions["C"].width=42
+            sh.column_dimensions["D"].width=30
+            sh.column_dimensions["E"].width=30
+            sh.column_dimensions["F"].width=37
+            sh.column_dimensions["G"].width=76
+        # Charts use only inventory references already matched to each native
+        # stratum and SAR height pixels actually read inside that stratum.
+        chart_native=self.project.get("native_carbon") or {}
+        bio_refs=chart_native.get("biodiversity_references") or []
+        native_strata=chart_native.get("strata") or []
+        def inventory_source_labels(refs):
+            labels=set()
+            for ref in refs:
+                institution=str(ref.get("institutions") or "Instituição não identificada")
+                institutions=ref.get("institutions") or []
+                urls=ref.get("source_urls") or []
+                for url in urls:
+                    labels.add(f"{', '.join(institutions) if institutions else institution} — {url}")
+            return sorted(labels)
+        chart=wb.create_sheet("Gráficos")
+        from openpyxl.chart import BarChart, LineChart, Reference
+        chart.sheet_view.showGridLines=False
+        chart.merge_cells("A1:L1");chart["A1"]="Enform Verde — distribuições estruturais e biodiversidade"
+        chart["A1"].font=Font(size=16,bold=True,color=white);chart["A1"].fill=PatternFill("solid",fgColor=green)
+        chart["A1"].alignment=Alignment(vertical="center");chart.row_dimensions[1].height=30
+        for span in ("A2:C2","A3:C3","D2:F2","D3:F3","G2:L2","G3:L3"):
+            chart.merge_cells(span)
+        for col in "ABCDEFGHIJKL":chart.column_dimensions[col].width=17
+        chart.column_dimensions["A"].width=20;chart.column_dimensions["D"].width=22;chart.column_dimensions["G"].width=28
+        chart["N1"]="Estoques de carbono por compartimento (apenas valores quantificados)"
+        chart["N1"].font=Font(bold=True,color=green)
+        for col,title in zip((14,15,16),("Compartimento","tC","tCO₂e")):
+            chart.cell(3,col,title).font=Font(bold=True,color=white)
+            chart.cell(3,col).fill=PatternFill("solid",fgColor=orange)
+        stock_components=[r for r in rows_total if r[0] and r[0]!="TOTAL CONHECIDO (não extrapolado)" and r[4] is not None]
+        for idx,row in enumerate(stock_components,4):
+            chart.cell(idx,14,str(row[0]));chart.cell(idx,15,float(row[4]));chart.cell(idx,16,float(row[5]))
+        if stock_components:
+            for col,title,anchor in ((15,"Estoque conhecido por compartimento (tC)","N5"),(16,"Estoque conhecido por compartimento (tCO₂e)","V5")):
+                bc=BarChart();bc.type="bar";bc.style=10;bc.title=title;bc.y_axis.title="Compartimento";bc.x_axis.title=title.split("(")[-1].rstrip(")")
+                bc.add_data(Reference(chart,min_col=col,min_row=3,max_row=3+len(stock_components)),titles_from_data=True)
+                bc.set_categories(Reference(chart,min_col=14,min_row=4,max_row=3+len(stock_components)))
+                bc.height=8;bc.width=16;chart.add_chart(bc,anchor)
+        for c in ("A2","A3","A4","D2","D3","D4","G2","G3","G4"):
+            chart[c].alignment=Alignment(wrap_text=True,vertical="center")
+        chart["A2"]="Distribuição diamétrica média e participação da área basal por classe DAP."
+        chart["A2"].font=Font(bold=True,color=green)
+        chart["A4"]="Classe DAP";chart["B4"]="Árvores médias (ind./ha)"
+        chart["C4"]="Área basal média (m²/ha)";chart["D4"]="Frequência de árvores (%)"
+        chart["E4"]="Área basal da classe (%)"
+        dbh_bins=[("5–10 cm","dbh_5_10_cm"),("10–20 cm","dbh_10_20_cm"),
+            ("20–30 cm","dbh_20_30_cm"),("30–40 cm","dbh_30_40_cm"),
+            ("40–60 cm","dbh_40_60_cm"),("≥60 cm","dbh_60_plus_cm")]
+        dbh_by_stratum=[];dbh_contributing_refs=[]
+        for idx,ref in enumerate(bio_refs):
+            if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":continue
+            st=native_strata[idx] if idx<len(native_strata) else {}
+            area=float(st.get("area_ha") or 0)
+            rows={x.get("bin_id"):x for x in ref.get("dbh_distribution_by_plot_mean") or []}
+            if area>0 and all(key in rows for _,key in dbh_bins):
+                dbh_by_stratum.append((area,rows))
+                dbh_contributing_refs.append(ref)
+        if dbh_by_stratum:
+            area_sum=sum(x[0] for x in dbh_by_stratum)
+            means=[]
+            for row,(label,key) in enumerate(dbh_bins,5):
+                mean_stems=sum(area*float(rows[key]["mean_stems_ha"]) for area,rows in dbh_by_stratum)/area_sum
+                mean_basal=sum(area*float(rows[key]["mean_basal_area_m2_ha"]) for area,rows in dbh_by_stratum)/area_sum
+                means.append((mean_stems,mean_basal))
+                chart.cell(row,1,label);chart.cell(row,2,mean_stems);chart.cell(row,3,mean_basal)
+            total_stems=sum(x[0] for x in means);total_basal=sum(x[1] for x in means)
+            chart["A40"]="Dados auxiliares das curvas diamétricas"
+            chart["A41"]="Classe DAP";chart["B41"]="Frequência de árvores (%)";chart["C41"]="Área basal da classe (%)"
+            for row,((label,_),(mean_stems,mean_basal)) in enumerate(zip(dbh_bins,means),42):
+                chart.cell(row,1,label)
+                chart.cell(row,2,100*mean_stems/total_stems if total_stems else 0)
+                chart.cell(row,3,100*mean_basal/total_basal if total_basal else 0)
+            dbh_refs=[ref for ref in dbh_contributing_refs if ref.get("source_urls")]
+            dbh_sources=inventory_source_labels(dbh_refs)
+            chart["A3"]="Médias por DAP ponderadas pela área dos estratos nativos; curvas mostram frequência relativa de indivíduos e participação da área basal. Fontes (instituição — URL): "+("; ".join(dbh_sources) or "N/D")
+            lc=LineChart();lc.title="Distribuição diamétrica média e área basal";lc.y_axis.title="Participação média (%)";lc.x_axis.title="DAP"
+            lc.add_data(Reference(chart,min_col=2,max_col=3,min_row=41,max_row=47),titles_from_data=True)
+            lc.set_categories(Reference(chart,min_col=1,min_row=42,max_row=47));lc.height=8;lc.width=16;chart.add_chart(lc,"A12")
+        else:
+            chart["A5"]="N/D — sem inventário compatível e carregado para os estratos nativos confirmados."
+            # Keep the missing-inventory note inside the left chart panel;
+            # columns D:F belong to the height panel and its own N/D note.
+            chart.merge_cells("A5:C5")
+            chart["A5"].alignment=Alignment(wrap_text=True,vertical="center")
+            chart.row_dimensions[5].height=32
+            chart["A3"]="Fonte/escopo: N/D; não substituir por média de outra fitofisionomia ou região sem identificação."
+
+        chart["D2"]="Altura: distribuição observada por pixels SAR; se ausência certificada, referência de alturas de árvores inventariadas."
+        chart["D2"].font=Font(bold=True,color=green);chart["D4"]="Faixa de altura (m)";chart["E4"]="Frequência (%)"
+        sar_bins={};sar_pixel_total=0;strata_with_height=0
+        for st in native_strata:
+            height_details=_verified_sar_height_details(st.get("sar_details") or {})
+            info=height_details.get("height_pixel_distribution") or {}
+            if info.get("status")!="SAR_PIXELS_HISTOGRAMMED":continue
+            strata_with_height+=1
+            for b in info.get("bins") or []:
+                key=b.get("label");sar_bins[key]=sar_bins.get(key,0)+int(b.get("pixel_count") or 0)
+                sar_pixel_total+=int(b.get("pixel_count") or 0)
+        height_source=""
+        if sar_pixel_total:
+            labels=[("0–5 m",0), ("5–10 m",1), ("10–15 m",2), ("15–20 m",3),
+                ("20–25 m",4), ("25–30 m",5), ("30–35 m",6), ("35–40 m",7),
+                ("40–45 m",8), ("45–50 m",9), ("50–55 m",10), ("55–60 m",11), ("≥60 m",12)]
+            for row,(label,_) in enumerate(labels,5):
+                chart.cell(row,4,label);chart.cell(row,5,100*sar_bins.get(label,0)/sar_pixel_total)
+            height_source=("Pixels SAR válidos lidos em "+str(strata_with_height)+" estrato(s) nativo(s); n="+
+                str(sar_pixel_total)+" pixels. Fonte: "+"; ".join(sorted({str(_verified_sar_height_details(st.get("sar_details") or {}).get("source") or _verified_sar_height_details(st.get("sar_details") or {}).get("product") or "produto SAR" ) for st in native_strata if _verified_sar_height_details(st.get("sar_details") or {}).get("height_pixel_distribution")})))
+            chart["D3"]=height_source+". Pixels sem dado não foram preenchidos."
+        else:
+            cert=(chart_native.get("height_absence_certificate") or
+                  (self.project.get("sar_result") or {}).get("height_absence_certificate"))
+            from sar_height_absence import regional_height_fallback_decision
+            allow_region,absence_reason=regional_height_fallback_decision(cert)
+            regional=[]
+            if allow_region:
+                regional_pairs=[(ref,ref.get("inventory_tree_height_distribution") or {}) for ref in bio_refs
+                    if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls") and ref.get("institutions")]
+                regional_pairs=[(ref,dist) for ref,dist in regional_pairs
+                    if dist.get("status")=="REFERENCIA_ALTURA_INVENTARIO_REGIONAL" and float(dist.get("n_plots") or 0)>0]
+                regional_refs=[ref for ref,_ in regional_pairs]
+                regional=[dist for _,dist in regional_pairs]
+            if allow_region and regional:
+                plot_weights=[float(x.get("n_plots") or 0) for x in regional]
+                weight_sum=sum(plot_weights)
+                for row,(i,label) in enumerate(enumerate(["0–5 m","5–10 m","10–15 m","15–20 m","20–25 m","25–30 m","30–35 m","35–40 m","40–45 m","45–50 m","50–55 m","55–60 m","≥60 m"]),5):
+                    value=sum(w*float(x["bins"][i]["mean_frequency_pct"]) for x,w in zip(regional,plot_weights))/weight_sum
+                    chart.cell(row,4,label);chart.cell(row,5,value)
+                sources=inventory_source_labels(regional_refs)
+                height_source="Fallback regional autorizado por ausência SAR certificada. Médias de alturas medidas em inventários compatíveis ("+str(sum(plot_weights))+" parcelas). Fontes (instituição — URL): "+"; ".join(sources)
+                chart["D3"]=height_source+". Altura de árvores inventariadas, não altura do dossel SAR nem medição da propriedade."
+            else:
+                if allow_region and not regional:
+                    absence_reason="SEM_INVENTARIO_COMPATIVEL_COM_FONTE_IDENTIFICAVEL"
+                chart["D5"]="N/D — "+absence_reason+"; médias regionais sem fonte rastreável ou falhas técnicas não substituem a observação SAR."
+                # Keep the no-data note within the height panel; extending
+                # through column G overwrote the Top-10 species table.
+                chart.merge_cells("D5:F5")
+                chart["D3"]="Sem altura SAR válida; contingência microrregional/regional bloqueada até comprovar ausência de cobertura."
+        if sar_pixel_total or (allow_region and regional):
+            hc=LineChart();hc.title="Distribuição de altura";hc.y_axis.title="Frequência (%)";hc.x_axis.title="Altura"
+            hc.add_data(Reference(chart,min_col=5,min_row=4,max_row=17),titles_from_data=True)
+            hc.set_categories(Reference(chart,min_col=4,min_row=5,max_row=17));hc.height=8;hc.width=16;chart.add_chart(hc,"H12")
+
+        chart["G2"]="Lista qualitativa — espécies de ocorrência mais provável (10 maiores dominâncias por área basal)."
+        chart["G2"].font=Font(bold=True,color=green)
+        for col,label in enumerate(("Nome vulgar","Nome científico","Área basal média (m²/ha)",
+                                    "Dominância relativa (%)","Frequência nas parcelas (%)"),7):
+            chart.cell(4,col,label)
+        species_values={}
+        for ref in bio_refs:
+            if ref.get("status")!="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL":continue
+            weight=float(ref.get("inventory_n_plots") or 0)
+            for item in ref.get("top10_by_dominance") or []:
+                scientific=str(item.get("scientific_name") or "").strip()
+                published=str(item.get("name_as_published") or item.get("species") or "").strip()
+                taxon=(scientific if scientific and not scientific.startswith("N/D")
+                       else str(ref.get("institutions") or "fonte")+"|"+published)
+                if not taxon or weight<=0:continue
+                record=species_values.setdefault(taxon,{"weight":0.0,"ba":0.0,"rel":0.0,"freq":0.0,
+                    "common":str(item.get("common_name") or "N/D"),
+                    "scientific":scientific or "N/D — fonte sem nome científico explícito",
+                    "published":published})
+                record["weight"]+=weight
+                record["ba"]+=float(item.get("mean_basal_area_m2_ha") or 0)*weight
+                record["rel"]+=float(item.get("relative_dominance_pct") or 0)*weight
+                record["freq"]+=float(item.get("frequency_pct") or 0)*weight
+        species_rank=sorted(((taxon,{k:(v[k]/v["weight"] if k in {"ba","rel","freq"} else v[k])
+                                      for k in v if k!="weight"})
+                             for taxon,v in species_values.items() if v["weight"]>0),
+                            key=lambda x:(-x[1]["ba"],x[0]))[:10]
+        if species_rank:
+            for row,(_taxon,item) in enumerate(species_rank,5):
+                chart.cell(row,7,item["common"]);chart.cell(row,8,item["scientific"])
+                chart.cell(row,9,item["ba"]);chart.cell(row,10,item["rel"]);chart.cell(row,11,item["freq"])
+            species_refs=[ref for ref in bio_refs if ref.get("status")=="REFERENCIA_FITOSSOCIOLOGICA_REGIONAL" and ref.get("source_urls")]
+            species_sources=inventory_source_labels(species_refs)
+            scopes=sorted({str(ref.get("geographic_scope") or "REGIONAL") for ref in species_refs})
+            phys=sorted({str(ref.get("physiognomy") or "N/D") for ref in species_refs})
+            chart.merge_cells("G3:K3")
+            chart["G3"]="Referência: "+", ".join(phys)+"; escopo "+", ".join(scopes)+". Fontes (instituição — URL): "+("; ".join(species_sources) or "N/D")
+            bc=BarChart();bc.type="bar";bc.style=10;bc.title="Dominância média das espécies";bc.x_axis.title="Área basal média (m²/ha)";bc.y_axis.title="Nome vulgar"
+            bc.add_data(Reference(chart,min_col=9,min_row=4,max_row=4+len(species_rank)),titles_from_data=True)
+            bc.set_categories(Reference(chart,min_col=7,min_row=5,max_row=4+len(species_rank)));bc.height=8;bc.width=16;chart.add_chart(bc,"A29")
+        else:
+            chart["G5"]="N/D — inventário compatível não carregado ou não encontrado."
+            chart.merge_cells("G5:L5");chart["G3"]="Fonte: N/D; espécies não serão inferidas de inventários incompatíveis."
+        chart.freeze_panes="A4";chart.sheet_view.zoomScale=85
+        # Single-screen executive index. Numeric stocks remain numeric so the
+        # operator can audit or reuse them; no missing pool is treated as zero.
+        dashboard=wb.create_sheet("PAINEL EXECUTIVO",0)
+        setup(dashboard,"ENFORM VERDE — PAINEL EXECUTIVO DA PROPRIEDADE")
+        dash_headers=["Seção","Indicador","tC/ha","tCO₂e/ha","Estoque tC",
+                      "Estoque tCO₂e","Situação","Área quantificada (ha)",
+                      "Incerteza por hectare","Fonte / observação"]
+        for col,label in enumerate(dash_headers,1):
+            dashboard.cell(3,col,label)
+        dash=[]
+        dn=self.project.get("native_carbon") or {}
+        dl=self.project.get("land_use") or {}
+        d_ha=dn.get("area_aoi_ha") or self.project.get("area_ha")
+        d_native=dn.get("native_area_ha")
+        d_known=dn.get("known_total_tc")
+        def drow(section,label,tc=None,tco2=None,stock=None,status="INFORMATIVO",note="",
+                 quantified_area=None,uncertainty=None):
+            dash.append([section,label,tc,tco2,stock,
+                         (stock*44/12 if stock is not None else None),status,
+                         quantified_area,uncertainty,note])
+        drow("IMÓVEL","Área da AOI",status="GEOMETRIA",note=(format_ptbr(d_ha,2)+" ha | EPSG:6933") if d_ha is not None else "N/D")
+        drow("IMÓVEL","Bioma IBGE",status="CARTOGRÁFICO",note=self.biome.get())
+        drow("VEGETAÇÃO","Região fitoecológica IBGE",status="POTENCIAL IBGE",note=self.phys.get())
+        drow("VEGETAÇÃO","Cobertura nativa mapeada",status="MAPA, NÃO CAMPO",
+             note=(format_ptbr(d_native,2)+" ha") if d_native is not None else "N/D")
+        drow("VEGETAÇÃO","Outros usos",status="CARTOGRÁFICO",note=
+             format_ptbr(dn.get("excluded_other_uses_ha"),2)+" ha" if dn.get("excluded_other_uses_ha") is not None else "N/D")
+        drow("VEGETAÇÃO","Cobertura não determinada",status="N/D / MAPA",note=
+             format_ptbr(dn.get("unknown_cover_area_ha"),2)+" ha" if dn.get("unknown_cover_area_ha") is not None else "N/D")
+        from executive_carbon_report import litter_dashboard_summaries
+        litter_rows=litter_dashboard_summaries(dn)
+        from carbon_dashboard_table import carbon_dashboard_rows
+        uncertainty_by_pool={r["compartment"]:r for r in carbon_dashboard_rows(dn)}
+        for part in dn.get("components") or []:
+            if str(part.get("parametro") or "").casefold() in ("serapilheira","serrapilheira"):
+                continue
+            stock=part.get("known_total_tc")
+            pool=uncertainty_by_pool.get(part.get("parametro"),{})
+            uncertainty_value=pool.get("uncertainty_tc_ha")
+            uncertainty_kind=str(pool.get("uncertainty_kind") or "")
+            if uncertainty_value is not None:
+                uncertainty_label="DP espacial descritivo: " if "descritivo" in uncertainty_kind.casefold() else "± "
+                uncertainty_text=(uncertainty_label+format_ptbr(uncertainty_value,2)+" tC/ha | "+
+                    ("" if uncertainty_label.endswith(": ") else "± ")+format_ptbr(uncertainty_value*44/12,2)+
+                    " tCO₂e/ha | "+format_ptbr(pool.get("uncertainty_percent"),2)+"%; "+uncertainty_kind)
+            elif pool.get("sensitivity_tc_ha") is not None:
+                sensitivity=pool["sensitivity_tc_ha"]
+                uncertainty_text=("Incerteza total N/D; sensibilidade parcial ±"+format_ptbr(sensitivity,2)+
+                    " tC/ha | ±"+format_ptbr(sensitivity*44/12,2)+" tCO₂e/ha | "+
+                    format_ptbr(pool.get("sensitivity_percent"),2)+"%; "+str(pool.get("sensitivity_kind")))
+            else:uncertainty_text=uncertainty_kind or "N/D"
+            drow("CARBONO",part.get("parametro") or "Compartimento",
+                 part.get("tc_on_quantified_area"),
+                 (part.get("tc_on_quantified_area")*44/12
+                    if part.get("tc_on_quantified_area") is not None else None),
+                 stock,"PARCIAL" if part.get("missing_native_area_ha") else
+                 ("QUANTIFICADO" if stock is not None else "N/D"),
+                 "Estoque e densidade referem-se apenas aos pixels/interseções quantificados; não somar incertezas sem evidência independente.",
+                 part.get("quantified_area_ha"),uncertainty_text)
+        drow("CARBONO","TOTAL CONHECIDO",
+             d_known/d_native if d_known is not None and d_native and dn.get("complete") else None,
+             d_known/d_native*44/12 if d_known is not None and d_native and dn.get("complete") else None,
+             d_known,"PARCIAL" if not dn.get("complete") else "CONSOLIDADO",
+             "Somente estoques elegíveis; densidade sobre área nativa total apenas se cobertura completa; não extrapolado.",
+             d_native if dn.get("complete") else None,
+             "Incerteza conjunta: "+str(dn.get("uncertainty_note") or "N/D")+
+             (" Áreas quantificadas diferem entre compartimentos." if not dn.get("complete") else ""))
+        if litter_rows:
+            for litter in litter_rows:
+                label="Serapilheira — "+str(litter["physiognomy"])
+                drow("CARBONO",label,litter.get("tc_ha"),litter.get("tco2e_ha"),
+                     litter.get("stock_tc"),litter.get("status"),litter.get("note"))
+        else:
+            diagnostic=next((c for st in dn.get("strata",[]) for c in st.get("components",[])
+                             if c.get("parametro")=="Serapilheira"),{})
+            audit=dn.get("litter_gravimetric_audit") or {}
+            reason=(diagnostic.get("obs") or diagnostic.get("uncertainty_kind") or
+                    audit.get("reason") or audit.get("status") or
+                    "Nenhuma referência de estoque compatível foi aceita; sem substituir por zero.")
+            drow("CARBONO","Serapilheira",status="N/D — MOTIVO REGISTRADO",note=str(reason))
+        dp=self.project.get("soil_pedology") or {}
+        soil_units=dp.get("soil_mapping_units") or []
+        if soil_units:
+            for unit in soil_units:
+                drow("PEDOLOGIA",unit.get("mapping_unit") or "Unidade de solo",
+                     status="MAPA REGIONAL",note=format_ptbr(unit.get("area_ha"),2)+
+                     " ha; associação: "+", ".join(unit.get("components") or []))
+        else:
+            drow("PEDOLOGIA","Classificação de solos",status="N/D",
+                 note=dp.get("reason") or "Sem interseção oficial disponível")
+        df=self.project.get("soil_fertility") or {}
+        fertile=[(unit,x) for unit,recs in (df.get("units") or {}).items()
+                 for x in recs if x.get("mean") is not None]
+        if fertile:
+            for zone,measurement in fertile:
+                drow("FERTILIDADE",str(measurement.get("label") or "")+" ["+
+                     str(measurement.get("depth_cm") or "?")+" cm]",status="MAPA PREDITIVO",
+                     note=str(zone)+": "+format_ptbr(measurement["mean"],2)+" "+
+                     str(measurement.get("unit") or "")+"; cobertura "+
+                     format_ptbr(measurement.get("coverage_pct"),2)+"%")
+        else:
+            drow("FERTILIDADE","CTC, pH, CE e textura",status="N/D",
+                 note=df.get("reason") or "Sem dados numéricos oficiais processados")
+        for item in (dl.get("classes") or []):
+            drow("USO DO SOLO",item.get("class_name") or "Classe",status="MAPEADO",
+                 note=format_ptbr(item.get("area_ha"),2)+" ha; "+str(item.get("source") or ""))
+        # Source-grounded minimum/most-probable/maximum: the central stock is
+        # displayed at the midpoint. Unknown uncertainties remain N/D; their
+        # omission must not be misrepresented as a property-wide interval.
+        from carbon_scenario_envelopes import scenario_envelope
+        envelope=scenario_envelope(dn)
+        dash.extend([
+            ["CENÁRIOS","ESTOQUE MÍNIMO — fontes quantificadas",None,
+             envelope["minimum_known_tco2e_ha"],envelope["minimum_known_tc"],
+             envelope["minimum_known_tco2e"],"ENVELOPE / N/D",None,None,
+             "Limites somente quando todas as fontes quantificadas fornecem faixa defensável."],
+            ["CENÁRIOS","ESTOQUE MAIS PROVÁVEL — soma conhecida",None,
+             envelope["central_known_tco2e_ha"],envelope["known_total_tc"],
+             envelope["central_known_tco2e"],"PARCIAL" if not dn.get("complete") else "ESTIMATIVA CENTRAL",None,
+             "N/D — incerteza conjunta não demonstrada", "Soma conhecida. Não pressupõe estoque nulo nos compartimentos N/D."],
+            ["CENÁRIOS","ESTOQUE MÁXIMO — fontes quantificadas",None,
+             envelope["maximum_known_tco2e_ha"],envelope["maximum_known_tc"],
+             envelope["maximum_known_tco2e"],"ENVELOPE / N/D",None,None,
+             "Não é IC95% conjunto; desvios da fonte espelhados em torno da estimativa central."],
+        ])
+        scenario=wb.create_sheet("Cenários e Incertezas")
+        setup(scenario,"Enform Verde — Cenários por estrato e compartimento")
+        for j,h in enumerate(["Fitofisionomia","Compartimento","Área (ha)",
+                              "Mínimo (tCO₂e)","Mais provável (tCO₂e)",
+                              "Máximo (tCO₂e)","Status","Tipo de incerteza"],1):
+            scenario.cell(3,j,h).value=h
+        scenario_rows=[
+            [part["physiognomy"],part["compartment"],part["area_ha"],
+             part["low_tc"]*44/12 if part["low_tc"] is not None else None,
+             part["central_tc"]*44/12,
+             part["high_tc"]*44/12 if part["high_tc"] is not None else None,
+             part["status"],str(part.get("uncertainty_kind") or "N/D")]
+            for part in envelope["rows"]]
+        if not scenario_rows:
+            scenario_rows=[["N/D","Sem estoque quantificado",None,None,None,None,
+                            "N/D","Não inventar limites"]]
+        put(scenario,scenario_rows)
+        scenario["A2"]="Cenários aritméticos simétricos de limites de fonte; não equivalem a intervalo estatístico conjunto de confiança."
+        scenario.merge_cells("A2:H2")
+        scenario["A2"].alignment=Alignment(wrap_text=True)
+        scenario.auto_filter.ref=f"A3:H{3+len(scenario_rows)}"
+        # Display the three carbon-stock scenarios at the TOP of the
+        # executive sheet, immediately after AOI area; they must not be hidden
+        # below potentially dozens of fertility and land-cover rows.
+        dash=dash[:1]+dash[-3:]+dash[1:-3]
+        put(dashboard,dash)
+        dashboard.auto_filter.ref=f"A3:H{3+len(dash)}"
+        dashboard.freeze_panes="C8"
+        dashboard.sheet_view.zoomScale=85
+        for scenario_row in (5,6,7):
+            for cell in dashboard[scenario_row]:
+                cell.font=Font(bold=True,color=green)
+
+        # Brazilian number formatting and readable dimensions on ALL worksheets.
+        # Wrapped long text is sized by its displayed line count, not clipped
+        # into a fixed-height row. Excel column letters may extend beyond H.
+        from openpyxl.utils import get_column_letter
+        import math as _math
+        for sheet in wb.worksheets:
+            sheet.sheet_view.showGridLines=False
+            col_widths={}
+            for record in sheet.iter_rows():
+                for cell in record:
+                    if cell.value is None:continue
+                    if isinstance(cell.value,(int,float)) and not isinstance(cell.value,bool):
+                        cell.number_format='#,##0.00'
+                        needed=max(14,len(f"{cell.value:,.2f}")+3)
+                    else:
+                        content=str(cell.value)
+                        needed=min(104,max(13,min(62,len(content)+3)))
+                    col_widths[cell.column]=max(col_widths.get(cell.column,13),needed)
+            for col,width in col_widths.items():
+                letter=get_column_letter(col)
+                if col>8 and sheet.title in ("Fertilidade do Solo","Modelo Para Campo"):
+                    width=max(width,24)
+                sheet.column_dimensions[letter].width=min(106,max(14,width+2))
+            for record in sheet.iter_rows():
+                if record[0].row<=3:continue
+                max_lines=1
+                for cell in record:
+                    if cell.value is None:continue
+                    width=sheet.column_dimensions[get_column_letter(cell.column)].width or 18
+                    body=str(cell.value)
+                    if isinstance(cell.value,(int,float)) and not isinstance(cell.value,bool):
+                        body=f"{cell.value:,.2f}"
+                    lines=sum(max(1,_math.ceil(len(piece)/max(8,int(width)-4)))
+                              for piece in body.split("\n"))
+                    max_lines=max(max_lines,lines)
+                    cell.alignment=Alignment(vertical="top",wrap_text=True)
+                sheet.row_dimensions[record[0].row].height=min(405,max(30,16*max_lines+10))
+            sheet.sheet_properties.pageSetUpPr.fitToPage=True
+            sheet.page_setup.fitToWidth=1
+            sheet.sheet_view.zoomScale=85
         wb.save(p); self.status.set("Excel exportado com sucesso.")
 
     def save_report(self):
-        txt=self.res.get("1.0","end").strip()
+        txt=str(self.project.get("last_result") or self.res.get("1.0","end")).strip()
         if not txt:return
         p=filedialog.asksaveasfilename(defaultextension=".txt",filetypes=[("Relatório TXT","*.txt")])
         if p:Path(p).write_text(txt+"\n\nFONTES\n"+self.src.get("1.0","end"),encoding="utf-8"); self.status.set("Relatório salvo.")
 
+def module_check():
+    """Offline check, run on the COMPILED EXE: new modules are packaged and
+    their bundled data resolve under sys._MEIPASS. Writes a JSON summary."""
+    out={"version":APP_VERSION}
+    import numpy as np, rasterio, geopandas as gpd
+    from rasterio.transform import from_origin
+    from shapely.geometry import Point, box
+    import pronasolos_wcs, soil_intersection_report, crop_model_priority, crop_vigor
+    import crop_climate_favorability, crop_forecast_pipeline
+    from soil_pronasolos_zonal import mapped_soil_0_100_on_polygon
+    from crop_yield_scenario import load_microregion_yields, microregion_of
+    from inventory_microdata_library import (OFFICIAL_DB, official_inventory_database_status,
+        select_official_inventory_units)
+    if not OFFICIAL_DB.is_file():
+        raise RuntimeError("Banco IFN externo não encontrado em data/national_inventory_microdata_v1.sqlite ao lado do aplicativo")
+    ifn_status=official_inventory_database_status()
+    if (not ifn_status.get("operational_for_tree_selection")
+            or ifn_status.get("observation_rows")!=841387
+            or ifn_status.get("sampling_units")!=8951
+            or ifn_status.get("ibge_unique_unit_matches")!=8951):
+        raise RuntimeError("Banco IFN ou cruzamento IBGE legenda_1 não atende ao contrato de seleção: "+json.dumps(ifn_status,ensure_ascii=False))
+    import sqlite3 as _sqlite3
+    with _sqlite3.connect(f"file:{OFFICIAL_DB.resolve()}?mode=ro",uri=True) as _conn:
+        _unit=_conn.execute("""SELECT s.biome,s.ua_center_lon,s.ua_center_lat,
+                x.ibge_legenda_1,s.uf,s.ua_id FROM ifn_sampling_unit_summary s
+            JOIN ifn_sampling_unit_ibge_crosswalk x ON x.ua_id=s.ua_id AND x.uf=s.uf
+            WHERE x.match_status='MATCH_UNICO_PONTO_INTERIOR' AND s.biome IS NOT NULL
+              AND s.ua_center_lon IS NOT NULL AND s.ua_center_lat IS NOT NULL
+              AND x.ibge_legenda_1 IS NOT NULL ORDER BY s.uf,s.ua_id LIMIT 1""").fetchone()
+    if not _unit:
+        raise RuntimeError("Banco IFN sem unidade adequada para teste de seleção")
+    _selected=select_official_inventory_units(biome=_unit[0],physiognomy=_unit[3],
+        longitude=_unit[1],latitude=_unit[2],max_distance_km=1,max_units=5,include_trees=False)
+    if (_selected.get("status")!="SELECAO_IFN_POR_LOCALIZACAO_BIOMA_FITOFISIONOMIA"
+            or not _selected.get("units") or _selected["units"][0].get("ua_id")!=_unit[5]
+            or _selected["units"][0].get("uf")!=_unit[4]):
+        raise RuntimeError("Consulta empacotada não selecionou a UA IFN coincidente em localização, bioma e legenda_1")
+    out["ifn_microdata"]={"database":"external_sidecar_read_only","observation_rows":ifn_status["observation_rows"],
+        "sampling_units":ifn_status["sampling_units"],"source_workbooks":ifn_status["source_workbooks"],
+        "ibge_unique_unit_matches":ifn_status["ibge_unique_unit_matches"],
+        "selection_by_location_biome_and_legenda_1":"ok",
+        "selected_reference_use_only":True,"agb_per_ha_or_canopy_height_estimator":False}
+    tmp=Path(tempfile.mkdtemp(prefix="enform_modcheck_")); px=pronasolos_wcs.PIXEL_DEG; paths={}
+    for lid in range(2,7):
+        f=tmp/f"h{lid}.tif"
+        with rasterio.open(f,"w",driver="GTiff",height=10,width=10,count=1,dtype="float32",crs="EPSG:4326",
+                           transform=from_origin(-55.0,-3.0,px,px),nodata=-9999) as d:
+            d.write(np.full((10,10),float(lid),dtype="float32"),1)
+        paths[lid]=f
+    soil=mapped_soil_0_100_on_polygon(gpd.GeoDataFrame(geometry=[box(-55+px,-3-9*px,-55+9*px,-3-px)],crs=4326),paths)
+    if abs(soil["0–100 cm"]["tc_ha"]-20.0)>1e-6:raise RuntimeError("interseção exata EPSG:4326 incorreta")
+    out["soil_exact_intersection"]="ok"
+    # The compiled EXE must include the pre-field modeling engine and stamped SHA.
+    from modeled_field_validation import build_pre_field_manifest, field_measurement_rows
+    model_check=build_pre_field_manifest({"strata":[],"native_area_ha":0,
+        "known_total_tc":None},analysis_id="WINDOWS_MODULE_CHECK")
+    if model_check["scientifically_homologated"] or field_measurement_rows(model_check):
+        raise RuntimeError("Modelo pré-campo fabricou observações ou homologação")
+    out["pre_field_model_contract"]="ok"
+    # Verify the three executable research classifiers are importable both in
+    # source Python and inside the clean frozen Windows distribution.
+    from sar_algorithm_portfolio import ALGORITHMS, FEATURE_SCHEMA, _models
+    available=_models()
+    if set(available)!=set(ALGORITHMS) or len(FEATURE_SCHEMA)<6:
+        raise RuntimeError("SAR experimental algorithm portfolio unavailable")
+    out["sar_experimental_algorithms"]={
+        "available":sorted(available),"trained_and_locally_validated":False,
+        "scope":"trainable only with independent reference samples"}
+
+    try:
+        from enform_build_source import SOURCE_SHA
+    except ImportError:
+        SOURCE_SHA=None
+    if getattr(sys,"frozen",False) and not (
+            isinstance(SOURCE_SHA,str) and re.fullmatch("[0-9a-fA-F]{40}",SOURCE_SHA)):
+        raise RuntimeError("EXE sem identificação do SHA exato dos fontes compilados")
+    out["compiled_source_sha"]=SOURCE_SHA
+    m=microregion_of(gpd.GeoDataFrame(geometry=[Point(-55.7,-12.5).buffer(.01)],crs=4326))["dominant"]
+    y=load_microregion_yields("Soja",m["code"])
+    if m["code"]!="51006" or len(y)<10:raise RuntimeError("dados PAM/microrregiões não empacotados")
+    out.update(microregion=m["name"],pam_years=len(y))
+    from crop_panel_yield_model import load_artifact
+    art=load_artifact()
+    if not art or "Soja" not in art.get("crops",{}):raise RuntimeError("modelo de produtividade calibrado não empacotado")
+    out["yield_panel_model"]={c:{g:round(v["loyo"]["skill_vs_trend"],3) for g,v in d.items()} for c,d in art["crops"].items()}
+    # Enforce Python-source / frozen-EXE parity of the INSTALLED SAR model.
+    # Import alone is insufficient: resolve the bundled joblib and verify its SHA.
+    from sar_landcover_lemplus import load as load_sar_rf, agricultural_year
+    from datetime import date as _date
+    rf,rf_manifest=load_sar_rf()
+    if rf_manifest.get("model_id")!="ENFORM_SAR_BRASIL_RF_V2":
+        raise RuntimeError("Modelo SAR instalado nao corresponde ao manifesto esperado")
+    months,season=agricultural_year(_date(2026,11,10))
+    if season!="2025/2026" or len(months)!=12:
+        raise RuntimeError("Janela retrospectiva do modelo SAR divergente")
+    out["sar_model"]={"model_id":rf_manifest["model_id"],
+                      "sha256":rf_manifest["sha256"],"season":season,
+                      "months":len(months)}
+    from crop_water_balance_yield import sowing_dates, _kc
+    out["crop_water"]={"soy_sowing_dates":str(sowing_dates("Soja",-12.5,2025)),
+                       "soy_kc_day_50":round(float(_kc("Soja",50)),6)}
+    (Path(tempfile.gettempdir())/"enform_verde_module_check.json").write_text(json.dumps(out,ensure_ascii=False),encoding="utf-8")
+    return out
+
+def _valid_raster_pixel_count(array):
+    """Count unmasked pixels, including MaskedArray's scalar no-mask case."""
+    return int(np.ma.count(array))
+
+
+def network_check(attempts=3):
+    """Compiled-EXE LIVE check (V87.37): real CBERS-4A pixels and real Sentinel-1
+    RTC VV/VH pixels must be readable over a Brazilian AOI (Sinop) with TLS
+    verification ON. Writes enform_verde_network_check.json; raises on failure."""
+    import time
+    import geopandas as gpd
+    from shapely.geometry import box, mapping
+    out={"version":APP_VERSION,"tls":tls_setup.configure()}
+    aoi=gpd.GeoDataFrame(geometry=[box(-55.21,-11.89,-55.17,-11.855)],crs=4326)  # Sinop-MT
+    def retry(fn):
+        last=None
+        for k in range(attempts):
+            try:return fn()
+            except Exception as exc:
+                last=exc;time.sleep(3*(k+1))
+        raise last
+    try:
+        p=retry(lambda:cbers4a_wfi_preview(aoi,out_w=320,out_h=200))
+        out["cbers4a"]={"status":"OK","provider":p.get("provider"),"date_range":p.get("date_range") or p.get("datetime")}
+    except Exception as exc:
+        out["cbers4a"]={"status":"ERRO","reason":type(exc).__name__+": "+str(exc)[:300]}
+    # A real Sentinel-2 image is sufficient if CBERS-4A is inaccessible.
+    out["optical"]={"status":"OK","provider":"CBERS-4A/WFI"} if out["cbers4a"]["status"]=="OK" else {"status":"ERRO"}
+    if out["optical"]["status"]!="OK":
+        for label,fn in (("Sentinel-2 Earth Search",lambda:sentinel2_earthsearch_preview(aoi,out_w=320,out_h=200)),
+                         ("Sentinel-2 MPC",lambda:sentinel2_preview(aoi))):
+            try:
+                optical=retry(fn)
+                out["optical"]={"status":"OK","provider":label,
+                                "acquisition_utc":optical.get("datetime")}
+                break
+            except Exception as exc:
+                out["optical"].setdefault("failed_providers",[]).append(
+                    label+": "+type(exc).__name__+": "+str(exc)[:180])
+    try:
+        from datetime import timedelta
+        from sentinel1_sources import search_sentinel1_sources
+        from sentinel1_mpc import get_runtime_sas_token, sign_asset_href
+        from recent_sar_landcover import _open_signed_cog_via_https
+        import rasterio
+        from rasterio.windows import from_bounds
+        from rasterio.warp import transform_geom
+        from shapely.geometry import shape
+        now=datetime.now(timezone.utc)
+        found=retry(lambda:search_sentinel1_sources(mapping(aoi.geometry.iloc[0]),start_utc=now-timedelta(days=30),end_utc=now))
+        scenes=[s for s in found.get("scenes",[]) if {"vv","vh"}<=set(s.get("assets") or {})]
+        if not scenes:raise RuntimeError("catálogos sem cena VV/VH em 30 dias")
+        s=scenes[0]
+        def read():
+            vals={};https_local={}
+            for pol in ("vv","vh"):
+                href=s["assets"][pol]["href"]
+                if s.get("provider","MPC")=="MPC":
+                    href=sign_asset_href(href)
+                with rasterio.Env(**tls_setup.gdal_env()):
+                    with rasterio.open(href) as src:
+                        g=shape(transform_geom("EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
+                        w=from_bounds(*g.bounds,transform=src.transform).round_offsets().round_lengths()
+                        a=src.read(1,window=w,masked=True)
+                        vals[pol]=_valid_raster_pixel_count(a)
+                if s.get("provider","MPC")=="MPC":
+                    # Exercise the independent Requests/TLS/local-COG path in
+                    # the compiled Windows executable; GDAL-only success is
+                    # not evidence that the recovery route works.
+                    with _open_signed_cog_via_https(
+                            s["assets"][pol]["href"],rasterio=rasterio,
+                            token_fn=get_runtime_sas_token,item_id=s.get("id"),
+                            asset_key=pol,geometry=mapping(aoi.geometry.iloc[0]),
+                            collection=s.get("collection","sentinel-1-rtc")) as src:
+                        geom=shape(transform_geom(
+                            "EPSG:4326",src.crs,mapping(aoi.geometry.iloc[0])))
+                        w=from_bounds(*geom.bounds,transform=src.transform)
+                        a=src.read(1,window=w,masked=True)
+                        https_local[pol]=_valid_raster_pixel_count(a)
+            return {"gdal":vals,"https_local":https_local}
+        px=retry(read)
+        if min(px["gdal"].values())<100:raise RuntimeError("menos de 100 pixels SAR válidos via GDAL: "+str(px["gdal"]))
+        if s.get("provider","MPC")=="MPC" and min(px["https_local"].values())<100:
+            raise RuntimeError("menos de 100 pixels SAR válidos via HTTPS local: "+str(px["https_local"]))
+        out["sentinel1"]={"status":"OK","scene_id":s.get("id"),"acquisition_utc":s.get("acquisition_utc"),
+                          "provider":s.get("provider","MPC"),"valid_pixels":px["gdal"],
+                          "https_local_valid_pixels":px["https_local"]}
+    except Exception as exc:
+        out["sentinel1"]={"status":"ERRO","reason":type(exc).__name__+": "+str(exc)[:300]}
+    (Path(tempfile.gettempdir())/"enform_verde_network_check.json").write_text(json.dumps(out,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
+    bad=[k for k in ("optical","sentinel1") if out[k]["status"]!="OK"]
+    if bad:raise RuntimeError("leitura real de pixels falhou: "+", ".join(bad))
+    return out
+
+def visual_check():
+    """Compiled-EXE check: the approved shell (header, action bar, navigation,
+    tabs, footer, styles) matches the packaged visual baseline."""
+    import ui_visual_standard as uvs
+    app=App()
+    try:
+        app.update(); shell=uvs._normalise({"static":{},"shell":uvs.shell_snapshot(app)})["shell"]
+    finally:
+        app.destroy()
+    baseline=json.loads(uvs.packaged_baseline().read_text(encoding="utf-8"))["shell"]
+    d=uvs.diff(baseline,shell)
+    (Path(tempfile.gettempdir())/"enform_verde_visual_check.txt").write_text("\n".join(d) or "PADRAO_VISUAL_OK",encoding="utf-8")
+    if d:raise RuntimeError("padrão visual alterado: "+"; ".join(d[:5]))
+
 if __name__=="__main__":
-    if "--acceptance-test" in sys.argv:
+    if "--network-check" in sys.argv:
+        try:network_check()
+        except Exception:
+            (Path(tempfile.gettempdir())/"enform_verde_network_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
+            sys.exit(1)
+    elif "--visual-check" in sys.argv:
+        try:visual_check()
+        except Exception:
+            (Path(tempfile.gettempdir())/"enform_verde_visual_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
+            sys.exit(1)
+    elif "--module-check" in sys.argv:
+        try:module_check()
+        except Exception:
+            (Path(tempfile.gettempdir())/"enform_verde_module_check_error.txt").write_text(traceback.format_exc(),encoding="utf-8")
+            sys.exit(1)
+    elif "--acceptance-test" in sys.argv:
         try:acceptance_test(sys.argv[sys.argv.index("--acceptance-test")+1])
         except Exception:
             (Path(tempfile.gettempdir())/"enform_verde_acceptance_error.txt").write_text(traceback.format_exc(),encoding="utf-8")

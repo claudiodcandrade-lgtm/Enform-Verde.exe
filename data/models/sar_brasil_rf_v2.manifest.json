@@ -1,0 +1,389 @@
+{
+ "model_id": "ENFORM_SAR_BRASIL_RF_V2",
+ "runtime_dependencies": {
+  "scikit-learn": "1.8.0"
+ },
+ "file": "sar_brasil_rf_v2.joblib",
+ "sha256": "f91ace8b347b9a3305db55d1cebafa08fc472b6bc8824bd5c55ade2d5c6f66a1",
+ "algorithm": "RandomForest (scikit-learn): cobertura 400 árvores (semente 20261109); cultura 300 árvores (semente 20261108); class_weight=balanced",
+ "features": "36 atributos: para cada mês do ano agrícola (out→set) VV dB, VH dB e VH−VV dB; média do γ⁰ RTC linear do mês em grade de 80 m (pontos: média 3×3)",
+ "sensor": "Sentinel-1 IW GRD RTC (Microsoft Planetary Computer)",
+ "training_labels": [
+  {
+   "dataset": "LEM+ (INPE et al.), talhões de campo out/2019–set/2020, oeste da BA",
+   "license": "CC BY 4.0",
+   "doi": "10.17632/vz6d7tw87f.1",
+   "sha256_zip": "8f86929f4d1f9e82f621ea64159566e0c5d6760edf4243fcfbc5cf4843b05852"
+  },
+  {
+   "dataset": "INPE e-sensing sitsdata Rondonia-Class-2022 (amostras de validação interpretadas por especialistas, 2022)",
+   "license": "GPL-2 (pacote sitsdata)",
+   "url": "https://github.com/e-sensing/sitsdata"
+  },
+  {
+   "dataset": "INPE e-sensing sits samples_modis_ndvi (Mato Grosso, levantamentos de campo e especialistas, 2014–2016)",
+   "license": "GPL-2 (pacote sits)",
+   "url": "https://github.com/e-sensing/sits"
+  }
+ ],
+ "mapbiomas_used": false,
+ "validation": {
+  "landcover": {
+   "task": "cobertura",
+   "labels": [
+    "Corte raso recente",
+    "Cultivo agrícola",
+    "Floresta nativa",
+    "Pastagem",
+    "Silvicultura",
+    "Vegetação nativa (Cerrado)",
+    "Água",
+    "Área úmida"
+   ],
+   "confusion_matrix": [
+    [
+     347,
+     21,
+     31,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     3,
+     1473,
+     3,
+     7,
+     0,
+     2,
+     0,
+     0
+    ],
+    [
+     15,
+     2,
+     510,
+     0,
+     0,
+     1,
+     1,
+     0
+    ],
+    [
+     15,
+     26,
+     0,
+     69,
+     0,
+     4,
+     0,
+     2
+    ],
+    [
+     10,
+     7,
+     0,
+     2,
+     2,
+     5,
+     0,
+     0
+    ],
+    [
+     5,
+     6,
+     0,
+     5,
+     0,
+     119,
+     0,
+     0
+    ],
+    [
+     4,
+     0,
+     0,
+     2,
+     0,
+     5,
+     57,
+     2
+    ],
+    [
+     26,
+     2,
+     6,
+     0,
+     0,
+     0,
+     6,
+     69
+    ]
+   ],
+   "overall_accuracy": 0.9213091922005571,
+   "overall_accuracy_wilson95": [
+    0.9108895437816833,
+    0.9306032974100482
+   ],
+   "per_class": {
+    "Corte raso recente": {
+     "n_reference": 399,
+     "n_predicted": 425,
+     "precision": 0.8164705882352942,
+     "precision_wilson95": [
+      0.7768889623509653,
+      0.8503824790337947
+     ],
+     "recall": 0.8696741854636592,
+     "recall_wilson95": [
+      0.8330848852590157,
+      0.8992131281172723
+     ]
+    },
+    "Cultivo agrícola": {
+     "n_reference": 1488,
+     "n_predicted": 1537,
+     "precision": 0.9583604424202993,
+     "precision_wilson95": [
+      0.9471780655635599,
+      0.9672573501854419
+     ],
+     "recall": 0.9899193548387096,
+     "recall_wilson95": [
+      0.983434105024408,
+      0.993881541607744
+     ]
+    },
+    "Floresta nativa": {
+     "n_reference": 529,
+     "n_predicted": 550,
+     "precision": 0.9272727272727272,
+     "precision_wilson95": [
+      0.9024794795728774,
+      0.9461388253853331
+     ],
+     "recall": 0.9640831758034026,
+     "recall_wilson95": [
+      0.9445871271701455,
+      0.9768877165604845
+     ]
+    },
+    "Pastagem": {
+     "n_reference": 116,
+     "n_predicted": 85,
+     "precision": 0.8117647058823529,
+     "precision_wilson95": [
+      0.7158897563059702,
+      0.8806785655511508
+     ],
+     "recall": 0.5948275862068966,
+     "recall_wilson95": [
+      0.5038412276075694,
+      0.6797346418493957
+     ]
+    },
+    "Silvicultura": {
+     "n_reference": 26,
+     "n_predicted": 2,
+     "precision": 1.0,
+     "precision_wilson95": [
+      0.34238022750665303,
+      1
+     ],
+     "recall": 0.07692307692307693,
+     "recall_wilson95": [
+      0.0213550884722762,
+      0.2414155377162906
+     ]
+    },
+    "Vegetação nativa (Cerrado)": {
+     "n_reference": 135,
+     "n_predicted": 136,
+     "precision": 0.875,
+     "precision_wilson95": [
+      0.8089254333305298,
+      0.9204719918692834
+     ],
+     "recall": 0.8814814814814815,
+     "recall_wilson95": [
+      0.8161368263401508,
+      0.9257165139724043
+     ]
+    },
+    "Água": {
+     "n_reference": 70,
+     "n_predicted": 64,
+     "precision": 0.890625,
+     "precision_wilson95": [
+      0.7910135867310387,
+      0.945998866555832
+     ],
+     "recall": 0.8142857142857143,
+     "recall_wilson95": [
+      0.7077442179325669,
+      0.8881269999809797
+     ]
+    },
+    "Área úmida": {
+     "n_reference": 109,
+     "n_predicted": 73,
+     "precision": 0.9452054794520548,
+     "precision_wilson95": [
+      0.8674100245784024,
+      0.9784875025843027
+     ],
+     "recall": 0.6330275229357798,
+     "recall_wilson95": [
+      0.5394549671888808,
+      0.7175427737396657
+     ]
+    }
+   },
+   "by_region": {
+    "Amazônia-RO (2022)": {
+     "n": 1107,
+     "accuracy": 0.8879855465221319,
+     "accuracy_wilson95": [
+      0.8680488619992712,
+      0.9052388049122093
+     ]
+    },
+    "Cerrado-BA (LEM+)": {
+     "n": 1694,
+     "accuracy": 0.9451003541912633,
+     "accuracy_wilson95": [
+      0.9332117305745935,
+      0.9549748501957003
+     ]
+    },
+    "Mato Grosso (2014-16)": {
+     "n": 71,
+     "accuracy": 0.8732394366197183,
+     "accuracy_wilson95": [
+      0.7763089172134625,
+      0.9318547241043516
+     ]
+    }
+   },
+   "n_samples": 2872,
+   "n_spatial_blocks": 708,
+   "validation": "GroupKFold(5) por blocos espaciais de 0,1° (fora da amostra espacial)"
+  },
+  "crop": {
+   "task": "cultura",
+   "labels": [
+    "Algodão",
+    "Café",
+    "Milho",
+    "Soja"
+   ],
+   "confusion_matrix": [
+    [
+     131,
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     15,
+     1,
+     4
+    ],
+    [
+     0,
+     0,
+     117,
+     51
+    ],
+    [
+     2,
+     0,
+     3,
+     1187
+    ]
+   ],
+   "overall_accuracy": 0.9583608724388631,
+   "overall_accuracy_wilson95": [
+    0.9470803122288318,
+    0.9673197998819996
+   ],
+   "per_class": {
+    "Algodão": {
+     "n_reference": 133,
+     "n_predicted": 133,
+     "precision": 0.9849624060150376,
+     "precision_wilson95": [
+      0.9468303454594498,
+      0.9958664155348265
+     ],
+     "recall": 0.9849624060150376,
+     "recall_wilson95": [
+      0.9468303454594498,
+      0.9958664155348265
+     ]
+    },
+    "Café": {
+     "n_reference": 20,
+     "n_predicted": 15,
+     "precision": 1.0,
+     "precision_wilson95": [
+      0.7961166989641515,
+      1
+     ],
+     "recall": 0.75,
+     "recall_wilson95": [
+      0.531299122381256,
+      0.8881382985923343
+     ]
+    },
+    "Milho": {
+     "n_reference": 168,
+     "n_predicted": 121,
+     "precision": 0.9669421487603306,
+     "precision_wilson95": [
+      0.9180772072778853,
+      0.9870708186058748
+     ],
+     "recall": 0.6964285714285714,
+     "recall_wilson95": [
+      0.6231505236977006,
+      0.760924428021994
+     ]
+    },
+    "Soja": {
+     "n_reference": 1192,
+     "n_predicted": 1244,
+     "precision": 0.9541800643086816,
+     "precision_wilson95": [
+      0.9410965182572326,
+      0.9644672390713118
+     ],
+     "recall": 0.9958053691275168,
+     "recall_wilson95": [
+      0.9902183257904329,
+      0.9982070137739405
+     ]
+    }
+   },
+   "n_fields": 1513,
+   "n_spatial_blocks": 79,
+   "validation": "GroupKFold(5) por blocos espaciais de 0,1° (fora da amostra espacial)"
+  }
+ },
+ "domain": {
+  "envelope_lonlat": [
+   -66.7,
+   -17.5,
+   -45.4,
+   -7.7
+  ],
+  "phytoregions": [
+   "savana/Cerrado",
+   "floresta (Amazônia)"
+  ],
+  "transfer_note": "Fora do envelope MT/RO/oeste-BA e das fitorregiões savana/floresta o erro de transferência NÃO é quantificado; resultado experimental."
+ }
+}

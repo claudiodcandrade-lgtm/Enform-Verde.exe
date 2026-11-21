@@ -1,0 +1,41 @@
+name: Sync V88.170 Word specification
+on:
+  push:
+    branches: [patches-3.26.6]
+    paths:
+      - docs/spec_updates/V88.170_IFN_BATCHED_BIODIVERSITY_QUERY.md
+permissions:
+  contents: write
+jobs:
+  sync-word:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: patches-3.26.6
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply V88.170 checkpoint to Word specification
+        run: |
+          python tools/update_spec_docx.py \
+            --docx docs/ESPECIFICACAO_TECNICA_COMPLETA.docx \
+            --entry docs/spec_updates/V88.170_IFN_BATCHED_BIODIVERSITY_QUERY.md \
+            --baseline e64582777a407dbdd2bf723aa2d026bb47f513bc \
+            --head-sha "$GITHUB_SHA" \
+            --code-sha "$GITHUB_SHA" \
+            --date 2026-11-19 \
+            --footer-label V88.170 \
+            --footer-date 19/11/2026 \
+            --cover-state "FH/DASHBOARD, S2 E EXE LIMPO APROVADOS" \
+            --cover-version "V88.170 | 3.26.80-PRECAMPO-EXPERIMENTAL"
+          cp docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_170.docx
+          python -c "from zipfile import ZipFile; p='docs/ESPECIFICACAO_TECNICA_COMPLETA.docx'; z=ZipFile(p); assert z.testzip() is None"
+      - name: Commit synchronized Word file
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/ESPECIFICACAO_TECNICA_COMPLETA.docx docs/ESPECIFICACAO_TECNICA_COMPLETA_V88_170.docx
+          git commit -m "Sync V88.170 Word specification" || exit 0
+          git push origin HEAD:patches-3.26.6

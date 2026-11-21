@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+/data/external_raw/
+/data/national_inventory_microdata_v1.sqlite
+/data/national_inventory_microdata_v1.sqlite-shm
+/data/national_inventory_microdata_v1.sqlite-wal

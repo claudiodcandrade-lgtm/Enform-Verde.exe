@@ -16,7 +16,7 @@ interval for the target AOI.
 import math
 import statistics
 
-SUPPORTED_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica")
+SUPPORTED_BIOMES=("Amazônia","Cerrado","Caatinga","Mata Atlântica","Pantanal")
 
 def _norm(x):
     return str(x or "").casefold().replace("ã","a").replace("á","a").replace("â","a").replace("é","e").replace("ê","e").replace("í","i").replace("ó","o").replace("ô","o").replace("õ","o").replace("ú","u").replace("ç","c")
@@ -52,6 +52,49 @@ def _robust_pool(records, label):
         low=min(lows); high=max(highs)
         stat=f"mediana de {len(records)} referências e envelope das fontes"
     return {"center":center,"low":low,"high":high,"stat":stat,"label":label,"records":records}
+
+_NO_COVERAGE_MARKERS = (
+    "sem pixels", "no pixels", "sem cena", "sem cenas", "no scene", "no scenes",
+    "nenhuma cena", "nenhum produto", "sem produto", "no products", "no items",
+    "sem cobertura", "no coverage", "sem resultados", "empty result",
+)
+
+def inventory_fallback_gate(sar_processed, warnings=(), *, sources_exhausted=False,
+                            height_processed=False, coverage_absence_confirmed=False,
+                            scenes_found=False, quantitative_agb_unavailable=False):
+    """Permit a clearly labelled inventory mean after terminal AGB routes fail.
+
+    The owner-approved mean is a contingency after FH×inventory and CCI did not
+    yield an AGB value. It is not evidence of SAR absence and cannot hide a
+    technical failure.
+    """
+    warning_list=[str(w) for w in (warnings or ())]
+    if not sources_exhausted:
+        return {"eligible":False,"reason":"rotas SAR configuradas ainda não foram todas tentadas; ausência não confirmada.",
+                "unresolved_warnings":warning_list,"evidence":"ROTAS_PENDENTES"}
+    resolved_model_notes=("não há modelo agb aplicável", "sem modelo agb calibrado/validado",
+        "classificado como sar estratificador", "pixels sar auxiliares foram lidos, mas não há altura/agb quantitativa")
+    unresolved=[w for w in warning_list
+                if not any(marker in w.casefold() for marker in _NO_COVERAGE_MARKERS)
+                and not (quantitative_agb_unavailable and any(
+                    marker in w.casefold() for marker in resolved_model_notes))]
+    if unresolved:
+        return {"eligible":False,"reason":"erro técnico SAR não comprova ausência de cenas; corrigir/repetir a rota.",
+                "unresolved_warnings":unresolved,"evidence":"ERRO_TECNICO_NAO_E_AUSENCIA_DE_CENAS"}
+    if quantitative_agb_unavailable:
+        return {"eligible":True,
+            "reason":"Rotas prioritárias concluídas sem erro, mas sem AGB quantitativa; permitido cenário contingencial separado pela média de inventários compatíveis.",
+            "status":"ROTAS_TERMINAIS_SEM_MODELO_AGB; CENAS_SAR_PODEM_EXISTIR",
+            "unresolved_warnings":[],"evidence":"COMPLETE_ERROR_FREE_ROUTES_NO_QUANTITATIVE_AGB"}
+    if sar_processed or height_processed or scenes_found:
+        return {"eligible":False,"reason":"Cenas ou pixels SAR foram encontrados/processados; contingência ainda não autorizada.",
+                "unresolved_warnings":[],"evidence":"CENAS_OU_PIXELS_SAR_PRESENTES"}
+    if coverage_absence_confirmed is not True:
+        return {"eligible":False,"reason":"ausência de cenas não foi certificada por buscas completas em todas as rotas exigidas.",
+                "unresolved_warnings":[],"evidence":"CERTIFICADO_DE_AUSENCIA_DE_CENAS_AUSENTE"}
+    return {"eligible":True,"reason":"todas as rotas SAR exigidas concluíram sem erro e certificaram ausência de cenas.",
+            "status":"SAR_AUSENCIA_CENAS_CONFIRMADA",
+            "unresolved_warnings":[],"evidence":"BUSCAS_COMPLETAS_SEM_CENAS_E_SEM_ERROS"}
 
 def national_agb_fallback(biome, physiognomy, aoi=None):
     """Return a mandatory modelled AGB estimate for the four scoped Brazilian biomes.
@@ -150,6 +193,41 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
                   uncertainty_kind="média ± DP entre estudos; não é IC95% da AOI")]
             label="Mata Atlântica — síntese ampla"
 
+    elif "pantanal" in b:
+        # Local field evidence from the Southeast Pantanal (Barros et al., 2022).
+        # Only two classes with numeric means and reported dispersion are enabled;
+        # the paper's other classes are not assigned values from the abstract.
+        # Values are aboveground carbon (Mg C/ha), converted to dry biomass with
+        # the app's explicit operational carbon fraction. The source does not
+        # identify whether ± is SD or SE, so it is carried as a descriptive
+        # envelope and never presented as an AOI confidence interval.
+        if any(k in p for k in ("floresta riparia","floresta ripária","mata ciliar","floresta ciliar")):
+            carbon_mean, carbon_spread = 184.1, 42.0
+            class_label = "floresta ripária"
+        elif any(k in p for k in ("savana gramineo-lenhosa","savana gramíneo-lenhosa","gramineo-lenhosa","gramíneo-lenhosa")):
+            carbon_mean, carbon_spread = 26.6, 19.1
+            class_label = "savana gramíneo-lenhosa"
+        else:
+            return None
+        fraction=0.47
+        mean=carbon_mean/fraction
+        spread=carbon_spread/fraction
+        rec=[_record(mean,max(0.0,mean-spread),mean+spread,
+             "Barros et al. (2022), Aboveground carbon stock in phytophysiognomies of the Southeast Pantanal, Brazil",
+             "https://doi.org/10.1007/s40415-022-00808-1",
+             f"estoque de C publicado para {class_label}: {carbon_mean} ± {carbon_spread} Mg C/ha; convertido em biomassa seca com fração C operacional {fraction}; dispersão ± sem tipo especificado no resumo",
+             uncertainty_kind="dispersão publicada ± (tipo não informado no resumo), convertida por fração C operacional; envelope descritivo, não IC95% do alvo")]
+        label=f"Pantanal sudeste — {class_label}; transferência espacial restrita ao domínio do estudo"
+        if aoi is not None:
+            # The study's sample sites include Fazenda Rio Negro (19°33'11"S,
+            # 56°13'44"W) and Dona Aracy (19°55'15"S, 56°22'16"W). Keep the
+            # fallback within 75 km of either site; never transfer it nationwide.
+            sites=[(-56.2289,-19.5531),(-56.3711,-19.9208)]
+            distances=[_aoi_distance_km(aoi,lon,lat) for lon,lat in sites]
+            distances=[d for d in distances if d is not None]
+            if distances and min(distances)>75.0:
+                return None
+
     elif "amazonia" in b:
         if "floresta ombrofila aberta" in p or "floresta aberta" in p:
             rec=[_record(313.0,288.0,346.0,"Cummings et al. (2002), Forest Ecology and Management 163:293–307",
@@ -186,7 +264,7 @@ def national_agb_fallback(biome, physiognomy, aoi=None):
       "agb_mg_ha":pooled["center"],
       "agb_range_mg_ha":[pooled["low"],pooled["high"]],
       "uncertainty_mg_ha":max(pooled["center"]-pooled["low"],pooled["high"]-pooled["center"]),
-      "uncertainty_kind":"limite de incerteza operacional por "+pooled["stat"]+"; não é validação SAR nem IC95% universal da AOI",
+      "uncertainty_kind":"limite de incerteza operacional por "+pooled["stat"]+"; "+"; ".join(dict.fromkeys(r.get("uncertainty_kind","") for r in rec if r.get("uncertainty_kind")))+"; não é validação SAR nem IC95% universal da AOI",
       "data_origin":"MODELAGEM_LITERATURA_HIERARQUICA",
       "method":"fallback hierárquico obrigatório após esgotamento das rotas SAR/produtos espaciais; seleção por bioma + fitofisionomia e síntese robusta das referências brasileiras/regionais disponíveis",
       "source":"; ".join(dict.fromkeys(r["source"] for r in rec)),

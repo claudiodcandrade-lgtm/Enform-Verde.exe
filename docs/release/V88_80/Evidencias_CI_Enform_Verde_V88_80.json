@@ -1,0 +1,62 @@
+{
+  "version": "3.26.42-PRECAMPO-EXPERIMENTAL",
+  "checkpoint": "V88.80",
+  "commit": "98b0a6795e8af7e3b7f24ac075ed2886a47a8634",
+  "workflows": {
+    "windows": {
+      "run_id": 43733571725,
+      "status": "success"
+    },
+    "dashboard": {
+      "run_id": 43733571768,
+      "status": "success",
+      "tests": 1173
+    },
+    "sar_live": {
+      "run_id": 43733571694,
+      "status": "success"
+    },
+    "word_sync": {
+      "run_id": 43733567007,
+      "status": "success"
+    }
+  },
+  "artifact": {
+    "name": "Enform-Verde-Windows-v3.26.42-PRECAMPO-EXPERIMENTAL.zip",
+    "sha256": "56bcd4e367cde2d0378cea01164f00a840f563750532cae21cc37553197c264c",
+    "exe_sha256": "b5db289882b9143e51f0c06080f7a85979ddbaa01fb2245db8fe1d1dd434947c",
+    "zip_integrity": "passed"
+  },
+  "gui_smoke": {
+    "artifact": "optical-gui-sinop-live-2899",
+    "status": "PASS_CBERS",
+    "provider": "CBERS-4A/WFI L4-SR / INPE STAC",
+    "worker_terminal_state_observed": true,
+    "canvas_image_items": 1,
+    "dimensions": [
+      673,
+      562
+    ],
+    "scope": "public Sinop centroid vicinity; not private Fazenda Maria Eduarda KML"
+  },
+  "sar": {
+    "status": "BOTH_AOIS_END_TO_END_HANDOFF_PASSED",
+    "sinop": {
+      "area_ha": 1084.73,
+      "run_id": "8E8914DCCBA6"
+    },
+    "tapajos": {
+      "area_ha": 1290.69,
+      "run_id": "4A70B18FD942"
+    },
+    "current_semantic_classification": "N/D_SEM_MODELO_EXECUTAVEL_VALIDADO",
+    "season": "2025/2026 experimental",
+    "carbon_complete": false
+  },
+  "limits": [
+    "Private Fazenda Maria Eduarda KML not tested",
+    "Scientific gate not homologated",
+    "No total carbon confidence interval supported",
+    "CBERS 11/11 backend result is sample coverage, not exhaustive national guarantee"
+  ]
+}
