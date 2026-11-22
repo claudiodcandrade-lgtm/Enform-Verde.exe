@@ -1,0 +1,36 @@
+{
+  "report_type": "licensed_observational_cross_source_screening_only",
+  "source_workflow_run_id": 41335365122,
+  "source_artifact_id": 13094877154,
+  "source_artifact_zip_sha256": "750817ec8d0fd61eb29aec61828e79f4089a470b54e0090da2dc9554ed44effb",
+  "source_sha256": {
+    "ifn_serapilheira_mato_grosso_retificada_2025": "dc88e80c5f9d1f8be05eb25afdb277d8f76759f4c960ac0f95e4fb1773945aa1",
+    "ifn_serapilheira_mato_grosso_do_sul_retificada_2025": "02b08e2a5a8b42e6ebb487e6a33ab0f508cd78feb1e1808135919fde4ce0b403",
+    "ifn_painel_necromassa_t_ha_2026": "322e8a0b17a1f159343d3d44d58ab91a1bfc455f1018437dc1ddc130f8deb6cc"
+  },
+  "pantanal_litter_unique_physical_ua": 12,
+  "pantanal_litter_depth_measurements": 60,
+  "pantanal_litter_zero_depth_measurements": 44,
+  "pantanal_litter_land_codes_provisional": {
+    "14": 2,
+    "31": 1,
+    "45": 9
+  },
+  "necromass_source_rows_by_biome": {
+    "Amazônia": 1155,
+    "Caatinga": 753,
+    "Cerrado": 786,
+    "Mata Atlântica": 365,
+    "Pampa": 41
+  },
+  "pantanal_necromass_source_rows": 0,
+  "litter_necromass_same_physical_ua_any_biome": 0,
+  "litter_necromass_same_physical_ua_both_pantanal": 0,
+  "ifn_land_code_dictionary_version_verified": false,
+  "ibge_fitophysiognomy_verified": false,
+  "carbon_stock_tC_ha": null,
+  "confidence_interval_95": null,
+  "spatial_sar_pair_verified": false,
+  "scientific_validation": false,
+  "warning": "Licensed 2018 litter depth is not dry litter mass; 2026 SFB panel necromass table has no Pantanal rows and no shared physical UA with the 12 Pantanal litter UAs. No Pantanal stock, transfer error or IC95 may be inferred."
+}

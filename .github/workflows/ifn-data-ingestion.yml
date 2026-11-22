@@ -1,0 +1,93 @@
+name: IFN independent data acquisition (non-homologating)
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/agricultural-identification-native-carbon]
+    paths:
+      - 'tools/acquire_ifn_independent_data.py'
+      - 'validation/ifn_sources.json'
+      - '.github/workflows/ifn-data-ingestion.yml'
+      - 'tests/test_acquire_ifn_independent_data.py'
+      - 'tools/prepare_ifn_necromass_candidates.py'
+      - 'tests/test_prepare_ifn_necromass_candidates.py'
+      - 'tools/audit_ifn_pantanal_litter_necromass.py'
+      - 'tests/test_audit_ifn_pantanal_litter_necromass.py'
+      - 'tools/audit_ifn_pantanal_fallen_wood.py'
+      - 'tests/test_audit_ifn_pantanal_fallen_wood.py'
+      - 'tools/audit_ifn_panel_biome_coverage.py'
+      - 'tests/test_audit_ifn_panel_biome_coverage.py'
+permissions:
+  contents: read
+jobs:
+  acquire-ifn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify IFN acquisition and encoding regression tests
+        run: python -m unittest tests.test_acquire_ifn_independent_data -v
+      - name: Verify conservative necromass UA join regressions
+        run: python -m unittest tests.test_prepare_ifn_necromass_candidates -v
+      - name: Verify Pantanal litter-necromass cross-source regressions
+        run: python -m unittest tests.test_audit_ifn_pantanal_litter_necromass -v
+      - name: Verify Pantanal litter-fallen-wood cross-source regressions
+        run: python -m unittest tests.test_audit_ifn_pantanal_fallen_wood -v
+      - name: Verify IFN 2026 panel biome coverage and anti-pseudoreplication regressions
+        run: python -m unittest tests.test_audit_ifn_panel_biome_coverage -v
+      - name: Acquire official source bytes and record SHA256
+        id: acquire
+        run: |
+          python tools/acquire_ifn_independent_data.py --registry validation/ifn_sources.json --out ifn_raw --report ifn_download_audit.json
+      - name: Prepare non-homologating IFN necromass UA candidates
+        if: steps.acquire.outcome == 'success'
+        run: |
+          python -m tools.prepare_ifn_necromass_candidates \
+            --download-audit ifn_download_audit.json --raw-dir ifn_raw \
+            --audit ifn_necromass_join_audit.json \
+            --candidates ifn_necromass_candidates.json
+      - name: Audit Pantanal litter versus necromass without inferring carbon
+        if: steps.acquire.outcome == 'success'
+        run: |
+          python -m tools.audit_ifn_pantanal_litter_necromass \
+            --raw-dir ifn_raw --download-audit ifn_download_audit.json \
+            --report ifn_pantanal_litter_necromass_overlap.json
+      - name: Audit Pantanal litter versus fallen wood without inferring carbon
+        if: steps.acquire.outcome == 'success'
+        run: |
+          python -m tools.audit_ifn_pantanal_fallen_wood \
+            --raw-dir ifn_raw --download-audit ifn_download_audit.json \
+            --report ifn_pantanal_litter_fallen_wood_overlap.json
+      - name: Audit IFN 2026 panel coverage without inferring stocks
+        if: steps.acquire.outcome == 'success'
+        run: |
+          python -m tools.audit_ifn_panel_biome_coverage \
+            --raw-dir ifn_raw --download-audit ifn_download_audit.json \
+            --report ifn_panel_biome_coverage.json \
+            --candidate-csv ifn_panel_native_ua_pre_ibge_unvalidated.csv
+      - name: Publish unvalidated acquisition audit and raw source files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifn-raw-source-audit-${{ github.sha }}
+          path: |
+            ifn_download_audit.json
+            ifn_necromass_join_audit.json
+            ifn_necromass_candidates.json
+            ifn_pantanal_litter_necromass_overlap.json
+            ifn_pantanal_litter_fallen_wood_overlap.json
+            ifn_panel_biome_coverage.json
+            ifn_panel_native_ua_pre_ibge_unvalidated.csv
+            ifn_raw/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Report download status without claiming scientific validation
+        if: always()
+        run: |
+          echo "Raw IFN acquisition outcome: ${{ steps.acquire.outcome }}"
+          echo "No bioma/pool capability is validated by this workflow."

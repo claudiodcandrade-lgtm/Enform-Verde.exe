@@ -1,0 +1,7 @@
+# V88.123 — posicionamento preciso do mapa no smoke Tk (16/11/2026)
+
+- O workflow V88.122 registrou CBERS carregado, canvas viewable e 84,4% de pixels visíveis no recorte, mas o mapa ficou em y=−85 após `yview_moveto(1.0)`. O bbox `327,−85,1000,477` cruzou o limite superior da tela 1.024×768; falha correta de visibilidade, sem falha de aquisição.
+- O smoke calcula a fração de rolagem da página externa usando posição atual do mapa, posição da viewport e altura do scrollregion; depois dimensiona o canvas pelo menor limite entre a janela do aplicativo e a tela, reposicionando outra vez após mudar a altura. Critérios de qualidade e visibilidade total foram preservados.
+- Testes: 16 focados passaram; suíte integral 1.249 testes OK, 1 skip headless; checker de coleta 183 módulos; compilação dos arquivos alterados e `git diff --check` aprovados. `ui_visual_standard.py` não pôde ser repetido localmente por ausência de display; a verificação visual Windows continua obrigatória.
+- O build V88.122 não gerou EXE. A nova tentativa Windows, incluindo canvas, SAR live, compilação e verificações do EXE, ainda está pendente. A candidata 3.26.60 permanece experimental e sem homologação científica.
+- Não houve alteração dos modelos, compartimentos ou parâmetros científicos; não foi medido benchmark de duração. Handoff completo carbono→dashboard, KML integral Maria Eduarda e validação independente de campo permanecem pendentes.

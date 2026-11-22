@@ -1,0 +1,22 @@
+{
+  "source": "ISRIC WoSIS latest (WFS)",
+  "inputs_sha256": {
+    "profiles": "4d2db7783085587296b7fb5fdce91b2277d26dfe80632471d0047014f2110e1d",
+    "orgc": "7dcf1d474124967f1c38b8831e233bc5b81d881315760f01269343da1c2aeb7a",
+    "bdfiod": "b907914334d450299685d61f2c23df551621b65fa53b7f427f5daef70293a37e",
+    "cfvo": "5525c23f08a1688ff5d98450e13589d36edd081487f25f844e0bd7bda24e62fd"
+  },
+  "brazil_profiles": 8996,
+  "eligible_profiles": 0,
+  "rejections": {
+    "sem_cobertura_0_100_com_BD_medida": 34,
+    "erro_posicional_grande": 7,
+    "sem_densidade_medida_em_camada_com_carbono": 8955
+  },
+  "eligible_datasets": [],
+  "paired_profiles": 0,
+  "validation": {
+    "status": "insufficient",
+    "reason": "menos de 10 perfis elegíveis"
+  }
+}

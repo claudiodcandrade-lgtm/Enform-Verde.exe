@@ -1,0 +1,269 @@
+"""Spatially explicit crop sampling for large municipal AOIs.
+
+Uses the exact disjoint land-use polygons saved by run_land_use. Sampled
+Sentinel-1 fields are NOT a validated wall-to-wall vigor map. No whole-municipality
+raster pixels are treated as a field; native-cover polygons are excluded.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+
+def crop_geometry(land, crop, *, canonical_fn):
+    import geopandas as gpd
+    path = (land or {}).get("vector_path")
+    if not path or not Path(path).is_file():
+        return None
+    frame = gpd.read_file(path)
+    if frame.empty or not {"class_name", "source"}.issubset(frame.columns) or frame.crs is None:
+        return None
+    from priority_production_models import priority_target
+    def target_name(name):
+        text = str(name)
+        if text.casefold().startswith("lavoura de "):
+            return canonical_fn(text[len("Lavoura de "):])
+        return priority_target(text)
+    mask = frame["class_name"].map(target_name) == crop
+    # Experimental source is acceptable for pre-field scenarios, provided
+    # that the forecast records seasonal/staleness and transfer uncertainty.
+    mask &= frame["source"].astype(str).str.startswith(
+        ("SAR_VALIDADO","SAR_EXPERIMENTAL_MODELO"))
+    selected = frame.loc[mask, ["geometry"]].copy()
+    selected = selected[selected.geometry.notna() & ~selected.geometry.is_empty]
+    return selected if not selected.empty else None
+
+
+def current_sar_cultivated_candidate_geometry(land):
+    """Read only contemporaneous Sentinel-1 class-2 candidate polygons.
+
+    These geometries indicate a radar signature compatible with cultivation;
+    they do not identify a crop and must only support a conditional SAR
+    structural-vigor diagnostic. The caller still has to enforce scene age.
+    """
+    import geopandas as gpd
+    orbital = (land or {}).get("recent_sar_cover") or {}
+    if orbital.get("status") != "SAR_REAL_EXPERIMENTAL_CANDIDATES":
+        return None
+    path = orbital.get("vector_path")
+    if path and Path(path).is_file():
+        frame = gpd.read_file(path)
+        required = {"class_code", "source", "geometry"}
+        if frame.empty or not required.issubset(frame.columns) or frame.crs is None:
+            return None
+        mask = (frame["class_code"].astype(str) == "2") & (
+            frame["source"].astype(str) == "SAR_CURRENT_EXPERIMENTAL")
+        selected = frame.loc[mask, ["geometry"]].copy()
+        selected = selected[selected.geometry.notna() & ~selected.geometry.is_empty]
+        return selected if not selected.empty else None
+    # A deliberately bounded vector export may be omitted for very fragmented
+    # masks. Recover connected class-2 regions from the exact SAR raster.
+    raster_path = orbital.get("raster_path")
+    if not raster_path or not Path(raster_path).is_file():
+        return None
+    import rasterio
+    from rasterio.features import shapes
+    from shapely.geometry import shape
+    with rasterio.open(raster_path) as src:
+        codes = src.read(1, masked=True)
+        mask = (~codes.mask) & (codes.data == 2)
+        geoms = [shape(g) for g, value in shapes(codes.data, mask=mask, transform=src.transform)
+                 if int(value) == 2]
+        crs = src.crs
+    geoms = [geom for geom in geoms if geom is not None and not geom.is_empty]
+    if not geoms or crs is None:
+        return None
+    return gpd.GeoDataFrame(geometry=geoms, crs=crs)
+
+
+def current_candidate_vigor_blocks(candidates, *, max_blocks=18,
+                                   min_block_area_ha=2.0,
+                                   target_block_area_ha=16.0,
+                                   max_targets=6,
+                                   min_reference_blocks=6,
+                                   footprint_label="máscara SAR candidata"):
+    """Split a dissolved current SAR-candidate mask into disjoint target and
+    internal-reference blocks.
+
+    The blocks are spatial diagnostics, not independent fields or validation
+    observations. Returning N/D when the footprint cannot supply the existing
+    six-reference minimum prevents pixel fragments being counted as fields.
+    """
+    import geopandas as gpd
+    from shapely.ops import unary_union
+
+    if candidates is None or candidates.empty or candidates.crs is None:
+        return {"status": "N/D", "reason": "máscara de candidatos SAR vazia ou sem CRS",
+                "target_blocks": [], "reference_gdf": None}
+    shapes = [g for g in candidates.geometry if g is not None and not g.is_empty]
+    if not shapes:
+        return {"status": "N/D", "reason": "máscara de candidatos SAR sem geometrias válidas",
+                "target_blocks": [], "reference_gdf": None}
+    footprint = gpd.GeoDataFrame(geometry=[unary_union(shapes)], crs=candidates.crs)
+    # Coarse 16-ha windows can miss a fragmented but substantial crop mask.
+    # Retry smaller equal-area windows while retaining the same 90% purity and
+    # six-reference minimum. Never count overlapping blocks as references.
+    attempted_areas = sorted({float(target_block_area_ha),
+                              max(float(min_block_area_ha), float(target_block_area_ha) / 2),
+                              max(float(min_block_area_ha), float(target_block_area_ha) / 4),
+                              float(min_block_area_ha)}, reverse=True)
+    blocks = []
+    selected_block_area = None
+    for block_area in attempted_areas:
+        blocks = sample_crop_patches(footprint, max_patches=max_blocks,
+                                     min_area_ha=min_block_area_ha,
+                                     target_patch_ha=block_area,
+                                     min_purity=.90)
+        if len(blocks) >= min_reference_blocks + 1:
+            selected_block_area = block_area
+            break
+    if len(blocks) < min_reference_blocks + 1:
+        return {"status": "N/D", "reason": (
+                    f"{footprint_label} permite apenas {len(blocks)} blocos internos; "
+                    f"vigor relativo exige 1 alvo e ao menos {min_reference_blocks} blocos de referência"),
+                "target_blocks": [], "reference_gdf": None,
+                "blocks_available": len(blocks),
+                "attempted_block_areas_ha": attempted_areas}
+    n_targets = min(max_targets, len(blocks) - min_reference_blocks)
+    target_blocks = blocks[:n_targets]
+    reference_blocks = blocks[n_targets:]
+    reference_gdf = gpd.GeoDataFrame(
+        geometry=[block.geometry.iloc[0] for block in reference_blocks],
+        crs=reference_blocks[0].crs)
+    return {"status": "ok", "target_blocks": target_blocks,
+            "reference_gdf": reference_gdf,
+            "blocks_available": len(blocks),
+            "target_block_count": len(target_blocks),
+            "reference_block_count": len(reference_blocks),
+            "block_area_ha": selected_block_area}
+
+
+def sample_crop_patches(geometry, *, max_patches=6, min_area_ha=12.0,
+                        target_patch_ha=64.0, min_purity=.90):
+    """Deterministic representative interior patches, using equal-area metres.
+
+    A crop polygon is never replaced by its municipality bounding rectangle.
+    A patch has >=90% mapped crop; its *actual clipped geometry* is passed to S1.
+    Sampling is a diagnostic convenience, not representative survey design.
+    """
+    import geopandas as gpd
+    from shapely.geometry import box
+    from shapely.geometry import Point
+    from math import sqrt
+
+    if geometry is None or geometry.empty or geometry.crs is None:
+        return []
+    mapped = geometry.to_crs(6933)
+    shapes = [geom for geom in mapped.geometry if geom is not None and not geom.is_empty]
+    if not shapes:
+        return []
+    shapes.sort(key=lambda x: -x.area)
+    patches = []
+    side = sqrt(target_patch_ha * 10000.0)
+    for geom in shapes:
+        if len(patches) >= max_patches:
+            break
+        if geom.area < min_area_ha * 10000.0:
+            continue
+        # Reproducible spatial spread across large agricultural polygons.
+        # These are diagnostic patches, NOT a random survey or exhaustive map.
+        minx, miny, maxx, maxy = geom.bounds
+        candidates = [geom.representative_point()]
+        for i in range(1, 8):
+            for j in range(1, 8):
+                p = Point(minx + (maxx-minx)*i/8, miny + (maxy-miny)*j/8)
+                if geom.contains(p):
+                    candidates.append(p)
+        for p in candidates:
+            if len(patches) >= max_patches:
+                break
+            window = box(p.x-side/2, p.y-side/2, p.x+side/2, p.y+side/2)
+            clipped = geom.intersection(window)
+            if clipped.is_empty or clipped.area < min_area_ha*10000:
+                continue
+            if clipped.area/window.area < min_purity:
+                continue
+            if any(clipped.intersects(old.to_crs(6933).geometry.iloc[0]) for old in patches):
+                continue
+            patches.append(gpd.GeoDataFrame(geometry=[clipped], crs=6933).to_crs(4326))
+    return patches
+
+
+def sampled_sentinel_vigor(crop_gdf, as_of, code, vigor_fn, *,
+                           max_patches=6, require_scene_evidence=False,
+                           min_area_ha=12.0, target_patch_ha=64.0,
+                           patches=None):
+    # Callers with a designed sample/reference split can supply the target
+    # blocks. Otherwise preserve the existing deterministic patch selection.
+    patches = patches if patches is not None else sample_crop_patches(
+        crop_gdf, max_patches=max_patches, min_area_ha=min_area_ha,
+        target_patch_ha=target_patch_ha)
+    if not patches:
+        return {"status": "N/D", "reason": "sem parcelas internas suficientemente homogêneas no mapa anual",
+                "patches_evaluated": 0, "patches_valid": 0}
+    by_class = {"baixo vigor": 0., "vigor adequado": 0., "alto vigor": 0.}
+    attempts = []
+    accepted = 0
+    accepted_scenes = []
+    total_crop_area_ha = float(crop_gdf.to_crs(6933).geometry.area.sum()/10000.0)
+    weighted = 0.
+    for idx, patch in enumerate(patches):
+        ha = float(patch.to_crs(6933).geometry.area.sum()/10000)
+        try:
+            result = vigor_fn(patch, as_of, code)
+        except Exception as exc:
+            result = {"status": "N/D", "reason": type(exc).__name__ + ": " + str(exc)[:160]}
+        attempts.append({"sample": idx+1, "area_ha": ha,
+                         "status": result.get("status"), "reason": result.get("reason"),
+                         "scene_id": result.get("scene_id"),
+                         "acquisition_utc": result.get("acquisition_utc"),
+                         "scene_age_days": result.get("scene_age_days"),
+                         "metrics": result.get("metrics"),
+                         "metric_boot_p05_p95": result.get("metric_boot_p05_p95"),
+                         "composite_boot_p05_p95": result.get("composite_boot_p05_p95"),
+                         "n_bootstrap": result.get("n_bootstrap"),
+                         "reference_fields": result.get("reference_fields"),
+                         "reference_blocks": result.get("reference_blocks"),
+                         "scene_search_audit": result.get("scene_search_audit"),
+                         "size_basis": result.get("size_basis"),
+                         "probabilities": result.get("probabilities"),
+                         "uncertainty_scope": result.get("uncertainty_scope"),
+                         "reference_blocks": result.get("reference_blocks"),
+                         "radar_interpretation": result.get("radar_interpretation")})
+        p = result.get("probabilities")
+        # Require actual georeferenced Sentinel-1 acquisition evidence, not
+        # a model-only synthetic vigor estimate. Record all acquisition times.
+        scene_id = result.get("scene_id")
+        acquired = result.get("acquisition_utc")
+        if result.get("status") not in ("experimental", "validated") or not isinstance(p, dict):
+            continue
+        if require_scene_evidence and (not scene_id or not acquired):
+            attempts[-1]["status"] = "N/D"
+            attempts[-1]["reason"] = "cena real sem identidade ou data de aquisição"
+            continue
+        try:
+            weights = {c: float(p[c]) for c in by_class}
+        except (KeyError, TypeError, ValueError):
+            continue
+        if any(v < 0 or v > 1 for v in weights.values()) or abs(sum(weights.values())-1)>1e-4:
+            continue
+        weighted += ha
+        accepted += 1
+        if scene_id and acquired:
+            accepted_scenes.append({"scene_id": scene_id, "acquisition_utc": acquired, "area_ha": ha})
+        for name in by_class:
+            by_class[name] += ha*weights[name]
+    if not accepted:
+        return {"status": "N/D", "reason": "Sentinel-1 ou referências da mesma classe indisponíveis nos polígonos amostrados",
+                "patches_evaluated": len(patches), "patches_valid": 0, "sample_audit": attempts,
+                "mapped_crop_area_ha": total_crop_area_ha, "sar_sample_coverage_fraction": 0.0}
+    prob = {name: val/weighted for name,val in by_class.items()}
+    label = max(prob, key=prob.get)
+    return {"status": "experimental", "class": label, "probabilities": prob,
+            "patches_evaluated": len(patches), "patches_valid": accepted,
+            "sample_area_ha": weighted, "mapped_crop_area_ha": total_crop_area_ha,
+            "sar_sample_coverage_fraction": weighted/total_crop_area_ha if total_crop_area_ha>0 else 0.,
+            "sample_audit": attempts, "accepted_scenes": accepted_scenes,
+            "acquisition_period_utc": [min(x["acquisition_utc"] for x in accepted_scenes),
+                                       max(x["acquisition_utc"] for x in accepted_scenes)] if accepted_scenes else None,
+            "source": "Sentinel-1 RTC VV/VH + geometria SAR fornecida, amostragem espacial dirigida",
+            "uncertainty_warning": "Probabilidades descritivas das amostras, NÃO calibradas para todo o município; erro de transferência e seleção não quantificado"}
