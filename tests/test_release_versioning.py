@@ -57,6 +57,11 @@ class ReleaseVersioningTests(unittest.TestCase):
         self.assertIn("enform_verde_acceptance_progress.txt", text)
         self.assertIn("enform_verde_acceptance_entry.txt", text)
         self.assertIn("[System.IO.Path]::GetTempPath()", text)
+        self.assertIn("[System.IO.File]::ReadAllBytes($log)", text)
+        self.assertIn("ACCEPTANCE_DIAGNOSTIC_CONTENT_BEGIN", text)
+        self.assertIn("enform_acceptance_diagnostics", text)
+        self.assertIn("Upload failed EXE acceptance diagnostics", text)
+        self.assertIn("name: acceptance-diagnostics-${{ github.run_id }}", text)
         self.assertIn('faulthandler.dump_traceback_later(60,repeat=True,file=progress)',
                       (ROOT / "desktop_app.py").read_text(encoding="utf-8"))
         self.assertIn('enform_verde_acceptance_entry.txt',

@@ -35,3 +35,6 @@ Validação do código no commit local: 1.360 testes passaram, 1 ignorado; 197 m
 
 ### Checkpoint V88.180 (21/11/2026)
 No SHA f4d44e7, o EXE Windows passou build e gates de SAR/FH, mas a aceitação Tapajós em pasta limpa expirou a 900 s. O progresso instrumentado não apareceu nos logs, indicando que o coletor consultou caminho temporário incorreto ou o dispatcher não entrou na rotina. O código atual grava marcador anterior à rota e o workflow buscará todos os arquivos diagnósticos em diretórios temporários Windows alternativos. Aguardam-se testes e novo gate Windows; sem aceite não distribuir.
+
+### Checkpoint V88.181 (22/11/2026)
+A aceitação Windows do EXE limpo segue bloqueada por timeout de 900 s, sem stack útil no log. O workflow foi instrumentado para ler bytes diretamente, registrar metadados, arquivar diagnósticos em caso de falha e encerrar subprocessos filhos. Isto não demonstra a eliminação do congelamento. Obter o novo artefato/log, corrigir a causa observada e exigir aceitação Tapajós ponta a ponta antes de distribuir.

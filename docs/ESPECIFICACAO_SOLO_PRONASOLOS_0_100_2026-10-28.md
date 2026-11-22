@@ -900,3 +900,6 @@ Validação do código no commit local: 1.360 testes passaram, 1 ignorado; 197 m
 
 ### Coordenação do gate de release — V88.180 (21/11/2026)
 O aceite integral Tapajós em Windows expirou após 900 s sem que o runner encontrasse o arquivo de stack/progresso no diretório temporário consultado. Esta ocorrência é do fluxo geral do EXE/SAR e não constitui evidência de erro, ausência ou falha no compartimento de carbono orgânico do solo 0–100 cm. Preservar integralmente a regra de quantificação SOC e resolver o caminho do diagnóstico no gate Windows antes de distribuir a candidata.
+
+### Coordenação do gate de release — V88.181 (22/11/2026)
+A instrumentação de diagnóstico do timeout Windows ampliou captura de logs e subprocessos do EXE; não altera fonte, profundidade, equação, estoque ou incerteza do SOC 0–100 cm. A aceitação Tapajós continua necessária antes da distribuição.

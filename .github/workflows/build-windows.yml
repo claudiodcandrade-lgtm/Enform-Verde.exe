@@ -960,7 +960,9 @@ jobs:
             Write-Host "EXE_SMOKE_BEGIN label=$Label timeout_seconds=$TimeoutSeconds"
             $process = Start-Process -FilePath $exe -ArgumentList $Arguments -WorkingDirectory $dst -PassThru
             if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
-              try { $process.Kill() } catch { }
+              try { $process.Kill($true) } catch { try { $process.Kill() } catch { } }
+              $diagOut = Join-Path $env:RUNNER_TEMP 'enform_acceptance_diagnostics'
+              New-Item -ItemType Directory -Force -Path $diagOut | Out-Null
               $diagnosticFiles = switch ($Label) {
                 'module-check' { @('enform_verde_module_check_error.txt') }
                 'visual-check' { @('enform_verde_visual_check_error.txt','enform_verde_visual_check.txt') }
@@ -968,13 +970,31 @@ jobs:
                 'tapajos-acceptance' { @('enform_verde_acceptance_entry.txt','enform_verde_acceptance_error.txt','enform_verde_acceptance_result.json','enform_verde_acceptance_progress.txt') }
                 default { @() }
               }
-              foreach ($file in $diagnosticFiles) {
               $roots = @($env:TEMP,$env:TMP,[System.IO.Path]::GetTempPath(),(Join-Path $env:LOCALAPPDATA 'Temp'),$dst) |
                 Where-Object { $_ } | Select-Object -Unique
-              foreach ($root in $roots) {
-                $log = Join-Path $root $file
-                if (Test-Path $log) { Write-Host "ACCEPTANCE_DIAGNOSTIC path=$log"; Get-Content $log -ErrorAction SilentlyContinue }
-              }
+              foreach ($file in $diagnosticFiles) {
+                $found = $false
+                foreach ($root in $roots) {
+                  $log = Join-Path $root $file
+                  if (Test-Path -LiteralPath $log -PathType Leaf) {
+                    $found = $true
+                    try {
+                      $item = Get-Item -LiteralPath $log -ErrorAction Stop
+                      $bytes = [System.IO.File]::ReadAllBytes($log)
+                      $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+                      Write-Host "ACCEPTANCE_DIAGNOSTIC path=$log bytes=$($bytes.Length) modified_utc=$($item.LastWriteTimeUtc.ToString('o'))"
+                      Write-Host "ACCEPTANCE_DIAGNOSTIC_CONTENT_BEGIN file=$file"
+                      if ($bytes.Length -eq 0) { Write-Host '<EMPTY FILE>' }
+                      elseif ([string]::IsNullOrWhiteSpace($content)) {
+                        Write-Host "<NO UTF8 TEXT>; HEX_PREFIX=$([Convert]::ToHexString($bytes[0..([Math]::Min($bytes.Length,64)-1)]))"
+                      } else { Write-Host $content }
+                      Write-Host "ACCEPTANCE_DIAGNOSTIC_CONTENT_END file=$file"
+                      $safeRoot = ($root -replace '[:\\/ ]','_')
+                      Copy-Item -LiteralPath $log -Destination (Join-Path $diagOut "$safeRoot`__$file") -Force
+                    } catch { Write-Host "ACCEPTANCE_DIAGNOSTIC_READ_ERROR path=$log error=$($_.Exception.Message)" }
+                  }
+                }
+                if (!$found) { Write-Host "ACCEPTANCE_DIAGNOSTIC_MISSING file=$file roots=$($roots -join ';')" }
               }
               throw "COMPILED_EXE_TIMEOUT label=$Label timeout_seconds=$TimeoutSeconds"
             }
@@ -1032,6 +1052,13 @@ jobs:
             Get-Content $result
           }
           finally { $env:PATH = $oldPath }
+      - name: Upload failed EXE acceptance diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-diagnostics-${{ github.run_id }}
+          path: ${{ runner.temp }}/enform_acceptance_diagnostics/
+          if-no-files-found: ignore
       - name: Record tested Windows EXE source SHA and checksum
         shell: pwsh
         run: |

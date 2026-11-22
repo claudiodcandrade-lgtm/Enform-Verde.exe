@@ -33,3 +33,6 @@ A aceitação agora registra as etapas e despeja periodicamente as pilhas Python
 ## V88.180 — diagnóstico do aceite Windows ainda sem captura
 
 O SHA `f4d44e7` passou a regressão completa (1.357 testes, 1 ignorado), o dashboard, as provas SAR/FH e o build Windows. O EXE copiado para pasta limpa voltou a expirar após 900 s. Embora o coletor incluísse o log de progresso, o runner não localizou o arquivo no diretório temporário padrão; portanto a pilha que bloqueia ainda não foi capturada e não há nova versão distribuível. A próxima revisão registra um marcador na entrada do `--acceptance-test` e busca todos os diagnósticos nos caminhos temporários efetivamente usados pelo Python e pelo Windows. A versão permanece experimental.
+
+## Gate de distribuição — V88.181
+A aceitação completa do EXE em pasta limpa ainda não passou: o último teste ultrapassou 900 s e os logs não revelaram a etapa bloqueada. O workflow agora coleta diagnósticos por leitura binária, inclui metadados e anexa os arquivos ao job com falha. Não é uma correção comprovada do congelamento; esta compilação não deve ser distribuída até que a aceitação integral termine com sucesso. Versão experimental, sem homologação científica de campo.
